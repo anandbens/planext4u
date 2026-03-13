@@ -66,7 +66,14 @@ export default function CustomerBrowsePage() {
           <Link to="/app/browse"><Badge variant={!categoryFilter ? "default" : "outline"} className="cursor-pointer whitespace-nowrap">All</Badge></Link>
           {categories?.map((c) => (
             <Link key={c.id} to={`/app/browse?category=${c.name}`}>
-              <Badge variant={categoryFilter === c.name ? "default" : "outline"} className="cursor-pointer whitespace-nowrap">{c.image} {c.name}</Badge>
+              <Badge variant={categoryFilter === c.name ? "default" : "outline"} className="cursor-pointer whitespace-nowrap flex items-center gap-1.5">
+                {c.image && c.image.startsWith('/') ? (
+                  <img src={c.image} alt={c.name} className="h-5 w-5 rounded-full object-cover" />
+                ) : (
+                  <span>{c.image}</span>
+                )}
+                {c.name}
+              </Badge>
             </Link>
           ))}
         </div>
