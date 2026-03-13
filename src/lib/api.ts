@@ -702,11 +702,29 @@ export const api = {
     return { success: true };
   },
 
-  postClassifiedAd: async (data: { title: string; description: string; price: number; category: string; city: string; area: string }) => {
+  postClassifiedAd: async (data: { title: string; description: string; price: number; category: string; city: string; area: string; images?: string[] }) => {
+    // Get current user info
+    const { data: session } = await supabase.auth.getSession();
+    const userId = session?.session?.user?.id;
+    if (!userId) throw new Error("Not authenticated");
+    
+    // Get customer info
+    const { data: customerData } = await supabase.rpc('get_customer_id', { _user_id: userId });
+    const customerId = customerData || userId;
+    const { data: customer } = await supabase.from('customers').select('name').eq('id', customerId).single();
+
     const newAd = {
       id: genId('AD'),
-      ...data, images: [] as string[], user_id: "USR-001", status: "pending",
-      user_name: "Rahul Sharma",
+      title: data.title,
+      description: data.description,
+      price: data.price,
+      category: data.category,
+      city: data.city,
+      area: data.area,
+      images: (data.images || []) as unknown as any,
+      user_id: customerId,
+      status: "pending",
+      user_name: customer?.name || "User",
     };
     const { error } = await supabase.from('classified_ads').insert(newAd as any);
     if (error) throw error;
