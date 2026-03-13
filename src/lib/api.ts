@@ -250,7 +250,7 @@ export const api = {
       total_revenue: totalRevenue,
       pending_settlements: (settlements || []).filter(s => s.status === 'pending').length,
       active_ads: (classifieds || []).length,
-      total_services: services || 0,
+      total_services: totalServices || 0,
       customers_trend: 12.5, vendors_trend: 8.3, orders_trend: 15.2, revenue_trend: 22.1,
       recent_orders: (allOrders.slice(0, 5) as any) as Order[],
       revenue_chart: [
