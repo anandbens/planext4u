@@ -706,16 +706,6 @@ export const api = {
     return { success: true };
   },
 
-  settleSettlement: async (id: string) => {
-    await delay();
-    const idx = MOCK_SETTLEMENTS.findIndex((s) => s.id === id);
-    if (idx >= 0) {
-      (MOCK_SETTLEMENTS[idx] as any).status = 'settled';
-      (MOCK_SETTLEMENTS[idx] as any).settled_at = new Date().toISOString();
-      persist('settlements', MOCK_SETTLEMENTS);
-    }
-    return { success: true };
-  },
 
   // CMS
   getBanners: async () => {
