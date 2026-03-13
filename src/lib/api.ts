@@ -317,9 +317,9 @@ export const api = {
 
   postClassifiedAd: async (data: { title: string; description: string; price: number; category: string; city: string; area: string }) => {
     await delay();
-    const newAd: ClassifiedAd = {
+    const newAd = {
       id: `AD-${String(MOCK_CLASSIFIEDS.length + 1).padStart(3, '0')}`,
-      ...data, images: [], user_id: "USR-001", status: "pending",
+      ...data, images: [] as string[], user_id: "USR-001", status: "pending" as const,
       created_at: new Date().toISOString(), user_name: "Rahul Sharma",
     };
     MOCK_CLASSIFIEDS.unshift(newAd);
