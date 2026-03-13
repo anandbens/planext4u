@@ -430,7 +430,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
       {/* Mobile Bottom Navigation - Zepto-style with raised active pill */}
       {!hideNav && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
-          <div className="relative flex items-end justify-around px-1 pt-2 pb-2">
+          <div className="relative flex items-center justify-around px-1 py-2">
             {navItems.map((item) => {
               const active = item.comingSoon ? false : isActive(item.to);
 
@@ -440,8 +440,9 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                   {active ? (
                     <motion.div
                       layoutId="nav-active-pill"
-                      className="flex flex-col items-center justify-center bg-primary rounded-2xl px-4 py-2 -mt-5 shadow-lg relative"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      className="flex flex-col items-center justify-center bg-primary rounded-[18px] px-5 py-2.5 -mt-7 relative"
+                      style={{ boxShadow: '0 4px 20px -2px hsl(180 100% 30% / 0.45), 0 0 10px 0 hsl(180 100% 30% / 0.2)' }}
+                      transition={{ type: "spring", stiffness: 380, damping: 28 }}
                     >
                       <item.icon className="h-5 w-5 text-primary-foreground" />
                       <span className="text-[9px] font-bold text-primary-foreground mt-0.5 leading-tight">
@@ -471,7 +472,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
 
               if (item.comingSoon) {
                 return (
-                  <button key={item.label} onClick={() => toast.info(`${item.label} is coming soon! Stay tuned.`)}
+                  <button key={item.label} onClick={() => toast.info(`${item.label} is coming soon! Stay tuned.`, { duration: 2500 })}
                     className="flex flex-col items-center relative min-w-[48px]">
                     {content}
                   </button>
