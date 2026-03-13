@@ -20,7 +20,7 @@ export default function CustomerClassifiedsPage() {
     queryFn: () => api.getBrowseClassifieds({ category: categoryFilter, search: searchQuery || undefined }),
   });
 
-  const categories = api.getClassifiedCategories();
+  const categories = api.getClassifiedCategories().map(c => typeof c === 'string' ? c : c.name);
 
   return (
     <CustomerLayout>

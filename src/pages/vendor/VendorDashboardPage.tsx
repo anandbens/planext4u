@@ -29,7 +29,7 @@ export default function VendorDashboardPage() {
       <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold">{data?.vendor.business_name || "Loading..."}</h1>
+            <h1 className="text-lg font-bold">{(data?.vendor as any)?.business_name || "Loading..."}</h1>
             <p className="text-xs text-muted-foreground">Vendor Dashboard</p>
           </div>
           <div className="flex items-center gap-2">
