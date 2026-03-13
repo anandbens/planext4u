@@ -1,8 +1,26 @@
+import { useQuery } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { StatCard } from "@/components/admin/StatCard";
 import { Star, Gift, Users, TrendingUp } from "lucide-react";
+import { api, PointsTransaction } from "@/lib/api";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+const typeStyle: Record<string, string> = {
+  welcome: "bg-primary/10 text-primary",
+  referral: "bg-info/10 text-info",
+  order_reward: "bg-success/10 text-success",
+};
 
 export default function PointsPage() {
+  const { data } = useQuery({
+    queryKey: ["pointsTransactions"],
+    queryFn: () => api.getPointsTransactions({ page: 1, per_page: 20 }),
+  });
+
+  const transactions = data?.data || [];
+  const totalIssued = transactions.reduce((s, t) => s + t.points, 0);
+
   return (
     <AdminLayout>
       <div className="page-header">
@@ -17,23 +35,42 @@ export default function PointsPage() {
         <StatCard title="Referral Points" value="28,300" trend={22.6} icon={Users} gradient="gradient-info" />
       </div>
 
-      <div className="bg-card rounded-xl border border-border/50 p-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
-        <h3 className="text-base font-semibold mb-4">Points Configuration</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-4 rounded-lg bg-secondary/30">
-            <p className="text-sm font-medium text-muted-foreground">Welcome Bonus</p>
-            <p className="text-2xl font-bold mt-1">200 pts</p>
-            <p className="text-xs text-muted-foreground mt-1">Given to new customers on registration</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-card rounded-xl border border-border/50 p-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
+          <h3 className="text-base font-semibold mb-4">Points Configuration</h3>
+          <div className="space-y-4">
+            {[
+              { label: "Welcome Bonus", value: "200 pts", desc: "Given to new customers on registration" },
+              { label: "Referral Reward", value: "100 pts", desc: "When referred user places first order" },
+              { label: "Order Reward Rate", value: "2%", desc: "Percentage of order value as points" },
+            ].map((c) => (
+              <div key={c.label} className="p-3 rounded-lg bg-secondary/30">
+                <p className="text-sm font-medium text-muted-foreground">{c.label}</p>
+                <p className="text-xl font-bold mt-0.5">{c.value}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{c.desc}</p>
+              </div>
+            ))}
           </div>
-          <div className="p-4 rounded-lg bg-secondary/30">
-            <p className="text-sm font-medium text-muted-foreground">Referral Reward</p>
-            <p className="text-2xl font-bold mt-1">100 pts</p>
-            <p className="text-xs text-muted-foreground mt-1">When referred user places first order</p>
-          </div>
-          <div className="p-4 rounded-lg bg-secondary/30">
-            <p className="text-sm font-medium text-muted-foreground">Order Reward Rate</p>
-            <p className="text-2xl font-bold mt-1">2%</p>
-            <p className="text-xs text-muted-foreground mt-1">Percentage of order value as points</p>
+        </div>
+
+        <div className="md:col-span-2 bg-card rounded-xl border border-border/50 p-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
+          <h3 className="text-base font-semibold mb-4">Recent Transactions</h3>
+          <div className="space-y-3">
+            {transactions.map((t) => (
+              <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20">
+                <div className="flex items-center gap-3">
+                  <Badge className={`${typeStyle[t.type] || ''} border-0 text-[10px]`}>{t.type.replace('_', ' ')}</Badge>
+                  <div>
+                    <p className="text-sm font-medium">{t.user_name}</p>
+                    <p className="text-xs text-muted-foreground">{t.description}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-success">+{t.points}</p>
+                  <p className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
