@@ -313,17 +313,28 @@ export const api = {
     return { success: true };
   },
 
-  createCustomer: async (data: Omit<User, 'id' | 'created_at' | 'referral_code'>) => {
+  createCustomer: async (data: Partial<User>) => {
     await delay();
-    const newCustomer: User = {
+    const newCustomer = {
       id: `USR-${String(MOCK_CUSTOMERS.length + 1).padStart(3, '0')}`,
-      ...data as any,
-      referral_code: `REF${String(MOCK_CUSTOMERS.length + 1).padStart(4, '0')}`,
+      name: data.name || '',
+      email: data.email || '',
+      mobile: data.mobile || '',
+      city_id: data.city_id || '1',
+      area_id: data.area_id || '1',
+      latitude: data.latitude || 0,
+      longitude: data.longitude || 0,
       wallet_points: data.wallet_points || 0,
+      referral_code: `REF${String(MOCK_CUSTOMERS.length + 1).padStart(4, '0')}`,
+      referred_by: data.referred_by || null,
+      status: data.status || 'active' as const,
       created_at: new Date().toISOString(),
+      occupation: data.occupation || '',
     };
-    MOCK_CUSTOMERS.unshift(newCustomer);
+    MOCK_CUSTOMERS.unshift(newCustomer as any);
     persist('customers', MOCK_CUSTOMERS);
+    return { success: true, customer: newCustomer };
+  },
     return { success: true, customer: newCustomer };
   },
 
