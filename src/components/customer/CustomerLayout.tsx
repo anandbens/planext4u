@@ -49,12 +49,14 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     navigate("/app");
   };
 
+  const [socioToast, setSocioToast] = useState(false);
+
   const navItems = [
     { icon: Home, label: "Home", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
     { icon: Wrench, label: "Services", to: "/app/services" },
-    { icon: Megaphone, label: "Socio", to: "/app/classifieds" },
-    { icon: CalendarDays, label: "Booking", to: "/app/services" },
+    { icon: Megaphone, label: "Socio", to: "#socio-coming-soon", comingSoon: true },
+    { icon: CalendarDays, label: "Booking", to: "/app/services?tab=booking" },
     { icon: Newspaper, label: "Classified", to: "/app/classifieds" },
   ];
 
