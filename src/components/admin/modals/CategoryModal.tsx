@@ -18,7 +18,7 @@ interface CategoryModalProps {
   onDelete?: (id: string) => Promise<void>;
 }
 
-const emptyForm = { name: "", image: "📦", status: "active" as const };
+const emptyForm = { name: "", image: "📦", status: "active" as Category["status"] };
 
 export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete }: CategoryModalProps) {
   const isCreate = mode === "create";
