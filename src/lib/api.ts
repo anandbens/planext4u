@@ -686,7 +686,7 @@ export const api = {
   bulkSettleSettlements: async (ids: string[]) => {
     await delay();
     const now = new Date().toISOString();
-    ids.forEach(id => { const s = MOCK_SETTLEMENTS.find(s => s.id === id); if (s && (s.status === 'eligible' || s.status === 'pending')) { s.status = 'settled'; s.settled_at = now; } });
+    ids.forEach(id => { const s = MOCK_SETTLEMENTS.find(s => s.id === id); if (s && (s.status === 'eligible' || s.status === 'pending')) { (s as any).status = 'settled'; s.settled_at = now; } });
     persist('settlements', MOCK_SETTLEMENTS);
     return { success: true };
   },
