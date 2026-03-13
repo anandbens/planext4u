@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Package, Store, Tag, Star, DollarSign, Trash2 } from "lucide-react";
+import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MOCK_CATEGORIES, MOCK_VENDORS } from "@/lib/mockData";
 
@@ -25,6 +25,7 @@ const emptyForm = {
   title: "", description: "", price: 0, tax: 0, discount: 0,
   max_points_redeemable: 0, status: "active" as Product["status"],
   vendor_id: "", vendor_name: "", category_id: "", category_name: "", stock: 0, emoji: "📦",
+  image: "",
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete }: ProductModalProps) {
@@ -45,6 +46,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         vendor_id: product.vendor_id, vendor_name: product.vendor_name,
         category_id: product.category_id, category_name: product.category_name,
         stock: product.stock || 0, emoji: product.emoji || "📦",
+        image: product.image || "",
       });
       setEditMode(mode === "edit");
     }
@@ -106,6 +108,19 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
+          {/* Image Preview + URL */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Product Image</Label>
+            {form.image && (
+              <div className="h-32 w-full rounded-lg overflow-hidden bg-secondary/20 border border-border/30">
+                <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+            )}
+            {editMode && (
+              <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="Image URL (e.g. /images/products/laptop.jpg)" />
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label className="text-xs text-muted-foreground">Title *</Label>

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Wrench, DollarSign, Trash2 } from "lucide-react";
+import { Wrench, DollarSign, Trash2, ImageIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MOCK_SERVICE_CATEGORIES, MOCK_SERVICE_VENDORS } from "@/lib/mockData";
 
@@ -26,6 +26,7 @@ const emptyForm = {
   max_points_redeemable: 0, status: "active" as Service["status"],
   vendor_id: "", vendor_name: "", category_id: "", category_name: "",
   emoji: "🔧", service_area: "Coimbatore", duration: "1-2 hours",
+  image: "",
 };
 
 export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCreate, onDelete }: ServiceModalProps) {
@@ -45,6 +46,7 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
         category_id: service.category_id, category_name: service.category_name,
         emoji: service.emoji || "🔧", service_area: service.service_area || "Coimbatore",
         duration: service.duration || "1-2 hours",
+        image: (service as any).image || "",
       });
       setEditMode(mode === "edit");
     }
@@ -98,6 +100,19 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
+          {/* Image Preview + URL */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Service Image</Label>
+            {form.image && (
+              <div className="h-32 w-full rounded-lg overflow-hidden bg-secondary/20 border border-border/30">
+                <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+            )}
+            {editMode && (
+              <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="Image URL (e.g. /images/services/cleaning.jpg)" />
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label className="text-xs text-muted-foreground">Title *</Label>

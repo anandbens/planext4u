@@ -63,18 +63,21 @@ export default function CustomerProductPage() {
         <Search className="h-4 w-4 text-muted-foreground" />
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-4 pb-24 md:pb-6">
+      <div className="max-w-5xl mx-auto px-4 py-4 pb-28 md:pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Product Image */}
           <div className="relative">
-            <div className="bg-secondary/20 rounded-2xl h-64 md:h-96 flex items-center justify-center text-8xl relative">
-              {product.emoji}
+            <div className="bg-secondary/20 rounded-2xl h-64 md:h-96 flex items-center justify-center relative overflow-hidden">
+              {product.image ? (
+                <img src={product.image} alt={product.title} className="w-full h-full object-cover rounded-2xl" />
+              ) : (
+                <span className="text-8xl">{product.emoji}</span>
+              )}
               <button onClick={() => { setWishlisted(!wishlisted); toast.success(wishlisted ? "Removed from wishlist" : "Added to wishlist"); }}
                 className="absolute top-3 right-3 h-8 w-8 rounded-full bg-card/80 flex items-center justify-center">
                 <Heart className={`h-4 w-4 ${wishlisted ? "fill-destructive text-destructive" : "text-muted-foreground"}`} />
               </button>
             </div>
-            {/* Image Dots */}
             <div className="flex gap-1.5 justify-center mt-3">
               {[0,1,2].map(i => (
                 <button key={i} onClick={() => setImgIdx(i)}
@@ -171,17 +174,15 @@ export default function CustomerProductPage() {
         </Tabs>
       </div>
 
-      {/* Sticky Bottom Bar - Like Image 10 */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
-        <div className="flex items-center justify-between mb-2">
+      {/* Sticky Bottom Bar - mobile */}
+      <div className="fixed bottom-14 left-0 right-0 z-40 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
+        <div className="flex items-center justify-between">
           <div>
             <span className="text-[10px] text-muted-foreground">1 Unit</span>
             <div className="flex items-baseline gap-2">
               <span className="text-lg font-bold">₹{product.price.toLocaleString()}</span>
               {discountPct > 0 && <span className="text-xs text-muted-foreground line-through">MRP ₹{originalPrice.toLocaleString()}</span>}
-              {discountPct > 0 && <Badge className="bg-primary/10 text-primary border-0 text-[9px]">{discountPct}% OFF</Badge>}
             </div>
-            <p className="text-[9px] text-muted-foreground">Inclusive of all taxes</p>
           </div>
           <Button className="h-11 px-6 rounded-xl gap-2" onClick={addToCart}>
             <ShoppingCart className="h-4 w-4" /> Add to cart

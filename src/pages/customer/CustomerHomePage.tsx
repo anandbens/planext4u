@@ -19,7 +19,6 @@ export default function CustomerHomePage() {
   const { data, isLoading } = useQuery({ queryKey: ["customerHome"], queryFn: api.getCustomerHome });
   const [bannerIdx, setBannerIdx] = useState(0);
   const [showSplash, setShowSplash] = useState(() => {
-    // Show splash only once per session
     const shown = sessionStorage.getItem("p4u_splash_shown");
     return !shown;
   });
@@ -39,7 +38,7 @@ export default function CustomerHomePage() {
   const itemAnim = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
   const slideUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
 
-  // Category icons for horizontal scroll (matching reference)
+  // Category icons for horizontal scroll
   const categoryIcons = [
     { icon: "📦", label: "All", to: "/app/browse" },
     { icon: "🎧", label: "Electronics", to: "/app/browse?category=Electronics" },
@@ -58,22 +57,23 @@ export default function CustomerHomePage() {
   return (
     <CustomerLayout>
       <div className="max-w-7xl mx-auto space-y-0 pb-24 md:pb-6">
-        {/* Mobile Category Icons Row */}
-        <div className="px-4 md:hidden">
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-3">
+        {/* Mobile Category Icons Row - improved with circular avatars */}
+        <div className="px-4 pt-2 md:hidden">
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-3">
             {categoryIcons.map((cat, i) => (
               <motion.div
                 key={cat.label}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05, duration: 0.3 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.04, duration: 0.25 }}
               >
-                <Link to={cat.to} className="flex flex-col items-center gap-1.5 min-w-[60px]">
-                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border transition-all
-                    ${i === 0 ? 'bg-primary/10 border-primary' : 'bg-card border-border/50 hover:border-primary/30'}`}>
-                    <span className="text-xl">{cat.icon}</span>
+                <Link to={cat.to} className="flex flex-col items-center gap-1.5 min-w-[56px]">
+                  <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-all shadow-sm
+                    ${i === 0 ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2' : 'bg-card border border-border/50 hover:border-primary/30 hover:shadow-md'}`}>
+                    <span className="text-lg">{cat.icon}</span>
                   </div>
-                  <span className={`text-[10px] font-medium ${i === 0 ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>{cat.label}</span>
+                  <span className={`text-[10px] font-medium leading-tight text-center
+                    ${i === 0 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>{cat.label}</span>
                 </Link>
               </motion.div>
             ))}
@@ -98,21 +98,6 @@ export default function CustomerHomePage() {
           </div>
         </motion.div>
 
-        {/* Emergency Button - Mobile */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.3 }}
-          className="px-4 pb-3 md:hidden"
-        >
-          <Link to="/app/services?type=emergency">
-            <div className="bg-destructive rounded-2xl py-3.5 flex items-center justify-center gap-2 text-destructive-foreground shadow-md">
-              <PhoneCall className="h-5 w-5" />
-              <span className="font-bold text-sm">Emergency</span>
-            </div>
-          </Link>
-        </motion.div>
-
         {/* Hero Banner Carousel */}
         <div className="px-4 pt-0 md:pt-4">
           {isLoading ? (
@@ -135,22 +120,10 @@ export default function CustomerHomePage() {
                   ) : (
                     <div className={`bg-gradient-to-r ${data.banners[bannerIdx]?.gradient || 'from-primary to-primary/70'} rounded-2xl p-6 md:p-12 h-44 md:h-72 flex items-center`}>
                       <div>
-                        <motion.h2
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.2 }}
-                          className="text-xl md:text-4xl font-bold text-primary-foreground"
-                        >
-                          {data.banners[bannerIdx]?.title}
-                        </motion.h2>
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.35 }}
-                          className="text-xs md:text-base text-primary-foreground/80 mt-1"
-                        >
-                          {data.banners[bannerIdx]?.subtitle}
-                        </motion.p>
+                        <motion.h2 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
+                          className="text-xl md:text-4xl font-bold text-primary-foreground">{data.banners[bannerIdx]?.title}</motion.h2>
+                        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+                          className="text-xs md:text-base text-primary-foreground/80 mt-1">{data.banners[bannerIdx]?.subtitle}</motion.p>
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
                           <Button size="sm" variant="secondary" className="mt-3">Shop Now</Button>
                         </motion.div>
@@ -177,7 +150,7 @@ export default function CustomerHomePage() {
           ) : null}
         </div>
 
-        {/* Emergency / Urgent / Help Section - Desktop */}
+        {/* Emergency / Urgent / Help Section - Desktop ONLY */}
         <motion.section
           initial="hidden"
           whileInView="visible"
@@ -210,28 +183,16 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Best of Products - Teal Carousel */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="py-2"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="py-2">
           <div className="bg-primary rounded-2xl mx-4 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4">
               <h2 className="text-lg md:text-xl font-bold text-primary-foreground">Best of Products</h2>
               <div className="flex gap-2">
-                <button onClick={() => {
-                  const el = document.getElementById('product-carousel');
-                  if (el) el.scrollBy({ left: -220, behavior: 'smooth' });
-                }}
+                <button onClick={() => { const el = document.getElementById('product-carousel'); if (el) el.scrollBy({ left: -220, behavior: 'smooth' }); }}
                   className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/40 transition-colors">
                   <ChevronLeft className="h-4 w-4 text-primary-foreground" />
                 </button>
-                <button onClick={() => {
-                  const el = document.getElementById('product-carousel');
-                  if (el) el.scrollBy({ left: 220, behavior: 'smooth' });
-                }}
+                <button onClick={() => { const el = document.getElementById('product-carousel'); if (el) el.scrollBy({ left: 220, behavior: 'smooth' }); }}
                   className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/40 transition-colors">
                   <ChevronRight className="h-4 w-4 text-primary-foreground" />
                 </button>
@@ -240,13 +201,7 @@ export default function CustomerHomePage() {
             <div id="product-carousel" className="flex gap-4 overflow-x-auto pb-6 px-6 scrollbar-hide scroll-smooth">
               {isLoading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-52 w-40 rounded-xl shrink-0" />) :
                 data?.featuredProducts.map((p, idx) => (
-                  <motion.div
-                    key={p.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.3 }}
-                    className="shrink-0"
-                  >
+                  <motion.div key={p.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05, duration: 0.3 }} className="shrink-0">
                     <Link to={`/app/product/${p.id}`}>
                       <Card className="w-36 sm:w-44 md:w-48 overflow-hidden hover:shadow-xl transition-all duration-300 bg-card border-0 hover:-translate-y-1">
                         <div className="h-28 sm:h-36 md:h-40 bg-secondary/20 flex items-center justify-center overflow-hidden">
@@ -269,24 +224,14 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Brand Deal Banners */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="px-4 py-6"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               { brand: "IPHONE", image: "/images/banners/iphone-deal.jpg", to: "/app/browse?search=iphone", label: "UP to 80% OFF" },
               { brand: "REALME", image: "/images/banners/realme-deal.jpg", to: "/app/browse?search=realme", label: "UP to 80% OFF" },
               { brand: "XIAOMI", image: "/images/banners/xiaomi-deal.jpg", to: "/app/browse?search=xiaomi", label: "UP to 60% OFF" },
-            ].map((deal, i) => (
-              <motion.div
-                key={deal.brand}
-                whileHover={{ scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
+            ].map((deal) => (
+              <motion.div key={deal.brand} whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 300 }}>
                 <Link to={deal.to} className="block rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
                   <div className="relative">
                     <img src={deal.image} alt={deal.brand} className="w-full h-32 md:h-40 object-cover" />
@@ -301,13 +246,7 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Pick Up Where You Left Off */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="px-4 py-2"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-2">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               { title: "Pick up where you left off", items: data?.featuredProducts?.slice(0, 4) || [] },
@@ -337,33 +276,22 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Shop by Category */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="px-4 py-6"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg md:text-xl font-bold">Shop by Category</h2>
             <Link to="/app/browse" className="text-sm text-primary flex items-center gap-0.5 hover:underline font-medium">
               View All <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-          <motion.div
-            variants={containerAnim}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3 md:gap-4"
-          >
+          <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
+            className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3 md:gap-4">
             {isLoading ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
               data?.categories.map((c) => (
                 <motion.div key={c.id} variants={itemAnim}>
                   <Link to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-2 group">
-                    <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl bg-secondary/50 border border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/30 group-hover:shadow-md transition-all duration-300">
+                    <div className="h-14 w-14 md:h-20 md:w-20 rounded-full bg-secondary/50 border-2 border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/50 group-hover:shadow-md transition-all duration-300">
                       {c.image && c.image.startsWith('/') ? (
-                        <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-2xl" />
+                        <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-full" />
                       ) : (
                         <span className="text-2xl md:text-3xl">{c.image || '📦'}</span>
                       )}
@@ -376,13 +304,7 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Seller List / Vendor Cards */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="px-4 py-2"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-2">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg md:text-xl font-bold">Seller List</h2>
             <div className="flex items-center gap-2">
@@ -446,28 +368,16 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Top Servicers Section */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="py-6"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="py-6">
           <div className="bg-primary rounded-2xl mx-4 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4">
               <h2 className="text-lg md:text-xl font-bold text-primary-foreground">Top Servicer</h2>
               <div className="flex gap-2">
-                <button onClick={() => {
-                  const el = document.getElementById('service-carousel');
-                  if (el) el.scrollBy({ left: -220, behavior: 'smooth' });
-                }}
+                <button onClick={() => { const el = document.getElementById('service-carousel'); if (el) el.scrollBy({ left: -220, behavior: 'smooth' }); }}
                   className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/40 transition-colors">
                   <ChevronLeft className="h-4 w-4 text-primary-foreground" />
                 </button>
-                <button onClick={() => {
-                  const el = document.getElementById('service-carousel');
-                  if (el) el.scrollBy({ left: 220, behavior: 'smooth' });
-                }}
+                <button onClick={() => { const el = document.getElementById('service-carousel'); if (el) el.scrollBy({ left: 220, behavior: 'smooth' }); }}
                   className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/40 transition-colors">
                   <ChevronRight className="h-4 w-4 text-primary-foreground" />
                 </button>
@@ -476,13 +386,7 @@ export default function CustomerHomePage() {
             <div id="service-carousel" className="flex gap-4 overflow-x-auto pb-6 px-6 scrollbar-hide scroll-smooth">
               {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-64 w-56 rounded-xl shrink-0" />) :
                 data?.featuredServices?.map((s, idx) => (
-                  <motion.div
-                    key={s.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05, duration: 0.3 }}
-                    className="shrink-0"
-                  >
+                  <motion.div key={s.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05, duration: 0.3 }} className="shrink-0">
                     <Link to={`/app/services/${s.id}`}>
                       <Card className="w-52 sm:w-60 md:w-64 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div className="h-36 md:h-44 bg-secondary/20 relative overflow-hidden">
@@ -519,13 +423,7 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Healthy & Wellness Banner */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="px-4 py-4"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
           <div className="bg-gradient-to-r from-warning/20 to-warning/5 rounded-2xl p-6 md:p-8 flex items-center justify-between overflow-hidden">
             <div>
               <h3 className="text-lg md:text-xl font-bold">Healthy & Wellness</h3>
@@ -540,21 +438,10 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Most Booked Services */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="px-4 py-4"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
           <h2 className="text-lg md:text-xl font-bold mb-4">Most Booked Services</h2>
-          <motion.div
-            variants={containerAnim}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4"
-          >
+          <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
             {isLoading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />) :
               data?.featuredServices?.slice(0, 5).map((s) => (
                 <motion.div key={s.id} variants={itemAnim}>
@@ -593,13 +480,7 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Home Services Grid */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="px-4 py-4"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
           <h2 className="text-lg md:text-xl font-bold mb-4">Home Services</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="gradient-primary rounded-2xl p-6 flex flex-col justify-center text-primary-foreground">
@@ -615,9 +496,9 @@ export default function CustomerHomePage() {
                   <motion.div key={c.id} whileHover={{ scale: 1.03 }} transition={{ type: "spring", stiffness: 300 }}>
                     <Link to={`/app/services?category=${c.name}`}
                       className="bg-card rounded-xl border border-border/50 p-3 hover:border-primary/30 hover:shadow-md transition-all flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="h-12 w-12 rounded-full bg-secondary/50 flex items-center justify-center overflow-hidden shrink-0">
                         {c.image && c.image.startsWith('/') ? (
-                          <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-lg" />
+                          <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-full" />
                         ) : (
                           <span className="text-xl">{c.image}</span>
                         )}
@@ -634,13 +515,7 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Discount CTA */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="px-4 py-6"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-6">
           <div className="relative bg-gradient-to-br from-success/90 to-success/70 rounded-2xl p-8 md:p-12 text-success-foreground overflow-hidden">
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
             <div className="relative z-10">
@@ -659,13 +534,8 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Trust Bar */}
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="grid grid-cols-3 gap-3 px-4 py-4"
-        >
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp}
+          className="grid grid-cols-3 gap-3 px-4 py-4">
           {[
             { icon: Shield, text: "100% Genuine", sub: "Verified vendors" },
             { icon: Clock, text: "Fast Delivery", sub: "Within 48 hours" },
@@ -680,13 +550,7 @@ export default function CustomerHomePage() {
         </motion.div>
 
         {/* Classifieds CTA */}
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={slideUp}
-          className="px-4 py-4"
-        >
+        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
           <div className="gradient-primary rounded-2xl p-6 md:p-8 text-primary-foreground">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
