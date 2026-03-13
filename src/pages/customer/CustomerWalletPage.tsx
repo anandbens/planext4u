@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Wallet, ArrowUpRight, ArrowDownLeft, Gift, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Wallet, ArrowUpRight, ArrowDownLeft, Gift, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,11 +9,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
 
+const ITEMS_PER_PAGE = 8;
+
 export default function CustomerWalletPage() {
   const { data: profile } = useQuery({ queryKey: ["customerProfile"], queryFn: () => api.getCustomerProfile("USR-001") });
-  const { data: transactions, isLoading } = useQuery({ queryKey: ["pointsTransactions"], queryFn: () => api.getPointsTransactions({ page: 1, per_page: 50 }) });
+  const { data: transactions, isLoading } = useQuery({ queryKey: ["pointsTransactions"], queryFn: () => api.getPointsTransactions({ page: 1, per_page: 100 }) });
+  const [currentPage, setCurrentPage] = useState(1);
 
   const userTransactions = transactions?.data?.filter(t => t.user_id === 'USR-001') || [];
+  const totalPages = Math.max(1, Math.ceil(userTransactions.length / ITEMS_PER_PAGE));
+  const paginated = userTransactions.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const typeIcon = (type: string) => {
     if (type === 'welcome') return <Gift className="h-4 w-4 text-primary" />;
@@ -63,12 +69,16 @@ export default function CustomerWalletPage() {
           </Card>
         </div>
 
-        {/* Transaction History */}
+        {/* Transaction History with Pagination */}
         <div>
-          <h2 className="text-sm font-bold mb-3">Transaction History</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold">Transaction History</h2>
+            <span className="text-xs text-muted-foreground">{userTransactions.length} transactions</span>
+          </div>
           <div className="space-y-2">
             {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />) :
-              userTransactions.map(t => (
+              paginated.length === 0 ? <p className="text-center py-8 text-muted-foreground text-sm">No transactions yet</p> :
+              paginated.map(t => (
                 <Card key={t.id} className="p-3 flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
                     {typeIcon(t.type)}
@@ -81,6 +91,23 @@ export default function CustomerWalletPage() {
                 </Card>
               ))}
           </div>
+
+          {/* Pagination */}
+          {userTransactions.length > ITEMS_PER_PAGE && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage <= 1}
+                onClick={() => setCurrentPage(p => p - 1)}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage(p => p + 1)}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </CustomerLayout>

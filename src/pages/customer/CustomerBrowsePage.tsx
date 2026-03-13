@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Heart, Grid3X3, List, ShoppingCart, MapPin, Clock, ChevronRight } from "lucide-react";
+import { Star, Heart, Grid3X3, List, ShoppingCart, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,9 @@ export default function CustomerBrowsePage() {
   const categoryFilter = searchParams.get("category") || undefined;
   const searchFilter = searchParams.get("search") || undefined;
   const [cartCount, setCartCount] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["browseProducts", categoryFilter, sortBy, searchFilter],
@@ -31,6 +34,32 @@ export default function CustomerBrowsePage() {
   useEffect(() => {
     api.getCart().then(items => setCartCount(items.reduce((s, i) => s + i.qty, 0)));
   }, []);
+
+  // Check scroll state for arrow indicators
+  const checkScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const el = scrollRef.current;
+    if (el) {
+      el.addEventListener('scroll', checkScroll);
+      window.addEventListener('resize', checkScroll);
+      return () => {
+        el.removeEventListener('scroll', checkScroll);
+        window.removeEventListener('resize', checkScroll);
+      };
+    }
+  }, [categories]);
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    const el = scrollRef.current;
+    if (el) el.scrollBy({ left: direction === 'left' ? -200 : 200, behavior: 'smooth' });
+  };
 
   const quickAdd = async (p: any) => {
     await api.addToCart(p, 1);
@@ -61,27 +90,68 @@ export default function CustomerBrowsePage() {
           </div>
         </div>
 
-        {/* Category chips */}
-        <div className="flex gap-2.5 overflow-x-auto pb-4 mb-2 scrollbar-hide">
-          <Link to="/app/browse">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
-              ${!categoryFilter ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
-              <span className="text-sm font-medium">All</span>
-            </div>
-          </Link>
-          {categories?.map((c) => (
-            <Link key={c.id} to={`/app/browse?category=${c.name}`}>
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
-                ${categoryFilter === c.name ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
-                {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
-                  <img src={c.image} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
-                ) : (
-                  <span className="text-base">{c.image}</span>
-                )}
-                <span className="text-sm font-medium">{c.name}</span>
+        {/* Category chips with rounded background boxes and scroll arrows */}
+        <div className="relative mb-4">
+          {/* Left scroll arrow */}
+          <AnimatePresence>
+            {canScrollLeft && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => scrollCategories('left')}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-card border border-border shadow-md flex items-center justify-center hover:bg-accent transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          {/* Right scroll arrow */}
+          <AnimatePresence>
+            {canScrollRight && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => scrollCategories('right')}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-card border border-border shadow-md flex items-center justify-center hover:bg-accent transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          <div ref={scrollRef} className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide px-1 scroll-smooth">
+            {/* All category */}
+            <Link to="/app/browse" className="shrink-0">
+              <div className={`flex flex-col items-center gap-1.5 min-w-[70px] transition-all`}>
+                <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all
+                  ${!categoryFilter ? 'bg-primary/10 border-primary shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
+                  <span className="text-xl">📦</span>
+                </div>
+                <span className={`text-[11px] font-medium ${!categoryFilter ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>All</span>
+                {!categoryFilter && <div className="w-8 h-0.5 rounded-full bg-primary -mt-0.5" />}
               </div>
             </Link>
-          ))}
+            {categories?.map((c) => (
+              <Link key={c.id} to={`/app/browse?category=${c.name}`} className="shrink-0">
+                <div className="flex flex-col items-center gap-1.5 min-w-[70px] transition-all">
+                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all overflow-hidden
+                    ${categoryFilter === c.name ? 'bg-primary/10 border-primary shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
+                    {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
+                      <img src={c.image} alt={c.name} className="h-8 w-8 rounded-lg object-cover" />
+                    ) : (
+                      <span className="text-xl">{c.image || '📦'}</span>
+                    )}
+                  </div>
+                  <span className={`text-[11px] font-medium text-center leading-tight max-w-[70px] truncate
+                    ${categoryFilter === c.name ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>{c.name}</span>
+                  {categoryFilter === c.name && <div className="w-8 h-0.5 rounded-full bg-primary -mt-0.5" />}
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {isLoading ? (

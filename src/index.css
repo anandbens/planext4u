@@ -118,18 +118,21 @@
     line-height: 1.6;
   }
 
-  /* Retina / High-DPI: use CSS zoom so content renders as if browser is at 125% */
-  /* This eliminates side whitespace and makes elements bigger on high-res screens */
-  @media (min-resolution: 120dpi) and (min-width: 1200px) {
+  /* Retina / High-DPI: scale up content on high-resolution displays */
+  /* Uses both -webkit-device-pixel-ratio and min-resolution for cross-browser support */
+  @media (-webkit-min-device-pixel-ratio: 1.25) and (min-width: 1200px),
+         (min-resolution: 120dpi) and (min-width: 1200px) {
+    html { zoom: 1.15; }
+  }
+
+  @media (-webkit-min-device-pixel-ratio: 1.5) and (min-width: 1200px),
+         (min-resolution: 144dpi) and (min-width: 1200px) {
     html { zoom: 1.2; }
   }
 
-  @media (min-resolution: 144dpi) and (min-width: 1200px) {
+  @media (-webkit-min-device-pixel-ratio: 2) and (min-width: 1200px),
+         (min-resolution: 192dpi) and (min-width: 1200px) {
     html { zoom: 1.25; }
-  }
-
-  @media (min-resolution: 192dpi) and (min-width: 1200px) {
-    html { zoom: 1.3; }
     .stat-card { border-width: 0.5px; }
   }
 

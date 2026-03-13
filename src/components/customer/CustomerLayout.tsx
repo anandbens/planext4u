@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,11 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     }
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const handleSearch = (query: string) => {
     navigate(`/app/browse?search=${encodeURIComponent(query)}`);
   };
@@ -49,8 +54,6 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     navigate("/app");
   };
 
-  
-
   const navItems = [
     { icon: Home, label: "Home", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
@@ -60,7 +63,28 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     { icon: Newspaper, label: "Classified", to: "/app/classifieds" },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  // Smart active state detection using startsWith for sub-routes
+  const isActive = (path: string) => {
+    if (path === '/app') return location.pathname === '/app';
+    if (path === '/app/browse') return location.pathname.startsWith('/app/browse') || location.pathname.startsWith('/app/product') || location.pathname.startsWith('/app/cart') || location.pathname.startsWith('/app/vendor');
+    if (path === '/app/services') return location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/');
+    if (path === '/app/classifieds') return location.pathname.startsWith('/app/classifieds');
+    return location.pathname === path;
+  };
+
+  // Mobile menu items for slide-in drawer
+  const mobileMenuItems = [
+    { label: "Browse Products", to: "/app/browse", icon: ShoppingBag },
+    { label: "Services", to: "/app/services", icon: Wrench },
+    { label: "Classifieds", to: "/app/classifieds", icon: Newspaper },
+    { label: "My Orders", to: "/app/orders", icon: ClipboardList },
+    { label: "My Profile", to: "/app/profile", icon: User },
+    { label: "Wishlist", to: "/app/wishlist", icon: Heart },
+    { label: "Wallet", to: "/app/wallet", icon: Wallet },
+    { label: "Referrals", to: "/app/referrals", icon: Gift },
+    { label: "KYC", to: "/app/kyc", icon: Shield },
+    { label: "Become a Seller", to: "/vendor/login", icon: ShoppingBag },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -164,33 +188,87 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Slide-in Menu (App-like right-to-left drawer) */}
         <AnimatePresence>
           {mobileMenuOpen && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-              className="border-t border-white/10 bg-[hsl(207,96%,10%)] md:hidden overflow-hidden">
-              <div className="px-4 py-4 space-y-2">
-                {[
-                  { label: "Browse Products", to: "/app/browse" },
-                  { label: "Services", to: "/app/services" },
-                  { label: "Classifieds", to: "/app/classifieds" },
-                  { label: "My Orders", to: "/app/orders" },
-                  { label: "My Profile", to: "/app/profile" },
-                  { label: "Wishlist", to: "/app/wishlist" },
-                  { label: "Wallet", to: "/app/wallet" },
-                  { label: "Referrals", to: "/app/referrals" },
-                  { label: "Become a Seller", to: "/vendor/login" },
-                ].map(item => (
-                  <Link key={item.to + item.label} to={item.to} className="block py-2 text-sm font-medium text-white/80 hover:text-white transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}>{item.label}</Link>
-                ))}
-                {customerUser ? (
-                  <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="block py-2 text-sm font-medium text-destructive">Logout</button>
-                ) : (
-                  <Link to="/app/login" className="block py-2 text-sm font-medium text-warning" onClick={() => setMobileMenuOpen(false)}>Login / Register</Link>
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-foreground/40 backdrop-blur-sm z-50 md:hidden"
+                onClick={() => setMobileMenuOpen(false)}
+              />
+              {/* Drawer */}
+              <motion.div
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                className="fixed top-0 right-0 bottom-0 w-[280px] bg-card z-50 md:hidden shadow-2xl flex flex-col"
+              >
+                <div className="flex items-center justify-between p-4 border-b border-border/50">
+                  <div className="flex items-center gap-2">
+                    <img src={p4uLogoTeal} alt="Planext4u" className="h-8 w-8 object-contain" />
+                    <span className="font-bold text-sm">Menu</span>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                {customerUser && (
+                  <div className="p-4 border-b border-border/50 bg-secondary/30">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                        {customerUser.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold">{customerUser.name}</p>
+                        <p className="text-[10px] text-muted-foreground">{customerUser.email}</p>
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </div>
-            </motion.div>
+
+                <div className="flex-1 overflow-y-auto py-2">
+                  {mobileMenuItems.map((item, i) => (
+                    <motion.div
+                      key={item.to + item.label}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.03, duration: 0.2 }}
+                    >
+                      <Link
+                        to={item.to}
+                        className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors
+                          ${isActive(item.to) ? 'text-primary bg-primary/5 border-r-2 border-primary' : 'text-foreground/80 hover:bg-accent'}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+
+                <div className="p-4 border-t border-border/50">
+                  {customerUser ? (
+                    <Button variant="outline" className="w-full gap-2 text-destructive border-destructive/30" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
+                      <LogOut className="h-4 w-4" /> Logout
+                    </Button>
+                  ) : (
+                    <Link to="/app/login" onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full gap-2">
+                        <User className="h-4 w-4" /> Login / Register
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </header>
@@ -198,7 +276,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
       <main>{children}</main>
 
       {/* Footer */}
-      <footer className="bg-[hsl(207,96%,10%)] text-white py-8 lg:py-12 mt-8 lg:mt-12 hidden md:block">
+      <footer className="bg-[hsl(var(--brand-dark))] text-white py-8 lg:py-12 mt-8 lg:mt-12 hidden md:block">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-8">
             <div>
@@ -248,10 +326,10 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
             <div className="flex flex-col items-center lg:items-end gap-4">
               <img src={p4uLogoDark} alt="Planext4u" className="h-20 w-20 object-contain rounded-xl" />
               <div className="flex flex-col gap-2">
-                <div className="bg-white text-[hsl(207,96%,10%)] rounded-lg px-4 py-2 text-center text-xs font-medium cursor-pointer hover:opacity-90">
+                <div className="bg-white text-[hsl(var(--brand-dark))] rounded-lg px-4 py-2 text-center text-xs font-medium cursor-pointer hover:opacity-90">
                   <span className="text-[9px] block opacity-60">Download on the</span>App Store
                 </div>
-                <div className="bg-white text-[hsl(207,96%,10%)] rounded-lg px-4 py-2 text-center text-xs font-medium cursor-pointer hover:opacity-90">
+                <div className="bg-white text-[hsl(var(--brand-dark))] rounded-lg px-4 py-2 text-center text-xs font-medium cursor-pointer hover:opacity-90">
                   <span className="text-[9px] block opacity-60">GET IT ON</span>Google Play
                 </div>
               </div>
@@ -263,10 +341,10 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
         </div>
       </footer>
 
-      {/* Mobile Bottom Navigation - 6 tabs matching reference */}
+      {/* Mobile Bottom Navigation - 6 tabs */}
       {!hideNav && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/50 md:hidden safe-area-bottom">
-          <div className="flex items-center justify-around py-1.5">
+          <div className="flex items-end justify-around px-1 pt-1.5 pb-1.5">
             {navItems.map((item) => {
               const active = item.comingSoon ? false : isActive(item.to);
               const isShopTab = item.label === "Shop";
@@ -275,9 +353,10 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                 <div className="flex flex-col items-center gap-0.5 relative">
                   {isShopTab ? (
                     <motion.div
-                      className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg bg-primary text-primary-foreground`}
-                      animate={active ? { scale: [1, 1.15, 1], y: -4 } : { scale: 1, y: 0 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 15 }}>
+                      className="h-12 w-12 -mt-5 rounded-2xl flex items-center justify-center shadow-lg bg-primary text-primary-foreground relative"
+                      animate={active ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    >
                       <item.icon className="h-5 w-5" />
                       {item.badge && item.badge > 0 && (
                         <span className="absolute -top-1 -right-0.5 h-4 w-4 rounded-full bg-warning text-warning-foreground text-[8px] flex items-center justify-center font-bold">
@@ -286,32 +365,32 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                       )}
                     </motion.div>
                   ) : (
-                    <motion.div
-                      className="relative flex items-center justify-center"
-                      animate={active ? { scale: 1.1, y: -2 } : { scale: 1, y: 0 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 20 }}>
-                      <item.icon className="h-5 w-5" />
-                      {active && (
-                        <motion.div
-                          layoutId="nav-indicator"
-                          className="absolute -bottom-1.5 w-1.5 h-1.5 rounded-full bg-primary"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                        />
-                      )}
-                    </motion.div>
+                    <div className="relative flex items-center justify-center h-6">
+                      <item.icon className={`h-5 w-5 transition-colors ${active ? 'text-primary' : ''}`} />
+                    </div>
                   )}
-                  <span className={`text-[9px] font-medium transition-colors ${isShopTab ? 'text-primary font-semibold mt-0.5' : ''} ${active ? 'text-primary font-semibold' : ''}`}>
+                  <span className={`text-[9px] font-medium transition-colors leading-tight
+                    ${isShopTab ? 'text-primary font-semibold mt-0.5' : ''}
+                    ${active && !isShopTab ? 'text-primary font-semibold' : !isShopTab && !active ? 'text-muted-foreground' : ''}`}>
                     {item.label}
                   </span>
+                  {/* Active indicator line */}
+                  {active && !isShopTab && (
+                    <motion.div
+                      layoutId="nav-active-line"
+                      className="absolute -bottom-1.5 w-5 h-0.5 rounded-full bg-primary"
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                    />
+                  )}
                 </div>
               );
 
               if (item.comingSoon) {
                 return (
                   <button key={item.label} onClick={() => toast.info(`${item.label} is coming soon! Stay tuned.`)}
-                    className="flex flex-col items-center gap-0.5 relative text-muted-foreground">
+                    className="flex flex-col items-center gap-0.5 relative text-muted-foreground min-w-[48px]">
                     {content}
                   </button>
                 );
@@ -319,8 +398,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
 
               return (
                 <Link key={item.to + item.label} to={item.to}
-                  className={`flex flex-col items-center gap-0.5 relative transition-all
-                    ${isShopTab ? '-mt-4' : ''}
+                  className={`flex flex-col items-center gap-0.5 relative transition-all min-w-[48px]
                     ${active && !isShopTab ? 'text-primary' : !isShopTab ? 'text-muted-foreground' : ''}`}>
                   {content}
                 </Link>
