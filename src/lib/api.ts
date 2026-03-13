@@ -407,6 +407,27 @@ export const api = {
     return { success: true };
   },
 
+  createProduct: async (data: Partial<Product>) => {
+    await delay();
+    const newProduct: any = {
+      id: `PRD-${String(MOCK_PRODUCTS.length + 1).padStart(3, '0')}`,
+      ...data,
+      rating: 0, reviews: 0, stock: data.stock || 0, sales: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    MOCK_PRODUCTS.unshift(newProduct);
+    persist('products', MOCK_PRODUCTS);
+    return { success: true, product: newProduct };
+  },
+
+  deleteProduct: async (id: string) => {
+    await delay();
+    const idx = MOCK_PRODUCTS.findIndex((p) => p.id === id);
+    if (idx >= 0) { MOCK_PRODUCTS.splice(idx, 1); persist('products', MOCK_PRODUCTS); }
+    return { success: true };
+  },
+
   getProductById: async (id: string): Promise<Product | null> => {
     await delay();
     return MOCK_PRODUCTS.find((p) => p.id === id || p.id === `PRD-${String(id).padStart(3, '0')}`) || MOCK_PRODUCTS[0];
