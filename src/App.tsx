@@ -20,6 +20,24 @@ import CMSPage from "./pages/CMSPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
+// New admin pages
+import CategoriesPage from "./pages/CategoriesPage";
+import AdminServicesPage from "./pages/AdminServicesPage";
+import TaxPage from "./pages/TaxPage";
+import ReportLogPage from "./pages/ReportLogPage";
+import CFCityPage from "./pages/CFCityPage";
+import CFAreaPage from "./pages/CFAreaPage";
+import CFCategoriesPage from "./pages/CFCategoriesPage";
+import CFServicesPage from "./pages/CFServicesPage";
+import CFVendorsPage from "./pages/CFVendorsPage";
+import CFProductsPage from "./pages/CFProductsPage";
+import OccupationsPage from "./pages/OccupationsPage";
+import PlatformVariablesPage from "./pages/PlatformVariablesPage";
+import PopupBannersPage from "./pages/PopupBannersPage";
+import BannersPage from "./pages/BannersPage";
+import AdvertisementsPage from "./pages/AdvertisementsPage";
+import WebsiteQueriesPage from "./pages/WebsiteQueriesPage";
+
 // Report sub-pages
 import SalesReportPage from "./pages/reports/SalesReportPage";
 import VendorReportPage from "./pages/reports/VendorReportPage";
@@ -89,6 +107,24 @@ const App = () => (
             <Route path="/reports/payments" element={<ProtectedPage><PaymentReportPage /></ProtectedPage>} />
             <Route path="/cms" element={<ProtectedPage><CMSPage /></ProtectedPage>} />
             <Route path="/settings" element={<ProtectedPage><SettingsPage /></ProtectedPage>} />
+
+            {/* New admin routes */}
+            <Route path="/categories" element={<ProtectedPage><CategoriesPage /></ProtectedPage>} />
+            <Route path="/admin/services" element={<ProtectedPage><AdminServicesPage /></ProtectedPage>} />
+            <Route path="/tax" element={<ProtectedPage><TaxPage /></ProtectedPage>} />
+            <Route path="/report-log" element={<ProtectedPage><ReportLogPage /></ProtectedPage>} />
+            <Route path="/cf/city" element={<ProtectedPage><CFCityPage /></ProtectedPage>} />
+            <Route path="/cf/area" element={<ProtectedPage><CFAreaPage /></ProtectedPage>} />
+            <Route path="/cf/categories" element={<ProtectedPage><CFCategoriesPage /></ProtectedPage>} />
+            <Route path="/cf/services" element={<ProtectedPage><CFServicesPage /></ProtectedPage>} />
+            <Route path="/cf/vendors" element={<ProtectedPage><CFVendorsPage /></ProtectedPage>} />
+            <Route path="/cf/products" element={<ProtectedPage><CFProductsPage /></ProtectedPage>} />
+            <Route path="/occupations" element={<ProtectedPage><OccupationsPage /></ProtectedPage>} />
+            <Route path="/platform-variables" element={<ProtectedPage><PlatformVariablesPage /></ProtectedPage>} />
+            <Route path="/popup-banners" element={<ProtectedPage><PopupBannersPage /></ProtectedPage>} />
+            <Route path="/banners" element={<ProtectedPage><BannersPage /></ProtectedPage>} />
+            <Route path="/advertisements" element={<ProtectedPage><AdvertisementsPage /></ProtectedPage>} />
+            <Route path="/website-queries" element={<ProtectedPage><WebsiteQueriesPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerHomePage />} />
