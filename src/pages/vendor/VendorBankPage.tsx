@@ -14,6 +14,12 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface BankAccount {
+  id: string; vendor_id: string; bank_name: string; account_holder: string;
+  account_number: string; ifsc_code: string; account_type: string; is_primary: boolean;
+  created_at: string;
+}
+
 interface BankForm {
   bank_name: string; account_holder: string; account_number: string;
   ifsc_code: string; account_type: string;
@@ -32,19 +38,20 @@ export default function VendorBankPage() {
 
   const { data: accounts, isLoading } = useQuery({
     queryKey: ["vendorBankAccounts", vendorId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("vendor_bank_accounts")
+    queryFn: async (): Promise<BankAccount[]> => {
+      const { data, error } = await supabase
+        .from("vendor_bank_accounts" as any)
         .select("*")
         .eq("vendor_id", vendorId)
         .order("created_at", { ascending: false });
-      return data || [];
+      if (error) throw error;
+      return (data || []) as any as BankAccount[];
     },
   });
 
   const addMutation = useMutation({
     mutationFn: async (formData: BankForm) => {
-      const { error } = await supabase.from("vendor_bank_accounts").insert({
+      const { error } = await supabase.from("vendor_bank_accounts" as any).insert({
         vendor_id: vendorId,
         bank_name: formData.bank_name,
         account_holder: formData.account_holder,
@@ -52,7 +59,7 @@ export default function VendorBankPage() {
         ifsc_code: formData.ifsc_code,
         account_type: formData.account_type,
         is_primary: (accounts?.length || 0) === 0,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -65,8 +72,8 @@ export default function VendorBankPage() {
 
   const setPrimary = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("vendor_bank_accounts").update({ is_primary: false }).eq("vendor_id", vendorId);
-      const { error } = await supabase.from("vendor_bank_accounts").update({ is_primary: true }).eq("id", id);
+      await supabase.from("vendor_bank_accounts" as any).update({ is_primary: false } as any).eq("vendor_id", vendorId);
+      const { error } = await supabase.from("vendor_bank_accounts" as any).update({ is_primary: true } as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -77,7 +84,7 @@ export default function VendorBankPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("vendor_bank_accounts").delete().eq("id", id);
+      const { error } = await supabase.from("vendor_bank_accounts" as any).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -101,7 +108,7 @@ export default function VendorBankPage() {
               <p className="text-muted-foreground">No bank accounts added. Add one to receive settlement payouts.</p>
             </Card>
           ) :
-          accounts?.map((acc: any) => (
+          accounts?.map((acc) => (
             <Card key={acc.id} className={`p-4 ${acc.is_primary ? 'border-primary/50 bg-primary/5' : ''}`}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">

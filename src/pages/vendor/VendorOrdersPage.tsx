@@ -1,13 +1,13 @@
-import { Link } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
+import { VendorLayout } from "@/components/vendor/VendorLayout";
+import { useAuth } from "@/lib/auth";
 import { api, Order } from "@/lib/api";
+import { toast } from "sonner";
 
 const statusStyle: Record<string, string> = {
   placed: "bg-primary/10 text-primary", paid: "bg-info/10 text-info", accepted: "bg-info/10 text-info",
@@ -16,10 +16,13 @@ const statusStyle: Record<string, string> = {
 };
 
 export default function VendorOrdersPage() {
+  const { vendorUser } = useAuth();
+  const vendorId = vendorUser?.vendor_id || "VND-001";
   const qc = useQueryClient();
+
   const { data: orders, isLoading } = useQuery({
-    queryKey: ["vendorOrders"],
-    queryFn: () => api.getVendorOrders("VND-001"),
+    queryKey: ["vendorOrders", vendorId],
+    queryFn: () => api.getVendorOrders(vendorId),
   });
 
   const updateStatus = useMutation({
@@ -56,14 +59,8 @@ export default function VendorOrdersPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild><Link to="/vendor"><ArrowLeft className="h-5 w-5" /></Link></Button>
-          <h1 className="font-semibold">Orders ({orders?.length || 0})</h1>
-        </div>
-      </header>
-      <main className="max-w-5xl mx-auto px-4 py-6">
+    <VendorLayout title={`Orders (${orders?.length || 0})`}>
+      <div className="max-w-5xl mx-auto px-4 py-6">
         {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl mb-3" />) : (
           <Tabs defaultValue="all">
             <TabsList className="mb-4">
@@ -78,7 +75,7 @@ export default function VendorOrdersPage() {
             <TabsContent value="completed" className="space-y-3">{completedOrders.map((o) => <OrderCard key={o.id} o={o} />)}</TabsContent>
           </Tabs>
         )}
-      </main>
-    </div>
+      </div>
+    </VendorLayout>
   );
 }

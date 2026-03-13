@@ -1,29 +1,26 @@
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Store, Mail, Phone, MapPin, Shield, Star, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Store, Mail, Phone, MapPin, Shield, Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VendorLayout } from "@/components/vendor/VendorLayout";
+import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 export default function VendorProfilePage() {
+  const { vendorUser } = useAuth();
+  const vendorId = vendorUser?.vendor_id || "VND-001";
+
   const { data: vendor, isLoading } = useQuery({
-    queryKey: ["vendorProfile"],
-    queryFn: () => api.getVendorProfile("VND-001"),
+    queryKey: ["vendorProfile", vendorId],
+    queryFn: () => api.getVendorProfile(vendorId),
   });
 
-  if (isLoading) return <div className="min-h-screen bg-background p-8"><Skeleton className="h-48 rounded-xl" /></div>;
+  if (isLoading) return <VendorLayout title="Profile"><div className="p-8"><Skeleton className="h-48 rounded-xl" /></div></VendorLayout>;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild><Link to="/vendor"><ArrowLeft className="h-5 w-5" /></Link></Button>
-          <h1 className="font-semibold">Business Profile</h1>
-        </div>
-      </header>
-      <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+    <VendorLayout title="Business Profile">
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center"><Store className="h-8 w-8 text-primary" /></div>
@@ -69,8 +66,7 @@ export default function VendorProfilePage() {
             <div><p className="text-lg font-bold">₹{((vendor?.total_revenue || 0) / 1000).toFixed(0)}k</p><p className="text-xs text-muted-foreground">Revenue</p></div>
           </div>
         </Card>
-        <Button variant="outline" className="w-full text-destructive"><LogOut className="h-4 w-4 mr-2" /> Logout</Button>
-      </main>
-    </div>
+      </div>
+    </VendorLayout>
   );
 }
