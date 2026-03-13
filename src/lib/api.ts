@@ -290,6 +290,18 @@ export const api = {
   updateVendorStatus: (id: string, status: Vendor['status']) =>
     MOCK_ENABLED ? Promise.resolve({ success: true }) : request(`/admin/vendors/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 
+  updateVendor: (id: string, data: Partial<Vendor>) =>
+    MOCK_ENABLED ? Promise.resolve({ success: true }) : request(`/admin/vendors/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  updateCustomer: (id: string, data: Partial<User>) =>
+    MOCK_ENABLED ? Promise.resolve({ success: true }) : request(`/admin/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  updateProduct: (id: string, data: Partial<Product>) =>
+    MOCK_ENABLED ? Promise.resolve({ success: true }) : request(`/admin/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  updateOrderStatus: (id: string, status: Order['status']) =>
+    MOCK_ENABLED ? Promise.resolve({ success: true }) : request(`/admin/orders/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
   // Products
   getProducts: (params: { page?: number; per_page?: number; search?: string }) =>
     MOCK_ENABLED
