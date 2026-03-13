@@ -150,6 +150,39 @@ export default function CustomerHomePage() {
           ) : null}
         </div>
 
+        {/* Store Banners - Scrollable 2-row grid (Zepto-style) */}
+        {data?.storeBanners && data.storeBanners.length > 0 && (
+          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="py-4">
+            <div className="overflow-x-auto scrollbar-hide px-4">
+              <div className="grid grid-rows-2 grid-flow-col gap-3 auto-cols-[140px] sm:auto-cols-[160px] md:auto-cols-[180px]">
+                {data.storeBanners.map((store: any, idx: number) => (
+                  <motion.div
+                    key={store.id}
+                    initial={{ opacity: 0, scale: 0.92 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.04, duration: 0.3 }}
+                  >
+                    <Link to={store.link || "/app/browse"} className="block group">
+                      <div className="rounded-2xl overflow-hidden border border-border/30 bg-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+                        <div className="h-24 sm:h-28 overflow-hidden">
+                          <img
+                            src={store.image}
+                            alt={store.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                        <div className="px-2 py-2 text-center">
+                          <p className="text-[11px] sm:text-xs font-semibold leading-tight truncate">{store.title}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.section>
+        )}
+
         {/* Emergency / Urgent / Help Section - Desktop ONLY */}
         <motion.section
           initial="hidden"
