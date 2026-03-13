@@ -893,8 +893,8 @@ export const api = {
       ...data, status: "open", customer_name: customer.name, phone: customer.mobile,
       assigned_to: "Unassigned", resolution: "", created_at: now, updated_at: now,
     };
-    MOCK_SUPPORT_TICKETS.unshift(newTicket);
-    persist('support_tickets', MOCK_SUPPORT_TICKETS);
+    MOCK_SUPPORT_TICKETS.unshift(newTicket as any);
+    persist('support_tickets');
     return { success: true, ticket: newTicket };
   },
 

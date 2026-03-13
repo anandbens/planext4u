@@ -283,7 +283,7 @@ export const MOCK_REPORT_LOG = initStore('report_log', DEFAULT_REPORT_LOG);
 export const MOCK_SUPPORT_TICKETS = initStore('support_tickets', DEFAULT_SUPPORT_TICKETS);
 
 // Helper to persist changes
-export function persist(storeName: string) {
+export function persist(storeName: string, _data?: any) {
   const storeMap: Record<string, any> = {
     products: MOCK_PRODUCTS, services: MOCK_SERVICES, service_vendors: MOCK_SERVICE_VENDORS,
     customers: MOCK_CUSTOMERS, vendors: MOCK_VENDORS, orders: MOCK_ORDERS,
