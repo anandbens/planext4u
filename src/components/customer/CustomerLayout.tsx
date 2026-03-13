@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper } from "lucide-react";
+import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -72,24 +72,83 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     return location.pathname === path;
   };
 
-  // Mobile menu items for slide-in drawer
-  const mobileMenuItems = [
-    { label: "Browse Products", to: "/app/browse", icon: ShoppingBag },
-    { label: "Services", to: "/app/services", icon: Wrench },
-    { label: "Classifieds", to: "/app/classifieds", icon: Newspaper },
-    { label: "My Orders", to: "/app/orders", icon: ClipboardList },
-    { label: "My Profile", to: "/app/profile", icon: User },
-    { label: "Wishlist", to: "/app/wishlist", icon: Heart },
-    { label: "Wallet", to: "/app/wallet", icon: Wallet },
-    { label: "Referrals", to: "/app/referrals", icon: Gift },
-    { label: "KYC", to: "/app/kyc", icon: Shield },
-    { label: "Become a Seller", to: "/vendor/login", icon: ShoppingBag },
+
+
+  const quickActions = [
+    { label: "Your\nOrders", icon: ClipboardList, to: "/app/orders" },
+    { label: "Help &\nSupport", icon: HelpCircle, to: "#" },
+    { label: "Your\nWishlist", icon: Heart, to: "/app/wishlist" },
+  ];
+
+  const menuListItems = [
+    { label: "Your Wishlist", icon: Heart, to: "/app/wishlist" },
+    { label: "Wallet & Points", icon: Wallet, to: "/app/wallet" },
+    { label: "Referrals", icon: Gift, to: "/app/referrals" },
+    { label: "KYC Verification", icon: Shield, to: "/app/kyc" },
+    { label: "Saved Addresses", icon: MapPinned, to: "/app/profile/edit" },
+    { label: "Become a Seller", icon: ShoppingBag, to: "/vendor/login" },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Desktop Header */}
-      <header className="sticky top-0 z-40 brand-header">
+      {/* ====== MOBILE HEADER (Zepto-style) ====== */}
+      <header className="sticky top-0 z-40 md:hidden bg-primary">
+        <div className="px-4 pt-3 pb-2">
+          {/* Row 1: Location + Wallet + Profile */}
+          <div className="flex items-center justify-between mb-3">
+            <button onClick={() => setLocationModalOpen(true)} className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4 text-primary-foreground shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-primary-foreground leading-tight truncate">{selectedLocation}</p>
+                  <p className="text-[10px] text-primary-foreground/60 truncate">Pattanam, Coimbatore</p>
+                </div>
+                <ChevronDown className="h-3 w-3 text-primary-foreground/60 shrink-0" />
+              </div>
+            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link to="/app/wallet" className="flex items-center gap-1 bg-primary-foreground/15 px-2.5 py-1.5 rounded-full">
+                <span className="text-[10px] text-primary-foreground/80">₹</span>
+                <span className="text-xs font-bold text-primary-foreground">0</span>
+              </Link>
+              <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center">
+                {customerUser ? (
+                  <span className="text-sm font-bold text-primary-foreground">{customerUser.name.charAt(0)}</span>
+                ) : (
+                  <User className="h-4 w-4 text-primary-foreground" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Row 2: Horizontal pill tabs */}
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-3">
+            {[
+              { label: "planext4u", to: "/app", highlight: true },
+              { label: "Shop", to: "/app/browse" },
+              { label: "Services", to: "/app/services" },
+              { label: "Classified", to: "/app/classifieds" },
+            ].map((tab) => (
+              <Link key={tab.label} to={tab.to}
+                className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all
+                  ${tab.highlight
+                    ? 'bg-primary-foreground text-primary'
+                    : isActive(tab.to)
+                      ? 'bg-primary-foreground text-primary'
+                      : 'bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25'
+                  }`}>
+                {tab.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Row 3: Search bar */}
+          <SearchAutocomplete onSearch={handleSearch} placeholder='Search for "Groceries"' />
+        </div>
+      </header>
+
+      {/* ====== DESKTOP HEADER ====== */}
+      <header className="sticky top-0 z-40 brand-header hidden md:block">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 lg:gap-4 py-3">
             <Link to="/app" className="flex items-center gap-2 shrink-0">
@@ -97,12 +156,12 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
             </Link>
 
             <button onClick={() => setLocationModalOpen(true)}
-              className="hidden md:flex items-center gap-1.5 text-sm border border-white/20 rounded-lg px-3 py-1.5 bg-white/5 hover:bg-white/10 transition-colors">
+              className="flex items-center gap-1.5 text-sm border border-white/20 rounded-lg px-3 py-1.5 bg-white/5 hover:bg-white/10 transition-colors">
               <MapPin className="h-3.5 w-3.5 text-warning" />
               <span className="text-white/80 text-xs truncate max-w-[140px]">{selectedLocation}</span>
             </button>
 
-            <SearchAutocomplete onSearch={handleSearch} className="flex-1 max-w-xl hidden sm:block" />
+            <SearchAutocomplete onSearch={handleSearch} className="flex-1 max-w-xl" />
 
             <div className="flex items-center gap-1 ml-auto">
               <Link to="/vendor/login" className="hidden lg:block">
@@ -112,7 +171,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
               {customerUser ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-xs gap-1 text-white hover:bg-white/10 hover:text-white hidden md:flex">
+                    <Button variant="ghost" size="sm" className="text-xs gap-1 text-white hover:bg-white/10 hover:text-white">
                       <User className="h-3.5 w-3.5" /> {customerUser.name.split(' ')[0]} <ChevronDown className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -131,7 +190,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                 </DropdownMenu>
               ) : (
                 <Link to="/app/login">
-                  <Button variant="ghost" size="sm" className="text-xs gap-1 text-white hover:bg-white/10 hover:text-white hidden md:flex">
+                  <Button variant="ghost" size="sm" className="text-xs gap-1 text-white hover:bg-white/10 hover:text-white">
                     <User className="h-3.5 w-3.5" /> Login <ChevronDown className="h-3 w-3" />
                   </Button>
                 </Link>
@@ -147,19 +206,12 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                   )}
                 </Link>
               </Button>
-              <Button variant="ghost" size="icon" className="md:hidden text-white hover:bg-white/10" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
             </div>
-          </div>
-
-          <div className="pb-2 sm:hidden">
-            <SearchAutocomplete onSearch={handleSearch} placeholder='Search for "Groceries"' />
           </div>
         </div>
 
         {/* Desktop Nav Tabs */}
-        <div className="hidden md:block bg-card border-t border-border/30">
+        <div className="bg-card border-t border-border/30">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-center gap-1 py-1.5">
               {[
@@ -187,91 +239,129 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
             </div>
           </div>
         </div>
+      </header>
 
-        {/* Mobile Slide-in Menu (App-like right-to-left drawer) */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <>
-              {/* Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 bg-foreground/40 backdrop-blur-sm z-50 md:hidden"
-                onClick={() => setMobileMenuOpen(false)}
-              />
-              {/* Drawer */}
-              <motion.div
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                className="fixed top-0 right-0 bottom-0 w-[280px] bg-card z-50 md:hidden shadow-2xl flex flex-col"
-              >
-                <div className="flex items-center justify-between p-4 border-b border-border/50">
-                  <div className="flex items-center gap-2">
-                    <img src={p4uLogoTeal} alt="Planext4u" className="h-8 w-8 object-contain" />
-                    <span className="font-bold text-sm">Menu</span>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
+      {/* ====== MOBILE SLIDE-IN MENU (Settings-style like Zepto) ====== */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-foreground/40 backdrop-blur-sm z-50 md:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 350, damping: 30 }}
+              className="fixed top-0 right-0 bottom-0 w-full max-w-[340px] bg-background z-50 md:hidden shadow-2xl flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center gap-3 px-4 py-4 border-b border-border/30">
+                <button onClick={() => setMobileMenuOpen(false)} className="h-9 w-9 rounded-full border border-border/50 flex items-center justify-center">
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+                <span className="text-lg font-bold">Settings</span>
+              </div>
 
-                {customerUser && (
-                  <div className="p-4 border-b border-border/50 bg-secondary/30">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                        {customerUser.name.charAt(0)}
+              <div className="flex-1 overflow-y-auto">
+                {/* Profile Card */}
+                <div className="p-5">
+                  {customerUser ? (
+                    <div className="flex items-center gap-4">
+                      <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center">
+                        <span className="text-2xl font-bold text-primary">{customerUser.name.charAt(0)}</span>
                       </div>
                       <div>
-                        <p className="text-sm font-semibold">{customerUser.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{customerUser.email}</p>
+                        <p className="text-xl font-bold">{customerUser.name}</p>
+                        <p className="text-sm text-muted-foreground">{customerUser.mobile || customerUser.email}</p>
                       </div>
                     </div>
-                  </div>
-                )}
-
-                <div className="flex-1 overflow-y-auto py-2">
-                  {mobileMenuItems.map((item, i) => (
-                    <motion.div
-                      key={item.to + item.label}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.03, duration: 0.2 }}
-                    >
-                      <Link
-                        to={item.to}
-                        className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors
-                          ${isActive(item.to) ? 'text-primary bg-primary/5 border-r-2 border-primary' : 'text-foreground/80 hover:bg-accent'}`}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                      </Link>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <div className="p-4 border-t border-border/50">
-                  {customerUser ? (
-                    <Button variant="outline" className="w-full gap-2 text-destructive border-destructive/30" onClick={() => { handleLogout(); setMobileMenuOpen(false); }}>
-                      <LogOut className="h-4 w-4" /> Logout
-                    </Button>
                   ) : (
-                    <Link to="/app/login" onClick={() => setMobileMenuOpen(false)}>
-                      <Button className="w-full gap-2">
-                        <User className="h-4 w-4" /> Login / Register
-                      </Button>
+                    <Link to="/app/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-4">
+                      <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center">
+                        <User className="h-7 w-7 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-bold">Login / Register</p>
+                        <p className="text-sm text-muted-foreground">Tap to get started</p>
+                      </div>
                     </Link>
                   )}
                 </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      </header>
+
+                {/* Quick Action Cards */}
+                <div className="px-5 pb-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    {quickActions.map((action, i) => (
+                      <motion.div key={action.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                        <Link to={action.to} onClick={() => setMobileMenuOpen(false)}
+                          className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border border-border/50 bg-card hover:bg-accent/50 transition-colors text-center">
+                          <action.icon className="h-5 w-5 text-foreground/70" />
+                          <span className="text-[11px] font-medium text-foreground/80 whitespace-pre-line leading-tight">{action.label}</span>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Wallet Card */}
+                <div className="px-5 pb-5">
+                  <Link to="/app/wallet" onClick={() => setMobileMenuOpen(false)}
+                    className="block p-4 rounded-2xl bg-accent/60 border border-accent">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Wallet className="h-5 w-5 text-primary" />
+                        <span className="text-sm font-bold">P4U Wallet & Points</span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Available Balance</p>
+                        <p className="text-lg font-bold">₹0</p>
+                      </div>
+                      <Button size="sm" variant="outline" className="text-xs h-8 rounded-full">Add Balance</Button>
+                    </div>
+                  </Link>
+                </div>
+
+                {/* Your Information */}
+                <div className="px-5 pb-3">
+                  <p className="text-sm font-bold mb-3">Your Information</p>
+                  <div className="rounded-2xl border border-border/50 bg-card overflow-hidden divide-y divide-dashed divide-border/50">
+                    {menuListItems.map((item, i) => (
+                      <motion.div key={item.label} initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.03 }}>
+                        <Link to={item.to} onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3.5 hover:bg-accent/30 transition-colors">
+                          <item.icon className="h-5 w-5 text-foreground/60" />
+                          <span className="text-sm font-medium flex-1">{item.label}</span>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Logout */}
+                {customerUser && (
+                  <div className="px-5 py-4">
+                    <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                      className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl border border-destructive/20 text-destructive hover:bg-destructive/5 transition-colors">
+                      <LogOut className="h-5 w-5" />
+                      <span className="text-sm font-semibold">Logout</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <main>{children}</main>
 
