@@ -38,6 +38,11 @@ import CustomerProductPage from "./pages/customer/CustomerProductPage";
 import CustomerCartPage from "./pages/customer/CustomerCartPage";
 import CustomerOrdersPage from "./pages/customer/CustomerOrdersPage";
 import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
+import CustomerServicesPage from "./pages/customer/CustomerServicesPage";
+import CustomerServiceDetailPage from "./pages/customer/CustomerServiceDetailPage";
+import CustomerClassifiedsPage from "./pages/customer/CustomerClassifiedsPage";
+import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
+import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 
 // Vendor pages
 import VendorDashboardPage from "./pages/vendor/VendorDashboardPage";
@@ -92,6 +97,11 @@ const App = () => (
             <Route path="/app/cart" element={<CustomerCartPage />} />
             <Route path="/app/orders" element={<CustomerOrdersPage />} />
             <Route path="/app/profile" element={<CustomerProfilePage />} />
+            <Route path="/app/services" element={<CustomerServicesPage />} />
+            <Route path="/app/service/:id" element={<CustomerServiceDetailPage />} />
+            <Route path="/app/classifieds" element={<CustomerClassifiedsPage />} />
+            <Route path="/app/classifieds/post" element={<CustomerPostAdPage />} />
+            <Route path="/app/register" element={<CustomerRegisterPage />} />
 
             {/* Vendor-facing routes */}
             <Route path="/vendor" element={<VendorDashboardPage />} />

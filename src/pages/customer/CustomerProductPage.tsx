@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Star, Heart, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw } from "lucide-react";
+import { Star, Heart, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 
@@ -29,28 +30,15 @@ export default function CustomerProductPage() {
 
   const addToCart = () => toast.success(`${product?.title} added to cart`);
 
-  if (isLoading) return <div className="min-h-screen bg-background p-8"><Skeleton className="h-96 rounded-2xl" /></div>;
-  if (!product) return <div className="min-h-screen bg-background p-8 text-center">Product not found</div>;
+  if (isLoading) return <CustomerLayout><div className="p-8"><Skeleton className="h-96 rounded-2xl" /></div></CustomerLayout>;
+  if (!product) return <CustomerLayout><div className="p-8 text-center">Product not found</div></CustomerLayout>;
 
   const discountPct = product.discount ? Math.round((product.discount / product.price) * 100) : 0;
   const originalPrice = product.price + product.discount;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild><Link to="/app"><ArrowLeft className="h-5 w-5" /></Link></Button>
-          <h1 className="font-semibold truncate">{product.title}</h1>
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setWishlisted(!wishlisted)}>
-              <Heart className={`h-5 w-5 ${wishlisted ? "fill-destructive text-destructive" : ""}`} />
-            </Button>
-            <Button variant="ghost" size="icon" asChild><Link to="/app/cart"><ShoppingCart className="h-5 w-5" /></Link></Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 py-6">
+    <CustomerLayout>
+      <div className="max-w-5xl mx-auto px-4 py-6 pb-20 md:pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-secondary/30 rounded-2xl h-72 md:h-96 flex items-center justify-center text-8xl">{product.emoji}</div>
           <div>
@@ -77,6 +65,9 @@ export default function CustomerProductPage() {
                 <span className="w-10 text-center text-sm font-medium">{qty}</span>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setQty(qty + 1)}><Plus className="h-4 w-4" /></Button>
               </div>
+              <Button variant="ghost" size="icon" onClick={() => { setWishlisted(!wishlisted); toast.success(wishlisted ? "Removed from wishlist" : "Added to wishlist"); }}>
+                <Heart className={`h-5 w-5 ${wishlisted ? "fill-destructive text-destructive" : ""}`} />
+              </Button>
             </div>
             <div className="flex gap-3 mt-6">
               <Button className="flex-1" onClick={addToCart}><ShoppingCart className="h-4 w-4 mr-2" /> Add to Cart</Button>
@@ -109,7 +100,7 @@ export default function CustomerProductPage() {
             ))}
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+      </div>
+    </CustomerLayout>
   );
 }
