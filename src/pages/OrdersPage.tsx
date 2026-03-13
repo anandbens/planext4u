@@ -3,14 +3,26 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { api, Order, PaginatedResponse } from "@/lib/api";
+import { OrderModal } from "@/components/admin/modals/OrderModal";
+import { Button } from "@/components/ui/button";
+import { Eye, Pencil } from "lucide-react";
 
 export default function OrdersPage() {
   const [data, setData] = useState<PaginatedResponse<Order> | null>(null);
   const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Order | null>(null);
+  const [modalMode, setModalMode] = useState<"view" | "edit">("view");
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     api.getOrders({ page, per_page: 10 }).then(setData);
   }, [page]);
+
+  const openModal = (order: Order, mode: "view" | "edit") => {
+    setSelected(order);
+    setModalMode(mode);
+    setModalOpen(true);
+  };
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
 
@@ -28,9 +40,14 @@ export default function OrdersPage() {
           { key: "subtotal", label: "Subtotal", render: (o) => `₹${o.subtotal.toLocaleString()}` },
           { key: "tax", label: "Tax", render: (o) => `₹${o.tax.toLocaleString()}` },
           { key: "discount", label: "Discount", render: (o) => o.discount > 0 ? <span className="text-success">-₹{o.discount}</span> : "—" },
-          { key: "points_used", label: "Points", render: (o) => o.points_used > 0 ? <span className="text-primary font-medium">{o.points_used}</span> : "—" },
           { key: "total", label: "Total", render: (o) => <span className="font-bold">₹{o.total.toLocaleString()}</span> },
           { key: "status", label: "Status", render: (o) => <StatusBadge status={o.status} /> },
+          { key: "actions", label: "", render: (o) => (
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(o, "view"); }}><Eye className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(o, "edit"); }}><Pencil className="h-4 w-4" /></Button>
+            </div>
+          )},
         ]}
         data={data.data}
         total={data.total}
@@ -40,6 +57,7 @@ export default function OrdersPage() {
         onPageChange={setPage}
         onSearch={() => {}}
         onExport={() => {}}
+        onRowClick={(o) => openModal(o, "view")}
         searchPlaceholder="Search orders..."
         filters={[{ key: "status", label: "Status", options: [
           { value: "placed", label: "Placed" }, { value: "paid", label: "Paid" },
@@ -48,6 +66,7 @@ export default function OrdersPage() {
           { value: "cancelled", label: "Cancelled" },
         ]}]}
       />
+      <OrderModal order={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} />
     </AdminLayout>
   );
 }

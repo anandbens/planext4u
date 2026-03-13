@@ -20,6 +20,7 @@ interface DataTableProps<T> {
   onPageChange: (page: number) => void;
   onSearch?: (query: string) => void;
   onExport?: () => void;
+  onRowClick?: (item: T) => void;
   searchPlaceholder?: string;
   filters?: { key: string; label: string; options: { value: string; label: string }[] }[];
   onFilterChange?: (key: string, value: string) => void;
