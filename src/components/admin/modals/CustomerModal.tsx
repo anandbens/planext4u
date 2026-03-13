@@ -7,19 +7,39 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Mail, Phone, Star, Gift, Calendar } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface CustomerModalProps {
   customer: User | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "view" | "edit";
+  onSave?: (id: string, data: Partial<User>) => Promise<void>;
 }
 
-export function CustomerModal({ customer, open, onOpenChange, mode }: CustomerModalProps) {
+export function CustomerModal({ customer, open, onOpenChange, mode, onSave }: CustomerModalProps) {
   const [editMode, setEditMode] = useState(mode === "edit");
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", mobile: "", status: "" as User["status"] });
+
+  useEffect(() => {
+    if (customer) {
+      setForm({ name: customer.name, email: customer.email, mobile: customer.mobile, status: customer.status });
+      setEditMode(mode === "edit");
+    }
+  }, [customer, mode]);
 
   if (!customer) return null;
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave?.(customer.id, form);
+      onOpenChange(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -54,7 +74,7 @@ export function CustomerModal({ customer, open, onOpenChange, mode }: CustomerMo
               <div>
                 <Label className="text-xs text-muted-foreground">Full Name</Label>
                 {editMode ? (
-                  <Input defaultValue={customer.name} className="mt-1" />
+                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" />
                 ) : (
                   <p className="text-sm font-medium mt-1">{customer.name}</p>
                 )}
@@ -62,7 +82,7 @@ export function CustomerModal({ customer, open, onOpenChange, mode }: CustomerMo
               <div>
                 <Label className="text-xs text-muted-foreground">Status</Label>
                 {editMode ? (
-                  <Select defaultValue={customer.status}>
+                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as User["status"] })}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="active">Active</SelectItem>
@@ -77,7 +97,7 @@ export function CustomerModal({ customer, open, onOpenChange, mode }: CustomerMo
               <div>
                 <Label className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> Email</Label>
                 {editMode ? (
-                  <Input defaultValue={customer.email} className="mt-1" />
+                  <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" />
                 ) : (
                   <p className="text-sm font-medium mt-1">{customer.email}</p>
                 )}
@@ -85,7 +105,7 @@ export function CustomerModal({ customer, open, onOpenChange, mode }: CustomerMo
               <div>
                 <Label className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Mobile</Label>
                 {editMode ? (
-                  <Input defaultValue={customer.mobile} className="mt-1" />
+                  <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="mt-1" />
                 ) : (
                   <p className="text-sm font-medium mt-1">{customer.mobile}</p>
                 )}
@@ -140,8 +160,11 @@ export function CustomerModal({ customer, open, onOpenChange, mode }: CustomerMo
         <DialogFooter className="mt-4">
           {editMode ? (
             <>
-              <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
-              <Button onClick={() => { onOpenChange(false); }}>Save Changes</Button>
+              <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving && <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-2" />}
+                Save Changes
+              </Button>
             </>
           ) : (
             <>

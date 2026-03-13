@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, Download, ChevronLeft, ChevronRight, Filter } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,27 +33,30 @@ export function DataTable<T extends Record<string, any>>({
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
 
-  const handleSearch = (val: string) => {
-    setSearch(val);
-    onSearch?.(val);
-  };
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearch?.(search);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   return (
     <div className="bg-card rounded-xl border border-border/50 overflow-hidden" style={{ boxShadow: 'var(--shadow-sm)' }}>
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 border-b border-border/50">
-        <div className="flex items-center gap-2 flex-1 w-full sm:w-auto">
-          <div className="relative flex-1 sm:max-w-xs">
+        <div className="flex items-center gap-2 flex-1 w-full sm:w-auto flex-wrap">
+          <div className="relative flex-1 sm:max-w-xs min-w-[180px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
               value={search}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="pl-9 bg-secondary/50 border-0 h-9"
             />
           </div>
           {filters?.map((f) => (
-            <Select key={f.key} onValueChange={(v) => onFilterChange?.(f.key, v)}>
+            <Select key={f.key} onValueChange={(v) => onFilterChange?.(f.key, v === "all" ? "" : v)}>
               <SelectTrigger className="w-36 h-9 bg-secondary/50 border-0">
                 <SelectValue placeholder={f.label} />
               </SelectTrigger>
@@ -84,15 +87,23 @@ export function DataTable<T extends Record<string, any>>({
             </tr>
           </thead>
           <tbody>
-            {data.map((item, i) => (
-              <tr key={item.id || i} className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''}`} onClick={() => onRowClick?.(item)}>
-                {columns.map((col) => (
-                  <td key={col.key}>
-                    {col.render ? col.render(item) : item[col.key]}
-                  </td>
-                ))}
+            {data.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="text-center py-12 text-muted-foreground">
+                  No results found
+                </td>
               </tr>
-            ))}
+            ) : (
+              data.map((item, i) => (
+                <tr key={item.id || i} className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''}`} onClick={() => onRowClick?.(item)}>
+                  {columns.map((col) => (
+                    <td key={col.key}>
+                      {col.render ? col.render(item) : item[col.key]}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -100,7 +111,7 @@ export function DataTable<T extends Record<string, any>>({
       {/* Pagination */}
       <div className="flex items-center justify-between px-4 py-3 border-t border-border/50 bg-secondary/20">
         <p className="text-sm text-muted-foreground">
-          Showing {((page - 1) * perPage) + 1}–{Math.min(page * perPage, total)} of {total.toLocaleString()}
+          {total > 0 ? `Showing ${((page - 1) * perPage) + 1}–${Math.min(page * perPage, total)} of ${total.toLocaleString()}` : "No results"}
         </p>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>

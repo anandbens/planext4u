@@ -8,21 +8,48 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Package, Store, Tag, Star, DollarSign } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ProductModalProps {
   product: Product | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "view" | "edit";
+  onSave?: (id: string, data: Partial<Product>) => Promise<void>;
 }
 
-export function ProductModal({ product, open, onOpenChange, mode }: ProductModalProps) {
+export function ProductModal({ product, open, onOpenChange, mode, onSave }: ProductModalProps) {
   const [editMode, setEditMode] = useState(mode === "edit");
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    title: "", description: "", price: 0, tax: 0, discount: 0,
+    max_points_redeemable: 0, status: "" as Product["status"],
+  });
+
+  useEffect(() => {
+    if (product) {
+      setForm({
+        title: product.title, description: product.description,
+        price: product.price, tax: product.tax, discount: product.discount,
+        max_points_redeemable: product.max_points_redeemable, status: product.status,
+      });
+      setEditMode(mode === "edit");
+    }
+  }, [product, mode]);
 
   if (!product) return null;
 
-  const finalPrice = product.price + product.tax - product.discount;
+  const finalPrice = (editMode ? form.price + form.tax - form.discount : product.price + product.tax - product.discount);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave?.(product.id, form);
+      onOpenChange(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -49,20 +76,19 @@ export function ProductModal({ product, open, onOpenChange, mode }: ProductModal
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
-          {/* Basic Info */}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label className="text-xs text-muted-foreground">Title</Label>
-              {editMode ? <Input defaultValue={product.title} className="mt-1" /> : <p className="text-sm font-medium mt-1">{product.title}</p>}
+              {editMode ? <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{product.title}</p>}
             </div>
             <div className="col-span-2">
               <Label className="text-xs text-muted-foreground">Description</Label>
-              {editMode ? <Textarea defaultValue={product.description} className="mt-1" rows={3} /> : <p className="text-sm mt-1 text-muted-foreground">{product.description}</p>}
+              {editMode ? <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1" rows={3} /> : <p className="text-sm mt-1 text-muted-foreground">{product.description}</p>}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Status</Label>
               {editMode ? (
-                <Select defaultValue={product.status}>
+                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Product["status"] })}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
@@ -74,21 +100,20 @@ export function ProductModal({ product, open, onOpenChange, mode }: ProductModal
             </div>
           </div>
 
-          {/* Pricing */}
           <div className="p-4 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
             <h4 className="text-sm font-semibold flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" /> Pricing</h4>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground">Base Price</Label>
-                {editMode ? <Input type="number" defaultValue={product.price} className="mt-1" /> : <p className="text-sm font-bold mt-1">₹{product.price.toLocaleString()}</p>}
+                {editMode ? <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-bold mt-1">₹{product.price.toLocaleString()}</p>}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Tax</Label>
-                {editMode ? <Input type="number" defaultValue={product.tax} className="mt-1" /> : <p className="text-sm font-medium mt-1">₹{product.tax.toLocaleString()}</p>}
+                {editMode ? <Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1">₹{product.tax.toLocaleString()}</p>}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Discount</Label>
-                {editMode ? <Input type="number" defaultValue={product.discount} className="mt-1" /> : <p className="text-sm font-medium mt-1 text-success">{product.discount > 0 ? `₹${product.discount}` : "—"}</p>}
+                {editMode ? <Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1 text-success">{product.discount > 0 ? `₹${product.discount}` : "—"}</p>}
               </div>
             </div>
             <Separator />
@@ -98,12 +123,11 @@ export function ProductModal({ product, open, onOpenChange, mode }: ProductModal
             </div>
           </div>
 
-          {/* Points */}
           <div className="p-4 rounded-lg bg-accent/30 border border-primary/10 flex items-center gap-4">
             <Star className="h-8 w-8 text-warning" />
             <div className="flex-1">
               <Label className="text-xs text-muted-foreground">Max Points Redeemable</Label>
-              {editMode ? <Input type="number" defaultValue={product.max_points_redeemable} className="mt-1 max-w-32" /> : <p className="text-xl font-bold">{product.max_points_redeemable} pts</p>}
+              {editMode ? <Input type="number" value={form.max_points_redeemable} onChange={(e) => setForm({ ...form, max_points_redeemable: Number(e.target.value) })} className="mt-1 max-w-32" /> : <p className="text-xl font-bold">{product.max_points_redeemable} pts</p>}
             </div>
           </div>
         </div>
@@ -111,8 +135,11 @@ export function ProductModal({ product, open, onOpenChange, mode }: ProductModal
         <DialogFooter className="mt-4">
           {editMode ? (
             <>
-              <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
-              <Button onClick={() => onOpenChange(false)}>Save Changes</Button>
+              <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving && <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-2" />}
+                Save Changes
+              </Button>
             </>
           ) : (
             <>
