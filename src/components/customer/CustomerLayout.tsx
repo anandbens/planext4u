@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper } from "lucide-react";
+import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
