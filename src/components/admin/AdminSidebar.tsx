@@ -1,70 +1,95 @@
 import {
   LayoutDashboard, Users, Store, Package, ShoppingCart, Banknote,
-  Megaphone, Star, Gift, BarChart3, Settings, Image, FileText, ChevronDown, LogOut,
+  Megaphone, Star, Gift, BarChart3, Settings, Image, FileText, LogOut,
   Grid3X3, Wrench, Receipt, MapPin, Map, Tag, Briefcase, SlidersHorizontal,
   MessageSquare, MonitorPlay, ExternalLink, ClipboardList,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/lib/auth";
+import { useAuth, UserRole } from "@/lib/auth";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const mainItems = [
+interface NavItem {
+  title: string;
+  url: string;
+  icon: any;
+  roles?: UserRole[]; // if undefined, all roles can see
+}
+
+const mainItems: NavItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Points", url: "/points", icon: Star },
   { title: "Orders", url: "/orders", icon: ShoppingCart },
-  { title: "Settlements", url: "/settlements", icon: Banknote },
-  { title: "Customers", url: "/customers", icon: Users },
-  { title: "Categories", url: "/categories", icon: Grid3X3 },
-  { title: "Services", url: "/admin/services", icon: Wrench },
-  { title: "Products", url: "/products", icon: Package },
-  { title: "Tax", url: "/tax", icon: Receipt },
+  { title: "Customers", url: "/customers", icon: Users, roles: ['admin', 'sales'] },
+  { title: "Product Vendors", url: "/vendors", icon: Store, roles: ['admin', 'sales'] },
+  { title: "Service Vendors", url: "/cf/vendors", icon: Store, roles: ['admin', 'sales'] },
+  { title: "Products", url: "/products", icon: Package, roles: ['admin', 'sales'] },
+  { title: "Services", url: "/admin/services", icon: Wrench, roles: ['admin', 'sales'] },
+  { title: "Categories", url: "/categories", icon: Grid3X3, roles: ['admin'] },
 ];
 
-const reportItems = [
+const financeItems: NavItem[] = [
+  { title: "Settlements", url: "/settlements", icon: Banknote, roles: ['admin', 'finance'] },
+  { title: "Points", url: "/points", icon: Star, roles: ['admin', 'finance'] },
+  { title: "Tax", url: "/tax", icon: Receipt, roles: ['admin', 'finance'] },
+];
+
+const reportItems: NavItem[] = [
   { title: "Reports", url: "/reports", icon: BarChart3 },
-  { title: "Report Log", url: "/report-log", icon: ClipboardList },
+  { title: "Report Log", url: "/report-log", icon: ClipboardList, roles: ['admin'] },
 ];
 
-const configItems = [
-  { title: "CF City", url: "/cf/city", icon: MapPin },
-  { title: "CF Area", url: "/cf/area", icon: Map },
-  { title: "CF Categories", url: "/cf/categories", icon: Tag },
-  { title: "CF Services", url: "/cf/services", icon: Wrench },
-  { title: "CF Vendors", url: "/cf/vendors", icon: Store },
-  { title: "CF Products", url: "/cf/products", icon: Package },
+const configItems: NavItem[] = [
+  { title: "CF City", url: "/cf/city", icon: MapPin, roles: ['admin'] },
+  { title: "CF Area", url: "/cf/area", icon: Map, roles: ['admin'] },
+  { title: "CF Categories", url: "/cf/categories", icon: Tag, roles: ['admin'] },
+  { title: "CF Services", url: "/cf/services", icon: Wrench, roles: ['admin'] },
+  { title: "CF Products", url: "/cf/products", icon: Package, roles: ['admin'] },
 ];
 
-const systemItems = [
-  { title: "Occupations", url: "/occupations", icon: Briefcase },
-  { title: "Platform Variables", url: "/platform-variables", icon: SlidersHorizontal },
-  { title: "Popup Banners", url: "/popup-banners", icon: MonitorPlay },
-  { title: "Banners", url: "/banners", icon: Image },
-  { title: "Advertisements", url: "/advertisements", icon: Megaphone },
-  { title: "Website Queries", url: "/website-queries", icon: MessageSquare },
-  { title: "Referrals", url: "/referrals", icon: Gift },
-  { title: "Classified Ads", url: "/classifieds", icon: FileText },
-  { title: "Settings", url: "/settings", icon: Settings },
+const systemItems: NavItem[] = [
+  { title: "Occupations", url: "/occupations", icon: Briefcase, roles: ['admin'] },
+  { title: "Platform Variables", url: "/platform-variables", icon: SlidersHorizontal, roles: ['admin'] },
+  { title: "Popup Banners", url: "/popup-banners", icon: MonitorPlay, roles: ['admin'] },
+  { title: "Banners", url: "/banners", icon: Image, roles: ['admin'] },
+  { title: "Advertisements", url: "/advertisements", icon: Megaphone, roles: ['admin', 'sales'] },
+  { title: "Website Queries", url: "/website-queries", icon: MessageSquare, roles: ['admin', 'sales'] },
+  { title: "Referrals", url: "/referrals", icon: Gift, roles: ['admin'] },
+  { title: "Classified Ads", url: "/classifieds", icon: FileText, roles: ['admin', 'sales'] },
+  { title: "Settings", url: "/settings", icon: Settings, roles: ['admin'] },
 ];
 
-const portalLinks = [
+const portalLinks: NavItem[] = [
   { title: "Customer Portal", url: "/app", icon: ExternalLink },
   { title: "Vendor Portal", url: "/vendor", icon: ExternalLink },
 ];
 
+const ROLE_COLORS: Record<UserRole, string> = {
+  admin: 'bg-primary/15 text-primary',
+  finance: 'bg-success/15 text-success',
+  sales: 'bg-info/15 text-info',
+};
+
 interface NavGroupProps {
   label: string;
-  items: typeof mainItems;
+  items: NavItem[];
   collapsed: boolean;
+  userRole: UserRole;
 }
 
-function NavGroup({ label, items, collapsed }: NavGroupProps) {
-  const location = useLocation();
+function NavGroup({ label, items, collapsed, userRole }: NavGroupProps) {
+  const filteredItems = items.filter(item => {
+    if (!item.roles) return true;
+    if (userRole === 'admin') return true;
+    return item.roles.includes(userRole);
+  });
+
+  if (filteredItems.length === 0) return null;
 
   return (
     <SidebarGroup>
@@ -75,18 +100,15 @@ function NavGroup({ label, items, collapsed }: NavGroupProps) {
       )}
       <SidebarGroupContent>
         <SidebarMenu>
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <NavLink
-                  to={item.url}
-                  end={item.url === "/"}
+                <NavLink to={item.url} end={item.url === "/"}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                     "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent",
                   )}
-                  activeClassName="bg-sidebar-primary/20 text-sidebar-primary-foreground border-l-2 border-sidebar-primary"
-                >
+                  activeClassName="bg-sidebar-primary/20 text-sidebar-primary-foreground border-l-2 border-sidebar-primary">
                   <item.icon className="h-[18px] w-[18px] shrink-0" />
                   {!collapsed && <span>{item.title}</span>}
                 </NavLink>
@@ -104,11 +126,10 @@ export function AdminSidebar() {
   const collapsed = state === "collapsed";
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const role = user?.role || 'admin';
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
+  const handleLogout = () => { logout(); navigate("/login", { replace: true }); };
+
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarHeader className="px-4 py-5">
@@ -126,11 +147,12 @@ export function AdminSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 gap-1">
-        <NavGroup label="Main" items={mainItems} collapsed={collapsed} />
-        <NavGroup label="Reports" items={reportItems} collapsed={collapsed} />
-        <NavGroup label="Configuration" items={configItems} collapsed={collapsed} />
-        <NavGroup label="System" items={systemItems} collapsed={collapsed} />
-        <NavGroup label="Portals" items={portalLinks} collapsed={collapsed} />
+        <NavGroup label="Main" items={mainItems} collapsed={collapsed} userRole={role} />
+        <NavGroup label="Finance" items={financeItems} collapsed={collapsed} userRole={role} />
+        <NavGroup label="Reports" items={reportItems} collapsed={collapsed} userRole={role} />
+        <NavGroup label="Configuration" items={configItems} collapsed={collapsed} userRole={role} />
+        <NavGroup label="System" items={systemItems} collapsed={collapsed} userRole={role} />
+        <NavGroup label="Portals" items={portalLinks} collapsed={collapsed} userRole={role} />
       </SidebarContent>
 
       <SidebarFooter className="px-4 py-4 border-t border-sidebar-border">
@@ -142,7 +164,10 @@ export function AdminSidebar() {
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-accent-foreground truncate">{user?.name || "Admin"}</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-sidebar-accent-foreground truncate">{user?.name || "Admin"}</p>
+                <Badge className={cn("text-[9px] px-1.5 py-0 h-4 border-0 capitalize", ROLE_COLORS[role])}>{role}</Badge>
+              </div>
               <p className="text-[11px] text-sidebar-foreground/50 truncate">{user?.email || "admin@marketplace.com"}</p>
             </div>
           )}

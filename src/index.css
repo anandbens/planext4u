@@ -98,9 +98,33 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* Retina / High-DPI adjustments */
+  @media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi) {
+    body {
+      font-size: 16px;
+    }
+  }
+
+  @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    body {
+      font-size: 16px;
+    }
+    .stat-card {
+      border-width: 0.5px;
+    }
   }
 }
 
@@ -110,28 +134,14 @@
     box-shadow: var(--shadow-glass);
   }
 
-  .gradient-primary {
-    background: var(--gradient-primary);
-  }
-
-  .gradient-success {
-    background: var(--gradient-success);
-  }
-
-  .gradient-warning {
-    background: var(--gradient-warning);
-  }
-
-  .gradient-info {
-    background: var(--gradient-info);
-  }
-
-  .gradient-danger {
-    background: var(--gradient-danger);
-  }
+  .gradient-primary { background: var(--gradient-primary); }
+  .gradient-success { background: var(--gradient-success); }
+  .gradient-warning { background: var(--gradient-warning); }
+  .gradient-info { background: var(--gradient-info); }
+  .gradient-danger { background: var(--gradient-danger); }
 
   .stat-card {
-    @apply relative overflow-hidden rounded-xl p-6 transition-all duration-300;
+    @apply relative overflow-hidden rounded-xl p-4 lg:p-6 transition-all duration-300;
     box-shadow: var(--shadow-md);
   }
 
@@ -141,15 +151,15 @@
   }
 
   .admin-table {
-    @apply w-full text-sm;
+    @apply w-full;
   }
 
   .admin-table th {
-    @apply px-4 py-3 text-left font-semibold text-muted-foreground uppercase tracking-wider text-xs;
+    @apply px-3 lg:px-4 py-2.5 lg:py-3 text-left font-semibold text-muted-foreground uppercase tracking-wider text-[11px] lg:text-xs;
   }
 
   .admin-table td {
-    @apply px-4 py-3.5 border-t border-border/50;
+    @apply px-3 lg:px-4 py-3 lg:py-3.5 border-t border-border/50 text-xs lg:text-sm;
   }
 
   .admin-table tr:hover td {
@@ -157,14 +167,33 @@
   }
 
   .page-header {
-    @apply mb-8;
+    @apply mb-5 lg:mb-8;
   }
 
   .page-title {
-    @apply text-2xl font-bold tracking-tight;
+    @apply text-xl lg:text-2xl xl:text-3xl font-bold tracking-tight;
   }
 
   .page-description {
-    @apply text-muted-foreground mt-1;
+    @apply text-sm lg:text-base text-muted-foreground mt-1;
+  }
+
+  /* Mobile safe area for bottom nav */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Scrollbar hide utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Product image placeholder with gradient */
+  .product-img-placeholder {
+    @apply bg-gradient-to-br from-secondary/60 to-secondary/20 flex items-center justify-center;
   }
 }
