@@ -309,8 +309,8 @@ const DEFAULT_TAX_CONFIG = [
 ];
 
 const DEFAULT_POPUP_BANNERS = [
-  { id: "PB-001", title: "Welcome Offer!", description: "Get 200 points on your first order", image: "", link: "/app/browse", status: "active" as const, start_date: "2026-03-01", end_date: "2026-03-31", created_at: "2026-02-25T10:00:00Z" },
-  { id: "PB-002", title: "Flash Sale", description: "50% off on electronics today only", image: "", link: "/app/browse?category=electronics", status: "active" as const, start_date: "2026-03-13", end_date: "2026-03-14", created_at: "2026-03-12T10:00:00Z" },
+  { id: "PB-001", title: "Welcome Offer!", description: "Get 200 points on your first order", image: "/images/banners/welcome-offer.jpg", link: "/app/browse", status: "active" as const, start_date: "2026-03-01", end_date: "2026-03-31", created_at: "2026-02-25T10:00:00Z" },
+  { id: "PB-002", title: "Flash Sale", description: "50% off on electronics today only", image: "/images/banners/flash-sale.jpg", link: "/app/browse?category=electronics", status: "active" as const, start_date: "2026-03-13", end_date: "2026-03-14", created_at: "2026-03-12T10:00:00Z" },
   { id: "PB-003", title: "Rate Us!", description: "Share your experience and win rewards", image: "", link: "#", status: "inactive" as const, start_date: "2026-04-01", end_date: "2026-04-30", created_at: "2026-03-10T10:00:00Z" },
 ];
 
