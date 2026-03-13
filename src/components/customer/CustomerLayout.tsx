@@ -146,7 +146,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                 { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds" },
               ].map((tab) => (
                 tab.comingSoon ? (
-                  <button key={tab.label} onClick={() => toast.info("Socio is coming soon! Stay tuned.")}
+                  <button key={tab.label} onClick={() => toast.info(`${tab.label} is coming soon! Stay tuned.`)}
                     className="flex items-center gap-2 px-5 py-2 rounded-full border border-primary/20 bg-card hover:bg-primary/5 text-primary transition-colors">
                     <tab.icon className="h-4 w-4" />
                     <span className="text-sm font-semibold">{tab.label}</span>
