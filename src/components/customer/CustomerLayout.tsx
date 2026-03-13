@@ -72,21 +72,8 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     return location.pathname === path;
   };
 
-  // Mobile menu items for slide-in drawer
-  const mobileMenuItems = [
-    { label: "Browse Products", to: "/app/browse", icon: ShoppingBag },
-    { label: "Services", to: "/app/services", icon: Wrench },
-    { label: "Classifieds", to: "/app/classifieds", icon: Newspaper },
-    { label: "My Orders", to: "/app/orders", icon: ClipboardList },
-    { label: "My Profile", to: "/app/profile", icon: User },
-    { label: "Wishlist", to: "/app/wishlist", icon: Heart },
-    { label: "Wallet", to: "/app/wallet", icon: Wallet },
-    { label: "Referrals", to: "/app/referrals", icon: Gift },
-    { label: "KYC", to: "/app/kyc", icon: Shield },
-    { label: "Become a Seller", to: "/vendor/login", icon: ShoppingBag },
-  ];
 
-  // Quick action items for mobile menu
+
   const quickActions = [
     { label: "Your\nOrders", icon: ClipboardList, to: "/app/orders" },
     { label: "Help &\nSupport", icon: HelpCircle, to: "#" },
