@@ -24,6 +24,8 @@ interface DataTableProps<T> {
   onSearch?: (query: string) => void;
   onExport?: () => void;
   onRowClick?: (item: T) => void;
+  onAdd?: () => void;
+  addLabel?: string;
   searchPlaceholder?: string;
   filters?: { key: string; label: string; options: { value: string; label: string }[] }[];
   onFilterChange?: (key: string, value: string) => void;
