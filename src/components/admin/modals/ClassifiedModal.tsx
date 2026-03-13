@@ -18,7 +18,7 @@ interface ClassifiedModalProps {
   onModeChange?: (mode: "view" | "edit") => void;
 }
 
-export function ClassifiedModal({ ad, open, onOpenChange, mode, onSave, onDelete }: ClassifiedModalProps) {
+export function ClassifiedModal({ ad, open, onOpenChange, mode, onSave, onDelete, onModeChange }: ClassifiedModalProps) {
   const [form, setForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState("");
