@@ -28,7 +28,11 @@ export default function CustomerProductPage() {
     enabled: !!id,
   });
 
-  const addToCart = () => toast.success(`${product?.title} added to cart`);
+  const addToCart = async () => {
+    if (!product) return;
+    await api.addToCart(product, qty);
+    toast.success(`${product.title} (×${qty}) added to cart`);
+  };
 
   if (isLoading) return <CustomerLayout><div className="p-8"><Skeleton className="h-96 rounded-2xl" /></div></CustomerLayout>;
   if (!product) return <CustomerLayout><div className="p-8 text-center">Product not found</div></CustomerLayout>;
