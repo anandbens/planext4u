@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Package, ShoppingCart, DollarSign, Star, Bell, Settings } from "lucide-react";
+import { Package, ShoppingCart, DollarSign, Star, Wrench, CreditCard, History } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { VendorLayout } from "@/components/vendor/VendorLayout";
+import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 const statusColor: Record<string, string> = {
@@ -19,27 +20,17 @@ const revenueData = [
 ];
 
 export default function VendorDashboardPage() {
+  const { vendorUser } = useAuth();
+  const vendorId = vendorUser?.vendor_id || "VND-001";
+
   const { data, isLoading } = useQuery({
-    queryKey: ["vendorDashboard"],
-    queryFn: () => api.getVendorDashboard("VND-001"),
+    queryKey: ["vendorDashboard", vendorId],
+    queryFn: () => api.getVendorDashboard(vendorId),
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold">{(data?.vendor as any)?.business_name || "Loading..."}</h1>
-            <p className="text-xs text-muted-foreground">Vendor Dashboard</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative"><Bell className="h-5 w-5" /><span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[10px] text-destructive-foreground flex items-center justify-center font-bold">2</span></Button>
-            <Button variant="ghost" size="icon" asChild><Link to="/vendor/settings"><Settings className="h-5 w-5" /></Link></Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+    <VendorLayout title="Dashboard">
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) : [
             { icon: DollarSign, label: "Total Revenue", value: `₹${(data?.todayRevenue || 0).toLocaleString()}`, trend: `${data?.orders.length} orders` },
@@ -91,17 +82,19 @@ export default function VendorDashboardPage() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: "Manage Products", to: "/vendor/products", icon: Package },
-            { label: "All Orders", to: "/vendor/orders", icon: ShoppingCart },
+            { label: "Products", to: "/vendor/products", icon: Package },
+            { label: "Services", to: "/vendor/services", icon: Wrench },
+            { label: "Orders", to: "/vendor/orders", icon: ShoppingCart },
             { label: "Settlements", to: "/vendor/settlements", icon: DollarSign },
-            { label: "Profile", to: "/vendor/profile", icon: Settings },
+            { label: "Payments", to: "/vendor/payments", icon: History },
+            { label: "Bank A/C", to: "/vendor/bank", icon: CreditCard },
           ].map((l) => (
             <Link key={l.label} to={l.to}><Card className="p-4 hover:border-primary/30 transition-colors text-center"><l.icon className="h-6 w-6 mx-auto text-primary mb-2" /><p className="text-xs font-medium">{l.label}</p></Card></Link>
           ))}
         </div>
-      </main>
-    </div>
+      </div>
+    </VendorLayout>
   );
 }

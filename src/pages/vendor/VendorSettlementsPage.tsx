@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, DollarSign, Clock, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { DollarSign, Clock, CheckCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VendorLayout } from "@/components/vendor/VendorLayout";
+import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 const statusStyle: Record<string, string> = {
@@ -13,9 +13,12 @@ const statusStyle: Record<string, string> = {
 };
 
 export default function VendorSettlementsPage() {
+  const { vendorUser } = useAuth();
+  const vendorId = vendorUser?.vendor_id || "VND-001";
+
   const { data: settlements, isLoading } = useQuery({
-    queryKey: ["vendorSettlements"],
-    queryFn: () => api.getVendorSettlements("VND-001"),
+    queryKey: ["vendorSettlements", vendorId],
+    queryFn: () => api.getVendorSettlements(vendorId),
   });
 
   const totalEarned = settlements?.reduce((s, x) => s + x.net_amount, 0) || 0;
@@ -23,14 +26,8 @@ export default function VendorSettlementsPage() {
   const settled = settlements?.filter((s) => s.status === 'settled').reduce((sum, s) => sum + s.net_amount, 0) || 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild><Link to="/vendor"><ArrowLeft className="h-5 w-5" /></Link></Button>
-          <h1 className="font-semibold">Settlements</h1>
-        </div>
-      </header>
-      <main className="max-w-5xl mx-auto px-4 py-6">
+    <VendorLayout title="Settlements">
+      <div className="max-w-5xl mx-auto px-4 py-6">
         <div className="grid grid-cols-3 gap-3 mb-6">
           <Card className="p-4 text-center"><DollarSign className="h-5 w-5 mx-auto text-success mb-1" /><p className="text-lg font-bold">₹{totalEarned.toLocaleString()}</p><p className="text-xs text-muted-foreground">Total Earned</p></Card>
           <Card className="p-4 text-center"><Clock className="h-5 w-5 mx-auto text-warning mb-1" /><p className="text-lg font-bold">₹{pending.toLocaleString()}</p><p className="text-xs text-muted-foreground">Pending</p></Card>
@@ -57,7 +54,7 @@ export default function VendorSettlementsPage() {
               </Card>
             ))}
         </div>
-      </main>
-    </div>
+      </div>
+    </VendorLayout>
   );
 }

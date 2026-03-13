@@ -71,9 +71,12 @@ import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
 import VendorDashboardPage from "./pages/vendor/VendorDashboardPage";
 import VendorProductsPage from "./pages/vendor/VendorProductsPage";
+import VendorServicesPage from "./pages/vendor/VendorServicesPage";
 import VendorOrdersPage from "./pages/vendor/VendorOrdersPage";
 import VendorSettlementsPage from "./pages/vendor/VendorSettlementsPage";
 import VendorProfilePage from "./pages/vendor/VendorProfilePage";
+import VendorBankPage from "./pages/vendor/VendorBankPage";
+import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
 
 const queryClient = new QueryClient();
 
@@ -157,8 +160,11 @@ const App = () => (
             <Route path="/vendor/login" element={<VendorLoginPage />} />
             <Route path="/vendor" element={<VendorDashboardPage />} />
             <Route path="/vendor/products" element={<VendorProductsPage />} />
+            <Route path="/vendor/services" element={<VendorServicesPage />} />
             <Route path="/vendor/orders" element={<VendorOrdersPage />} />
             <Route path="/vendor/settlements" element={<VendorSettlementsPage />} />
+            <Route path="/vendor/payments" element={<VendorPaymentHistoryPage />} />
+            <Route path="/vendor/bank" element={<VendorBankPage />} />
             <Route path="/vendor/profile" element={<VendorProfilePage />} />
             <Route path="/vendor/settings" element={<VendorProfilePage />} />
 

@@ -1064,6 +1064,45 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_bank_accounts: {
+        Row: {
+          account_holder: string
+          account_number: string
+          account_type: string
+          bank_name: string
+          created_at: string
+          id: string
+          ifsc_code: string
+          is_primary: boolean
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          account_holder?: string
+          account_number?: string
+          account_type?: string
+          bank_name?: string
+          created_at?: string
+          id?: string
+          ifsc_code?: string
+          is_primary?: boolean
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          account_holder?: string
+          account_number?: string
+          account_type?: string
+          bank_name?: string
+          created_at?: string
+          id?: string
+          ifsc_code?: string
+          is_primary?: boolean
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       vendors: {
         Row: {
           area_id: string | null
