@@ -145,9 +145,10 @@ export interface CartItem {
 export const setAuthToken = (_token: string | null) => {};
 
 // Helper: paginate from Supabase query
-function paginateResult<T>(data: any[], count: number, page: number, perPage: number): PaginatedResponse<T> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function paginateResult(data: any[], count: number, page: number, perPage: number): any {
   return {
-    data: data as T[],
+    data,
     total: count,
     page,
     per_page: perPage,
