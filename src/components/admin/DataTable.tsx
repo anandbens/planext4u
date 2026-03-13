@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
-import { Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Download, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarWidget } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 interface Column<T> {
   key: string;
@@ -24,14 +27,19 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   filters?: { key: string; label: string; options: { value: string; label: string }[] }[];
   onFilterChange?: (key: string, value: string) => void;
+  onDateRangeChange?: (from: string | undefined, to: string | undefined) => void;
+  dateFilterLabel?: string;
+  showDateFilter?: boolean;
 }
 
 export function DataTable<T extends Record<string, any>>({
   columns, data, total, page, perPage, totalPages,
   onPageChange, onSearch, onExport, onRowClick, searchPlaceholder = "Search...",
-  filters, onFilterChange,
+  filters, onFilterChange, onDateRangeChange, dateFilterLabel = "Date", showDateFilter = true,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
 
   // Debounced search
   useEffect(() => {
@@ -40,6 +48,22 @@ export function DataTable<T extends Record<string, any>>({
     }, 350);
     return () => clearTimeout(timer);
   }, [search]);
+
+  const handleDateFromChange = (date: Date | undefined) => {
+    setDateFrom(date);
+    onDateRangeChange?.(date ? format(date, 'yyyy-MM-dd') : undefined, dateTo ? format(dateTo, 'yyyy-MM-dd') : undefined);
+  };
+
+  const handleDateToChange = (date: Date | undefined) => {
+    setDateTo(date);
+    onDateRangeChange?.(dateFrom ? format(dateFrom, 'yyyy-MM-dd') : undefined, date ? format(date, 'yyyy-MM-dd') : undefined);
+  };
+
+  const clearDates = () => {
+    setDateFrom(undefined);
+    setDateTo(undefined);
+    onDateRangeChange?.(undefined, undefined);
+  };
 
   return (
     <div className="bg-card rounded-xl border border-border/50 overflow-hidden" style={{ boxShadow: 'var(--shadow-sm)' }}>
@@ -69,11 +93,44 @@ export function DataTable<T extends Record<string, any>>({
             </Select>
           ))}
         </div>
-        {onExport && (
-          <Button variant="outline" size="sm" onClick={onExport} className="gap-2">
-            <Download className="h-4 w-4" /> Export CSV
-          </Button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {showDateFilter && onDateRangeChange && (
+            <>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {dateFrom ? format(dateFrom, 'dd MMM yyyy') : 'From Date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <CalendarWidget mode="single" selected={dateFrom} onSelect={handleDateFromChange} initialFocus />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {dateTo ? format(dateTo, 'dd MMM yyyy') : 'To Date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <CalendarWidget mode="single" selected={dateTo} onSelect={handleDateToChange} initialFocus />
+                </PopoverContent>
+              </Popover>
+              {(dateFrom || dateTo) && (
+                <Button variant="ghost" size="sm" className="h-9 text-xs text-muted-foreground" onClick={clearDates}>
+                  Clear
+                </Button>
+              )}
+            </>
+          )}
+          {onExport && (
+            <Button variant="outline" size="sm" onClick={onExport} className="gap-2 h-9">
+              <Download className="h-4 w-4" /> Export CSV
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Table */}

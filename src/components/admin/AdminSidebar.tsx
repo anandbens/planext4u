@@ -1,6 +1,8 @@
 import {
   LayoutDashboard, Users, Store, Package, ShoppingCart, Banknote,
   Megaphone, Star, Gift, BarChart3, Settings, Image, FileText, ChevronDown, LogOut,
+  Grid3X3, Wrench, Receipt, MapPin, Map, Tag, Briefcase, SlidersHorizontal,
+  MessageSquare, MonitorPlay, ExternalLink, ClipboardList,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -10,33 +12,49 @@ import {
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Customers", url: "/customers", icon: Users },
-  { title: "Vendors", url: "/vendors", icon: Store },
-  { title: "Products", url: "/products", icon: Package },
+  { title: "Points", url: "/points", icon: Star },
   { title: "Orders", url: "/orders", icon: ShoppingCart },
   { title: "Settlements", url: "/settlements", icon: Banknote },
-  { title: "Classified Ads", url: "/classifieds", icon: Megaphone },
+  { title: "Customers", url: "/customers", icon: Users },
+  { title: "Categories", url: "/categories", icon: Grid3X3 },
+  { title: "Services", url: "/admin/services", icon: Wrench },
+  { title: "Products", url: "/products", icon: Package },
+  { title: "Tax", url: "/tax", icon: Receipt },
 ];
 
-const engagementItems = [
-  { title: "Loyalty Points", url: "/points", icon: Star },
-  { title: "Referrals", url: "/referrals", icon: Gift },
-];
-
-const insightItems = [
+const reportItems = [
   { title: "Reports", url: "/reports", icon: BarChart3 },
+  { title: "Report Log", url: "/report-log", icon: ClipboardList },
+];
+
+const configItems = [
+  { title: "CF City", url: "/cf/city", icon: MapPin },
+  { title: "CF Area", url: "/cf/area", icon: Map },
+  { title: "CF Categories", url: "/cf/categories", icon: Tag },
+  { title: "CF Services", url: "/cf/services", icon: Wrench },
+  { title: "CF Vendors", url: "/cf/vendors", icon: Store },
+  { title: "CF Products", url: "/cf/products", icon: Package },
 ];
 
 const systemItems = [
-  { title: "CMS", url: "/cms", icon: Image },
+  { title: "Occupations", url: "/occupations", icon: Briefcase },
+  { title: "Platform Variables", url: "/platform-variables", icon: SlidersHorizontal },
+  { title: "Popup Banners", url: "/popup-banners", icon: MonitorPlay },
+  { title: "Banners", url: "/banners", icon: Image },
+  { title: "Advertisements", url: "/advertisements", icon: Megaphone },
+  { title: "Website Queries", url: "/website-queries", icon: MessageSquare },
+  { title: "Referrals", url: "/referrals", icon: Gift },
+  { title: "Classified Ads", url: "/classifieds", icon: FileText },
   { title: "Settings", url: "/settings", icon: Settings },
+];
+
+const portalLinks = [
+  { title: "Customer Portal", url: "/app", icon: ExternalLink },
+  { title: "Vendor Portal", url: "/vendor", icon: ExternalLink },
 ];
 
 interface NavGroupProps {
@@ -47,7 +65,6 @@ interface NavGroupProps {
 
 function NavGroup({ label, items, collapsed }: NavGroupProps) {
   const location = useLocation();
-  const isActive = (path: string) => location.pathname === path;
 
   return (
     <SidebarGroup>
@@ -110,9 +127,10 @@ export function AdminSidebar() {
 
       <SidebarContent className="px-2 gap-1">
         <NavGroup label="Main" items={mainItems} collapsed={collapsed} />
-        <NavGroup label="Engagement" items={engagementItems} collapsed={collapsed} />
-        <NavGroup label="Insights" items={insightItems} collapsed={collapsed} />
+        <NavGroup label="Reports" items={reportItems} collapsed={collapsed} />
+        <NavGroup label="Configuration" items={configItems} collapsed={collapsed} />
         <NavGroup label="System" items={systemItems} collapsed={collapsed} />
+        <NavGroup label="Portals" items={portalLinks} collapsed={collapsed} />
       </SidebarContent>
 
       <SidebarFooter className="px-4 py-4 border-t border-sidebar-border">

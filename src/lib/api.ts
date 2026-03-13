@@ -6,6 +6,8 @@ import {
   MOCK_SETTLEMENTS, MOCK_CLASSIFIEDS, MOCK_POINTS_TRANSACTIONS,
   MOCK_REFERRALS, MOCK_CATEGORIES, MOCK_BANNERS, MOCK_PLATFORM_VARIABLES,
   MOCK_SERVICES, MOCK_SERVICE_CATEGORIES, MOCK_SERVICE_VENDORS, MOCK_CLASSIFIED_CATEGORIES,
+  MOCK_OCCUPATIONS, MOCK_CITIES, MOCK_AREAS, MOCK_TAX_CONFIG,
+  MOCK_POPUP_BANNERS, MOCK_ADVERTISEMENTS, MOCK_WEBSITE_QUERIES, MOCK_REPORT_LOG,
 } from './mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
@@ -16,6 +18,7 @@ export interface User {
   city_id: string; area_id: string; latitude: number; longitude: number;
   wallet_points: number; referral_code: string; referred_by: string | null;
   status: 'active' | 'inactive' | 'suspended'; created_at: string;
+  occupation?: string;
 }
 
 export interface Vendor {
@@ -32,6 +35,7 @@ export interface Product {
   status: 'active' | 'inactive' | 'draft';
   vendor_name?: string; category_name?: string; emoji?: string;
   rating?: number; reviews?: number; stock?: number; sales?: number;
+  created_at?: string; updated_at?: string;
 }
 
 export interface Service {
@@ -40,13 +44,14 @@ export interface Service {
   status: 'active' | 'inactive' | 'draft';
   vendor_name?: string; category_name?: string; emoji?: string;
   rating?: number; reviews?: number; service_area?: string; duration?: string;
+  created_at?: string;
 }
 
 export interface Order {
   id: string; customer_id: string; vendor_id: string;
   subtotal: number; tax: number; discount: number; points_used: number; total: number;
   status: 'placed' | 'paid' | 'accepted' | 'in_progress' | 'delivered' | 'completed' | 'cancelled';
-  created_at: string; customer_name?: string; vendor_name?: string;
+  created_at: string; updated_at?: string; customer_name?: string; vendor_name?: string;
   items?: { title: string; qty: number; emoji: string; price: number }[];
 }
 
@@ -54,7 +59,7 @@ export interface Settlement {
   id: string; vendor_id: string; order_id: string;
   amount: number; commission: number; net_amount: number;
   status: 'pending' | 'eligible' | 'settled' | 'on_hold';
-  settled_at: string | null; vendor_name?: string;
+  settled_at: string | null; created_at?: string; vendor_name?: string;
 }
 
 export interface ClassifiedAd {
@@ -77,17 +82,53 @@ export interface Referral {
 
 export interface Category {
   id: string; name: string; parent_id: string | null; image: string;
-  status: 'active' | 'inactive'; count?: number;
+  status: 'active' | 'inactive'; count?: number; created_at?: string;
 }
 
 export interface Banner {
   id: string; title: string; desktop_image: string; mobile_image: string;
   link: string; priority: number; start_date: string; end_date: string;
-  status: 'active' | 'inactive'; subtitle?: string; gradient?: string;
+  status: 'active' | 'inactive'; subtitle?: string; gradient?: string; created_at?: string;
 }
 
 export interface PlatformVariable {
   id: string; key: string; value: string; description: string;
+}
+
+export interface Occupation {
+  id: string; name: string; status: 'active' | 'inactive'; customer_count: number; created_at: string;
+}
+
+export interface City {
+  id: string; name: string; state: string; status: 'active' | 'inactive'; area_count: number; created_at: string;
+}
+
+export interface Area {
+  id: string; name: string; city_id: string; city_name: string; pincode: string; status: 'active' | 'inactive'; created_at: string;
+}
+
+export interface TaxConfig {
+  id: string; name: string; rate: number; type: 'GST' | 'Cess'; status: 'active' | 'inactive'; applied_to: string; created_at: string;
+}
+
+export interface PopupBanner {
+  id: string; title: string; description: string; image: string; link: string; status: 'active' | 'inactive'; start_date: string; end_date: string; created_at: string;
+}
+
+export interface Advertisement {
+  id: string; title: string; advertiser: string; placement: string; type: 'banner' | 'sidebar' | 'sponsored' | 'strip';
+  status: 'active' | 'paused' | 'expired'; impressions: number; clicks: number;
+  start_date: string; end_date: string; revenue: number; created_at: string;
+}
+
+export interface WebsiteQuery {
+  id: string; name: string; email: string; phone: string; subject: string; message: string;
+  status: 'new' | 'in_progress' | 'resolved'; created_at: string;
+}
+
+export interface ReportLog {
+  id: string; report_type: string; generated_by: string; format: string;
+  status: 'completed' | 'failed' | 'processing'; file_size: string; created_at: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -144,6 +185,21 @@ function filterStatus<T extends { status: string }>(items: T[], status?: string)
   return status && status !== 'all' ? items.filter((i) => i.status === status) : items;
 }
 
+function filterDateRange<T extends Record<string, any>>(items: T[], dateFrom?: string, dateTo?: string, dateField: string = 'created_at'): T[] {
+  let result = items;
+  if (dateFrom) {
+    const from = new Date(dateFrom);
+    from.setHours(0, 0, 0, 0);
+    result = result.filter((i) => new Date(i[dateField]) >= from);
+  }
+  if (dateTo) {
+    const to = new Date(dateTo);
+    to.setHours(23, 59, 59, 999);
+    result = result.filter((i) => new Date(i[dateField]) <= to);
+  }
+  return result;
+}
+
 const delay = () => new Promise((r) => setTimeout(r, 150));
 
 // API Methods
@@ -163,6 +219,7 @@ export const api = {
       city_id: "1", area_id: "1", latitude: 19.076, longitude: 72.877,
       wallet_points: 200, referral_code: `REF${String(MOCK_CUSTOMERS.length + 1).padStart(4, '0')}`,
       referred_by: data.referral_code || null, status: "active" as const, created_at: new Date().toISOString(),
+      occupation: "",
     };
     MOCK_CUSTOMERS.push(newCustomer);
     return { success: true, user: newCustomer, token: 'mock-customer-token' };
@@ -198,10 +255,12 @@ export const api = {
   },
 
   // Customers
-  getCustomers: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
+  getCustomers: async (params: { page?: number; per_page?: number; search?: string; status?: string; occupation?: string; date_from?: string; date_to?: string }) => {
     await delay();
-    let items = filterSearch(MOCK_CUSTOMERS, params.search, ['name', 'email', 'mobile']);
+    let items = filterSearch(MOCK_CUSTOMERS, params.search, ['name', 'email', 'mobile', 'occupation']);
     items = filterStatus(items, params.status);
+    items = filterDateRange(items, params.date_from, params.date_to);
+    if (params.occupation) items = items.filter((c) => c.occupation === params.occupation);
     return paginate(items, params.page, params.per_page);
   },
 
@@ -213,11 +272,12 @@ export const api = {
   },
 
   // Vendors
-  getVendors: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
+  getVendors: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
     await delay();
     const allVendors = [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS];
     let items = filterSearch(allVendors, params.search, ['name', 'business_name', 'email']);
     items = filterStatus(items, params.status);
+    items = filterDateRange(items, params.date_from, params.date_to);
     return paginate(items, params.page, params.per_page);
   },
 
@@ -240,9 +300,10 @@ export const api = {
   },
 
   // Products
-  getProducts: async (params: { page?: number; per_page?: number; search?: string }) => {
+  getProducts: async (params: { page?: number; per_page?: number; search?: string; date_from?: string; date_to?: string }) => {
     await delay();
-    const items = filterSearch(MOCK_PRODUCTS, params.search, ['title', 'vendor_name', 'category_name']);
+    let items = filterSearch(MOCK_PRODUCTS, params.search, ['title', 'vendor_name', 'category_name']);
+    items = filterDateRange(items, params.date_from, params.date_to);
     return paginate(items, params.page, params.per_page);
   },
 
@@ -259,9 +320,10 @@ export const api = {
   },
 
   // Services
-  getServices: async (params: { page?: number; per_page?: number; search?: string }) => {
+  getServices: async (params: { page?: number; per_page?: number; search?: string; date_from?: string; date_to?: string }) => {
     await delay();
-    const items = filterSearch(MOCK_SERVICES, params.search, ['title', 'vendor_name', 'category_name']);
+    let items = filterSearch(MOCK_SERVICES, params.search, ['title', 'vendor_name', 'category_name']);
+    items = filterDateRange(items, params.date_from, params.date_to);
     return paginate(items, params.page, params.per_page);
   },
 
@@ -287,10 +349,11 @@ export const api = {
   },
 
   // Orders
-  getOrders: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
+  getOrders: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
     await delay();
     let items = filterSearch(MOCK_ORDERS, params.search, ['id', 'customer_name', 'vendor_name']);
     items = filterStatus(items, params.status);
+    items = filterDateRange(items, params.date_from, params.date_to);
     return paginate(items, params.page, params.per_page);
   },
 
@@ -302,16 +365,18 @@ export const api = {
   },
 
   // Settlements
-  getSettlements: async (params: { page?: number; per_page?: number; status?: string }) => {
+  getSettlements: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
     await delay();
-    const items = filterStatus(MOCK_SETTLEMENTS, params.status);
+    let items = filterStatus(MOCK_SETTLEMENTS, params.status);
+    items = filterDateRange(items, params.date_from, params.date_to);
     return paginate(items, params.page, params.per_page);
   },
 
   // Classified Ads
-  getClassifiedAds: async (params: { page?: number; per_page?: number; status?: string }) => {
+  getClassifiedAds: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
     await delay();
-    const items = filterStatus(MOCK_CLASSIFIEDS, params.status);
+    let items = filterStatus(MOCK_CLASSIFIEDS, params.status);
+    items = filterDateRange(items, params.date_from, params.date_to);
     return paginate(items, params.page, params.per_page);
   },
 
@@ -342,15 +407,19 @@ export const api = {
   getClassifiedCategories: () => MOCK_CLASSIFIED_CATEGORIES,
 
   // Points
-  getPointsTransactions: async (params: { page?: number; per_page?: number }) => {
+  getPointsTransactions: async (params: { page?: number; per_page?: number; date_from?: string; date_to?: string }) => {
     await delay();
-    return paginate(MOCK_POINTS_TRANSACTIONS, params.page, params.per_page);
+    let items = [...MOCK_POINTS_TRANSACTIONS];
+    items = filterDateRange(items, params.date_from, params.date_to);
+    return paginate(items, params.page, params.per_page);
   },
 
   // Referrals
-  getReferrals: async (params: { page?: number; per_page?: number }) => {
+  getReferrals: async (params: { page?: number; per_page?: number; date_from?: string; date_to?: string }) => {
     await delay();
-    return paginate(MOCK_REFERRALS, params.page, params.per_page);
+    let items = [...MOCK_REFERRALS];
+    items = filterDateRange(items, params.date_from, params.date_to);
+    return paginate(items, params.page, params.per_page);
   },
 
   // Categories
@@ -359,10 +428,24 @@ export const api = {
     return MOCK_CATEGORIES;
   },
 
+  updateCategory: async (id: string, data: Partial<Category>) => {
+    await delay();
+    const idx = MOCK_CATEGORIES.findIndex((c) => c.id === id);
+    if (idx >= 0) Object.assign(MOCK_CATEGORIES[idx], data);
+    return { success: true };
+  },
+
   // CMS
   getBanners: async () => {
     await delay();
     return MOCK_BANNERS;
+  },
+
+  updateBanner: async (id: string, data: Partial<Banner>) => {
+    await delay();
+    const idx = MOCK_BANNERS.findIndex((b) => b.id === id);
+    if (idx >= 0) Object.assign(MOCK_BANNERS[idx], data);
+    return { success: true };
   },
 
   // Platform Variables
@@ -376,6 +459,85 @@ export const api = {
     const idx = MOCK_PLATFORM_VARIABLES.findIndex((v) => v.id === id);
     if (idx >= 0) MOCK_PLATFORM_VARIABLES[idx].value = value;
     return { success: true };
+  },
+
+  // ===== NEW MODULE APIs =====
+
+  // Occupations
+  getOccupations: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
+    await delay();
+    let items = filterSearch(MOCK_OCCUPATIONS, params.search, ['name']);
+    items = filterStatus(items, params.status);
+    return paginate(items, params.page, params.per_page);
+  },
+
+  updateOccupation: async (id: string, data: Partial<Occupation>) => {
+    await delay();
+    const idx = MOCK_OCCUPATIONS.findIndex((o) => o.id === id);
+    if (idx >= 0) Object.assign(MOCK_OCCUPATIONS[idx], data);
+    return { success: true };
+  },
+
+  // Cities
+  getCities: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
+    await delay();
+    let items = filterSearch(MOCK_CITIES, params.search, ['name', 'state']);
+    items = filterStatus(items, params.status);
+    return paginate(items, params.page, params.per_page);
+  },
+
+  // Areas
+  getAreas: async (params: { page?: number; per_page?: number; search?: string; status?: string; city_id?: string }) => {
+    await delay();
+    let items = filterSearch(MOCK_AREAS, params.search, ['name', 'city_name', 'pincode']);
+    items = filterStatus(items, params.status);
+    if (params.city_id) items = items.filter((a) => a.city_id === params.city_id);
+    return paginate(items, params.page, params.per_page);
+  },
+
+  // Tax Config
+  getTaxConfig: async (params: { page?: number; per_page?: number; status?: string }) => {
+    await delay();
+    const items = filterStatus(MOCK_TAX_CONFIG, params.status);
+    return paginate(items, params.page, params.per_page);
+  },
+
+  // Popup Banners
+  getPopupBanners: async (params: { page?: number; per_page?: number; status?: string }) => {
+    await delay();
+    const items = filterStatus(MOCK_POPUP_BANNERS, params.status);
+    return paginate(items, params.page, params.per_page);
+  },
+
+  // Advertisements
+  getAdvertisements: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
+    await delay();
+    let items = filterStatus(MOCK_ADVERTISEMENTS, params.status);
+    items = filterDateRange(items, params.date_from, params.date_to);
+    return paginate(items, params.page, params.per_page);
+  },
+
+  // Website Queries
+  getWebsiteQueries: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
+    await delay();
+    let items = filterStatus(MOCK_WEBSITE_QUERIES, params.status);
+    items = filterDateRange(items, params.date_from, params.date_to);
+    return paginate(items, params.page, params.per_page);
+  },
+
+  updateWebsiteQueryStatus: async (id: string, status: WebsiteQuery['status']) => {
+    await delay();
+    const idx = MOCK_WEBSITE_QUERIES.findIndex((q) => q.id === id);
+    if (idx >= 0) (MOCK_WEBSITE_QUERIES[idx] as any).status = status;
+    return { success: true };
+  },
+
+  // Report Log
+  getReportLog: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
+    await delay();
+    let items = filterStatus(MOCK_REPORT_LOG, params.status);
+    items = filterDateRange(items, params.date_from, params.date_to);
+    return paginate(items, params.page, params.per_page);
   },
 
   // ===== Customer-facing APIs =====
