@@ -366,6 +366,32 @@ export const api = {
     return { success: true };
   },
 
+  createVendor: async (data: Partial<Vendor>, type: 'product' | 'service' = 'product') => {
+    await delay();
+    const store = type === 'service' ? MOCK_SERVICE_VENDORS : MOCK_VENDORS;
+    const newVendor: any = {
+      id: `VND-${String(MOCK_VENDORS.length + MOCK_SERVICE_VENDORS.length + 1).padStart(3, '0')}`,
+      ...data,
+      status: 'pending',
+      total_products: 0, total_orders: 0, total_revenue: 0,
+      created_at: new Date().toISOString(),
+    };
+    store.unshift(newVendor);
+    persist(type === 'service' ? 'service_vendors' : 'vendors', store);
+    return { success: true, vendor: newVendor };
+  },
+
+  deleteVendor: async (id: string) => {
+    await delay();
+    let idx = MOCK_VENDORS.findIndex((v) => v.id === id);
+    if (idx >= 0) { MOCK_VENDORS.splice(idx, 1); persist('vendors', MOCK_VENDORS); }
+    else {
+      idx = MOCK_SERVICE_VENDORS.findIndex((v) => v.id === id);
+      if (idx >= 0) { MOCK_SERVICE_VENDORS.splice(idx, 1); persist('service_vendors', MOCK_SERVICE_VENDORS); }
+    }
+    return { success: true };
+  },
+
   // Products
   getProducts: async (params: { page?: number; per_page?: number; search?: string; date_from?: string; date_to?: string }) => {
     await delay();
