@@ -1056,7 +1056,8 @@ export const api = {
       cart.push({
         id: product.id, title: product.title, price: product.price, qty,
         vendor: product.vendor_name || '', vendor_id: product.vendor_id,
-        emoji: product.emoji || '📦', maxPoints: product.max_points_redeemable,
+        emoji: product.emoji || '📦', image: product.image || '',
+        maxPoints: product.max_points_redeemable,
         tax: product.tax, discount: product.discount,
       });
     }

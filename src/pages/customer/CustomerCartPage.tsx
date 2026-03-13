@@ -213,8 +213,12 @@ export default function CustomerCartPage() {
                       return (
                         <Card key={item.id} className="p-4">
                           <div className="flex gap-3">
-                            <div className="h-20 w-20 bg-secondary/30 rounded-xl flex items-center justify-center text-3xl shrink-0 overflow-hidden">
-                              {item.emoji}
+                            <div className="h-20 w-20 bg-secondary/30 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                              {item.image ? (
+                                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-3xl">{item.emoji}</span>
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between">
