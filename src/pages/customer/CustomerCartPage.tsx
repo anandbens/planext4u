@@ -22,6 +22,8 @@ const TIME_SLOTS = [
 
 export default function CustomerCartPage() {
   const navigate = useNavigate();
+  const { customerUser } = useAuth();
+  const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
