@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Star, Heart, Grid3X3, List } from "lucide-react";
+import { Star, Heart, Grid3X3, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
 
 export default function CustomerBrowsePage() {
@@ -20,14 +21,20 @@ export default function CustomerBrowsePage() {
     queryFn: () => api.browseProducts({ category: categoryFilter, sort: sortBy }),
   });
 
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: api.getCategories,
+  });
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild><Link to="/app"><ArrowLeft className="h-5 w-5" /></Link></Button>
-          <h1 className="font-semibold">{categoryFilter || "All Products"}</h1>
-          <span className="text-sm text-muted-foreground">({products?.length || 0} items)</span>
-          <div className="ml-auto flex items-center gap-2">
+    <CustomerLayout>
+      <div className="max-w-7xl mx-auto px-4 py-6 pb-20 md:pb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold">{categoryFilter || "All Products"}</h1>
+            <p className="text-sm text-muted-foreground">{products?.length || 0} products</p>
+          </div>
+          <div className="flex items-center gap-2">
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-36 h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -41,9 +48,21 @@ export default function CustomerBrowsePage() {
             <Button variant={viewMode === "list" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setViewMode("list")}><List className="h-4 w-4" /></Button>
           </div>
         </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Category chips */}
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide">
+          <Link to="/app/browse">
+            <Badge variant={!categoryFilter ? "default" : "outline"} className="cursor-pointer whitespace-nowrap">All</Badge>
+          </Link>
+          {categories?.map((c) => (
+            <Link key={c.id} to={`/app/browse?category=${c.name}`}>
+              <Badge variant={categoryFilter === c.name ? "default" : "outline"} className="cursor-pointer whitespace-nowrap">
+                {c.image} {c.name}
+              </Badge>
+            </Link>
+          ))}
+        </div>
+
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />)}
@@ -58,6 +77,9 @@ export default function CustomerBrowsePage() {
                     <div className={`bg-secondary/30 flex items-center justify-center text-4xl relative ${viewMode === "list" ? "w-32 h-32 shrink-0" : "h-40"}`}>
                       {p.emoji}
                       {discountPct > 0 && <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-[10px] px-1.5 py-0">{discountPct}% OFF</Badge>}
+                      <button className="absolute top-2 right-2 h-7 w-7 rounded-full bg-card/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Heart className="h-3.5 w-3.5 text-muted-foreground" />
+                      </button>
                     </div>
                     <div className="p-3 flex-1">
                       <p className="text-xs text-muted-foreground">{p.vendor_name}</p>
@@ -78,7 +100,7 @@ export default function CustomerBrowsePage() {
             })}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </CustomerLayout>
   );
 }

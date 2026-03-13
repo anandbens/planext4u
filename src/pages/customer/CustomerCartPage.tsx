@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Minus, Plus, Trash2, Tag, Coins } from "lucide-react";
+import { Minus, Plus, Trash2, Tag, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 
 const initialCart = [
@@ -32,15 +33,10 @@ export default function CustomerCartPage() {
   const total = subtotal + tax - discount - pointsUsed;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild><Link to="/app"><ArrowLeft className="h-5 w-5" /></Link></Button>
-          <h1 className="font-semibold">Cart ({cart.length} items)</h1>
-        </div>
-      </header>
+    <CustomerLayout>
+      <div className="max-w-3xl mx-auto px-4 py-6 pb-20 md:pb-6">
+        <h1 className="text-xl font-bold mb-6">Cart ({cart.length} items)</h1>
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
         {cart.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-lg font-medium">Your cart is empty</p>
@@ -74,7 +70,6 @@ export default function CustomerCartPage() {
 
             <div>
               <Card className="p-4 space-y-4">
-                {/* Coupon */}
                 <div>
                   <label className="text-xs font-medium flex items-center gap-1 mb-1.5"><Tag className="h-3 w-3" /> Coupon Code</label>
                   <div className="flex gap-2">
@@ -82,15 +77,11 @@ export default function CustomerCartPage() {
                     <Button size="sm" variant="secondary" className="h-8" onClick={() => coupon === "WELCOME" ? toast.success("Coupon applied!") : toast.error("Invalid coupon")}>Apply</Button>
                   </div>
                 </div>
-
-                {/* Points */}
                 <div>
                   <label className="text-xs font-medium flex items-center gap-1 mb-1.5"><Coins className="h-3 w-3" /> Use Points ({walletPoints} available)</label>
                   <Input type="number" placeholder="0" value={pointsUsed || ""} onChange={(e) => setPointsUsed(Math.min(Number(e.target.value), walletPoints, 250))} className="h-8 text-xs" />
                 </div>
-
                 <Separator />
-
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{subtotal.toLocaleString()}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Tax (18%)</span><span>₹{tax.toLocaleString()}</span></div>
@@ -99,13 +90,12 @@ export default function CustomerCartPage() {
                   <Separator />
                   <div className="flex justify-between font-bold text-base"><span>Total</span><span>₹{total.toLocaleString()}</span></div>
                 </div>
-
                 <Button className="w-full" onClick={() => toast.success("Order placed successfully!")}>Place Order</Button>
               </Card>
             </div>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </CustomerLayout>
   );
 }

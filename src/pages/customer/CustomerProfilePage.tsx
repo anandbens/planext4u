@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, User, Package, Heart, MapPin, Coins, Gift, Settings, LogOut, ChevronRight } from "lucide-react";
+import { User, Package, Heart, MapPin, Coins, Gift, Settings, LogOut, ChevronRight, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
 
 export default function CustomerProfilePage() {
@@ -19,18 +20,13 @@ export default function CustomerProfilePage() {
     { icon: MapPin, label: "Saved Addresses", to: "/app", count: "2" },
     { icon: Coins, label: "Loyalty Points", to: "/app", info: `${profile?.wallet_points?.toLocaleString() || 0} pts` },
     { icon: Gift, label: "Referrals", to: "/app", info: profile?.referral_code || "" },
+    { icon: Megaphone, label: "My Classifieds", to: "/app/classifieds", count: "3" },
     { icon: Settings, label: "Settings", to: "/app" },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild><Link to="/app"><ArrowLeft className="h-5 w-5" /></Link></Button>
-          <h1 className="font-semibold">Profile</h1>
-        </div>
-      </header>
-      <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+    <CustomerLayout>
+      <div className="max-w-3xl mx-auto px-4 py-6 pb-20 md:pb-6 space-y-6">
         {isLoading ? <Skeleton className="h-24 rounded-xl" /> : (
           <Card className="p-6 flex items-center gap-4">
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center"><User className="h-8 w-8 text-primary" /></div>
@@ -61,7 +57,7 @@ export default function CustomerProfilePage() {
             <LogOut className="h-5 w-5" /><span className="text-sm font-medium">Logout</span>
           </button>
         </Card>
-      </main>
-    </div>
+      </div>
+    </CustomerLayout>
   );
 }
