@@ -37,6 +37,8 @@ import PopupBannersPage from "./pages/PopupBannersPage";
 import BannersPage from "./pages/BannersPage";
 import AdvertisementsPage from "./pages/AdvertisementsPage";
 import WebsiteQueriesPage from "./pages/WebsiteQueriesPage";
+import SupportTicketsPage from "./pages/SupportTicketsPage";
+import IntegrationsPage from "./pages/IntegrationsPage";
 
 // Report sub-pages
 import SalesReportPage from "./pages/reports/SalesReportPage";
