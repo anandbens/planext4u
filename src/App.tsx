@@ -20,6 +20,32 @@ import CMSPage from "./pages/CMSPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
+// Report sub-pages
+import SalesReportPage from "./pages/reports/SalesReportPage";
+import VendorReportPage from "./pages/reports/VendorReportPage";
+import SettlementReportPage from "./pages/reports/SettlementReportPage";
+import CustomerReportPage from "./pages/reports/CustomerReportPage";
+import PointsReportPage from "./pages/reports/PointsReportPage";
+import ReferralReportPage from "./pages/reports/ReferralReportPage";
+import ClassifiedReportPage from "./pages/reports/ClassifiedReportPage";
+import TaxReportPage from "./pages/reports/TaxReportPage";
+import PaymentReportPage from "./pages/reports/PaymentReportPage";
+
+// Customer pages
+import CustomerHomePage from "./pages/customer/CustomerHomePage";
+import CustomerBrowsePage from "./pages/customer/CustomerBrowsePage";
+import CustomerProductPage from "./pages/customer/CustomerProductPage";
+import CustomerCartPage from "./pages/customer/CustomerCartPage";
+import CustomerOrdersPage from "./pages/customer/CustomerOrdersPage";
+import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
+
+// Vendor pages
+import VendorDashboardPage from "./pages/vendor/VendorDashboardPage";
+import VendorProductsPage from "./pages/vendor/VendorProductsPage";
+import VendorOrdersPage from "./pages/vendor/VendorOrdersPage";
+import VendorSettlementsPage from "./pages/vendor/VendorSettlementsPage";
+import VendorProfilePage from "./pages/vendor/VendorProfilePage";
+
 const queryClient = new QueryClient();
 
 function ProtectedPage({ children }: { children: React.ReactNode }) {
@@ -35,6 +61,8 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+
+            {/* Admin routes */}
             <Route path="/" element={<ProtectedPage><DashboardPage /></ProtectedPage>} />
             <Route path="/customers" element={<ProtectedPage><CustomersPage /></ProtectedPage>} />
             <Route path="/vendors" element={<ProtectedPage><VendorsPage /></ProtectedPage>} />
@@ -45,8 +73,34 @@ const App = () => (
             <Route path="/points" element={<ProtectedPage><PointsPage /></ProtectedPage>} />
             <Route path="/referrals" element={<ProtectedPage><ReferralsPage /></ProtectedPage>} />
             <Route path="/reports" element={<ProtectedPage><ReportsPage /></ProtectedPage>} />
+            <Route path="/reports/sales" element={<ProtectedPage><SalesReportPage /></ProtectedPage>} />
+            <Route path="/reports/vendors" element={<ProtectedPage><VendorReportPage /></ProtectedPage>} />
+            <Route path="/reports/settlements" element={<ProtectedPage><SettlementReportPage /></ProtectedPage>} />
+            <Route path="/reports/customers" element={<ProtectedPage><CustomerReportPage /></ProtectedPage>} />
+            <Route path="/reports/points" element={<ProtectedPage><PointsReportPage /></ProtectedPage>} />
+            <Route path="/reports/referrals" element={<ProtectedPage><ReferralReportPage /></ProtectedPage>} />
+            <Route path="/reports/classifieds" element={<ProtectedPage><ClassifiedReportPage /></ProtectedPage>} />
+            <Route path="/reports/tax" element={<ProtectedPage><TaxReportPage /></ProtectedPage>} />
+            <Route path="/reports/payments" element={<ProtectedPage><PaymentReportPage /></ProtectedPage>} />
             <Route path="/cms" element={<ProtectedPage><CMSPage /></ProtectedPage>} />
             <Route path="/settings" element={<ProtectedPage><SettingsPage /></ProtectedPage>} />
+
+            {/* Customer-facing routes */}
+            <Route path="/app" element={<CustomerHomePage />} />
+            <Route path="/app/browse" element={<CustomerBrowsePage />} />
+            <Route path="/app/product/:id" element={<CustomerProductPage />} />
+            <Route path="/app/cart" element={<CustomerCartPage />} />
+            <Route path="/app/orders" element={<CustomerOrdersPage />} />
+            <Route path="/app/profile" element={<CustomerProfilePage />} />
+
+            {/* Vendor-facing routes */}
+            <Route path="/vendor" element={<VendorDashboardPage />} />
+            <Route path="/vendor/products" element={<VendorProductsPage />} />
+            <Route path="/vendor/orders" element={<VendorOrdersPage />} />
+            <Route path="/vendor/settlements" element={<VendorSettlementsPage />} />
+            <Route path="/vendor/profile" element={<VendorProfilePage />} />
+            <Route path="/vendor/settings" element={<VendorProfilePage />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
