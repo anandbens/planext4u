@@ -1,21 +1,24 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Star, Heart, ChevronLeft, Clock, Shield, Sparkles, Search, MapPin, Mic, ShoppingBag, Wrench, Megaphone, CalendarDays } from "lucide-react";
+import { ChevronRight, ChevronLeft, Star, Heart, Clock, Shield, Sparkles, Search, MapPin, Mic, ShoppingBag, Wrench, Megaphone, CalendarDays, AlertTriangle, HelpCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
+import p4uLogo from "@/assets/p4u-logo.png";
 
 export default function CustomerHomePage() {
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({ queryKey: ["customerHome"], queryFn: api.getCustomerHome });
   const [bannerIdx, setBannerIdx] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [productScrollIdx, setProductScrollIdx] = useState(0);
+  const [serviceScrollIdx, setServiceScrollIdx] = useState(0);
 
   useEffect(() => {
     if (!data?.banners.length) return;
@@ -33,9 +36,9 @@ export default function CustomerHomePage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-4 space-y-6 pb-20 md:pb-6">
-        {/* Location + Points Bar (Mobile) */}
-        <div className="flex items-center justify-between md:hidden">
+      <div className="max-w-7xl mx-auto space-y-0 pb-20 md:pb-6">
+        {/* Mobile Location + Points Bar */}
+        <div className="flex items-center justify-between px-4 py-3 md:hidden">
           <div className="flex items-center gap-1.5">
             <MapPin className="h-4 w-4 text-primary" />
             <div>
@@ -44,107 +47,208 @@ export default function CustomerHomePage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-warning/10 px-2 py-1 rounded-full">
+            <div className="flex items-center gap-1 bg-warning/10 px-2.5 py-1 rounded-full">
               <span className="text-warning text-xs">●</span>
-              <span className="text-xs font-semibold">1,260</span>
+              <span className="text-xs font-semibold">1,260 pts</span>
             </div>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <form onSubmit={handleSearch} className="relative md:hidden">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder='Search for "Bio-Enzymes"' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+        {/* Mobile Search */}
+        <form onSubmit={handleSearch} className="relative px-4 md:hidden">
+          <Search className="absolute left-7 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder='Search for "Electronics"' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 pr-10 h-12 rounded-xl bg-secondary/50 border-border/60 text-base" />
-          <Mic className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Mic className="absolute right-7 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         </form>
 
-        {/* Quick Category Pills */}
-        <div className="flex gap-3 md:hidden">
-          <Link to="/app/browse?category=Food%20%26%20Grocery" className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2.5 rounded-full border border-primary/20">
-            <ShoppingBag className="h-4 w-4" /><span className="text-sm font-semibold">Groceries</span>
-          </Link>
-          <Link to="/app/services" className="flex items-center gap-2 bg-destructive/10 text-destructive px-4 py-2.5 rounded-full border border-destructive/20">
-            <Wrench className="h-4 w-4" /><span className="text-sm font-semibold">Emergency</span>
-          </Link>
+        {/* Desktop Nav Tabs - matching reference */}
+        <div className="hidden md:flex items-center justify-center gap-1 bg-primary/5 border-y border-primary/10 py-2 px-4">
+          {[
+            { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
+            { icon: Wrench, label: "Services", to: "/app/services" },
+            { icon: Megaphone, label: "Socio", to: "/app/classifieds" },
+            { icon: CalendarDays, label: "Booking", to: "/app/services" },
+            { icon: Megaphone, label: "Classified Ads", to: "/app/classifieds" },
+          ].map((tab) => (
+            <Link key={tab.label} to={tab.to}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-full border border-primary/20 bg-card hover:bg-primary/10 transition-colors">
+              <tab.icon className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">{tab.label}</span>
+            </Link>
+          ))}
         </div>
 
-        {/* Hero Banner Carousel */}
-        {isLoading ? (
-          <Skeleton className="h-36 md:h-64 rounded-2xl" />
-        ) : data?.banners && data.banners.length > 0 ? (
-          <div className="relative overflow-hidden rounded-2xl">
-            <motion.div key={bannerIdx} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }}
-              className={`bg-gradient-to-r ${data.banners[bannerIdx]?.gradient || 'from-primary to-primary/70'} rounded-2xl p-6 md:p-12 text-primary-foreground relative overflow-hidden`}>
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute -right-20 -top-20 w-60 h-60 rounded-full bg-primary-foreground/20" />
+        {/* Hero Banner Carousel with Real Images */}
+        <div className="px-4 pt-4">
+          {isLoading ? (
+            <Skeleton className="h-40 md:h-80 rounded-2xl" />
+          ) : data?.banners && data.banners.length > 0 ? (
+            <div className="relative overflow-hidden rounded-2xl">
+              <AnimatePresence mode="wait">
+                <motion.div key={bannerIdx} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.4 }}>
+                  {data.banners[bannerIdx]?.desktop_image ? (
+                    <Link to={data.banners[bannerIdx]?.link || "/app/browse"}>
+                      <img
+                        src={data.banners[bannerIdx].desktop_image}
+                        alt={data.banners[bannerIdx].title}
+                        className="w-full h-40 sm:h-56 md:h-72 lg:h-80 object-cover rounded-2xl"
+                      />
+                    </Link>
+                  ) : (
+                    <div className={`bg-gradient-to-r ${data.banners[bannerIdx]?.gradient || 'from-primary to-primary/70'} rounded-2xl p-6 md:p-12 h-40 md:h-72 flex items-center`}>
+                      <div>
+                        <h2 className="text-xl md:text-4xl font-bold text-primary-foreground">{data.banners[bannerIdx]?.title}</h2>
+                        <p className="text-xs md:text-base text-primary-foreground/80 mt-1">{data.banners[bannerIdx]?.subtitle}</p>
+                        <Button size="sm" variant="secondary" className="mt-3">Shop Now</Button>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+              {/* Navigation Arrows */}
+              <button onClick={() => setBannerIdx((prev) => (prev - 1 + data.banners.length) % data.banners.length)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-card transition-colors">
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button onClick={() => setBannerIdx((prev) => (prev + 1) % data.banners.length)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-card transition-colors">
+                <ChevronRight className="h-5 w-5" />
+              </button>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+                {data.banners.map((_, i) => (
+                  <button key={i} onClick={() => setBannerIdx(i)}
+                    className={`h-2.5 rounded-full transition-all ${i === bannerIdx ? 'w-6 bg-card' : 'w-2.5 bg-card/50'}`} />
+                ))}
               </div>
-              <div className="relative z-10">
-                <h2 className="text-xl md:text-4xl font-bold">{data.banners[bannerIdx]?.title}</h2>
-                <p className="text-xs md:text-base opacity-90 mt-1">{data.banners[bannerIdx]?.subtitle}</p>
-                <Button size="sm" variant="secondary" className="mt-3">Shop Now</Button>
-              </div>
-            </motion.div>
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-              {data.banners.map((_, i) => (
-                <button key={i} onClick={() => setBannerIdx(i)}
-                  className={`h-2 rounded-full transition-all ${i === bannerIdx ? 'w-5 bg-primary-foreground' : 'w-2 bg-primary-foreground/40'}`} />
+            </div>
+          ) : null}
+        </div>
+
+        {/* Emergency / Urgent / Help Section */}
+        <section className="px-4 py-6">
+          <div className="bg-secondary/30 rounded-2xl p-6 border border-border/30">
+            <div className="grid grid-cols-3 gap-4 md:gap-8">
+              {[
+                { icon: Zap, label: "Emergency", color: "bg-warning text-warning-foreground", to: "/app/services?type=emergency" },
+                { icon: AlertTriangle, label: "Urgent", color: "bg-primary text-primary-foreground", to: "/app/services?type=urgent" },
+                { icon: HelpCircle, label: "Help", color: "bg-info text-info-foreground", to: "/app/services?type=help" },
+              ].map((item) => (
+                <Link key={item.label} to={item.to} className="flex flex-col items-center gap-3 group">
+                  <div className="h-16 w-16 md:h-24 md:w-24 rounded-2xl bg-card border border-border/50 flex items-center justify-center group-hover:shadow-lg transition-all">
+                    <item.icon className="h-8 w-8 md:h-12 md:w-12 text-primary" />
+                  </div>
+                  <span className={`px-4 py-1.5 md:px-6 md:py-2 rounded-full text-xs md:text-sm font-semibold ${item.color}`}>
+                    {item.label}
+                  </span>
+                </Link>
               ))}
             </div>
           </div>
-        ) : null}
+        </section>
 
-        {/* Seller List / Shop Categories - Like Image 8 */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Shop by Category</h2>
-            <Link to="/app/browse" className="text-sm text-primary flex items-center gap-0.5 hover:underline">View All <ChevronRight className="h-4 w-4" /></Link>
+        {/* Best of Products - Horizontal Carousel */}
+        <section className="py-2">
+          <div className="bg-primary rounded-2xl mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4">
+              <h2 className="text-lg md:text-xl font-bold text-primary-foreground">Best of Products</h2>
+              <div className="flex gap-2">
+                <button onClick={() => setProductScrollIdx(Math.max(0, productScrollIdx - 1))}
+                  className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/30 transition-colors">
+                  <ChevronLeft className="h-4 w-4 text-primary-foreground" />
+                </button>
+                <button onClick={() => setProductScrollIdx(Math.min((data?.featuredProducts?.length || 1) - 1, productScrollIdx + 1))}
+                  className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/30 transition-colors">
+                  <ChevronRight className="h-4 w-4 text-primary-foreground" />
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-6 px-6 scrollbar-hide">
+              {isLoading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-52 w-40 rounded-xl shrink-0" />) :
+                data?.featuredProducts.map((p) => (
+                  <Link key={p.id} to={`/app/product/${p.id}`} className="shrink-0">
+                    <Card className="w-36 sm:w-44 md:w-48 overflow-hidden hover:shadow-lg transition-all bg-card border-primary/20">
+                      <div className="h-28 sm:h-36 md:h-40 bg-secondary/20 flex items-center justify-center overflow-hidden">
+                        {p.image ? (
+                          <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-4xl">{p.emoji}</span>
+                        )}
+                      </div>
+                      <div className="p-3 text-center">
+                        <p className="text-xs font-semibold truncate">{p.title}</p>
+                        <p className="text-sm font-bold text-primary mt-1">From ₹{(p.price - (p.discount || 0)).toLocaleString()}</p>
+                      </div>
+                    </Card>
+                  </Link>
+                ))}
+            </div>
           </div>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {isLoading ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-16 w-16 rounded-xl shrink-0" />) :
+        </section>
+
+        {/* Shop by Category */}
+        <section className="px-4 py-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg md:text-xl font-bold">Shop by Category</h2>
+            <Link to="/app/browse" className="text-sm text-primary flex items-center gap-0.5 hover:underline font-medium">
+              View All <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3 md:gap-4">
+            {isLoading ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
               data?.categories.map((c) => (
-                <Link key={c.id} to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-1.5 shrink-0">
-                  <div className="h-16 w-16 rounded-2xl bg-secondary/50 border border-border/50 flex items-center justify-center text-2xl hover:border-primary/30 hover:shadow-md transition-all">
-                    {c.image}
+                <Link key={c.id} to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-2 group">
+                  <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl bg-secondary/50 border border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/30 group-hover:shadow-md transition-all">
+                    {c.image && !c.image.startsWith('/') ? (
+                      <span className="text-2xl md:text-3xl">{c.image}</span>
+                    ) : c.image ? (
+                      <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-2xl" />
+                    ) : (
+                      <span className="text-2xl">📦</span>
+                    )}
                   </div>
-                  <span className="text-[11px] font-medium text-center max-w-[64px] leading-tight">{c.name}</span>
+                  <span className="text-[11px] md:text-xs font-medium text-center leading-tight">{c.name}</span>
                 </Link>
               ))}
           </div>
         </section>
 
-        {/* Seller List - Vendor Cards like Image 8 */}
-        <section>
+        {/* Seller List / Vendor Cards */}
+        <section className="px-4 py-2">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold">Seller List</h2>
+            <h2 className="text-lg md:text-xl font-bold">Seller List</h2>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1">Filters</Button>
-              <Button variant="outline" size="sm" className="h-7 text-xs gap-1">Sort by</Button>
+              <Button variant="outline" size="sm" className="h-8 text-xs gap-1">Filters</Button>
+              <Button variant="outline" size="sm" className="h-8 text-xs gap-1">Sort by</Button>
             </div>
           </div>
-          <motion.div variants={containerAnim} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />) :
-              data?.featuredProducts.map((p) => {
+          <motion.div variants={containerAnim} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-60 rounded-xl" />) :
+              data?.featuredProducts.slice(0, 8).map((p) => {
                 const discountPct = p.discount ? Math.round((p.discount / p.price) * 100) : 0;
                 return (
                   <motion.div key={p.id} variants={itemAnim}>
                     <Link to={`/app/product/${p.id}`}>
-                      <Card className="overflow-hidden hover:shadow-md transition-all group">
-                        <div className="bg-secondary/30 h-32 sm:h-40 flex items-center justify-center text-4xl relative">
+                      <Card className="overflow-hidden hover:shadow-lg transition-all group">
+                        <div className="bg-secondary/20 h-36 sm:h-44 md:h-48 flex items-center justify-center relative overflow-hidden">
                           {discountPct > 0 && (
-                            <span className="absolute top-2 left-2 bg-primary/90 text-primary-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">
-                              {discountPct}% Off Every Purchase
+                            <span className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-[9px] md:text-[10px] px-2 py-0.5 rounded-sm font-medium">
+                              {discountPct}% Off
                             </span>
                           )}
-                          {p.emoji}
-                          <button className="absolute top-2 right-2 h-7 w-7 rounded-full bg-card/80 flex items-center justify-center">
+                          {p.image ? (
+                            <img src={p.image} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          ) : (
+                            <span className="text-5xl">{p.emoji}</span>
+                          )}
+                          <button className="absolute top-2 right-2 h-7 w-7 rounded-full bg-card/80 flex items-center justify-center z-10">
                             <Heart className="h-3.5 w-3.5 text-muted-foreground" />
                           </button>
-                          <span className="absolute bottom-2 left-2 bg-card/90 text-[9px] px-1.5 py-0.5 rounded text-muted-foreground flex items-center gap-0.5">
+                          <span className="absolute bottom-2 left-2 bg-card/90 text-[9px] px-1.5 py-0.5 rounded text-muted-foreground flex items-center gap-0.5 z-10">
                             <MapPin className="h-2.5 w-2.5" /> 1.5 km
                           </span>
                         </div>
-                        <div className="p-2.5">
+                        <div className="p-3">
                           <div className="flex items-center justify-between">
                             <h3 className="text-sm font-semibold truncate">{p.vendor_name}</h3>
                             <div className="flex items-center gap-0.5">
@@ -154,12 +258,10 @@ export default function CustomerHomePage() {
                           </div>
                           <p className="text-[10px] text-muted-foreground">{p.category_name}</p>
                           <div className="flex items-center justify-between mt-1.5">
-                            <span className="text-[10px] text-muted-foreground">Min ₹{p.price.toLocaleString()}</span>
-                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                              <Star className="h-2.5 w-2.5" /> {p.max_points_redeemable} pts
-                            </span>
+                            <span className="text-xs font-bold text-primary">₹{(p.price - (p.discount || 0)).toLocaleString()}</span>
+                            {p.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">₹{p.price.toLocaleString()}</span>}
                           </div>
-                          <div className="flex items-center gap-1 mt-1">
+                          <div className="flex items-center gap-1 mt-1.5">
                             <Clock className="h-2.5 w-2.5 text-primary" />
                             <span className="text-[10px] text-primary font-medium">Delivery in 60 Min</span>
                           </div>
@@ -172,48 +274,169 @@ export default function CustomerHomePage() {
           </motion.div>
         </section>
 
-        {/* Services Section */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Book a Service</h2>
-            <Link to="/app/services" className="text-sm text-primary flex items-center gap-0.5 hover:underline">View All <ChevronRight className="h-4 w-4" /></Link>
+        {/* Top Servicers Section */}
+        <section className="py-6">
+          <div className="bg-primary rounded-2xl mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4">
+              <h2 className="text-lg md:text-xl font-bold text-primary-foreground">Top Servicers</h2>
+              <div className="flex gap-2">
+                <button onClick={() => setServiceScrollIdx(Math.max(0, serviceScrollIdx - 1))}
+                  className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/30">
+                  <ChevronLeft className="h-4 w-4 text-primary-foreground" />
+                </button>
+                <button onClick={() => setServiceScrollIdx(serviceScrollIdx + 1)}
+                  className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/30">
+                  <ChevronRight className="h-4 w-4 text-primary-foreground" />
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-6 px-6 scrollbar-hide">
+              {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-64 w-56 rounded-xl shrink-0" />) :
+                data?.featuredServices?.map((s) => (
+                  <Link key={s.id} to={`/app/services/${s.id}`} className="shrink-0">
+                    <Card className="w-52 sm:w-60 md:w-64 overflow-hidden hover:shadow-lg transition-all">
+                      <div className="h-36 md:h-44 bg-secondary/20 relative overflow-hidden">
+                        {s.image ? (
+                          <img src={s.image} alt={s.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+                            <span className="text-4xl">{s.emoji}</span>
+                          </div>
+                        )}
+                        <Badge className="absolute top-2 left-2 bg-success/90 text-success-foreground text-[9px]">New Arrival</Badge>
+                        <span className="absolute bottom-2 left-2 bg-card/90 text-[9px] px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                          <MapPin className="h-2.5 w-2.5" /> 1.5 km
+                        </span>
+                      </div>
+                      <div className="p-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold truncate flex-1">{s.vendor_name}</h3>
+                          <div className="flex items-center gap-0.5">
+                            <Star className="h-3 w-3 fill-warning text-warning" />
+                            <span className="text-xs font-medium">{s.rating}</span>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">{s.category_name}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{s.description?.slice(0, 40)}...</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Clock className="h-2.5 w-2.5 text-muted-foreground" />
+                          <span className="text-[10px] text-muted-foreground">{s.duration}</span>
+                        </div>
+                        <Button size="sm" className="w-full mt-2 h-8 text-xs">Book Consultant @₹49</Button>
+                      </div>
+                    </Card>
+                  </Link>
+                ))}
+            </div>
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            {isLoading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) :
-              data?.serviceCategories.map((c) => (
-                <Link to={`/app/services?category=${c.name}`} key={c.id} className="bg-card rounded-xl border border-border/50 p-4 text-center hover:border-primary/30 hover:shadow-md transition-all">
-                  <span className="text-2xl">{c.image}</span>
-                  <p className="text-xs font-medium mt-2">{c.name}</p>
+        </section>
+
+        {/* Most Booked Services */}
+        <section className="px-4 py-4">
+          <h2 className="text-lg md:text-xl font-bold mb-4">Most Booked Services</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
+            {isLoading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />) :
+              data?.featuredServices?.slice(0, 5).map((s) => (
+                <Link key={s.id} to={`/app/services/${s.id}`}>
+                  <Card className="overflow-hidden hover:shadow-lg transition-all group">
+                    <div className="h-32 md:h-40 bg-secondary/20 relative overflow-hidden">
+                      {s.image ? (
+                        <img src={s.image} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><span className="text-3xl">{s.emoji}</span></div>
+                      )}
+                      <div className="absolute top-2 left-2 flex items-center gap-0.5 bg-card/90 px-1.5 py-0.5 rounded">
+                        <Star className="h-2.5 w-2.5 fill-warning text-warning" />
+                        <span className="text-[10px] font-medium">{s.rating}</span>
+                      </div>
+                      <button className="absolute top-2 right-2 h-6 w-6 rounded-full bg-card/80 flex items-center justify-center">
+                        <Heart className="h-3 w-3 text-muted-foreground" />
+                      </button>
+                    </div>
+                    <div className="p-3">
+                      <h3 className="text-xs font-semibold leading-tight line-clamp-2">{s.title}</h3>
+                      <div className="flex items-center gap-1 mt-1.5">
+                        <span className="text-sm font-bold">₹{(s.price - (s.discount || 0)).toLocaleString()}</span>
+                        {s.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">₹{s.price}</span>}
+                      </div>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Clock className="h-2.5 w-2.5 text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground">{s.duration}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">{s.description?.slice(0, 60)}...</p>
+                      {s.discount > 0 && (
+                        <Badge variant="destructive" className="mt-1.5 text-[9px] px-1.5">
+                          {Math.round((s.discount / s.price) * 100)}% OFF
+                        </Badge>
+                      )}
+                    </div>
+                  </Card>
                 </Link>
               ))}
           </div>
         </section>
 
+        {/* Service Categories Grid (Home Services) */}
+        <section className="px-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Left - Title Card */}
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-6 flex flex-col justify-center border border-primary/10">
+              <h2 className="text-xl md:text-2xl font-bold">Book a Service</h2>
+              <p className="text-sm text-muted-foreground mt-2">Professional services at your doorstep</p>
+              <Link to="/app/services">
+                <Button size="sm" className="mt-4 w-fit">View All Services</Button>
+              </Link>
+            </div>
+            {/* Right - Service Category Grid */}
+            <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {isLoading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) :
+                data?.serviceCategories.slice(0, 8).map((c) => (
+                  <Link to={`/app/services?category=${c.name}`} key={c.id}
+                    className="bg-card rounded-xl border border-border/50 p-3 hover:border-primary/30 hover:shadow-md transition-all flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-secondary/50 flex items-center justify-center overflow-hidden shrink-0">
+                      {c.image && c.image.startsWith('/') ? (
+                        <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-lg" />
+                      ) : (
+                        <span className="text-xl">{c.image}</span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold leading-tight">{c.name}</p>
+                      <p className="text-[10px] text-muted-foreground">From ₹349</p>
+                    </div>
+                  </Link>
+                ))}
+            </div>
+          </div>
+        </section>
+
         {/* Trust Bar */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 px-4 py-4">
           {[
             { icon: Shield, text: "100% Genuine", sub: "Verified vendors" },
             { icon: Clock, text: "Fast Delivery", sub: "Within 48 hours" },
             { icon: Sparkles, text: "Earn Rewards", sub: "On every order" },
           ].map((b) => (
-            <Card key={b.text} className="p-3 text-center">
-              <b.icon className="h-5 w-5 mx-auto text-primary mb-1" />
-              <p className="text-xs font-semibold">{b.text}</p>
-              <p className="text-[10px] text-muted-foreground">{b.sub}</p>
+            <Card key={b.text} className="p-3 md:p-4 text-center">
+              <b.icon className="h-5 w-5 md:h-6 md:w-6 mx-auto text-primary mb-1" />
+              <p className="text-xs md:text-sm font-semibold">{b.text}</p>
+              <p className="text-[10px] md:text-xs text-muted-foreground">{b.sub}</p>
             </Card>
           ))}
         </div>
 
         {/* Classifieds CTA */}
-        <section className="gradient-info rounded-2xl p-6 md:p-8 text-primary-foreground">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <h2 className="text-lg md:text-2xl font-bold">Buy & Sell Locally</h2>
-              <p className="text-xs sm:text-sm opacity-90 mt-1">Post free classified ads and find great deals near you</p>
-            </div>
-            <div className="flex gap-2">
-              <Link to="/app/classifieds"><Button variant="secondary" size="sm">Browse Ads</Button></Link>
-              <Link to="/app/classifieds/post"><Button variant="secondary" size="sm">Post Ad Free</Button></Link>
+        <section className="px-4 py-4">
+          <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-6 md:p-8 text-primary-foreground">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg md:text-2xl font-bold">Buy & Sell Locally</h2>
+                <p className="text-xs sm:text-sm opacity-90 mt-1">Post free classified ads and find great deals near you</p>
+              </div>
+              <div className="flex gap-2">
+                <Link to="/app/classifieds"><Button variant="secondary" size="sm">Browse Ads</Button></Link>
+                <Link to="/app/classifieds/post"><Button variant="secondary" size="sm">Post Ad Free</Button></Link>
+              </div>
             </div>
           </div>
         </section>

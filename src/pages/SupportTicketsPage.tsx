@@ -15,8 +15,8 @@ import { Headphones, MessageSquare, Clock, CheckCircle } from "lucide-react";
 
 interface SupportTicket {
   id: string; subject: string; description: string; category: string; priority: string;
-  status: string; customer_id: string; customer_name: string; phone: string;
-  assigned_to: string; resolution?: string; created_at: string; updated_at: string;
+  status: string; customer_id: string; customer_name: string; phone?: string;
+  assigned_to: string; resolution?: string; resolution_notes?: string; created_at: string; updated_at: string;
 }
 
 export default function SupportTicketsPage() {
