@@ -138,7 +138,7 @@ export interface DashboardStats {
 
 export interface CartItem {
   id: string; title: string; price: number; qty: number; vendor: string;
-  vendor_id: string; emoji: string; maxPoints: number; tax: number; discount: number;
+  vendor_id: string; emoji: string; image?: string; maxPoints: number; tax: number; discount: number;
 }
 
 // Auth token management (kept for backwards compat but not used for Supabase)
