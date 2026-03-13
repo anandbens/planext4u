@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          metadata: Json | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          metadata?: Json | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          metadata?: Json | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       advertisements: {
         Row: {
           advertiser: string
@@ -256,6 +283,45 @@ export type Database = {
         Update: {
           id?: number
           name?: string
+        }
+        Relationships: []
+      }
+      customer_addresses: {
+        Row: {
+          address_line: string
+          city: string
+          created_at: string | null
+          customer_id: string
+          id: string
+          is_default: boolean | null
+          label: string
+          pincode: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          address_line: string
+          city?: string
+          created_at?: string | null
+          customer_id: string
+          id?: string
+          is_default?: boolean | null
+          label?: string
+          pincode?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          address_line?: string
+          city?: string
+          created_at?: string | null
+          customer_id?: string
+          id?: string
+          is_default?: boolean | null
+          label?: string
+          pincode?: string
+          type?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
