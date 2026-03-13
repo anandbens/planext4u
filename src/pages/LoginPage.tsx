@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, LogIn, Shield, Banknote, ShoppingCart } from "lucide-react";
+import { Eye, EyeOff, LogIn, Shield, Banknote, ShoppingCart, Database } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import p4uLogo from "@/assets/p4u-logo.png";
@@ -15,12 +15,13 @@ const QUICK_LOGINS = [
 ];
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, seedDemoUsers } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +30,11 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast.success("Welcome back!");
-      navigate("/", { replace: true });
-    } catch { toast.error("Invalid admin credentials. Only authorized admin accounts can login."); }
-    finally { setLoading(false); }
+      // Small delay to allow onAuthStateChange to fire
+      setTimeout(() => navigate("/", { replace: true }), 500);
+    } catch (err: any) {
+      toast.error(err.message || "Invalid credentials. Make sure demo users are seeded first.");
+    } finally { setLoading(false); }
   };
 
   const quickLogin = async (cred: typeof QUICK_LOGINS[0]) => {
@@ -41,9 +44,20 @@ export default function LoginPage() {
     try {
       await login(cred.email, cred.password);
       toast.success(`Welcome, ${cred.role}!`);
-      navigate("/", { replace: true });
-    } catch { toast.error("Login failed"); }
-    finally { setLoading(false); }
+      setTimeout(() => navigate("/", { replace: true }), 500);
+    } catch (err: any) {
+      toast.error(err.message || "Login failed. Have you seeded demo users?");
+    } finally { setLoading(false); }
+  };
+
+  const handleSeedUsers = async () => {
+    setSeeding(true);
+    try {
+      await seedDemoUsers();
+      toast.success("Demo users created! You can now login with the quick login buttons.");
+    } catch (err: any) {
+      toast.error("Failed to seed users: " + (err.message || "Unknown error"));
+    } finally { setSeeding(false); }
   };
 
   return (
@@ -70,6 +84,17 @@ export default function LoginPage() {
 
           {/* Form */}
           <div className="p-6 space-y-4">
+            {/* Seed Button */}
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-brand-amber/30 text-brand-amber hover:bg-brand-amber/10"
+              onClick={handleSeedUsers}
+              disabled={seeding}
+            >
+              <Database className="h-4 w-4" />
+              {seeding ? "Creating demo accounts..." : "🔧 First time? Seed Demo Users"}
+            </Button>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input placeholder="Admin Email" value={email} onChange={(e) => setEmail(e.target.value)}
                 className="h-12 rounded-xl border-border/60 focus:border-brand-teal" type="email" />
