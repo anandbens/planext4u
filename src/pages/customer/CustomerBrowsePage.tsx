@@ -69,7 +69,7 @@ export default function CustomerBrowsePage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-20 md:pb-6">
+      <div className="max-w-7xl mx-auto px-4 py-4 pb-28 md:pb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold">{categoryFilter || searchFilter || "All Products"}</h1>
@@ -207,7 +207,7 @@ export default function CustomerBrowsePage() {
       <AnimatePresence>
         {cartCount > 0 && (
           <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
-            className="fixed bottom-16 md:bottom-4 left-4 right-4 z-40 max-w-lg mx-auto">
+            className="fixed bottom-14 md:bottom-4 left-4 right-4 z-40 max-w-lg mx-auto">
             <Button className="w-full h-12 rounded-2xl shadow-lg text-base gap-2 justify-between px-5" onClick={() => navigate('/app/cart')}>
               <div className="flex items-center gap-2">
                 <ShoppingCart className="h-4 w-4" />
