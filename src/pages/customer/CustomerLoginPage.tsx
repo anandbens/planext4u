@@ -3,79 +3,52 @@ import { useAuth } from "@/lib/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Mail, Phone } from "lucide-react";
+import { Eye, EyeOff, Mail, Database } from "lucide-react";
 import { toast } from "sonner";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
-  const { customerLogin } = useAuth();
+  const { customerLogin, seedDemoUsers } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"email" | "mobile" | "otp">("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [otpTimer, setOtpTimer] = useState(30);
+  const [seeding, setSeeding] = useState(false);
 
-  const sendOtp = () => {
-    if (mode === "email" && !email.trim()) { toast.error("Please enter email"); return; }
-    if (mode === "mobile" && !mobile.trim()) { toast.error("Please enter mobile number"); return; }
-    setMode("otp");
-    setOtpTimer(30);
-    toast.success("OTP sent! Use 226688 for demo");
-    const interval = setInterval(() => {
-      setOtpTimer(prev => { if (prev <= 1) { clearInterval(interval); return 0; } return prev - 1; });
-    }, 1000);
-  };
-
-  const verifyOtp = async () => {
-    if (otp.length < 6) { toast.error("Please enter complete OTP"); return; }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password.trim()) { toast.error("Please enter email and password"); return; }
     setLoading(true);
     try {
-      await customerLogin(email || mobile, otp);
+      await customerLogin(email, password);
       toast.success("Welcome to Planext4u!");
-      navigate("/app", { replace: true });
-    } catch { toast.error("Invalid OTP. Use 226688 for demo."); }
-    finally { setLoading(false); }
+      setTimeout(() => navigate("/app", { replace: true }), 500);
+    } catch (err: any) {
+      toast.error(err.message || "Invalid credentials");
+    } finally { setLoading(false); }
   };
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) { toast.error("Please enter email"); return; }
-    // Email login → send OTP
-    sendOtp();
+  const quickLogin = async () => {
+    setLoading(true);
+    try {
+      await customerLogin("customer@planext4u.com", "P4u@Customer2026");
+      toast.success("Welcome to Planext4u!");
+      setTimeout(() => navigate("/app", { replace: true }), 500);
+    } catch (err: any) {
+      toast.error(err.message || "Login failed. Seed demo users first.");
+    } finally { setLoading(false); }
   };
 
-  if (mode === "otp") {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <button onClick={() => setMode("email")} className="self-start mb-8 text-muted-foreground hover:text-foreground text-sm">← Back</button>
-          <h1 className="text-2xl font-bold">Enter confirmation code</h1>
-          <p className="text-sm text-muted-foreground mt-2 text-center">A 6-digit code was sent to<br />{email || mobile}</p>
-          <p className="text-sm font-mono mt-3 text-primary">{Math.floor(otpTimer / 60).toString().padStart(2, '0')}:{(otpTimer % 60).toString().padStart(2, '0')}</p>
-          <div className="mt-6">
-            <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-              <InputOTPGroup>
-                {[0,1,2,3,4,5].map(i => (<InputOTPSlot key={i} index={i} className="h-12 w-12 text-lg border-border" />))}
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">Demo OTP: <span className="font-mono text-primary font-bold">226688</span></p>
-          <p className="text-sm mt-4 text-muted-foreground">
-            Don't get the OTP?{" "}
-            <button onClick={sendOtp} className="text-primary font-semibold hover:underline" disabled={otpTimer > 0}>Resend Code</button>
-          </p>
-          <Button className="w-full max-w-xs mt-8 h-12 bg-primary" onClick={verifyOtp} disabled={loading || otp.length < 6}>
-            {loading ? "Verifying..." : "Verify & Continue"}
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const handleSeedUsers = async () => {
+    setSeeding(true);
+    try {
+      await seedDemoUsers();
+      toast.success("Demo users created!");
+    } catch (err: any) {
+      toast.error("Failed: " + (err.message || "Unknown error"));
+    } finally { setSeeding(false); }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -91,12 +64,22 @@ export default function CustomerLoginPage() {
       <div className="flex-1 bg-card -mt-6 rounded-t-3xl px-6 pt-8 pb-6">
         <h2 className="text-xl font-bold text-center mb-6">Log in or Sign up</h2>
 
-        {mode === "email" ? (
-          <form onSubmit={handleEmailLogin} className="space-y-4 max-w-sm mx-auto">
+        <div className="space-y-4 max-w-sm mx-auto">
+          <Button
+            variant="outline"
+            className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10"
+            onClick={handleSeedUsers}
+            disabled={seeding}
+          >
+            <Database className="h-4 w-4" />
+            {seeding ? "Creating demo accounts..." : "🔧 First time? Seed Demo Users"}
+          </Button>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Enter E-mail ID" value={email} onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 h-12 text-base rounded-xl" />
+                className="pl-10 h-12 text-base rounded-xl" type="email" />
             </div>
             <div className="relative">
               <Input type={showPassword ? "text" : "password"} placeholder="Enter password"
@@ -107,26 +90,19 @@ export default function CustomerLoginPage() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            <Button type="button" className="w-full h-12 rounded-xl text-base bg-primary" onClick={sendOtp}>
-              Send OTP →
+            <Button type="submit" className="w-full h-12 rounded-xl text-base bg-primary" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In →"}
             </Button>
-            <button type="button" className="text-sm text-primary w-full text-center hover:underline" onClick={() => setMode("mobile")}>
-              Or Mobile Number
-            </button>
           </form>
-        ) : (
-          <div className="space-y-4 max-w-sm mx-auto">
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Enter Mobile Number" value={mobile} onChange={(e) => setMobile(e.target.value)}
-                className="pl-10 h-12 text-base rounded-xl" type="tel" />
-            </div>
-            <Button className="w-full h-12 rounded-xl text-base bg-primary" onClick={sendOtp}>Send OTP →</Button>
-            <button type="button" className="text-sm text-primary w-full text-center hover:underline" onClick={() => setMode("email")}>Or E-mail ID</button>
-          </div>
-        )}
 
-        {/* Social Login - Customer only */}
+          <button onClick={quickLogin} disabled={loading}
+            className="w-full bg-secondary/50 rounded-xl border border-border/50 p-3 text-center hover:border-primary/40 transition-all">
+            <p className="text-xs font-semibold">Quick Demo Login</p>
+            <p className="text-[10px] text-muted-foreground">customer@planext4u.com / P4u@Customer2026</p>
+          </button>
+        </div>
+
+        {/* Social Login */}
         <div className="mt-6 text-center max-w-sm mx-auto">
           <p className="text-xs text-muted-foreground mb-3">Or login with</p>
           <div className="flex justify-center gap-4">

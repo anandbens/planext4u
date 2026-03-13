@@ -15,7 +15,7 @@ export default function CustomerPostAdPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", price: "", category: "", city: "Mumbai", area: "" });
 
-  const categories = api.getClassifiedCategories();
+  const categories = api.getClassifiedCategories().map(c => typeof c === 'string' ? c : c.name);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

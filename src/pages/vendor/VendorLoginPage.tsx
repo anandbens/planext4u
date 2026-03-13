@@ -3,17 +3,18 @@ import { useAuth } from "@/lib/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, LogIn, Store } from "lucide-react";
+import { Eye, EyeOff, LogIn, Store, Database } from "lucide-react";
 import { toast } from "sonner";
 import p4uLogo from "@/assets/p4u-logo.png";
 
 export default function VendorLoginPage() {
-  const { vendorLogin } = useAuth();
+  const { vendorLogin, seedDemoUsers } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [seeding, setSeeding] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,9 +23,10 @@ export default function VendorLoginPage() {
     try {
       await vendorLogin(email, password);
       toast.success("Welcome to Vendor Portal!");
-      navigate("/vendor", { replace: true });
-    } catch { toast.error("Invalid vendor credentials"); }
-    finally { setLoading(false); }
+      setTimeout(() => navigate("/vendor", { replace: true }), 500);
+    } catch (err: any) {
+      toast.error(err.message || "Invalid vendor credentials");
+    } finally { setLoading(false); }
   };
 
   const quickLogin = async () => {
@@ -34,9 +36,20 @@ export default function VendorLoginPage() {
     try {
       await vendorLogin("vendor@planext4u.com", "P4u@Vendor2026");
       toast.success("Welcome, TechMart!");
-      navigate("/vendor", { replace: true });
-    } catch { toast.error("Login failed"); }
-    finally { setLoading(false); }
+      setTimeout(() => navigate("/vendor", { replace: true }), 500);
+    } catch (err: any) {
+      toast.error(err.message || "Login failed. Seed demo users first.");
+    } finally { setLoading(false); }
+  };
+
+  const handleSeedUsers = async () => {
+    setSeeding(true);
+    try {
+      await seedDemoUsers();
+      toast.success("Demo users created!");
+    } catch (err: any) {
+      toast.error("Failed: " + (err.message || "Unknown error"));
+    } finally { setSeeding(false); }
   };
 
   return (
@@ -63,6 +76,16 @@ export default function VendorLoginPage() {
           </div>
 
           <div className="p-6 space-y-4">
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-brand-amber/30 text-brand-amber hover:bg-brand-amber/10"
+              onClick={handleSeedUsers}
+              disabled={seeding}
+            >
+              <Database className="h-4 w-4" />
+              {seeding ? "Creating demo accounts..." : "🔧 First time? Seed Demo Users"}
+            </Button>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input placeholder="Vendor Email" value={email} onChange={(e) => setEmail(e.target.value)}
                 className="h-12 rounded-xl" type="email" />

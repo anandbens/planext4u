@@ -29,7 +29,7 @@ export default function VendorDashboardPage() {
       <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-bold">{data?.vendor.business_name || "Loading..."}</h1>
+            <h1 className="text-lg font-bold">{(data?.vendor as any)?.business_name || "Loading..."}</h1>
             <p className="text-xs text-muted-foreground">Vendor Dashboard</p>
           </div>
           <div className="flex items-center gap-2">
@@ -45,7 +45,7 @@ export default function VendorDashboardPage() {
             { icon: DollarSign, label: "Total Revenue", value: `₹${(data?.todayRevenue || 0).toLocaleString()}`, trend: `${data?.orders.length} orders` },
             { icon: ShoppingCart, label: "Active Orders", value: String(data?.activeOrders || 0), trend: "" },
             { icon: Package, label: "Products", value: String(data?.products.length || 0), trend: "" },
-            { icon: Star, label: "Rating", value: String(data?.vendor.rating || 0), trend: `${data?.vendor.total_orders} total orders` },
+            { icon: Star, label: "Rating", value: String((data?.vendor as any)?.rating || 0), trend: `${(data?.vendor as any)?.total_orders || 0} total orders` },
           ].map((s) => (
             <Card key={s.label} className="p-4">
               <div className="flex items-center justify-between mb-2"><span className="text-xs text-muted-foreground">{s.label}</span><s.icon className="h-4 w-4 text-muted-foreground" /></div>

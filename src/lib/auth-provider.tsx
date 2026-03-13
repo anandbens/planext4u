@@ -1,21 +1,8 @@
-import { useEffect, useState, ReactNode } from "react";
-import { setAuthToken } from "@/lib/api";
+import { useEffect, useState, ReactNode, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { AuthContext } from "@/lib/auth-context";
 import { logActivity } from "@/lib/activity-log";
-import type { AuthUser, CustomerUser, VendorUser, UserRole } from "@/lib/auth-types";
-
-const ADMIN_CREDENTIALS: Record<string, { password: string; name: string; role: UserRole }> = {
-  'admin@planext4u.com': { password: 'P4u@Admin2026', name: 'Super Admin', role: 'admin' },
-  'finance@planext4u.com': { password: 'P4u@Finance2026', name: 'Finance Manager', role: 'finance' },
-  'sales@planext4u.com': { password: 'P4u@Sales2026', name: 'Sales Executive', role: 'sales' },
-};
-
-const VENDOR_CREDENTIALS: Record<string, { password: string; name: string; business: string; id: string }> = {
-  'vendor@planext4u.com': { password: 'P4u@Vendor2026', name: 'Ravi Kumar', business: 'TechMart', id: 'VND-001' },
-  'ravi@techmart.com': { password: 'vendor123', name: 'Ravi Kumar', business: 'TechMart', id: 'VND-001' },
-};
-
-const DEMO_OTP = '226688';
+import type { AuthUser, CustomerUser, VendorUser, UserRole, AppRole } from "@/lib/auth-types";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -23,84 +10,159 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [vendorUser, setVendorUser] = useState<VendorUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    try {
-      const token = localStorage.getItem("admin_token");
-      const savedUser = localStorage.getItem("admin_user");
-      const savedCustomer = localStorage.getItem("customer_user");
-      const savedVendor = localStorage.getItem("vendor_user");
+  const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string) => {
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role, vendor_id, customer_id")
+      .eq("user_id", supabaseUid);
 
-      if (token && savedUser) {
-        setAuthToken(token);
-        setUser(JSON.parse(savedUser));
-      }
-      if (savedCustomer) setCustomerUser(JSON.parse(savedCustomer));
-      if (savedVendor) setVendorUser(JSON.parse(savedVendor));
-    } catch {
-      localStorage.removeItem("admin_user");
-      localStorage.removeItem("customer_user");
-      localStorage.removeItem("vendor_user");
-      localStorage.removeItem("admin_token");
-      setAuthToken(null);
-    } finally {
-      setIsLoading(false);
+    if (!roles || roles.length === 0) return;
+
+    const roleRecord = roles[0];
+    const role = roleRecord.role as AppRole;
+
+    if (role === 'admin' || role === 'finance' || role === 'sales') {
+      const authUser: AuthUser = {
+        id: supabaseUid,
+        name,
+        email,
+        role: role as UserRole,
+        portal: 'admin',
+        supabase_uid: supabaseUid,
+      };
+      setUser(authUser);
+      localStorage.setItem("admin_user", JSON.stringify(authUser));
+    } else if (role === 'vendor') {
+      // Load vendor details
+      const vendorId = roleRecord.vendor_id || 'VND-001';
+      const { data: vendor } = await supabase
+        .from("vendors")
+        .select("id, name, business_name, email")
+        .eq("id", vendorId)
+        .single();
+
+      const vu: VendorUser = {
+        id: vendor?.id || vendorId,
+        name: vendor?.name || name,
+        email: vendor?.email || email,
+        business_name: vendor?.business_name || '',
+        vendor_id: vendorId,
+        supabase_uid: supabaseUid,
+      };
+      setVendorUser(vu);
+      localStorage.setItem("vendor_user", JSON.stringify(vu));
+    } else if (role === 'customer') {
+      const customerId = roleRecord.customer_id || 'USR-001';
+      const { data: customer } = await supabase
+        .from("customers")
+        .select("id, name, email, mobile")
+        .eq("id", customerId)
+        .single();
+
+      const cu: CustomerUser = {
+        id: customer?.id || customerId,
+        name: customer?.name || name,
+        email: customer?.email || email,
+        mobile: customer?.mobile || '',
+        customer_id: customerId,
+        supabase_uid: supabaseUid,
+      };
+      setCustomerUser(cu);
+      localStorage.setItem("customer_user", JSON.stringify(cu));
     }
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const cred = ADMIN_CREDENTIALS[email.toLowerCase()];
-    if (!cred || cred.password !== password) throw new Error('Invalid admin credentials');
+  useEffect(() => {
+    // Set up auth state listener BEFORE checking session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const { id, email, user_metadata } = session.user;
+        const name = user_metadata?.name || email?.split('@')[0] || '';
+        // Use setTimeout to avoid potential deadlocks with Supabase client
+        setTimeout(() => loadUserRole(id, email || '', name), 0);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setCustomerUser(null);
+        setVendorUser(null);
+        localStorage.removeItem("admin_user");
+        localStorage.removeItem("customer_user");
+        localStorage.removeItem("vendor_user");
+      }
+    });
 
-    const authUser: AuthUser = { id: '1', name: cred.name, email, role: cred.role, portal: 'admin' };
-    setAuthToken('mock-admin-jwt-token');
-    localStorage.setItem("admin_user", JSON.stringify(authUser));
-    setUser(authUser);
+    // Check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const { id, email, user_metadata } = session.user;
+        const name = user_metadata?.name || email?.split('@')[0] || '';
+        loadUserRole(id, email || '', name).finally(() => setIsLoading(false));
+      } else {
+        // Try to restore from localStorage as fallback
+        try {
+          const savedUser = localStorage.getItem("admin_user");
+          const savedCustomer = localStorage.getItem("customer_user");
+          const savedVendor = localStorage.getItem("vendor_user");
+          if (savedUser) setUser(JSON.parse(savedUser));
+          if (savedCustomer) setCustomerUser(JSON.parse(savedCustomer));
+          if (savedVendor) setVendorUser(JSON.parse(savedVendor));
+        } catch { /* ignore */ }
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [loadUserRole]);
+
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+    // Role loading happens in onAuthStateChange
   };
 
-  const customerLogin = async (identifier: string, otp: string) => {
-    if (otp !== DEMO_OTP) throw new Error('Invalid OTP');
-
-    const cu: CustomerUser = {
-      id: 'USR-001',
-      name: 'Rahul Sharma',
-      email: identifier.includes('@') ? identifier : 'customer@planext4u.com',
-      mobile: identifier.includes('@') ? '+91 98765 43210' : identifier,
-    };
-
-    localStorage.setItem("customer_user", JSON.stringify(cu));
-    setCustomerUser(cu);
-    logActivity('login', `Customer ${cu.name} logged in`);
+  const customerLogin = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+    logActivity('login', `Customer logged in with ${email}`);
   };
 
   const vendorLogin = async (email: string, password: string) => {
-    const cred = VENDOR_CREDENTIALS[email.toLowerCase()];
-    if (!cred || cred.password !== password) throw new Error('Invalid vendor credentials');
-
-    const vu: VendorUser = { id: cred.id, name: cred.name, email, business_name: cred.business };
-    localStorage.setItem("vendor_user", JSON.stringify(vu));
-    setVendorUser(vu);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
   };
 
-  const logout = () => {
-    setAuthToken(null);
-    localStorage.removeItem("admin_user");
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
+    localStorage.removeItem("admin_user");
   };
 
-  const customerLogout = () => {
-    localStorage.removeItem("customer_user");
+  const customerLogout = async () => {
+    await supabase.auth.signOut();
     setCustomerUser(null);
+    localStorage.removeItem("customer_user");
   };
 
-  const vendorLogout = () => {
-    localStorage.removeItem("vendor_user");
+  const vendorLogout = async () => {
+    await supabase.auth.signOut();
     setVendorUser(null);
+    localStorage.removeItem("vendor_user");
   };
 
   const hasAccess = (allowedRoles: UserRole[]) => {
     if (!user) return false;
     if (user.role === 'admin') return true;
     return allowedRoles.includes(user.role);
+  };
+
+  const seedDemoUsers = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('seed-users');
+      if (error) throw error;
+      console.log('Demo users seeded:', data);
+    } catch (err) {
+      console.error('Failed to seed demo users:', err);
+      throw err;
+    }
   };
 
   return (
@@ -118,10 +180,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         customerLogout,
         vendorLogout,
         hasAccess,
+        seedDemoUsers,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
-
