@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Download, DollarSign, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 import { downloadCSV } from "@/lib/csv";
+import { cn } from "@/lib/utils";
 
 const data = [
   { week: "W1", settled: 820000, pending: 180000, commission: 98000 },
