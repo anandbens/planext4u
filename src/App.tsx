@@ -54,6 +54,7 @@ import PaymentReportPage from "./pages/reports/PaymentReportPage";
 // Customer pages
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
 import CustomerBrowsePage from "./pages/customer/CustomerBrowsePage";
+import CustomerVendorPage from "./pages/customer/CustomerVendorPage";
 import CustomerProductPage from "./pages/customer/CustomerProductPage";
 import CustomerCartPage from "./pages/customer/CustomerCartPage";
 import CustomerOrdersPage from "./pages/customer/CustomerOrdersPage";
