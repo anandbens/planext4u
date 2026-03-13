@@ -71,9 +71,12 @@ import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
 import VendorDashboardPage from "./pages/vendor/VendorDashboardPage";
 import VendorProductsPage from "./pages/vendor/VendorProductsPage";
+import VendorServicesPage from "./pages/vendor/VendorServicesPage";
 import VendorOrdersPage from "./pages/vendor/VendorOrdersPage";
 import VendorSettlementsPage from "./pages/vendor/VendorSettlementsPage";
 import VendorProfilePage from "./pages/vendor/VendorProfilePage";
+import VendorBankPage from "./pages/vendor/VendorBankPage";
+import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
 
 const queryClient = new QueryClient();
 
