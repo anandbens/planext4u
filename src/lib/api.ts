@@ -221,7 +221,7 @@ export const api = {
       { data: orders },
       { data: settlements },
       { data: classifieds },
-      { data: services },
+      { count: totalServices },
       { data: categories },
       { data: serviceCategories },
       { data: allVendors },
