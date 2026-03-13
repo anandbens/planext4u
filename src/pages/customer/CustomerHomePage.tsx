@@ -58,8 +58,8 @@ export default function CustomerHomePage() {
     <CustomerLayout>
       <div className="max-w-7xl mx-auto space-y-0 pb-24 md:pb-6">
         {/* Mobile Category Icons Row - improved with circular avatars */}
-        <div className="px-4 pt-4 md:hidden">
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-3">
+        <div className="px-4 pt-5 md:hidden">
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-3 pt-1 pl-1">
             {categoryIcons.map((cat, i) => (
               <motion.div
                 key={cat.label}
