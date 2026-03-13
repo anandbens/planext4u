@@ -1,24 +1,24 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Package, ChevronRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-const orders = [
-  { id: "ORD-001", date: "Mar 13, 2026", total: 2750, status: "In Progress", items: [{ title: "Wireless Headphones", qty: 1, emoji: "🎧" }], vendor: "TechMart" },
-  { id: "ORD-002", date: "Mar 11, 2026", total: 1798, status: "Delivered", items: [{ title: "Cotton T-Shirt Pack", qty: 2, emoji: "👕" }], vendor: "FashionHub" },
-  { id: "ORD-003", date: "Mar 8, 2026", total: 6344, status: "Completed", items: [{ title: "Smart Watch Pro", qty: 1, emoji: "⌚" }], vendor: "GadgetWorld" },
-  { id: "ORD-004", date: "Mar 5, 2026", total: 599, status: "Cancelled", items: [{ title: "Organic Honey", qty: 1, emoji: "🍯" }], vendor: "GreenGrocer" },
-];
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 
 const statusColor: Record<string, string> = {
-  "In Progress": "bg-info/10 text-info",
-  "Delivered": "bg-success/10 text-success",
-  "Completed": "bg-success/10 text-success",
-  "Cancelled": "bg-destructive/10 text-destructive",
+  placed: "bg-primary/10 text-primary", paid: "bg-info/10 text-info", accepted: "bg-info/10 text-info",
+  in_progress: "bg-warning/10 text-warning", delivered: "bg-success/10 text-success",
+  completed: "bg-success/10 text-success", cancelled: "bg-destructive/10 text-destructive",
 };
 
 export default function CustomerOrdersPage() {
+  const { data: orders, isLoading } = useQuery({
+    queryKey: ["customerOrders"],
+    queryFn: () => api.getCustomerOrders("USR-001"),
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
@@ -27,29 +27,30 @@ export default function CustomerOrdersPage() {
           <h1 className="font-semibold">My Orders</h1>
         </div>
       </header>
-
       <main className="max-w-3xl mx-auto px-4 py-6 space-y-3">
-        {orders.map((o) => (
-          <Card key={o.id} className="p-4 hover:shadow-sm transition-shadow">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-sm font-semibold">{o.id}</p>
-                <p className="text-xs text-muted-foreground">{o.date} • {o.vendor}</p>
-              </div>
-              <Badge className={statusColor[o.status] + " border-0"}>{o.status}</Badge>
-            </div>
-            {o.items.map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-secondary/30 rounded-lg flex items-center justify-center text-lg">{item.emoji}</div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">Qty: {item.qty}</p>
+        {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) :
+          orders?.length === 0 ? <p className="text-center py-16 text-muted-foreground">No orders yet</p> :
+          orders?.map((o) => (
+            <Card key={o.id} className="p-4 hover:shadow-sm transition-shadow">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-sm font-semibold">{o.id}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })} • {o.vendor_name}</p>
                 </div>
-                <p className="text-sm font-bold">₹{o.total.toLocaleString()}</p>
+                <Badge className={(statusColor[o.status] || "bg-muted") + " border-0"}>{o.status.replace("_", " ")}</Badge>
               </div>
-            ))}
-          </Card>
-        ))}
+              {o.items?.map((item, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-secondary/30 rounded-lg flex items-center justify-center text-lg">{item.emoji}</div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">Qty: {item.qty}</p>
+                  </div>
+                  <p className="text-sm font-bold">₹{o.total.toLocaleString()}</p>
+                </div>
+              ))}
+            </Card>
+          ))}
       </main>
     </div>
   );
