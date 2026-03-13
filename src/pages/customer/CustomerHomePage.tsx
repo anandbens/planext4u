@@ -58,8 +58,8 @@ export default function CustomerHomePage() {
     <CustomerLayout>
       <div className="max-w-7xl mx-auto space-y-0 pb-24 md:pb-6">
         {/* Mobile Category Icons Row - improved with circular avatars */}
-        <div className="px-4 pt-4 md:hidden">
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-3">
+        <div className="px-4 pt-5 md:hidden">
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-3 pt-1 pl-1">
             {categoryIcons.map((cat, i) => (
               <motion.div
                 key={cat.label}
@@ -584,15 +584,16 @@ export default function CustomerHomePage() {
 
         {/* Classifieds CTA */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
-          <div className="gradient-primary rounded-2xl p-6 md:p-8 text-primary-foreground">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg md:text-2xl font-bold">Buy & Sell Locally</h2>
-                <p className="text-xs sm:text-sm opacity-90 mt-1">Post free classified ads and find great deals near you</p>
-              </div>
-              <div className="flex gap-2">
-                <Link to="/app/classifieds"><Button variant="secondary" size="sm" className="rounded-full">Browse Ads</Button></Link>
-                <Link to="/app/classifieds/post"><Button variant="secondary" size="sm" className="rounded-full">Post Ad Free</Button></Link>
+          <div className="rounded-2xl overflow-hidden relative">
+            <img src="/images/banners/classifieds-banner.jpg" alt="Classifieds" className="w-full h-44 md:h-56 object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-foreground/70 to-foreground/20 flex items-center">
+              <div className="p-6 md:p-8">
+                <h2 className="text-lg md:text-2xl font-bold text-card">Buy & Sell Locally</h2>
+                <p className="text-xs sm:text-sm text-card/90 mt-1">Post free classified ads and find great deals near you</p>
+                <div className="flex gap-2 mt-3">
+                  <Link to="/app/classifieds"><Button variant="secondary" size="sm" className="rounded-full">Browse Ads</Button></Link>
+                  <Link to="/app/classifieds/post"><Button variant="secondary" size="sm" className="rounded-full">Post Ad Free</Button></Link>
+                </div>
               </div>
             </div>
           </div>
