@@ -58,23 +58,6 @@ export default function CustomerHomePage() {
   return (
     <CustomerLayout>
       <div className="max-w-7xl mx-auto space-y-0 pb-24 md:pb-6">
-        {/* Mobile Location + Points Bar */}
-        <div className="flex items-center justify-between px-4 py-3 md:hidden">
-          <div className="flex items-center gap-1.5">
-            <MapPin className="h-4 w-4 text-foreground" />
-            <div>
-              <p className="text-sm font-bold leading-tight">JJ Nagar, 15</p>
-              <p className="text-[10px] text-muted-foreground">Pattanam, Coimbatore</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-warning/10 border border-warning/20 px-2.5 py-1 rounded-full">
-              <span className="text-warning text-xs">⭐</span>
-              <span className="text-xs font-bold">1,260</span>
-            </div>
-          </div>
-        </div>
-
         {/* Mobile Category Icons Row */}
         <div className="px-4 md:hidden">
           <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-3">
