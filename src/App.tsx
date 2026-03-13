@@ -127,6 +127,8 @@ const App = () => (
             <Route path="/banners" element={<ProtectedPage><BannersPage /></ProtectedPage>} />
             <Route path="/advertisements" element={<ProtectedPage><AdvertisementsPage /></ProtectedPage>} />
             <Route path="/website-queries" element={<ProtectedPage><WebsiteQueriesPage /></ProtectedPage>} />
+            <Route path="/support-tickets" element={<ProtectedPage><SupportTicketsPage /></ProtectedPage>} />
+            <Route path="/integrations" element={<ProtectedPage><IntegrationsPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerHomePage />} />

@@ -59,8 +59,10 @@ const systemItems: NavItem[] = [
   { title: "Banners", url: "/banners", icon: Image, roles: ['admin'] },
   { title: "Advertisements", url: "/advertisements", icon: Megaphone, roles: ['admin', 'sales'] },
   { title: "Website Queries", url: "/website-queries", icon: MessageSquare, roles: ['admin', 'sales'] },
+  { title: "Support Tickets", url: "/support-tickets", icon: Headphones, roles: ['admin', 'sales'] },
   { title: "Referrals", url: "/referrals", icon: Gift, roles: ['admin'] },
   { title: "Classified Ads", url: "/classifieds", icon: FileText, roles: ['admin', 'sales'] },
+  { title: "Integrations", url: "/integrations", icon: Key, roles: ['admin'] },
   { title: "Settings", url: "/settings", icon: Settings, roles: ['admin'] },
 ];
 
