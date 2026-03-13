@@ -118,27 +118,31 @@
     line-height: 1.6;
   }
 
-  /* High-DPI / Retina: scale up proportionally using clamp to avoid breakage on low-res */
+  /* Retina / High-DPI: zoom the entire page so it renders like ~1320px viewport */
   @media (-webkit-min-device-pixel-ratio: 1.25), (min-resolution: 120dpi) {
-    html { font-size: clamp(15px, 0.9vw + 10px, 18px); }
+    html { font-size: clamp(16px, 1.1vw + 10px, 20px); }
   }
 
   @media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi) {
-    html { font-size: clamp(15px, 0.95vw + 10px, 19px); }
+    html { font-size: clamp(16px, 1.15vw + 10px, 21px); }
   }
 
   @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    html { font-size: clamp(16px, 1vw + 10px, 20px); }
+    html { font-size: clamp(17px, 1.2vw + 10px, 22px); }
     .stat-card { border-width: 0.5px; }
   }
 
   /* Large retina displays (e.g., MacBook Pro 16", 4K monitors) */
   @media (min-width: 1920px) and (-webkit-min-device-pixel-ratio: 1.25) {
-    html { font-size: clamp(17px, 1vw + 10px, 22px); }
+    html { font-size: clamp(18px, 1.2vw + 10px, 24px); zoom: 1.15; }
   }
 
   @media (min-width: 2560px) {
-    html { font-size: clamp(18px, 0.8vw + 10px, 24px); }
+    html { font-size: clamp(20px, 1vw + 10px, 26px); zoom: 1.35; }
+  }
+
+  @media (min-width: 3840px) {
+    html { zoom: 1.8; }
   }
 }
 

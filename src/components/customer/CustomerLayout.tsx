@@ -310,7 +310,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
 
               if (item.comingSoon) {
                 return (
-                  <button key={item.label} onClick={() => toast.info("Socio is coming soon! Stay tuned.")}
+                  <button key={item.label} onClick={() => toast.info(`${item.label} is coming soon! Stay tuned.`)}
                     className="flex flex-col items-center gap-0.5 relative text-muted-foreground">
                     {content}
                   </button>
