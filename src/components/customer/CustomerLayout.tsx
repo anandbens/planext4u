@@ -49,12 +49,14 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     navigate("/app");
   };
 
+  
+
   const navItems = [
     { icon: Home, label: "Home", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
     { icon: Wrench, label: "Services", to: "/app/services" },
-    { icon: Megaphone, label: "Socio", to: "/app/classifieds" },
-    { icon: CalendarDays, label: "Booking", to: "/app/services" },
+    { icon: Megaphone, label: "Socio", to: "#socio-coming-soon", comingSoon: true },
+    { icon: CalendarDays, label: "Booking", to: "/app/services?tab=booking" },
     { icon: Newspaper, label: "Classified", to: "/app/classifieds" },
   ];
 
@@ -139,16 +141,24 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
               {[
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
                 { icon: Wrench, label: "Services", to: "/app/services" },
-                { icon: Megaphone, label: "Socio", to: "/app/classifieds" },
-                { icon: CalendarDays, label: "Booking", to: "/app/services" },
-                { icon: Megaphone, label: "Classified Ads", to: "/app/classifieds" },
+                { icon: Megaphone, label: "Socio", to: "#", comingSoon: true },
+                { icon: CalendarDays, label: "Booking", to: "/app/services?tab=booking" },
+                { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds" },
               ].map((tab) => (
-                <Link key={tab.label} to={tab.to}
-                  className={`flex items-center gap-2 px-5 py-2 rounded-full border transition-colors
-                    ${isActive(tab.to) ? 'bg-primary text-primary-foreground border-primary' : 'border-primary/20 bg-card hover:bg-primary/5 text-primary'}`}>
-                  <tab.icon className="h-4 w-4" />
-                  <span className="text-sm font-semibold">{tab.label}</span>
-                </Link>
+                tab.comingSoon ? (
+                  <button key={tab.label} onClick={() => toast.info("Socio is coming soon! Stay tuned.")}
+                    className="flex items-center gap-2 px-5 py-2 rounded-full border border-primary/20 bg-card hover:bg-primary/5 text-primary transition-colors">
+                    <tab.icon className="h-4 w-4" />
+                    <span className="text-sm font-semibold">{tab.label}</span>
+                  </button>
+                ) : (
+                  <Link key={tab.label} to={tab.to}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-full border transition-colors
+                      ${isActive(tab.to) ? 'bg-primary text-primary-foreground border-primary' : 'border-primary/20 bg-card hover:bg-primary/5 text-primary'}`}>
+                    <tab.icon className="h-4 w-4" />
+                    <span className="text-sm font-semibold">{tab.label}</span>
+                  </Link>
+                )
               ))}
             </div>
           </div>
@@ -257,28 +267,62 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
       {!hideNav && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/50 md:hidden safe-area-bottom">
           <div className="flex items-center justify-around py-1.5">
-            {navItems.map((item, idx) => {
-              const active = isActive(item.to);
-              // Shop tab gets a raised teal pill style like reference
+            {navItems.map((item) => {
+              const active = item.comingSoon ? false : isActive(item.to);
               const isShopTab = item.label === "Shop";
-              return (
-                <Link key={item.to + item.label} to={item.to}
-                  className={`flex flex-col items-center gap-0.5 relative transition-all
-                    ${isShopTab ? '-mt-4' : ''}
-                    ${active && !isShopTab ? 'text-primary' : !isShopTab ? 'text-muted-foreground' : ''}`}>
+
+              const content = (
+                <div className="flex flex-col items-center gap-0.5 relative">
                   {isShopTab ? (
-                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg ${active ? 'bg-primary text-primary-foreground' : 'bg-primary text-primary-foreground'}`}>
+                    <motion.div
+                      className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg bg-primary text-primary-foreground`}
+                      animate={active ? { scale: [1, 1.15, 1], y: -4 } : { scale: 1, y: 0 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 15 }}>
                       <item.icon className="h-5 w-5" />
                       {item.badge && item.badge > 0 && (
                         <span className="absolute -top-1 -right-0.5 h-4 w-4 rounded-full bg-warning text-warning-foreground text-[8px] flex items-center justify-center font-bold">
                           {item.badge}
                         </span>
                       )}
-                    </div>
+                    </motion.div>
                   ) : (
-                    <item.icon className="h-5 w-5" />
+                    <motion.div
+                      className="relative flex items-center justify-center"
+                      animate={active ? { scale: 1.1, y: -2 } : { scale: 1, y: 0 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 20 }}>
+                      <item.icon className="h-5 w-5" />
+                      {active && (
+                        <motion.div
+                          layoutId="nav-indicator"
+                          className="absolute -bottom-1.5 w-1.5 h-1.5 rounded-full bg-primary"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                        />
+                      )}
+                    </motion.div>
                   )}
-                  <span className={`text-[9px] font-medium ${isShopTab ? 'text-primary font-semibold mt-0.5' : ''}`}>{item.label}</span>
+                  <span className={`text-[9px] font-medium transition-colors ${isShopTab ? 'text-primary font-semibold mt-0.5' : ''} ${active ? 'text-primary font-semibold' : ''}`}>
+                    {item.label}
+                  </span>
+                </div>
+              );
+
+              if (item.comingSoon) {
+                return (
+                  <button key={item.label} onClick={() => toast.info("Socio is coming soon! Stay tuned.")}
+                    className="flex flex-col items-center gap-0.5 relative text-muted-foreground">
+                    {content}
+                  </button>
+                );
+              }
+
+              return (
+                <Link key={item.to + item.label} to={item.to}
+                  className={`flex flex-col items-center gap-0.5 relative transition-all
+                    ${isShopTab ? '-mt-4' : ''}
+                    ${active && !isShopTab ? 'text-primary' : !isShopTab ? 'text-muted-foreground' : ''}`}>
+                  {content}
                 </Link>
               );
             })}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
 import { Minus, Plus, Trash2, Tag, ShoppingBag, ChevronLeft, Share2, ChevronDown, ChevronRight, Truck, Clock, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,6 +22,8 @@ const TIME_SLOTS = [
 
 export default function CustomerCartPage() {
   const navigate = useNavigate();
+  const { customerUser } = useAuth();
+  const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
@@ -34,12 +37,12 @@ export default function CustomerCartPage() {
   const [deliveryAddress] = useState("P4U Complex - 605001");
 
   useEffect(() => {
-    Promise.all([api.getCart(), api.getCustomerProfile('USR-001')]).then(([cartItems, profile]) => {
+    Promise.all([api.getCart(), api.getCustomerProfile(customerId)]).then(([cartItems, profile]) => {
       setCart(cartItems);
-      setWalletPoints(profile.wallet_points);
+      setWalletPoints(profile?.wallet_points || 0);
       setLoading(false);
-    });
-  }, []);
+    }).catch(() => setLoading(false));
+  }, [customerId]);
 
   const updateQty = async (id: string, delta: number) => {
     const item = cart.find(i => i.id === id);
@@ -77,7 +80,7 @@ export default function CustomerCartPage() {
     if (cart.length === 0) return;
     setPlacing(true);
     try {
-      const result = await api.placeOrder(cart, 'USR-001', pointsUsed, discount);
+      const result = await api.placeOrder(cart, customerId, pointsUsed, discount);
       await api.clearCart();
       toast.success(`${result.orders.length} order(s) placed successfully!`);
       navigate('/app/orders');
@@ -210,8 +213,12 @@ export default function CustomerCartPage() {
                       return (
                         <Card key={item.id} className="p-4">
                           <div className="flex gap-3">
-                            <div className="h-20 w-20 bg-secondary/30 rounded-xl flex items-center justify-center text-3xl shrink-0 overflow-hidden">
-                              {item.emoji}
+                            <div className="h-20 w-20 bg-secondary/30 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                              {item.image ? (
+                                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-3xl">{item.emoji}</span>
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between">

@@ -44,15 +44,24 @@ export default function CustomerServicesPage() {
         </div>
 
         {/* Category chips */}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-4 scrollbar-hide">
+        <div className="flex gap-2.5 overflow-x-auto pb-4 mb-4 scrollbar-hide">
           <Link to="/app/services">
-            <Badge variant={!categoryFilter ? "default" : "outline"} className="cursor-pointer whitespace-nowrap">All</Badge>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
+              ${!categoryFilter ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
+              <span className="text-sm font-medium">All</span>
+            </div>
           </Link>
           {categories?.map((c) => (
             <Link key={c.id} to={`/app/services?category=${c.name}`}>
-              <Badge variant={categoryFilter === c.name ? "default" : "outline"} className="cursor-pointer whitespace-nowrap">
-                {c.image} {c.name}
-              </Badge>
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
+                ${categoryFilter === c.name ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
+                {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
+                  <img src={c.image} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
+                ) : (
+                  <span className="text-base">{c.image}</span>
+                )}
+                <span className="text-sm font-medium">{c.name}</span>
+              </div>
             </Link>
           ))}
         </div>
@@ -68,8 +77,12 @@ export default function CustomerServicesPage() {
               return (
                 <Link to={`/app/service/${s.id}`} key={s.id}>
                   <Card className="overflow-hidden hover:shadow-md transition-all">
-                    <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 h-32 flex items-center justify-center text-5xl relative">
-                      {s.emoji}
+                    <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 h-32 flex items-center justify-center relative overflow-hidden">
+                      {s.image ? (
+                        <img src={s.image} alt={s.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-5xl">{s.emoji}</span>
+                      )}
                       {discountPct > 0 && <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-[10px]">{discountPct}% OFF</Badge>}
                     </div>
                     <div className="p-4">

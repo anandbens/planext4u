@@ -138,7 +138,7 @@ export interface DashboardStats {
 
 export interface CartItem {
   id: string; title: string; price: number; qty: number; vendor: string;
-  vendor_id: string; emoji: string; maxPoints: number; tax: number; discount: number;
+  vendor_id: string; emoji: string; image?: string; maxPoints: number; tax: number; discount: number;
 }
 
 // Auth token management (kept for backwards compat but not used for Supabase)
@@ -1056,7 +1056,8 @@ export const api = {
       cart.push({
         id: product.id, title: product.title, price: product.price, qty,
         vendor: product.vendor_name || '', vendor_id: product.vendor_id,
-        emoji: product.emoji || '📦', maxPoints: product.max_points_redeemable,
+        emoji: product.emoji || '📦', image: product.image || '',
+        maxPoints: product.max_points_redeemable,
         tax: product.tax, discount: product.discount,
       });
     }
