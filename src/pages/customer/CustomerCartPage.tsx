@@ -80,7 +80,7 @@ export default function CustomerCartPage() {
     if (cart.length === 0) return;
     setPlacing(true);
     try {
-      const result = await api.placeOrder(cart, 'USR-001', pointsUsed, discount);
+      const result = await api.placeOrder(cart, customerId, pointsUsed, discount);
       await api.clearCart();
       toast.success(`${result.orders.length} order(s) placed successfully!`);
       navigate('/app/orders');
