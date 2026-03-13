@@ -117,15 +117,20 @@ export function AdminSidebar() {
 
       <SidebarFooter className="px-4 py-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center">
-            <span className="text-xs font-semibold text-sidebar-accent-foreground">A</span>
+          <div className="h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center shrink-0">
+            <span className="text-xs font-semibold text-sidebar-accent-foreground">
+              {user?.name?.charAt(0) || "A"}
+            </span>
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-accent-foreground truncate">Admin User</p>
-              <p className="text-[11px] text-sidebar-foreground/50 truncate">admin@marketplace.com</p>
+              <p className="text-sm font-medium text-sidebar-accent-foreground truncate">{user?.name || "Admin"}</p>
+              <p className="text-[11px] text-sidebar-foreground/50 truncate">{user?.email || "admin@marketplace.com"}</p>
             </div>
           )}
+          <button onClick={handleLogout} className="text-sidebar-foreground/50 hover:text-sidebar-accent-foreground transition-colors" title="Logout">
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </SidebarFooter>
     </Sidebar>
