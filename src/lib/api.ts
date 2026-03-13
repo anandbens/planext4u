@@ -145,9 +145,9 @@ export interface CartItem {
 export const setAuthToken = (_token: string | null) => {};
 
 // Helper: paginate from Supabase query
-function paginateResult<T>(data: T[], count: number, page: number, perPage: number): PaginatedResponse<T> {
+function paginateResult<T>(data: any[], count: number, page: number, perPage: number): PaginatedResponse<T> {
   return {
-    data,
+    data: data as T[],
     total: count,
     page,
     per_page: perPage,
