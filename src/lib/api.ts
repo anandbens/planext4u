@@ -1,18 +1,7 @@
-// API Service Layer with localStorage persistence
-// All mutations are saved to localStorage automatically
+// API Service Layer - Supabase backed
+// All operations go through the Supabase client
 
-import {
-  MOCK_PRODUCTS, MOCK_CUSTOMERS, MOCK_VENDORS, MOCK_ORDERS,
-  MOCK_SETTLEMENTS, MOCK_CLASSIFIEDS, MOCK_POINTS_TRANSACTIONS,
-  MOCK_REFERRALS, MOCK_CATEGORIES, MOCK_BANNERS, MOCK_PLATFORM_VARIABLES,
-  MOCK_SERVICES, MOCK_SERVICE_CATEGORIES, MOCK_SERVICE_VENDORS, MOCK_CLASSIFIED_CATEGORIES,
-  MOCK_OCCUPATIONS, MOCK_CITIES, MOCK_AREAS, MOCK_TAX_CONFIG,
-  MOCK_POPUP_BANNERS, MOCK_ADVERTISEMENTS, MOCK_WEBSITE_QUERIES, MOCK_REPORT_LOG,
-  MOCK_SUPPORT_TICKETS,
-  persist,
-} from './mockData';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+import { supabase } from "@/integrations/supabase/client";
 
 // Types
 export interface User {
@@ -35,7 +24,7 @@ export interface Product {
   id: string; vendor_id: string; category_id: string; title: string; description: string;
   price: number; tax: number; discount: number; max_points_redeemable: number;
   status: 'active' | 'inactive' | 'draft';
-  vendor_name?: string; category_name?: string; emoji?: string;
+  vendor_name?: string; category_name?: string; emoji?: string; image?: string;
   rating?: number; reviews?: number; stock?: number; sales?: number;
   created_at?: string; updated_at?: string;
 }
@@ -44,7 +33,7 @@ export interface Service {
   id: string; vendor_id: string; category_id: string; title: string; description: string;
   price: number; tax: number; discount: number; max_points_redeemable: number;
   status: 'active' | 'inactive' | 'draft';
-  vendor_name?: string; category_name?: string; emoji?: string;
+  vendor_name?: string; category_name?: string; emoji?: string; image?: string;
   rating?: number; reviews?: number; service_area?: string; duration?: string;
   created_at?: string;
 }
@@ -152,134 +141,118 @@ export interface CartItem {
   vendor_id: string; emoji: string; maxPoints: number; tax: number; discount: number;
 }
 
-// Auth token management
-let authToken: string | null = localStorage.getItem('admin_token');
+// Auth token management (kept for backwards compat but not used for Supabase)
+export const setAuthToken = (_token: string | null) => {};
 
-export const setAuthToken = (token: string | null) => {
-  authToken = token;
-  if (token) localStorage.setItem('admin_token', token);
-  else localStorage.removeItem('admin_token');
-};
-
-const headers = () => ({
-  'Content-Type': 'application/json',
-  ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-});
-
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers: { ...headers(), ...options?.headers } });
-  if (!res.ok) throw new Error(`API Error: ${res.status}`);
-  return res.json();
-}
-
-// Helper: paginate & filter
-function paginate<T>(items: T[], page = 1, perPage = 10): PaginatedResponse<T> {
-  const start = (page - 1) * perPage;
+// Helper: paginate from Supabase query
+function paginateResult<T>(data: T[], count: number, page: number, perPage: number): PaginatedResponse<T> {
   return {
-    data: items.slice(start, start + perPage),
-    total: items.length, page, per_page: perPage,
-    total_pages: Math.ceil(items.length / perPage),
+    data,
+    total: count,
+    page,
+    per_page: perPage,
+    total_pages: Math.ceil(count / perPage),
   };
 }
 
-function filterSearch<T extends Record<string, any>>(items: T[], search?: string, fields: string[] = ['name', 'title', 'email']): T[] {
-  if (!search) return items;
-  const q = search.toLowerCase();
-  return items.filter((item) => fields.some((f) => String(item[f] || '').toLowerCase().includes(q)));
+function genId(prefix: string, length: number = 3): string {
+  return `${prefix}-${String(Math.floor(Math.random() * 999) + 1).padStart(length, '0')}-${Date.now().toString(36).slice(-4)}`;
 }
-
-function filterStatus<T extends { status: string }>(items: T[], status?: string): T[] {
-  return status && status !== 'all' ? items.filter((i) => i.status === status) : items;
-}
-
-function filterDateRange<T extends Record<string, any>>(items: T[], dateFrom?: string, dateTo?: string, dateField: string = 'created_at'): T[] {
-  let result = items;
-  if (dateFrom) {
-    const from = new Date(dateFrom);
-    from.setHours(0, 0, 0, 0);
-    result = result.filter((i) => new Date(i[dateField]) >= from);
-  }
-  if (dateTo) {
-    const to = new Date(dateTo);
-    to.setHours(23, 59, 59, 999);
-    result = result.filter((i) => new Date(i[dateField]) <= to);
-  }
-  return result;
-}
-
-const delay = () => new Promise((r) => setTimeout(r, 150));
 
 // API Methods
 export const api = {
   // Auth
   login: async (email: string, _password: string) => {
-    await delay();
-    return { token: 'mock-jwt-token', user: { id: '1', name: 'Admin', email } };
+    return { token: 'supabase-session', user: { id: '1', name: 'Admin', email } };
   },
 
   // Customer Registration
   registerCustomer: async (data: { name: string; mobile: string; email: string; city: string; area: string; referral_code?: string; occupation?: string }) => {
-    await delay();
-    const newId = `USR-${String(MOCK_CUSTOMERS.length + 1).padStart(3, '0')}`;
+    const newId = genId('USR');
     const now = new Date().toISOString();
-    const newCustomer = {
+    const refCode = `REF${Date.now().toString(36).toUpperCase()}`;
+
+    const { error } = await supabase.from('customers').insert({
       id: newId, name: data.name, mobile: data.mobile, email: data.email,
       city_id: "1", area_id: "1", latitude: 19.076, longitude: 72.877,
-      wallet_points: 200, referral_code: `REF${String(MOCK_CUSTOMERS.length + 1).padStart(4, '0')}`,
-      referred_by: data.referral_code || null, status: "active" as const, created_at: now,
+      wallet_points: 200, referral_code: refCode,
+      referred_by: data.referral_code || null, status: "active",
       occupation: data.occupation || "",
-    };
-    MOCK_CUSTOMERS.push(newCustomer);
-    persist('customers', MOCK_CUSTOMERS);
-
-    // Add welcome points transaction
-    const ptId = `PT-${String(MOCK_POINTS_TRANSACTIONS.length + 1).padStart(3, '0')}`;
-    MOCK_POINTS_TRANSACTIONS.push({
-      id: ptId, user_id: newId, type: "welcome", points: 200,
-      description: "Welcome bonus on registration", created_at: now, user_name: data.name,
     });
-    persist('points_transactions', MOCK_POINTS_TRANSACTIONS);
+    if (error) throw error;
+
+    // Add welcome points
+    await supabase.from('points_transactions').insert({
+      id: genId('PT'), user_id: newId, type: "welcome", points: 200,
+      description: "Welcome bonus on registration", user_name: data.name,
+    });
 
     // Handle referral
     if (data.referral_code) {
-      const referrer = MOCK_CUSTOMERS.find((c) => c.referral_code === data.referral_code);
-      if (referrer) {
-        referrer.wallet_points += 100;
-        persist('customers', MOCK_CUSTOMERS);
+      const { data: referrer } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('referral_code', data.referral_code)
+        .single();
 
-        const refId = `REF-${String(MOCK_REFERRALS.length + 1).padStart(3, '0')}`;
-        MOCK_REFERRALS.push({
-          id: refId, referrer_id: referrer.id, referee_id: newId,
-          status: "completed", points_awarded: 100, created_at: now,
+      if (referrer) {
+        await supabase.from('customers').update({ wallet_points: referrer.wallet_points + 100 }).eq('id', referrer.id);
+        await supabase.from('referrals').insert({
+          id: genId('REF'), referrer_id: referrer.id, referee_id: newId,
+          status: "completed", points_awarded: 100,
           referrer_name: referrer.name, referee_name: data.name,
         });
-        persist('referrals', MOCK_REFERRALS);
-
-        const rptId = `PT-${String(MOCK_POINTS_TRANSACTIONS.length + 1).padStart(3, '0')}`;
-        MOCK_POINTS_TRANSACTIONS.push({
-          id: rptId, user_id: referrer.id, type: "referral", points: 100,
-          description: `Referral reward: ${data.name} joined`, created_at: now, user_name: referrer.name,
+        await supabase.from('points_transactions').insert({
+          id: genId('PT'), user_id: referrer.id, type: "referral", points: 100,
+          description: `Referral reward: ${data.name} joined`, user_name: referrer.name,
         });
-        persist('points_transactions', MOCK_POINTS_TRANSACTIONS);
       }
     }
 
-    return { success: true, user: newCustomer, token: 'mock-customer-token' };
+    return { success: true, user: { id: newId, name: data.name }, token: 'session' };
   },
 
   // Dashboard
   getDashboardStats: async (): Promise<DashboardStats> => {
-    await delay();
+    const [
+      { count: totalCustomers },
+      { count: totalVendors },
+      { count: totalServiceVendors },
+      { data: orders },
+      { data: settlements },
+      { data: classifieds },
+      { data: services },
+      { data: categories },
+      { data: serviceCategories },
+      { data: allVendors },
+      { data: allSvcVendors },
+    ] = await Promise.all([
+      supabase.from('customers').select('*', { count: 'exact', head: true }),
+      supabase.from('vendors').select('*', { count: 'exact', head: true }),
+      supabase.from('service_vendors').select('*', { count: 'exact', head: true }),
+      supabase.from('orders').select('*'),
+      supabase.from('settlements').select('*'),
+      supabase.from('classified_ads').select('*').eq('status', 'approved'),
+      supabase.from('services').select('*', { count: 'exact', head: true }),
+      supabase.from('categories').select('name, count'),
+      supabase.from('service_categories').select('name, count'),
+      supabase.from('vendors').select('business_name, total_revenue, total_orders').not('total_revenue', 'is', null).order('total_revenue', { ascending: false }).limit(5),
+      supabase.from('service_vendors').select('business_name, total_revenue, total_orders').not('total_revenue', 'is', null).order('total_revenue', { ascending: false }).limit(5),
+    ]);
+
+    const allOrders = orders || [];
+    const totalRevenue = allOrders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total), 0);
+
     return {
-      total_customers: MOCK_CUSTOMERS.length,
-      total_vendors: MOCK_VENDORS.length + MOCK_SERVICE_VENDORS.length,
-      total_orders: MOCK_ORDERS.length,
-      total_revenue: MOCK_ORDERS.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0),
-      pending_settlements: MOCK_SETTLEMENTS.filter((s) => s.status === 'pending').length,
-      active_ads: MOCK_CLASSIFIEDS.filter((a) => a.status === 'approved').length,
-      total_services: MOCK_SERVICES.length,
+      total_customers: totalCustomers || 0,
+      total_vendors: (totalVendors || 0) + (totalServiceVendors || 0),
+      total_orders: allOrders.length,
+      total_revenue: totalRevenue,
+      pending_settlements: (settlements || []).filter(s => s.status === 'pending').length,
+      active_ads: (classifieds || []).length,
+      total_services: services || 0,
       customers_trend: 12.5, vendors_trend: 8.3, orders_trend: 15.2, revenue_trend: 22.1,
-      recent_orders: MOCK_ORDERS.slice(0, 5),
+      recent_orders: (allOrders.slice(0, 5) as any) as Order[],
       revenue_chart: [
         { date: '2026-03-07', revenue: 185000, orders: 320 },
         { date: '2026-03-08', revenue: 210000, orders: 345 },
@@ -289,34 +262,44 @@ export const api = {
         { date: '2026-03-12', revenue: 260000, orders: 395 },
         { date: '2026-03-13', revenue: 290000, orders: 445 },
       ],
-      top_vendors: [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].filter((v) => v.total_revenue).sort((a, b) => (b.total_revenue || 0) - (a.total_revenue || 0)).slice(0, 5).map((v) => ({
-        name: v.business_name, revenue: v.total_revenue!, orders: v.total_orders!,
+      top_vendors: [...(allVendors || []), ...(allSvcVendors || [])].map(v => ({
+        name: v.business_name, revenue: Number(v.total_revenue) || 0, orders: v.total_orders || 0,
       })),
-      category_distribution: [...MOCK_CATEGORIES, ...MOCK_SERVICE_CATEGORIES].map((c) => ({ name: c.name, count: c.count || 0 })),
+      category_distribution: [...(categories || []), ...(serviceCategories || [])].map(c => ({ name: c.name, count: c.count || 0 })),
     };
   },
 
   // Customers
   getCustomers: async (params: { page?: number; per_page?: number; search?: string; status?: string; occupation?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = filterSearch(MOCK_CUSTOMERS, params.search, ['name', 'email', 'mobile', 'occupation']);
-    items = filterStatus(items, params.status);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    if (params.occupation) items = items.filter((c) => c.occupation === params.occupation);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('customers').select('*', { count: 'exact' });
+    if (params.search) {
+      query = query.or(`name.ilike.%${params.search}%,email.ilike.%${params.search}%,mobile.ilike.%${params.search}%`);
+    }
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    if (params.occupation) query = query.eq('occupation', params.occupation);
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   updateCustomer: async (id: string, data: Partial<User>) => {
-    await delay();
-    const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
-    if (idx >= 0) { Object.assign(MOCK_CUSTOMERS[idx], data); persist('customers', MOCK_CUSTOMERS); }
+    const { error } = await supabase.from('customers').update(data as any).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   createCustomer: async (data: Partial<User>) => {
-    await delay();
     const newCustomer = {
-      id: `USR-${String(MOCK_CUSTOMERS.length + 1).padStart(3, '0')}`,
+      id: genId('USR'),
       name: data.name || '',
       email: data.email || '',
       mobile: data.mobile || '',
@@ -325,219 +308,241 @@ export const api = {
       latitude: data.latitude || 0,
       longitude: data.longitude || 0,
       wallet_points: data.wallet_points || 0,
-      referral_code: `REF${String(MOCK_CUSTOMERS.length + 1).padStart(4, '0')}`,
+      referral_code: `REF${Date.now().toString(36).toUpperCase()}`,
       referred_by: data.referred_by || null,
-      status: data.status || 'active' as const,
-      created_at: new Date().toISOString(),
+      status: data.status || 'active',
       occupation: data.occupation || '',
     };
-    MOCK_CUSTOMERS.unshift(newCustomer as any);
-    persist('customers', MOCK_CUSTOMERS);
+    const { error } = await supabase.from('customers').insert(newCustomer);
+    if (error) throw error;
     return { success: true, customer: newCustomer };
   },
 
   deleteCustomer: async (id: string) => {
-    await delay();
-    const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
-    if (idx >= 0) { MOCK_CUSTOMERS.splice(idx, 1); persist('customers', MOCK_CUSTOMERS); }
+    const { error } = await supabase.from('customers').delete().eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   // Vendors
   getVendors: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    const allVendors = [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS];
-    let items = filterSearch(allVendors, params.search, ['name', 'business_name', 'email']);
-    items = filterStatus(items, params.status);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    // Fetch product vendors
+    let vQuery = supabase.from('vendors').select('*', { count: 'exact' });
+    if (params.search) vQuery = vQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%`);
+    if (params.status && params.status !== 'all') vQuery = vQuery.eq('status', params.status);
+    if (params.date_from) vQuery = vQuery.gte('created_at', params.date_from);
+    if (params.date_to) vQuery = vQuery.lte('created_at', params.date_to + 'T23:59:59Z');
+    vQuery = vQuery.order('created_at', { ascending: false });
+
+    let svQuery = supabase.from('service_vendors').select('*', { count: 'exact' });
+    if (params.search) svQuery = svQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%`);
+    if (params.status && params.status !== 'all') svQuery = svQuery.eq('status', params.status);
+    if (params.date_from) svQuery = svQuery.gte('created_at', params.date_from);
+    if (params.date_to) svQuery = svQuery.lte('created_at', params.date_to + 'T23:59:59Z');
+    svQuery = svQuery.order('created_at', { ascending: false });
+
+    const [{ data: vendors, count: vCount }, { data: svcVendors, count: svCount }] = await Promise.all([vQuery, svQuery]);
+    const all = [...(vendors || []), ...(svcVendors || [])];
+    const total = (vCount || 0) + (svCount || 0);
+    const paginated = all.slice(from, to + 1);
+    return paginateResult(paginated, total, page, perPage);
   },
 
   updateVendorStatus: async (id: string, status: string) => {
-    await delay();
-    const idx = MOCK_VENDORS.findIndex((v) => v.id === id);
-    if (idx >= 0) { (MOCK_VENDORS[idx] as any).status = status; persist('vendors', MOCK_VENDORS); }
-    else {
-      const sIdx = MOCK_SERVICE_VENDORS.findIndex((v) => v.id === id);
-      if (sIdx >= 0) { (MOCK_SERVICE_VENDORS[sIdx] as any).status = status; persist('service_vendors', MOCK_SERVICE_VENDORS); }
+    const { error: e1 } = await supabase.from('vendors').update({ status }).eq('id', id);
+    if (e1) {
+      const { error: e2 } = await supabase.from('service_vendors').update({ status }).eq('id', id);
+      if (e2) throw e2;
     }
     return { success: true };
   },
 
   updateVendor: async (id: string, data: Partial<Vendor>) => {
-    await delay();
-    const idx = MOCK_VENDORS.findIndex((v) => v.id === id);
-    if (idx >= 0) { Object.assign(MOCK_VENDORS[idx], data); persist('vendors', MOCK_VENDORS); }
-    else {
-      const sIdx = MOCK_SERVICE_VENDORS.findIndex((v) => v.id === id);
-      if (sIdx >= 0) { Object.assign(MOCK_SERVICE_VENDORS[sIdx], data); persist('service_vendors', MOCK_SERVICE_VENDORS); }
+    const { error: e1 } = await supabase.from('vendors').update(data as any).eq('id', id);
+    if (e1) {
+      const { error: e2 } = await supabase.from('service_vendors').update(data as any).eq('id', id);
+      if (e2) throw e2;
     }
     return { success: true };
   },
 
   createVendor: async (data: Partial<Vendor>, type: 'product' | 'service' = 'product') => {
-    await delay();
-    const store = type === 'service' ? MOCK_SERVICE_VENDORS : MOCK_VENDORS;
-    const newVendor: any = {
-      id: `VND-${String(MOCK_VENDORS.length + MOCK_SERVICE_VENDORS.length + 1).padStart(3, '0')}`,
+    const table = type === 'service' ? 'service_vendors' : 'vendors';
+    const newVendor = {
+      id: genId('VND'),
       ...data,
       status: 'pending',
       total_products: 0, total_orders: 0, total_revenue: 0,
-      created_at: new Date().toISOString(),
     };
-    store.unshift(newVendor);
-    persist(type === 'service' ? 'service_vendors' : 'vendors', store);
+    const { error } = await supabase.from(table).insert(newVendor as any);
+    if (error) throw error;
     return { success: true, vendor: newVendor };
   },
 
   deleteVendor: async (id: string) => {
-    await delay();
-    let idx = MOCK_VENDORS.findIndex((v) => v.id === id);
-    if (idx >= 0) { MOCK_VENDORS.splice(idx, 1); persist('vendors', MOCK_VENDORS); }
-    else {
-      idx = MOCK_SERVICE_VENDORS.findIndex((v) => v.id === id);
-      if (idx >= 0) { MOCK_SERVICE_VENDORS.splice(idx, 1); persist('service_vendors', MOCK_SERVICE_VENDORS); }
+    const { error: e1 } = await supabase.from('vendors').delete().eq('id', id);
+    if (e1) {
+      const { error: e2 } = await supabase.from('service_vendors').delete().eq('id', id);
+      if (e2) throw e2;
     }
     return { success: true };
   },
 
   // Products
   getProducts: async (params: { page?: number; per_page?: number; search?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = filterSearch(MOCK_PRODUCTS, params.search, ['title', 'vendor_name', 'category_name']);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('products').select('*', { count: 'exact' });
+    if (params.search) query = query.or(`title.ilike.%${params.search}%,vendor_name.ilike.%${params.search}%,category_name.ilike.%${params.search}%`);
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   updateProduct: async (id: string, data: Partial<Product>) => {
-    await delay();
-    const idx = MOCK_PRODUCTS.findIndex((p) => p.id === id);
-    if (idx >= 0) { Object.assign(MOCK_PRODUCTS[idx], data, { updated_at: new Date().toISOString() }); persist('products', MOCK_PRODUCTS); }
+    const { error } = await supabase.from('products').update({ ...data, updated_at: new Date().toISOString() } as any).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   createProduct: async (data: Partial<Product>) => {
-    await delay();
-    const newProduct: any = {
-      id: `PRD-${String(MOCK_PRODUCTS.length + 1).padStart(3, '0')}`,
+    const newProduct = {
+      id: genId('PRD'),
       ...data,
       rating: 0, reviews: 0, stock: data.stock || 0, sales: 0,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     };
-    MOCK_PRODUCTS.unshift(newProduct);
-    persist('products', MOCK_PRODUCTS);
+    const { error } = await supabase.from('products').insert(newProduct as any);
+    if (error) throw error;
     return { success: true, product: newProduct };
   },
 
   deleteProduct: async (id: string) => {
-    await delay();
-    const idx = MOCK_PRODUCTS.findIndex((p) => p.id === id);
-    if (idx >= 0) { MOCK_PRODUCTS.splice(idx, 1); persist('products', MOCK_PRODUCTS); }
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   getProductById: async (id: string): Promise<Product | null> => {
-    await delay();
-    return MOCK_PRODUCTS.find((p) => p.id === id || p.id === `PRD-${String(id).padStart(3, '0')}`) || MOCK_PRODUCTS[0];
+    const { data } = await supabase.from('products').select('*').eq('id', id).single();
+    return data as any;
   },
 
   // Services
   getServices: async (params: { page?: number; per_page?: number; search?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = filterSearch(MOCK_SERVICES, params.search, ['title', 'vendor_name', 'category_name']);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('services').select('*', { count: 'exact' });
+    if (params.search) query = query.or(`title.ilike.%${params.search}%,vendor_name.ilike.%${params.search}%,category_name.ilike.%${params.search}%`);
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   getServiceById: async (id: string): Promise<Service | null> => {
-    await delay();
-    return MOCK_SERVICES.find((s) => s.id === id) || MOCK_SERVICES[0];
+    const { data } = await supabase.from('services').select('*').eq('id', id).single();
+    return data as any;
   },
 
   browseServices: async (params: { category?: string; search?: string; sort?: string }) => {
-    await delay();
-    let items = [...MOCK_SERVICES].filter((s) => s.status === 'active');
-    if (params.category) items = items.filter((s) => s.category_name?.toLowerCase().includes(params.category!.toLowerCase()));
-    if (params.search) items = items.filter((s) => s.title.toLowerCase().includes(params.search!.toLowerCase()));
-    if (params.sort === 'price_low') items.sort((a, b) => a.price - b.price);
-    if (params.sort === 'price_high') items.sort((a, b) => b.price - a.price);
-    if (params.sort === 'rating') items.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    return items;
+    let query = supabase.from('services').select('*').eq('status', 'active');
+    if (params.category) query = query.ilike('category_name', `%${params.category}%`);
+    if (params.search) query = query.ilike('title', `%${params.search}%`);
+    if (params.sort === 'price_low') query = query.order('price', { ascending: true });
+    else if (params.sort === 'price_high') query = query.order('price', { ascending: false });
+    else if (params.sort === 'rating') query = query.order('rating', { ascending: false });
+
+    const { data } = await query;
+    return (data || []) as Service[];
   },
 
   getServiceCategories: async () => {
-    await delay();
-    return MOCK_SERVICE_CATEGORIES;
+    const { data } = await supabase.from('service_categories').select('*');
+    return (data || []) as Category[];
   },
 
   // Orders
   getOrders: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = filterSearch(MOCK_ORDERS, params.search, ['id', 'customer_name', 'vendor_name']);
-    items = filterStatus(items, params.status);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('orders').select('*', { count: 'exact' });
+    if (params.search) query = query.or(`id.ilike.%${params.search}%,customer_name.ilike.%${params.search}%,vendor_name.ilike.%${params.search}%`);
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   updateOrderStatus: async (id: string, status: Order['status']) => {
-    await delay();
-    const idx = MOCK_ORDERS.findIndex((o) => o.id === id);
-    if (idx >= 0) {
-      MOCK_ORDERS[idx].status = status;
-      MOCK_ORDERS[idx].updated_at = new Date().toISOString();
-      persist('orders', MOCK_ORDERS);
+    const { error } = await supabase.from('orders').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
 
-      // If completed, create settlement
-      if (status === 'completed') {
-        const order = MOCK_ORDERS[idx];
-        const vendor = [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].find(v => v.id === order.vendor_id);
+    if (status === 'completed') {
+      const { data: order } = await supabase.from('orders').select('*').eq('id', id).single();
+      if (order) {
+        // Fetch vendor
+        const { data: vendor } = await supabase.from('vendors').select('*').eq('id', order.vendor_id).single();
         const commRate = vendor?.commission_rate || 10;
-        const commission = Math.round(order.total * commRate / 100);
-        const stlId = `STL-${String(MOCK_SETTLEMENTS.length + 1).padStart(3, '0')}`;
-        MOCK_SETTLEMENTS.push({
-          id: stlId, vendor_id: order.vendor_id, order_id: order.id,
-          amount: order.total, commission, net_amount: order.total - commission,
-          status: 'pending', settled_at: null, created_at: new Date().toISOString(),
-          vendor_name: order.vendor_name,
+        const commission = Math.round(Number(order.total) * commRate / 100);
+
+        await supabase.from('settlements').insert({
+          id: genId('STL'), vendor_id: order.vendor_id, order_id: order.id,
+          amount: order.total, commission, net_amount: Number(order.total) - commission,
+          status: 'pending', vendor_name: order.vendor_name,
         });
-        persist('settlements', MOCK_SETTLEMENTS);
 
-        // Award loyalty points (2% of order value)
-        const rewardPoints = Math.round(order.total * 0.02);
-        const customer = MOCK_CUSTOMERS.find(c => c.id === order.customer_id);
+        // Award loyalty points
+        const rewardPoints = Math.round(Number(order.total) * 0.02);
+        const { data: customer } = await supabase.from('customers').select('*').eq('id', order.customer_id).single();
         if (customer) {
-          customer.wallet_points += rewardPoints;
-          persist('customers', MOCK_CUSTOMERS);
-
-          const ptId = `PT-${String(MOCK_POINTS_TRANSACTIONS.length + 1).padStart(3, '0')}`;
-          MOCK_POINTS_TRANSACTIONS.push({
-            id: ptId, user_id: customer.id, type: 'order_reward', points: rewardPoints,
-            description: `2% reward on order ${order.id}`, created_at: new Date().toISOString(),
-            user_name: customer.name,
+          await supabase.from('customers').update({ wallet_points: customer.wallet_points + rewardPoints }).eq('id', customer.id);
+          await supabase.from('points_transactions').insert({
+            id: genId('PT'), user_id: customer.id, type: 'order_reward', points: rewardPoints,
+            description: `2% reward on order ${order.id}`, user_name: customer.name,
           });
-          persist('points_transactions', MOCK_POINTS_TRANSACTIONS);
         }
 
         // Update vendor stats
         if (vendor) {
-          vendor.total_orders = (vendor.total_orders || 0) + 1;
-          vendor.total_revenue = (vendor.total_revenue || 0) + order.total;
-          if (MOCK_VENDORS.includes(vendor as any)) persist('vendors', MOCK_VENDORS);
-          else persist('service_vendors', MOCK_SERVICE_VENDORS);
+          await supabase.from('vendors').update({
+            total_orders: (vendor.total_orders || 0) + 1,
+            total_revenue: (Number(vendor.total_revenue) || 0) + Number(order.total),
+          }).eq('id', vendor.id);
         }
       }
     }
     return { success: true };
   },
 
-  // Place order from cart
   placeOrder: async (cartItems: CartItem[], customerId: string, pointsUsed: number, discount: number) => {
-    await delay();
+    const { data: customer } = await supabase.from('customers').select('*').eq('id', customerId).single();
     const now = new Date().toISOString();
-    const customer = MOCK_CUSTOMERS.find(c => c.id === customerId) || MOCK_CUSTOMERS[0];
 
-    // Group items by vendor
     const byVendor: Record<string, CartItem[]> = {};
     cartItems.forEach(item => {
       if (!byVendor[item.vendor_id]) byVendor[item.vendor_id] = [];
@@ -553,25 +558,22 @@ export const api = {
       const items = byVendor[vendorId];
       const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
       const tax = items.reduce((s, i) => s + i.tax * i.qty, 0);
-      const orderId = `ORD-${String(MOCK_ORDERS.length + 1).padStart(3, '0')}`;
+      const orderId = genId('ORD');
 
-      const order: Order = {
-        id: orderId, customer_id: customer.id, vendor_id: vendorId,
+      const order: any = {
+        id: orderId, customer_id: customer?.id || customerId, vendor_id: vendorId,
         subtotal, tax, discount: discountPerOrder, points_used: pointsPerOrder,
         total: subtotal + tax - discountPerOrder - pointsPerOrder,
-        status: 'placed', created_at: now, updated_at: now,
-        customer_name: customer.name, vendor_name: items[0].vendor,
+        status: 'placed',
+        customer_name: customer?.name || '', vendor_name: items[0].vendor,
         items: items.map(i => ({ title: i.title, qty: i.qty, emoji: i.emoji, price: i.price })),
       };
-      (MOCK_ORDERS as Order[]).unshift(order);
+      await supabase.from('orders').insert(order);
       orders.push(order);
     }
-    persist('orders', MOCK_ORDERS);
 
-    // Deduct points from customer wallet
-    if (pointsUsed > 0) {
-      customer.wallet_points -= pointsUsed;
-      persist('customers', MOCK_CUSTOMERS);
+    if (pointsUsed > 0 && customer) {
+      await supabase.from('customers').update({ wallet_points: customer.wallet_points - pointsUsed }).eq('id', customer.id);
     }
 
     return { success: true, orders };
@@ -579,387 +581,471 @@ export const api = {
 
   // Settlements
   getSettlements: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = filterStatus(MOCK_SETTLEMENTS, params.status);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('settlements').select('*', { count: 'exact' });
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   settleSettlement: async (id: string) => {
-    await delay();
-    const idx = MOCK_SETTLEMENTS.findIndex(s => s.id === id);
-    if (idx >= 0) {
-      MOCK_SETTLEMENTS[idx].status = 'settled';
-      MOCK_SETTLEMENTS[idx].settled_at = new Date().toISOString();
-      persist('settlements', MOCK_SETTLEMENTS);
-    }
+    const { error } = await supabase.from('settlements').update({ status: 'settled', settled_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   // Bulk operations
   bulkDeleteCustomers: async (ids: string[]) => {
-    await delay();
-    ids.forEach(id => { const idx = MOCK_CUSTOMERS.findIndex(c => c.id === id); if (idx >= 0) MOCK_CUSTOMERS.splice(idx, 1); });
-    persist('customers', MOCK_CUSTOMERS);
+    const { error } = await supabase.from('customers').delete().in('id', ids);
+    if (error) throw error;
     return { success: true };
   },
 
   bulkUpdateCustomerStatus: async (ids: string[], status: string) => {
-    await delay();
-    ids.forEach(id => { const c = MOCK_CUSTOMERS.find(c => c.id === id); if (c) (c as any).status = status; });
-    persist('customers', MOCK_CUSTOMERS);
+    const { error } = await supabase.from('customers').update({ status }).in('id', ids);
+    if (error) throw error;
     return { success: true };
   },
 
   bulkDeleteProducts: async (ids: string[]) => {
-    await delay();
-    ids.forEach(id => { const idx = MOCK_PRODUCTS.findIndex(p => p.id === id); if (idx >= 0) MOCK_PRODUCTS.splice(idx, 1); });
-    persist('products', MOCK_PRODUCTS);
+    const { error } = await supabase.from('products').delete().in('id', ids);
+    if (error) throw error;
     return { success: true };
   },
 
   bulkUpdateProductStatus: async (ids: string[], status: string) => {
-    await delay();
-    ids.forEach(id => { const p = MOCK_PRODUCTS.find(p => p.id === id); if (p) (p as any).status = status; });
-    persist('products', MOCK_PRODUCTS);
+    const { error } = await supabase.from('products').update({ status }).in('id', ids);
+    if (error) throw error;
     return { success: true };
   },
 
   bulkDeleteVendors: async (ids: string[]) => {
-    await delay();
-    ids.forEach(id => {
-      let idx = MOCK_VENDORS.findIndex(v => v.id === id);
-      if (idx >= 0) MOCK_VENDORS.splice(idx, 1);
-      else { idx = MOCK_SERVICE_VENDORS.findIndex(v => v.id === id); if (idx >= 0) MOCK_SERVICE_VENDORS.splice(idx, 1); }
-    });
-    persist('vendors', MOCK_VENDORS);
-    persist('service_vendors', MOCK_SERVICE_VENDORS);
+    await supabase.from('vendors').delete().in('id', ids);
+    await supabase.from('service_vendors').delete().in('id', ids);
     return { success: true };
   },
 
   bulkUpdateVendorStatus: async (ids: string[], status: string) => {
-    await delay();
-    ids.forEach(id => {
-      const v = MOCK_VENDORS.find(v => v.id === id) || MOCK_SERVICE_VENDORS.find(v => v.id === id);
-      if (v) (v as any).status = status;
-    });
-    persist('vendors', MOCK_VENDORS);
-    persist('service_vendors', MOCK_SERVICE_VENDORS);
+    await supabase.from('vendors').update({ status }).in('id', ids);
+    await supabase.from('service_vendors').update({ status }).in('id', ids);
     return { success: true };
   },
 
   bulkDeleteServices: async (ids: string[]) => {
-    await delay();
-    ids.forEach(id => { const idx = MOCK_SERVICES.findIndex(s => s.id === id); if (idx >= 0) MOCK_SERVICES.splice(idx, 1); });
-    persist('services', MOCK_SERVICES);
+    const { error } = await supabase.from('services').delete().in('id', ids);
+    if (error) throw error;
     return { success: true };
   },
 
   bulkUpdateServiceStatus: async (ids: string[], status: string) => {
-    await delay();
-    ids.forEach(id => { const s = MOCK_SERVICES.find(s => s.id === id); if (s) (s as any).status = status; });
-    persist('services', MOCK_SERVICES);
+    const { error } = await supabase.from('services').update({ status }).in('id', ids);
+    if (error) throw error;
     return { success: true };
   },
 
   bulkDeleteCategories: async (ids: string[]) => {
-    await delay();
-    ids.forEach(id => { const idx = MOCK_CATEGORIES.findIndex(c => c.id === id); if (idx >= 0) MOCK_CATEGORIES.splice(idx, 1); });
-    persist('categories', MOCK_CATEGORIES);
+    const { error } = await supabase.from('categories').delete().in('id', ids);
+    if (error) throw error;
     return { success: true };
   },
 
   bulkUpdateOrderStatus: async (ids: string[], status: string) => {
-    await delay();
-    ids.forEach(id => { const o = MOCK_ORDERS.find(o => o.id === id); if (o) { (o as any).status = status; o.updated_at = new Date().toISOString(); } });
-    persist('orders', MOCK_ORDERS);
+    const { error } = await supabase.from('orders').update({ status, updated_at: new Date().toISOString() }).in('id', ids);
+    if (error) throw error;
     return { success: true };
   },
 
   bulkUpdateClassifiedStatus: async (ids: string[], status: string) => {
-    await delay();
-    ids.forEach(id => { const a = MOCK_CLASSIFIEDS.find(a => a.id === id); if (a) (a as any).status = status; });
-    persist('classifieds', MOCK_CLASSIFIEDS);
+    const { error } = await supabase.from('classified_ads').update({ status }).in('id', ids);
+    if (error) throw error;
     return { success: true };
   },
 
   bulkSettleSettlements: async (ids: string[]) => {
-    await delay();
     const now = new Date().toISOString();
-    ids.forEach(id => { const s = MOCK_SETTLEMENTS.find(s => s.id === id); if (s && (s.status === 'eligible' || s.status === 'pending')) { (s as any).status = 'settled'; s.settled_at = now; } });
-    persist('settlements', MOCK_SETTLEMENTS);
+    const { error } = await supabase.from('settlements').update({ status: 'settled', settled_at: now }).in('id', ids);
+    if (error) throw error;
     return { success: true };
   },
 
-
   // Classified Ads
   getClassifiedAds: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = filterStatus(MOCK_CLASSIFIEDS, params.status);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('classified_ads').select('*', { count: 'exact' });
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   updateClassifiedStatus: async (id: string, status: ClassifiedAd['status']) => {
-    await delay();
-    const idx = MOCK_CLASSIFIEDS.findIndex(a => a.id === id);
-    if (idx >= 0) { (MOCK_CLASSIFIEDS[idx] as any).status = status; persist('classifieds', MOCK_CLASSIFIEDS); }
+    const { error } = await supabase.from('classified_ads').update({ status }).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   postClassifiedAd: async (data: { title: string; description: string; price: number; category: string; city: string; area: string }) => {
-    await delay();
     const newAd = {
-      id: `AD-${String(MOCK_CLASSIFIEDS.length + 1).padStart(3, '0')}`,
-      ...data, images: [] as string[], user_id: "USR-001", status: "pending" as const,
-      created_at: new Date().toISOString(), user_name: "Rahul Sharma",
+      id: genId('AD'),
+      ...data, images: [] as string[], user_id: "USR-001", status: "pending",
+      user_name: "Rahul Sharma",
     };
-    MOCK_CLASSIFIEDS.unshift(newAd);
-    persist('classifieds', MOCK_CLASSIFIEDS);
+    const { error } = await supabase.from('classified_ads').insert(newAd as any);
+    if (error) throw error;
     return { success: true, ad: newAd };
   },
 
   getCustomerClassifieds: async (userId: string) => {
-    await delay();
-    return MOCK_CLASSIFIEDS.filter((ad) => ad.user_id === userId || userId === 'USR-001');
+    const { data } = await supabase.from('classified_ads').select('*').eq('user_id', userId);
+    return (data || []) as ClassifiedAd[];
   },
 
   getBrowseClassifieds: async (params: { category?: string; search?: string }) => {
-    await delay();
-    let items = MOCK_CLASSIFIEDS.filter((ad) => ad.status === 'approved');
-    if (params.category) items = items.filter((ad) => ad.category.toLowerCase().includes(params.category!.toLowerCase()));
-    if (params.search) items = items.filter((ad) => ad.title.toLowerCase().includes(params.search!.toLowerCase()));
-    return items;
+    let query = supabase.from('classified_ads').select('*').eq('status', 'approved');
+    if (params.category) query = query.ilike('category', `%${params.category}%`);
+    if (params.search) query = query.ilike('title', `%${params.search}%`);
+    const { data } = await query;
+    return (data || []) as ClassifiedAd[];
   },
 
-  getClassifiedCategories: () => MOCK_CLASSIFIED_CATEGORIES,
+  getClassifiedCategories: () => {
+    // Synchronous for backward compat - will be loaded elsewhere
+    return [] as { id: number; name: string }[];
+  },
+
+  getClassifiedCategoriesAsync: async () => {
+    const { data } = await supabase.from('classified_categories').select('*');
+    return (data || []) as { id: number; name: string }[];
+  },
 
   // Points
   getPointsTransactions: async (params: { page?: number; per_page?: number; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = [...MOCK_POINTS_TRANSACTIONS];
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('points_transactions').select('*', { count: 'exact' });
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   // Referrals
   getReferrals: async (params: { page?: number; per_page?: number; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = [...MOCK_REFERRALS];
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('referrals').select('*', { count: 'exact' });
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   // Categories
   getCategories: async () => {
-    await delay();
-    return MOCK_CATEGORIES;
+    const { data } = await supabase.from('categories').select('*').order('name');
+    return (data || []) as Category[];
   },
 
   updateCategory: async (id: string, data: Partial<Category>) => {
-    await delay();
-    const idx = MOCK_CATEGORIES.findIndex((c) => c.id === id);
-    if (idx >= 0) { Object.assign(MOCK_CATEGORIES[idx], data); persist('categories', MOCK_CATEGORIES); }
+    const { error } = await supabase.from('categories').update(data as any).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   createCategory: async (data: Partial<Category>) => {
-    await delay();
-    const newCat: any = {
-      id: String(MOCK_CATEGORIES.length + 1),
-      ...data,
-      count: 0,
-      created_at: new Date().toISOString(),
-    };
-    MOCK_CATEGORIES.push(newCat);
-    persist('categories', MOCK_CATEGORIES);
+    const newCat = { id: genId('CAT'), ...data, count: 0 };
+    const { error } = await supabase.from('categories').insert(newCat as any);
+    if (error) throw error;
     return { success: true, category: newCat };
   },
 
   deleteCategory: async (id: string) => {
-    await delay();
-    const idx = MOCK_CATEGORIES.findIndex((c) => c.id === id);
-    if (idx >= 0) { MOCK_CATEGORIES.splice(idx, 1); persist('categories', MOCK_CATEGORIES); }
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   // Services CRUD
   updateService: async (id: string, data: Partial<Service>) => {
-    await delay();
-    const idx = MOCK_SERVICES.findIndex((s) => s.id === id);
-    if (idx >= 0) { Object.assign(MOCK_SERVICES[idx], data); persist('services', MOCK_SERVICES); }
+    const { error } = await supabase.from('services').update(data as any).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   createService: async (data: Partial<Service>) => {
-    await delay();
-    const newSrv: any = {
-      id: `SRV-${String(MOCK_SERVICES.length + 1).padStart(3, '0')}`,
-      ...data,
-      rating: 0, reviews: 0,
-      created_at: new Date().toISOString(),
-    };
-    MOCK_SERVICES.unshift(newSrv);
-    persist('services', MOCK_SERVICES);
+    const newSrv = { id: genId('SRV'), ...data, rating: 0, reviews: 0 };
+    const { error } = await supabase.from('services').insert(newSrv as any);
+    if (error) throw error;
     return { success: true, service: newSrv };
   },
 
   deleteService: async (id: string) => {
-    await delay();
-    const idx = MOCK_SERVICES.findIndex((s) => s.id === id);
-    if (idx >= 0) { MOCK_SERVICES.splice(idx, 1); persist('services', MOCK_SERVICES); }
+    const { error } = await supabase.from('services').delete().eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
-
   // CMS
   getBanners: async () => {
-    await delay();
-    return MOCK_BANNERS;
+    const { data } = await supabase.from('banners').select('*').order('priority', { ascending: false });
+    return (data || []) as Banner[];
   },
 
   updateBanner: async (id: string, data: Partial<Banner>) => {
-    await delay();
-    const idx = MOCK_BANNERS.findIndex((b) => b.id === id);
-    if (idx >= 0) { Object.assign(MOCK_BANNERS[idx], data); persist('banners', MOCK_BANNERS); }
+    const { error } = await supabase.from('banners').update(data as any).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   // Platform Variables
   getPlatformVariables: async () => {
-    await delay();
-    return MOCK_PLATFORM_VARIABLES;
+    const { data } = await supabase.from('platform_variables').select('*');
+    return (data || []) as PlatformVariable[];
   },
 
   updatePlatformVariable: async (id: string, value: string) => {
-    await delay();
-    const idx = MOCK_PLATFORM_VARIABLES.findIndex((v) => v.id === id);
-    if (idx >= 0) { MOCK_PLATFORM_VARIABLES[idx].value = value; persist('platform_variables', MOCK_PLATFORM_VARIABLES); }
+    const { error } = await supabase.from('platform_variables').update({ value }).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   // Occupations
   getOccupations: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
-    await delay();
-    let items = filterSearch(MOCK_OCCUPATIONS, params.search, ['name']);
-    items = filterStatus(items, params.status);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('occupations').select('*', { count: 'exact' });
+    if (params.search) query = query.ilike('name', `%${params.search}%`);
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    query = query.order('name').range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   updateOccupation: async (id: string, data: Partial<Occupation>) => {
-    await delay();
-    const idx = MOCK_OCCUPATIONS.findIndex((o) => o.id === id);
-    if (idx >= 0) { Object.assign(MOCK_OCCUPATIONS[idx], data); persist('occupations', MOCK_OCCUPATIONS); }
+    const { error } = await supabase.from('occupations').update(data as any).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   // Cities
   getCities: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
-    await delay();
-    let items = filterSearch(MOCK_CITIES, params.search, ['name', 'state']);
-    items = filterStatus(items, params.status);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('cities').select('*', { count: 'exact' });
+    if (params.search) query = query.or(`name.ilike.%${params.search}%,state.ilike.%${params.search}%`);
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    query = query.order('name').range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   // Areas
   getAreas: async (params: { page?: number; per_page?: number; search?: string; status?: string; city_id?: string }) => {
-    await delay();
-    let items = filterSearch(MOCK_AREAS, params.search, ['name', 'city_name', 'pincode']);
-    items = filterStatus(items, params.status);
-    if (params.city_id) items = items.filter((a) => a.city_id === params.city_id);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('areas').select('*', { count: 'exact' });
+    if (params.search) query = query.or(`name.ilike.%${params.search}%,city_name.ilike.%${params.search}%,pincode.ilike.%${params.search}%`);
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    if (params.city_id) query = query.eq('city_id', params.city_id);
+    query = query.order('name').range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   // Tax Config
   getTaxConfig: async (params: { page?: number; per_page?: number; status?: string }) => {
-    await delay();
-    const items = filterStatus(MOCK_TAX_CONFIG, params.status);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('tax_config').select('*', { count: 'exact' });
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    query = query.order('name').range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   // Popup Banners
   getPopupBanners: async (params: { page?: number; per_page?: number; status?: string }) => {
-    await delay();
-    const items = filterStatus(MOCK_POPUP_BANNERS, params.status);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('popup_banners').select('*', { count: 'exact' });
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   // Advertisements
   getAdvertisements: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = filterStatus(MOCK_ADVERTISEMENTS, params.status);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('advertisements').select('*', { count: 'exact' });
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   // Website Queries
   getWebsiteQueries: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = filterStatus(MOCK_WEBSITE_QUERIES, params.status);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('website_queries').select('*', { count: 'exact' });
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   updateWebsiteQueryStatus: async (id: string, status: WebsiteQuery['status']) => {
-    await delay();
-    const idx = MOCK_WEBSITE_QUERIES.findIndex((q) => q.id === id);
-    if (idx >= 0) { (MOCK_WEBSITE_QUERIES[idx] as any).status = status; persist('website_queries', MOCK_WEBSITE_QUERIES); }
+    const { error } = await supabase.from('website_queries').update({ status }).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   // Report Log
   getReportLog: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = filterStatus(MOCK_REPORT_LOG, params.status);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('report_log').select('*', { count: 'exact' });
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   // ===== Customer-facing APIs =====
   getCustomerHome: async () => {
-    await delay();
+    const [
+      { data: banners },
+      { data: categories },
+      { data: serviceCategories },
+      { data: featuredProducts },
+      { data: featuredServices },
+    ] = await Promise.all([
+      supabase.from('banners').select('*').eq('status', 'active').order('priority', { ascending: false }),
+      supabase.from('categories').select('*'),
+      supabase.from('service_categories').select('*'),
+      supabase.from('products').select('*').eq('status', 'active').limit(8),
+      supabase.from('services').select('*').eq('status', 'active').limit(4),
+    ]);
     return {
-      banners: MOCK_BANNERS.filter((b) => b.status === 'active'),
-      categories: MOCK_CATEGORIES,
-      serviceCategories: MOCK_SERVICE_CATEGORIES,
-      featuredProducts: MOCK_PRODUCTS.filter((p) => p.status === 'active').slice(0, 8),
-      featuredServices: MOCK_SERVICES.filter((s) => s.status === 'active').slice(0, 4),
+      banners: banners || [],
+      categories: categories || [],
+      serviceCategories: serviceCategories || [],
+      featuredProducts: featuredProducts || [],
+      featuredServices: featuredServices || [],
     };
   },
 
   browseProducts: async (params: { category?: string; search?: string; sort?: string }) => {
-    await delay();
-    let items = MOCK_PRODUCTS.filter((p) => p.status === 'active');
-    if (params.category) items = items.filter((p) => p.category_name?.toLowerCase().includes(params.category!.toLowerCase()));
-    if (params.search) items = items.filter((p) => p.title.toLowerCase().includes(params.search!.toLowerCase()));
-    if (params.sort === 'price_low') items.sort((a, b) => a.price - b.price);
-    if (params.sort === 'price_high') items.sort((a, b) => b.price - a.price);
-    if (params.sort === 'rating') items.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-    return items;
+    let query = supabase.from('products').select('*').eq('status', 'active');
+    if (params.category) query = query.ilike('category_name', `%${params.category}%`);
+    if (params.search) query = query.ilike('title', `%${params.search}%`);
+    if (params.sort === 'price_low') query = query.order('price', { ascending: true });
+    else if (params.sort === 'price_high') query = query.order('price', { ascending: false });
+    else if (params.sort === 'rating') query = query.order('rating', { ascending: false });
+
+    const { data } = await query;
+    return (data || []) as Product[];
   },
 
   getCustomerOrders: async (customerId: string) => {
-    await delay();
-    return MOCK_ORDERS.filter((o) => o.customer_id === customerId || customerId === 'USR-001');
+    const { data } = await supabase.from('orders').select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
+    return (data || []) as Order[];
   },
 
   getCustomerProfile: async (customerId: string) => {
-    await delay();
-    const user = MOCK_CUSTOMERS.find((c) => c.id === customerId) || MOCK_CUSTOMERS[0];
-    const orders = MOCK_ORDERS.filter((o) => o.customer_id === user.id);
-    const referrals = MOCK_REFERRALS.filter((r) => r.referrer_id === user.id);
-    return { ...user, total_orders: orders.length, total_referrals: referrals.length };
+    const { data: user } = await supabase.from('customers').select('*').eq('id', customerId).single();
+    if (!user) return null;
+    const [{ count: orderCount }, { count: referralCount }] = await Promise.all([
+      supabase.from('orders').select('*', { count: 'exact', head: true }).eq('customer_id', user.id),
+      supabase.from('referrals').select('*', { count: 'exact', head: true }).eq('referrer_id', user.id),
+    ]);
+    return { ...user, total_orders: orderCount || 0, total_referrals: referralCount || 0 };
   },
 
-  // Cart
+  // Cart (kept in localStorage for simplicity)
   getCart: async (): Promise<CartItem[]> => {
-    await delay();
     const { loadCart } = await import('./persist');
     return loadCart();
   },
 
   addToCart: async (product: Product, qty: number = 1) => {
-    await delay();
     const { loadCart, saveCart } = await import('./persist');
     const cart = loadCart();
     const existing = cart.find((i: CartItem) => i.id === product.id);
@@ -978,7 +1064,6 @@ export const api = {
   },
 
   updateCartItem: async (itemId: string, qty: number) => {
-    await delay();
     const { loadCart, saveCart } = await import('./persist');
     const cart = loadCart();
     const idx = cart.findIndex((i: CartItem) => i.id === itemId);
@@ -991,7 +1076,6 @@ export const api = {
   },
 
   removeFromCart: async (itemId: string) => {
-    await delay();
     const { loadCart, saveCart } = await import('./persist');
     const cart = loadCart().filter((i: CartItem) => i.id !== itemId);
     saveCart(cart);
@@ -999,7 +1083,6 @@ export const api = {
   },
 
   clearCart: async () => {
-    await delay();
     const { saveCart } = await import('./persist');
     saveCart([]);
     return { success: true };
@@ -1007,48 +1090,64 @@ export const api = {
 
   // ===== Vendor-facing APIs =====
   getVendorDashboard: async (vendorId: string) => {
-    await delay();
-    const vendor = [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].find((v) => v.id === vendorId) || MOCK_VENDORS[0];
-    const orders = MOCK_ORDERS.filter((o) => o.vendor_id === vendor.id);
-    const products = MOCK_PRODUCTS.filter((p) => p.vendor_id === vendor.id);
-    const services = MOCK_SERVICES.filter((s) => s.vendor_id === vendor.id);
-    const settlements = MOCK_SETTLEMENTS.filter((s) => s.vendor_id === vendor.id);
+    const [
+      { data: vendor },
+      { data: orders },
+      { data: products },
+      { data: services },
+      { data: settlements },
+    ] = await Promise.all([
+      supabase.from('vendors').select('*').eq('id', vendorId).single(),
+      supabase.from('orders').select('*').eq('vendor_id', vendorId),
+      supabase.from('products').select('*').eq('vendor_id', vendorId),
+      supabase.from('services').select('*').eq('vendor_id', vendorId),
+      supabase.from('settlements').select('*').eq('vendor_id', vendorId),
+    ]);
+    const allOrders = orders || [];
     return {
-      vendor, orders, products, services, settlements,
-      todayRevenue: orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0),
-      activeOrders: orders.filter((o) => !['completed', 'cancelled'].includes(o.status)).length,
+      vendor: vendor || {},
+      orders: allOrders,
+      products: products || [],
+      services: services || [],
+      settlements: settlements || [],
+      todayRevenue: allOrders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total), 0),
+      activeOrders: allOrders.filter(o => !['completed', 'cancelled'].includes(o.status)).length,
     };
   },
 
   getVendorProducts: async (vendorId: string) => {
-    await delay();
-    return MOCK_PRODUCTS.filter((p) => p.vendor_id === vendorId || vendorId === 'VND-001');
+    const { data } = await supabase.from('products').select('*').eq('vendor_id', vendorId);
+    return (data || []) as Product[];
   },
 
   getVendorOrders: async (vendorId: string) => {
-    await delay();
-    return MOCK_ORDERS.filter((o) => o.vendor_id === vendorId || vendorId === 'VND-001');
+    const { data } = await supabase.from('orders').select('*').eq('vendor_id', vendorId).order('created_at', { ascending: false });
+    return (data || []) as Order[];
   },
 
   getVendorSettlements: async (vendorId: string) => {
-    await delay();
-    return MOCK_SETTLEMENTS.filter((s) => s.vendor_id === vendorId || vendorId === 'VND-001');
+    const { data } = await supabase.from('settlements').select('*').eq('vendor_id', vendorId).order('created_at', { ascending: false });
+    return (data || []) as Settlement[];
   },
 
   getVendorProfile: async (vendorId: string) => {
-    await delay();
-    return [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].find((v) => v.id === vendorId) || MOCK_VENDORS[0];
+    const { data: vendor } = await supabase.from('vendors').select('*').eq('id', vendorId).single();
+    if (vendor) return vendor as any;
+    const { data: svcVendor } = await supabase.from('service_vendors').select('*').eq('id', vendorId).single();
+    return svcVendor as any;
   },
 
   // Reports
   getSalesReport: async (_params: any) => {
-    await delay();
+    const { data: orders } = await supabase.from('orders').select('*');
+    const allOrders = orders || [];
+    const nonCancelled = allOrders.filter(o => o.status !== 'cancelled');
     return {
       summary: {
-        total_sales: MOCK_ORDERS.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0),
-        total_orders: MOCK_ORDERS.length,
-        avg_order_value: Math.round(MOCK_ORDERS.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0) / Math.max(MOCK_ORDERS.length, 1)),
-        total_tax: MOCK_ORDERS.reduce((s, o) => s + o.tax, 0),
+        total_sales: nonCancelled.reduce((s, o) => s + Number(o.total), 0),
+        total_orders: allOrders.length,
+        avg_order_value: Math.round(nonCancelled.reduce((s, o) => s + Number(o.total), 0) / Math.max(nonCancelled.length, 1)),
+        total_tax: allOrders.reduce((s, o) => s + Number(o.tax), 0),
       },
       chart: [
         { month: 'Oct', sales: 380000, orders: 1650 }, { month: 'Nov', sales: 420000, orders: 1820 },
@@ -1057,79 +1156,92 @@ export const api = {
       ],
     };
   },
+
   getVendorPerformance: async (_params: any) => {
-    await delay();
-    return { vendors: [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].filter((v) => v.total_revenue) };
+    const [{ data: v1 }, { data: v2 }] = await Promise.all([
+      supabase.from('vendors').select('*').not('total_revenue', 'is', null),
+      supabase.from('service_vendors').select('*').not('total_revenue', 'is', null),
+    ]);
+    return { vendors: [...(v1 || []), ...(v2 || [])] };
   },
+
   getSettlementReport: async (_params: any) => {
-    await delay();
+    const { data: settlements } = await supabase.from('settlements').select('*');
+    const all = settlements || [];
     return {
-      settlements: MOCK_SETTLEMENTS,
+      settlements: all,
       summary: {
-        total_settled: MOCK_SETTLEMENTS.filter(s => s.status === 'settled').reduce((sum, s) => sum + s.net_amount, 0),
-        total_pending: MOCK_SETTLEMENTS.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.net_amount, 0),
-        total_commission: MOCK_SETTLEMENTS.reduce((sum, s) => sum + s.commission, 0),
+        total_settled: all.filter(s => s.status === 'settled').reduce((sum, s) => sum + Number(s.net_amount), 0),
+        total_pending: all.filter(s => s.status === 'pending').reduce((sum, s) => sum + Number(s.net_amount), 0),
+        total_commission: all.reduce((sum, s) => sum + Number(s.commission), 0),
       },
     };
   },
+
   getCustomerReport: async (_params: any) => {
-    await delay();
-    return { customers: MOCK_CUSTOMERS, summary: { total: MOCK_CUSTOMERS.length, active: MOCK_CUSTOMERS.filter((c) => c.status === 'active').length } };
+    const { data: customers } = await supabase.from('customers').select('*');
+    const all = customers || [];
+    return { customers: all, summary: { total: all.length, active: all.filter(c => c.status === 'active').length } };
   },
+
   getPointsReport: async (_params: any) => {
-    await delay();
-    return { transactions: MOCK_POINTS_TRANSACTIONS };
+    const { data } = await supabase.from('points_transactions').select('*');
+    return { transactions: data || [] };
   },
+
   getReferralReport: async (_params: any) => {
-    await delay();
-    return { referrals: MOCK_REFERRALS };
+    const { data } = await supabase.from('referrals').select('*');
+    return { referrals: data || [] };
   },
 
   // Support Tickets
   getSupportTickets: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
-    await delay();
-    let items = filterSearch(MOCK_SUPPORT_TICKETS, params.search, ['subject', 'customer_name', 'category', 'id']);
-    items = filterStatus(items, params.status);
-    items = filterDateRange(items, params.date_from, params.date_to);
-    return paginate(items, params.page, params.per_page);
+    const page = params.page || 1;
+    const perPage = params.per_page || 10;
+    const from = (page - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('support_tickets').select('*', { count: 'exact' });
+    if (params.search) query = query.or(`subject.ilike.%${params.search}%,customer_name.ilike.%${params.search}%,category.ilike.%${params.search}%`);
+    if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    if (params.date_from) query = query.gte('created_at', params.date_from);
+    if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+    return paginateResult(data || [], count || 0, page, perPage);
   },
 
   resolveTicket: async (id: string, status: string, resolution: string) => {
-    await delay();
-    const idx = MOCK_SUPPORT_TICKETS.findIndex(t => t.id === id);
-    if (idx >= 0) {
-      (MOCK_SUPPORT_TICKETS[idx] as any).status = status;
-      (MOCK_SUPPORT_TICKETS[idx] as any).resolution_notes = resolution;
-      MOCK_SUPPORT_TICKETS[idx].updated_at = new Date().toISOString();
-      persist('support_tickets');
-    }
+    const { error } = await supabase.from('support_tickets').update({
+      status, resolution_notes: resolution, updated_at: new Date().toISOString(),
+    }).eq('id', id);
+    if (error) throw error;
     return { success: true };
   },
 
   createSupportTicket: async (data: { subject: string; description: string; category: string; priority: string; customer_id: string }) => {
-    await delay();
-    const customer = MOCK_CUSTOMERS.find(c => c.id === data.customer_id) || MOCK_CUSTOMERS[0];
+    const { data: customer } = await supabase.from('customers').select('name, mobile').eq('id', data.customer_id).single();
     const now = new Date().toISOString();
     const newTicket = {
-      id: `TKT-${String(MOCK_SUPPORT_TICKETS.length + 1).padStart(3, '0')}`,
-      ...data, status: "open", customer_name: customer.name, phone: customer.mobile,
-      assigned_to: "Unassigned", resolution: "", created_at: now, updated_at: now,
+      id: genId('TKT'),
+      ...data, status: "open", customer_name: customer?.name || '',
+      assigned_to: "Unassigned", resolution_notes: "",
     };
-    MOCK_SUPPORT_TICKETS.unshift(newTicket as any);
-    persist('support_tickets');
+    const { error } = await supabase.from('support_tickets').insert(newTicket as any);
+    if (error) throw error;
     return { success: true, ticket: newTicket };
   },
 
-  // Reset all data
+  // Reset all data (no-op with Supabase)
   resetData: () => {
-    const { resetAllStores } = require('./persist');
-    resetAllStores();
+    localStorage.clear();
     window.location.reload();
   },
 
   // Export
-  exportCSV: async (type: string, _params: any) => {
-    await delay();
+  exportCSV: async (_type: string, _params: any) => {
     return { url: '#' };
   },
 };

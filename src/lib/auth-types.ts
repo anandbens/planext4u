@@ -1,4 +1,5 @@
 export type UserRole = 'admin' | 'finance' | 'sales';
+export type AppRole = 'admin' | 'finance' | 'sales' | 'vendor' | 'customer';
 export type PortalType = 'admin' | 'vendor' | 'customer';
 
 export interface AuthUser {
@@ -7,6 +8,7 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   portal: PortalType;
+  supabase_uid?: string;
 }
 
 export interface CustomerUser {
@@ -14,6 +16,8 @@ export interface CustomerUser {
   name: string;
   email: string;
   mobile: string;
+  customer_id?: string;
+  supabase_uid?: string;
 }
 
 export interface VendorUser {
@@ -21,6 +25,8 @@ export interface VendorUser {
   name: string;
   email: string;
   business_name: string;
+  vendor_id?: string;
+  supabase_uid?: string;
 }
 
 export interface AuthContextType {
@@ -30,10 +36,11 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  customerLogin: (identifier: string, otp: string) => Promise<void>;
+  customerLogin: (email: string, password: string) => Promise<void>;
   vendorLogin: (email: string, password: string) => Promise<void>;
   logout: () => void;
   customerLogout: () => void;
   vendorLogout: () => void;
   hasAccess: (allowedRoles: UserRole[]) => boolean;
+  seedDemoUsers: () => Promise<void>;
 }
