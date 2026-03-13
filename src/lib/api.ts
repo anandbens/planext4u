@@ -485,7 +485,7 @@ export const api = {
         customer_name: customer.name, vendor_name: items[0].vendor,
         items: items.map(i => ({ title: i.title, qty: i.qty, emoji: i.emoji, price: i.price })),
       };
-      MOCK_ORDERS.unshift(order);
+      (MOCK_ORDERS as Order[]).unshift(order);
       orders.push(order);
     }
     persist('orders', MOCK_ORDERS);
