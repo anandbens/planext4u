@@ -658,6 +658,65 @@ export const api = {
     return { success: true };
   },
 
+  createCategory: async (data: Partial<Category>) => {
+    await delay();
+    const newCat: any = {
+      id: String(MOCK_CATEGORIES.length + 1),
+      ...data,
+      count: 0,
+      created_at: new Date().toISOString(),
+    };
+    MOCK_CATEGORIES.push(newCat);
+    persist('categories', MOCK_CATEGORIES);
+    return { success: true, category: newCat };
+  },
+
+  deleteCategory: async (id: string) => {
+    await delay();
+    const idx = MOCK_CATEGORIES.findIndex((c) => c.id === id);
+    if (idx >= 0) { MOCK_CATEGORIES.splice(idx, 1); persist('categories', MOCK_CATEGORIES); }
+    return { success: true };
+  },
+
+  // Services CRUD
+  updateService: async (id: string, data: Partial<Service>) => {
+    await delay();
+    const idx = MOCK_SERVICES.findIndex((s) => s.id === id);
+    if (idx >= 0) { Object.assign(MOCK_SERVICES[idx], data); persist('services', MOCK_SERVICES); }
+    return { success: true };
+  },
+
+  createService: async (data: Partial<Service>) => {
+    await delay();
+    const newSrv: any = {
+      id: `SRV-${String(MOCK_SERVICES.length + 1).padStart(3, '0')}`,
+      ...data,
+      rating: 0, reviews: 0,
+      created_at: new Date().toISOString(),
+    };
+    MOCK_SERVICES.unshift(newSrv);
+    persist('services', MOCK_SERVICES);
+    return { success: true, service: newSrv };
+  },
+
+  deleteService: async (id: string) => {
+    await delay();
+    const idx = MOCK_SERVICES.findIndex((s) => s.id === id);
+    if (idx >= 0) { MOCK_SERVICES.splice(idx, 1); persist('services', MOCK_SERVICES); }
+    return { success: true };
+  },
+
+  settleSettlement: async (id: string) => {
+    await delay();
+    const idx = MOCK_SETTLEMENTS.findIndex((s) => s.id === id);
+    if (idx >= 0) {
+      (MOCK_SETTLEMENTS[idx] as any).status = 'settled';
+      (MOCK_SETTLEMENTS[idx] as any).settled_at = new Date().toISOString();
+      persist('settlements', MOCK_SETTLEMENTS);
+    }
+    return { success: true };
+  },
+
   // CMS
   getBanners: async () => {
     await delay();
