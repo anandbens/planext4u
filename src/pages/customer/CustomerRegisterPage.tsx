@@ -1,115 +1,72 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { MapPin, Gift, User, Mail, Phone, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { MapPin, Gift } from "lucide-react";
+import { logActivity } from "@/lib/auth";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerRegisterPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", mobile: "", email: "", city: "", area: "", referral_code: "" });
+  const [form, setForm] = useState({ name: "", mobile: "", email: "", city: "Coimbatore", area: "", referral_code: "", occupation: "" });
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const captureLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation not supported");
-      return;
-    }
     setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        toast.success("Location captured!");
-        setGeoLoading(false);
-      },
-      () => {
-        toast.error("Unable to get location. Please enable location access.");
-        setGeoLoading(false);
-      }
+      (pos) => { setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGeoLoading(false); toast.success("Location captured!"); },
+      () => { setGeoLoading(false); toast.error("Location access denied"); },
+      { enableHighAccuracy: true }
     );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.mobile.trim() || !form.email.trim() || !form.city.trim() || !form.area.trim()) {
-      toast.error("Please fill all required fields");
-      return;
-    }
+    if (!form.name || !form.mobile || !form.email) { toast.error("Please fill all required fields"); return; }
     setLoading(true);
     try {
       await api.registerCustomer(form);
-      toast.success("Account created! Welcome bonus of 200 points credited. 🎉");
-      navigate("/app");
-    } catch {
-      toast.error("Registration failed");
-    } finally {
-      setLoading(false);
-    }
+      toast.success("🎉 Registration successful!", { duration: 5000 });
+      setTimeout(() => toast.info("📧 Welcome email sent to " + form.email, { description: "Check your inbox for activation link and password setup.", duration: 6000 }), 1000);
+      setTimeout(() => toast.info("📱 Welcome SMS sent to " + form.mobile, { description: "You've earned 200 welcome points!", duration: 5000 }), 2500);
+      logActivity('registration', `New customer registered: ${form.name} (${form.email})`);
+      navigate("/app/login");
+    } catch { toast.error("Registration failed"); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="h-14 w-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4">
-            <span className="text-xl font-bold text-primary-foreground">M</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">Create Account</h1>
-          <p className="text-sm text-muted-foreground mt-1">Join MarketHub and start shopping</p>
-        </div>
-
+    <div className="min-h-screen bg-background">
+      <div className="bg-primary pt-8 pb-12 px-6 flex flex-col items-center relative">
+        <Link to="/app/login" className="absolute top-4 left-4 text-primary-foreground/60 hover:text-primary-foreground"><ArrowLeft className="h-5 w-5" /></Link>
+        <img src={p4uLogoTeal} alt="Planext4u" className="h-16 w-16 object-contain mb-2 rounded-xl" />
+        <h2 className="text-primary-foreground text-lg font-bold">Create Account</h2>
+        <p className="text-primary-foreground/60 text-xs">Join Planext4u and start shopping</p>
+      </div>
+      <div className="max-w-md mx-auto -mt-6 px-4 pb-8">
         <Card className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label>Full Name *</Label>
-              <Input placeholder="Enter your name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1.5" maxLength={100} />
-            </div>
-            <div>
-              <Label>Mobile Number *</Label>
-              <Input placeholder="+91 98765 43210" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="mt-1.5" maxLength={15} />
-            </div>
-            <div>
-              <Label>Email *</Label>
-              <Input type="email" placeholder="you@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5" maxLength={255} />
-            </div>
+            <div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Full Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="pl-10 h-11" /></div>
+            <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Mobile Number *" value={form.mobile} onChange={e => setForm({...form, mobile: e.target.value})} className="pl-10 h-11" type="tel" /></div>
+            <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Email Address *" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="pl-10 h-11" type="email" /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>City *</Label>
-                <Input placeholder="Mumbai" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="mt-1.5" />
-              </div>
-              <div>
-                <Label>Area *</Label>
-                <Input placeholder="Andheri" value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} className="mt-1.5" />
-              </div>
+              <Input placeholder="City" value={form.city} onChange={e => setForm({...form, city: e.target.value})} className="h-11" />
+              <Input placeholder="Area" value={form.area} onChange={e => setForm({...form, area: e.target.value})} className="h-11" />
             </div>
-
-            <Button type="button" variant="outline" className="w-full gap-2" onClick={captureLocation} disabled={geoLoading}>
-              <MapPin className="h-4 w-4" />
-              {geoLoading ? "Detecting..." : location ? "Location Captured ✓" : "Capture Location"}
+            <Input placeholder="Occupation" value={form.occupation} onChange={e => setForm({...form, occupation: e.target.value})} className="h-11" />
+            <Button type="button" variant="outline" className="w-full h-11 gap-2" onClick={captureLocation} disabled={geoLoading}>
+              <MapPin className="h-4 w-4" /> {geoLoading ? "Capturing..." : location ? "📍 Location Captured" : "Capture Location"}
             </Button>
-
-            <div>
-              <Label className="flex items-center gap-1"><Gift className="h-3.5 w-3.5 text-primary" /> Referral Code (optional)</Label>
-              <Input placeholder="Enter referral code" value={form.referral_code} onChange={(e) => setForm({ ...form, referral_code: e.target.value })} className="mt-1.5" />
-            </div>
-
-            <div className="bg-success/10 text-success rounded-lg p-3 text-xs font-medium text-center">
-              🎁 Get 200 welcome bonus points on registration!
-            </div>
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating Account..." : "Create Account"}
-            </Button>
+            <div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Referral Code (optional)" value={form.referral_code} onChange={e => setForm({...form, referral_code: e.target.value})} className="pl-10 h-11" /></div>
+            <Button type="submit" className="w-full h-12 text-base bg-primary" disabled={loading}>{loading ? "Creating Account..." : "Create Account"}</Button>
+            <p className="text-xs text-muted-foreground text-center">Already have an account? <Link to="/app/login" className="text-primary font-semibold hover:underline">Sign In</Link></p>
+            <p className="text-[10px] text-muted-foreground text-center">By registering, you agree to our Terms of Service and Privacy Policy. A welcome email with activation link and SMS will be sent upon registration.</p>
           </form>
-
-          <p className="text-xs text-muted-foreground text-center mt-4">
-            Already have an account? <Link to="/app" className="text-primary hover:underline">Sign In</Link>
-          </p>
         </Card>
       </div>
     </div>
