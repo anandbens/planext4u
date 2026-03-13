@@ -6,7 +6,7 @@ import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Vendor, PaginatedResponse } from "@/lib/api";
 import { VendorModal } from "@/components/admin/modals/VendorModal";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Eye, Pencil } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Pencil, Trash2 } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -16,12 +16,10 @@ export default function VendorsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selected, setSelected] = useState<Vendor | null>(null);
-  const [modalMode, setModalMode] = useState<"view" | "edit">("view");
+  const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
   const [modalOpen, setModalOpen] = useState(false);
-
-  // Confirmation dialog state
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<{ vendor: Vendor; action: "approve" | "reject" } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ vendor: Vendor; action: "approve" | "reject" | "delete" } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
   const fetchData = useCallback(() => {
@@ -30,7 +28,7 @@ export default function VendorsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const openModal = (vendor: Vendor, mode: "view" | "edit") => {
+  const openModal = (vendor: Vendor | null, mode: "view" | "edit" | "create") => {
     setSelected(vendor);
     setModalMode(mode);
     setModalOpen(true);
@@ -38,11 +36,23 @@ export default function VendorsPage() {
 
   const handleSave = async (id: string, updates: Partial<Vendor>) => {
     await api.updateVendor(id, updates);
-    toast.success("Vendor updated successfully");
+    toast.success("Vendor updated");
     fetchData();
   };
 
-  const openConfirm = (vendor: Vendor, action: "approve" | "reject") => {
+  const handleCreate = async (data: Partial<Vendor>) => {
+    await api.createVendor(data);
+    toast.success("Vendor created");
+    fetchData();
+  };
+
+  const handleDelete = async (id: string) => {
+    await api.deleteVendor(id);
+    toast.success("Vendor deleted");
+    fetchData();
+  };
+
+  const openConfirm = (vendor: Vendor, action: "approve" | "reject" | "delete") => {
     setConfirmAction({ vendor, action });
     setConfirmOpen(true);
   };
@@ -51,14 +61,18 @@ export default function VendorsPage() {
     if (!confirmAction) return;
     setConfirmLoading(true);
     const { vendor, action } = confirmAction;
-    const nextStatus: Vendor["status"] = action === "reject" ? "rejected"
-      : vendor.status === "pending" ? "level1_approved"
-      : vendor.status === "level1_approved" ? "level2_approved"
-      : "verified";
     try {
-      await api.updateVendorStatus(vendor.id, nextStatus);
-      toast.success(action === "approve" ? `Vendor approved → ${nextStatus.replace(/_/g, " ")}` : "Vendor rejected");
-      fetchData();
+      if (action === "delete") {
+        await handleDelete(vendor.id);
+      } else {
+        const nextStatus: Vendor["status"] = action === "reject" ? "rejected"
+          : vendor.status === "pending" ? "level1_approved"
+          : vendor.status === "level1_approved" ? "level2_approved"
+          : "verified";
+        await api.updateVendorStatus(vendor.id, nextStatus);
+        toast.success(action === "approve" ? `Vendor → ${nextStatus.replace(/_/g, " ")}` : "Vendor rejected");
+        fetchData();
+      }
     } finally {
       setConfirmLoading(false);
       setConfirmOpen(false);
@@ -110,6 +124,7 @@ export default function VendorsPage() {
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(v, "reject"); }}><XCircle className="h-4 w-4" /></Button>
                 </>
               )}
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(v, "delete"); }}><Trash2 className="h-4 w-4" /></Button>
             </div>
           )},
         ]}
@@ -121,29 +136,31 @@ export default function VendorsPage() {
         onPageChange={setPage}
         onSearch={setSearch}
         onExport={handleExport}
+        onAdd={() => openModal(null, "create")}
+        addLabel="Add Vendor"
         onRowClick={(v) => openModal(v, "view")}
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } }}
         searchPlaceholder="Search vendors..."
         filters={[{ key: "status", label: "Status", options: [
-          { value: "pending", label: "Pending" },
-          { value: "level1_approved", label: "Level 1" },
-          { value: "level2_approved", label: "Level 2" },
-          { value: "verified", label: "Verified" },
+          { value: "pending", label: "Pending" }, { value: "level1_approved", label: "Level 1" },
+          { value: "level2_approved", label: "Level 2" }, { value: "verified", label: "Verified" },
           { value: "rejected", label: "Rejected" },
         ]}]}
       />
-      <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} />
+      <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title={confirmAction?.action === "approve" ? "Approve Vendor" : "Reject Vendor"}
+        title={confirmAction?.action === "approve" ? "Approve Vendor" : confirmAction?.action === "delete" ? "Delete Vendor" : "Reject Vendor"}
         description={
           confirmAction?.action === "approve"
-            ? `Are you sure you want to approve "${confirmAction.vendor.business_name}"? This will advance them to the next approval level.`
-            : `Are you sure you want to reject "${confirmAction?.vendor.business_name}"? This action can be reversed from the edit modal.`
+            ? `Approve "${confirmAction.vendor.business_name}"? This advances them to the next level.`
+            : confirmAction?.action === "delete"
+            ? `Delete "${confirmAction?.vendor.business_name}"? This cannot be undone.`
+            : `Reject "${confirmAction?.vendor.business_name}"?`
         }
-        confirmLabel={confirmAction?.action === "approve" ? "Approve" : "Reject"}
-        variant={confirmAction?.action === "reject" ? "destructive" : "default"}
+        confirmLabel={confirmAction?.action === "approve" ? "Approve" : confirmAction?.action === "delete" ? "Delete" : "Reject"}
+        variant={confirmAction?.action === "approve" ? "default" : "destructive"}
         onConfirm={handleConfirm}
         loading={confirmLoading}
       />

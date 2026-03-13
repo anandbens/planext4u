@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, User, PaginatedResponse } from "@/lib/api";
 import { CustomerModal } from "@/components/admin/modals/CustomerModal";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { MOCK_OCCUPATIONS } from "@/lib/mockData";
@@ -19,8 +20,10 @@ export default function CustomersPage() {
   const [dateFrom, setDateFrom] = useState<string>();
   const [dateTo, setDateTo] = useState<string>();
   const [selected, setSelected] = useState<User | null>(null);
-  const [modalMode, setModalMode] = useState<"view" | "edit">("view");
+  const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
   const [modalOpen, setModalOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState<User | null>(null);
 
   const fetchData = useCallback(() => {
     api.getCustomers({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined, occupation: occupationFilter || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
@@ -28,7 +31,7 @@ export default function CustomersPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const openModal = (user: User, mode: "view" | "edit") => {
+  const openModal = (user: User | null, mode: "view" | "edit" | "create") => {
     setSelected(user);
     setModalMode(mode);
     setModalOpen(true);
@@ -36,8 +39,25 @@ export default function CustomersPage() {
 
   const handleSave = async (id: string, updates: Partial<User>) => {
     await api.updateCustomer(id, updates);
-    toast.success("Customer updated successfully");
+    toast.success("Customer updated");
     fetchData();
+  };
+
+  const handleCreate = async (data: Partial<User>) => {
+    await api.createCustomer(data);
+    toast.success("Customer created");
+    fetchData();
+  };
+
+  const handleDelete = async (id: string) => {
+    await api.deleteCustomer(id);
+    toast.success("Customer deleted");
+    fetchData();
+  };
+
+  const confirmDelete = (user: User) => {
+    setConfirmTarget(user);
+    setConfirmOpen(true);
   };
 
   const handleExport = () => {
@@ -68,15 +88,12 @@ export default function CustomersPage() {
           { key: "mobile", label: "Mobile" },
           { key: "occupation", label: "Occupation", render: (u) => <span className="text-sm">{u.occupation || '—'}</span> },
           { key: "wallet_points", label: "Points", render: (u) => <span className="font-semibold">{u.wallet_points.toLocaleString()}</span> },
-          { key: "referral_code", label: "Referral Code", render: (u) => <code className="text-xs bg-secondary px-2 py-0.5 rounded">{u.referral_code}</code> },
           { key: "status", label: "Status", render: (u) => <StatusBadge status={u.status} /> },
-          { key: "created_at", label: "Registered", render: (u) => (
-            <span className="text-xs">{new Date(u.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-          )},
           { key: "actions", label: "", render: (u) => (
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(u, "view"); }}><Eye className="h-4 w-4" /></Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(u, "edit"); }}><Pencil className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); confirmDelete(u); }}><Trash2 className="h-4 w-4" /></Button>
             </div>
           )},
         ]}
@@ -88,6 +105,8 @@ export default function CustomersPage() {
         onPageChange={setPage}
         onSearch={setSearch}
         onExport={handleExport}
+        onAdd={() => openModal(null, "create")}
+        addLabel="Add Customer"
         onRowClick={(u) => openModal(u, "view")}
         onFilterChange={(key, val) => {
           if (key === "status") { setStatusFilter(val); setPage(1); }
@@ -100,7 +119,16 @@ export default function CustomersPage() {
           { key: "occupation", label: "Occupation", options: MOCK_OCCUPATIONS.filter(o => o.status === 'active').map(o => ({ value: o.name, label: o.name })) },
         ]}
       />
-      <CustomerModal customer={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} />
+      <CustomerModal customer={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Delete Customer"
+        description={`Are you sure you want to delete "${confirmTarget?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={async () => { if (confirmTarget) { await handleDelete(confirmTarget.id); setConfirmOpen(false); } }}
+      />
     </AdminLayout>
   );
 }
