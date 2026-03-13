@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Users, Store, Package, ShoppingCart, Banknote,
   Megaphone, Star, Gift, BarChart3, Settings, Image, FileText, LogOut,
   Grid3X3, Wrench, Receipt, MapPin, Map, Tag, Briefcase, SlidersHorizontal,
-  MessageSquare, MonitorPlay, ExternalLink, ClipboardList,
+  MessageSquare, MonitorPlay, ExternalLink, ClipboardList, Headphones, Key,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
