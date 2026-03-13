@@ -142,7 +142,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
                 { icon: Wrench, label: "Services", to: "/app/services" },
                 { icon: Megaphone, label: "Socio", to: "#", comingSoon: true },
-                { icon: CalendarDays, label: "Booking", to: "/app/services?tab=booking" },
+                { icon: CalendarDays, label: "Booking", to: "#", comingSoon: true },
                 { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds" },
               ].map((tab) => (
                 tab.comingSoon ? (
