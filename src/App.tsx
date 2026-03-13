@@ -160,8 +160,11 @@ const App = () => (
             <Route path="/vendor/login" element={<VendorLoginPage />} />
             <Route path="/vendor" element={<VendorDashboardPage />} />
             <Route path="/vendor/products" element={<VendorProductsPage />} />
+            <Route path="/vendor/services" element={<VendorServicesPage />} />
             <Route path="/vendor/orders" element={<VendorOrdersPage />} />
             <Route path="/vendor/settlements" element={<VendorSettlementsPage />} />
+            <Route path="/vendor/payments" element={<VendorPaymentHistoryPage />} />
+            <Route path="/vendor/bank" element={<VendorBankPage />} />
             <Route path="/vendor/profile" element={<VendorProfilePage />} />
             <Route path="/vendor/settings" element={<VendorProfilePage />} />
 
