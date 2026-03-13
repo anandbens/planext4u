@@ -27,3 +27,13 @@ export function exportToCSV<T extends Record<string, any>>(
   a.click();
   URL.revokeObjectURL(url);
 }
+
+// Simple wrapper for report pages
+export function downloadCSV<T extends Record<string, any>>(
+  data: T[],
+  keys: string[],
+  filename: string
+) {
+  const columns = keys.map((k) => ({ key: k, label: k }));
+  exportToCSV(data, columns, filename);
+}

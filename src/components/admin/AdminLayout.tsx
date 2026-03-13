@@ -1,8 +1,8 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
-import { Bell, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -26,10 +26,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="relative text-muted-foreground">
-                <Bell className="h-[18px] w-[18px]" />
-                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground flex items-center justify-center">3</span>
-              </Button>
+              <NotificationDropdown />
             </div>
           </header>
           <main className="flex-1 p-4 lg:p-6 overflow-auto">
