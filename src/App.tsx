@@ -19,8 +19,6 @@ import ReportsPage from "./pages/ReportsPage";
 import CMSPage from "./pages/CMSPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
-
-// New admin pages
 import CategoriesPage from "./pages/CategoriesPage";
 import AdminServicesPage from "./pages/AdminServicesPage";
 import TaxPage from "./pages/TaxPage";
@@ -39,8 +37,6 @@ import AdvertisementsPage from "./pages/AdvertisementsPage";
 import WebsiteQueriesPage from "./pages/WebsiteQueriesPage";
 import SupportTicketsPage from "./pages/SupportTicketsPage";
 import IntegrationsPage from "./pages/IntegrationsPage";
-
-// Report sub-pages
 import SalesReportPage from "./pages/reports/SalesReportPage";
 import VendorReportPage from "./pages/reports/VendorReportPage";
 import SettlementReportPage from "./pages/reports/SettlementReportPage";
@@ -53,12 +49,18 @@ import PaymentReportPage from "./pages/reports/PaymentReportPage";
 
 // Customer pages
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
+import CustomerLoginPage from "./pages/customer/CustomerLoginPage";
 import CustomerBrowsePage from "./pages/customer/CustomerBrowsePage";
 import CustomerVendorPage from "./pages/customer/CustomerVendorPage";
 import CustomerProductPage from "./pages/customer/CustomerProductPage";
 import CustomerCartPage from "./pages/customer/CustomerCartPage";
 import CustomerOrdersPage from "./pages/customer/CustomerOrdersPage";
 import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
+import CustomerProfileEditPage from "./pages/customer/CustomerProfileEditPage";
+import CustomerKYCPage from "./pages/customer/CustomerKYCPage";
+import CustomerWalletPage from "./pages/customer/CustomerWalletPage";
+import CustomerWishlistPage from "./pages/customer/CustomerWishlistPage";
+import CustomerReferralPage from "./pages/customer/CustomerReferralPage";
 import CustomerServicesPage from "./pages/customer/CustomerServicesPage";
 import CustomerServiceDetailPage from "./pages/customer/CustomerServiceDetailPage";
 import CustomerClassifiedsPage from "./pages/customer/CustomerClassifiedsPage";
@@ -66,6 +68,7 @@ import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 
 // Vendor pages
+import VendorLoginPage from "./pages/vendor/VendorLoginPage";
 import VendorDashboardPage from "./pages/vendor/VendorDashboardPage";
 import VendorProductsPage from "./pages/vendor/VendorProductsPage";
 import VendorOrdersPage from "./pages/vendor/VendorOrdersPage";
@@ -86,6 +89,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* Admin Login */}
             <Route path="/login" element={<LoginPage />} />
 
             {/* Admin routes */}
@@ -110,8 +114,6 @@ const App = () => (
             <Route path="/reports/payments" element={<ProtectedPage><PaymentReportPage /></ProtectedPage>} />
             <Route path="/cms" element={<ProtectedPage><CMSPage /></ProtectedPage>} />
             <Route path="/settings" element={<ProtectedPage><SettingsPage /></ProtectedPage>} />
-
-            {/* New admin routes */}
             <Route path="/categories" element={<ProtectedPage><CategoriesPage /></ProtectedPage>} />
             <Route path="/admin/services" element={<ProtectedPage><AdminServicesPage /></ProtectedPage>} />
             <Route path="/tax" element={<ProtectedPage><TaxPage /></ProtectedPage>} />
@@ -133,19 +135,26 @@ const App = () => (
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerHomePage />} />
+            <Route path="/app/login" element={<CustomerLoginPage />} />
+            <Route path="/app/register" element={<CustomerRegisterPage />} />
             <Route path="/app/browse" element={<CustomerBrowsePage />} />
             <Route path="/app/product/:id" element={<CustomerProductPage />} />
             <Route path="/app/vendor/:id" element={<CustomerVendorPage />} />
             <Route path="/app/cart" element={<CustomerCartPage />} />
             <Route path="/app/orders" element={<CustomerOrdersPage />} />
             <Route path="/app/profile" element={<CustomerProfilePage />} />
+            <Route path="/app/profile/edit" element={<CustomerProfileEditPage />} />
+            <Route path="/app/kyc" element={<CustomerKYCPage />} />
+            <Route path="/app/wallet" element={<CustomerWalletPage />} />
+            <Route path="/app/wishlist" element={<CustomerWishlistPage />} />
+            <Route path="/app/referrals" element={<CustomerReferralPage />} />
             <Route path="/app/services" element={<CustomerServicesPage />} />
             <Route path="/app/service/:id" element={<CustomerServiceDetailPage />} />
             <Route path="/app/classifieds" element={<CustomerClassifiedsPage />} />
             <Route path="/app/classifieds/post" element={<CustomerPostAdPage />} />
-            <Route path="/app/register" element={<CustomerRegisterPage />} />
 
             {/* Vendor-facing routes */}
+            <Route path="/vendor/login" element={<VendorLoginPage />} />
             <Route path="/vendor" element={<VendorDashboardPage />} />
             <Route path="/vendor/products" element={<VendorProductsPage />} />
             <Route path="/vendor/orders" element={<VendorOrdersPage />} />
