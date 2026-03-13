@@ -5,6 +5,7 @@ import {
   MOCK_PRODUCTS, MOCK_CUSTOMERS, MOCK_VENDORS, MOCK_ORDERS,
   MOCK_SETTLEMENTS, MOCK_CLASSIFIEDS, MOCK_POINTS_TRANSACTIONS,
   MOCK_REFERRALS, MOCK_CATEGORIES, MOCK_BANNERS, MOCK_PLATFORM_VARIABLES,
+  MOCK_SERVICES, MOCK_SERVICE_CATEGORIES, MOCK_SERVICE_VENDORS, MOCK_CLASSIFIED_CATEGORIES,
 } from './mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
@@ -31,6 +32,14 @@ export interface Product {
   status: 'active' | 'inactive' | 'draft';
   vendor_name?: string; category_name?: string; emoji?: string;
   rating?: number; reviews?: number; stock?: number; sales?: number;
+}
+
+export interface Service {
+  id: string; vendor_id: string; category_id: string; title: string; description: string;
+  price: number; tax: number; discount: number; max_points_redeemable: number;
+  status: 'active' | 'inactive' | 'draft';
+  vendor_name?: string; category_name?: string; emoji?: string;
+  rating?: number; reviews?: number; service_area?: string; duration?: string;
 }
 
 export interface Order {
@@ -87,7 +96,7 @@ export interface PaginatedResponse<T> {
 
 export interface DashboardStats {
   total_customers: number; total_vendors: number; total_orders: number; total_revenue: number;
-  pending_settlements: number; active_ads: number;
+  pending_settlements: number; active_ads: number; total_services: number;
   customers_trend: number; vendors_trend: number; orders_trend: number; revenue_trend: number;
   recent_orders: Order[];
   revenue_chart: { date: string; revenue: number; orders: number }[];
@@ -115,8 +124,6 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-const MOCK_ENABLED = true;
-
 // Helper: paginate & filter
 function paginate<T>(items: T[], page = 1, perPage = 10): PaginatedResponse<T> {
   const start = (page - 1) * perPage;
@@ -137,7 +144,6 @@ function filterStatus<T extends { status: string }>(items: T[], status?: string)
   return status && status !== 'all' ? items.filter((i) => i.status === status) : items;
 }
 
-// Simulate async
 const delay = () => new Promise((r) => setTimeout(r, 150));
 
 // API Methods
@@ -148,16 +154,31 @@ export const api = {
     return { token: 'mock-jwt-token', user: { id: '1', name: 'Admin', email } };
   },
 
+  // Customer Registration
+  registerCustomer: async (data: { name: string; mobile: string; email: string; city: string; area: string; referral_code?: string }) => {
+    await delay();
+    const newId = `USR-${String(MOCK_CUSTOMERS.length + 1).padStart(3, '0')}`;
+    const newCustomer = {
+      id: newId, name: data.name, mobile: data.mobile, email: data.email,
+      city_id: "1", area_id: "1", latitude: 19.076, longitude: 72.877,
+      wallet_points: 200, referral_code: `REF${String(MOCK_CUSTOMERS.length + 1).padStart(4, '0')}`,
+      referred_by: data.referral_code || null, status: "active" as const, created_at: new Date().toISOString(),
+    };
+    MOCK_CUSTOMERS.push(newCustomer);
+    return { success: true, user: newCustomer, token: 'mock-customer-token' };
+  },
+
   // Dashboard
   getDashboardStats: async (): Promise<DashboardStats> => {
     await delay();
     return {
       total_customers: MOCK_CUSTOMERS.length * 2485,
-      total_vendors: MOCK_VENDORS.length * 125,
+      total_vendors: (MOCK_VENDORS.length + MOCK_SERVICE_VENDORS.length) * 125,
       total_orders: MOCK_ORDERS.length * 1843,
-      total_revenue: MOCK_VENDORS.reduce((s, v) => s + (v.total_revenue || 0), 0),
+      total_revenue: MOCK_VENDORS.reduce((s, v) => s + (v.total_revenue || 0), 0) + MOCK_SERVICE_VENDORS.reduce((s, v) => s + (v.total_revenue || 0), 0),
       pending_settlements: MOCK_SETTLEMENTS.filter((s) => s.status === 'pending').length * 86,
       active_ads: MOCK_CLASSIFIEDS.filter((a) => a.status === 'approved').length * 371,
+      total_services: MOCK_SERVICES.length * 245,
       customers_trend: 12.5, vendors_trend: 8.3, orders_trend: 15.2, revenue_trend: 22.1,
       recent_orders: MOCK_ORDERS.slice(0, 5),
       revenue_chart: [
@@ -169,17 +190,16 @@ export const api = {
         { date: '2026-03-12', revenue: 260000, orders: 395 },
         { date: '2026-03-13', revenue: 290000, orders: 445 },
       ],
-      top_vendors: MOCK_VENDORS.filter((v) => v.total_revenue).slice(0, 5).map((v) => ({
+      top_vendors: [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].filter((v) => v.total_revenue).sort((a, b) => (b.total_revenue || 0) - (a.total_revenue || 0)).slice(0, 5).map((v) => ({
         name: v.business_name, revenue: v.total_revenue!, orders: v.total_orders!,
       })),
-      category_distribution: MOCK_CATEGORIES.map((c) => ({ name: c.name, count: c.count || 0 })),
+      category_distribution: [...MOCK_CATEGORIES, ...MOCK_SERVICE_CATEGORIES].map((c) => ({ name: c.name, count: c.count || 0 })),
     };
   },
 
   // Customers
   getCustomers: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
     await delay();
-    if (!MOCK_ENABLED) return request<PaginatedResponse<User>>(`/admin/customers?${new URLSearchParams(params as any)}`);
     let items = filterSearch(MOCK_CUSTOMERS, params.search, ['name', 'email', 'mobile']);
     items = filterStatus(items, params.status);
     return paginate(items, params.page, params.per_page);
@@ -195,8 +215,8 @@ export const api = {
   // Vendors
   getVendors: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
     await delay();
-    if (!MOCK_ENABLED) return request<PaginatedResponse<Vendor>>(`/admin/vendors?${new URLSearchParams(params as any)}`);
-    let items = filterSearch(MOCK_VENDORS, params.search, ['name', 'business_name', 'email']);
+    const allVendors = [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS];
+    let items = filterSearch(allVendors, params.search, ['name', 'business_name', 'email']);
     items = filterStatus(items, params.status);
     return paginate(items, params.page, params.per_page);
   },
@@ -205,6 +225,10 @@ export const api = {
     await delay();
     const idx = MOCK_VENDORS.findIndex((v) => v.id === id);
     if (idx >= 0) MOCK_VENDORS[idx].status = status;
+    else {
+      const sIdx = MOCK_SERVICE_VENDORS.findIndex((v) => v.id === id);
+      if (sIdx >= 0) MOCK_SERVICE_VENDORS[sIdx].status = status;
+    }
     return { success: true };
   },
 
@@ -218,7 +242,6 @@ export const api = {
   // Products
   getProducts: async (params: { page?: number; per_page?: number; search?: string }) => {
     await delay();
-    if (!MOCK_ENABLED) return request<PaginatedResponse<Product>>(`/admin/products?${new URLSearchParams(params as any)}`);
     const items = filterSearch(MOCK_PRODUCTS, params.search, ['title', 'vendor_name', 'category_name']);
     return paginate(items, params.page, params.per_page);
   },
@@ -235,10 +258,37 @@ export const api = {
     return MOCK_PRODUCTS.find((p) => p.id === id || p.id === `PRD-${String(id).padStart(3, '0')}`) || MOCK_PRODUCTS[0];
   },
 
+  // Services
+  getServices: async (params: { page?: number; per_page?: number; search?: string }) => {
+    await delay();
+    const items = filterSearch(MOCK_SERVICES, params.search, ['title', 'vendor_name', 'category_name']);
+    return paginate(items, params.page, params.per_page);
+  },
+
+  getServiceById: async (id: string): Promise<Service | null> => {
+    await delay();
+    return MOCK_SERVICES.find((s) => s.id === id) || MOCK_SERVICES[0];
+  },
+
+  browseServices: async (params: { category?: string; search?: string; sort?: string }) => {
+    await delay();
+    let items = [...MOCK_SERVICES].filter((s) => s.status === 'active');
+    if (params.category) items = items.filter((s) => s.category_name?.toLowerCase().includes(params.category!.toLowerCase()));
+    if (params.search) items = items.filter((s) => s.title.toLowerCase().includes(params.search!.toLowerCase()));
+    if (params.sort === 'price_low') items.sort((a, b) => a.price - b.price);
+    if (params.sort === 'price_high') items.sort((a, b) => b.price - a.price);
+    if (params.sort === 'rating') items.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    return items;
+  },
+
+  getServiceCategories: async () => {
+    await delay();
+    return MOCK_SERVICE_CATEGORIES;
+  },
+
   // Orders
   getOrders: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
     await delay();
-    if (!MOCK_ENABLED) return request<PaginatedResponse<Order>>(`/admin/orders?${new URLSearchParams(params as any)}`);
     let items = filterSearch(MOCK_ORDERS, params.search, ['id', 'customer_name', 'vendor_name']);
     items = filterStatus(items, params.status);
     return paginate(items, params.page, params.per_page);
@@ -254,7 +304,6 @@ export const api = {
   // Settlements
   getSettlements: async (params: { page?: number; per_page?: number; status?: string }) => {
     await delay();
-    if (!MOCK_ENABLED) return request<PaginatedResponse<Settlement>>(`/admin/settlements?${new URLSearchParams(params as any)}`);
     const items = filterStatus(MOCK_SETTLEMENTS, params.status);
     return paginate(items, params.page, params.per_page);
   },
@@ -262,10 +311,35 @@ export const api = {
   // Classified Ads
   getClassifiedAds: async (params: { page?: number; per_page?: number; status?: string }) => {
     await delay();
-    if (!MOCK_ENABLED) return request<PaginatedResponse<ClassifiedAd>>(`/admin/classifieds?${new URLSearchParams(params as any)}`);
     const items = filterStatus(MOCK_CLASSIFIEDS, params.status);
     return paginate(items, params.page, params.per_page);
   },
+
+  postClassifiedAd: async (data: { title: string; description: string; price: number; category: string; city: string; area: string }) => {
+    await delay();
+    const newAd: ClassifiedAd = {
+      id: `AD-${String(MOCK_CLASSIFIEDS.length + 1).padStart(3, '0')}`,
+      ...data, images: [], user_id: "USR-001", status: "pending",
+      created_at: new Date().toISOString(), user_name: "Rahul Sharma",
+    };
+    MOCK_CLASSIFIEDS.unshift(newAd);
+    return { success: true, ad: newAd };
+  },
+
+  getCustomerClassifieds: async (userId: string) => {
+    await delay();
+    return MOCK_CLASSIFIEDS.filter((ad) => ad.user_id === userId || userId === 'USR-001');
+  },
+
+  getBrowseClassifieds: async (params: { category?: string; search?: string }) => {
+    await delay();
+    let items = MOCK_CLASSIFIEDS.filter((ad) => ad.status === 'approved');
+    if (params.category) items = items.filter((ad) => ad.category.toLowerCase().includes(params.category!.toLowerCase()));
+    if (params.search) items = items.filter((ad) => ad.title.toLowerCase().includes(params.search!.toLowerCase()));
+    return items;
+  },
+
+  getClassifiedCategories: () => MOCK_CLASSIFIED_CATEGORIES,
 
   // Points
   getPointsTransactions: async (params: { page?: number; per_page?: number }) => {
@@ -310,7 +384,9 @@ export const api = {
     return {
       banners: MOCK_BANNERS.filter((b) => b.status === 'active'),
       categories: MOCK_CATEGORIES,
+      serviceCategories: MOCK_SERVICE_CATEGORIES,
       featuredProducts: MOCK_PRODUCTS.filter((p) => p.status === 'active').slice(0, 8),
+      featuredServices: MOCK_SERVICES.filter((s) => s.status === 'active').slice(0, 4),
     };
   },
 
@@ -341,12 +417,13 @@ export const api = {
   // ===== Vendor-facing APIs =====
   getVendorDashboard: async (vendorId: string) => {
     await delay();
-    const vendor = MOCK_VENDORS.find((v) => v.id === vendorId) || MOCK_VENDORS[0];
+    const vendor = [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].find((v) => v.id === vendorId) || MOCK_VENDORS[0];
     const orders = MOCK_ORDERS.filter((o) => o.vendor_id === vendor.id);
     const products = MOCK_PRODUCTS.filter((p) => p.vendor_id === vendor.id);
+    const services = MOCK_SERVICES.filter((s) => s.vendor_id === vendor.id);
     const settlements = MOCK_SETTLEMENTS.filter((s) => s.vendor_id === vendor.id);
     return {
-      vendor, orders, products, settlements,
+      vendor, orders, products, services, settlements,
       todayRevenue: orders.reduce((s, o) => s + o.total, 0),
       activeOrders: orders.filter((o) => !['completed', 'cancelled'].includes(o.status)).length,
     };
@@ -369,17 +446,45 @@ export const api = {
 
   getVendorProfile: async (vendorId: string) => {
     await delay();
-    return MOCK_VENDORS.find((v) => v.id === vendorId) || MOCK_VENDORS[0];
+    return [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].find((v) => v.id === vendorId) || MOCK_VENDORS[0];
   },
 
-  // Reports (stubs)
-  getSalesReport: (params: any) => request(`/admin/reports/sales?${new URLSearchParams(params)}`),
-  getVendorPerformance: (params: any) => request(`/admin/reports/vendors?${new URLSearchParams(params)}`),
-  getSettlementReport: (params: any) => request(`/admin/reports/settlements?${new URLSearchParams(params)}`),
-  getCustomerReport: (params: any) => request(`/admin/reports/customers?${new URLSearchParams(params)}`),
-  getPointsReport: (params: any) => request(`/admin/reports/points?${new URLSearchParams(params)}`),
-  getReferralReport: (params: any) => request(`/admin/reports/referrals?${new URLSearchParams(params)}`),
+  // Reports (stubs with mock data)
+  getSalesReport: async (_params: any) => {
+    await delay();
+    return {
+      summary: { total_sales: 2890000, total_orders: 12450, avg_order_value: 2320, total_tax: 520200 },
+      chart: [
+        { month: 'Oct', sales: 380000, orders: 1650 }, { month: 'Nov', sales: 420000, orders: 1820 },
+        { month: 'Dec', sales: 510000, orders: 2210 }, { month: 'Jan', sales: 390000, orders: 1690 },
+        { month: 'Feb', sales: 450000, orders: 1950 }, { month: 'Mar', sales: 740000, orders: 3130 },
+      ],
+    };
+  },
+  getVendorPerformance: async (_params: any) => {
+    await delay();
+    return { vendors: [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].filter((v) => v.total_revenue) };
+  },
+  getSettlementReport: async (_params: any) => {
+    await delay();
+    return { settlements: MOCK_SETTLEMENTS, summary: { total_settled: 2774, total_pending: 8031, total_commission: 1301 } };
+  },
+  getCustomerReport: async (_params: any) => {
+    await delay();
+    return { customers: MOCK_CUSTOMERS, summary: { total: MOCK_CUSTOMERS.length, active: MOCK_CUSTOMERS.filter((c) => c.status === 'active').length } };
+  },
+  getPointsReport: async (_params: any) => {
+    await delay();
+    return { transactions: MOCK_POINTS_TRANSACTIONS };
+  },
+  getReferralReport: async (_params: any) => {
+    await delay();
+    return { referrals: MOCK_REFERRALS };
+  },
 
   // Export
-  exportCSV: (type: string, params: any) => request(`/admin/export/${type}?${new URLSearchParams(params)}`, { method: 'GET' }),
+  exportCSV: async (type: string, _params: any) => {
+    await delay();
+    return { url: '#' };
+  },
 };
