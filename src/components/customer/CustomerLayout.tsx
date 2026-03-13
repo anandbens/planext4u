@@ -49,7 +49,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     navigate("/app");
   };
 
-  const [socioToast, setSocioToast] = useState(false);
+  
 
   const navItems = [
     { icon: Home, label: "Home", to: "/app" },
