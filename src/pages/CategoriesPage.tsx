@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { DataTable } from "@/components/admin/DataTable";
+import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { api, PaginatedResponse, Category } from "@/lib/api";
 import { CategoryModal } from "@/components/admin/modals/CategoryModal";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Layers, CheckCircle, Package } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
@@ -29,26 +29,16 @@ export default function CategoriesPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const openModal = (cat: Category | null, mode: "view" | "edit" | "create") => {
-    setSelected(cat);
-    setModalMode(mode);
-    setModalOpen(true);
+    setSelected(cat); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<Category>) => {
-    await api.updateCategory(id, updates);
-    toast.success("Category updated");
-    fetchData();
-  };
+  const handleSave = async (id: string, updates: Partial<Category>) => { await api.updateCategory(id, updates); toast.success("Category updated"); fetchData(); };
+  const handleCreate = async (data: Partial<Category>) => { await api.createCategory(data); toast.success("Category created"); fetchData(); };
+  const handleDelete = async (id: string) => { await api.deleteCategory(id); toast.success("Category deleted"); fetchData(); };
 
-  const handleCreate = async (data: Partial<Category>) => {
-    await api.createCategory(data);
-    toast.success("Category created");
-    fetchData();
-  };
-
-  const handleDelete = async (id: string) => {
-    await api.deleteCategory(id);
-    toast.success("Category deleted");
+  const handleBulkDelete = async (ids: string[]) => {
+    await api.bulkDeleteCategories(ids);
+    toast.success(`${ids.length} categories deleted`);
     fetchData();
   };
 
@@ -62,6 +52,15 @@ export default function CategoriesPage() {
   };
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
+
+  const active = data.data.filter(c => c.status === 'active').length;
+  const totalProducts = data.data.reduce((s, c) => s + (c.count || 0), 0);
+
+  const summaryWidgets: SummaryWidget[] = [
+    { label: "Total Categories", value: data.total, icon: <Layers className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
+    { label: "Active", value: active, icon: <CheckCircle className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
+    { label: "Total Products", value: totalProducts, icon: <Package className="h-5 w-5 text-info" />, color: "bg-info/5", textColor: "text-info" },
+  ];
 
   return (
     <AdminLayout>
@@ -96,6 +95,9 @@ export default function CategoriesPage() {
         onRowClick={(c) => openModal(c, "edit")}
         searchPlaceholder="Search categories..."
         showDateFilter={false}
+        summaryWidgets={summaryWidgets}
+        enableBulkSelect
+        onBulkDelete={handleBulkDelete}
       />
       <CategoryModal category={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
       <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Delete Category" description={`Delete "${confirmTarget?.name}"?`} confirmLabel="Delete" variant="destructive"

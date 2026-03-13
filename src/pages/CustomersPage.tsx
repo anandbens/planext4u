@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { DataTable } from "@/components/admin/DataTable";
+import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, User, PaginatedResponse } from "@/lib/api";
 import { CustomerModal } from "@/components/admin/modals/CustomerModal";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2, Users, UserCheck, UserX, Star } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { MOCK_OCCUPATIONS } from "@/lib/mockData";
@@ -32,32 +32,23 @@ export default function CustomersPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const openModal = (user: User | null, mode: "view" | "edit" | "create") => {
-    setSelected(user);
-    setModalMode(mode);
-    setModalOpen(true);
+    setSelected(user); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<User>) => {
-    await api.updateCustomer(id, updates);
-    toast.success("Customer updated");
+  const handleSave = async (id: string, updates: Partial<User>) => { await api.updateCustomer(id, updates); toast.success("Customer updated"); fetchData(); };
+  const handleCreate = async (data: Partial<User>) => { await api.createCustomer(data); toast.success("Customer created"); fetchData(); };
+  const handleDelete = async (id: string) => { await api.deleteCustomer(id); toast.success("Customer deleted"); fetchData(); };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    await api.bulkDeleteCustomers(ids);
+    toast.success(`${ids.length} customers deleted`);
     fetchData();
   };
 
-  const handleCreate = async (data: Partial<User>) => {
-    await api.createCustomer(data);
-    toast.success("Customer created");
+  const handleBulkStatus = async (ids: string[], status: string) => {
+    await api.bulkUpdateCustomerStatus(ids, status);
+    toast.success(`${ids.length} customers updated to ${status}`);
     fetchData();
-  };
-
-  const handleDelete = async (id: string) => {
-    await api.deleteCustomer(id);
-    toast.success("Customer deleted");
-    fetchData();
-  };
-
-  const confirmDelete = (user: User) => {
-    setConfirmTarget(user);
-    setConfirmOpen(true);
   };
 
   const handleExport = () => {
@@ -73,6 +64,17 @@ export default function CustomersPage() {
   };
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
+
+  const allCustomers = data.data;
+  const activeCount = allCustomers.filter(c => c.status === 'active').length;
+  const totalPoints = allCustomers.reduce((s, c) => s + c.wallet_points, 0);
+
+  const summaryWidgets: SummaryWidget[] = [
+    { label: "Total Customers", value: data.total, icon: <Users className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
+    { label: "Active", value: activeCount, icon: <UserCheck className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
+    { label: "Inactive / Suspended", value: data.total - activeCount, icon: <UserX className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
+    { label: "Total Wallet Points", value: totalPoints, icon: <Star className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+  ];
 
   return (
     <AdminLayout>
@@ -93,7 +95,7 @@ export default function CustomersPage() {
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(u, "view"); }}><Eye className="h-4 w-4" /></Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(u, "edit"); }}><Pencil className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); confirmDelete(u); }}><Trash2 className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setConfirmTarget(u); setConfirmOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
             </div>
           )},
         ]}
@@ -118,17 +120,19 @@ export default function CustomersPage() {
           { key: "status", label: "Status", options: [{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }, { value: "suspended", label: "Suspended" }] },
           { key: "occupation", label: "Occupation", options: MOCK_OCCUPATIONS.filter(o => o.status === 'active').map(o => ({ value: o.name, label: o.name })) },
         ]}
+        summaryWidgets={summaryWidgets}
+        enableBulkSelect
+        onBulkDelete={handleBulkDelete}
+        onBulkStatusUpdate={handleBulkStatus}
+        bulkStatusOptions={[
+          { value: "active", label: "Active" },
+          { value: "inactive", label: "Inactive" },
+          { value: "suspended", label: "Suspended" },
+        ]}
       />
       <CustomerModal customer={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
-      <ConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title="Delete Customer"
-        description={`Are you sure you want to delete "${confirmTarget?.name}"? This action cannot be undone.`}
-        confirmLabel="Delete"
-        variant="destructive"
-        onConfirm={async () => { if (confirmTarget) { await handleDelete(confirmTarget.id); setConfirmOpen(false); } }}
-      />
+      <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Delete Customer" description={`Are you sure you want to delete "${confirmTarget?.name}"? This action cannot be undone.`} confirmLabel="Delete" variant="destructive"
+        onConfirm={async () => { if (confirmTarget) { await handleDelete(confirmTarget.id); setConfirmOpen(false); } }} />
     </AdminLayout>
   );
 }

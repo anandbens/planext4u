@@ -596,6 +596,102 @@ export const api = {
     return { success: true };
   },
 
+  // Bulk operations
+  bulkDeleteCustomers: async (ids: string[]) => {
+    await delay();
+    ids.forEach(id => { const idx = MOCK_CUSTOMERS.findIndex(c => c.id === id); if (idx >= 0) MOCK_CUSTOMERS.splice(idx, 1); });
+    persist('customers', MOCK_CUSTOMERS);
+    return { success: true };
+  },
+
+  bulkUpdateCustomerStatus: async (ids: string[], status: string) => {
+    await delay();
+    ids.forEach(id => { const c = MOCK_CUSTOMERS.find(c => c.id === id); if (c) (c as any).status = status; });
+    persist('customers', MOCK_CUSTOMERS);
+    return { success: true };
+  },
+
+  bulkDeleteProducts: async (ids: string[]) => {
+    await delay();
+    ids.forEach(id => { const idx = MOCK_PRODUCTS.findIndex(p => p.id === id); if (idx >= 0) MOCK_PRODUCTS.splice(idx, 1); });
+    persist('products', MOCK_PRODUCTS);
+    return { success: true };
+  },
+
+  bulkUpdateProductStatus: async (ids: string[], status: string) => {
+    await delay();
+    ids.forEach(id => { const p = MOCK_PRODUCTS.find(p => p.id === id); if (p) (p as any).status = status; });
+    persist('products', MOCK_PRODUCTS);
+    return { success: true };
+  },
+
+  bulkDeleteVendors: async (ids: string[]) => {
+    await delay();
+    ids.forEach(id => {
+      let idx = MOCK_VENDORS.findIndex(v => v.id === id);
+      if (idx >= 0) MOCK_VENDORS.splice(idx, 1);
+      else { idx = MOCK_SERVICE_VENDORS.findIndex(v => v.id === id); if (idx >= 0) MOCK_SERVICE_VENDORS.splice(idx, 1); }
+    });
+    persist('vendors', MOCK_VENDORS);
+    persist('service_vendors', MOCK_SERVICE_VENDORS);
+    return { success: true };
+  },
+
+  bulkUpdateVendorStatus: async (ids: string[], status: string) => {
+    await delay();
+    ids.forEach(id => {
+      const v = MOCK_VENDORS.find(v => v.id === id) || MOCK_SERVICE_VENDORS.find(v => v.id === id);
+      if (v) (v as any).status = status;
+    });
+    persist('vendors', MOCK_VENDORS);
+    persist('service_vendors', MOCK_SERVICE_VENDORS);
+    return { success: true };
+  },
+
+  bulkDeleteServices: async (ids: string[]) => {
+    await delay();
+    ids.forEach(id => { const idx = MOCK_SERVICES.findIndex(s => s.id === id); if (idx >= 0) MOCK_SERVICES.splice(idx, 1); });
+    persist('services', MOCK_SERVICES);
+    return { success: true };
+  },
+
+  bulkUpdateServiceStatus: async (ids: string[], status: string) => {
+    await delay();
+    ids.forEach(id => { const s = MOCK_SERVICES.find(s => s.id === id); if (s) (s as any).status = status; });
+    persist('services', MOCK_SERVICES);
+    return { success: true };
+  },
+
+  bulkDeleteCategories: async (ids: string[]) => {
+    await delay();
+    ids.forEach(id => { const idx = MOCK_CATEGORIES.findIndex(c => c.id === id); if (idx >= 0) MOCK_CATEGORIES.splice(idx, 1); });
+    persist('categories', MOCK_CATEGORIES);
+    return { success: true };
+  },
+
+  bulkUpdateOrderStatus: async (ids: string[], status: string) => {
+    await delay();
+    ids.forEach(id => { const o = MOCK_ORDERS.find(o => o.id === id); if (o) { (o as any).status = status; o.updated_at = new Date().toISOString(); } });
+    persist('orders', MOCK_ORDERS);
+    return { success: true };
+  },
+
+  bulkUpdateClassifiedStatus: async (ids: string[], status: string) => {
+    await delay();
+    ids.forEach(id => { const a = MOCK_CLASSIFIEDS.find(a => a.id === id); if (a) (a as any).status = status; });
+    persist('classifieds', MOCK_CLASSIFIEDS);
+    return { success: true };
+  },
+
+  bulkSettleSettlements: async (ids: string[]) => {
+    await delay();
+    const now = new Date().toISOString();
+    ids.forEach(id => { const s = MOCK_SETTLEMENTS.find(s => s.id === id); if (s && (s.status === 'eligible' || s.status === 'pending')) { (s as any).status = 'settled'; s.settled_at = now; } });
+    persist('settlements', MOCK_SETTLEMENTS);
+    return { success: true };
+  },
+
+
   // Classified Ads
   getClassifiedAds: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
     await delay();

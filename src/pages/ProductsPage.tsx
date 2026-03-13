@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { DataTable } from "@/components/admin/DataTable";
+import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Product, PaginatedResponse } from "@/lib/api";
 import { ProductModal } from "@/components/admin/modals/ProductModal";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2, Package, IndianRupee, Tag, TrendingUp } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -14,6 +14,8 @@ export default function ProductsPage() {
   const [data, setData] = useState<PaginatedResponse<Product> | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState<string>();
+  const [dateTo, setDateTo] = useState<string>();
   const [selected, setSelected] = useState<Product | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
   const [modalOpen, setModalOpen] = useState(false);
@@ -21,32 +23,28 @@ export default function ProductsPage() {
   const [confirmTarget, setConfirmTarget] = useState<Product | null>(null);
 
   const fetchData = useCallback(() => {
-    api.getProducts({ page, per_page: 10, search: search || undefined }).then(setData);
-  }, [page, search]);
+    api.getProducts({ page, per_page: 10, search: search || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
+  }, [page, search, dateFrom, dateTo]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const openModal = (product: Product | null, mode: "view" | "edit" | "create") => {
-    setSelected(product);
-    setModalMode(mode);
-    setModalOpen(true);
+    setSelected(product); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<Product>) => {
-    await api.updateProduct(id, updates);
-    toast.success("Product updated");
+  const handleSave = async (id: string, updates: Partial<Product>) => { await api.updateProduct(id, updates); toast.success("Product updated"); fetchData(); };
+  const handleCreate = async (data: Partial<Product>) => { await api.createProduct(data); toast.success("Product created"); fetchData(); };
+  const handleDelete = async (id: string) => { await api.deleteProduct(id); toast.success("Product deleted"); fetchData(); };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    await api.bulkDeleteProducts(ids);
+    toast.success(`${ids.length} products deleted`);
     fetchData();
   };
 
-  const handleCreate = async (data: Partial<Product>) => {
-    await api.createProduct(data);
-    toast.success("Product created");
-    fetchData();
-  };
-
-  const handleDelete = async (id: string) => {
-    await api.deleteProduct(id);
-    toast.success("Product deleted");
+  const handleBulkStatus = async (ids: string[], status: string) => {
+    await api.bulkUpdateProductStatus(ids, status);
+    toast.success(`${ids.length} products updated to ${status}`);
     fetchData();
   };
 
@@ -56,13 +54,23 @@ export default function ProductsPage() {
       { key: "id", label: "ID" }, { key: "title", label: "Product" },
       { key: "vendor_name", label: "Vendor" }, { key: "category_name", label: "Category" },
       { key: "price", label: "Price" }, { key: "tax", label: "Tax" },
-      { key: "discount", label: "Discount" }, { key: "max_points_redeemable", label: "Max Points" },
-      { key: "status", label: "Status" },
+      { key: "discount", label: "Discount" }, { key: "status", label: "Status" },
     ], "products");
     toast.success("CSV exported");
   };
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
+
+  const active = data.data.filter(p => p.status === 'active').length;
+  const avgPrice = data.data.length ? Math.round(data.data.reduce((s, p) => s + p.price, 0) / data.data.length) : 0;
+  const totalDiscount = data.data.reduce((s, p) => s + p.discount, 0);
+
+  const summaryWidgets: SummaryWidget[] = [
+    { label: "Total Products", value: data.total, icon: <Package className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
+    { label: "Active", value: active, icon: <TrendingUp className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
+    { label: "Avg Price", value: `₹${avgPrice.toLocaleString()}`, icon: <IndianRupee className="h-5 w-5 text-info" />, color: "bg-info/5", textColor: "text-info" },
+    { label: "Total Discounts", value: `₹${totalDiscount.toLocaleString()}`, icon: <Tag className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+  ];
 
   return (
     <AdminLayout>
@@ -99,7 +107,17 @@ export default function ProductsPage() {
         onAdd={() => openModal(null, "create")}
         addLabel="Add Product"
         onRowClick={(p) => openModal(p, "view")}
+        onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
         searchPlaceholder="Search products..."
+        summaryWidgets={summaryWidgets}
+        enableBulkSelect
+        onBulkDelete={handleBulkDelete}
+        onBulkStatusUpdate={handleBulkStatus}
+        bulkStatusOptions={[
+          { value: "active", label: "Active" },
+          { value: "inactive", label: "Inactive" },
+          { value: "draft", label: "Draft" },
+        ]}
       />
       <ProductModal product={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
       <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Delete Product" description={`Delete "${confirmTarget?.title}"? This cannot be undone.`} confirmLabel="Delete" variant="destructive"

@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { DataTable } from "@/components/admin/DataTable";
+import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Order, PaginatedResponse } from "@/lib/api";
 import { OrderModal } from "@/components/admin/modals/OrderModal";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Ban } from "lucide-react";
+import { Eye, Pencil, Ban, ShoppingCart, IndianRupee, Clock, CheckCircle } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -15,35 +15,29 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState<string>();
+  const [dateTo, setDateTo] = useState<string>();
   const [selected, setSelected] = useState<Order | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "edit">("view");
   const [modalOpen, setModalOpen] = useState(false);
-
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<Order | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
 
   const fetchData = useCallback(() => {
-    api.getOrders({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined }).then(setData);
-  }, [page, search, statusFilter]);
+    api.getOrders({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
+  }, [page, search, statusFilter, dateFrom, dateTo]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const openModal = (order: Order, mode: "view" | "edit") => {
-    setSelected(order);
-    setModalMode(mode);
-    setModalOpen(true);
+    setSelected(order); setModalMode(mode); setModalOpen(true);
   };
 
   const handleSave = async (id: string, status: Order["status"]) => {
     if (status === "cancelled") {
-      // Route through confirmation
       const order = data?.data.find(o => o.id === id);
-      if (order) {
-        setCancelTarget(order);
-        setCancelConfirmOpen(true);
-        setModalOpen(false);
-      }
+      if (order) { setCancelTarget(order); setCancelConfirmOpen(true); setModalOpen(false); }
       return;
     }
     await api.updateOrderStatus(id, status);
@@ -54,30 +48,38 @@ export default function OrdersPage() {
   const handleCancelConfirm = async () => {
     if (!cancelTarget) return;
     setCancelLoading(true);
-    try {
-      await api.updateOrderStatus(cancelTarget.id, "cancelled");
-      toast.success("Order cancelled");
-      fetchData();
-    } finally {
-      setCancelLoading(false);
-      setCancelConfirmOpen(false);
-      setCancelTarget(null);
-    }
+    try { await api.updateOrderStatus(cancelTarget.id, "cancelled"); toast.success("Order cancelled"); fetchData(); }
+    finally { setCancelLoading(false); setCancelConfirmOpen(false); setCancelTarget(null); }
+  };
+
+  const handleBulkStatus = async (ids: string[], status: string) => {
+    await api.bulkUpdateOrderStatus(ids, status);
+    toast.success(`${ids.length} orders updated to ${status}`);
+    fetchData();
   };
 
   const handleExport = () => {
     if (!data) return;
     exportToCSV(data.data, [
       { key: "id", label: "Order ID" }, { key: "customer_name", label: "Customer" },
-      { key: "vendor_name", label: "Vendor" }, { key: "subtotal", label: "Subtotal" },
-      { key: "tax", label: "Tax" }, { key: "discount", label: "Discount" },
-      { key: "points_used", label: "Points Used" }, { key: "total", label: "Total" },
+      { key: "vendor_name", label: "Vendor" }, { key: "total", label: "Total" },
       { key: "status", label: "Status" },
     ], "orders");
     toast.success("CSV exported");
   };
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
+
+  const totalRevenue = data.data.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0);
+  const activeOrders = data.data.filter(o => !['completed', 'cancelled'].includes(o.status)).length;
+  const completed = data.data.filter(o => o.status === 'completed').length;
+
+  const summaryWidgets: SummaryWidget[] = [
+    { label: "Total Orders", value: data.total, icon: <ShoppingCart className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
+    { label: "Revenue (page)", value: `₹${totalRevenue.toLocaleString()}`, icon: <IndianRupee className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
+    { label: "Active", value: activeOrders, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+    { label: "Completed", value: completed, icon: <CheckCircle className="h-5 w-5 text-info" />, color: "bg-info/5", textColor: "text-info" },
+  ];
 
   return (
     <AdminLayout>
@@ -115,6 +117,7 @@ export default function OrdersPage() {
         onExport={handleExport}
         onRowClick={(o) => openModal(o, "view")}
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } }}
+        onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
         searchPlaceholder="Search orders..."
         filters={[{ key: "status", label: "Status", options: [
           { value: "placed", label: "Placed" }, { value: "paid", label: "Paid" },
@@ -122,18 +125,18 @@ export default function OrdersPage() {
           { value: "delivered", label: "Delivered" }, { value: "completed", label: "Completed" },
           { value: "cancelled", label: "Cancelled" },
         ]}]}
+        summaryWidgets={summaryWidgets}
+        enableBulkSelect
+        onBulkStatusUpdate={handleBulkStatus}
+        bulkStatusOptions={[
+          { value: "placed", label: "Placed" }, { value: "accepted", label: "Accepted" },
+          { value: "completed", label: "Completed" }, { value: "cancelled", label: "Cancelled" },
+        ]}
       />
       <OrderModal order={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} />
-      <ConfirmDialog
-        open={cancelConfirmOpen}
-        onOpenChange={setCancelConfirmOpen}
-        title="Cancel Order"
-        description={`Are you sure you want to cancel order "${cancelTarget?.id}"? This action cannot be undone. The customer will be notified.`}
-        confirmLabel="Cancel Order"
-        variant="destructive"
-        onConfirm={handleCancelConfirm}
-        loading={cancelLoading}
-      />
+      <ConfirmDialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen} title="Cancel Order"
+        description={`Cancel order "${cancelTarget?.id}"? The customer will be notified.`}
+        confirmLabel="Cancel Order" variant="destructive" onConfirm={handleCancelConfirm} loading={cancelLoading} />
     </AdminLayout>
   );
 }
