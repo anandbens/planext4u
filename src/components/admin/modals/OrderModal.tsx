@@ -1,0 +1,142 @@
+import { Order } from "@/lib/api";
+import { StatusBadge } from "@/components/admin/StatusBadge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { ShoppingCart, User, Store, Calendar, ArrowRight } from "lucide-react";
+import { useState } from "react";
+
+interface OrderModalProps {
+  order: Order | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: "view" | "edit";
+}
+
+const orderFlow: Order["status"][] = ["placed", "paid", "accepted", "in_progress", "delivered", "completed"];
+
+export function OrderModal({ order, open, onOpenChange, mode }: OrderModalProps) {
+  const [editMode, setEditMode] = useState(mode === "edit");
+
+  if (!order) return null;
+
+  const currentStep = orderFlow.indexOf(order.status);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl gradient-success flex items-center justify-center shrink-0">
+              <ShoppingCart className="h-5 w-5 text-card" />
+            </div>
+            <div>
+              <span>{order.id}</span>
+              <p className="text-xs font-normal text-muted-foreground mt-0.5">
+                {new Date(order.created_at).toLocaleString()}
+              </p>
+            </div>
+          </DialogTitle>
+          <DialogDescription className="flex items-center gap-2 pt-1">
+            <StatusBadge status={order.status} />
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Order Progress */}
+        {order.status !== "cancelled" && (
+          <div className="flex items-center gap-0.5 py-3">
+            {orderFlow.map((s, i) => (
+              <div key={s} className="flex items-center flex-1">
+                <div className="flex flex-col items-center flex-1">
+                  <div className={`w-full h-1.5 rounded-full ${i <= currentStep ? 'gradient-success' : 'bg-secondary'}`} />
+                  <span className={`text-[10px] mt-1 capitalize ${i <= currentStep ? 'text-success font-medium' : 'text-muted-foreground'}`}>
+                    {s.replace("_", " ")}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Parties */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 rounded-lg bg-secondary/30 flex items-center gap-3">
+            <User className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-xs text-muted-foreground">Customer</p>
+              <p className="text-sm font-medium">{order.customer_name}</p>
+            </div>
+          </div>
+          <div className="p-3 rounded-lg bg-secondary/30 flex items-center gap-3">
+            <Store className="h-5 w-5 text-info" />
+            <div>
+              <p className="text-xs text-muted-foreground">Vendor</p>
+              <p className="text-sm font-medium">{order.vendor_name}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Order Summary */}
+        <div className="space-y-3 p-4 rounded-lg bg-secondary/20 border border-border/30">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Subtotal</span>
+            <span>₹{order.subtotal.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Tax</span>
+            <span>₹{order.tax.toLocaleString()}</span>
+          </div>
+          {order.discount > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Discount</span>
+              <span className="text-success">-₹{order.discount.toLocaleString()}</span>
+            </div>
+          )}
+          {order.points_used > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Points Redeemed</span>
+              <span className="text-primary font-medium">{order.points_used} pts</span>
+            </div>
+          )}
+          <Separator />
+          <div className="flex justify-between text-base font-bold">
+            <span>Total</span>
+            <span>₹{order.total.toLocaleString()}</span>
+          </div>
+        </div>
+
+        {/* Status Update */}
+        {editMode && order.status !== "cancelled" && order.status !== "completed" && (
+          <div className="p-4 rounded-lg border border-primary/20 bg-accent/30">
+            <Label className="text-xs text-muted-foreground mb-2 block">Update Order Status</Label>
+            <Select defaultValue={order.status}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {orderFlow.map((s) => (
+                  <SelectItem key={s} value={s} className="capitalize">{s.replace("_", " ")}</SelectItem>
+                ))}
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <DialogFooter className="mt-2">
+          {editMode ? (
+            <>
+              <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
+              <Button onClick={() => onOpenChange(false)}>Save Changes</Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+              <Button onClick={() => setEditMode(true)}>Edit Status</Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
