@@ -15,6 +15,7 @@ interface ClassifiedModalProps {
   mode: "view" | "edit";
   onSave?: (id: string, data: Partial<ClassifiedAd>) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
+  onModeChange?: (mode: "view" | "edit") => void;
 }
 
 export function ClassifiedModal({ ad, open, onOpenChange, mode, onSave, onDelete }: ClassifiedModalProps) {
