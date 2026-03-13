@@ -5,37 +5,46 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { api, SupportTicket } from "@/lib/api";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Headphones, MessageSquare, Clock, CheckCircle } from "lucide-react";
 
+interface SupportTicket {
+  id: string; subject: string; description: string; category: string; priority: string;
+  status: string; customer_id: string; customer_name: string; phone: string;
+  assigned_to: string; resolution?: string; created_at: string; updated_at: string;
+}
+
 export default function SupportTicketsPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<SupportTicket | null>(null);
   const [resolution, setResolution] = useState("");
   const [newStatus, setNewStatus] = useState("");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState<string>();
+  const [dateTo, setDateTo] = useState<string>();
 
   const load = () => {
     setLoading(true);
-    api.getSupportTickets({ search, status: statusFilter }).then((res) => {
+    api.getSupportTickets({ page, search, date_from: dateFrom, date_to: dateTo }).then((res) => {
       setTickets(res.data);
+      setTotal(res.total);
       setLoading(false);
     });
   };
 
-  useEffect(() => { load(); }, [search, statusFilter]);
+  useEffect(() => { load(); }, [page, search, dateFrom, dateTo]);
 
   const handleResolve = async () => {
     if (!selected || !resolution.trim()) { toast.error("Please enter resolution notes"); return; }
-    await api.resolveTicket(selected.id, newStatus as any || "resolved", resolution);
+    await api.resolveTicket(selected.id, newStatus || "resolved", resolution);
     toast.success("Ticket updated");
     setSelected(null);
     setResolution("");
@@ -43,23 +52,23 @@ export default function SupportTicketsPage() {
   };
 
   const stats = {
-    total: tickets.length,
+    total: total,
     open: tickets.filter(t => t.status === "open").length,
     inProgress: tickets.filter(t => t.status === "in_progress").length,
     resolved: tickets.filter(t => t.status === "resolved").length,
   };
 
   const columns = [
-    { key: "id", label: "Ticket ID", render: (v: string) => <span className="font-mono text-xs">{v}</span> },
+    { key: "id", label: "Ticket ID", render: (row: SupportTicket) => <span className="font-mono text-xs">{row.id}</span> },
     { key: "subject", label: "Subject" },
     { key: "customer_name", label: "Customer" },
-    { key: "category", label: "Category", render: (v: string) => <Badge variant="outline" className="text-xs">{v}</Badge> },
-    { key: "priority", label: "Priority", render: (v: string) => (
-      <Badge className={`text-[10px] border-0 ${v === 'high' ? 'bg-destructive/10 text-destructive' : v === 'medium' ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'}`}>{v}</Badge>
+    { key: "category", label: "Category", render: (row: SupportTicket) => <Badge variant="outline" className="text-xs">{row.category}</Badge> },
+    { key: "priority", label: "Priority", render: (row: SupportTicket) => (
+      <Badge className={`text-[10px] border-0 ${row.priority === 'high' ? 'bg-destructive/10 text-destructive' : row.priority === 'medium' ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'}`}>{row.priority}</Badge>
     )},
-    { key: "status", label: "Status", render: (v: string) => <StatusBadge status={v} /> },
+    { key: "status", label: "Status", render: (row: SupportTicket) => <StatusBadge status={row.status} /> },
     { key: "assigned_to", label: "Assigned To" },
-    { key: "created_at", label: "Created", render: (v: string) => new Date(v).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) },
+    { key: "created_at", label: "Created", render: (row: SupportTicket) => new Date(row.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) },
   ];
 
   return (
@@ -79,27 +88,32 @@ export default function SupportTicketsPage() {
       <DataTable
         columns={columns}
         data={tickets}
+        total={total}
+        page={page}
+        perPage={10}
+        totalPages={Math.ceil(total / 10)}
+        onPageChange={setPage}
         loading={loading}
         searchPlaceholder="Search tickets..."
         onSearch={setSearch}
-        statusFilter={statusFilter}
-        onStatusFilter={setStatusFilter}
-        statusOptions={[
-          { label: "All", value: "all" },
-          { label: "Open", value: "open" },
-          { label: "In Progress", value: "in_progress" },
-          { label: "Resolved", value: "resolved" },
-          { label: "Closed", value: "closed" },
+        filters={[
+          { key: "status", label: "Status", options: [
+            { label: "All", value: "all" },
+            { label: "Open", value: "open" },
+            { label: "In Progress", value: "in_progress" },
+            { label: "Resolved", value: "resolved" },
+            { label: "Closed", value: "closed" },
+          ]},
         ]}
-        onRowClick={(ticket) => { setSelected(ticket); setNewStatus(ticket.status); setResolution(""); }}
+        onFilterChange={(_key, _val) => {}}
+        onDateRangeChange={(from, to) => { setDateFrom(from); setDateTo(to); }}
+        onRowClick={(ticket) => { setSelected(ticket as any); setNewStatus((ticket as any).status); setResolution(""); }}
       />
 
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Headphones className="h-5 w-5" /> Ticket: {selected?.id}
-            </DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Headphones className="h-5 w-5" /> Ticket: {selected?.id}</DialogTitle>
           </DialogHeader>
           {selected && (
             <div className="space-y-4">
