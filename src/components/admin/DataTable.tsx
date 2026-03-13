@@ -85,7 +85,7 @@ export function DataTable<T extends Record<string, any>>({
           </thead>
           <tbody>
             {data.map((item, i) => (
-              <tr key={item.id || i} className="transition-colors">
+              <tr key={item.id || i} className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''}`} onClick={() => onRowClick?.(item)}>
                 {columns.map((col) => (
                   <td key={col.key}>
                     {col.render ? col.render(item) : item[col.key]}
