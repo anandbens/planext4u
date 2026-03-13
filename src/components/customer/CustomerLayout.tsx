@@ -82,7 +82,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
 
             <div className="flex items-center gap-1 ml-auto">
               <Link to="/vendor/login" className="hidden lg:block">
-                <Button variant="outline" size="sm" className="text-xs border-white/30 text-white hover:bg-white/10 hover:text-white">Become a Seller</Button>
+                <Button size="sm" className="text-xs font-semibold text-foreground hover:opacity-90 border-0" style={{ backgroundColor: '#f9ac1e' }}>Become a Seller</Button>
               </Link>
 
               {customerUser ? (
