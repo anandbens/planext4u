@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/auth";
 import { Minus, Plus, Trash2, Tag, ShoppingBag, ChevronLeft, Share2, ChevronDown, ChevronRight, Truck, Clock, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
