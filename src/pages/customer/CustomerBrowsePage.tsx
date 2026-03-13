@@ -95,9 +95,13 @@ export default function CustomerBrowsePage() {
               return (
                 <Card key={p.id} className={`overflow-hidden hover:shadow-md transition-shadow group ${viewMode === "list" ? "flex" : ""}`}>
                   <Link to={`/app/product/${p.id}`} className={viewMode === "list" ? "flex flex-1" : "block"}>
-                    <div className={`bg-secondary/30 flex items-center justify-center text-4xl relative ${viewMode === "list" ? "w-28 h-28 shrink-0" : "h-36"}`}>
-                      {discountPct > 0 && <span className="absolute top-2 left-2 bg-primary/90 text-primary-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">{discountPct}% Off</span>}
-                      {p.emoji}
+                    <div className={`bg-secondary/30 flex items-center justify-center relative overflow-hidden ${viewMode === "list" ? "w-28 h-28 shrink-0" : "h-36"}`}>
+                      {discountPct > 0 && <span className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">{discountPct}% Off</span>}
+                      {p.image ? (
+                        <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-4xl">{p.emoji}</span>
+                      )}
                       <button className="absolute top-2 right-2 h-7 w-7 rounded-full bg-card/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => { e.preventDefault(); }}>
                         <Heart className="h-3.5 w-3.5 text-muted-foreground" />

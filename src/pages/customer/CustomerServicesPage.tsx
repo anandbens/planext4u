@@ -77,8 +77,12 @@ export default function CustomerServicesPage() {
               return (
                 <Link to={`/app/service/${s.id}`} key={s.id}>
                   <Card className="overflow-hidden hover:shadow-md transition-all">
-                    <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 h-32 flex items-center justify-center text-5xl relative">
-                      {s.emoji}
+                    <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 h-32 flex items-center justify-center relative overflow-hidden">
+                      {s.image ? (
+                        <img src={s.image} alt={s.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-5xl">{s.emoji}</span>
+                      )}
                       {discountPct > 0 && <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-[10px]">{discountPct}% OFF</Badge>}
                     </div>
                     <div className="p-4">
