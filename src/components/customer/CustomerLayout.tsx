@@ -427,39 +427,52 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
         </div>
       </footer>
 
-      {/* Mobile Bottom Navigation - with animated pill background */}
+      {/* Mobile Bottom Navigation - Zepto-style with raised active pill */}
       {!hideNav && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/50 md:hidden safe-area-bottom">
-          <div className="relative flex items-end justify-around px-1 pt-1.5 pb-1.5">
-            {navItems.map((item, index) => {
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+          <div className="relative flex items-end justify-around px-1 pt-2 pb-2">
+            {navItems.map((item) => {
               const active = item.comingSoon ? false : isActive(item.to);
 
               const content = (
-                <motion.div
-                  className="flex flex-col items-center gap-0.5 relative z-10"
-                  animate={active ? { scale: [1, 1.05, 1] } : { scale: 1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className={`relative flex items-center justify-center h-7 w-7 rounded-xl transition-all duration-300
-                    ${active ? 'bg-primary text-primary-foreground shadow-sm' : ''}`}>
-                    <item.icon className={`h-[18px] w-[18px] transition-colors duration-200 ${active ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-                    {item.badge && item.badge > 0 && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-warning text-warning-foreground text-[8px] flex items-center justify-center font-bold">
-                        {item.badge}
+                <div className="flex flex-col items-center relative z-10">
+                  {/* Raised pill for active item */}
+                  {active ? (
+                    <motion.div
+                      layoutId="nav-active-pill"
+                      className="flex flex-col items-center justify-center bg-primary rounded-2xl px-4 py-2 -mt-5 shadow-lg relative"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    >
+                      <item.icon className="h-5 w-5 text-primary-foreground" />
+                      <span className="text-[9px] font-bold text-primary-foreground mt-0.5 leading-tight">
+                        {item.label}
                       </span>
-                    )}
-                  </div>
-                  <span className={`text-[9px] font-medium transition-colors duration-200 leading-tight
-                    ${active ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
-                    {item.label}
-                  </span>
-                </motion.div>
+                      {item.badge && item.badge > 0 && (
+                        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[8px] flex items-center justify-center font-bold">
+                          {item.badge}
+                        </span>
+                      )}
+                    </motion.div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-1 relative">
+                      <item.icon className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-[9px] font-medium text-muted-foreground mt-0.5 leading-tight">
+                        {item.label}
+                      </span>
+                      {item.badge && item.badge > 0 && (
+                        <span className="absolute -top-1 right-0 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[8px] flex items-center justify-center font-bold">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               );
 
               if (item.comingSoon) {
                 return (
                   <button key={item.label} onClick={() => toast.info(`${item.label} is coming soon! Stay tuned.`)}
-                    className="flex flex-col items-center gap-0.5 relative text-muted-foreground min-w-[48px]">
+                    className="flex flex-col items-center relative min-w-[48px]">
                     {content}
                   </button>
                 );
@@ -467,7 +480,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
 
               return (
                 <Link key={item.to + item.label} to={item.to}
-                  className="flex flex-col items-center gap-0.5 relative min-w-[48px]">
+                  className="flex flex-col items-center relative min-w-[48px]">
                   {content}
                 </Link>
               );
