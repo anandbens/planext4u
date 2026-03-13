@@ -253,22 +253,35 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
         </div>
       </footer>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation - 6 tabs matching reference */}
       {!hideNav && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-t border-border/50 md:hidden safe-area-bottom">
-          <div className="flex items-center justify-around py-2">
-            {navItems.map((item) => (
-              <Link key={item.to} to={item.to}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors relative ${isActive(item.to) ? 'text-primary' : 'text-muted-foreground'}`}>
-                <item.icon className="h-5 w-5" />
-                {item.badge && item.badge > 0 && (
-                  <span className="absolute -top-0.5 right-1 h-4 w-4 rounded-full bg-warning text-warning-foreground text-[8px] flex items-center justify-center font-bold">
-                    {item.badge}
-                  </span>
-                )}
-                <span className="text-[10px] font-medium">{item.label}</span>
-              </Link>
-            ))}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/50 md:hidden safe-area-bottom">
+          <div className="flex items-center justify-around py-1.5">
+            {navItems.map((item, idx) => {
+              const active = isActive(item.to);
+              // Shop tab gets a raised teal pill style like reference
+              const isShopTab = item.label === "Shop";
+              return (
+                <Link key={item.to + item.label} to={item.to}
+                  className={`flex flex-col items-center gap-0.5 relative transition-all
+                    ${isShopTab ? '-mt-4' : ''}
+                    ${active && !isShopTab ? 'text-primary' : !isShopTab ? 'text-muted-foreground' : ''}`}>
+                  {isShopTab ? (
+                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-lg ${active ? 'bg-primary text-primary-foreground' : 'bg-primary text-primary-foreground'}`}>
+                      <item.icon className="h-5 w-5" />
+                      {item.badge && item.badge > 0 && (
+                        <span className="absolute -top-1 -right-0.5 h-4 w-4 rounded-full bg-warning text-warning-foreground text-[8px] flex items-center justify-center font-bold">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <item.icon className="h-5 w-5" />
+                  )}
+                  <span className={`text-[9px] font-medium ${isShopTab ? 'text-primary font-semibold mt-0.5' : ''}`}>{item.label}</span>
+                </Link>
+              );
+            })}
           </div>
         </nav>
       )}
