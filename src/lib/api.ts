@@ -335,8 +335,6 @@ export const api = {
     persist('customers', MOCK_CUSTOMERS);
     return { success: true, customer: newCustomer };
   },
-    return { success: true, customer: newCustomer };
-  },
 
   deleteCustomer: async (id: string) => {
     await delay();
