@@ -56,7 +56,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
     { icon: Wrench, label: "Services", to: "/app/services" },
     { icon: Megaphone, label: "Socio", to: "#socio-coming-soon", comingSoon: true },
-    { icon: CalendarDays, label: "Booking", to: "/app/services?tab=booking" },
+    { icon: CalendarDays, label: "Booking", to: "#booking-coming-soon", comingSoon: true },
     { icon: Newspaper, label: "Classified", to: "/app/classifieds" },
   ];
 
@@ -82,7 +82,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
 
             <div className="flex items-center gap-1 ml-auto">
               <Link to="/vendor/login" className="hidden lg:block">
-                <Button variant="outline" size="sm" className="text-xs border-white/30 text-white hover:bg-white/10 hover:text-white">Become a Seller</Button>
+                <Button size="sm" className="text-xs font-semibold text-foreground hover:opacity-90 border-0" style={{ backgroundColor: '#f9ac1e' }}>Become a Seller</Button>
               </Link>
 
               {customerUser ? (
@@ -142,11 +142,11 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
                 { icon: Wrench, label: "Services", to: "/app/services" },
                 { icon: Megaphone, label: "Socio", to: "#", comingSoon: true },
-                { icon: CalendarDays, label: "Booking", to: "/app/services?tab=booking" },
+                { icon: CalendarDays, label: "Booking", to: "#", comingSoon: true },
                 { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds" },
               ].map((tab) => (
                 tab.comingSoon ? (
-                  <button key={tab.label} onClick={() => toast.info("Socio is coming soon! Stay tuned.")}
+                  <button key={tab.label} onClick={() => toast.info(`${tab.label} is coming soon! Stay tuned.`)}
                     className="flex items-center gap-2 px-5 py-2 rounded-full border border-primary/20 bg-card hover:bg-primary/5 text-primary transition-colors">
                     <tab.icon className="h-4 w-4" />
                     <span className="text-sm font-semibold">{tab.label}</span>
@@ -310,7 +310,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
 
               if (item.comingSoon) {
                 return (
-                  <button key={item.label} onClick={() => toast.info("Socio is coming soon! Stay tuned.")}
+                  <button key={item.label} onClick={() => toast.info(`${item.label} is coming soon! Stay tuned.`)}
                     className="flex flex-col items-center gap-0.5 relative text-muted-foreground">
                     {content}
                   </button>
