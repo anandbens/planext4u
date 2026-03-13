@@ -1,22 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ChevronLeft, Star, Heart, Clock, Shield, Sparkles, Search, MapPin, Mic, ShoppingBag, Wrench, Megaphone, CalendarDays, AlertTriangle, HelpCircle, Zap } from "lucide-react";
+import { ChevronRight, ChevronLeft, Star, Heart, Clock, Shield, Sparkles, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
-import p4uLogo from "@/assets/p4u-logo.png";
+import { loadSelectedLocation } from "@/components/customer/LocationModal";
 
 export default function CustomerHomePage() {
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({ queryKey: ["customerHome"], queryFn: api.getCustomerHome });
   const [bannerIdx, setBannerIdx] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
   const [productScrollIdx, setProductScrollIdx] = useState(0);
   const [serviceScrollIdx, setServiceScrollIdx] = useState(0);
 
@@ -25,11 +23,6 @@ export default function CustomerHomePage() {
     const interval = setInterval(() => setBannerIdx((prev) => (prev + 1) % data.banners.length), 5000);
     return () => clearInterval(interval);
   }, [data?.banners.length]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) navigate(`/app/browse?search=${encodeURIComponent(searchQuery.trim())}`);
-  };
 
   const containerAnim = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
   const itemAnim = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
@@ -54,33 +47,8 @@ export default function CustomerHomePage() {
           </div>
         </div>
 
-        {/* Mobile Search */}
-        <form onSubmit={handleSearch} className="relative px-4 md:hidden">
-          <Search className="absolute left-7 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder='Search for "Electronics"' value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 pr-10 h-12 rounded-xl bg-secondary/50 border-border/60 text-base" />
-          <Mic className="absolute right-7 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        </form>
-
-        {/* Desktop Nav Tabs - matching reference */}
-        <div className="hidden md:flex items-center justify-center gap-1 bg-primary/5 border-y border-primary/10 py-2 px-4">
-          {[
-            { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
-            { icon: Wrench, label: "Services", to: "/app/services" },
-            { icon: Megaphone, label: "Socio", to: "/app/classifieds" },
-            { icon: CalendarDays, label: "Booking", to: "/app/services" },
-            { icon: Megaphone, label: "Classified Ads", to: "/app/classifieds" },
-          ].map((tab) => (
-            <Link key={tab.label} to={tab.to}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full border border-primary/20 bg-card hover:bg-primary/10 transition-colors">
-              <tab.icon className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">{tab.label}</span>
-            </Link>
-          ))}
-        </div>
-
-        {/* Hero Banner Carousel with Real Images */}
-        <div className="px-4 pt-4">
+        {/* Hero Banner Carousel */}
+        <div className="px-4 pt-2 md:pt-4">
           {isLoading ? (
             <Skeleton className="h-40 md:h-80 rounded-2xl" />
           ) : data?.banners && data.banners.length > 0 ? (
@@ -89,11 +57,8 @@ export default function CustomerHomePage() {
                 <motion.div key={bannerIdx} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} transition={{ duration: 0.4 }}>
                   {data.banners[bannerIdx]?.desktop_image ? (
                     <Link to={data.banners[bannerIdx]?.link || "/app/browse"}>
-                      <img
-                        src={data.banners[bannerIdx].desktop_image}
-                        alt={data.banners[bannerIdx].title}
-                        className="w-full h-40 sm:h-56 md:h-72 lg:h-80 object-cover rounded-2xl"
-                      />
+                      <img src={data.banners[bannerIdx].desktop_image} alt={data.banners[bannerIdx].title}
+                        className="w-full h-40 sm:h-56 md:h-72 lg:h-80 object-cover rounded-2xl" />
                     </Link>
                   ) : (
                     <div className={`bg-gradient-to-r ${data.banners[bannerIdx]?.gradient || 'from-primary to-primary/70'} rounded-2xl p-6 md:p-12 h-40 md:h-72 flex items-center`}>
@@ -106,7 +71,6 @@ export default function CustomerHomePage() {
                   )}
                 </motion.div>
               </AnimatePresence>
-              {/* Navigation Arrows */}
               <button onClick={() => setBannerIdx((prev) => (prev - 1 + data.banners.length) % data.banners.length)}
                 className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-card transition-colors">
                 <ChevronLeft className="h-5 w-5" />
@@ -125,20 +89,20 @@ export default function CustomerHomePage() {
           ) : null}
         </div>
 
-        {/* Emergency / Urgent / Help Section */}
+        {/* Emergency / Urgent / Help Section with Real Images */}
         <section className="px-4 py-6">
-          <div className="bg-secondary/30 rounded-2xl p-6 border border-border/30">
+          <div className="bg-card rounded-2xl p-6 border border-border/30 shadow-sm">
             <div className="grid grid-cols-3 gap-4 md:gap-8">
               {[
-                { icon: Zap, label: "Emergency", color: "bg-warning text-warning-foreground", to: "/app/services?type=emergency" },
-                { icon: AlertTriangle, label: "Urgent", color: "bg-primary text-primary-foreground", to: "/app/services?type=urgent" },
-                { icon: HelpCircle, label: "Help", color: "bg-info text-info-foreground", to: "/app/services?type=help" },
+                { label: "Emergency", image: "/images/services/emergency.jpg", to: "/app/services?type=emergency" },
+                { label: "Urgent", image: "/images/services/urgent.jpg", to: "/app/services?type=urgent" },
+                { label: "Help", image: "/images/services/help.jpg", to: "/app/services?type=help" },
               ].map((item) => (
                 <Link key={item.label} to={item.to} className="flex flex-col items-center gap-3 group">
-                  <div className="h-16 w-16 md:h-24 md:w-24 rounded-2xl bg-card border border-border/50 flex items-center justify-center group-hover:shadow-lg transition-all">
-                    <item.icon className="h-8 w-8 md:h-12 md:w-12 text-primary" />
+                  <div className="h-20 w-20 md:h-28 md:w-28 rounded-2xl overflow-hidden bg-card border border-border/50 group-hover:shadow-lg transition-all">
+                    <img src={item.image} alt={item.label} className="w-full h-full object-cover" />
                   </div>
-                  <span className={`px-4 py-1.5 md:px-6 md:py-2 rounded-full text-xs md:text-sm font-semibold ${item.color}`}>
+                  <span className="px-4 py-1.5 md:px-6 md:py-2 rounded-full text-xs md:text-sm font-semibold bg-primary text-primary-foreground">
                     {item.label}
                   </span>
                 </Link>
@@ -147,7 +111,7 @@ export default function CustomerHomePage() {
           </div>
         </section>
 
-        {/* Best of Products - Horizontal Carousel */}
+        {/* Best of Products - Teal Carousel */}
         <section className="py-2">
           <div className="bg-primary rounded-2xl mx-4 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4">
@@ -186,6 +150,51 @@ export default function CustomerHomePage() {
           </div>
         </section>
 
+        {/* Brand Deal Banners */}
+        <section className="px-4 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { brand: "IPHONE", image: "/images/banners/iphone-deal.jpg", to: "/app/browse?search=iphone" },
+              { brand: "REALME", image: "/images/banners/realme-deal.jpg", to: "/app/browse?search=realme" },
+              { brand: "XIAOMI", image: "/images/banners/xiaomi-deal.jpg", to: "/app/browse?search=xiaomi" },
+            ].map((deal) => (
+              <Link key={deal.brand} to={deal.to} className="block rounded-2xl overflow-hidden hover:shadow-lg transition-all">
+                <img src={deal.image} alt={deal.brand} className="w-full h-32 md:h-40 object-cover" />
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Pick Up Where You Left Off */}
+        <section className="px-4 py-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { title: "Pick up where you left off", items: data?.featuredProducts?.slice(0, 4) || [] },
+              { title: "Pick up where you left off", items: data?.featuredProducts?.slice(4, 8) || [] },
+              { title: "Trending Now", items: data?.featuredProducts?.slice(0, 4) || [] },
+            ].map((section, sIdx) => (
+              <Card key={sIdx} className="p-4">
+                <h3 className="text-sm font-bold mb-3">{section.title}</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {section.items.map((p: any) => (
+                    <Link key={p.id} to={`/app/product/${p.id}`} className="group">
+                      <div className="h-20 bg-secondary/30 rounded-lg overflow-hidden mb-1">
+                        {p.image ? (
+                          <img src={p.image} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-2xl">{p.emoji}</div>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground truncate">{p.title}</p>
+                    </Link>
+                  ))}
+                </div>
+                <Link to="/app/browse" className="text-xs text-primary font-medium mt-2 block hover:underline">Explore More</Link>
+              </Card>
+            ))}
+          </div>
+        </section>
+
         {/* Shop by Category */}
         <section className="px-4 py-6">
           <div className="flex items-center justify-between mb-4">
@@ -199,12 +208,10 @@ export default function CustomerHomePage() {
               data?.categories.map((c) => (
                 <Link key={c.id} to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-2 group">
                   <div className="h-16 w-16 md:h-20 md:w-20 rounded-2xl bg-secondary/50 border border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/30 group-hover:shadow-md transition-all">
-                    {c.image && !c.image.startsWith('/') ? (
-                      <span className="text-2xl md:text-3xl">{c.image}</span>
-                    ) : c.image ? (
+                    {c.image && c.image.startsWith('/') ? (
                       <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-2xl" />
                     ) : (
-                      <span className="text-2xl">📦</span>
+                      <span className="text-2xl md:text-3xl">{c.image || '📦'}</span>
                     )}
                   </div>
                   <span className="text-[11px] md:text-xs font-medium text-center leading-tight">{c.name}</span>
@@ -228,7 +235,7 @@ export default function CustomerHomePage() {
                 const discountPct = p.discount ? Math.round((p.discount / p.price) * 100) : 0;
                 return (
                   <motion.div key={p.id} variants={itemAnim}>
-                    <Link to={`/app/product/${p.id}`}>
+                    <Link to={`/app/vendor/${p.vendor_id}`}>
                       <Card className="overflow-hidden hover:shadow-lg transition-all group">
                         <div className="bg-secondary/20 h-36 sm:h-44 md:h-48 flex items-center justify-center relative overflow-hidden">
                           {discountPct > 0 && (
@@ -363,12 +370,6 @@ export default function CustomerHomePage() {
                         <Clock className="h-2.5 w-2.5 text-muted-foreground" />
                         <span className="text-[10px] text-muted-foreground">{s.duration}</span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">{s.description?.slice(0, 60)}...</p>
-                      {s.discount > 0 && (
-                        <Badge variant="destructive" className="mt-1.5 text-[9px] px-1.5">
-                          {Math.round((s.discount / s.price) * 100)}% OFF
-                        </Badge>
-                      )}
                     </div>
                   </Card>
                 </Link>
@@ -376,18 +377,16 @@ export default function CustomerHomePage() {
           </div>
         </section>
 
-        {/* Service Categories Grid (Home Services) */}
+        {/* Book a Service Section */}
         <section className="px-4 py-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Left - Title Card */}
-            <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-6 flex flex-col justify-center border border-primary/10">
+            <div className="gradient-primary rounded-2xl p-6 flex flex-col justify-center text-primary-foreground">
               <h2 className="text-xl md:text-2xl font-bold">Book a Service</h2>
-              <p className="text-sm text-muted-foreground mt-2">Professional services at your doorstep</p>
+              <p className="text-sm opacity-80 mt-2">Professional services at your doorstep</p>
               <Link to="/app/services">
-                <Button size="sm" className="mt-4 w-fit">View All Services</Button>
+                <Button size="sm" variant="secondary" className="mt-4 w-fit">View All Services</Button>
               </Link>
             </div>
-            {/* Right - Service Category Grid */}
             <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
               {isLoading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) :
                 data?.serviceCategories.slice(0, 8).map((c) => (
@@ -427,7 +426,7 @@ export default function CustomerHomePage() {
 
         {/* Classifieds CTA */}
         <section className="px-4 py-4">
-          <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-6 md:p-8 text-primary-foreground">
+          <div className="gradient-primary rounded-2xl p-6 md:p-8 text-primary-foreground">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg md:text-2xl font-bold">Buy & Sell Locally</h2>

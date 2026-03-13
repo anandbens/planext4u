@@ -54,6 +54,7 @@ import PaymentReportPage from "./pages/reports/PaymentReportPage";
 // Customer pages
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
 import CustomerBrowsePage from "./pages/customer/CustomerBrowsePage";
+import CustomerVendorPage from "./pages/customer/CustomerVendorPage";
 import CustomerProductPage from "./pages/customer/CustomerProductPage";
 import CustomerCartPage from "./pages/customer/CustomerCartPage";
 import CustomerOrdersPage from "./pages/customer/CustomerOrdersPage";
@@ -134,6 +135,7 @@ const App = () => (
             <Route path="/app" element={<CustomerHomePage />} />
             <Route path="/app/browse" element={<CustomerBrowsePage />} />
             <Route path="/app/product/:id" element={<CustomerProductPage />} />
+            <Route path="/app/vendor/:id" element={<CustomerVendorPage />} />
             <Route path="/app/cart" element={<CustomerCartPage />} />
             <Route path="/app/orders" element={<CustomerOrdersPage />} />
             <Route path="/app/profile" element={<CustomerProfilePage />} />

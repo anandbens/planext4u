@@ -8,26 +8,27 @@
   :root {
     --font-sans: 'DM Sans', system-ui, sans-serif;
 
-    --background: 220 20% 97%;
-    --foreground: 222 47% 11%;
+    /* P4U Brand Colors: #011d33, #e8f6f6, #ffffff, #009999, #f89f03 */
+    --background: 195 18% 96%;
+    --foreground: 207 96% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 207 96% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 207 96% 10%;
 
-    --primary: 245 58% 51%;
+    --primary: 180 100% 30%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 180 33% 94%;
+    --secondary-foreground: 207 96% 10%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 180 20% 94%;
+    --muted-foreground: 207 20% 46%;
 
-    --accent: 245 58% 96%;
-    --accent-foreground: 245 58% 51%;
+    --accent: 180 100% 95%;
+    --accent-foreground: 180 100% 30%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -35,61 +36,67 @@
     --success: 152 60% 40%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 37 95% 49%;
     --warning-foreground: 0 0% 100%;
 
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 245 58% 51%;
+    --border: 180 15% 88%;
+    --input: 180 15% 88%;
+    --ring: 180 100% 30%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 240 33% 14%;
-    --sidebar-foreground: 240 10% 80%;
-    --sidebar-primary: 245 58% 60%;
+    --sidebar-background: 207 96% 10%;
+    --sidebar-foreground: 180 20% 80%;
+    --sidebar-primary: 180 100% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 25% 20%;
+    --sidebar-accent: 207 60% 18%;
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 240 20% 22%;
-    --sidebar-ring: 245 58% 51%;
-    --sidebar-muted: 240 15% 30%;
+    --sidebar-border: 207 50% 18%;
+    --sidebar-ring: 180 100% 30%;
+    --sidebar-muted: 207 30% 28%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(245, 58%, 51%), hsl(280, 70%, 55%));
+    --brand-dark: 207 96% 10%;
+    --brand-light: 180 33% 94%;
+    --brand-teal: 180 100% 30%;
+    --brand-amber: 37 95% 49%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(180, 100%, 30%), hsl(207, 96%, 10%));
     --gradient-success: linear-gradient(135deg, hsl(152, 60%, 40%), hsl(170, 60%, 45%));
-    --gradient-warning: linear-gradient(135deg, hsl(38, 92%, 50%), hsl(25, 90%, 55%));
+    --gradient-warning: linear-gradient(135deg, hsl(37, 95%, 49%), hsl(25, 90%, 55%));
     --gradient-info: linear-gradient(135deg, hsl(199, 89%, 48%), hsl(210, 80%, 55%));
     --gradient-danger: linear-gradient(135deg, hsl(0, 72%, 51%), hsl(340, 70%, 50%));
+    --gradient-brand: linear-gradient(135deg, hsl(180, 100%, 30%), hsl(37, 95%, 49%));
 
-    --shadow-sm: 0 1px 2px 0 hsl(220 20% 10% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(220 20% 10% / 0.07), 0 2px 4px -2px hsl(220 20% 10% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(220 20% 10% / 0.08), 0 4px 6px -4px hsl(220 20% 10% / 0.04);
-    --shadow-xl: 0 20px 25px -5px hsl(220 20% 10% / 0.1), 0 8px 10px -6px hsl(220 20% 10% / 0.05);
-    --shadow-glass: 0 8px 32px 0 hsl(245 58% 51% / 0.08);
+    --shadow-sm: 0 1px 2px 0 hsl(207 96% 10% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(207 96% 10% / 0.07), 0 2px 4px -2px hsl(207 96% 10% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(207 96% 10% / 0.08), 0 4px 6px -4px hsl(207 96% 10% / 0.04);
+    --shadow-xl: 0 20px 25px -5px hsl(207 96% 10% / 0.1), 0 8px 10px -6px hsl(207 96% 10% / 0.05);
+    --shadow-glass: 0 8px 32px 0 hsl(180 100% 30% / 0.08);
   }
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 245 58% 60%;
+    --background: 207 96% 6%;
+    --foreground: 180 20% 98%;
+    --card: 207 96% 9%;
+    --card-foreground: 180 20% 98%;
+    --popover: 207 96% 9%;
+    --popover-foreground: 180 20% 98%;
+    --primary: 180 100% 40%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --secondary: 207 33% 17%;
+    --secondary-foreground: 180 20% 98%;
+    --muted: 207 33% 17%;
+    --muted-foreground: 180 15% 65%;
+    --accent: 207 33% 17%;
+    --accent-foreground: 180 20% 98%;
     --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 212 27% 84%;
+    --destructive-foreground: 180 20% 98%;
+    --border: 207 33% 17%;
+    --input: 207 33% 17%;
+    --ring: 180 100% 40%;
   }
 }
 
@@ -111,7 +118,6 @@
     line-height: 1.6;
   }
 
-  /* Retina / High-DPI adjustments */
   @media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi) {
     body {
       font-size: 16px;
@@ -139,6 +145,16 @@
   .gradient-warning { background: var(--gradient-warning); }
   .gradient-info { background: var(--gradient-info); }
   .gradient-danger { background: var(--gradient-danger); }
+  .gradient-brand { background: var(--gradient-brand); }
+
+  .brand-header {
+    background: hsl(var(--brand-dark));
+    color: white;
+  }
+
+  .brand-nav {
+    border-color: hsl(var(--brand-teal));
+  }
 
   .stat-card {
     @apply relative overflow-hidden rounded-xl p-4 lg:p-6 transition-all duration-300;
@@ -178,12 +194,10 @@
     @apply text-sm lg:text-base text-muted-foreground mt-1;
   }
 
-  /* Mobile safe area for bottom nav */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Scrollbar hide utility */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -192,7 +206,6 @@
     display: none;
   }
 
-  /* Product image placeholder with gradient */
   .product-img-placeholder {
     @apply bg-gradient-to-br from-secondary/60 to-secondary/20 flex items-center justify-center;
   }
