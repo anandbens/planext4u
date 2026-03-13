@@ -8,6 +8,7 @@ import {
   MOCK_SERVICES, MOCK_SERVICE_CATEGORIES, MOCK_SERVICE_VENDORS, MOCK_CLASSIFIED_CATEGORIES,
   MOCK_OCCUPATIONS, MOCK_CITIES, MOCK_AREAS, MOCK_TAX_CONFIG,
   MOCK_POPUP_BANNERS, MOCK_ADVERTISEMENTS, MOCK_WEBSITE_QUERIES, MOCK_REPORT_LOG,
+  MOCK_SUPPORT_TICKETS,
   persist,
 } from './mockData';
 
@@ -860,6 +861,41 @@ export const api = {
   getReferralReport: async (_params: any) => {
     await delay();
     return { referrals: MOCK_REFERRALS };
+  },
+
+  // Support Tickets
+  getSupportTickets: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
+    await delay();
+    let items = filterSearch(MOCK_SUPPORT_TICKETS, params.search, ['subject', 'customer_name', 'category', 'id']);
+    items = filterStatus(items, params.status);
+    items = filterDateRange(items, params.date_from, params.date_to);
+    return paginate(items, params.page, params.per_page);
+  },
+
+  resolveTicket: async (id: string, status: string, resolution: string) => {
+    await delay();
+    const idx = MOCK_SUPPORT_TICKETS.findIndex(t => t.id === id);
+    if (idx >= 0) {
+      MOCK_SUPPORT_TICKETS[idx].status = status;
+      MOCK_SUPPORT_TICKETS[idx].resolution = resolution;
+      MOCK_SUPPORT_TICKETS[idx].updated_at = new Date().toISOString();
+      persist('support_tickets', MOCK_SUPPORT_TICKETS);
+    }
+    return { success: true };
+  },
+
+  createSupportTicket: async (data: { subject: string; description: string; category: string; priority: string; customer_id: string }) => {
+    await delay();
+    const customer = MOCK_CUSTOMERS.find(c => c.id === data.customer_id) || MOCK_CUSTOMERS[0];
+    const now = new Date().toISOString();
+    const newTicket = {
+      id: `TKT-${String(MOCK_SUPPORT_TICKETS.length + 1).padStart(3, '0')}`,
+      ...data, status: "open", customer_name: customer.name, phone: customer.mobile,
+      assigned_to: "Unassigned", resolution: "", created_at: now, updated_at: now,
+    };
+    MOCK_SUPPORT_TICKETS.unshift(newTicket);
+    persist('support_tickets', MOCK_SUPPORT_TICKETS);
+    return { success: true, ticket: newTicket };
   },
 
   // Reset all data

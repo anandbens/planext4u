@@ -37,6 +37,8 @@ import PopupBannersPage from "./pages/PopupBannersPage";
 import BannersPage from "./pages/BannersPage";
 import AdvertisementsPage from "./pages/AdvertisementsPage";
 import WebsiteQueriesPage from "./pages/WebsiteQueriesPage";
+import SupportTicketsPage from "./pages/SupportTicketsPage";
+import IntegrationsPage from "./pages/IntegrationsPage";
 
 // Report sub-pages
 import SalesReportPage from "./pages/reports/SalesReportPage";
@@ -125,6 +127,8 @@ const App = () => (
             <Route path="/banners" element={<ProtectedPage><BannersPage /></ProtectedPage>} />
             <Route path="/advertisements" element={<ProtectedPage><AdvertisementsPage /></ProtectedPage>} />
             <Route path="/website-queries" element={<ProtectedPage><WebsiteQueriesPage /></ProtectedPage>} />
+            <Route path="/support-tickets" element={<ProtectedPage><SupportTicketsPage /></ProtectedPage>} />
+            <Route path="/integrations" element={<ProtectedPage><IntegrationsPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerHomePage />} />

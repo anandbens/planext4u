@@ -245,6 +245,17 @@ const DEFAULT_REPORT_LOG = [
   { id: "RL-006", report_type: "Points Report", generated_by: "Admin", format: "CSV", status: "processing" as const, file_size: "0 MB", created_at: "2026-03-13T12:00:00Z" },
 ];
 
+const DEFAULT_SUPPORT_TICKETS = [
+  { id: "TKT-001", subject: "Order not delivered", description: "Order ORD-001 was supposed to be delivered yesterday but I haven't received it yet.", category: "Delivery", priority: "high", status: "open", customer_id: "USR-001", customer_name: "Rahul Sharma", phone: "+91 98765 43210", assigned_to: "Agent Priya", resolution: "", created_at: "2026-03-13T09:00:00Z", updated_at: "2026-03-13T09:00:00Z" },
+  { id: "TKT-002", subject: "Wrong product received", description: "I ordered headphones but received a speaker instead. Please help with exchange.", category: "Product Issue", priority: "high", status: "in_progress", customer_id: "USR-002", customer_name: "Priya Patel", phone: "+91 98765 43211", assigned_to: "Agent Amit", resolution: "", created_at: "2026-03-12T14:30:00Z", updated_at: "2026-03-13T10:00:00Z" },
+  { id: "TKT-003", subject: "Refund not processed", description: "I returned the product 10 days ago but refund is still pending.", category: "Refund", priority: "medium", status: "open", customer_id: "USR-003", customer_name: "Amit Kumar", phone: "+91 98765 43212", assigned_to: "Agent Sneha", resolution: "", created_at: "2026-03-11T10:15:00Z", updated_at: "2026-03-11T10:15:00Z" },
+  { id: "TKT-004", subject: "Unable to apply coupon", description: "WELCOME coupon code is not working on my cart. Shows invalid error.", category: "Payment", priority: "low", status: "resolved", customer_id: "USR-004", customer_name: "Sneha Reddy", phone: "+91 98765 43213", assigned_to: "Agent Ravi", resolution: "Coupon was expired. Applied a new 10% discount manually.", created_at: "2026-03-10T16:00:00Z", updated_at: "2026-03-11T09:00:00Z" },
+  { id: "TKT-005", subject: "Service provider didn't show up", description: "Booked AC repair service for today 10AM but the technician hasn't arrived.", category: "Service", priority: "high", status: "in_progress", customer_id: "USR-005", customer_name: "Vikram Singh", phone: "+91 98765 43214", assigned_to: "Agent Priya", resolution: "", created_at: "2026-03-13T11:00:00Z", updated_at: "2026-03-13T11:30:00Z" },
+  { id: "TKT-006", subject: "Account login issue", description: "I am unable to login to my account. OTP is not being received on my registered number.", category: "Account", priority: "medium", status: "resolved", customer_id: "USR-006", customer_name: "Anita Gupta", phone: "+91 98765 43215", assigned_to: "Agent Amit", resolution: "Reset OTP service. Customer was able to login successfully.", created_at: "2026-03-09T08:30:00Z", updated_at: "2026-03-09T14:00:00Z" },
+  { id: "TKT-007", subject: "Product quality complaint", description: "The ceramic vase I received has a crack on the bottom. Very disappointed.", category: "Product Issue", priority: "medium", status: "open", customer_id: "USR-008", customer_name: "Meera Joshi", phone: "+91 98765 43217", assigned_to: "Unassigned", resolution: "", created_at: "2026-03-12T09:00:00Z", updated_at: "2026-03-12T09:00:00Z" },
+  { id: "TKT-008", subject: "Vendor behaviour complaint", description: "The delivery person was rude and threw the package at my door.", category: "Vendor", priority: "high", status: "closed", customer_id: "USR-009", customer_name: "Karan Mehta", phone: "+91 98765 43218", assigned_to: "Agent Sneha", resolution: "Warned the vendor. Issued 200 loyalty points to customer as compensation.", created_at: "2026-03-08T10:00:00Z", updated_at: "2026-03-09T11:00:00Z" },
+];
+
 // ===== PERSISTED STORES (loaded from localStorage, falls back to defaults) =====
 
 export const MOCK_PRODUCTS = loadStore('products', DEFAULT_PRODUCTS);
@@ -270,6 +281,7 @@ export const MOCK_POPUP_BANNERS = loadStore('popup_banners', DEFAULT_POPUP_BANNE
 export const MOCK_ADVERTISEMENTS = loadStore('advertisements', DEFAULT_ADVERTISEMENTS);
 export const MOCK_WEBSITE_QUERIES = loadStore('website_queries', DEFAULT_WEBSITE_QUERIES);
 export const MOCK_REPORT_LOG = loadStore('report_log', DEFAULT_REPORT_LOG);
+export const MOCK_SUPPORT_TICKETS = loadStore('support_tickets', DEFAULT_SUPPORT_TICKETS);
 
 // Helper to persist a store after mutation
 export function persist(storeName: string, data: any[]) {

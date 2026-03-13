@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Users, Store, Package, ShoppingCart, Banknote,
   Megaphone, Star, Gift, BarChart3, Settings, Image, FileText, LogOut,
   Grid3X3, Wrench, Receipt, MapPin, Map, Tag, Briefcase, SlidersHorizontal,
-  MessageSquare, MonitorPlay, ExternalLink, ClipboardList,
+  MessageSquare, MonitorPlay, ExternalLink, ClipboardList, Headphones, Key,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -59,8 +59,10 @@ const systemItems: NavItem[] = [
   { title: "Banners", url: "/banners", icon: Image, roles: ['admin'] },
   { title: "Advertisements", url: "/advertisements", icon: Megaphone, roles: ['admin', 'sales'] },
   { title: "Website Queries", url: "/website-queries", icon: MessageSquare, roles: ['admin', 'sales'] },
+  { title: "Support Tickets", url: "/support-tickets", icon: Headphones, roles: ['admin', 'sales'] },
   { title: "Referrals", url: "/referrals", icon: Gift, roles: ['admin'] },
   { title: "Classified Ads", url: "/classifieds", icon: FileText, roles: ['admin', 'sales'] },
+  { title: "Integrations", url: "/integrations", icon: Key, roles: ['admin'] },
   { title: "Settings", url: "/settings", icon: Settings, roles: ['admin'] },
 ];
 
