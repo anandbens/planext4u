@@ -5,24 +5,44 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, User, Store, Calendar, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { ShoppingCart, User, Store } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface OrderModalProps {
   order: Order | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "view" | "edit";
+  onSave?: (id: string, status: Order["status"]) => Promise<void>;
 }
 
 const orderFlow: Order["status"][] = ["placed", "paid", "accepted", "in_progress", "delivered", "completed"];
 
-export function OrderModal({ order, open, onOpenChange, mode }: OrderModalProps) {
+export function OrderModal({ order, open, onOpenChange, mode, onSave }: OrderModalProps) {
   const [editMode, setEditMode] = useState(mode === "edit");
+  const [saving, setSaving] = useState(false);
+  const [newStatus, setNewStatus] = useState<Order["status"]>("placed");
+
+  useEffect(() => {
+    if (order) {
+      setNewStatus(order.status);
+      setEditMode(mode === "edit");
+    }
+  }, [order, mode]);
 
   if (!order) return null;
 
   const currentStep = orderFlow.indexOf(order.status);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave?.(order.id, newStatus);
+      onOpenChange(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -44,7 +64,6 @@ export function OrderModal({ order, open, onOpenChange, mode }: OrderModalProps)
           </DialogDescription>
         </DialogHeader>
 
-        {/* Order Progress */}
         {order.status !== "cancelled" && (
           <div className="flex items-center gap-0.5 py-3">
             {orderFlow.map((s, i) => (
@@ -60,7 +79,6 @@ export function OrderModal({ order, open, onOpenChange, mode }: OrderModalProps)
           </div>
         )}
 
-        {/* Parties */}
         <div className="grid grid-cols-2 gap-4">
           <div className="p-3 rounded-lg bg-secondary/30 flex items-center gap-3">
             <User className="h-5 w-5 text-primary" />
@@ -78,7 +96,6 @@ export function OrderModal({ order, open, onOpenChange, mode }: OrderModalProps)
           </div>
         </div>
 
-        {/* Order Summary */}
         <div className="space-y-3 p-4 rounded-lg bg-secondary/20 border border-border/30">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Subtotal</span>
@@ -107,11 +124,10 @@ export function OrderModal({ order, open, onOpenChange, mode }: OrderModalProps)
           </div>
         </div>
 
-        {/* Status Update */}
         {editMode && order.status !== "cancelled" && order.status !== "completed" && (
           <div className="p-4 rounded-lg border border-primary/20 bg-accent/30">
             <Label className="text-xs text-muted-foreground mb-2 block">Update Order Status</Label>
-            <Select defaultValue={order.status}>
+            <Select value={newStatus} onValueChange={(v) => setNewStatus(v as Order["status"])}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {orderFlow.map((s) => (
@@ -126,8 +142,11 @@ export function OrderModal({ order, open, onOpenChange, mode }: OrderModalProps)
         <DialogFooter className="mt-2">
           {editMode ? (
             <>
-              <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
-              <Button onClick={() => onOpenChange(false)}>Save Changes</Button>
+              <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving && <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-2" />}
+                Save Changes
+              </Button>
             </>
           ) : (
             <>

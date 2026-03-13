@@ -7,23 +7,51 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mail, Phone, Store, Percent, Crown, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface VendorModalProps {
   vendor: Vendor | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: "view" | "edit";
+  onSave?: (id: string, data: Partial<Vendor>) => Promise<void>;
 }
 
 const statusFlow: Vendor["status"][] = ["pending", "level1_approved", "level2_approved", "verified"];
 
-export function VendorModal({ vendor, open, onOpenChange, mode }: VendorModalProps) {
+export function VendorModal({ vendor, open, onOpenChange, mode, onSave }: VendorModalProps) {
   const [editMode, setEditMode] = useState(mode === "edit");
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: "", business_name: "", email: "", mobile: "",
+    commission_rate: 0, membership: "", status: "" as Vendor["status"],
+  });
+
+  useEffect(() => {
+    if (vendor) {
+      setForm({
+        name: vendor.name, business_name: vendor.business_name,
+        email: vendor.email, mobile: vendor.mobile,
+        commission_rate: vendor.commission_rate, membership: vendor.membership,
+        status: vendor.status,
+      });
+      setEditMode(mode === "edit");
+    }
+  }, [vendor, mode]);
 
   if (!vendor) return null;
 
   const currentStep = statusFlow.indexOf(vendor.status);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave?.(vendor.id, form);
+      onOpenChange(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,7 +74,6 @@ export function VendorModal({ vendor, open, onOpenChange, mode }: VendorModalPro
           </DialogDescription>
         </DialogHeader>
 
-        {/* Approval Progress */}
         {vendor.status !== "rejected" && (
           <div className="flex items-center gap-1 py-3">
             {statusFlow.map((s, i) => (
@@ -68,27 +95,27 @@ export function VendorModal({ vendor, open, onOpenChange, mode }: VendorModalPro
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground">Owner Name</Label>
-                {editMode ? <Input defaultValue={vendor.name} className="mt-1" /> : <p className="text-sm font-medium mt-1">{vendor.name}</p>}
+                {editMode ? <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{vendor.name}</p>}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Business Name</Label>
-                {editMode ? <Input defaultValue={vendor.business_name} className="mt-1" /> : <p className="text-sm font-medium mt-1">{vendor.business_name}</p>}
+                {editMode ? <Input value={form.business_name} onChange={(e) => setForm({ ...form, business_name: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{vendor.business_name}</p>}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> Email</Label>
-                {editMode ? <Input defaultValue={vendor.email} className="mt-1" /> : <p className="text-sm font-medium mt-1">{vendor.email}</p>}
+                {editMode ? <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{vendor.email}</p>}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Mobile</Label>
-                {editMode ? <Input defaultValue={vendor.mobile} className="mt-1" /> : <p className="text-sm font-medium mt-1">{vendor.mobile}</p>}
+                {editMode ? <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{vendor.mobile}</p>}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Status</Label>
                 {editMode ? (
-                  <Select defaultValue={vendor.status}>
+                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Vendor["status"] })}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {statusFlow.map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
+                      {statusFlow.map((s) => <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>)}
                       <SelectItem value="rejected">Rejected</SelectItem>
                     </SelectContent>
                   </Select>
@@ -104,7 +131,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode }: VendorModalPro
                   <Percent className="h-4 w-4 text-primary" />
                   <Label className="text-xs text-muted-foreground">Commission Rate</Label>
                 </div>
-                {editMode ? <Input type="number" defaultValue={vendor.commission_rate} className="mt-1" /> : <p className="text-xl font-bold">{vendor.commission_rate}%</p>}
+                {editMode ? <Input type="number" value={form.commission_rate} onChange={(e) => setForm({ ...form, commission_rate: Number(e.target.value) })} className="mt-1" /> : <p className="text-xl font-bold">{vendor.commission_rate}%</p>}
               </div>
               <div className="p-4 rounded-lg bg-secondary/30">
                 <div className="flex items-center gap-2 mb-1">
@@ -112,7 +139,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode }: VendorModalPro
                   <Label className="text-xs text-muted-foreground">Membership</Label>
                 </div>
                 {editMode ? (
-                  <Select defaultValue={vendor.membership}>
+                  <Select value={form.membership} onValueChange={(v) => setForm({ ...form, membership: v })}>
                     <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="basic">Basic</SelectItem>
@@ -136,8 +163,11 @@ export function VendorModal({ vendor, open, onOpenChange, mode }: VendorModalPro
         <DialogFooter className="mt-4">
           {editMode ? (
             <>
-              <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
-              <Button onClick={() => onOpenChange(false)}>Save Changes</Button>
+              <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>Cancel</Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving && <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-2" />}
+                Save Changes
+              </Button>
             </>
           ) : (
             <>
