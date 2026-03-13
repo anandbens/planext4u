@@ -37,12 +37,12 @@ export default function CustomerCartPage() {
   const [deliveryAddress] = useState("P4U Complex - 605001");
 
   useEffect(() => {
-    Promise.all([api.getCart(), api.getCustomerProfile('USR-001')]).then(([cartItems, profile]) => {
+    Promise.all([api.getCart(), api.getCustomerProfile(customerId)]).then(([cartItems, profile]) => {
       setCart(cartItems);
-      setWalletPoints(profile.wallet_points);
+      setWalletPoints(profile?.wallet_points || 0);
       setLoading(false);
-    });
-  }, []);
+    }).catch(() => setLoading(false));
+  }, [customerId]);
 
   const updateQty = async (id: string, delta: number) => {
     const item = cart.find(i => i.id === id);
