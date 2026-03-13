@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, LogIn, Store } from "lucide-react";
 import { toast } from "sonner";
-import p4uLogoDark from "@/assets/p4u-logo-dark.png";
+import p4uLogo from "@/assets/p4u-logo.png";
 
 export default function VendorLoginPage() {
   const { vendorLogin } = useAuth();
@@ -40,16 +40,26 @@ export default function VendorLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(207,96%,10%)] via-primary to-[hsl(207,96%,10%)]">
-      <div className="w-full max-w-md mx-4">
-        <div className="bg-card rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-primary p-8 text-center">
-            <img src={p4uLogoDark} alt="Planext4u" className="h-16 w-16 object-contain mx-auto mb-3 rounded-xl" />
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Store className="h-5 w-5 text-primary-foreground" />
-              <h1 className="text-xl font-bold text-primary-foreground">Vendor Portal</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-dark via-brand-dark/90 to-brand-teal/30">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-brand-teal/10 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-brand-amber/5 blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-md mx-4 relative z-10">
+        <div className="bg-card rounded-2xl shadow-2xl overflow-hidden border border-white/10">
+          <div className="bg-gradient-to-r from-brand-dark to-brand-dark/90 p-8 text-center relative">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIvPjwvc3ZnPg==')] opacity-50" />
+            <div className="relative">
+              <div className="bg-white rounded-2xl p-3 w-16 h-16 mx-auto mb-3 shadow-lg">
+                <img src={p4uLogo} alt="Planext4u" className="w-full h-full object-contain" />
+              </div>
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Store className="h-5 w-5 text-brand-amber" />
+                <h1 className="text-xl font-bold text-white">Vendor Portal</h1>
+              </div>
+              <p className="text-white/60 text-xs">Manage your store, orders & settlements</p>
             </div>
-            <p className="text-primary-foreground/60 text-xs">Manage your store, orders & settlements</p>
           </div>
 
           <div className="p-6 space-y-4">
@@ -65,19 +75,19 @@ export default function VendorLoginPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <Button type="submit" className="w-full h-12 rounded-xl text-base gap-2 bg-primary" disabled={loading}>
+              <Button type="submit" className="w-full h-12 rounded-xl text-base gap-2 bg-brand-dark hover:bg-brand-dark/90 text-white" disabled={loading}>
                 {loading ? "Signing in..." : <><LogIn className="h-4 w-4" /> Sign In</>}
               </Button>
             </form>
 
             <button onClick={quickLogin} disabled={loading}
-              className="w-full bg-secondary/50 rounded-xl border border-border/50 p-3 text-center hover:border-primary/40 transition-all">
+              className="w-full bg-secondary/50 rounded-xl border border-border/50 p-3 text-center hover:border-brand-teal/40 transition-all">
               <p className="text-xs font-semibold">Quick Demo Login</p>
               <p className="text-[10px] text-muted-foreground">vendor@planext4u.com / P4u@Vendor2026</p>
             </button>
 
             <div className="text-center space-y-2 pt-2">
-              <Link to="/app/login" className="text-xs text-primary hover:underline block">Customer Login →</Link>
+              <Link to="/app/login" className="text-xs text-brand-teal hover:underline block">Customer Login →</Link>
               <Link to="/login" className="text-xs text-muted-foreground hover:underline block">Admin Login →</Link>
             </div>
           </div>
