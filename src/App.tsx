@@ -155,6 +155,7 @@ const App = () => (
             <Route path="/app/service/:id" element={<CustomerServiceDetailPage />} />
             <Route path="/app/classifieds" element={<CustomerClassifiedsPage />} />
             <Route path="/app/classifieds/post" element={<CustomerPostAdPage />} />
+            <Route path="/app/classifieds/:id" element={<CustomerClassifiedDetailPage />} />
 
             {/* Vendor-facing routes */}
             <Route path="/vendor/login" element={<VendorLoginPage />} />
