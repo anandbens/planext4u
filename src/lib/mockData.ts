@@ -251,7 +251,7 @@ const DEFAULT_SUPPORT_TICKETS = [
 
 // ===== STORE INITIALIZATION =====
 function initStore<T>(key: string, defaults: T[]): T[] {
-  const stored = loadStore<T[]>(key);
+  const stored = loadStore<T>(key, defaults);
   if (stored && stored.length > 0) return stored;
   saveStore(key, defaults);
   return [...defaults];
