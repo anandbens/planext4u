@@ -221,13 +221,13 @@ export const api = {
     return paginate(items, params.page, params.per_page);
   },
 
-  updateVendorStatus: async (id: string, status: Vendor['status']) => {
+  updateVendorStatus: async (id: string, status: string) => {
     await delay();
     const idx = MOCK_VENDORS.findIndex((v) => v.id === id);
-    if (idx >= 0) MOCK_VENDORS[idx].status = status;
+    if (idx >= 0) (MOCK_VENDORS[idx] as any).status = status;
     else {
       const sIdx = MOCK_SERVICE_VENDORS.findIndex((v) => v.id === id);
-      if (sIdx >= 0) MOCK_SERVICE_VENDORS[sIdx].status = status;
+      if (sIdx >= 0) (MOCK_SERVICE_VENDORS[sIdx] as any).status = status;
     }
     return { success: true };
   },
