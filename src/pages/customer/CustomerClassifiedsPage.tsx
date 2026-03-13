@@ -66,7 +66,13 @@ export default function CustomerClassifiedsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {ads?.map((ad) => (
               <Card key={ad.id} className="overflow-hidden hover:shadow-md transition-all">
-                <div className="bg-secondary/30 h-32 flex items-center justify-center text-4xl">📦</div>
+                <div className="bg-secondary/30 h-32 flex items-center justify-center text-4xl overflow-hidden">
+                  {(ad as any).images && Array.isArray((ad as any).images) && (ad as any).images.length > 0 ? (
+                    <img src={(ad as any).images[0]} alt={ad.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>📦</span>
+                  )}
+                </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between">
                     <h3 className="text-sm font-semibold">{ad.title}</h3>
