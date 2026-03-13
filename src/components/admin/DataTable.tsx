@@ -28,7 +28,7 @@ interface DataTableProps<T> {
 
 export function DataTable<T extends Record<string, any>>({
   columns, data, total, page, perPage, totalPages,
-  onPageChange, onSearch, onExport, searchPlaceholder = "Search...",
+  onPageChange, onSearch, onExport, onRowClick, searchPlaceholder = "Search...",
   filters, onFilterChange,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
