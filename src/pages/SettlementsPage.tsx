@@ -1,18 +1,58 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Settlement, PaginatedResponse } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
+import { toast } from "sonner";
+import { exportToCSV } from "@/lib/csv";
 
 export default function SettlementsPage() {
   const [data, setData] = useState<PaginatedResponse<Settlement> | null>(null);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState<Settlement | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    api.getSettlements({ page, per_page: 10 }).then(setData);
-  }, [page]);
+  const fetchData = useCallback(() => {
+    api.getSettlements({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined }).then(setData);
+  }, [page, search, statusFilter]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleSettle = async (settlement: Settlement) => {
+    setConfirmTarget(settlement);
+    setConfirmOpen(true);
+  };
+
+  const confirmSettle = async () => {
+    if (!confirmTarget) return;
+    setLoading(true);
+    try {
+      await api.settleSettlement(confirmTarget.id);
+      toast.success(`Settlement ${confirmTarget.id} processed`);
+      fetchData();
+    } finally {
+      setLoading(false);
+      setConfirmOpen(false);
+      setConfirmTarget(null);
+    }
+  };
+
+  const handleExport = () => {
+    if (!data) return;
+    exportToCSV(data.data, [
+      { key: "id", label: "ID" }, { key: "vendor_name", label: "Vendor" },
+      { key: "order_id", label: "Order" }, { key: "amount", label: "Amount" },
+      { key: "commission", label: "Commission" }, { key: "net_amount", label: "Net" },
+      { key: "status", label: "Status" },
+    ], "settlements");
+    toast.success("CSV exported");
+  };
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
 
@@ -20,7 +60,7 @@ export default function SettlementsPage() {
     <AdminLayout>
       <div className="page-header">
         <h1 className="page-title">Settlements</h1>
-        <p className="page-description">{data.total} pending settlements · Manual settlement by default</p>
+        <p className="page-description">{data.total} settlements · Manual settlement by default</p>
       </div>
       <DataTable
         columns={[
@@ -32,9 +72,12 @@ export default function SettlementsPage() {
           { key: "net_amount", label: "Net Payout", render: (s) => <span className="font-bold text-success">₹{s.net_amount.toLocaleString()}</span> },
           { key: "status", label: "Status", render: (s) => <StatusBadge status={s.status} /> },
           { key: "actions", label: "", render: (s) => s.status === 'eligible' ? (
-            <Button variant="outline" size="sm" className="gap-1 text-success border-success/30 hover:bg-success/10">
+            <Button variant="outline" size="sm" className="gap-1 text-success border-success/30 hover:bg-success/10"
+              onClick={(e) => { e.stopPropagation(); handleSettle(s); }}>
               <CheckCircle className="h-3.5 w-3.5" /> Settle
             </Button>
+          ) : s.status === 'settled' ? (
+            <span className="text-xs text-muted-foreground">Settled</span>
           ) : null },
         ]}
         data={data.data}
@@ -43,12 +86,24 @@ export default function SettlementsPage() {
         perPage={data.per_page}
         totalPages={data.total_pages}
         onPageChange={setPage}
-        onSearch={() => {}}
-        onExport={() => {}}
+        onSearch={setSearch}
+        onExport={handleExport}
+        onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } }}
+        searchPlaceholder="Search settlements..."
         filters={[{ key: "status", label: "Status", options: [
           { value: "pending", label: "Pending" }, { value: "eligible", label: "Eligible" },
           { value: "settled", label: "Settled" }, { value: "on_hold", label: "On Hold" },
         ]}]}
+      />
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Process Settlement"
+        description={`Process settlement ${confirmTarget?.id} for vendor "${confirmTarget?.vendor_name}"? Net payout: ₹${confirmTarget?.net_amount.toLocaleString()}`}
+        confirmLabel="Process Settlement"
+        variant="default"
+        onConfirm={confirmSettle}
+        loading={loading}
       />
     </AdminLayout>
   );

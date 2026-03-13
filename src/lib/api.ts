@@ -313,6 +313,36 @@ export const api = {
     return { success: true };
   },
 
+  createCustomer: async (data: Partial<User>) => {
+    await delay();
+    const newCustomer = {
+      id: `USR-${String(MOCK_CUSTOMERS.length + 1).padStart(3, '0')}`,
+      name: data.name || '',
+      email: data.email || '',
+      mobile: data.mobile || '',
+      city_id: data.city_id || '1',
+      area_id: data.area_id || '1',
+      latitude: data.latitude || 0,
+      longitude: data.longitude || 0,
+      wallet_points: data.wallet_points || 0,
+      referral_code: `REF${String(MOCK_CUSTOMERS.length + 1).padStart(4, '0')}`,
+      referred_by: data.referred_by || null,
+      status: data.status || 'active' as const,
+      created_at: new Date().toISOString(),
+      occupation: data.occupation || '',
+    };
+    MOCK_CUSTOMERS.unshift(newCustomer as any);
+    persist('customers', MOCK_CUSTOMERS);
+    return { success: true, customer: newCustomer };
+  },
+
+  deleteCustomer: async (id: string) => {
+    await delay();
+    const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
+    if (idx >= 0) { MOCK_CUSTOMERS.splice(idx, 1); persist('customers', MOCK_CUSTOMERS); }
+    return { success: true };
+  },
+
   // Vendors
   getVendors: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
     await delay();
@@ -345,6 +375,32 @@ export const api = {
     return { success: true };
   },
 
+  createVendor: async (data: Partial<Vendor>, type: 'product' | 'service' = 'product') => {
+    await delay();
+    const store = type === 'service' ? MOCK_SERVICE_VENDORS : MOCK_VENDORS;
+    const newVendor: any = {
+      id: `VND-${String(MOCK_VENDORS.length + MOCK_SERVICE_VENDORS.length + 1).padStart(3, '0')}`,
+      ...data,
+      status: 'pending',
+      total_products: 0, total_orders: 0, total_revenue: 0,
+      created_at: new Date().toISOString(),
+    };
+    store.unshift(newVendor);
+    persist(type === 'service' ? 'service_vendors' : 'vendors', store);
+    return { success: true, vendor: newVendor };
+  },
+
+  deleteVendor: async (id: string) => {
+    await delay();
+    let idx = MOCK_VENDORS.findIndex((v) => v.id === id);
+    if (idx >= 0) { MOCK_VENDORS.splice(idx, 1); persist('vendors', MOCK_VENDORS); }
+    else {
+      idx = MOCK_SERVICE_VENDORS.findIndex((v) => v.id === id);
+      if (idx >= 0) { MOCK_SERVICE_VENDORS.splice(idx, 1); persist('service_vendors', MOCK_SERVICE_VENDORS); }
+    }
+    return { success: true };
+  },
+
   // Products
   getProducts: async (params: { page?: number; per_page?: number; search?: string; date_from?: string; date_to?: string }) => {
     await delay();
@@ -357,6 +413,27 @@ export const api = {
     await delay();
     const idx = MOCK_PRODUCTS.findIndex((p) => p.id === id);
     if (idx >= 0) { Object.assign(MOCK_PRODUCTS[idx], data, { updated_at: new Date().toISOString() }); persist('products', MOCK_PRODUCTS); }
+    return { success: true };
+  },
+
+  createProduct: async (data: Partial<Product>) => {
+    await delay();
+    const newProduct: any = {
+      id: `PRD-${String(MOCK_PRODUCTS.length + 1).padStart(3, '0')}`,
+      ...data,
+      rating: 0, reviews: 0, stock: data.stock || 0, sales: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    MOCK_PRODUCTS.unshift(newProduct);
+    persist('products', MOCK_PRODUCTS);
+    return { success: true, product: newProduct };
+  },
+
+  deleteProduct: async (id: string) => {
+    await delay();
+    const idx = MOCK_PRODUCTS.findIndex((p) => p.id === id);
+    if (idx >= 0) { MOCK_PRODUCTS.splice(idx, 1); persist('products', MOCK_PRODUCTS); }
     return { success: true };
   },
 
@@ -501,7 +578,7 @@ export const api = {
   },
 
   // Settlements
-  getSettlements: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
+  getSettlements: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
     await delay();
     let items = filterStatus(MOCK_SETTLEMENTS, params.status);
     items = filterDateRange(items, params.date_from, params.date_to);
@@ -589,6 +666,55 @@ export const api = {
     if (idx >= 0) { Object.assign(MOCK_CATEGORIES[idx], data); persist('categories', MOCK_CATEGORIES); }
     return { success: true };
   },
+
+  createCategory: async (data: Partial<Category>) => {
+    await delay();
+    const newCat: any = {
+      id: String(MOCK_CATEGORIES.length + 1),
+      ...data,
+      count: 0,
+      created_at: new Date().toISOString(),
+    };
+    MOCK_CATEGORIES.push(newCat);
+    persist('categories', MOCK_CATEGORIES);
+    return { success: true, category: newCat };
+  },
+
+  deleteCategory: async (id: string) => {
+    await delay();
+    const idx = MOCK_CATEGORIES.findIndex((c) => c.id === id);
+    if (idx >= 0) { MOCK_CATEGORIES.splice(idx, 1); persist('categories', MOCK_CATEGORIES); }
+    return { success: true };
+  },
+
+  // Services CRUD
+  updateService: async (id: string, data: Partial<Service>) => {
+    await delay();
+    const idx = MOCK_SERVICES.findIndex((s) => s.id === id);
+    if (idx >= 0) { Object.assign(MOCK_SERVICES[idx], data); persist('services', MOCK_SERVICES); }
+    return { success: true };
+  },
+
+  createService: async (data: Partial<Service>) => {
+    await delay();
+    const newSrv: any = {
+      id: `SRV-${String(MOCK_SERVICES.length + 1).padStart(3, '0')}`,
+      ...data,
+      rating: 0, reviews: 0,
+      created_at: new Date().toISOString(),
+    };
+    MOCK_SERVICES.unshift(newSrv);
+    persist('services', MOCK_SERVICES);
+    return { success: true, service: newSrv };
+  },
+
+  deleteService: async (id: string) => {
+    await delay();
+    const idx = MOCK_SERVICES.findIndex((s) => s.id === id);
+    if (idx >= 0) { MOCK_SERVICES.splice(idx, 1); persist('services', MOCK_SERVICES); }
+    return { success: true };
+  },
+
 
   // CMS
   getBanners: async () => {

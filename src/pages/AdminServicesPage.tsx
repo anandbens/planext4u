@@ -2,7 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Service, PaginatedResponse } from "@/lib/api";
+import { ServiceModal } from "@/components/admin/modals/ServiceModal";
+import { Button } from "@/components/ui/button";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -12,12 +16,41 @@ export default function AdminServicesPage() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState<string>();
   const [dateTo, setDateTo] = useState<string>();
+  const [selected, setSelected] = useState<Service | null>(null);
+  const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState<Service | null>(null);
 
   const fetchData = useCallback(() => {
     api.getServices({ page, per_page: 10, search: search || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
   }, [page, search, dateFrom, dateTo]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const openModal = (service: Service | null, mode: "view" | "edit" | "create") => {
+    setSelected(service);
+    setModalMode(mode);
+    setModalOpen(true);
+  };
+
+  const handleSave = async (id: string, updates: Partial<Service>) => {
+    await api.updateService(id, updates);
+    toast.success("Service updated");
+    fetchData();
+  };
+
+  const handleCreate = async (data: Partial<Service>) => {
+    await api.createService(data);
+    toast.success("Service created");
+    fetchData();
+  };
+
+  const handleDelete = async (id: string) => {
+    await api.deleteService(id);
+    toast.success("Service deleted");
+    fetchData();
+  };
 
   const handleExport = () => {
     if (!data) return;
@@ -48,7 +81,13 @@ export default function AdminServicesPage() {
           { key: "duration", label: "Duration" },
           { key: "rating", label: "Rating", render: (s) => <span>⭐ {s.rating}</span> },
           { key: "status", label: "Status", render: (s) => <StatusBadge status={s.status} /> },
-          { key: "created_at", label: "Created", render: (s) => s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—' },
+          { key: "actions", label: "", render: (s) => (
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(s, "view"); }}><Eye className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(s, "edit"); }}><Pencil className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setConfirmTarget(s); setConfirmOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
+            </div>
+          )},
         ]}
         data={data.data}
         total={data.total}
@@ -58,9 +97,15 @@ export default function AdminServicesPage() {
         onPageChange={setPage}
         onSearch={setSearch}
         onExport={handleExport}
+        onAdd={() => openModal(null, "create")}
+        addLabel="Add Service"
+        onRowClick={(s) => openModal(s, "view")}
         onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
         searchPlaceholder="Search services..."
       />
+      <ServiceModal service={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
+      <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Delete Service" description={`Delete "${confirmTarget?.title}"?`} confirmLabel="Delete" variant="destructive"
+        onConfirm={async () => { if (confirmTarget) { await handleDelete(confirmTarget.id); setConfirmOpen(false); } }} />
     </AdminLayout>
   );
 }

@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Product, PaginatedResponse } from "@/lib/api";
 import { ProductModal } from "@/components/admin/modals/ProductModal";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -14,8 +15,10 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Product | null>(null);
-  const [modalMode, setModalMode] = useState<"view" | "edit">("view");
+  const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
   const [modalOpen, setModalOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState<Product | null>(null);
 
   const fetchData = useCallback(() => {
     api.getProducts({ page, per_page: 10, search: search || undefined }).then(setData);
@@ -23,7 +26,7 @@ export default function ProductsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const openModal = (product: Product, mode: "view" | "edit") => {
+  const openModal = (product: Product | null, mode: "view" | "edit" | "create") => {
     setSelected(product);
     setModalMode(mode);
     setModalOpen(true);
@@ -31,7 +34,19 @@ export default function ProductsPage() {
 
   const handleSave = async (id: string, updates: Partial<Product>) => {
     await api.updateProduct(id, updates);
-    toast.success("Product updated successfully");
+    toast.success("Product updated");
+    fetchData();
+  };
+
+  const handleCreate = async (data: Partial<Product>) => {
+    await api.createProduct(data);
+    toast.success("Product created");
+    fetchData();
+  };
+
+  const handleDelete = async (id: string) => {
+    await api.deleteProduct(id);
+    toast.success("Product deleted");
     fetchData();
   };
 
@@ -64,12 +79,12 @@ export default function ProductsPage() {
           { key: "vendor_name", label: "Vendor" },
           { key: "price", label: "Price", render: (p) => <span className="font-semibold">₹{p.price.toLocaleString()}</span> },
           { key: "discount", label: "Discount", render: (p) => p.discount > 0 ? <span className="text-success font-medium">₹{p.discount}</span> : <span className="text-muted-foreground">—</span> },
-          { key: "max_points_redeemable", label: "Max Points", render: (p) => <span>{p.max_points_redeemable}</span> },
           { key: "status", label: "Status", render: (p) => <StatusBadge status={p.status} /> },
           { key: "actions", label: "", render: (p) => (
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(p, "view"); }}><Eye className="h-4 w-4" /></Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(p, "edit"); }}><Pencil className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setConfirmTarget(p); setConfirmOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
             </div>
           )},
         ]}
@@ -81,10 +96,14 @@ export default function ProductsPage() {
         onPageChange={setPage}
         onSearch={setSearch}
         onExport={handleExport}
+        onAdd={() => openModal(null, "create")}
+        addLabel="Add Product"
         onRowClick={(p) => openModal(p, "view")}
         searchPlaceholder="Search products..."
       />
-      <ProductModal product={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} />
+      <ProductModal product={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
+      <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Delete Product" description={`Delete "${confirmTarget?.title}"? This cannot be undone.`} confirmLabel="Delete" variant="destructive"
+        onConfirm={async () => { if (confirmTarget) { await handleDelete(confirmTarget.id); setConfirmOpen(false); } }} />
     </AdminLayout>
   );
 }

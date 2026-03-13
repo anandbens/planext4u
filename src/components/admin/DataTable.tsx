@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Download, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { Search, Download, ChevronLeft, ChevronRight, Calendar, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,6 +24,8 @@ interface DataTableProps<T> {
   onSearch?: (query: string) => void;
   onExport?: () => void;
   onRowClick?: (item: T) => void;
+  onAdd?: () => void;
+  addLabel?: string;
   searchPlaceholder?: string;
   filters?: { key: string; label: string; options: { value: string; label: string }[] }[];
   onFilterChange?: (key: string, value: string) => void;
@@ -34,7 +36,8 @@ interface DataTableProps<T> {
 
 export function DataTable<T extends Record<string, any>>({
   columns, data, total, page, perPage, totalPages,
-  onPageChange, onSearch, onExport, onRowClick, searchPlaceholder = "Search...",
+  onPageChange, onSearch, onExport, onRowClick, onAdd, addLabel = "Add New",
+  searchPlaceholder = "Search...",
   filters, onFilterChange, onDateRangeChange, dateFilterLabel = "Date", showDateFilter = true,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
@@ -124,6 +127,11 @@ export function DataTable<T extends Record<string, any>>({
                 </Button>
               )}
             </>
+          )}
+          {onAdd && (
+            <Button size="sm" onClick={onAdd} className="gap-2 h-9">
+              <Plus className="h-4 w-4" /> {addLabel}
+            </Button>
           )}
           {onExport && (
             <Button variant="outline" size="sm" onClick={onExport} className="gap-2 h-9">
