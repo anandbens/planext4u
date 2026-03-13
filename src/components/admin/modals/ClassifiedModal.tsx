@@ -152,8 +152,12 @@ export function ClassifiedModal({ ad, open, onOpenChange, mode, onSave, onDelete
               <Trash2 className="h-4 w-4 mr-1" /> Delete
             </Button>
           )}
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          {isEdit && <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>}
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{isEdit ? "Cancel" : "Close"}</Button>
+          {isEdit ? (
+            <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+          ) : (
+            <Button onClick={() => onModeChange?.("edit")}>Edit</Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
