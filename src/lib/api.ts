@@ -1,5 +1,5 @@
-// API Service Layer - All endpoints are stubs pointing to your REST API
-// Replace API_BASE_URL with your actual backend URL
+// API Service Layer with localStorage persistence
+// All mutations are saved to localStorage automatically
 
 import {
   MOCK_PRODUCTS, MOCK_CUSTOMERS, MOCK_VENDORS, MOCK_ORDERS,
@@ -8,6 +8,7 @@ import {
   MOCK_SERVICES, MOCK_SERVICE_CATEGORIES, MOCK_SERVICE_VENDORS, MOCK_CLASSIFIED_CATEGORIES,
   MOCK_OCCUPATIONS, MOCK_CITIES, MOCK_AREAS, MOCK_TAX_CONFIG,
   MOCK_POPUP_BANNERS, MOCK_ADVERTISEMENTS, MOCK_WEBSITE_QUERIES, MOCK_REPORT_LOG,
+  persist,
 } from './mockData';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
@@ -145,6 +146,11 @@ export interface DashboardStats {
   category_distribution: { name: string; count: number }[];
 }
 
+export interface CartItem {
+  id: string; title: string; price: number; qty: number; vendor: string;
+  vendor_id: string; emoji: string; maxPoints: number; tax: number; discount: number;
+}
+
 // Auth token management
 let authToken: string | null = localStorage.getItem('admin_token');
 
@@ -211,17 +217,52 @@ export const api = {
   },
 
   // Customer Registration
-  registerCustomer: async (data: { name: string; mobile: string; email: string; city: string; area: string; referral_code?: string }) => {
+  registerCustomer: async (data: { name: string; mobile: string; email: string; city: string; area: string; referral_code?: string; occupation?: string }) => {
     await delay();
     const newId = `USR-${String(MOCK_CUSTOMERS.length + 1).padStart(3, '0')}`;
+    const now = new Date().toISOString();
     const newCustomer = {
       id: newId, name: data.name, mobile: data.mobile, email: data.email,
       city_id: "1", area_id: "1", latitude: 19.076, longitude: 72.877,
       wallet_points: 200, referral_code: `REF${String(MOCK_CUSTOMERS.length + 1).padStart(4, '0')}`,
-      referred_by: data.referral_code || null, status: "active" as const, created_at: new Date().toISOString(),
-      occupation: "",
+      referred_by: data.referral_code || null, status: "active" as const, created_at: now,
+      occupation: data.occupation || "",
     };
     MOCK_CUSTOMERS.push(newCustomer);
+    persist('customers', MOCK_CUSTOMERS);
+
+    // Add welcome points transaction
+    const ptId = `PT-${String(MOCK_POINTS_TRANSACTIONS.length + 1).padStart(3, '0')}`;
+    MOCK_POINTS_TRANSACTIONS.push({
+      id: ptId, user_id: newId, type: "welcome", points: 200,
+      description: "Welcome bonus on registration", created_at: now, user_name: data.name,
+    });
+    persist('points_transactions', MOCK_POINTS_TRANSACTIONS);
+
+    // Handle referral
+    if (data.referral_code) {
+      const referrer = MOCK_CUSTOMERS.find((c) => c.referral_code === data.referral_code);
+      if (referrer) {
+        referrer.wallet_points += 100;
+        persist('customers', MOCK_CUSTOMERS);
+
+        const refId = `REF-${String(MOCK_REFERRALS.length + 1).padStart(3, '0')}`;
+        MOCK_REFERRALS.push({
+          id: refId, referrer_id: referrer.id, referee_id: newId,
+          status: "completed", points_awarded: 100, created_at: now,
+          referrer_name: referrer.name, referee_name: data.name,
+        });
+        persist('referrals', MOCK_REFERRALS);
+
+        const rptId = `PT-${String(MOCK_POINTS_TRANSACTIONS.length + 1).padStart(3, '0')}`;
+        MOCK_POINTS_TRANSACTIONS.push({
+          id: rptId, user_id: referrer.id, type: "referral", points: 100,
+          description: `Referral reward: ${data.name} joined`, created_at: now, user_name: referrer.name,
+        });
+        persist('points_transactions', MOCK_POINTS_TRANSACTIONS);
+      }
+    }
+
     return { success: true, user: newCustomer, token: 'mock-customer-token' };
   },
 
@@ -229,13 +270,13 @@ export const api = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     await delay();
     return {
-      total_customers: MOCK_CUSTOMERS.length * 2485,
-      total_vendors: (MOCK_VENDORS.length + MOCK_SERVICE_VENDORS.length) * 125,
-      total_orders: MOCK_ORDERS.length * 1843,
-      total_revenue: MOCK_VENDORS.reduce((s, v) => s + (v.total_revenue || 0), 0) + MOCK_SERVICE_VENDORS.reduce((s, v) => s + (v.total_revenue || 0), 0),
-      pending_settlements: MOCK_SETTLEMENTS.filter((s) => s.status === 'pending').length * 86,
-      active_ads: MOCK_CLASSIFIEDS.filter((a) => a.status === 'approved').length * 371,
-      total_services: MOCK_SERVICES.length * 245,
+      total_customers: MOCK_CUSTOMERS.length,
+      total_vendors: MOCK_VENDORS.length + MOCK_SERVICE_VENDORS.length,
+      total_orders: MOCK_ORDERS.length,
+      total_revenue: MOCK_ORDERS.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0),
+      pending_settlements: MOCK_SETTLEMENTS.filter((s) => s.status === 'pending').length,
+      active_ads: MOCK_CLASSIFIEDS.filter((a) => a.status === 'approved').length,
+      total_services: MOCK_SERVICES.length,
       customers_trend: 12.5, vendors_trend: 8.3, orders_trend: 15.2, revenue_trend: 22.1,
       recent_orders: MOCK_ORDERS.slice(0, 5),
       revenue_chart: [
@@ -267,7 +308,7 @@ export const api = {
   updateCustomer: async (id: string, data: Partial<User>) => {
     await delay();
     const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
-    if (idx >= 0) Object.assign(MOCK_CUSTOMERS[idx], data);
+    if (idx >= 0) { Object.assign(MOCK_CUSTOMERS[idx], data); persist('customers', MOCK_CUSTOMERS); }
     return { success: true };
   },
 
@@ -284,10 +325,10 @@ export const api = {
   updateVendorStatus: async (id: string, status: string) => {
     await delay();
     const idx = MOCK_VENDORS.findIndex((v) => v.id === id);
-    if (idx >= 0) (MOCK_VENDORS[idx] as any).status = status;
+    if (idx >= 0) { (MOCK_VENDORS[idx] as any).status = status; persist('vendors', MOCK_VENDORS); }
     else {
       const sIdx = MOCK_SERVICE_VENDORS.findIndex((v) => v.id === id);
-      if (sIdx >= 0) (MOCK_SERVICE_VENDORS[sIdx] as any).status = status;
+      if (sIdx >= 0) { (MOCK_SERVICE_VENDORS[sIdx] as any).status = status; persist('service_vendors', MOCK_SERVICE_VENDORS); }
     }
     return { success: true };
   },
@@ -295,7 +336,11 @@ export const api = {
   updateVendor: async (id: string, data: Partial<Vendor>) => {
     await delay();
     const idx = MOCK_VENDORS.findIndex((v) => v.id === id);
-    if (idx >= 0) Object.assign(MOCK_VENDORS[idx], data);
+    if (idx >= 0) { Object.assign(MOCK_VENDORS[idx], data); persist('vendors', MOCK_VENDORS); }
+    else {
+      const sIdx = MOCK_SERVICE_VENDORS.findIndex((v) => v.id === id);
+      if (sIdx >= 0) { Object.assign(MOCK_SERVICE_VENDORS[sIdx], data); persist('service_vendors', MOCK_SERVICE_VENDORS); }
+    }
     return { success: true };
   },
 
@@ -310,7 +355,7 @@ export const api = {
   updateProduct: async (id: string, data: Partial<Product>) => {
     await delay();
     const idx = MOCK_PRODUCTS.findIndex((p) => p.id === id);
-    if (idx >= 0) Object.assign(MOCK_PRODUCTS[idx], data);
+    if (idx >= 0) { Object.assign(MOCK_PRODUCTS[idx], data, { updated_at: new Date().toISOString() }); persist('products', MOCK_PRODUCTS); }
     return { success: true };
   },
 
@@ -360,8 +405,98 @@ export const api = {
   updateOrderStatus: async (id: string, status: Order['status']) => {
     await delay();
     const idx = MOCK_ORDERS.findIndex((o) => o.id === id);
-    if (idx >= 0) MOCK_ORDERS[idx].status = status;
+    if (idx >= 0) {
+      MOCK_ORDERS[idx].status = status;
+      MOCK_ORDERS[idx].updated_at = new Date().toISOString();
+      persist('orders', MOCK_ORDERS);
+
+      // If completed, create settlement
+      if (status === 'completed') {
+        const order = MOCK_ORDERS[idx];
+        const vendor = [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].find(v => v.id === order.vendor_id);
+        const commRate = vendor?.commission_rate || 10;
+        const commission = Math.round(order.total * commRate / 100);
+        const stlId = `STL-${String(MOCK_SETTLEMENTS.length + 1).padStart(3, '0')}`;
+        MOCK_SETTLEMENTS.push({
+          id: stlId, vendor_id: order.vendor_id, order_id: order.id,
+          amount: order.total, commission, net_amount: order.total - commission,
+          status: 'pending', settled_at: null, created_at: new Date().toISOString(),
+          vendor_name: order.vendor_name,
+        });
+        persist('settlements', MOCK_SETTLEMENTS);
+
+        // Award loyalty points (2% of order value)
+        const rewardPoints = Math.round(order.total * 0.02);
+        const customer = MOCK_CUSTOMERS.find(c => c.id === order.customer_id);
+        if (customer) {
+          customer.wallet_points += rewardPoints;
+          persist('customers', MOCK_CUSTOMERS);
+
+          const ptId = `PT-${String(MOCK_POINTS_TRANSACTIONS.length + 1).padStart(3, '0')}`;
+          MOCK_POINTS_TRANSACTIONS.push({
+            id: ptId, user_id: customer.id, type: 'order_reward', points: rewardPoints,
+            description: `2% reward on order ${order.id}`, created_at: new Date().toISOString(),
+            user_name: customer.name,
+          });
+          persist('points_transactions', MOCK_POINTS_TRANSACTIONS);
+        }
+
+        // Update vendor stats
+        if (vendor) {
+          vendor.total_orders = (vendor.total_orders || 0) + 1;
+          vendor.total_revenue = (vendor.total_revenue || 0) + order.total;
+          if (MOCK_VENDORS.includes(vendor as any)) persist('vendors', MOCK_VENDORS);
+          else persist('service_vendors', MOCK_SERVICE_VENDORS);
+        }
+      }
+    }
     return { success: true };
+  },
+
+  // Place order from cart
+  placeOrder: async (cartItems: CartItem[], customerId: string, pointsUsed: number, discount: number) => {
+    await delay();
+    const now = new Date().toISOString();
+    const customer = MOCK_CUSTOMERS.find(c => c.id === customerId) || MOCK_CUSTOMERS[0];
+
+    // Group items by vendor
+    const byVendor: Record<string, CartItem[]> = {};
+    cartItems.forEach(item => {
+      if (!byVendor[item.vendor_id]) byVendor[item.vendor_id] = [];
+      byVendor[item.vendor_id].push(item);
+    });
+
+    const orders: Order[] = [];
+    const vendorIds = Object.keys(byVendor);
+    const pointsPerOrder = Math.floor(pointsUsed / vendorIds.length);
+    const discountPerOrder = Math.floor(discount / vendorIds.length);
+
+    for (const vendorId of vendorIds) {
+      const items = byVendor[vendorId];
+      const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+      const tax = items.reduce((s, i) => s + i.tax * i.qty, 0);
+      const orderId = `ORD-${String(MOCK_ORDERS.length + 1).padStart(3, '0')}`;
+
+      const order: Order = {
+        id: orderId, customer_id: customer.id, vendor_id: vendorId,
+        subtotal, tax, discount: discountPerOrder, points_used: pointsPerOrder,
+        total: subtotal + tax - discountPerOrder - pointsPerOrder,
+        status: 'placed', created_at: now, updated_at: now,
+        customer_name: customer.name, vendor_name: items[0].vendor,
+        items: items.map(i => ({ title: i.title, qty: i.qty, emoji: i.emoji, price: i.price })),
+      };
+      MOCK_ORDERS.unshift(order);
+      orders.push(order);
+    }
+    persist('orders', MOCK_ORDERS);
+
+    // Deduct points from customer wallet
+    if (pointsUsed > 0) {
+      customer.wallet_points -= pointsUsed;
+      persist('customers', MOCK_CUSTOMERS);
+    }
+
+    return { success: true, orders };
   },
 
   // Settlements
@@ -372,12 +507,30 @@ export const api = {
     return paginate(items, params.page, params.per_page);
   },
 
+  settleSettlement: async (id: string) => {
+    await delay();
+    const idx = MOCK_SETTLEMENTS.findIndex(s => s.id === id);
+    if (idx >= 0) {
+      MOCK_SETTLEMENTS[idx].status = 'settled';
+      MOCK_SETTLEMENTS[idx].settled_at = new Date().toISOString();
+      persist('settlements', MOCK_SETTLEMENTS);
+    }
+    return { success: true };
+  },
+
   // Classified Ads
   getClassifiedAds: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
     await delay();
     let items = filterStatus(MOCK_CLASSIFIEDS, params.status);
     items = filterDateRange(items, params.date_from, params.date_to);
     return paginate(items, params.page, params.per_page);
+  },
+
+  updateClassifiedStatus: async (id: string, status: ClassifiedAd['status']) => {
+    await delay();
+    const idx = MOCK_CLASSIFIEDS.findIndex(a => a.id === id);
+    if (idx >= 0) { (MOCK_CLASSIFIEDS[idx] as any).status = status; persist('classifieds', MOCK_CLASSIFIEDS); }
+    return { success: true };
   },
 
   postClassifiedAd: async (data: { title: string; description: string; price: number; category: string; city: string; area: string }) => {
@@ -388,6 +541,7 @@ export const api = {
       created_at: new Date().toISOString(), user_name: "Rahul Sharma",
     };
     MOCK_CLASSIFIEDS.unshift(newAd);
+    persist('classifieds', MOCK_CLASSIFIEDS);
     return { success: true, ad: newAd };
   },
 
@@ -431,7 +585,7 @@ export const api = {
   updateCategory: async (id: string, data: Partial<Category>) => {
     await delay();
     const idx = MOCK_CATEGORIES.findIndex((c) => c.id === id);
-    if (idx >= 0) Object.assign(MOCK_CATEGORIES[idx], data);
+    if (idx >= 0) { Object.assign(MOCK_CATEGORIES[idx], data); persist('categories', MOCK_CATEGORIES); }
     return { success: true };
   },
 
@@ -444,7 +598,7 @@ export const api = {
   updateBanner: async (id: string, data: Partial<Banner>) => {
     await delay();
     const idx = MOCK_BANNERS.findIndex((b) => b.id === id);
-    if (idx >= 0) Object.assign(MOCK_BANNERS[idx], data);
+    if (idx >= 0) { Object.assign(MOCK_BANNERS[idx], data); persist('banners', MOCK_BANNERS); }
     return { success: true };
   },
 
@@ -457,11 +611,9 @@ export const api = {
   updatePlatformVariable: async (id: string, value: string) => {
     await delay();
     const idx = MOCK_PLATFORM_VARIABLES.findIndex((v) => v.id === id);
-    if (idx >= 0) MOCK_PLATFORM_VARIABLES[idx].value = value;
+    if (idx >= 0) { MOCK_PLATFORM_VARIABLES[idx].value = value; persist('platform_variables', MOCK_PLATFORM_VARIABLES); }
     return { success: true };
   },
-
-  // ===== NEW MODULE APIs =====
 
   // Occupations
   getOccupations: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
@@ -474,7 +626,7 @@ export const api = {
   updateOccupation: async (id: string, data: Partial<Occupation>) => {
     await delay();
     const idx = MOCK_OCCUPATIONS.findIndex((o) => o.id === id);
-    if (idx >= 0) Object.assign(MOCK_OCCUPATIONS[idx], data);
+    if (idx >= 0) { Object.assign(MOCK_OCCUPATIONS[idx], data); persist('occupations', MOCK_OCCUPATIONS); }
     return { success: true };
   },
 
@@ -528,7 +680,7 @@ export const api = {
   updateWebsiteQueryStatus: async (id: string, status: WebsiteQuery['status']) => {
     await delay();
     const idx = MOCK_WEBSITE_QUERIES.findIndex((q) => q.id === id);
-    if (idx >= 0) (MOCK_WEBSITE_QUERIES[idx] as any).status = status;
+    if (idx >= 0) { (MOCK_WEBSITE_QUERIES[idx] as any).status = status; persist('website_queries', MOCK_WEBSITE_QUERIES); }
     return { success: true };
   },
 
@@ -576,6 +728,60 @@ export const api = {
     return { ...user, total_orders: orders.length, total_referrals: referrals.length };
   },
 
+  // Cart
+  getCart: async (): Promise<CartItem[]> => {
+    await delay();
+    const { loadCart } = await import('./persist');
+    return loadCart();
+  },
+
+  addToCart: async (product: Product, qty: number = 1) => {
+    await delay();
+    const { loadCart, saveCart } = await import('./persist');
+    const cart = loadCart();
+    const existing = cart.find((i: CartItem) => i.id === product.id);
+    if (existing) {
+      existing.qty += qty;
+    } else {
+      cart.push({
+        id: product.id, title: product.title, price: product.price, qty,
+        vendor: product.vendor_name || '', vendor_id: product.vendor_id,
+        emoji: product.emoji || '📦', maxPoints: product.max_points_redeemable,
+        tax: product.tax, discount: product.discount,
+      });
+    }
+    saveCart(cart);
+    return { success: true, cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0) };
+  },
+
+  updateCartItem: async (itemId: string, qty: number) => {
+    await delay();
+    const { loadCart, saveCart } = await import('./persist');
+    const cart = loadCart();
+    const idx = cart.findIndex((i: CartItem) => i.id === itemId);
+    if (idx >= 0) {
+      if (qty <= 0) cart.splice(idx, 1);
+      else cart[idx].qty = qty;
+    }
+    saveCart(cart);
+    return { success: true };
+  },
+
+  removeFromCart: async (itemId: string) => {
+    await delay();
+    const { loadCart, saveCart } = await import('./persist');
+    const cart = loadCart().filter((i: CartItem) => i.id !== itemId);
+    saveCart(cart);
+    return { success: true };
+  },
+
+  clearCart: async () => {
+    await delay();
+    const { saveCart } = await import('./persist');
+    saveCart([]);
+    return { success: true };
+  },
+
   // ===== Vendor-facing APIs =====
   getVendorDashboard: async (vendorId: string) => {
     await delay();
@@ -586,7 +792,7 @@ export const api = {
     const settlements = MOCK_SETTLEMENTS.filter((s) => s.vendor_id === vendor.id);
     return {
       vendor, orders, products, services, settlements,
-      todayRevenue: orders.reduce((s, o) => s + o.total, 0),
+      todayRevenue: orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0),
       activeOrders: orders.filter((o) => !['completed', 'cancelled'].includes(o.status)).length,
     };
   },
@@ -611,11 +817,16 @@ export const api = {
     return [...MOCK_VENDORS, ...MOCK_SERVICE_VENDORS].find((v) => v.id === vendorId) || MOCK_VENDORS[0];
   },
 
-  // Reports (stubs with mock data)
+  // Reports
   getSalesReport: async (_params: any) => {
     await delay();
     return {
-      summary: { total_sales: 2890000, total_orders: 12450, avg_order_value: 2320, total_tax: 520200 },
+      summary: {
+        total_sales: MOCK_ORDERS.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0),
+        total_orders: MOCK_ORDERS.length,
+        avg_order_value: Math.round(MOCK_ORDERS.filter(o => o.status !== 'cancelled').reduce((s, o) => s + o.total, 0) / Math.max(MOCK_ORDERS.length, 1)),
+        total_tax: MOCK_ORDERS.reduce((s, o) => s + o.tax, 0),
+      },
       chart: [
         { month: 'Oct', sales: 380000, orders: 1650 }, { month: 'Nov', sales: 420000, orders: 1820 },
         { month: 'Dec', sales: 510000, orders: 2210 }, { month: 'Jan', sales: 390000, orders: 1690 },
@@ -629,7 +840,14 @@ export const api = {
   },
   getSettlementReport: async (_params: any) => {
     await delay();
-    return { settlements: MOCK_SETTLEMENTS, summary: { total_settled: 2774, total_pending: 8031, total_commission: 1301 } };
+    return {
+      settlements: MOCK_SETTLEMENTS,
+      summary: {
+        total_settled: MOCK_SETTLEMENTS.filter(s => s.status === 'settled').reduce((sum, s) => sum + s.net_amount, 0),
+        total_pending: MOCK_SETTLEMENTS.filter(s => s.status === 'pending').reduce((sum, s) => sum + s.net_amount, 0),
+        total_commission: MOCK_SETTLEMENTS.reduce((sum, s) => sum + s.commission, 0),
+      },
+    };
   },
   getCustomerReport: async (_params: any) => {
     await delay();
@@ -642,6 +860,13 @@ export const api = {
   getReferralReport: async (_params: any) => {
     await delay();
     return { referrals: MOCK_REFERRALS };
+  },
+
+  // Reset all data
+  resetData: () => {
+    const { resetAllStores } = require('./persist');
+    resetAllStores();
+    window.location.reload();
   },
 
   // Export
