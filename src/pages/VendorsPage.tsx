@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { DataTable } from "@/components/admin/DataTable";
+import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Vendor, PaginatedResponse } from "@/lib/api";
 import { VendorModal } from "@/components/admin/modals/VendorModal";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Eye, Pencil, Trash2 } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, Ban } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -15,6 +15,8 @@ export default function VendorsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState<string>();
+  const [dateTo, setDateTo] = useState<string>();
   const [selected, setSelected] = useState<Vendor | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
   const [modalOpen, setModalOpen] = useState(false);
@@ -23,38 +25,33 @@ export default function VendorsPage() {
   const [confirmLoading, setConfirmLoading] = useState(false);
 
   const fetchData = useCallback(() => {
-    api.getVendors({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined }).then(setData);
-  }, [page, search, statusFilter]);
+    api.getVendors({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
+  }, [page, search, statusFilter, dateFrom, dateTo]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const openModal = (vendor: Vendor | null, mode: "view" | "edit" | "create") => {
-    setSelected(vendor);
-    setModalMode(mode);
-    setModalOpen(true);
+    setSelected(vendor); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<Vendor>) => {
-    await api.updateVendor(id, updates);
-    toast.success("Vendor updated");
+  const handleSave = async (id: string, updates: Partial<Vendor>) => { await api.updateVendor(id, updates); toast.success("Vendor updated"); fetchData(); };
+  const handleCreate = async (data: Partial<Vendor>) => { await api.createVendor(data); toast.success("Vendor created"); fetchData(); };
+  const handleDelete = async (id: string) => { await api.deleteVendor(id); toast.success("Vendor deleted"); fetchData(); };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    await api.bulkDeleteVendors(ids);
+    toast.success(`${ids.length} vendors deleted`);
     fetchData();
   };
 
-  const handleCreate = async (data: Partial<Vendor>) => {
-    await api.createVendor(data);
-    toast.success("Vendor created");
-    fetchData();
-  };
-
-  const handleDelete = async (id: string) => {
-    await api.deleteVendor(id);
-    toast.success("Vendor deleted");
+  const handleBulkStatus = async (ids: string[], status: string) => {
+    await api.bulkUpdateVendorStatus(ids, status);
+    toast.success(`${ids.length} vendors updated to ${status}`);
     fetchData();
   };
 
   const openConfirm = (vendor: Vendor, action: "approve" | "reject" | "delete") => {
-    setConfirmAction({ vendor, action });
-    setConfirmOpen(true);
+    setConfirmAction({ vendor, action }); setConfirmOpen(true);
   };
 
   const handleConfirm = async () => {
@@ -62,22 +59,16 @@ export default function VendorsPage() {
     setConfirmLoading(true);
     const { vendor, action } = confirmAction;
     try {
-      if (action === "delete") {
-        await handleDelete(vendor.id);
-      } else {
+      if (action === "delete") { await handleDelete(vendor.id); }
+      else {
         const nextStatus: Vendor["status"] = action === "reject" ? "rejected"
           : vendor.status === "pending" ? "level1_approved"
-          : vendor.status === "level1_approved" ? "level2_approved"
-          : "verified";
+          : vendor.status === "level1_approved" ? "level2_approved" : "verified";
         await api.updateVendorStatus(vendor.id, nextStatus);
         toast.success(action === "approve" ? `Vendor → ${nextStatus.replace(/_/g, " ")}` : "Vendor rejected");
         fetchData();
       }
-    } finally {
-      setConfirmLoading(false);
-      setConfirmOpen(false);
-      setConfirmAction(null);
-    }
+    } finally { setConfirmLoading(false); setConfirmOpen(false); setConfirmAction(null); }
   };
 
   const handleExport = () => {
@@ -85,13 +76,23 @@ export default function VendorsPage() {
     exportToCSV(data.data, [
       { key: "id", label: "ID" }, { key: "business_name", label: "Business" },
       { key: "name", label: "Owner" }, { key: "email", label: "Email" },
-      { key: "mobile", label: "Mobile" }, { key: "commission_rate", label: "Commission %" },
-      { key: "membership", label: "Plan" }, { key: "status", label: "Status" },
+      { key: "commission_rate", label: "Commission %" }, { key: "status", label: "Status" },
     ], "vendors");
     toast.success("CSV exported");
   };
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
+
+  const verified = data.data.filter(v => v.status === 'verified').length;
+  const pending = data.data.filter(v => v.status === 'pending').length;
+  const rejected = data.data.filter(v => v.status === 'rejected').length;
+
+  const summaryWidgets: SummaryWidget[] = [
+    { label: "Total Vendors", value: data.total, icon: <Store className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
+    { label: "Verified", value: verified, icon: <ShieldCheck className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
+    { label: "Pending Approval", value: pending, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+    { label: "Rejected", value: rejected, icon: <Ban className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
+  ];
 
   return (
     <AdminLayout>
@@ -140,30 +141,30 @@ export default function VendorsPage() {
         addLabel="Add Vendor"
         onRowClick={(v) => openModal(v, "view")}
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } }}
+        onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
         searchPlaceholder="Search vendors..."
         filters={[{ key: "status", label: "Status", options: [
           { value: "pending", label: "Pending" }, { value: "level1_approved", label: "Level 1" },
           { value: "level2_approved", label: "Level 2" }, { value: "verified", label: "Verified" },
           { value: "rejected", label: "Rejected" },
         ]}]}
+        summaryWidgets={summaryWidgets}
+        enableBulkSelect
+        onBulkDelete={handleBulkDelete}
+        onBulkStatusUpdate={handleBulkStatus}
+        bulkStatusOptions={[
+          { value: "pending", label: "Pending" },
+          { value: "verified", label: "Verified" },
+          { value: "rejected", label: "Rejected" },
+        ]}
       />
       <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
-      <ConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
+      <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen}
         title={confirmAction?.action === "approve" ? "Approve Vendor" : confirmAction?.action === "delete" ? "Delete Vendor" : "Reject Vendor"}
-        description={
-          confirmAction?.action === "approve"
-            ? `Approve "${confirmAction.vendor.business_name}"? This advances them to the next level.`
-            : confirmAction?.action === "delete"
-            ? `Delete "${confirmAction?.vendor.business_name}"? This cannot be undone.`
-            : `Reject "${confirmAction?.vendor.business_name}"?`
-        }
+        description={confirmAction?.action === "approve" ? `Approve "${confirmAction.vendor.business_name}"?` : confirmAction?.action === "delete" ? `Delete "${confirmAction?.vendor.business_name}"?` : `Reject "${confirmAction?.vendor.business_name}"?`}
         confirmLabel={confirmAction?.action === "approve" ? "Approve" : confirmAction?.action === "delete" ? "Delete" : "Reject"}
         variant={confirmAction?.action === "approve" ? "default" : "destructive"}
-        onConfirm={handleConfirm}
-        loading={confirmLoading}
-      />
+        onConfirm={handleConfirm} loading={confirmLoading} />
     </AdminLayout>
   );
 }

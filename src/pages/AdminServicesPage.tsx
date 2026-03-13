@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { DataTable } from "@/components/admin/DataTable";
+import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Service, PaginatedResponse } from "@/lib/api";
 import { ServiceModal } from "@/components/admin/modals/ServiceModal";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2, Wrench, Star, IndianRupee, CheckCircle } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -29,26 +29,22 @@ export default function AdminServicesPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const openModal = (service: Service | null, mode: "view" | "edit" | "create") => {
-    setSelected(service);
-    setModalMode(mode);
-    setModalOpen(true);
+    setSelected(service); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<Service>) => {
-    await api.updateService(id, updates);
-    toast.success("Service updated");
+  const handleSave = async (id: string, updates: Partial<Service>) => { await api.updateService(id, updates); toast.success("Service updated"); fetchData(); };
+  const handleCreate = async (data: Partial<Service>) => { await api.createService(data); toast.success("Service created"); fetchData(); };
+  const handleDelete = async (id: string) => { await api.deleteService(id); toast.success("Service deleted"); fetchData(); };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    await api.bulkDeleteServices(ids);
+    toast.success(`${ids.length} services deleted`);
     fetchData();
   };
 
-  const handleCreate = async (data: Partial<Service>) => {
-    await api.createService(data);
-    toast.success("Service created");
-    fetchData();
-  };
-
-  const handleDelete = async (id: string) => {
-    await api.deleteService(id);
-    toast.success("Service deleted");
+  const handleBulkStatus = async (ids: string[], status: string) => {
+    await api.bulkUpdateServiceStatus(ids, status);
+    toast.success(`${ids.length} services updated to ${status}`);
     fetchData();
   };
 
@@ -63,6 +59,17 @@ export default function AdminServicesPage() {
   };
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
+
+  const active = data.data.filter(s => s.status === 'active').length;
+  const avgRating = data.data.length ? (data.data.reduce((s, sv) => s + (sv.rating || 0), 0) / data.data.length).toFixed(1) : '0';
+  const avgPrice = data.data.length ? Math.round(data.data.reduce((s, sv) => s + sv.price, 0) / data.data.length) : 0;
+
+  const summaryWidgets: SummaryWidget[] = [
+    { label: "Total Services", value: data.total, icon: <Wrench className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
+    { label: "Active", value: active, icon: <CheckCircle className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
+    { label: "Avg Rating", value: `⭐ ${avgRating}`, icon: <Star className="h-5 w-5 text-warning" />, color: "bg-warning/5" },
+    { label: "Avg Price", value: `₹${avgPrice.toLocaleString()}`, icon: <IndianRupee className="h-5 w-5 text-info" />, color: "bg-info/5", textColor: "text-info" },
+  ];
 
   return (
     <AdminLayout>
@@ -102,6 +109,15 @@ export default function AdminServicesPage() {
         onRowClick={(s) => openModal(s, "view")}
         onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
         searchPlaceholder="Search services..."
+        summaryWidgets={summaryWidgets}
+        enableBulkSelect
+        onBulkDelete={handleBulkDelete}
+        onBulkStatusUpdate={handleBulkStatus}
+        bulkStatusOptions={[
+          { value: "active", label: "Active" },
+          { value: "inactive", label: "Inactive" },
+          { value: "draft", label: "Draft" },
+        ]}
       />
       <ServiceModal service={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
       <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Delete Service" description={`Delete "${confirmTarget?.title}"?`} confirmLabel="Delete" variant="destructive"
