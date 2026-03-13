@@ -45,7 +45,7 @@ export default function VendorDashboardPage() {
             { icon: DollarSign, label: "Total Revenue", value: `₹${(data?.todayRevenue || 0).toLocaleString()}`, trend: `${data?.orders.length} orders` },
             { icon: ShoppingCart, label: "Active Orders", value: String(data?.activeOrders || 0), trend: "" },
             { icon: Package, label: "Products", value: String(data?.products.length || 0), trend: "" },
-            { icon: Star, label: "Rating", value: String(data?.vendor.rating || 0), trend: `${data?.vendor.total_orders} total orders` },
+            { icon: Star, label: "Rating", value: String((data?.vendor as any)?.rating || 0), trend: `${(data?.vendor as any)?.total_orders || 0} total orders` },
           ].map((s) => (
             <Card key={s.label} className="p-4">
               <div className="flex items-center justify-between mb-2"><span className="text-xs text-muted-foreground">{s.label}</span><s.icon className="h-4 w-4 text-muted-foreground" /></div>
