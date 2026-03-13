@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -6,22 +6,45 @@ import { api, User, PaginatedResponse } from "@/lib/api";
 import { CustomerModal } from "@/components/admin/modals/CustomerModal";
 import { Button } from "@/components/ui/button";
 import { Eye, Pencil } from "lucide-react";
+import { exportToCSV } from "@/lib/csv";
+import { toast } from "sonner";
 
 export default function CustomersPage() {
   const [data, setData] = useState<PaginatedResponse<User> | null>(null);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [selected, setSelected] = useState<User | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "edit">("view");
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    api.getCustomers({ page, per_page: 10 }).then(setData);
-  }, [page]);
+  const fetchData = useCallback(() => {
+    api.getCustomers({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined }).then(setData);
+  }, [page, search, statusFilter]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const openModal = (user: User, mode: "view" | "edit") => {
     setSelected(user);
     setModalMode(mode);
     setModalOpen(true);
+  };
+
+  const handleSave = async (id: string, updates: Partial<User>) => {
+    await api.updateCustomer(id, updates);
+    toast.success("Customer updated successfully");
+    fetchData();
+  };
+
+  const handleExport = () => {
+    if (!data) return;
+    exportToCSV(data.data, [
+      { key: "id", label: "ID" }, { key: "name", label: "Name" },
+      { key: "email", label: "Email" }, { key: "mobile", label: "Mobile" },
+      { key: "wallet_points", label: "Points" }, { key: "referral_code", label: "Referral Code" },
+      { key: "status", label: "Status" },
+    ], "customers");
+    toast.success("CSV exported");
   };
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
@@ -54,13 +77,14 @@ export default function CustomersPage() {
         perPage={data.per_page}
         totalPages={data.total_pages}
         onPageChange={setPage}
-        onSearch={() => {}}
-        onExport={() => {}}
+        onSearch={setSearch}
+        onExport={handleExport}
         onRowClick={(u) => openModal(u, "view")}
+        onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } }}
         searchPlaceholder="Search customers..."
         filters={[{ key: "status", label: "Status", options: [{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }, { value: "suspended", label: "Suspended" }] }]}
       />
-      <CustomerModal customer={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} />
+      <CustomerModal customer={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} />
     </AdminLayout>
   );
 }
