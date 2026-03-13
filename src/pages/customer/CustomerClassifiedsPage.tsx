@@ -100,21 +100,23 @@ export default function CustomerClassifiedsPage() {
             {ads?.map((ad) => {
               const adImages = Array.isArray((ad as any).images) ? (ad as any).images as string[] : [];
               return (
-                <Card key={ad.id} className="overflow-hidden hover:shadow-md transition-all">
-                  <AdImageCarousel images={adImages} />
-                  <div className="p-4">
-                    <div className="flex items-start justify-between">
-                      <h3 className="text-sm font-semibold">{ad.title}</h3>
-                      <span className="text-base font-bold text-primary">₹{ad.price.toLocaleString()}</span>
+                <Link key={ad.id} to={`/app/classifieds/${ad.id}`} className="block">
+                  <Card className="overflow-hidden hover:shadow-md transition-all">
+                    <AdImageCarousel images={adImages} />
+                    <div className="p-4">
+                      <div className="flex items-start justify-between">
+                        <h3 className="text-sm font-semibold">{ad.title}</h3>
+                        <span className="text-base font-bold text-primary">₹{ad.price.toLocaleString()}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{ad.description}</p>
+                      <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{ad.area}, {ad.city}</span>
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(ad.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
+                      </div>
+                      <Badge variant="outline" className="mt-2 text-[10px]">{ad.category}</Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{ad.description}</p>
-                    <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{ad.area}, {ad.city}</span>
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{new Date(ad.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</span>
-                    </div>
-                    <Badge variant="outline" className="mt-2 text-[10px]">{ad.category}</Badge>
-                  </div>
-                </Card>
+                  </Card>
+                </Link>
               );
             })}
           </div>

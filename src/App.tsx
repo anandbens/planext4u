@@ -65,6 +65,7 @@ import CustomerServicesPage from "./pages/customer/CustomerServicesPage";
 import CustomerServiceDetailPage from "./pages/customer/CustomerServiceDetailPage";
 import CustomerClassifiedsPage from "./pages/customer/CustomerClassifiedsPage";
 import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
+import CustomerClassifiedDetailPage from "./pages/customer/CustomerClassifiedDetailPage";
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 
 // Vendor pages
@@ -155,6 +156,7 @@ const App = () => (
             <Route path="/app/service/:id" element={<CustomerServiceDetailPage />} />
             <Route path="/app/classifieds" element={<CustomerClassifiedsPage />} />
             <Route path="/app/classifieds/post" element={<CustomerPostAdPage />} />
+            <Route path="/app/classifieds/:id" element={<CustomerClassifiedDetailPage />} />
 
             {/* Vendor-facing routes */}
             <Route path="/vendor/login" element={<VendorLoginPage />} />
