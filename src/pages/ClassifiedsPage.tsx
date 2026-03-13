@@ -155,6 +155,7 @@ export default function ClassifiedsPage() {
         mode={modalMode}
         onSave={handleSave}
         onDelete={handleDelete}
+        onModeChange={setModalMode}
       />
       <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen}
         title={confirmAction?.action === "approve" ? "Approve Ad" : "Reject Ad"}
