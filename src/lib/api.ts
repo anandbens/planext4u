@@ -578,7 +578,7 @@ export const api = {
   },
 
   // Settlements
-  getSettlements: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
+  getSettlements: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
     await delay();
     let items = filterStatus(MOCK_SETTLEMENTS, params.status);
     items = filterDateRange(items, params.date_from, params.date_to);
