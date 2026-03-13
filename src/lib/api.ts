@@ -313,6 +313,27 @@ export const api = {
     return { success: true };
   },
 
+  createCustomer: async (data: Omit<User, 'id' | 'created_at' | 'referral_code'>) => {
+    await delay();
+    const newCustomer: User = {
+      id: `USR-${String(MOCK_CUSTOMERS.length + 1).padStart(3, '0')}`,
+      ...data as any,
+      referral_code: `REF${String(MOCK_CUSTOMERS.length + 1).padStart(4, '0')}`,
+      wallet_points: data.wallet_points || 0,
+      created_at: new Date().toISOString(),
+    };
+    MOCK_CUSTOMERS.unshift(newCustomer);
+    persist('customers', MOCK_CUSTOMERS);
+    return { success: true, customer: newCustomer };
+  },
+
+  deleteCustomer: async (id: string) => {
+    await delay();
+    const idx = MOCK_CUSTOMERS.findIndex((c) => c.id === id);
+    if (idx >= 0) { MOCK_CUSTOMERS.splice(idx, 1); persist('customers', MOCK_CUSTOMERS); }
+    return { success: true };
+  },
+
   // Vendors
   getVendors: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
     await delay();
