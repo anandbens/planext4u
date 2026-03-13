@@ -128,6 +128,11 @@ export function DataTable<T extends Record<string, any>>({
               )}
             </>
           )}
+          {onAdd && (
+            <Button size="sm" onClick={onAdd} className="gap-2 h-9">
+              <Plus className="h-4 w-4" /> {addLabel}
+            </Button>
+          )}
           {onExport && (
             <Button variant="outline" size="sm" onClick={onExport} className="gap-2 h-9">
               <Download className="h-4 w-4" /> Export CSV
