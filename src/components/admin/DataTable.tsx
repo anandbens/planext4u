@@ -36,7 +36,8 @@ interface DataTableProps<T> {
 
 export function DataTable<T extends Record<string, any>>({
   columns, data, total, page, perPage, totalPages,
-  onPageChange, onSearch, onExport, onRowClick, searchPlaceholder = "Search...",
+  onPageChange, onSearch, onExport, onRowClick, onAdd, addLabel = "Add New",
+  searchPlaceholder = "Search...",
   filters, onFilterChange, onDateRangeChange, dateFilterLabel = "Date", showDateFilter = true,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
