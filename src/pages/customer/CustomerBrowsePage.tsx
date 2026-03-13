@@ -62,18 +62,24 @@ export default function CustomerBrowsePage() {
         </div>
 
         {/* Category chips */}
-        <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide">
-          <Link to="/app/browse"><Badge variant={!categoryFilter ? "default" : "outline"} className="cursor-pointer whitespace-nowrap">All</Badge></Link>
+        <div className="flex gap-2.5 overflow-x-auto pb-4 mb-2 scrollbar-hide">
+          <Link to="/app/browse">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
+              ${!categoryFilter ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
+              <span className="text-sm font-medium">All</span>
+            </div>
+          </Link>
           {categories?.map((c) => (
             <Link key={c.id} to={`/app/browse?category=${c.name}`}>
-              <Badge variant={categoryFilter === c.name ? "default" : "outline"} className="cursor-pointer whitespace-nowrap flex items-center gap-1.5">
-                {c.image && c.image.startsWith('/') ? (
-                  <img src={c.image} alt={c.name} className="h-5 w-5 rounded-full object-cover" />
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
+                ${categoryFilter === c.name ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
+                {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
+                  <img src={c.image} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
                 ) : (
-                  <span>{c.image}</span>
+                  <span className="text-base">{c.image}</span>
                 )}
-                {c.name}
-              </Badge>
+                <span className="text-sm font-medium">{c.name}</span>
+              </div>
             </Link>
           ))}
         </div>
