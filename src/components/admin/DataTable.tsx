@@ -20,6 +20,7 @@ interface DataTableProps<T> {
   onPageChange: (page: number) => void;
   onSearch?: (query: string) => void;
   onExport?: () => void;
+  onRowClick?: (item: T) => void;
   searchPlaceholder?: string;
   filters?: { key: string; label: string; options: { value: string; label: string }[] }[];
   onFilterChange?: (key: string, value: string) => void;
@@ -27,7 +28,7 @@ interface DataTableProps<T> {
 
 export function DataTable<T extends Record<string, any>>({
   columns, data, total, page, perPage, totalPages,
-  onPageChange, onSearch, onExport, searchPlaceholder = "Search...",
+  onPageChange, onSearch, onExport, onRowClick, searchPlaceholder = "Search...",
   filters, onFilterChange,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
@@ -84,7 +85,7 @@ export function DataTable<T extends Record<string, any>>({
           </thead>
           <tbody>
             {data.map((item, i) => (
-              <tr key={item.id || i} className="transition-colors">
+              <tr key={item.id || i} className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''}`} onClick={() => onRowClick?.(item)}>
                 {columns.map((col) => (
                   <td key={col.key}>
                     {col.render ? col.render(item) : item[col.key]}
