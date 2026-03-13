@@ -3,6 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { ClassifiedModal } from "@/components/admin/modals/ClassifiedModal";
 import { api, ClassifiedAd, PaginatedResponse } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Megaphone, Clock, ShieldCheck, IndianRupee } from "lucide-react";
@@ -18,6 +19,9 @@ export default function ClassifiedsPage() {
   const [dateTo, setDateTo] = useState<string>();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ ad: ClassifiedAd; action: "approve" | "reject" } | null>(null);
+  const [selectedAd, setSelectedAd] = useState<ClassifiedAd | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"view" | "edit">("view");
 
   const fetchData = useCallback(() => {
     api.getClassifiedAds({ page, per_page: 10, status: statusFilter || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
@@ -38,6 +42,31 @@ export default function ClassifiedsPage() {
   const handleBulkStatus = async (ids: string[], status: string) => {
     await api.bulkUpdateClassifiedStatus(ids, status);
     toast.success(`${ids.length} ads updated to ${status}`);
+    fetchData();
+  };
+
+  const handleSave = async (id: string, updates: Partial<ClassifiedAd>) => {
+    await api.updateClassifiedStatus(id, updates.status as ClassifiedAd['status']);
+    // Update images and other fields via direct supabase update
+    const { supabase } = await import("@/integrations/supabase/client");
+    await supabase.from("classified_ads").update({
+      title: updates.title,
+      description: updates.description,
+      price: updates.price,
+      category: updates.category,
+      city: updates.city,
+      area: updates.area,
+      images: updates.images,
+      status: updates.status,
+    }).eq("id", id);
+    toast.success("Ad updated");
+    fetchData();
+  };
+
+  const handleDelete = async (id: string) => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    await supabase.from("classified_ads").delete().eq("id", id);
+    toast.success("Ad deleted");
     fetchData();
   };
 
@@ -73,6 +102,14 @@ export default function ClassifiedsPage() {
       <DataTable
         columns={[
           { key: "id", label: "ID" },
+          { key: "image", label: "Image", render: (a) => {
+            const images = Array.isArray((a as any).images) ? (a as any).images : [];
+            return images.length > 0 ? (
+              <img src={images[0]} alt={a.title} className="h-10 w-10 rounded-lg object-cover" />
+            ) : (
+              <div className="h-10 w-10 rounded-lg bg-secondary/30 flex items-center justify-center text-lg">📦</div>
+            );
+          }},
           { key: "title", label: "Title", render: (a) => (
             <div><p className="font-medium">{a.title}</p><p className="text-xs text-muted-foreground">{a.category}</p></div>
           )},
@@ -109,6 +146,15 @@ export default function ClassifiedsPage() {
           { value: "approved", label: "Approve" },
           { value: "rejected", label: "Reject" },
         ]}
+        onRowClick={(ad) => { setSelectedAd(ad); setModalMode("view"); setModalOpen(true); }}
+      />
+      <ClassifiedModal
+        ad={selectedAd}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        mode={modalMode}
+        onSave={handleSave}
+        onDelete={handleDelete}
       />
       <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen}
         title={confirmAction?.action === "approve" ? "Approve Ad" : "Reject Ad"}
