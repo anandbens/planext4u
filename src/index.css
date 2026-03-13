@@ -119,17 +119,23 @@
   }
 
   @media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi) {
-    body {
-      font-size: 16px;
+    html {
+      font-size: 17px;
     }
   }
 
   @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    body {
-      font-size: 16px;
+    html {
+      font-size: 18px;
     }
     .stat-card {
       border-width: 0.5px;
+    }
+  }
+
+  @media (min-width: 1920px) and (-webkit-min-device-pixel-ratio: 1.5) {
+    html {
+      font-size: 20px;
     }
   }
 }

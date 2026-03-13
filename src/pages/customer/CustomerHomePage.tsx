@@ -117,17 +117,23 @@ export default function CustomerHomePage() {
             <div className="flex items-center justify-between px-6 py-4">
               <h2 className="text-lg md:text-xl font-bold text-primary-foreground">Best of Products</h2>
               <div className="flex gap-2">
-                <button onClick={() => setProductScrollIdx(Math.max(0, productScrollIdx - 1))}
+                <button onClick={() => {
+                  const el = document.getElementById('product-carousel');
+                  if (el) el.scrollBy({ left: -200, behavior: 'smooth' });
+                }}
                   className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/30 transition-colors">
                   <ChevronLeft className="h-4 w-4 text-primary-foreground" />
                 </button>
-                <button onClick={() => setProductScrollIdx(Math.min((data?.featuredProducts?.length || 1) - 1, productScrollIdx + 1))}
+                <button onClick={() => {
+                  const el = document.getElementById('product-carousel');
+                  if (el) el.scrollBy({ left: 200, behavior: 'smooth' });
+                }}
                   className="h-8 w-8 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/30 transition-colors">
                   <ChevronRight className="h-4 w-4 text-primary-foreground" />
                 </button>
               </div>
             </div>
-            <div className="flex gap-4 overflow-x-auto pb-6 px-6 scrollbar-hide">
+            <div id="product-carousel" className="flex gap-4 overflow-x-auto pb-6 px-6 scrollbar-hide scroll-smooth">
               {isLoading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-52 w-40 rounded-xl shrink-0" />) :
                 data?.featuredProducts.map((p) => (
                   <Link key={p.id} to={`/app/product/${p.id}`} className="shrink-0">
