@@ -876,10 +876,10 @@ export const api = {
     await delay();
     const idx = MOCK_SUPPORT_TICKETS.findIndex(t => t.id === id);
     if (idx >= 0) {
-      MOCK_SUPPORT_TICKETS[idx].status = status;
-      MOCK_SUPPORT_TICKETS[idx].resolution = resolution;
+      (MOCK_SUPPORT_TICKETS[idx] as any).status = status;
+      (MOCK_SUPPORT_TICKETS[idx] as any).resolution_notes = resolution;
       MOCK_SUPPORT_TICKETS[idx].updated_at = new Date().toISOString();
-      persist('support_tickets', MOCK_SUPPORT_TICKETS);
+      persist('support_tickets');
     }
     return { success: true };
   },
