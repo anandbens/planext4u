@@ -93,7 +93,6 @@ export default function SupportTicketsPage() {
         perPage={10}
         totalPages={Math.ceil(total / 10)}
         onPageChange={setPage}
-        loading={loading}
         searchPlaceholder="Search tickets..."
         onSearch={setSearch}
         filters={[
@@ -107,7 +106,7 @@ export default function SupportTicketsPage() {
         ]}
         onFilterChange={(_key, _val) => {}}
         onDateRangeChange={(from, to) => { setDateFrom(from); setDateTo(to); }}
-        onRowClick={(ticket) => { setSelected(ticket as any); setNewStatus((ticket as any).status); setResolution(""); }}
+        onRowClick={(ticket) => { setSelected(ticket); setNewStatus(ticket.status); setResolution(""); }}
       />
 
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
