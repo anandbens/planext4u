@@ -51,10 +51,11 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
 
   const navItems = [
     { icon: Home, label: "Home", to: "/app" },
-    { icon: Search, label: "Browse", to: "/app/browse" },
-    { icon: ShoppingCart, label: "Cart", to: "/app/cart", badge: cartCount },
-    { icon: ClipboardList, label: "Orders", to: "/app/orders" },
-    { icon: User, label: "Profile", to: "/app/profile" },
+    { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
+    { icon: Wrench, label: "Services", to: "/app/services" },
+    { icon: Megaphone, label: "Socio", to: "/app/classifieds" },
+    { icon: CalendarDays, label: "Booking", to: "/app/services" },
+    { icon: Newspaper, label: "Classified", to: "/app/classifieds" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
