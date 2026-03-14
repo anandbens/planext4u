@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -93,11 +93,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Admin Login */}
-            <Route path="/login" element={<LoginPage />} />
-
-            {/* Admin routes */}
-            <Route path="/" element={<ProtectedPage><DashboardPage /></ProtectedPage>} />
+            {/* Redirect root and admin login to customer app */}
+            <Route path="/" element={<Navigate to="/app" replace />} />
+            <Route path="/login" element={<Navigate to="/app" replace />} />
             <Route path="/customers" element={<ProtectedPage><CustomersPage /></ProtectedPage>} />
             <Route path="/vendors" element={<ProtectedPage><VendorsPage /></ProtectedPage>} />
             <Route path="/products" element={<ProtectedPage><ProductsPage /></ProtectedPage>} />
