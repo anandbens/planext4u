@@ -317,10 +317,11 @@ export function useRepost() {
 
       await supabase.from('social_posts').insert({
         user_id: customerUser.id,
-        content: original.content,
-        media_urls: original.media_urls,
+        caption: original.caption,
+        media: original.media,
         post_type: 'repost',
-        repost_of: postId,
+        is_repost: true,
+        original_post_id: postId,
         status: 'published',
       });
       toast.success("Reposted!");
