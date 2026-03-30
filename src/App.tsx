@@ -78,6 +78,13 @@ import SocialStoryViewerPage from "./pages/customer/SocialStoryViewerPage";
 import SocialDMPage from "./pages/customer/SocialDMPage";
 import SocialNotificationsPage from "./pages/customer/SocialNotificationsPage";
 import SocialSettingsPage from "./pages/customer/SocialSettingsPage";
+import SocialCommentsPage from "./pages/customer/SocialCommentsPage";
+import SocialFollowersPage from "./pages/customer/SocialFollowersPage";
+import SocialEditProfilePage from "./pages/customer/SocialEditProfilePage";
+import SocialCreatorDashboardPage from "./pages/customer/SocialCreatorDashboardPage";
+import SocialLivePage from "./pages/customer/SocialLivePage";
+import SocialBroadcastPage from "./pages/customer/SocialBroadcastPage";
+import SocialShopPage from "./pages/customer/SocialShopPage";
 import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
 
 // Property pages
@@ -208,6 +215,14 @@ const App = () => (
             <Route path="/app/social/notifications" element={<SocialNotificationsPage />} />
             <Route path="/app/social/settings" element={<SocialSettingsPage />} />
             <Route path="/app/social/@:username" element={<SocialProfilePage />} />
+            <Route path="/app/social/comments/:postId" element={<SocialCommentsPage />} />
+            <Route path="/app/social/:username/followers" element={<SocialFollowersPage />} />
+            <Route path="/app/social/:username/following" element={<SocialFollowersPage />} />
+            <Route path="/app/social/edit-profile" element={<SocialEditProfilePage />} />
+            <Route path="/app/social/dashboard" element={<SocialCreatorDashboardPage />} />
+            <Route path="/app/social/live" element={<SocialLivePage />} />
+            <Route path="/app/social/channels" element={<SocialBroadcastPage />} />
+            <Route path="/app/social/shop" element={<SocialShopPage />} />
 
             {/* Admin Social */}
             <Route path="/admin/social" element={<ProtectedPage><AdminSocialDashboardPage /></ProtectedPage>} />
