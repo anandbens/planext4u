@@ -86,6 +86,8 @@ import SocialLivePage from "./pages/customer/SocialLivePage";
 import SocialBroadcastPage from "./pages/customer/SocialBroadcastPage";
 import SocialShopPage from "./pages/customer/SocialShopPage";
 import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
+import PaymentPage from "./pages/customer/PaymentPage";
+import SocioDMChatPage from "./pages/customer/SocioDMChatPage";
 
 // Property pages
 import PropertyHomePage from "./pages/customer/PropertyHomePage";
