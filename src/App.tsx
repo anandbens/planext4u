@@ -68,6 +68,14 @@ import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
 import CustomerClassifiedDetailPage from "./pages/customer/CustomerClassifiedDetailPage";
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 
+// Property pages
+import PropertyHomePage from "./pages/customer/PropertyHomePage";
+import PropertyDetailPage from "./pages/customer/PropertyDetailPage";
+import PostPropertyPage from "./pages/customer/PostPropertyPage";
+import PropertyEMIPage from "./pages/customer/PropertyEMIPage";
+import MyPropertiesPage from "./pages/customer/MyPropertiesPage";
+import AdminPropertiesPage from "./pages/admin/AdminPropertiesPage";
+
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
 import VendorDashboardPage from "./pages/vendor/VendorDashboardPage";
@@ -136,6 +144,7 @@ const App = () => (
             <Route path="/website-queries" element={<ProtectedPage><WebsiteQueriesPage /></ProtectedPage>} />
             <Route path="/support-tickets" element={<ProtectedPage><SupportTicketsPage /></ProtectedPage>} />
             <Route path="/integrations" element={<ProtectedPage><IntegrationsPage /></ProtectedPage>} />
+            <Route path="/admin/properties" element={<ProtectedPage><AdminPropertiesPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerHomePage />} />
@@ -157,6 +166,14 @@ const App = () => (
             <Route path="/app/classifieds" element={<CustomerClassifiedsPage />} />
             <Route path="/app/classifieds/post" element={<CustomerPostAdPage />} />
             <Route path="/app/classifieds/:id" element={<CustomerClassifiedDetailPage />} />
+
+            {/* Property / Find Home routes */}
+            <Route path="/app/find-home" element={<PropertyHomePage />} />
+            <Route path="/app/find-home/post" element={<PostPropertyPage />} />
+            <Route path="/app/find-home/emi" element={<PropertyEMIPage />} />
+            <Route path="/app/find-home/my-properties" element={<MyPropertiesPage />} />
+            <Route path="/app/find-home/saved" element={<MyPropertiesPage />} />
+            <Route path="/app/find-home/:id" element={<PropertyDetailPage />} />
 
             {/* Vendor-facing routes */}
             <Route path="/vendor/login" element={<VendorLoginPage />} />

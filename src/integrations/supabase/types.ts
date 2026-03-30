@@ -693,6 +693,377 @@ export type Database = {
         }
         Relationships: []
       }
+      properties: {
+        Row: {
+          age_of_property: string | null
+          amenities: Json | null
+          area_sqft: number | null
+          availability_date: string | null
+          bhk: string | null
+          boost_expires_at: string | null
+          city: string | null
+          contact_reveals: number | null
+          created_at: string
+          description: string | null
+          enquiry_count: number | null
+          facing: Database["public"]["Enums"]["property_facing"] | null
+          floor_number: number | null
+          furnishing: Database["public"]["Enums"]["property_furnishing"] | null
+          id: string
+          images: Json | null
+          is_boosted: boolean | null
+          is_featured: boolean | null
+          is_verified: boolean | null
+          landmark: string | null
+          latitude: number | null
+          locality: string | null
+          longitude: number | null
+          maintenance_charges: number | null
+          parking: Database["public"]["Enums"]["property_parking"] | null
+          pg_facilities: Json | null
+          pg_gender_preference: string | null
+          pg_meals_included: Json | null
+          pg_room_type: string | null
+          pg_rules: Json | null
+          pincode: string | null
+          posted_by: Database["public"]["Enums"]["property_posted_by"]
+          preferred_tenant: string | null
+          price: number
+          price_negotiable: boolean | null
+          property_type: Database["public"]["Enums"]["property_type"]
+          rejection_reason: string | null
+          security_deposit: number | null
+          status: Database["public"]["Enums"]["property_status"]
+          title: string
+          total_floors: number | null
+          transaction_type: Database["public"]["Enums"]["property_transaction_type"]
+          updated_at: string
+          user_id: string
+          user_name: string | null
+          video_url: string | null
+          views_count: number | null
+          virtual_tour_url: string | null
+        }
+        Insert: {
+          age_of_property?: string | null
+          amenities?: Json | null
+          area_sqft?: number | null
+          availability_date?: string | null
+          bhk?: string | null
+          boost_expires_at?: string | null
+          city?: string | null
+          contact_reveals?: number | null
+          created_at?: string
+          description?: string | null
+          enquiry_count?: number | null
+          facing?: Database["public"]["Enums"]["property_facing"] | null
+          floor_number?: number | null
+          furnishing?: Database["public"]["Enums"]["property_furnishing"] | null
+          id: string
+          images?: Json | null
+          is_boosted?: boolean | null
+          is_featured?: boolean | null
+          is_verified?: boolean | null
+          landmark?: string | null
+          latitude?: number | null
+          locality?: string | null
+          longitude?: number | null
+          maintenance_charges?: number | null
+          parking?: Database["public"]["Enums"]["property_parking"] | null
+          pg_facilities?: Json | null
+          pg_gender_preference?: string | null
+          pg_meals_included?: Json | null
+          pg_room_type?: string | null
+          pg_rules?: Json | null
+          pincode?: string | null
+          posted_by?: Database["public"]["Enums"]["property_posted_by"]
+          preferred_tenant?: string | null
+          price?: number
+          price_negotiable?: boolean | null
+          property_type?: Database["public"]["Enums"]["property_type"]
+          rejection_reason?: string | null
+          security_deposit?: number | null
+          status?: Database["public"]["Enums"]["property_status"]
+          title: string
+          total_floors?: number | null
+          transaction_type?: Database["public"]["Enums"]["property_transaction_type"]
+          updated_at?: string
+          user_id: string
+          user_name?: string | null
+          video_url?: string | null
+          views_count?: number | null
+          virtual_tour_url?: string | null
+        }
+        Update: {
+          age_of_property?: string | null
+          amenities?: Json | null
+          area_sqft?: number | null
+          availability_date?: string | null
+          bhk?: string | null
+          boost_expires_at?: string | null
+          city?: string | null
+          contact_reveals?: number | null
+          created_at?: string
+          description?: string | null
+          enquiry_count?: number | null
+          facing?: Database["public"]["Enums"]["property_facing"] | null
+          floor_number?: number | null
+          furnishing?: Database["public"]["Enums"]["property_furnishing"] | null
+          id?: string
+          images?: Json | null
+          is_boosted?: boolean | null
+          is_featured?: boolean | null
+          is_verified?: boolean | null
+          landmark?: string | null
+          latitude?: number | null
+          locality?: string | null
+          longitude?: number | null
+          maintenance_charges?: number | null
+          parking?: Database["public"]["Enums"]["property_parking"] | null
+          pg_facilities?: Json | null
+          pg_gender_preference?: string | null
+          pg_meals_included?: Json | null
+          pg_room_type?: string | null
+          pg_rules?: Json | null
+          pincode?: string | null
+          posted_by?: Database["public"]["Enums"]["property_posted_by"]
+          preferred_tenant?: string | null
+          price?: number
+          price_negotiable?: boolean | null
+          property_type?: Database["public"]["Enums"]["property_type"]
+          rejection_reason?: string | null
+          security_deposit?: number | null
+          status?: Database["public"]["Enums"]["property_status"]
+          title?: string
+          total_floors?: number | null
+          transaction_type?: Database["public"]["Enums"]["property_transaction_type"]
+          updated_at?: string
+          user_id?: string
+          user_name?: string | null
+          video_url?: string | null
+          views_count?: number | null
+          virtual_tour_url?: string | null
+        }
+        Relationships: []
+      }
+      property_bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_bookmarks_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_enquiries: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          property_id: string
+          seeker_id: string
+          seeker_name: string | null
+          seeker_phone: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          property_id: string
+          seeker_id: string
+          seeker_name?: string | null
+          seeker_phone?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          property_id?: string
+          seeker_id?: string
+          seeker_name?: string | null
+          seeker_phone?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_enquiries_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_localities: {
+        Row: {
+          city: string
+          created_at: string
+          id: string
+          is_popular: boolean | null
+          name: string
+          status: string
+        }
+        Insert: {
+          city: string
+          created_at?: string
+          id?: string
+          is_popular?: boolean | null
+          name: string
+          status?: string
+        }
+        Update: {
+          city?: string
+          created_at?: string
+          id?: string
+          is_popular?: boolean | null
+          name?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      property_plans: {
+        Row: {
+          contact_reveal_limit: number
+          created_at: string
+          description: string | null
+          duration_days: number
+          id: string
+          is_active: boolean | null
+          listing_limit: number
+          name: string
+          price: number
+          visibility_boost: boolean | null
+        }
+        Insert: {
+          contact_reveal_limit?: number
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          id: string
+          is_active?: boolean | null
+          listing_limit?: number
+          name: string
+          price?: number
+          visibility_boost?: boolean | null
+        }
+        Update: {
+          contact_reveal_limit?: number
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          id?: string
+          is_active?: boolean | null
+          listing_limit?: number
+          name?: string
+          price?: number
+          visibility_boost?: boolean | null
+        }
+        Relationships: []
+      }
+      property_reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          property_id: string
+          reason: string
+          reporter_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          property_id: string
+          reason?: string
+          reporter_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          property_id?: string
+          reason?: string
+          reporter_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_reports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_visits: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          property_id: string
+          seeker_id: string
+          seeker_name: string | null
+          status: string
+          visit_date: string
+          visit_time: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          property_id: string
+          seeker_id: string
+          seeker_name?: string | null
+          status?: string
+          visit_date: string
+          visit_time?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          property_id?: string
+          seeker_id?: string
+          seeker_name?: string | null
+          status?: string
+          visit_date?: string
+          visit_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_visits_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referrals: {
         Row: {
           created_at: string
@@ -1251,6 +1622,37 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "finance" | "sales" | "vendor" | "customer"
+      property_facing:
+        | "north"
+        | "south"
+        | "east"
+        | "west"
+        | "north_east"
+        | "north_west"
+        | "south_east"
+        | "south_west"
+      property_furnishing: "unfurnished" | "semi_furnished" | "fully_furnished"
+      property_parking: "none" | "two_wheeler" | "four_wheeler" | "both"
+      property_posted_by: "owner" | "agent" | "builder"
+      property_status:
+        | "draft"
+        | "submitted"
+        | "active"
+        | "rejected"
+        | "paused"
+        | "expired"
+        | "sold"
+      property_transaction_type: "rent" | "sale" | "lease" | "pg"
+      property_type:
+        | "apartment"
+        | "independent_house"
+        | "villa"
+        | "plot"
+        | "pg_hostel"
+        | "commercial_office"
+        | "commercial_shop"
+        | "commercial_warehouse"
+        | "commercial_showroom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1379,6 +1781,40 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "finance", "sales", "vendor", "customer"],
+      property_facing: [
+        "north",
+        "south",
+        "east",
+        "west",
+        "north_east",
+        "north_west",
+        "south_east",
+        "south_west",
+      ],
+      property_furnishing: ["unfurnished", "semi_furnished", "fully_furnished"],
+      property_parking: ["none", "two_wheeler", "four_wheeler", "both"],
+      property_posted_by: ["owner", "agent", "builder"],
+      property_status: [
+        "draft",
+        "submitted",
+        "active",
+        "rejected",
+        "paused",
+        "expired",
+        "sold",
+      ],
+      property_transaction_type: ["rent", "sale", "lease", "pg"],
+      property_type: [
+        "apartment",
+        "independent_house",
+        "villa",
+        "plot",
+        "pg_hostel",
+        "commercial_office",
+        "commercial_shop",
+        "commercial_warehouse",
+        "commercial_showroom",
+      ],
     },
   },
 } as const
