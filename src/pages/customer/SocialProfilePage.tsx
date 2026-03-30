@@ -101,8 +101,8 @@ export default function SocialProfilePage() {
     enabled: !!targetUserId,
   });
 
-  const displayName = profile?.display_name || customerUser?.name || "User";
-  const displayUsername = profile?.username || customerUser?.name || "user";
+  const displayName = profile?.display_name || (profileUsername ? profileUsername.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : customerUser?.name || "User");
+  const displayUsername = profile?.username || profileUsername || customerUser?.name || "user";
   const bio = profile?.bio || "";
   const isVerified = profile?.is_verified || false;
   const postCount = profile?.post_count || userPosts.length;
