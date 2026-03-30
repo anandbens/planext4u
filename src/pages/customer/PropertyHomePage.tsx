@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, MapPin, Home, Building2, ChevronRight, Star, Heart, Shield, Filter, SlidersHorizontal, Bed, Bath, Maximize2, ChevronLeft, Wrench, Calculator, TrendingUp, Clock, X } from "lucide-react";
+import { Search, MapPin, Home, Building2, ChevronRight, Star, Heart, Shield, Filter, SlidersHorizontal, Bed, Bath, Maximize2, ChevronLeft, Wrench, Calculator, TrendingUp, Clock, X, MessageCircle, IndianRupee, Bookmark, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
