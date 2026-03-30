@@ -42,7 +42,16 @@ export default function CustomerReferralPage() {
               </div>
               <Button size="icon" variant="outline" onClick={copyCode}><Copy className="h-4 w-4" /></Button>
             </div>
-            <Button className="mt-4 gap-2 bg-warning text-warning-foreground hover:bg-warning/90">
+            <Button className="mt-4 gap-2 bg-warning text-warning-foreground hover:bg-warning/90" onClick={() => {
+              const code = profile?.referral_code || 'REF0001';
+              const text = `Join P4U and get 200 bonus points! Use my referral code: ${code}`;
+              if (navigator.share) {
+                navigator.share({ title: 'Join P4U', text }).catch(() => {});
+              } else {
+                navigator.clipboard.writeText(text);
+                toast.success("Referral message copied to clipboard!");
+              }
+            }}>
               <Users className="h-4 w-4" /> Share with Friends
             </Button>
           </div>

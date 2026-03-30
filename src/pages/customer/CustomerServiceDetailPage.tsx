@@ -22,6 +22,8 @@ const serviceImages: Record<string, string> = {
   "carpentry": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600",
   "ac": "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600",
   "beauty": "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600",
+  "repair": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600",
+  "appliance": "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600",
   "default": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600",
 };
 
@@ -39,11 +41,9 @@ export default function CustomerServiceDetailPage() {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
-  const [showCheckout, setShowCheckout] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
-  const [booking, setBooking] = useState(false);
 
   const { data: service, isLoading } = useQuery({
     queryKey: ["service", id],
@@ -61,22 +61,31 @@ export default function CustomerServiceDetailPage() {
 
   const handleBookNow = () => {
     if (!selectedDate || !selectedSlot) { toast.error("Select date and time"); return; }
-    setShowCheckout(true);
-  };
-
-  const confirmBooking = async () => {
-    setBooking(true);
-    await new Promise(r => setTimeout(r, 1000));
-    setBooking(false);
-    setShowCheckout(false);
-    toast.success("Service booked successfully!");
-    setShowReview(true);
+    // Navigate to payment page with service booking details
+    navigate('/app/payment', {
+      state: {
+        cart: [{
+          id: service.id, title: service.title, price: service.price, qty: 1,
+          vendor: service.vendor_name, vendor_id: service.vendor_id,
+          emoji: service.emoji || '🔧', image: service.image,
+          maxPoints: service.max_points_redeemable || 0, tax: service.tax || 0,
+          discount: service.discount || 0,
+        }],
+        subtotal: service.price,
+        platformFee: 0,
+        discount: service.discount || 0,
+        pointsUsed: 0,
+        total: finalPrice,
+        isServiceBooking: true,
+        bookingDate: selectedDate,
+        bookingSlot: selectedSlot,
+      }
+    });
   };
 
   const submitReview = () => {
     toast.success("Thank you for your review!");
     setShowReview(false);
-    navigate('/app/services');
   };
 
   const reviews = [
@@ -87,9 +96,8 @@ export default function CustomerServiceDetailPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-5xl mx-auto px-4 py-6 pb-20 md:pb-6">
+      <div className="max-w-5xl mx-auto px-4 py-6 pb-28 md:pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Service Image */}
           <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
             <img src={imgUrl} alt={service.title} className="w-full h-full object-cover" />
             <button onClick={() => navigate(-1)} className="absolute top-4 left-4 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center md:hidden">
@@ -120,14 +128,14 @@ export default function CustomerServiceDetailPage() {
 
             <div className="mt-6">
               <h3 className="text-sm font-semibold mb-2 flex items-center gap-1"><Calendar className="h-4 w-4" /> Select Date</h3>
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 {Array.from({ length: 7 }).map((_, i) => {
                   const d = new Date(); d.setDate(d.getDate() + i);
                   const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' });
                   const val = d.toISOString().split('T')[0];
                   return (
                     <button key={i} onClick={() => setSelectedDate(val)}
-                      className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap ${selectedDate === val ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
+                      className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${selectedDate === val ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
                       {label}
                     </button>
                   );
@@ -148,7 +156,7 @@ export default function CustomerServiceDetailPage() {
             </div>
 
             <Button className="w-full mt-6" disabled={!selectedDate || !selectedSlot} onClick={handleBookNow}>
-              Book Now — ₹{service.price.toLocaleString()}
+              Book Now — ₹{finalPrice.toLocaleString()}
             </Button>
 
             <div className="grid grid-cols-3 gap-3 mt-4">
@@ -166,7 +174,7 @@ export default function CustomerServiceDetailPage() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card className="p-6">
             <h3 className="font-semibold mb-3">About this service</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{service.description}</p>
@@ -181,7 +189,7 @@ export default function CustomerServiceDetailPage() {
               <h3 className="font-semibold">Customer Reviews</h3>
               <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowReview(true)}>Write Review</Button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 mb-4">
               {reviews.map((r, i) => (
                 <div key={i} className="border-b border-border/30 last:border-0 pb-3 last:pb-0">
                   <div className="flex items-center justify-between">
@@ -198,36 +206,6 @@ export default function CustomerServiceDetailPage() {
           </Card>
         </div>
       </div>
-
-      {/* Service Checkout Dialog */}
-      <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
-        <DialogContent className="max-w-sm">
-          <DialogTitle>Confirm Booking</DialogTitle>
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-3">
-              <img src={imgUrl} alt="" className="h-16 w-16 rounded-xl object-cover" />
-              <div>
-                <h3 className="text-sm font-semibold">{service.title}</h3>
-                <p className="text-xs text-muted-foreground">{service.vendor_name}</p>
-              </div>
-            </div>
-            <Separator />
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span className="font-medium">{selectedDate}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Time</span><span className="font-medium">{selectedSlot}</span></div>
-              <Separator />
-              <div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>₹{service.price.toLocaleString()}</span></div>
-              {service.discount > 0 && <div className="flex justify-between text-success"><span>Discount</span><span>-₹{service.discount.toLocaleString()}</span></div>}
-              {service.tax > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>₹{service.tax.toLocaleString()}</span></div>}
-              <Separator />
-              <div className="flex justify-between font-bold text-base"><span>Total</span><span>₹{finalPrice.toLocaleString()}</span></div>
-            </div>
-            <Button className="w-full h-12" onClick={confirmBooking} disabled={booking}>
-              {booking ? "Processing..." : `Pay ₹${finalPrice.toLocaleString()}`}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Review Dialog */}
       <Dialog open={showReview} onOpenChange={setShowReview}>
