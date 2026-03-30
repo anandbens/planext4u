@@ -68,6 +68,12 @@ import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
 import CustomerClassifiedDetailPage from "./pages/customer/CustomerClassifiedDetailPage";
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 
+// Social pages
+import SocialFeedPage from "./pages/customer/SocialFeedPage";
+import SocialCreatePostPage from "./pages/customer/SocialCreatePostPage";
+import SocialProfilePage from "./pages/customer/SocialProfilePage";
+import SocialExplorePage from "./pages/customer/SocialExplorePage";
+
 // Property pages
 import PropertyHomePage from "./pages/customer/PropertyHomePage";
 import PropertyDetailPage from "./pages/customer/PropertyDetailPage";
@@ -184,6 +190,13 @@ const App = () => (
             <Route path="/app/classifieds" element={<CustomerClassifiedsPage />} />
             <Route path="/app/classifieds/post" element={<CustomerPostAdPage />} />
             <Route path="/app/classifieds/:id" element={<CustomerClassifiedDetailPage />} />
+
+            {/* Social routes */}
+            <Route path="/app/social" element={<SocialFeedPage />} />
+            <Route path="/app/social/create" element={<SocialCreatePostPage />} />
+            <Route path="/app/social/profile" element={<SocialProfilePage />} />
+            <Route path="/app/social/explore" element={<SocialExplorePage />} />
+            <Route path="/app/social/@:username" element={<SocialProfilePage />} />
 
             {/* Property / Find Home routes */}
             <Route path="/app/find-home" element={<PropertyHomePage />} />

@@ -59,7 +59,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     { icon: Home, label: "Home", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
     { icon: Wrench, label: "Services", to: "/app/services" },
-    { icon: Megaphone, label: "Socio", to: "#socio-coming-soon", comingSoon: true },
+    { icon: Megaphone, label: "Socio", to: "/app/social" },
     { icon: Building, label: "Find Home", to: "/app/find-home" },
     { icon: Newspaper, label: "Classified", to: "/app/classifieds" },
   ];
@@ -68,13 +68,14 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     if (path === '/app') return location.pathname === '/app';
     if (path === '/app/browse') return location.pathname.startsWith('/app/browse') || location.pathname.startsWith('/app/product') || location.pathname.startsWith('/app/cart') || location.pathname.startsWith('/app/vendor');
     if (path === '/app/services') return location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/');
+    if (path === '/app/social') return location.pathname.startsWith('/app/social');
     if (path === '/app/classifieds') return location.pathname.startsWith('/app/classifieds');
     if (path === '/app/find-home') return location.pathname.startsWith('/app/find-home');
     return location.pathname === path;
   };
 
   // Find active nav index for pill indicator
-  const activeNavIndex = navItems.findIndex(item => !item.comingSoon && isActive(item.to));
+  const activeNavIndex = navItems.findIndex(item => isActive(item.to));
 
   const quickActions = [
     { label: "Your\nOrders", icon: ClipboardList, to: "/app/orders" },
@@ -224,24 +225,16 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
               {[
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
                 { icon: Wrench, label: "Services", to: "/app/services" },
-                { icon: Megaphone, label: "Socio", to: "#", comingSoon: true },
+                { icon: Megaphone, label: "Socio", to: "/app/social" },
                 { icon: Building, label: "Find Home", to: "/app/find-home" },
                 { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds" },
               ].map((tab) => (
-                tab.comingSoon ? (
-                  <button key={tab.label} onClick={() => toast.info(`${tab.label} is coming soon! Stay tuned.`, { duration: 2500 })}
-                    className="flex items-center gap-2 px-5 py-2 rounded-full border border-primary/20 bg-card hover:bg-primary/5 text-primary transition-colors">
-                    <tab.icon className="h-4 w-4" />
-                    <span className="text-sm font-semibold">{tab.label}</span>
-                  </button>
-                ) : (
                   <Link key={tab.label} to={tab.to}
                     className={`flex items-center gap-2 px-5 py-2 rounded-full border transition-colors
                       ${isActive(tab.to) ? 'bg-primary text-primary-foreground border-primary' : 'border-primary/20 bg-card hover:bg-primary/5 text-primary'}`}>
                     <tab.icon className="h-4 w-4" />
                     <span className="text-sm font-semibold">{tab.label}</span>
                   </Link>
-                )
               ))}
             </div>
           </div>
@@ -434,11 +427,10 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
           <div className="relative flex items-center justify-around px-1 py-2">
             {navItems.map((item) => {
-              const active = item.comingSoon ? false : isActive(item.to);
+              const active = isActive(item.to);
 
               const content = (
                 <div className="flex flex-col items-center relative z-10">
-                  {/* Raised pill for active item */}
                   {active ? (
                     <motion.div
                       layoutId="nav-active-pill"
@@ -471,15 +463,6 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                   )}
                 </div>
               );
-
-              if (item.comingSoon) {
-                return (
-                  <button key={item.label} onClick={() => toast.info(`${item.label} is coming soon! Stay tuned.`, { duration: 2500 })}
-                    className="flex flex-col items-center relative min-w-[48px]">
-                    {content}
-                  </button>
-                );
-              }
 
               return (
                 <Link key={item.to + item.label} to={item.to}
