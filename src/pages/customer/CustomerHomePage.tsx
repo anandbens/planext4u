@@ -478,7 +478,7 @@ export default function CustomerHomePage() {
             {isLoading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />) :
               data?.featuredServices?.slice(0, 5).map((s) => (
                 <motion.div key={s.id} variants={itemAnim}>
-                  <Link to={`/app/services/${s.id}`}>
+                  <Link to={`/app/service/${s.id}`}>
                     <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
                       <div className="h-32 md:h-40 bg-secondary/20 relative overflow-hidden">
                         {s.image ? (
