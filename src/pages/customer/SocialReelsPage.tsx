@@ -72,7 +72,7 @@ export default function SocialReelsPage() {
   }, []);
 
   const reelsContent = (
-    <div className="md:relative md:h-[calc(100vh-120px)] fixed inset-0 bg-black z-50 md:z-auto md:rounded-xl md:overflow-hidden">
+    <div className="md:relative md:h-[calc(100vh-120px)] fixed inset-0 bg-black z-40 md:z-auto md:rounded-xl md:overflow-hidden">
       <div
         ref={containerRef}
         className="h-full w-full overflow-y-scroll snap-y snap-mandatory"
