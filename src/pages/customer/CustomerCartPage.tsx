@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { Minus, Plus, Trash2, Tag, ShoppingBag, ChevronLeft, Share2, ChevronDown, ChevronRight, Truck, Clock, Save, Heart, CheckCircle } from "lucide-react";
+import { Minus, Plus, Trash2, Tag, ShoppingBag, ChevronLeft, ChevronDown, ChevronRight, Truck, Clock, Save, Heart, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,8 +41,6 @@ export default function CustomerCartPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
   const [calendarWeekOffset, setCalendarWeekOffset] = useState(0);
-
-  // Address management
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressDialog, setShowAddressDialog] = useState(false);
@@ -53,6 +51,11 @@ export default function CustomerCartPage() {
     Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses()]).then(([cartItems, profile]) => {
       setCart(cartItems);
       setWalletPoints(profile?.wallet_points || 0);
+      // Load saved-for-later from localStorage
+      try {
+        const saved = JSON.parse(localStorage.getItem('app_db_saved_for_later') || '[]');
+        setSavedForLater(saved);
+      } catch {}
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [customerId]);
@@ -111,16 +114,27 @@ export default function CustomerCartPage() {
   };
 
   const saveForLater = (item: CartItem) => {
-    setSavedForLater(prev => [...prev, item]);
+    // Move to wishlist (persistent)
+    try {
+      let wl = JSON.parse(localStorage.getItem('app_db_wishlist') || '[]') as string[];
+      if (!wl.includes(item.id)) wl.push(item.id);
+      localStorage.setItem('app_db_wishlist', JSON.stringify(wl));
+    } catch {}
+    // Also save in saved-for-later list with full data
+    const updated = [...savedForLater, item];
+    setSavedForLater(updated);
+    localStorage.setItem('app_db_saved_for_later', JSON.stringify(updated));
     setCart(prev => prev.filter(i => i.id !== item.id));
     api.removeFromCart(item.id);
-    toast.success("Saved for later");
+    toast.success("Saved for later & added to wishlist ❤️");
   };
 
   const moveToCart = async (item: CartItem) => {
     await api.addToCart({ id: item.id, title: item.title, price: item.price, vendor_id: item.vendor_id || '', vendor_name: item.vendor, emoji: item.emoji, image: item.image, tax: item.tax, discount: item.discount, max_points_redeemable: item.maxPoints } as any, 1);
     setCart(prev => [...prev, { ...item, qty: 1 }]);
-    setSavedForLater(prev => prev.filter(i => i.id !== item.id));
+    const updated = savedForLater.filter(i => i.id !== item.id);
+    setSavedForLater(updated);
+    localStorage.setItem('app_db_saved_for_later', JSON.stringify(updated));
     toast.success("Moved to cart");
   };
 
@@ -147,12 +161,7 @@ export default function CustomerCartPage() {
     if (!selectedAddressId) { toast.error("Please select a delivery address"); return; }
     navigate('/app/payment', {
       state: {
-        cart,
-        subtotal,
-        platformFee,
-        discount,
-        pointsUsed,
-        total,
+        cart, subtotal, platformFee, discount, pointsUsed, total,
         selectedAddress: addresses.find(a => a.id === selectedAddressId),
       }
     });
@@ -168,9 +177,6 @@ export default function CustomerCartPage() {
     return <CustomerLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></CustomerLayout>;
   }
 
-
-
-
   return (
     <CustomerLayout>
       <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-md border-b border-border/50 px-4 py-3 flex items-center justify-between md:hidden">
@@ -178,12 +184,10 @@ export default function CustomerCartPage() {
           <ChevronLeft className="h-4 w-4" />
         </button>
         <h1 className="text-base font-semibold">Cart</h1>
-        <button className="text-primary text-xs font-medium flex items-center gap-1">
-          <Share2 className="h-3.5 w-3.5" /> Share
-        </button>
+        <div className="w-8" />
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-4 pb-28 md:pb-6">
+      <div className="max-w-5xl mx-auto px-4 py-4 pb-36 md:pb-6">
         {cart.length === 0 && savedForLater.length === 0 ? (
           <div className="text-center py-16">
             <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -220,7 +224,6 @@ export default function CustomerCartPage() {
                         )}
                         <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => {
                           if (addresses.length > 0) {
-                            // Show address selection
                             const next = addresses.find(a => a.id !== selectedAddressId) || addresses[0];
                             setSelectedAddressId(next.id);
                             toast.success(`Switched to ${next.label}`);
@@ -292,11 +295,11 @@ export default function CustomerCartPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between">
-                                <div>
+                                <div className="flex-1 min-w-0">
                                   <h3 className="text-sm font-semibold leading-tight">{item.title}</h3>
                                   <p className="text-[10px] text-muted-foreground">Vendor: {item.vendor}</p>
                                 </div>
-                                <p className="text-xs text-primary flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" /> Delivery in 30 Mins</p>
+                                <p className="text-xs text-primary flex items-center gap-0.5 shrink-0 whitespace-nowrap"><Clock className="h-2.5 w-2.5" /> Delivery in 30 Mins</p>
                               </div>
                               <div className="flex items-center gap-2 mt-1.5">
                                 {item.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">₹{(item.price + item.discount).toLocaleString()}</span>}
@@ -304,14 +307,15 @@ export default function CustomerCartPage() {
                                 {discountPct > 0 && <span className="text-[10px] text-success font-medium">{discountPct}% Off</span>}
                               </div>
                               <p className="text-[10px] text-success mt-0.5">Eligible for FREE Shipping</p>
-                              <div className="flex items-center gap-3 mt-2">
+                              {/* Aligned left: qty, save, remove */}
+                              <div className="flex items-center gap-3 mt-2 flex-wrap">
                                 <div className="flex items-center gap-1 border border-border rounded-lg">
                                   <button onClick={() => updateQty(item.id, -1)} className="h-7 w-7 flex items-center justify-center hover:bg-accent rounded-l-lg"><Minus className="h-3 w-3" /></button>
                                   <span className="text-sm font-medium w-6 text-center">{item.qty}</span>
                                   <button onClick={() => updateQty(item.id, 1)} className="h-7 w-7 flex items-center justify-center hover:bg-accent rounded-r-lg"><Plus className="h-3 w-3" /></button>
                                 </div>
                                 <button onClick={() => saveForLater(item)} className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1">
-                                  <Save className="h-3 w-3" /> SAVE FOR LATER
+                                  <Heart className="h-3 w-3" /> SAVE FOR LATER
                                 </button>
                                 <button onClick={() => removeItem(item.id)} className="text-xs font-medium text-destructive hover:underline">REMOVE</button>
                               </div>
@@ -382,9 +386,9 @@ export default function CustomerCartPage() {
         )}
       </div>
 
-      {/* Sticky Bottom - Mobile */}
+      {/* Sticky Bottom - Mobile - above bottom nav */}
       {cart.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
+        <div className="fixed bottom-14 left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
           <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={placeOrder} disabled={placing}>
             {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed Payment"}
           </Button>

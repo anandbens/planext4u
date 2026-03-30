@@ -17,12 +17,39 @@ const reviews = [
   { user: "Amit K.", rating: 5, comment: "Best in this price range. Highly recommended!", date: "1 week ago" },
 ];
 
+// Variant options per attribute type
+const VARIANT_OPTIONS: Record<string, string[]> = {
+  "Size": ["S", "M", "L", "XL", "XXL"],
+  "Color": ["Black", "White", "Red", "Blue", "Green"],
+  "Weight": ["250g", "500g", "1kg", "2kg"],
+  "Material": ["Cotton", "Polyester", "Silk", "Linen"],
+};
+
+function getProductVariants(title: string): { label: string; options: string[]; selected: string }[] {
+  const lower = title.toLowerCase();
+  const variants: { label: string; options: string[]; selected: string }[] = [];
+  if (lower.includes("shirt") || lower.includes("fashion") || lower.includes("cloth") || lower.includes("wear") || lower.includes("t-shirt") || lower.includes("jacket")) {
+    variants.push({ label: "Size", options: VARIANT_OPTIONS["Size"], selected: "M" });
+    variants.push({ label: "Color", options: VARIANT_OPTIONS["Color"], selected: "Black" });
+  } else if (lower.includes("headphone") || lower.includes("speaker") || lower.includes("keyboard") || lower.includes("mouse") || lower.includes("electronics") || lower.includes("phone")) {
+    variants.push({ label: "Color", options: ["Black", "White", "Silver", "Blue"], selected: "Black" });
+  } else if (lower.includes("yoga") || lower.includes("mat") || lower.includes("fitness")) {
+    variants.push({ label: "Color", options: ["Purple", "Blue", "Green", "Pink"], selected: "Purple" });
+    variants.push({ label: "Size", options: ["4mm", "6mm", "8mm"], selected: "6mm" });
+  } else {
+    // Default: add a color variant
+    variants.push({ label: "Color", options: ["Black", "White", "Blue"], selected: "Black" });
+  }
+  return variants;
+}
+
 export default function CustomerProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [wishlisted, setWishlisted] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", id],
@@ -30,7 +57,16 @@ export default function CustomerProductPage() {
     enabled: !!id,
   });
 
-  // Check wishlist status on load
+  // Initialize variants when product loads
+  useEffect(() => {
+    if (product) {
+      const vars = getProductVariants(product.title);
+      const initial: Record<string, string> = {};
+      vars.forEach(v => { initial[v.label] = v.selected; });
+      setSelectedVariants(initial);
+    }
+  }, [product]);
+
   useEffect(() => {
     if (!id) return;
     try {
@@ -48,7 +84,7 @@ export default function CustomerProductPage() {
         toast.success("Removed from wishlist");
       } else {
         wl.push(id);
-        toast.success("Added to wishlist");
+        toast.success("Added to wishlist ❤️");
       }
       localStorage.setItem('app_db_wishlist', JSON.stringify(wl));
       setWishlisted(!wishlisted);
@@ -72,6 +108,7 @@ export default function CustomerProductPage() {
 
   const discountPct = product.discount ? Math.round((product.discount / product.price) * 100) : 0;
   const originalPrice = product.price + product.discount;
+  const variants = getProductVariants(product.title);
 
   return (
     <CustomerLayout>
@@ -84,7 +121,7 @@ export default function CustomerProductPage() {
         <Search className="h-4 w-4 text-muted-foreground" />
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-4 pb-28 md:pb-6">
+      <div className="max-w-5xl mx-auto px-4 py-4 pb-36 md:pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Product Image */}
           <div className="relative">
@@ -137,6 +174,22 @@ export default function CustomerProductPage() {
               <Clock className="h-3.5 w-3.5" />
               <span className="font-medium">Secure delivery in 20 Minutes</span>
             </div>
+
+            {/* Variants / Attributes */}
+            {variants.map((v) => (
+              <div key={v.label} className="mt-4">
+                <p className="text-sm font-semibold mb-2">{v.label}: <span className="font-normal text-muted-foreground">{selectedVariants[v.label] || v.selected}</span></p>
+                <div className="flex flex-wrap gap-2">
+                  {v.options.map(opt => (
+                    <button key={opt} onClick={() => setSelectedVariants(prev => ({ ...prev, [v.label]: opt }))}
+                      className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors
+                        ${(selectedVariants[v.label] || v.selected) === opt ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
 
             {/* Category info */}
             {product.category_name && (
@@ -202,8 +255,8 @@ export default function CustomerProductPage() {
         </Tabs>
       </div>
 
-      {/* Sticky Bottom Bar - mobile */}
-      <div className="fixed bottom-14 left-0 right-0 z-40 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
+      {/* Sticky Bottom Bar - mobile - positioned above bottom nav */}
+      <div className="fixed bottom-14 left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <div className="flex items-center gap-2">
@@ -222,7 +275,7 @@ export default function CustomerProductPage() {
             <ShoppingCart className="h-4 w-4" /> Cart
           </Button>
           <Button variant="secondary" className="h-11 px-4 rounded-xl gap-1.5 text-sm" onClick={buyNow}>
-            <Zap className="h-4 w-4" /> Buy Now
+            <Zap className="h-4 w-4" /> Buy
           </Button>
         </div>
       </div>

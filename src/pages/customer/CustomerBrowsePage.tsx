@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Heart, Grid3X3, List, ShoppingCart, ChevronRight, ChevronLeft } from "lucide-react";
+import { Star, Heart, Grid3X3, List, ShoppingCart, ChevronRight, ChevronLeft, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ export default function CustomerBrowsePage() {
   const categoryFilter = searchParams.get("category") || undefined;
   const searchFilter = searchParams.get("search") || undefined;
   const [cartCount, setCartCount] = useState(0);
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -35,9 +36,9 @@ export default function CustomerBrowsePage() {
 
   useEffect(() => {
     api.getCart().then(items => setCartCount(items.reduce((s, i) => s + i.qty, 0)));
+    try { setWishlist(JSON.parse(localStorage.getItem('app_db_wishlist') || '[]')); } catch { setWishlist([]); }
   }, []);
 
-  // Check scroll state for arrow indicators
   const checkScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
@@ -51,10 +52,7 @@ export default function CustomerBrowsePage() {
     if (el) {
       el.addEventListener('scroll', checkScroll);
       window.addEventListener('resize', checkScroll);
-      return () => {
-        el.removeEventListener('scroll', checkScroll);
-        window.removeEventListener('resize', checkScroll);
-      };
+      return () => { el.removeEventListener('scroll', checkScroll); window.removeEventListener('resize', checkScroll); };
     }
   }, [categories]);
 
@@ -69,9 +67,31 @@ export default function CustomerBrowsePage() {
     toast.success(`${p.title} added to cart`);
   };
 
+  const toggleWishlist = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    let wl = [...wishlist];
+    if (wl.includes(id)) {
+      wl = wl.filter(w => w !== id);
+      toast.success("Removed from wishlist");
+    } else {
+      wl.push(id);
+      toast.success("Added to wishlist ❤️");
+    }
+    setWishlist(wl);
+    localStorage.setItem('app_db_wishlist', JSON.stringify(wl));
+  };
+
+  const buyNow = async (p: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await api.addToCart(p, 1);
+    navigate('/app/cart');
+  };
+
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-28 md:pb-6">
+      <div className="max-w-7xl mx-auto px-4 py-4 pb-36 md:pb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold">{categoryFilter || searchFilter || "All Products"}</h1>
@@ -92,53 +112,39 @@ export default function CustomerBrowsePage() {
           </div>
         </div>
 
-        {/* Category chips with rounded background boxes and scroll arrows */}
+        {/* Category chips */}
         <div className="relative mb-4">
-          {/* Left scroll arrow */}
           <AnimatePresence>
             {canScrollLeft && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+              <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={() => scrollCategories('left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-card border border-border shadow-md flex items-center justify-center hover:bg-accent transition-colors"
-              >
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-card border border-border shadow-md flex items-center justify-center hover:bg-accent transition-colors">
                 <ChevronLeft className="h-4 w-4" />
               </motion.button>
             )}
           </AnimatePresence>
-
-          {/* Right scroll arrow */}
           <AnimatePresence>
             {canScrollRight && (
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+              <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={() => scrollCategories('right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-card border border-border shadow-md flex items-center justify-center hover:bg-accent transition-colors"
-              >
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-card border border-border shadow-md flex items-center justify-center hover:bg-accent transition-colors">
                 <ChevronRight className="h-4 w-4" />
               </motion.button>
             )}
           </AnimatePresence>
-
           <div ref={scrollRef} className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide px-1 scroll-smooth">
-            {/* All category */}
             <Link to="/app/browse" className="shrink-0">
-              <div className={`flex flex-col items-center gap-1.5 min-w-[70px] transition-all`}>
+              <div className="flex flex-col items-center gap-1.5 min-w-[70px]">
                 <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all
                   ${!categoryFilter ? 'bg-primary/10 border-primary shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
                   <span className="text-xl">📦</span>
                 </div>
                 <span className={`text-[11px] font-medium ${!categoryFilter ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>All</span>
-                {!categoryFilter && <div className="w-8 h-0.5 rounded-full bg-primary -mt-0.5" />}
               </div>
             </Link>
             {categories?.map((c) => (
               <Link key={c.id} to={`/app/browse?category=${c.name}`} className="shrink-0">
-                <div className="flex flex-col items-center gap-1.5 min-w-[70px] transition-all">
+                <div className="flex flex-col items-center gap-1.5 min-w-[70px]">
                   <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all overflow-hidden
                     ${categoryFilter === c.name ? 'bg-primary/10 border-primary shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
                     {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
@@ -149,7 +155,6 @@ export default function CustomerBrowsePage() {
                   </div>
                   <span className={`text-[11px] font-medium text-center leading-tight max-w-[70px] truncate
                     ${categoryFilter === c.name ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>{c.name}</span>
-                  {categoryFilter === c.name && <div className="w-8 h-0.5 rounded-full bg-primary -mt-0.5" />}
                 </div>
               </Link>
             ))}
@@ -168,6 +173,7 @@ export default function CustomerBrowsePage() {
               <div className={viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" : "flex flex-col gap-3"}>
                 {paginated.map((p) => {
                   const discountPct = p.discount ? Math.round((p.discount / p.price) * 100) : 0;
+                  const isWished = wishlist.includes(p.id);
                   return (
                     <Card key={p.id} className={`overflow-hidden hover:shadow-md transition-shadow group ${viewMode === "list" ? "flex" : ""}`}>
                       <Link to={`/app/product/${p.id}`} className={viewMode === "list" ? "flex flex-1" : "block"}>
@@ -178,9 +184,10 @@ export default function CustomerBrowsePage() {
                           ) : (
                             <span className="text-4xl">{p.emoji}</span>
                           )}
-                          <button className="absolute top-2 right-2 h-7 w-7 rounded-full bg-card/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => { e.preventDefault(); }}>
-                            <Heart className="h-3.5 w-3.5 text-muted-foreground" />
+                          {/* Wishlist always visible */}
+                          <button className="absolute top-2 right-2 h-7 w-7 rounded-full bg-card/80 flex items-center justify-center z-10"
+                            onClick={(e) => toggleWishlist(p.id, e)}>
+                            <Heart className={`h-3.5 w-3.5 ${isWished ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`} />
                           </button>
                         </div>
                         <div className="p-2.5 flex-1">
@@ -197,16 +204,18 @@ export default function CustomerBrowsePage() {
                           </div>
                         </div>
                       </Link>
-                      <div className="px-2.5 pb-2.5">
-                        <Button size="sm" variant="outline" className="w-full h-7 text-xs" onClick={() => quickAdd(p)}>
-                          Add to cart
+                      <div className="px-2.5 pb-2.5 flex gap-1.5">
+                        <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => quickAdd(p)}>
+                          <ShoppingCart className="h-3 w-3 mr-1" /> Cart
+                        </Button>
+                        <Button size="sm" className="h-7 text-xs px-2" onClick={(e) => buyNow(p, e as any)}>
+                          <Zap className="h-3 w-3 mr-1" /> Buy
                         </Button>
                       </div>
                     </Card>
                   );
                 })}
               </div>
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-6">
                   <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage <= 1}
@@ -214,10 +223,7 @@ export default function CustomerBrowsePage() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    const pageNum = totalPages <= 5 ? i + 1 : 
-                      currentPage <= 3 ? i + 1 : 
-                      currentPage >= totalPages - 2 ? totalPages - 4 + i : 
-                      currentPage - 2 + i;
+                    const pageNum = totalPages <= 5 ? i + 1 : currentPage <= 3 ? i + 1 : currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i;
                     return (
                       <Button key={pageNum} variant={currentPage === pageNum ? "default" : "outline"} size="sm"
                         className="h-8 w-8 text-xs" onClick={() => setCurrentPage(pageNum)}>
@@ -236,11 +242,11 @@ export default function CustomerBrowsePage() {
         })()}
       </div>
 
-      {/* Floating View Cart Bar */}
+      {/* Floating View Cart Bar - above bottom nav */}
       <AnimatePresence>
         {cartCount > 0 && (
           <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
-            className="fixed bottom-14 md:bottom-4 left-4 right-4 z-40 max-w-lg mx-auto">
+            className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-lg mx-auto">
             <Button className="w-full h-12 rounded-2xl shadow-lg text-base gap-2 justify-between px-5" onClick={() => navigate('/app/cart')}>
               <div className="flex items-center gap-2">
                 <ShoppingCart className="h-4 w-4" />

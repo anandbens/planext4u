@@ -9,11 +9,22 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function CustomerWishlistPage() {
-  const [wishlist, setWishlist] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('app_db_wishlist') || '[]'); } catch { return []; }
-  });
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Load wishlist from localStorage reactively
+  useEffect(() => {
+    const loadWishlist = () => {
+      try { return JSON.parse(localStorage.getItem('app_db_wishlist') || '[]'); } catch { return []; }
+    };
+    setWishlist(loadWishlist());
+
+    // Listen for storage changes from other components
+    const handler = () => setWishlist(loadWishlist());
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -29,6 +40,11 @@ export default function CustomerWishlistPage() {
     const updated = wishlist.filter(w => w !== id);
     setWishlist(updated);
     localStorage.setItem('app_db_wishlist', JSON.stringify(updated));
+    // Also remove from saved-for-later
+    try {
+      const saved = JSON.parse(localStorage.getItem('app_db_saved_for_later') || '[]');
+      localStorage.setItem('app_db_saved_for_later', JSON.stringify(saved.filter((s: any) => s.id !== id)));
+    } catch {}
     toast.success("Removed from wishlist");
   };
 
@@ -39,7 +55,7 @@ export default function CustomerWishlistPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-3xl mx-auto px-4 py-6 pb-20 md:pb-6 space-y-4">
+      <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-6 space-y-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild><Link to="/app/profile"><ArrowLeft className="h-5 w-5" /></Link></Button>
           <h1 className="text-lg font-bold">My Wishlist</h1>
