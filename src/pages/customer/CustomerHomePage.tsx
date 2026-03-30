@@ -420,7 +420,7 @@ export default function CustomerHomePage() {
               {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-64 w-56 rounded-xl shrink-0" />) :
                 data?.featuredServices?.map((s, idx) => (
                   <motion.div key={s.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05, duration: 0.3 }} className="shrink-0">
-                    <Link to={`/app/services/${s.id}`}>
+                    <Link to={`/app/service/${s.id}`}>
                       <Card className="w-52 sm:w-60 md:w-64 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                         <div className="h-36 md:h-44 bg-secondary/20 relative overflow-hidden">
                           {s.image ? (
