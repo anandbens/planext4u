@@ -76,6 +76,8 @@ import SocialExplorePage from "./pages/customer/SocialExplorePage";
 import SocialReelsPage from "./pages/customer/SocialReelsPage";
 import SocialStoryViewerPage from "./pages/customer/SocialStoryViewerPage";
 import SocialDMPage from "./pages/customer/SocialDMPage";
+import SocialNotificationsPage from "./pages/customer/SocialNotificationsPage";
+import SocialSettingsPage from "./pages/customer/SocialSettingsPage";
 import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
 
 // Property pages
@@ -203,6 +205,8 @@ const App = () => (
             <Route path="/app/social/reels" element={<SocialReelsPage />} />
             <Route path="/app/social/stories/:userId" element={<SocialStoryViewerPage />} />
             <Route path="/app/social/messages" element={<SocialDMPage />} />
+            <Route path="/app/social/notifications" element={<SocialNotificationsPage />} />
+            <Route path="/app/social/settings" element={<SocialSettingsPage />} />
             <Route path="/app/social/@:username" element={<SocialProfilePage />} />
 
             {/* Admin Social */}
