@@ -421,14 +421,19 @@ export default function PropertyHomePage() {
           </Select>
         </div>
 
-        <div className="px-4 py-1 text-sm text-muted-foreground">{sortedProperties.length} properties found</div>
+        <div className="px-4 py-1 flex items-center justify-between text-sm text-muted-foreground">
+          <span>{sortedProperties.length} properties found</span>
+          {sortedProperties.length > 12 && (
+            <span className="text-xs">Page {currentPage} of {Math.ceil(sortedProperties.length / ITEMS_PER_PAGE)}</span>
+          )}
+        </div>
 
         {/* Property Listings */}
         <div className="px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />)
           ) : sortedProperties.length === 0 ? (
-            <div className="text-center py-16">
+            <div className="text-center py-16 col-span-full">
               <Home className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
               <h3 className="text-lg font-bold">No Properties Found</h3>
               <p className="text-sm text-muted-foreground mt-1">Try adjusting your filters or search for a different location</p>
@@ -437,9 +442,31 @@ export default function PropertyHomePage() {
               </Button>
             </div>
           ) : (
-            sortedProperties.map((property: any, idx: number) => <PropertyCard key={property.id} property={property} index={idx} />)
+            paginatedProperties.map((property: any, idx: number) => <PropertyCard key={property.id} property={property} index={(currentPage - 1) * ITEMS_PER_PAGE + idx} />)
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 px-4 py-6">
+            <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>
+              <ChevronLeft className="h-4 w-4" /> Prev
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+              .map((page, i, arr) => (
+                <span key={page}>
+                  {i > 0 && arr[i - 1] !== page - 1 && <span className="text-muted-foreground px-1">…</span>}
+                  <Button variant={currentPage === page ? "default" : "outline"} size="sm" className="h-8 w-8 p-0" onClick={() => setCurrentPage(page)}>
+                    {page}
+                  </Button>
+                </span>
+              ))}
+            <Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
         {/* Post Property CTA */}
         <div className="px-4 py-8">
