@@ -76,6 +76,8 @@ import SocialExplorePage from "./pages/customer/SocialExplorePage";
 import SocialReelsPage from "./pages/customer/SocialReelsPage";
 import SocialStoryViewerPage from "./pages/customer/SocialStoryViewerPage";
 import SocialDMPage from "./pages/customer/SocialDMPage";
+import SocialNotificationsPage from "./pages/customer/SocialNotificationsPage";
+import SocialSettingsPage from "./pages/customer/SocialSettingsPage";
 import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
 
 // Property pages
