@@ -244,6 +244,16 @@ export default function PropertyDetailPage() {
 
   const handleScheduleVisit = async (date: string, time: string) => {
     if (!customerUser) { toast.error("Please login first"); navigate("/app/login"); return; }
+    const seekerId = customerUser.customer_id || customerUser.id;
+    const { error } = await supabase.from("property_visits" as any).insert({
+      property_id: id,
+      seeker_id: seekerId,
+      seeker_name: customerUser.name || "User",
+      visit_date: date,
+      visit_time: time,
+      status: "scheduled",
+    } as any);
+    if (error) { toast.error("Failed to schedule visit"); return; }
     toast.success(`Visit scheduled for ${date} at ${time}`);
     setShowSchedule(false);
   };
