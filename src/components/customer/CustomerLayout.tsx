@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned } from "lucide-react";
+import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -60,7 +60,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
     { icon: Wrench, label: "Services", to: "/app/services" },
     { icon: Megaphone, label: "Socio", to: "#socio-coming-soon", comingSoon: true },
-    { icon: Home, label: "Find Home", to: "/app/find-home" },
+    { icon: Building, label: "Find Home", to: "/app/find-home" },
     { icon: Newspaper, label: "Classified", to: "/app/classifieds" },
   ];
 
@@ -69,6 +69,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     if (path === '/app/browse') return location.pathname.startsWith('/app/browse') || location.pathname.startsWith('/app/product') || location.pathname.startsWith('/app/cart') || location.pathname.startsWith('/app/vendor');
     if (path === '/app/services') return location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/');
     if (path === '/app/classifieds') return location.pathname.startsWith('/app/classifieds');
+    if (path === '/app/find-home') return location.pathname.startsWith('/app/find-home');
     return location.pathname === path;
   };
 
@@ -224,7 +225,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
                 { icon: Wrench, label: "Services", to: "/app/services" },
                 { icon: Megaphone, label: "Socio", to: "#", comingSoon: true },
-                { icon: CalendarDays, label: "Booking", to: "#", comingSoon: true },
+                { icon: Building, label: "Find Home", to: "/app/find-home" },
                 { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds" },
               ].map((tab) => (
                 tab.comingSoon ? (
