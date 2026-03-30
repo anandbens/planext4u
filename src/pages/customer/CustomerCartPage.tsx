@@ -119,7 +119,7 @@ export default function CustomerCartPage() {
   };
 
   const moveToCart = async (item: CartItem) => {
-    await api.addToCart({ id: item.id, title: item.title, price: item.price, vendor_id: item.vendorId, vendor_name: item.vendor, emoji: item.emoji, image: item.image, tax: item.tax, discount: item.discount, max_points_redeemable: item.maxPoints } as any, 1);
+    await api.addToCart({ id: item.id, title: item.title, price: item.price, vendor_id: item.vendor_id || '', vendor_name: item.vendor, emoji: item.emoji, image: item.image, tax: item.tax, discount: item.discount, max_points_redeemable: item.maxPoints } as any, 1);
     setCart(prev => [...prev, { ...item, qty: 1 }]);
     setSavedForLater(prev => prev.filter(i => i.id !== item.id));
     toast.success("Moved to cart");
