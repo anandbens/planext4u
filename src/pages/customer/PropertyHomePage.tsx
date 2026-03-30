@@ -424,7 +424,7 @@ export default function PropertyHomePage() {
         <div className="px-4 py-1 text-sm text-muted-foreground">{sortedProperties.length} properties found</div>
 
         {/* Property Listings */}
-        <div className="px-4 space-y-4">
+        <div className="px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />)
           ) : sortedProperties.length === 0 ? (
@@ -596,7 +596,7 @@ function PropertyCard({ property, index }: { property: any; index: number }) {
           <span className="text-xs text-muted-foreground">Owner is available to Chat!</span>
         </div>
         <button className="text-xs font-semibold text-primary flex items-center gap-1"
-          onClick={() => navigate(`/app/find-home/${property.id}`)}>
+          onClick={(e) => { e.stopPropagation(); navigate(`/app/find-home/messages?property=${property.id}&owner=${property.user_id}`); }}>
           Start chat <MessageCircle className="h-3.5 w-3.5" />
         </button>
       </div>

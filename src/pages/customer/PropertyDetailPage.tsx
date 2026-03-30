@@ -237,13 +237,42 @@ export default function PropertyDetailPage() {
   const handleSendEnquiry = async () => {
     if (!customerUser) { toast.error("Please login first"); navigate("/app/login"); return; }
     if (!enquiryMsg.trim()) { toast.error("Please enter a message"); return; }
-    toast.success("Enquiry sent to the owner!");
+    const seekerId = customerUser.customer_id || customerUser.id;
+    // Insert a property message for 1-1 chat
+    const { error } = await supabase.from("property_messages" as any).insert({
+      property_id: id,
+      sender_id: seekerId,
+      sender_name: customerUser.name || "User",
+      receiver_id: property.user_id,
+      message: enquiryMsg.trim(),
+      is_read: false,
+    } as any);
+    if (error) { toast.error("Failed to send message"); return; }
+    // Also create enquiry record
+    await supabase.from("property_enquiries" as any).insert({
+      property_id: id,
+      seeker_id: seekerId,
+      seeker_name: customerUser.name || "User",
+      message: enquiryMsg.trim(),
+      status: "pending",
+    } as any);
+    toast.success("Message sent to the owner!");
     setShowContact(false);
     setEnquiryMsg("");
   };
 
   const handleScheduleVisit = async (date: string, time: string) => {
     if (!customerUser) { toast.error("Please login first"); navigate("/app/login"); return; }
+    const seekerId = customerUser.customer_id || customerUser.id;
+    const { error } = await supabase.from("property_visits" as any).insert({
+      property_id: id,
+      seeker_id: seekerId,
+      seeker_name: customerUser.name || "User",
+      visit_date: date,
+      visit_time: time,
+      status: "scheduled",
+    } as any);
+    if (error) { toast.error("Failed to schedule visit"); return; }
     toast.success(`Visit scheduled for ${date} at ${time}`);
     setShowSchedule(false);
   };
