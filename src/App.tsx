@@ -183,6 +183,10 @@ const App = () => (
             <Route path="/app/find-home/emi" element={<PropertyEMIPage />} />
             <Route path="/app/find-home/my-properties" element={<MyPropertiesPage />} />
             <Route path="/app/find-home/saved" element={<MyPropertiesPage />} />
+            <Route path="/app/find-home/saved-searches" element={<SavedSearchesPage />} />
+            <Route path="/app/find-home/messages" element={<PropertyMessagesPage />} />
+            <Route path="/app/find-home/rent-tracker" element={<RentTrackerPage />} />
+            <Route path="/app/find-home/value-estimator" element={<PropertyValueEstimatorPage />} />
             <Route path="/app/find-home/:id" element={<PropertyDetailPage />} />
 
             {/* Vendor-facing routes */}
