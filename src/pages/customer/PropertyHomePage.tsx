@@ -596,7 +596,7 @@ function PropertyCard({ property, index }: { property: any; index: number }) {
           <span className="text-xs text-muted-foreground">Owner is available to Chat!</span>
         </div>
         <button className="text-xs font-semibold text-primary flex items-center gap-1"
-          onClick={() => navigate(`/app/find-home/${property.id}`)}>
+          onClick={(e) => { e.stopPropagation(); navigate(`/app/find-home/messages?property=${property.id}&owner=${property.user_id}`); }}>
           Start chat <MessageCircle className="h-3.5 w-3.5" />
         </button>
       </div>
