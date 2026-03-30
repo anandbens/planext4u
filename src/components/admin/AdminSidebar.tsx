@@ -65,6 +65,11 @@ const homesItems: NavItem[] = [
   { title: "Property Reports", url: "/admin/property-reports", icon: BarChart3, roles: ['admin'] },
 ];
 
+// P4U Social admin section
+const socialItems: NavItem[] = [
+  { title: "Social Dashboard", url: "/admin/social", icon: Heart, roles: ['admin'] },
+];
+
 const systemItems: NavItem[] = [
   { title: "Occupations", url: "/occupations", icon: Briefcase, roles: ['admin'] },
   { title: "Platform Variables", url: "/platform-variables", icon: SlidersHorizontal, roles: ['admin'] },
