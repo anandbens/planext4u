@@ -382,57 +382,37 @@ export default function PropertyDetailPage() {
           )}
         </div>
 
-        {/* Overview Grid */}
+        {/* Overview Grid - NoBroker style 2-column bordered */}
         <div className="px-4 py-4">
           <Card className="p-4">
-            <h3 className="text-sm font-bold mb-3">Overview</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {property.bhk && (
-                <div className="flex items-center gap-2">
-                  <Bed className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">BHK</p><p className="text-sm font-medium">{property.bhk === "studio" ? "Studio" : `${property.bhk} BHK`}</p></div>
+            <h3 className="text-sm font-bold mb-1">Overview</h3>
+            <div className="w-12 h-0.5 bg-destructive mb-4" />
+            <div className="grid grid-cols-2 border border-border/50 rounded-lg overflow-hidden">
+              {[
+                property.bhk && { icon: Bed, value: property.bhk === "studio" ? "Studio" : property.bhk, label: "Bedroom" },
+                { icon: Calendar, value: new Date(property.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" }), label: "Posted On" },
+                property.area_sqft > 0 && { icon: Bath, value: Math.ceil(parseInt(property.bhk || "1")), label: "Bathrooms" },
+                { icon: Key, value: property.availability_date ? new Date(property.availability_date).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "Immediately", label: "Possession" },
+                { icon: UtensilsCrossed, value: "Yes", label: "Nonveg Allowed" },
+                { icon: ShieldCheck, value: property.amenities?.includes?.("Gated Security") || property.amenities?.includes?.("Gated Community") ? "Yes" : "No", label: "Gated Security" },
+                property.parking && property.parking !== "none" && { icon: Car, value: property.parking === "four_wheeler" ? "Car" : property.parking === "two_wheeler" ? "Bike" : property.parking === "both" ? "Both" : "Car", label: "Parking" },
+                { icon: Building2, value: PROPERTY_TYPE_LABELS[property.property_type] || "Apartment", label: "" },
+                { icon: Dog, value: "NA", label: "Pet Allowed" },
+              ].filter(Boolean).map((item: any, i: number) => (
+                <div key={i} className={`flex items-center gap-3 p-3 ${i % 2 === 0 ? "border-r border-border/50" : ""} ${i < 7 ? "border-b border-border/50" : ""}`}>
+                  <item.icon className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold">{item.value}</p>
+                    {item.label && <p className="text-[11px] text-muted-foreground">{item.label}</p>}
+                  </div>
                 </div>
-              )}
-              {property.area_sqft > 0 && (
-                <div className="flex items-center gap-2">
-                  <Maximize2 className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Area</p><p className="text-sm font-medium">{property.area_sqft} sq.ft</p></div>
-                </div>
-              )}
-              {property.floor_number > 0 && (
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Floor</p><p className="text-sm font-medium">{property.floor_number} of {property.total_floors}</p></div>
-                </div>
-              )}
-              {property.facing && (
-                <div className="flex items-center gap-2">
-                  <Compass className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Facing</p><p className="text-sm font-medium capitalize">{property.facing.replace("_", " ")}</p></div>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <div><p className="text-xs text-muted-foreground">Furnishing</p><p className="text-sm font-medium capitalize">{property.furnishing?.replace("_", " ")}</p></div>
-              </div>
-              {property.parking && property.parking !== "none" && (
-                <div className="flex items-center gap-2">
-                  <Car className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Parking</p><p className="text-sm font-medium capitalize">{property.parking.replace("_", " ")}</p></div>
-                </div>
-              )}
-              {property.age_of_property && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Age</p><p className="text-sm font-medium">{property.age_of_property} yrs</p></div>
-                </div>
-              )}
-              {property.preferred_tenant && property.preferred_tenant !== "any" && (
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Preferred</p><p className="text-sm font-medium capitalize">{property.preferred_tenant}</p></div>
-                </div>
-              )}
+              ))}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+              <div className="flex justify-between border-b border-border/30 pb-1"><span>Last Updated On</span><span className="font-medium text-foreground">{new Date(property.updated_at).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" })}</span></div>
+              <div className="flex justify-between border-b border-border/30 pb-1"><span>Furnishing Status</span><span className="font-medium text-foreground capitalize">{property.furnishing?.replace("_", " ") || "Unfurnished"}</span></div>
+              {property.facing && <div className="flex justify-between border-b border-border/30 pb-1"><span>Facing</span><span className="font-medium text-foreground capitalize">{property.facing.replace("_", " ")}</span></div>}
+              {property.age_of_property && <div className="flex justify-between border-b border-border/30 pb-1"><span>Age</span><span className="font-medium text-foreground">{property.age_of_property} years</span></div>}
             </div>
           </Card>
         </div>
