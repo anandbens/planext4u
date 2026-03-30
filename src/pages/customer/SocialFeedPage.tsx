@@ -449,28 +449,47 @@ export default function SocialFeedPage() {
       </div>
 
       {/* Stories - horizontally scrollable */}
-      <div ref={storiesRef} className="flex gap-3 px-4 py-3 overflow-x-auto overflow-y-hidden scrollbar-hide border-b border-border/20 max-w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
-        {stories.map((story: any) => (
-          <button key={story.id} className="flex flex-col items-center gap-1 shrink-0"
-            onClick={() => navigate(story.isOwn ? "/app/social/create" : `/app/social/stories/${story.id}`)}>
-            <div className={`relative p-[2px] rounded-full ${story.isOwn ? '' : story.seen ? 'bg-muted' : 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600'}`}>
-              <div className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-card p-[2px]">
-                <div className="h-full w-full rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                  {story.isOwn ? (
-                    <div className="relative h-full w-full bg-accent flex items-center justify-center"><Plus className="h-5 w-5 text-muted-foreground" /></div>
-                  ) : story.avatar ? (
-                    <img src={story.avatar} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-sm font-bold text-muted-foreground">{story.username.charAt(0).toUpperCase()}</span>
-                  )}
+      <div className="relative border-b border-border/20">
+        <div
+          ref={storiesRef}
+          className="flex gap-3 px-4 py-3 overflow-x-auto overflow-y-hidden scrollbar-hide"
+          style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}
+        >
+          {stories.map((story: any) => (
+            <button key={story.id} className="flex flex-col items-center gap-1 shrink-0 w-[68px]"
+              onClick={() => navigate(story.isOwn ? "/app/social/create" : `/app/social/stories/${story.id}`)}>
+              <div className={`relative p-[2px] rounded-full ${story.isOwn ? '' : story.seen ? 'bg-muted' : 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600'}`}>
+                <div className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-card p-[2px]">
+                  <div className="h-full w-full rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                    {story.isOwn ? (
+                      <div className="relative h-full w-full bg-accent flex items-center justify-center"><Plus className="h-5 w-5 text-muted-foreground" /></div>
+                    ) : story.avatar ? (
+                      <img src={story.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-bold text-muted-foreground">{story.username.charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-            <span className="text-[10px] max-w-[56px] truncate text-center">
-              {story.isOwn ? "Your Story" : story.username.split('_')[0]}
-            </span>
-          </button>
-        ))}
+              <span className="text-[10px] max-w-[56px] truncate text-center">
+                {story.isOwn ? "Your Story" : story.username.split('_')[0]}
+              </span>
+            </button>
+          ))}
+        </div>
+        {/* Scroll arrows for desktop */}
+        <button
+          className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-card border border-border shadow-md items-center justify-center z-10 hover:bg-muted"
+          onClick={() => { storiesRef.current?.scrollBy({ left: 200, behavior: 'smooth' }); }}
+        >
+          <ChevronDown className="h-4 w-4 rotate-[-90deg]" />
+        </button>
+        <button
+          className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-card border border-border shadow-md items-center justify-center z-10 hover:bg-muted"
+          onClick={() => { storiesRef.current?.scrollBy({ left: -200, behavior: 'smooth' }); }}
+        >
+          <ChevronDown className="h-4 w-4 rotate-90" />
+        </button>
       </div>
 
       {/* Feed */}
