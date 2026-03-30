@@ -304,9 +304,9 @@ export default function SocialFeedPage() {
               <Plus className="h-4 w-4" />
             </div>
           </Link>
-          <button onClick={() => toast.info("Reels coming soon")} className="flex flex-col items-center gap-0.5">
+          <Link to="/app/social/reels" className="flex flex-col items-center gap-0.5">
             <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M2 8h20M8 2v6M10 12l6 3.5-6 3.5z"/></svg>
-          </button>
+          </Link>
           <Link to="/app/social/profile" className="flex flex-col items-center gap-0.5">
             <div className="h-7 w-7 rounded-full bg-muted border-2 border-foreground flex items-center justify-center overflow-hidden">
               <span className="text-xs font-bold">{customerUser?.name?.charAt(0) || 'U'}</span>
