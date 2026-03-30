@@ -943,6 +943,39 @@ export type Database = {
         }
         Relationships: []
       }
+      property_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          property_id: string
+          receiver_id: string
+          sender_id: string
+          sender_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          property_id: string
+          receiver_id: string
+          sender_id: string
+          sender_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          property_id?: string
+          receiver_id?: string
+          sender_id?: string
+          sender_name?: string | null
+        }
+        Relationships: []
+      }
       property_plans: {
         Row: {
           contact_reveal_limit: number
@@ -1097,6 +1130,45 @@ export type Database = {
         }
         Relationships: []
       }
+      rent_payments: {
+        Row: {
+          created_at: string
+          due_date: number
+          id: string
+          landlord_name: string | null
+          landlord_phone: string | null
+          monthly_rent: number
+          paid_months: Json
+          property_title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          due_date?: number
+          id?: string
+          landlord_name?: string | null
+          landlord_phone?: string | null
+          monthly_rent?: number
+          paid_months?: Json
+          property_title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          due_date?: number
+          id?: string
+          landlord_name?: string | null
+          landlord_phone?: string | null
+          monthly_rent?: number
+          paid_months?: Json
+          property_title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       report_log: {
         Row: {
           created_at: string
@@ -1124,6 +1196,33 @@ export type Database = {
           id?: string
           report_type?: string
           status?: string
+        }
+        Relationships: []
+      }
+      saved_searches: {
+        Row: {
+          created_at: string
+          filters: Json
+          id: string
+          name: string
+          notify: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filters?: Json
+          id?: string
+          name?: string
+          notify?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filters?: Json
+          id?: string
+          name?: string
+          notify?: boolean
+          user_id?: string
         }
         Relationships: []
       }

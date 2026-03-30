@@ -74,7 +74,14 @@ import PropertyDetailPage from "./pages/customer/PropertyDetailPage";
 import PostPropertyPage from "./pages/customer/PostPropertyPage";
 import PropertyEMIPage from "./pages/customer/PropertyEMIPage";
 import MyPropertiesPage from "./pages/customer/MyPropertiesPage";
+import SavedSearchesPage from "./pages/customer/SavedSearchesPage";
+import PropertyMessagesPage from "./pages/customer/PropertyMessagesPage";
+import RentTrackerPage from "./pages/customer/RentTrackerPage";
+import PropertyValueEstimatorPage from "./pages/customer/PropertyValueEstimatorPage";
 import AdminPropertiesPage from "./pages/admin/AdminPropertiesPage";
+import AdminLocalitiesPage from "./pages/admin/AdminLocalitiesPage";
+import AdminPropertyPlansPage from "./pages/admin/AdminPropertyPlansPage";
+import AdminPropertyReportsPage from "./pages/admin/AdminPropertyReportsPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
@@ -145,6 +152,9 @@ const App = () => (
             <Route path="/support-tickets" element={<ProtectedPage><SupportTicketsPage /></ProtectedPage>} />
             <Route path="/integrations" element={<ProtectedPage><IntegrationsPage /></ProtectedPage>} />
             <Route path="/admin/properties" element={<ProtectedPage><AdminPropertiesPage /></ProtectedPage>} />
+            <Route path="/admin/localities" element={<ProtectedPage><AdminLocalitiesPage /></ProtectedPage>} />
+            <Route path="/admin/property-plans" element={<ProtectedPage><AdminPropertyPlansPage /></ProtectedPage>} />
+            <Route path="/admin/property-reports" element={<ProtectedPage><AdminPropertyReportsPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerHomePage />} />
@@ -173,6 +183,10 @@ const App = () => (
             <Route path="/app/find-home/emi" element={<PropertyEMIPage />} />
             <Route path="/app/find-home/my-properties" element={<MyPropertiesPage />} />
             <Route path="/app/find-home/saved" element={<MyPropertiesPage />} />
+            <Route path="/app/find-home/saved-searches" element={<SavedSearchesPage />} />
+            <Route path="/app/find-home/messages" element={<PropertyMessagesPage />} />
+            <Route path="/app/find-home/rent-tracker" element={<RentTrackerPage />} />
+            <Route path="/app/find-home/value-estimator" element={<PropertyValueEstimatorPage />} />
             <Route path="/app/find-home/:id" element={<PropertyDetailPage />} />
 
             {/* Vendor-facing routes */}

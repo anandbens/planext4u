@@ -320,10 +320,17 @@ export default function PropertyDetailPage() {
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/30 p-3 md:relative md:border-0 md:bg-transparent md:px-4 md:pb-6">
           <div className="flex gap-2 max-w-4xl mx-auto">
             <Button variant="outline" className="flex-1 h-11 gap-2 rounded-xl" onClick={() => setShowContact(true)}>
-              <Phone className="h-4 w-4" /> Contact Owner
+              <Phone className="h-4 w-4" /> Contact
+            </Button>
+            <Button variant="outline" className="h-11 gap-2 rounded-xl" onClick={() => {
+              if (!customerUser) { toast.info("Login to message"); navigate("/app/login"); return; }
+              const myId = customerUser.customer_id || customerUser.id;
+              navigate(`/app/find-home/messages?chat=${property.user_id}_${property.id}`);
+            }}>
+              <MessageCircle className="h-4 w-4" /> Message
             </Button>
             <Button className="flex-1 h-11 gap-2 rounded-xl" onClick={() => setShowSchedule(true)}>
-              <Calendar className="h-4 w-4" /> Schedule Visit
+              <Calendar className="h-4 w-4" /> Visit
             </Button>
           </div>
         </div>

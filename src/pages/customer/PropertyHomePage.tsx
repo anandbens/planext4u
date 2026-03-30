@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, MapPin, Home, Building2, ChevronRight, Star, Heart, Shield, Filter, SlidersHorizontal, Bed, Bath, Maximize2, ChevronLeft, Wrench, Calculator, TrendingUp, Clock, X } from "lucide-react";
+import { Search, MapPin, Home, Building2, ChevronRight, Star, Heart, Shield, Filter, SlidersHorizontal, Bed, Bath, Maximize2, ChevronLeft, Wrench, Calculator, TrendingUp, Clock, X, MessageCircle, IndianRupee, Bookmark, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -35,6 +36,7 @@ function formatPrice(price: number): string {
 export default function PropertyHomePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { customerUser } = useAuth();
   const [transactionType, setTransactionType] = useState(searchParams.get("type") || "rent");
   const [searchCity, setSearchCity] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -78,6 +80,19 @@ export default function PropertyHomePage() {
   const handleSearch = () => {
     if (!searchCity.trim()) return;
     navigate(`/app/find-home?type=${transactionType}&q=${encodeURIComponent(searchCity)}`);
+  };
+
+  const handleSaveSearch = async () => {
+    const userId = customerUser?.customer_id || customerUser?.id;
+    if (!userId) { toast.info("Login to save searches"); navigate("/app/login"); return; }
+    const filters: any = { transaction_type: transactionType };
+    if (searchCity) filters.city = searchCity;
+    if (selectedBhk.length) filters.bhk = selectedBhk;
+    if (selectedPropertyType.length) filters.property_type = selectedPropertyType;
+    if (budgetRange[0] > 0 || budgetRange[1] < 50000000) filters.budget = budgetRange;
+    const name = `${transactionType === "sale" ? "Buy" : transactionType.charAt(0).toUpperCase() + transactionType.slice(1)}${searchCity ? ` in ${searchCity}` : ""}`;
+    await supabase.from("saved_searches" as any).insert({ user_id: userId, name, filters } as any);
+    toast.success("Search saved! You'll get alerts for new matches.");
   };
 
   // Home services links
@@ -157,19 +172,33 @@ export default function PropertyHomePage() {
               <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center"><Calculator className="h-5 w-5 text-success" /></div>
               <span className="text-[10px] font-medium text-center leading-tight">EMI Calculator</span>
             </Link>
-            <Link to="/app/find-home?type=pg" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
-              <div className="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center"><Building2 className="h-5 w-5 text-warning" /></div>
-              <span className="text-[10px] font-medium text-center leading-tight">Find PG</span>
+            <Link to="/app/find-home/rent-tracker" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
+              <div className="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center"><IndianRupee className="h-5 w-5 text-warning" /></div>
+              <span className="text-[10px] font-medium text-center leading-tight">Rent Tracker</span>
             </Link>
-            <Link to="/app/find-home/my-properties" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all hidden md:flex">
+            <Link to="/app/find-home/value-estimator" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
               <div className="h-10 w-10 rounded-full bg-info/10 flex items-center justify-center"><TrendingUp className="h-5 w-5 text-info" /></div>
+              <span className="text-[10px] font-medium text-center leading-tight">Value Estimator</span>
+            </Link>
+            <Link to="/app/find-home/messages" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
+              <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center"><MessageCircle className="h-5 w-5 text-muted-foreground" /></div>
+              <span className="text-[10px] font-medium text-center leading-tight">Messages</span>
+            </Link>
+            <Link to="/app/find-home/saved-searches" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
+              <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center"><Bookmark className="h-5 w-5 text-destructive" /></div>
+              <span className="text-[10px] font-medium text-center leading-tight">Saved Searches</span>
+            </Link>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            <Link to="/app/find-home/my-properties" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center"><Home className="h-5 w-5 text-primary" /></div>
               <span className="text-[10px] font-medium text-center leading-tight">My Properties</span>
             </Link>
-            <Link to="/app/find-home/saved" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all hidden md:flex">
+            <Link to="/app/find-home/saved" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
               <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center"><Heart className="h-5 w-5 text-destructive" /></div>
-              <span className="text-[10px] font-medium text-center leading-tight">Saved</span>
+              <span className="text-[10px] font-medium text-center leading-tight">Saved Properties</span>
             </Link>
-            <Link to="/app/services" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all hidden md:flex">
+            <Link to="/app/services" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
               <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center"><Wrench className="h-5 w-5 text-muted-foreground" /></div>
               <span className="text-[10px] font-medium text-center leading-tight">Home Services</span>
             </Link>
@@ -200,7 +229,10 @@ export default function PropertyHomePage() {
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => setShowFilters(!showFilters)}>
               <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
             </Button>
-            <span className="text-sm text-muted-foreground">{sortedProperties.length} properties found</span>
+            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-primary" onClick={handleSaveSearch}>
+              <Save className="h-3.5 w-3.5" /> Save Search
+            </Button>
+            <span className="text-sm text-muted-foreground">{sortedProperties.length} found</span>
           </div>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
