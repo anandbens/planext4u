@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Heart, Share2, Shield, MapPin, Bed, Bath, Maximize2, Building2, Compass, Car, Calendar, Phone, MessageCircle, Flag, ChevronLeft, ChevronRight, Star, Clock, Calculator, X, Wifi, Dumbbell, Trees, ShieldCheck, Baby, Zap, Droplets, Flame, ParkingCircle, Eye, Users, TrendingUp } from "lucide-react";
+import { ArrowLeft, Heart, Share2, Shield, MapPin, Bed, Bath, Maximize2, Building2, Compass, Car, Calendar, Phone, MessageCircle, Flag, ChevronLeft, ChevronRight, Star, Clock, Calculator, X, Wifi, Dumbbell, Trees, ShieldCheck, Baby, Zap, Droplets, Flame, ParkingCircle, Eye, Users, TrendingUp, Snowflake, CloudRain, Radio, DoorOpen, Warehouse, BatteryCharging, Siren, Cctv, Waves, Home, Dog, UtensilsCrossed, Key, Sofa } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
