@@ -179,6 +179,8 @@ export default function PropertyHomePage() {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState<any>({ bhk: [], propertyType: [], availability: [], tenant: [], furnishing: [], parking: [], budget: [0, 50000000] });
   const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
 
   const [searchFocused, setSearchFocused] = useState(false);
   const { data: searchSuggestions = [] } = useQuery({
