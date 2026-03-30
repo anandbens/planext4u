@@ -11,8 +11,9 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 
 export default function CategoriesPage() {
-  const [data, setData] = useState<PaginatedResponse<Category> | null>(null);
+  const [allData, setAllData] = useState<Category[]>([]);
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selected, setSelected] = useState<Category | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "edit" | "create">("view");
   const [modalOpen, setModalOpen] = useState(false);
@@ -20,13 +21,21 @@ export default function CategoriesPage() {
   const [confirmTarget, setConfirmTarget] = useState<Category | null>(null);
 
   const fetchData = useCallback(() => {
-    api.getCategories().then((cats) => {
-      const start = (page - 1) * 10;
-      setData({ data: cats.slice(start, start + 10), total: cats.length, page, per_page: 10, total_pages: Math.ceil(cats.length / 10) });
-    });
-  }, [page]);
+    api.getCategories().then(setAllData);
+  }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Client-side search filtering
+  const filtered = allData.filter(c => {
+    if (!searchQuery) return true;
+    return c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           c.id.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const perPage = 10;
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   const openModal = (cat: Category | null, mode: "view" | "edit" | "create") => {
     setSelected(cat); setModalMode(mode); setModalOpen(true);
@@ -43,21 +52,18 @@ export default function CategoriesPage() {
   };
 
   const handleExport = () => {
-    if (!data) return;
-    exportToCSV(data.data, [
+    exportToCSV(filtered, [
       { key: "id", label: "ID" }, { key: "name", label: "Name" },
       { key: "count", label: "Products" }, { key: "status", label: "Status" },
     ], "categories");
     toast.success("CSV exported");
   };
 
-  if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
-
-  const active = data.data.filter(c => c.status === 'active').length;
-  const totalProducts = data.data.reduce((s, c) => s + (c.count || 0), 0);
+  const active = filtered.filter(c => c.status === 'active').length;
+  const totalProducts = filtered.reduce((s, c) => s + (c.count || 0), 0);
 
   const summaryWidgets: SummaryWidget[] = [
-    { label: "Total Categories", value: data.total, icon: <Layers className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
+    { label: "Total Categories", value: filtered.length, icon: <Layers className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
     { label: "Active", value: active, icon: <CheckCircle className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
     { label: "Total Products", value: totalProducts, icon: <Package className="h-5 w-5 text-info" />, color: "bg-info/5", textColor: "text-info" },
   ];
@@ -66,7 +72,7 @@ export default function CategoriesPage() {
     <AdminLayout>
       <div className="page-header">
         <h1 className="page-title">Categories</h1>
-        <p className="page-description">{data.total} product categories</p>
+        <p className="page-description">{filtered.length} product categories</p>
       </div>
       <DataTable
         columns={[
@@ -83,12 +89,13 @@ export default function CategoriesPage() {
             </div>
           )},
         ]}
-        data={data.data}
-        total={data.total}
-        page={data.page}
-        perPage={data.per_page}
-        totalPages={data.total_pages}
+        data={paginated}
+        total={filtered.length}
+        page={page}
+        perPage={perPage}
+        totalPages={totalPages}
         onPageChange={setPage}
+        onSearch={(q) => { setSearchQuery(q); setPage(1); }}
         onExport={handleExport}
         onAdd={() => openModal(null, "create")}
         addLabel="Add Category"

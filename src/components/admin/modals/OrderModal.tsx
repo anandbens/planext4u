@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, User, Store } from "lucide-react";
+import { ShoppingCart, User, Store, Package } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface OrderModalProps {
@@ -95,6 +95,27 @@ export function OrderModal({ order, open, onOpenChange, mode, onSave }: OrderMod
             </div>
           </div>
         </div>
+
+        {/* Order Items */}
+        {order.items && order.items.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold flex items-center gap-1"><Package className="h-4 w-4" /> Order Items</h4>
+            <div className="space-y-2 p-3 rounded-lg bg-secondary/10 border border-border/30">
+              {order.items.map((item: any, i: number) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-secondary/30 rounded-lg flex items-center justify-center text-lg shrink-0 overflow-hidden">
+                    {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji}</span>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{item.title}</p>
+                    <p className="text-xs text-muted-foreground">Qty: {item.qty}</p>
+                  </div>
+                  <p className="text-sm font-semibold">₹{((item.price || 0) * (item.qty || 1)).toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3 p-4 rounded-lg bg-secondary/20 border border-border/30">
           <div className="flex justify-between text-sm">
