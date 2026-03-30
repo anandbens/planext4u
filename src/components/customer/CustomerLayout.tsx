@@ -75,7 +75,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
   };
 
   // Find active nav index for pill indicator
-  const activeNavIndex = navItems.findIndex(item => !item.comingSoon && isActive(item.to));
+  const activeNavIndex = navItems.findIndex(item => isActive(item.to));
 
   const quickActions = [
     { label: "Your\nOrders", icon: ClipboardList, to: "/app/orders" },
