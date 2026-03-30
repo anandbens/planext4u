@@ -33,12 +33,16 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   commercial_shop: "Shop", commercial_warehouse: "Warehouse", commercial_showroom: "Showroom",
 };
 
-const AMENITY_ICONS: Record<string, any> = {
-  "Intercom": "🔔", "Air Conditioner": "❄️", "Rain Water Harvesting": "🌧️", "Internet Provider": "📶",
-  "Lift": "🛗", "Club House": "🏠", "Gas Pipeline": "🔥", "Fire Safety": "🧯",
-  "Park": "🌳", "Power Backup": "🔋", "Children Play Area": "🎪", "Security": "👮",
-  "Gym": "🏋️", "Visitor Parking": "🅿️", "Servant Room": "🚪", "Swimming Pool": "🏊",
-  "CCTV": "📹", "24x7 Water": "💧", "Gated Community": "🏘️",
+const AMENITY_ICON_MAP: Record<string, React.ComponentType<any>> = {
+  "Intercom": Radio, "Air Conditioner": Snowflake, "Rain Water Harvesting": CloudRain,
+  "Internet Provider": Wifi, "Lift": Building2, "Club House": Warehouse,
+  "Gas Pipeline": Flame, "Fire Safety": Siren, "Park": Trees,
+  "Power Backup": BatteryCharging, "Children Play Area": Baby, "Security": ShieldCheck,
+  "Gym": Dumbbell, "Visitor Parking": ParkingCircle, "Servant Room": DoorOpen,
+  "Swimming Pool": Waves, "CCTV": Cctv, "24x7 Water": Droplets,
+  "Gated Community": Home, "Security Guard": ShieldCheck, "Water Supply 24x7": Droplets,
+  "Garden": Trees, "Rainwater Harvesting": CloudRain, "Fire Safety": Siren,
+  "Pet Allowed": Dog, "Non-Veg Allowed": UtensilsCrossed, "Gated Security": ShieldCheck,
 };
 
 function formatPrice(price: number): string {
