@@ -175,13 +175,13 @@ export default function SocialReelsPage() {
         </button>
       </div>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav - use transparent overlay style for reels */}
       <nav className="absolute bottom-0 left-0 right-0 z-20 bg-black/50 backdrop-blur-sm border-t border-white/10 md:hidden safe-area-bottom">
         <div className="flex items-center justify-around px-2 py-2.5 max-w-xl mx-auto">
           <Link to="/app/social"><Home className="h-6 w-6 text-white/60" /></Link>
           <Link to="/app/social/explore"><Search className="h-6 w-6 text-white/60" /></Link>
           <Link to="/app/social/create"><div className="h-7 w-7 rounded-lg border-2 border-white/60 flex items-center justify-center"><Plus className="h-4 w-4 text-white/60" /></div></Link>
-          <button><svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M2 8h20M8 2v6M10 12l6 3.5-6 3.5z"/></svg></button>
+          <button className="relative"><Film className="h-6 w-6 text-white fill-white" /></button>
           <Link to="/app/social/profile"><div className="h-7 w-7 rounded-full bg-white/20 border border-white/60 flex items-center justify-center"><span className="text-xs font-bold text-white">{customerUser?.name?.charAt(0) || 'U'}</span></div></Link>
         </div>
       </nav>

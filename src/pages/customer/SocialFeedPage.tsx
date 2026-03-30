@@ -318,13 +318,10 @@ export default function SocialFeedPage() {
 
   const content = (
     <>
-      {/* Mobile header */}
-      <header className="sticky top-0 z-40 bg-card border-b border-border/30 md:hidden">
+      {/* Mobile header - Socio branding */}
+      <header className="sticky top-0 z-30 bg-card border-b border-border/30 md:hidden">
         <div className="max-w-xl mx-auto flex items-center justify-between px-4 py-3">
-          <Link to="/app" className="flex items-center gap-1.5">
-            <span className="text-2xl font-bold tracking-tight">Socio</span>
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          </Link>
+          <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Socio</span>
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/app/social/create")} className="p-1.5"><Plus className="h-6 w-6" /></button>
             <button onClick={() => navigate("/app/social/notifications")} className="p-1.5 relative">
