@@ -191,6 +191,13 @@ const App = () => (
             <Route path="/app/classifieds/post" element={<CustomerPostAdPage />} />
             <Route path="/app/classifieds/:id" element={<CustomerClassifiedDetailPage />} />
 
+            {/* Social routes */}
+            <Route path="/app/social" element={<SocialFeedPage />} />
+            <Route path="/app/social/create" element={<SocialCreatePostPage />} />
+            <Route path="/app/social/profile" element={<SocialProfilePage />} />
+            <Route path="/app/social/explore" element={<SocialExplorePage />} />
+            <Route path="/app/social/@:username" element={<SocialProfilePage />} />
+
             {/* Property / Find Home routes */}
             <Route path="/app/find-home" element={<PropertyHomePage />} />
             <Route path="/app/find-home/post" element={<PostPropertyPage />} />
