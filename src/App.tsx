@@ -86,6 +86,8 @@ import SocialLivePage from "./pages/customer/SocialLivePage";
 import SocialBroadcastPage from "./pages/customer/SocialBroadcastPage";
 import SocialShopPage from "./pages/customer/SocialShopPage";
 import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
+import PaymentPage from "./pages/customer/PaymentPage";
+import SocioDMChatPage from "./pages/customer/SocioDMChatPage";
 
 // Property pages
 import PropertyHomePage from "./pages/customer/PropertyHomePage";
@@ -191,6 +193,7 @@ const App = () => (
             <Route path="/app/product/:id" element={<CustomerProductPage />} />
             <Route path="/app/vendor/:id" element={<CustomerVendorPage />} />
             <Route path="/app/cart" element={<CustomerCartPage />} />
+            <Route path="/app/payment" element={<PaymentPage />} />
             <Route path="/app/orders" element={<CustomerOrdersPage />} />
             <Route path="/app/profile" element={<CustomerProfilePage />} />
             <Route path="/app/profile/edit" element={<CustomerProfileEditPage />} />
@@ -212,6 +215,7 @@ const App = () => (
             <Route path="/app/social/reels" element={<SocialReelsPage />} />
             <Route path="/app/social/stories/:userId" element={<SocialStoryViewerPage />} />
             <Route path="/app/social/messages" element={<SocialDMPage />} />
+            <Route path="/app/social/messages/:recipientId" element={<SocioDMChatPage />} />
             <Route path="/app/social/notifications" element={<SocialNotificationsPage />} />
             <Route path="/app/social/settings" element={<SocialSettingsPage />} />
             <Route path="/app/social/@:username" element={<SocialProfilePage />} />

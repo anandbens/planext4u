@@ -33,8 +33,7 @@ export default function CustomerCartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [savedForLater, setSavedForLater] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [placing, setPlacing] = useState(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [placing] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [pointsUsed, setPointsUsed] = useState(0);
@@ -145,14 +144,18 @@ export default function CustomerCartPage() {
 
   const placeOrder = async () => {
     if (cart.length === 0) return;
-    setPlacing(true);
-    try {
-      const result = await api.placeOrder(cart, customerId, pointsUsed, discount);
-      await api.clearCart();
-      setOrderPlaced(true);
-      toast.success(`${result.orders.length} order(s) placed successfully!`);
-    } catch { toast.error("Failed to place order"); }
-    finally { setPlacing(false); }
+    if (!selectedAddressId) { toast.error("Please select a delivery address"); return; }
+    navigate('/app/payment', {
+      state: {
+        cart,
+        subtotal,
+        platformFee,
+        discount,
+        pointsUsed,
+        total,
+        selectedAddress: addresses.find(a => a.id === selectedAddressId),
+      }
+    });
   };
 
   const selectedAddress = addresses.find(a => a.id === selectedAddressId);
@@ -165,24 +168,8 @@ export default function CustomerCartPage() {
     return <CustomerLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></CustomerLayout>;
   }
 
-  // Order success screen
-  if (orderPlaced) {
-    return (
-      <CustomerLayout>
-        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-          <div className="h-20 w-20 rounded-full bg-success/10 flex items-center justify-center mb-6">
-            <CheckCircle className="h-10 w-10 text-success" />
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Order Placed Successfully!</h2>
-          <p className="text-muted-foreground mb-6 max-w-sm">Your order has been placed and is being processed. You'll receive updates soon.</p>
-          <div className="flex gap-3">
-            <Button onClick={() => navigate('/app/orders')}>View Orders</Button>
-            <Button variant="outline" onClick={() => navigate('/app/browse')}>Continue Shopping</Button>
-          </div>
-        </div>
-      </CustomerLayout>
-    );
-  }
+
+
 
   return (
     <CustomerLayout>
@@ -396,7 +383,7 @@ export default function CustomerCartPage() {
       </div>
 
       {/* Sticky Bottom - Mobile */}
-      {cart.length > 0 && !orderPlaced && (
+      {cart.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
           <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={placeOrder} disabled={placing}>
             {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed Payment"}
