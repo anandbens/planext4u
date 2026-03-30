@@ -229,7 +229,10 @@ export default function PropertyHomePage() {
             <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => setShowFilters(!showFilters)}>
               <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
             </Button>
-            <span className="text-sm text-muted-foreground">{sortedProperties.length} properties found</span>
+            <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-primary" onClick={handleSaveSearch}>
+              <Save className="h-3.5 w-3.5" /> Save Search
+            </Button>
+            <span className="text-sm text-muted-foreground">{sortedProperties.length} found</span>
           </div>
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
