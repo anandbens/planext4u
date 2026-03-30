@@ -82,6 +82,19 @@ export default function PropertyHomePage() {
     navigate(`/app/find-home?type=${transactionType}&q=${encodeURIComponent(searchCity)}`);
   };
 
+  const handleSaveSearch = async () => {
+    const userId = customerUser?.customer_id || customerUser?.id;
+    if (!userId) { toast.info("Login to save searches"); navigate("/app/login"); return; }
+    const filters: any = { transaction_type: transactionType };
+    if (searchCity) filters.city = searchCity;
+    if (selectedBhk.length) filters.bhk = selectedBhk;
+    if (selectedPropertyType.length) filters.property_type = selectedPropertyType;
+    if (budgetRange[0] > 0 || budgetRange[1] < 50000000) filters.budget = budgetRange;
+    const name = `${transactionType === "sale" ? "Buy" : transactionType.charAt(0).toUpperCase() + transactionType.slice(1)}${searchCity ? ` in ${searchCity}` : ""}`;
+    await supabase.from("saved_searches" as any).insert({ user_id: userId, name, filters } as any);
+    toast.success("Search saved! You'll get alerts for new matches.");
+  };
+
   // Home services links
   const homeServices = [
     { icon: "🔧", label: "Plumbing", to: "/app/services?category=Plumbing" },
