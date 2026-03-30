@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,9 +23,14 @@ export default function CustomerPostAdPage() {
   const [form, setForm] = useState({ title: "", description: "", price: "", category: "", city: "Mumbai", area: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const categories = api.getClassifiedCategories().map(c => typeof c === 'string' ? c : c.name);
+  // Load categories from DB
+  const { data: categoriesData } = useQuery({
+    queryKey: ["classifiedCategories"],
+    queryFn: api.getClassifiedCategoriesAsync,
+  });
 
-  // Redirect if not logged in
+  const categories = (categoriesData || []).map(c => c.name);
+
   if (!customerUser) {
     return (
       <CustomerLayout>
@@ -109,11 +115,10 @@ export default function CustomerPostAdPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-2xl mx-auto px-4 py-6 pb-20 md:pb-6">
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-6">
         <h1 className="text-xl font-bold mb-6">Post a Classified Ad</h1>
         <Card className="p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Image Upload */}
             <div>
               <Label>Photos (up to 5)</Label>
               <div className="flex gap-2 flex-wrap mt-2">
@@ -154,9 +159,22 @@ export default function CustomerPostAdPage() {
               <div>
                 <Label>Category *</Label>
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category" /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {categories.length > 0 ? categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>) : (
+                      <>
+                        <SelectItem value="Electronics">Electronics</SelectItem>
+                        <SelectItem value="Furniture">Furniture</SelectItem>
+                        <SelectItem value="Vehicles">Vehicles</SelectItem>
+                        <SelectItem value="Fashion">Fashion</SelectItem>
+                        <SelectItem value="Books">Books</SelectItem>
+                        <SelectItem value="Sports">Sports</SelectItem>
+                        <SelectItem value="Home & Garden">Home & Garden</SelectItem>
+                        <SelectItem value="Jobs">Jobs</SelectItem>
+                        <SelectItem value="Services">Services</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

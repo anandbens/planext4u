@@ -26,7 +26,7 @@ export default function CustomerServicesPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-6 pb-20 md:pb-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold">{categoryFilter || "All Services"}</h1>
@@ -43,16 +43,16 @@ export default function CustomerServicesPage() {
           </Select>
         </div>
 
-        {/* Category chips */}
+        {/* Category chips - scrollable, no overflow */}
         <div className="flex gap-2.5 overflow-x-auto pb-4 mb-4 scrollbar-hide">
-          <Link to="/app/services">
+          <Link to="/app/services" className="shrink-0">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
               ${!categoryFilter ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
               <span className="text-sm font-medium">All</span>
             </div>
           </Link>
           {categories?.map((c) => (
-            <Link key={c.id} to={`/app/services?category=${c.name}`}>
+            <Link key={c.id} to={`/app/services?category=${c.name}`} className="shrink-0">
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
                 ${categoryFilter === c.name ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
                 {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
@@ -71,7 +71,7 @@ export default function CustomerServicesPage() {
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             {services?.map((s) => {
               const discountPct = s.discount ? Math.round((s.discount / s.price) * 100) : 0;
               return (
