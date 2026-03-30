@@ -1,23 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, ArrowLeft, Film } from "lucide-react";
+import { Search, X, ArrowLeft, Film, Heart, MessageCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const CATEGORIES = ["For You", "Trending", "Fashion", "Food", "Travel", "Tech", "Fitness", "Art", "Local", "Sports"];
-
-const MOCK_SEARCH_RECENT = [
-  { id: "1", username: "ted", name: "TED Talks", isVerified: true },
-  { id: "2", username: "voxdotcom", name: "Vox", isVerified: true },
-  { id: "3", username: "mkbhd", name: "Marques Brownlee", note: "Following" },
-];
-
-const EXPLORE_GRID = Array.from({ length: 24 }, (_, i) => ({
-  id: `e-${i}`,
-  isReel: i % 3 === 2,
-  color: ['bg-rose-200', 'bg-sky-200', 'bg-amber-200', 'bg-emerald-200', 'bg-violet-200'][i % 5],
-}));
 
 export default function SocialExplorePage() {
   const navigate = useNavigate();
@@ -25,7 +15,55 @@ export default function SocialExplorePage() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [activeCategory, setActiveCategory] = useState("For You");
 
+  // Fetch explore posts from DB
+  const { data: explorePosts = [] } = useQuery({
+    queryKey: ['social-explore', activeCategory],
+    queryFn: async () => {
+      let query = supabase
+        .from('social_posts')
+        .select('id, media, post_type, like_count, comment_count, view_count')
+        .eq('status', 'published')
+        .order('like_count', { ascending: false })
+        .limit(30);
+
+      if (activeCategory !== 'For You' && activeCategory !== 'Trending') {
+        query = query.contains('hashtags', [activeCategory.toLowerCase()]);
+      }
+      if (activeCategory === 'Trending') {
+        query = query.order('view_count', { ascending: false });
+      }
+
+      const { data } = await query;
+      return data || [];
+    },
+  });
+
+  // Search users/hashtags
+  const { data: searchResults = { users: [], hashtags: [] } } = useQuery({
+    queryKey: ['social-search', searchQuery],
+    queryFn: async () => {
+      if (!searchQuery.trim()) return { users: [], hashtags: [] };
+      const [{ data: users }, { data: hashtags }] = await Promise.all([
+        supabase.from('social_profiles').select('id, username, display_name, avatar_url, is_verified').ilike('username', `%${searchQuery}%`).limit(10),
+        supabase.from('social_hashtags').select('id, name, post_count').ilike('name', `%${searchQuery}%`).limit(5),
+      ]);
+      return { users: users || [], hashtags: hashtags || [] };
+    },
+    enabled: isSearchFocused && searchQuery.length > 0,
+  });
+
+  // Recent searches from DB
+  const { data: recentSearchUsers = [] } = useQuery({
+    queryKey: ['social-recent-search'],
+    queryFn: async () => {
+      const { data } = await supabase.from('social_profiles').select('id, username, display_name, avatar_url, is_verified').limit(5);
+      return data || [];
+    },
+    enabled: isSearchFocused && searchQuery.length === 0,
+  });
+
   if (isSearchFocused) {
+    const hasQuery = searchQuery.trim().length > 0;
     const searchView = (
       <div className="min-h-screen bg-background">
         <header className="sticky top-0 z-40 bg-card border-b border-border/30">
@@ -39,30 +77,94 @@ export default function SocialExplorePage() {
           </div>
         </header>
         <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold">Recent</span>
-            <button className="text-sm text-primary font-semibold">Clear all</button>
-          </div>
-          {MOCK_SEARCH_RECENT.map((item) => (
-            <div key={item.id} className="flex items-center gap-3 py-2.5">
-              <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center">
-                <span className="text-sm font-bold">{item.username.charAt(0).toUpperCase()}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-semibold">{item.username}</span>
-                  {item.isVerified && <svg className="h-3.5 w-3.5 text-primary fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>}
+          {hasQuery ? (
+            <>
+              {searchResults.hashtags.length > 0 && (
+                <div className="mb-4">
+                  <span className="text-sm font-semibold mb-2 block">Hashtags</span>
+                  {searchResults.hashtags.map((h: any) => (
+                    <button key={h.id} className="flex items-center gap-3 py-2.5 w-full" onClick={() => toast.info(`#${h.name}`)}>
+                      <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center">
+                        <span className="text-lg font-bold">#</span>
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-semibold">#{h.name}</p>
+                        <p className="text-xs text-muted-foreground">{(h.post_count || 0).toLocaleString()} posts</p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                <p className="text-xs text-muted-foreground">{item.name}{item.note ? ` • ${item.note}` : ''}</p>
+              )}
+              {searchResults.users.length > 0 && (
+                <div>
+                  <span className="text-sm font-semibold mb-2 block">Accounts</span>
+                  {searchResults.users.map((u: any) => (
+                    <button key={u.id} className="flex items-center gap-3 py-2.5 w-full" onClick={() => navigate(`/app/social/@${u.username}`)}>
+                      <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-sm font-bold">{u.username?.charAt(0).toUpperCase()}</span>}
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-semibold">{u.username}</span>
+                          {u.is_verified && <svg className="h-3.5 w-3.5 text-primary fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{u.display_name}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {searchResults.users.length === 0 && searchResults.hashtags.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-8">No results found</p>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold">Suggested</span>
               </div>
-              <button><X className="h-4 w-4 text-muted-foreground" /></button>
-            </div>
-          ))}
+              {recentSearchUsers.map((item: any) => (
+                <button key={item.id} className="flex items-center gap-3 py-2.5 w-full" onClick={() => navigate(`/app/social/@${item.username}`)}>
+                  <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                    {item.avatar_url ? <img src={item.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-sm font-bold">{item.username?.charAt(0).toUpperCase()}</span>}
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-semibold">{item.username}</span>
+                      {item.is_verified && <svg className="h-3.5 w-3.5 text-primary fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{item.display_name}</p>
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
         </div>
       </div>
     );
     return <SocialLayout hideSidebar>{searchView}</SocialLayout>;
   }
+
+  // Build grid items: mix DB posts with placeholders
+  const gridItems = explorePosts.length > 0
+    ? explorePosts.map((p: any, i: number) => {
+        const media = Array.isArray(p.media) && p.media.length > 0 ? p.media[0] : null;
+        return {
+          id: p.id,
+          isReel: p.post_type === 'reel',
+          imageUrl: media?.url || media?.thumbnailUrl || '',
+          likeCount: p.like_count || 0,
+          commentCount: p.comment_count || 0,
+        };
+      })
+    : Array.from({ length: 24 }, (_, i) => ({
+        id: `e-${i}`,
+        isReel: i % 3 === 2,
+        imageUrl: '',
+        color: ['bg-rose-200', 'bg-sky-200', 'bg-amber-200', 'bg-emerald-200', 'bg-violet-200'][i % 5],
+        likeCount: 0,
+        commentCount: 0,
+      }));
 
   const content = (
     <div className="pb-20 md:pb-8">
@@ -83,9 +185,23 @@ export default function SocialExplorePage() {
         </div>
       </header>
       <div className="grid grid-cols-3 gap-[2px]">
-        {EXPLORE_GRID.map((item) => (
-          <button key={item.id} className={`relative overflow-hidden ${item.color} aspect-square`} onClick={() => toast.info("Content detail coming soon")}>
+        {gridItems.map((item: any) => (
+          <button
+            key={item.id}
+            className={`relative overflow-hidden aspect-square group ${!item.imageUrl ? (item.color || 'bg-muted') : 'bg-muted'}`}
+            onClick={() => navigate(`/app/social/post/${item.id}`)}
+          >
+            {item.imageUrl ? (
+              <img src={item.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+            ) : (
+              <div className="w-full h-full" />
+            )}
             {item.isReel && <div className="absolute top-2 right-2"><Film className="h-4 w-4 text-white drop-shadow" /></div>}
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
+              <span className="flex items-center gap-1 text-sm font-bold"><Heart className="h-4 w-4 fill-white" />{item.likeCount}</span>
+              <span className="flex items-center gap-1 text-sm font-bold"><MessageCircle className="h-4 w-4 fill-white" />{item.commentCount}</span>
+            </div>
           </button>
         ))}
       </div>
