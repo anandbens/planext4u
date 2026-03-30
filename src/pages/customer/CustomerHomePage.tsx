@@ -547,24 +547,7 @@ export default function CustomerHomePage() {
           </div>
         </motion.section>
 
-        {/* Discount CTA */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-6">
-          <div className="relative bg-gradient-to-br from-success/90 to-success/70 rounded-2xl p-8 md:p-12 text-success-foreground overflow-hidden">
-            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
-            <div className="relative z-10">
-              <h2 className="text-2xl md:text-3xl font-bold">
-                Get <span className="text-warning">20% Discount</span> On Your First Purchase
-              </h2>
-              <p className="text-sm opacity-90 mt-2">Just Sign Up & Register to become a member</p>
-              <div className="flex gap-2 mt-4 max-w-sm">
-                <input type="email" placeholder="Email Address" className="flex-1 px-4 py-2.5 rounded-lg bg-card/20 border border-card/30 text-card placeholder:text-card/60 text-sm backdrop-blur-sm" />
-              </div>
-              <Button className="mt-3 bg-foreground text-background hover:bg-foreground/90 rounded-full px-6 font-semibold">
-                SUBSCRIBE NOW
-              </Button>
-            </div>
-          </div>
-        </motion.section>
+        <DiscountSubscriptionSection />
 
         {/* Trust Bar */}
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp}
