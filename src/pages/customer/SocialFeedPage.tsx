@@ -124,7 +124,7 @@ function PostCard({ post }: { post: any }) {
   const postId = post.id;
   const mediaItems = Array.isArray(post.media) ? post.media : [];
   const isCarousel = mediaItems.length > 1;
-  const isMock = postId === 'p1' || postId === 'p2' || postId === 'p3';
+  const isMock = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].includes(postId);
 
   const { data: isLiked = false } = useQuery({
     queryKey: ['social-like', postId, userId],
