@@ -464,14 +464,17 @@ export default function PropertyDetailPage() {
               <h3 className="text-sm font-bold mb-1">Amenities</h3>
               <div className="w-12 h-0.5 bg-destructive mb-4" />
               <div className="grid grid-cols-4 gap-y-6 gap-x-2">
-                {amenities.map((a: string) => (
-                  <div key={a} className="flex flex-col items-center text-center gap-2">
-                    <div className="h-12 w-12 rounded-lg border border-border/50 flex items-center justify-center text-xl">
-                      {AMENITY_ICONS[a] || "🏠"}
+                {amenities.map((a: string) => {
+                  const IconComp = AMENITY_ICON_MAP[a] || Home;
+                  return (
+                    <div key={a} className="flex flex-col items-center text-center gap-2">
+                      <div className="h-12 w-12 rounded-lg border border-border/50 flex items-center justify-center">
+                        <IconComp className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground leading-tight">{a}</span>
                     </div>
-                    <span className="text-[11px] text-muted-foreground leading-tight">{a}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           </div>
