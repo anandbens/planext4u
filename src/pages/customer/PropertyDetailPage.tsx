@@ -237,7 +237,26 @@ export default function PropertyDetailPage() {
   const handleSendEnquiry = async () => {
     if (!customerUser) { toast.error("Please login first"); navigate("/app/login"); return; }
     if (!enquiryMsg.trim()) { toast.error("Please enter a message"); return; }
-    toast.success("Enquiry sent to the owner!");
+    const seekerId = customerUser.customer_id || customerUser.id;
+    // Insert a property message for 1-1 chat
+    const { error } = await supabase.from("property_messages" as any).insert({
+      property_id: id,
+      sender_id: seekerId,
+      sender_name: customerUser.name || "User",
+      receiver_id: property.user_id,
+      message: enquiryMsg.trim(),
+      is_read: false,
+    } as any);
+    if (error) { toast.error("Failed to send message"); return; }
+    // Also create enquiry record
+    await supabase.from("property_enquiries" as any).insert({
+      property_id: id,
+      seeker_id: seekerId,
+      seeker_name: customerUser.name || "User",
+      message: enquiryMsg.trim(),
+      status: "pending",
+    } as any);
+    toast.success("Message sent to the owner!");
     setShowContact(false);
     setEnquiryMsg("");
   };

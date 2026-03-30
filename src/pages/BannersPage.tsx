@@ -110,7 +110,7 @@ export default function BannersPage() {
         onExport={handleExport}
         showDateFilter={false}
         summaryWidgets={summaryWidgets}
-        onCreate={() => openModal(null, "create")}
+        onAdd={() => openModal(null, "create")}
       />
       <BannerModal
         banner={selected}
