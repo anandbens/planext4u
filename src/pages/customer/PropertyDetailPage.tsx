@@ -323,8 +323,8 @@ export default function PropertyDetailPage() {
               <Phone className="h-4 w-4" /> Contact
             </Button>
             <Button variant="outline" className="h-11 gap-2 rounded-xl" onClick={() => {
-              if (!user) { toast.info("Login to message"); navigate("/app/login"); return; }
-              const myId = user.customer_id || user.id;
+              if (!customerUser) { toast.info("Login to message"); navigate("/app/login"); return; }
+              const myId = customerUser.customer_id || customerUser.id;
               navigate(`/app/find-home/messages?chat=${property.user_id}_${property.id}`);
             }}>
               <MessageCircle className="h-4 w-4" /> Message
