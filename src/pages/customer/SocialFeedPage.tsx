@@ -16,9 +16,9 @@ const FALLBACK_POSTS = [
     id: "p1", user_id: "mock", username: "vijay_sivakumar", displayName: "Vijay Sivakumar",
     isVerified: true, location_name: "Pondicherry, TN", created_at: new Date(Date.now() - 3600000).toISOString(),
     media: [
-      { type: "photo", url: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&h=600&fit=crop" },
-      { type: "photo", url: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=600&fit=crop" },
-      { type: "photo", url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://picsum.photos/seed/p1a/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p1b/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p1c/600/600" },
     ],
     caption: "Just tried the amazing coffee from Brooklyn Coffee Co.! Best pour-over in town ☕",
     hashtags: ["#coffee", "#local", "#brooklyn"],
@@ -29,8 +29,8 @@ const FALLBACK_POSTS = [
     id: "p2", user_id: "mock", username: "planext4u", displayName: "Planext4u",
     isVerified: true, location_name: "Coimbatore, TN", created_at: new Date(Date.now() - 10800000).toISOString(),
     media: [
-      { type: "photo", url: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&h=600&fit=crop" },
-      { type: "photo", url: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://picsum.photos/seed/p2a/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p2b/600/600" },
     ],
     caption: "Exciting things are coming to P4U! Stay tuned for the biggest update yet 🚀",
     hashtags: ["#planext4u", "#superapp"],
@@ -40,7 +40,7 @@ const FALLBACK_POSTS = [
     id: "p3", user_id: "mock", username: "priya_designs", displayName: "Priya Designs",
     isVerified: false, location_name: "Chennai, TN", created_at: new Date(Date.now() - 18000000).toISOString(),
     media: [
-      { type: "photo", url: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://picsum.photos/seed/p3a/600/600" },
     ],
     caption: "New collection dropping soon! What do you think of these designs? 🎨✨",
     hashtags: ["#design", "#art"],
@@ -50,8 +50,8 @@ const FALLBACK_POSTS = [
     id: "p4", user_id: "mock", username: "foodie_arun", displayName: "Arun Foodie",
     isVerified: false, location_name: "Bangalore, KA", created_at: new Date(Date.now() - 25200000).toISOString(),
     media: [
-      { type: "photo", url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=600&fit=crop" },
-      { type: "photo", url: "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://picsum.photos/seed/p4a/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p4b/600/600" },
     ],
     caption: "Weekend biryani feast at this hidden gem in Koramangala 🍚🔥 Must try!",
     hashtags: ["#food", "#biryani", "#bangalore"],
@@ -61,9 +61,9 @@ const FALLBACK_POSTS = [
     id: "p5", user_id: "mock", username: "travel_meera", displayName: "Meera Travels",
     isVerified: true, location_name: "Munnar, KL", created_at: new Date(Date.now() - 43200000).toISOString(),
     media: [
-      { type: "photo", url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=600&fit=crop" },
-      { type: "photo", url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&h=600&fit=crop" },
-      { type: "photo", url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://picsum.photos/seed/p5a/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p5b/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p5c/600/600" },
     ],
     caption: "Lost in the tea gardens of Munnar 🍃 This place is pure magic",
     hashtags: ["#travel", "#munnar", "#kerala", "#nature"],
@@ -73,7 +73,7 @@ const FALLBACK_POSTS = [
     id: "p6", user_id: "mock", username: "fit_kumar", displayName: "Kumar Fitness",
     isVerified: false, location_name: "Hyderabad, TS", created_at: new Date(Date.now() - 72000000).toISOString(),
     media: [
-      { type: "photo", url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://picsum.photos/seed/p6a/600/600" },
     ],
     caption: "Day 90 of the transformation journey 💪 Consistency is key!",
     hashtags: ["#fitness", "#gym", "#transformation"],
@@ -83,16 +83,16 @@ const FALLBACK_POSTS = [
 
 const MOCK_STORIES = [
   { id: "own", username: "Your Story", avatar: "", isOwn: true, seen: false },
-  { id: "s1", username: "vijay_kumar", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop", seen: false },
-  { id: "s2", username: "priya_designs", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", seen: false },
-  { id: "s3", username: "rahul_food", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop", seen: true },
-  { id: "s4", username: "anita_travel", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop", seen: true },
-  { id: "s5", username: "karthik_tech", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop", seen: false },
-  { id: "s6", username: "sneha_art", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop", seen: false },
-  { id: "s7", username: "planext4u", avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop", seen: true },
-  { id: "s8", username: "foodie_chen", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop", seen: false },
-  { id: "s9", username: "dev_rajan", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop", seen: true },
-  { id: "s10", username: "dance_queen", avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop", seen: false },
+  { id: "s1", username: "vijay_kumar", avatar: "https://i.pravatar.cc/100?u=vijay", seen: false },
+  { id: "s2", username: "priya_designs", avatar: "https://i.pravatar.cc/100?u=priya", seen: false },
+  { id: "s3", username: "rahul_food", avatar: "https://i.pravatar.cc/100?u=rahul", seen: true },
+  { id: "s4", username: "anita_travel", avatar: "https://i.pravatar.cc/100?u=anita", seen: true },
+  { id: "s5", username: "karthik_tech", avatar: "https://i.pravatar.cc/100?u=karthik", seen: false },
+  { id: "s6", username: "sneha_art", avatar: "https://i.pravatar.cc/100?u=sneha", seen: false },
+  { id: "s7", username: "planext4u", avatar: "https://i.pravatar.cc/100?u=planext", seen: true },
+  { id: "s8", username: "foodie_chen", avatar: "https://i.pravatar.cc/100?u=chen", seen: false },
+  { id: "s9", username: "dev_rajan", avatar: "https://i.pravatar.cc/100?u=rajan", seen: true },
+  { id: "s10", username: "dance_queen", avatar: "https://i.pravatar.cc/100?u=dance", seen: false },
 ];
 
 function formatCount(n: number): string {
@@ -281,8 +281,22 @@ function PostCard({ post }: { post: any }) {
       {/* Media */}
       <div className="relative aspect-square bg-muted overflow-hidden">
         {mediaItems.length > 0 ? (
-          <img src={mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || ''} alt="" className="w-full h-full object-cover" loading="lazy"
-            onDoubleClick={() => toggleLike.mutate()} />
+          <img 
+            src={mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || ''} 
+            alt="" 
+            className="w-full h-full object-cover" 
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
+            onDoubleClick={() => toggleLike.mutate()}
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.dataset.retried) {
+                target.dataset.retried = "1";
+                target.src = target.src.replace('&fit=crop', '&fit=crop&auto=format');
+              }
+            }}
+          />
         ) : (
           <div className="w-full h-full bg-accent/30 flex items-center justify-center"><span className="text-muted-foreground text-sm">No media</span></div>
         )}
