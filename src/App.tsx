@@ -215,6 +215,7 @@ const App = () => (
             <Route path="/app/social/reels" element={<SocialReelsPage />} />
             <Route path="/app/social/stories/:userId" element={<SocialStoryViewerPage />} />
             <Route path="/app/social/messages" element={<SocialDMPage />} />
+            <Route path="/app/social/messages/:recipientId" element={<SocioDMChatPage />} />
             <Route path="/app/social/notifications" element={<SocialNotificationsPage />} />
             <Route path="/app/social/settings" element={<SocialSettingsPage />} />
             <Route path="/app/social/@:username" element={<SocialProfilePage />} />
