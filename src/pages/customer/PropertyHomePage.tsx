@@ -424,7 +424,7 @@ export default function PropertyHomePage() {
         <div className="px-4 py-1 text-sm text-muted-foreground">{sortedProperties.length} properties found</div>
 
         {/* Property Listings */}
-        <div className="px-4 space-y-4">
+        <div className="px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />)
           ) : sortedProperties.length === 0 ? (
