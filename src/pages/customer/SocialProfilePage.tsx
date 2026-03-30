@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Settings, Plus, Grid3X3, Film, Bookmark, Users, MoreHorizontal, ChevronDown, Share2, UserPlus, MessageCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import SocialLayout from "@/components/social/SocialLayout";
 
 const MOCK_HIGHLIGHTS = [
   { id: "h1", name: "Add", isNew: true },
