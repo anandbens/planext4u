@@ -172,6 +172,7 @@ export function AdminSidebar() {
         <NavGroup label="Reports" items={reportItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="Configuration" items={configItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="P4U Homes" items={homesItems} collapsed={collapsed} userRole={role} />
+        <NavGroup label="P4U Social" items={socialItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="System" items={systemItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="Portals" items={portalLinks} collapsed={collapsed} userRole={role} />
       </SidebarContent>
