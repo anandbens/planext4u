@@ -43,10 +43,10 @@ export default function SocialProfilePage() {
     followedBy: ["Youtube", "Flipkart", "Zomato", "Blinkit", "Zepto"],
   };
 
-  return (
-    <div className="min-h-screen bg-background pb-20">
+  const content = (
+    <div className="pb-20 md:pb-8">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-card border-b border-border/30">
+      <header className="sticky top-0 z-40 bg-card border-b border-border/30 md:hidden">
         <div className="flex items-center justify-between px-4 py-3 max-w-xl mx-auto">
           <div className="flex items-center gap-2">
             {!isOwnProfile && (
