@@ -69,6 +69,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
     if (path === '/app/browse') return location.pathname.startsWith('/app/browse') || location.pathname.startsWith('/app/product') || location.pathname.startsWith('/app/cart') || location.pathname.startsWith('/app/vendor');
     if (path === '/app/services') return location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/');
     if (path === '/app/classifieds') return location.pathname.startsWith('/app/classifieds');
+    if (path === '/app/find-home') return location.pathname.startsWith('/app/find-home');
     return location.pathname === path;
   };
 
