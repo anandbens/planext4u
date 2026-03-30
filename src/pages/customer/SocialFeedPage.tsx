@@ -104,11 +104,11 @@ export default function SocialFeedPage() {
             <button onClick={() => navigate("/app/social/create")} className="p-1.5">
               <Plus className="h-6 w-6" />
             </button>
-            <button onClick={() => toast.info("Notifications coming soon")} className="p-1.5 relative">
+            <button onClick={() => navigate("/app/social/messages")} className="p-1.5 relative">
               <Heart className="h-6 w-6" />
               <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-destructive rounded-full" />
             </button>
-            <button onClick={() => toast.info("Messages coming soon")} className="p-1.5">
+            <button onClick={() => navigate("/app/social/messages")} className="p-1.5">
               <Send className="h-6 w-6" />
             </button>
           </div>
