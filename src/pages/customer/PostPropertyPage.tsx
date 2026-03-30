@@ -14,10 +14,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
-const AMENITIES = [
-  "Lift", "Security Guard", "CCTV", "Gym", "Swimming Pool", "Power Backup",
-  "Water Supply 24x7", "Club House", "Children Play Area", "Garden",
-  "Gas Pipeline", "Intercom", "Rainwater Harvesting", "Visitor Parking", "Fire Safety",
+const AMENITIES_WITH_ICONS: { name: string; icon: React.ComponentType<any> }[] = [
+  { name: "Intercom", icon: Radio }, { name: "Air Conditioner", icon: Snowflake },
+  { name: "Rain Water Harvesting", icon: CloudRain }, { name: "Internet Provider", icon: Wifi },
+  { name: "Lift", icon: Building2 }, { name: "Club House", icon: Warehouse },
+  { name: "Gas Pipeline", icon: Flame }, { name: "Fire Safety", icon: Siren },
+  { name: "Park", icon: Trees }, { name: "Power Backup", icon: BatteryCharging },
+  { name: "Children Play Area", icon: Baby }, { name: "Security Guard", icon: ShieldCheck },
+  { name: "Gym", icon: Dumbbell }, { name: "Swimming Pool", icon: Waves },
+  { name: "CCTV", icon: Cctv }, { name: "Visitor Parking", icon: ParkingCircle },
+  { name: "Servant Room", icon: DoorOpen }, { name: "24x7 Water", icon: Droplets },
+  { name: "Gated Community", icon: Home },
 ];
 
 const STEPS = [
