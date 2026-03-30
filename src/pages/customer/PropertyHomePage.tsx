@@ -172,19 +172,33 @@ export default function PropertyHomePage() {
               <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center"><Calculator className="h-5 w-5 text-success" /></div>
               <span className="text-[10px] font-medium text-center leading-tight">EMI Calculator</span>
             </Link>
-            <Link to="/app/find-home?type=pg" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
-              <div className="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center"><Building2 className="h-5 w-5 text-warning" /></div>
-              <span className="text-[10px] font-medium text-center leading-tight">Find PG</span>
+            <Link to="/app/find-home/rent-tracker" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
+              <div className="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center"><IndianRupee className="h-5 w-5 text-warning" /></div>
+              <span className="text-[10px] font-medium text-center leading-tight">Rent Tracker</span>
             </Link>
-            <Link to="/app/find-home/my-properties" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all hidden md:flex">
+            <Link to="/app/find-home/value-estimator" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
               <div className="h-10 w-10 rounded-full bg-info/10 flex items-center justify-center"><TrendingUp className="h-5 w-5 text-info" /></div>
+              <span className="text-[10px] font-medium text-center leading-tight">Value Estimator</span>
+            </Link>
+            <Link to="/app/find-home/messages" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
+              <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center"><MessageCircle className="h-5 w-5 text-muted-foreground" /></div>
+              <span className="text-[10px] font-medium text-center leading-tight">Messages</span>
+            </Link>
+            <Link to="/app/find-home/saved-searches" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
+              <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center"><Bookmark className="h-5 w-5 text-destructive" /></div>
+              <span className="text-[10px] font-medium text-center leading-tight">Saved Searches</span>
+            </Link>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            <Link to="/app/find-home/my-properties" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center"><Home className="h-5 w-5 text-primary" /></div>
               <span className="text-[10px] font-medium text-center leading-tight">My Properties</span>
             </Link>
-            <Link to="/app/find-home/saved" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all hidden md:flex">
+            <Link to="/app/find-home/saved" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
               <div className="h-10 w-10 rounded-full bg-destructive/10 flex items-center justify-center"><Heart className="h-5 w-5 text-destructive" /></div>
-              <span className="text-[10px] font-medium text-center leading-tight">Saved</span>
+              <span className="text-[10px] font-medium text-center leading-tight">Saved Properties</span>
             </Link>
-            <Link to="/app/services" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all hidden md:flex">
+            <Link to="/app/services" className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md transition-all">
               <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center"><Wrench className="h-5 w-5 text-muted-foreground" /></div>
               <span className="text-[10px] font-medium text-center leading-tight">Home Services</span>
             </Link>
