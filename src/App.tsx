@@ -215,6 +215,14 @@ const App = () => (
             <Route path="/app/social/notifications" element={<SocialNotificationsPage />} />
             <Route path="/app/social/settings" element={<SocialSettingsPage />} />
             <Route path="/app/social/@:username" element={<SocialProfilePage />} />
+            <Route path="/app/social/comments/:postId" element={<SocialCommentsPage />} />
+            <Route path="/app/social/:username/followers" element={<SocialFollowersPage />} />
+            <Route path="/app/social/:username/following" element={<SocialFollowersPage />} />
+            <Route path="/app/social/edit-profile" element={<SocialEditProfilePage />} />
+            <Route path="/app/social/dashboard" element={<SocialCreatorDashboardPage />} />
+            <Route path="/app/social/live" element={<SocialLivePage />} />
+            <Route path="/app/social/channels" element={<SocialBroadcastPage />} />
+            <Route path="/app/social/shop" element={<SocialShopPage />} />
 
             {/* Admin Social */}
             <Route path="/admin/social" element={<ProtectedPage><AdminSocialDashboardPage /></ProtectedPage>} />
