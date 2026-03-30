@@ -240,33 +240,10 @@ export default function SocialProfilePage() {
           </div>
         )}
       </div>
-
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
-        <div className="flex items-center justify-around px-2 py-2.5 max-w-xl mx-auto">
-          <Link to="/app/social" className="flex flex-col items-center gap-0.5">
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-          </Link>
-          <Link to="/app/social/explore" className="flex flex-col items-center gap-0.5">
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          </Link>
-          <Link to="/app/social/create" className="flex flex-col items-center gap-0.5">
-            <div className="h-7 w-7 rounded-lg border-2 border-foreground flex items-center justify-center">
-              <Plus className="h-4 w-4" />
-            </div>
-          </Link>
-          <button onClick={() => toast.info("Reels coming soon")} className="flex flex-col items-center gap-0.5">
-            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M2 8h20M8 2v6M10 12l6 3.5-6 3.5z"/></svg>
-          </button>
-          <Link to="/app/social/profile" className="flex flex-col items-center gap-0.5">
-            <div className="h-7 w-7 rounded-full bg-muted border-2 border-foreground flex items-center justify-center overflow-hidden">
-              <span className="text-xs font-bold">{customerUser?.name?.charAt(0) || 'U'}</span>
-            </div>
-          </Link>
-        </div>
-      </nav>
     </div>
   );
+
+  return <SocialLayout hideRightSidebar>{content}</SocialLayout>;
 }
 
 function Bell(props: any) {
