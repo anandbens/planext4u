@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, Film, MessageCircle, Bell, Plus, Settings, User, Compass } from "lucide-react";
+import { Home, Search, Film, MessageCircle, Bell, Plus, Settings, User, Compass, ArrowLeft, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -10,18 +10,12 @@ const MOCK_SEARCH_RECENT = [
   { id: "1", username: "ted", name: "TED Talks", isVerified: true },
   { id: "2", username: "voxdotcom", name: "Vox", isVerified: true },
   { id: "3", username: "mkbhd", name: "Marques Brownlee", note: "Following" },
-  { id: "4", username: "mkbhd", name: "Marques Brownlee", note: "Following" },
-  { id: "5", username: "mkbhd", name: "Marques Brownlee", note: "Following" },
-  { id: "6", username: "mkbhd", name: "Marques Brownlee", note: "Following" },
 ];
 
 const MOCK_SUGGESTIONS = [
   { id: "s1", username: "imkirtichadha", note: "Follows you" },
-  { id: "s2", username: "imkirtichadha", note: "Follows you" },
-  { id: "s3", username: "imkirtichadha", note: "Follows you" },
-  { id: "s4", username: "imkirtichadha", note: "Follows you" },
-  { id: "s5", username: "imkirtichadha", note: "Follows you" },
-  { id: "s6", username: "imkirtichadha", note: "Follows you" },
+  { id: "s2", username: "designbyshree", note: "Suggested for you" },
+  { id: "s3", username: "travel_india", note: "Follows you" },
 ];
 
 interface SocialLayoutProps {
@@ -52,13 +46,47 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
     return location.pathname.startsWith(path);
   };
 
+  // Detect if we're on a sub-page (not a main nav item)
+  const isSubPage = !NAV_ITEMS.some(item => 
+    item.path === location.pathname || 
+    (item.path === "/app/social" && location.pathname === "/app/social")
+  );
+
   return (
     <div className="min-h-screen bg-background">
+      {/* Desktop top bar - back to super app */}
+      <div className="hidden md:block sticky top-0 z-50 bg-card border-b border-border/30">
+        <div className="max-w-[1200px] mx-auto flex items-center justify-between px-4 py-2">
+          <div className="flex items-center gap-3">
+            <Link to="/app" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <ChevronLeft className="h-4 w-4" />
+              <span>Back to P4U</span>
+            </Link>
+            <span className="text-border">|</span>
+            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Socio
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            {customerUser ? (
+              <Link to="/app/social/profile" className="flex items-center gap-2 text-sm">
+                <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center">
+                  <span className="text-xs font-bold text-primary">{customerUser.name?.charAt(0) || 'U'}</span>
+                </div>
+                <span className="font-medium">{customerUser.name || 'Profile'}</span>
+              </Link>
+            ) : (
+              <Link to="/app/login" className="text-sm font-semibold text-primary">Login</Link>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Desktop layout: sidebar + content + right sidebar */}
       <div className="hidden md:flex max-w-[1200px] mx-auto">
         {/* Left Sidebar */}
         {!hideSidebar && (
-          <aside className="w-[220px] shrink-0 sticky top-[120px] self-start py-4 pl-4 pr-2">
+          <aside className="w-[220px] shrink-0 sticky top-[49px] self-start py-4 pl-4 pr-2 h-[calc(100vh-49px)] overflow-y-auto">
             <nav className="bg-card rounded-xl border border-border/30 py-2">
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item.path);
@@ -105,7 +133,7 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
 
         {/* Right Sidebar */}
         {!hideRightSidebar && !hideSidebar && (
-          <aside className="w-[280px] shrink-0 sticky top-[120px] self-start py-4 pr-4 pl-2 space-y-4">
+          <aside className="w-[280px] shrink-0 sticky top-[49px] self-start py-4 pr-4 pl-2 space-y-4 h-[calc(100vh-49px)] overflow-y-auto">
             {/* Search */}
             <div className="bg-card rounded-xl border border-border/30 p-4">
               <div className="flex items-center justify-between mb-3">
