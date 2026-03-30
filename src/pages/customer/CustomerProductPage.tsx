@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Heart, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw, ChevronLeft, Search, Clock } from "lucide-react";
+import { Star, Heart, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw, ChevronLeft, Search, Clock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,21 +17,11 @@ const reviews = [
   { user: "Amit K.", rating: 5, comment: "Best in this price range. Highly recommended!", date: "1 week ago" },
 ];
 
-const COLORS = [
-  { name: "Red", color: "bg-red-500" },
-  { name: "Blue", color: "bg-blue-600" },
-  { name: "Green", color: "bg-green-500" },
-];
-
-const SIZES = ["128 GB", "256 GB", "512 GB", "1 TB"];
-
 export default function CustomerProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [wishlisted, setWishlisted] = useState(false);
-  const [selectedColor, setSelectedColor] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(0);
   const [imgIdx, setImgIdx] = useState(0);
 
   const { data: product, isLoading } = useQuery({
@@ -40,10 +30,41 @@ export default function CustomerProductPage() {
     enabled: !!id,
   });
 
+  // Check wishlist status on load
+  useEffect(() => {
+    if (!id) return;
+    try {
+      const wl = JSON.parse(localStorage.getItem('app_db_wishlist') || '[]') as string[];
+      setWishlisted(wl.includes(id));
+    } catch {}
+  }, [id]);
+
+  const toggleWishlist = () => {
+    if (!id) return;
+    try {
+      let wl = JSON.parse(localStorage.getItem('app_db_wishlist') || '[]') as string[];
+      if (wishlisted) {
+        wl = wl.filter(w => w !== id);
+        toast.success("Removed from wishlist");
+      } else {
+        wl.push(id);
+        toast.success("Added to wishlist");
+      }
+      localStorage.setItem('app_db_wishlist', JSON.stringify(wl));
+      setWishlisted(!wishlisted);
+    } catch {}
+  };
+
   const addToCart = async () => {
     if (!product) return;
     await api.addToCart(product, qty);
     toast.success(`${product.title} (×${qty}) added to cart`);
+  };
+
+  const buyNow = async () => {
+    if (!product) return;
+    await api.addToCart(product, qty);
+    navigate('/app/cart');
   };
 
   if (isLoading) return <CustomerLayout><div className="p-8"><Skeleton className="h-96 rounded-2xl" /></div></CustomerLayout>;
@@ -73,7 +94,7 @@ export default function CustomerProductPage() {
               ) : (
                 <span className="text-8xl">{product.emoji}</span>
               )}
-              <button onClick={() => { setWishlisted(!wishlisted); toast.success(wishlisted ? "Removed from wishlist" : "Added to wishlist"); }}
+              <button onClick={toggleWishlist}
                 className="absolute top-3 right-3 h-8 w-8 rounded-full bg-card/80 flex items-center justify-center">
                 <Heart className={`h-4 w-4 ${wishlisted ? "fill-destructive text-destructive" : "text-muted-foreground"}`} />
               </button>
@@ -117,28 +138,35 @@ export default function CustomerProductPage() {
               <span className="font-medium">Secure delivery in 20 Minutes</span>
             </div>
 
-            {/* Color Selection */}
+            {/* Category info */}
+            {product.category_name && (
+              <div className="mt-4">
+                <p className="text-sm font-semibold mb-1">Category</p>
+                <Badge variant="outline">{product.category_name}</Badge>
+              </div>
+            )}
+
+            {/* Quantity Selector */}
             <div className="mt-5">
-              <p className="text-sm font-semibold mb-2">Colour</p>
-              <div className="flex gap-2">
-                {COLORS.map((c, i) => (
-                  <button key={c.name} onClick={() => setSelectedColor(i)}
-                    className={`h-9 w-9 rounded-full ${c.color} ${i === selectedColor ? 'ring-2 ring-primary ring-offset-2' : ''}`} />
-                ))}
+              <p className="text-sm font-semibold mb-2">Quantity</p>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center border border-border rounded-lg">
+                  <button onClick={() => setQty(q => Math.max(1, q - 1))} className="h-10 w-10 flex items-center justify-center hover:bg-accent rounded-l-lg"><Minus className="h-4 w-4" /></button>
+                  <span className="text-sm font-bold w-10 text-center">{qty}</span>
+                  <button onClick={() => setQty(q => q + 1)} className="h-10 w-10 flex items-center justify-center hover:bg-accent rounded-r-lg"><Plus className="h-4 w-4" /></button>
+                </div>
+                <span className="text-xs text-muted-foreground">{product.stock ? `${product.stock} in stock` : ''}</span>
               </div>
             </div>
 
-            {/* Size/Storage Selection */}
-            <div className="mt-4">
-              <p className="text-sm font-semibold mb-2">Storage</p>
-              <div className="flex gap-2 flex-wrap">
-                {SIZES.map((s, i) => (
-                  <button key={s} onClick={() => setSelectedSize(i)}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${i === selectedSize ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/30'}`}>
-                    {s}
-                  </button>
-                ))}
-              </div>
+            {/* Desktop Action Buttons */}
+            <div className="hidden md:flex gap-3 mt-5">
+              <Button className="flex-1 h-12 gap-2" onClick={addToCart}>
+                <ShoppingCart className="h-4 w-4" /> Add to Cart
+              </Button>
+              <Button variant="secondary" className="flex-1 h-12 gap-2" onClick={buyNow}>
+                <Zap className="h-4 w-4" /> Buy Now
+              </Button>
             </div>
 
             {/* Trust Badges */}
@@ -176,16 +204,25 @@ export default function CustomerProductPage() {
 
       {/* Sticky Bottom Bar - mobile */}
       <div className="fixed bottom-14 left-0 right-0 z-40 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[10px] text-muted-foreground">1 Unit</span>
-            <div className="flex items-baseline gap-2">
-              <span className="text-lg font-bold">₹{product.price.toLocaleString()}</span>
-              {discountPct > 0 && <span className="text-xs text-muted-foreground line-through">MRP ₹{originalPrice.toLocaleString()}</span>}
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center border border-border rounded-lg">
+                <button onClick={() => setQty(q => Math.max(1, q - 1))} className="h-9 w-8 flex items-center justify-center"><Minus className="h-3 w-3" /></button>
+                <span className="text-sm font-bold w-6 text-center">{qty}</span>
+                <button onClick={() => setQty(q => q + 1)} className="h-9 w-8 flex items-center justify-center"><Plus className="h-3 w-3" /></button>
+              </div>
+              <div>
+                <span className="text-lg font-bold">₹{product.price.toLocaleString()}</span>
+                {discountPct > 0 && <span className="text-[10px] text-muted-foreground line-through ml-1">₹{originalPrice.toLocaleString()}</span>}
+              </div>
             </div>
           </div>
-          <Button className="h-11 px-6 rounded-xl gap-2" onClick={addToCart}>
-            <ShoppingCart className="h-4 w-4" /> Add to cart
+          <Button className="h-11 px-4 rounded-xl gap-1.5 text-sm" onClick={addToCart}>
+            <ShoppingCart className="h-4 w-4" /> Cart
+          </Button>
+          <Button variant="secondary" className="h-11 px-4 rounded-xl gap-1.5 text-sm" onClick={buyNow}>
+            <Zap className="h-4 w-4" /> Buy Now
           </Button>
         </div>
       </div>
