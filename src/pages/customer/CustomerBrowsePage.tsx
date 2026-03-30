@@ -17,6 +17,8 @@ export default function CustomerBrowsePage() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState("popular");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
   const categoryFilter = searchParams.get("category") || undefined;
   const searchFilter = searchParams.get("search") || undefined;
   const [cartCount, setCartCount] = useState(0);
