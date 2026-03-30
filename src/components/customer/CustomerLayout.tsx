@@ -429,21 +429,22 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           <div className="relative flex items-center justify-around px-1 py-2">
             {navItems.map((item) => {
               const active = isActive(item.to);
+              const showBadge = item.badge !== undefined && item.badge > 0;
 
               const content = (
                 <div className="flex flex-col items-center relative z-10">
                   {active ? (
                     <motion.div
                       layoutId="nav-active-pill"
-                      className="flex flex-col items-center justify-center bg-primary rounded-[18px] px-5 py-2.5 -mt-7 relative"
+                      className="flex flex-col items-center justify-center bg-primary rounded-[18px] px-4 py-2.5 -mt-7 relative"
                       style={{ boxShadow: '0 4px 20px -2px hsl(180 100% 30% / 0.45), 0 0 10px 0 hsl(180 100% 30% / 0.2)' }}
                       transition={{ type: "spring", stiffness: 380, damping: 28 }}
                     >
                       <item.icon className="h-5 w-5 text-primary-foreground" />
-                      <span className="text-[9px] font-bold text-primary-foreground mt-0.5 leading-tight">
+                      <span className="text-[9px] font-bold text-primary-foreground mt-0.5 leading-tight whitespace-nowrap">
                         {item.label}
                       </span>
-                      {item.badge && item.badge > 0 && (
+                      {showBadge && (
                         <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[8px] flex items-center justify-center font-bold">
                           {item.badge}
                         </span>
@@ -452,10 +453,10 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                   ) : (
                     <div className="flex flex-col items-center justify-center py-1 relative">
                       <item.icon className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-[9px] font-medium text-muted-foreground mt-0.5 leading-tight">
+                      <span className="text-[9px] font-medium text-muted-foreground mt-0.5 leading-tight whitespace-nowrap">
                         {item.label}
                       </span>
-                      {item.badge && item.badge > 0 && (
+                      {showBadge && (
                         <span className="absolute -top-1 right-0 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[8px] flex items-center justify-center font-bold">
                           {item.badge}
                         </span>
@@ -467,7 +468,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
 
               return (
                 <Link key={item.to + item.label} to={item.to}
-                  className="flex flex-col items-center relative min-w-[48px]">
+                  className="flex-1 flex flex-col items-center relative">
                   {content}
                 </Link>
               );
