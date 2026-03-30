@@ -73,6 +73,10 @@ import SocialFeedPage from "./pages/customer/SocialFeedPage";
 import SocialCreatePostPage from "./pages/customer/SocialCreatePostPage";
 import SocialProfilePage from "./pages/customer/SocialProfilePage";
 import SocialExplorePage from "./pages/customer/SocialExplorePage";
+import SocialReelsPage from "./pages/customer/SocialReelsPage";
+import SocialStoryViewerPage from "./pages/customer/SocialStoryViewerPage";
+import SocialDMPage from "./pages/customer/SocialDMPage";
+import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
 
 // Property pages
 import PropertyHomePage from "./pages/customer/PropertyHomePage";
