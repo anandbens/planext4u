@@ -1,10 +1,11 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Music2, Plus, Search, Home } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Music2, Plus, Search, Home, Play } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import SocialLayout from "@/components/social/SocialLayout";
 
 const MOCK_REELS = [
   {
