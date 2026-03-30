@@ -131,15 +131,17 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           </div>
 
           {/* Row 2: Horizontal pill tabs */}
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-3">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-3 -mx-1 px-1" style={{ WebkitOverflowScrolling: 'touch' }}>
             {[
               { label: "planext4u", to: "/app", highlight: true },
               { label: "Shop", to: "/app/browse" },
               { label: "Services", to: "/app/services" },
+              { label: "Socio", to: "/app/social" },
+              { label: "Find Home", to: "/app/find-home" },
               { label: "Classified", to: "/app/classifieds" },
             ].map((tab) => (
               <Link key={tab.label} to={tab.to}
-                className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all
+                className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap
                   ${tab.highlight
                     ? 'bg-primary-foreground text-primary'
                     : isActive(tab.to)
