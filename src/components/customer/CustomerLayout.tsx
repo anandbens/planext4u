@@ -225,7 +225,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
               {[
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
                 { icon: Wrench, label: "Services", to: "/app/services" },
-                { icon: Megaphone, label: "Socio", to: "#", comingSoon: true },
+                { icon: Megaphone, label: "Socio", to: "/app/social" },
                 { icon: Building, label: "Find Home", to: "/app/find-home" },
                 { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds" },
               ].map((tab) => (
