@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronRight, Upload, X, Check, Home, MapPin, Building2, IndianRupee, Image } from "lucide-react";
+import { ArrowLeft, ChevronRight, Upload, X, Check, Home, MapPin, Building2, IndianRupee, Image, Radio, Snowflake, CloudRain, Wifi, Warehouse, Flame, Siren, Trees, BatteryCharging, Baby, ShieldCheck, Dumbbell, ParkingCircle, DoorOpen, Waves, Cctv, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
