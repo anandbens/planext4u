@@ -449,7 +449,7 @@ export default function SocialFeedPage() {
       </div>
 
       {/* Stories - horizontally scrollable */}
-      <div ref={storiesRef} className="flex gap-3 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-border/20" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div ref={storiesRef} className="flex gap-3 px-4 py-3 overflow-x-auto overflow-y-hidden scrollbar-hide border-b border-border/20 max-w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
         {stories.map((story: any) => (
           <button key={story.id} className="flex flex-col items-center gap-1 shrink-0"
             onClick={() => navigate(story.isOwn ? "/app/social/create" : `/app/social/stories/${story.id}`)}>
