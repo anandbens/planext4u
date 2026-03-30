@@ -36,6 +36,7 @@ function formatPrice(price: number): string {
 export default function PropertyHomePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { customerUser } = useAuth();
   const [transactionType, setTransactionType] = useState(searchParams.get("type") || "rent");
   const [searchCity, setSearchCity] = useState("");
   const [showFilters, setShowFilters] = useState(false);
