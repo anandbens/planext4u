@@ -73,6 +73,10 @@ import SocialFeedPage from "./pages/customer/SocialFeedPage";
 import SocialCreatePostPage from "./pages/customer/SocialCreatePostPage";
 import SocialProfilePage from "./pages/customer/SocialProfilePage";
 import SocialExplorePage from "./pages/customer/SocialExplorePage";
+import SocialReelsPage from "./pages/customer/SocialReelsPage";
+import SocialStoryViewerPage from "./pages/customer/SocialStoryViewerPage";
+import SocialDMPage from "./pages/customer/SocialDMPage";
+import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
 
 // Property pages
 import PropertyHomePage from "./pages/customer/PropertyHomePage";
@@ -196,7 +200,13 @@ const App = () => (
             <Route path="/app/social/create" element={<SocialCreatePostPage />} />
             <Route path="/app/social/profile" element={<SocialProfilePage />} />
             <Route path="/app/social/explore" element={<SocialExplorePage />} />
+            <Route path="/app/social/reels" element={<SocialReelsPage />} />
+            <Route path="/app/social/stories/:userId" element={<SocialStoryViewerPage />} />
+            <Route path="/app/social/messages" element={<SocialDMPage />} />
             <Route path="/app/social/@:username" element={<SocialProfilePage />} />
+
+            {/* Admin Social */}
+            <Route path="/admin/social" element={<ProtectedPage><AdminSocialDashboardPage /></ProtectedPage>} />
 
             {/* Property / Find Home routes */}
             <Route path="/app/find-home" element={<PropertyHomePage />} />

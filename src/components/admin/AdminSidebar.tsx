@@ -3,7 +3,7 @@ import {
   Megaphone, Star, Gift, BarChart3, Settings, Image, FileText, LogOut,
   Grid3X3, Wrench, Receipt, MapPin, Map, Tag, Briefcase, SlidersHorizontal,
   MessageSquare, MonitorPlay, ExternalLink, ClipboardList, Headphones, Key,
-  Home, Crown, Shield, Filter, Palette, Flag,
+  Home, Crown, Shield, Filter, Palette, Flag, Heart,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -63,6 +63,11 @@ const homesItems: NavItem[] = [
   { title: "Property Users", url: "/admin/homes/users", icon: Users, roles: ['admin'] },
   { title: "Homes CMS", url: "/admin/homes/cms", icon: Palette, roles: ['admin'] },
   { title: "Property Reports", url: "/admin/property-reports", icon: BarChart3, roles: ['admin'] },
+];
+
+// P4U Social admin section
+const socialItems: NavItem[] = [
+  { title: "Social Dashboard", url: "/admin/social", icon: Heart, roles: ['admin'] },
 ];
 
 const systemItems: NavItem[] = [
@@ -167,6 +172,7 @@ export function AdminSidebar() {
         <NavGroup label="Reports" items={reportItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="Configuration" items={configItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="P4U Homes" items={homesItems} collapsed={collapsed} userRole={role} />
+        <NavGroup label="P4U Social" items={socialItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="System" items={systemItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="Portals" items={portalLinks} collapsed={collapsed} userRole={role} />
       </SidebarContent>
