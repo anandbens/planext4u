@@ -18,8 +18,9 @@ const FALLBACK_POSTS = [
     media: [
       { type: "photo", url: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&h=600&fit=crop" },
       { type: "photo", url: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=600&fit=crop" },
     ],
-    caption: "Just tried the amazing coffee from Brooklyn Coffee Co.! Best...",
+    caption: "Just tried the amazing coffee from Brooklyn Coffee Co.! Best pour-over in town ☕",
     hashtags: ["#coffee", "#local", "#brooklyn"],
     like_count: 1600, comment_count: 800, share_count: 145,
     collabUser: "Kokila",
@@ -27,7 +28,10 @@ const FALLBACK_POSTS = [
   {
     id: "p2", user_id: "mock", username: "planext4u", displayName: "Planext4u",
     isVerified: true, location_name: "Coimbatore, TN", created_at: new Date(Date.now() - 10800000).toISOString(),
-    media: [{ type: "photo", url: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=600&h=600&fit=crop" }],
+    media: [
+      { type: "photo", url: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=600&h=600&fit=crop" },
+    ],
     caption: "Exciting things are coming to P4U! Stay tuned for the biggest update yet 🚀",
     hashtags: ["#planext4u", "#superapp"],
     like_count: 3200, comment_count: 450, share_count: 890,
@@ -35,10 +39,45 @@ const FALLBACK_POSTS = [
   {
     id: "p3", user_id: "mock", username: "priya_designs", displayName: "Priya Designs",
     isVerified: false, location_name: "Chennai, TN", created_at: new Date(Date.now() - 18000000).toISOString(),
-    media: [{ type: "photo", url: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=600&fit=crop" }],
+    media: [
+      { type: "photo", url: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=600&fit=crop" },
+    ],
     caption: "New collection dropping soon! What do you think of these designs? 🎨✨",
     hashtags: ["#design", "#art"],
     like_count: 892, comment_count: 67, share_count: 23,
+  },
+  {
+    id: "p4", user_id: "mock", username: "foodie_arun", displayName: "Arun Foodie",
+    isVerified: false, location_name: "Bangalore, KA", created_at: new Date(Date.now() - 25200000).toISOString(),
+    media: [
+      { type: "photo", url: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=600&h=600&fit=crop" },
+    ],
+    caption: "Weekend biryani feast at this hidden gem in Koramangala 🍚🔥 Must try!",
+    hashtags: ["#food", "#biryani", "#bangalore"],
+    like_count: 2100, comment_count: 312, share_count: 89,
+  },
+  {
+    id: "p5", user_id: "mock", username: "travel_meera", displayName: "Meera Travels",
+    isVerified: true, location_name: "Munnar, KL", created_at: new Date(Date.now() - 43200000).toISOString(),
+    media: [
+      { type: "photo", url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&h=600&fit=crop" },
+      { type: "photo", url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&h=600&fit=crop" },
+    ],
+    caption: "Lost in the tea gardens of Munnar 🍃 This place is pure magic",
+    hashtags: ["#travel", "#munnar", "#kerala", "#nature"],
+    like_count: 4500, comment_count: 678, share_count: 234,
+  },
+  {
+    id: "p6", user_id: "mock", username: "fit_kumar", displayName: "Kumar Fitness",
+    isVerified: false, location_name: "Hyderabad, TS", created_at: new Date(Date.now() - 72000000).toISOString(),
+    media: [
+      { type: "photo", url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=600&fit=crop" },
+    ],
+    caption: "Day 90 of the transformation journey 💪 Consistency is key!",
+    hashtags: ["#fitness", "#gym", "#transformation"],
+    like_count: 1800, comment_count: 145, share_count: 56,
   },
 ];
 
@@ -85,7 +124,7 @@ function PostCard({ post }: { post: any }) {
   const postId = post.id;
   const mediaItems = Array.isArray(post.media) ? post.media : [];
   const isCarousel = mediaItems.length > 1;
-  const isMock = postId === 'p1' || postId === 'p2' || postId === 'p3';
+  const isMock = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].includes(postId);
 
   const { data: isLiked = false } = useQuery({
     queryKey: ['social-like', postId, userId],

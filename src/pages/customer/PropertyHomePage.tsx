@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, MapPin, Home, Building2, ChevronRight, Star, Heart, Shield, SlidersHorizontal, Bed, Bath, Maximize2, Clock, X, MessageCircle, IndianRupee, Bookmark, Save, Wrench, Calculator, TrendingUp, Eye, Share2, Users } from "lucide-react";
+import { Search, MapPin, Home, Building2, ChevronRight, ChevronLeft, Star, Heart, Shield, SlidersHorizontal, Bed, Bath, Maximize2, Clock, X, MessageCircle, IndianRupee, Bookmark, Save, Wrench, Calculator, TrendingUp, Eye, Share2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 
+const PROPERTY_IMAGES = [
+  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=600&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=600&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=400&fit=crop",
+  "https://images.unsplash.com/photo-1571939228382-b2f2b585ce15?w=600&h=400&fit=crop",
+];
+
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
   apartment: "Apartment", independent_house: "Independent House", villa: "Villa",
   plot: "Plot", pg_hostel: "PG/Hostel", commercial_office: "Office",
@@ -29,6 +42,21 @@ function formatPrice(price: number): string {
   if (price >= 100000) return `₹${(price / 100000).toFixed(1)} L`;
   if (price >= 1000) return `₹${(price / 1000).toFixed(0)}K`;
   return `₹${price.toLocaleString("en-IN")}`;
+}
+
+function getPropertyImages(property: any, index: number = 0): string[] {
+  const dbImages = Array.isArray(property.images) ? property.images.filter(Boolean) : [];
+  if (dbImages.length >= 3) return dbImages;
+  // Fill with realistic house images based on index for variety
+  const offset = (index * 3) % PROPERTY_IMAGES.length;
+  const fallbacks = [
+    PROPERTY_IMAGES[offset % PROPERTY_IMAGES.length],
+    PROPERTY_IMAGES[(offset + 1) % PROPERTY_IMAGES.length],
+    PROPERTY_IMAGES[(offset + 2) % PROPERTY_IMAGES.length],
+    PROPERTY_IMAGES[(offset + 3) % PROPERTY_IMAGES.length],
+    PROPERTY_IMAGES[(offset + 4) % PROPERTY_IMAGES.length],
+  ];
+  return [...dbImages, ...fallbacks].slice(0, 5);
 }
 
 // NoBroker-style Filter Modal
@@ -61,7 +89,6 @@ function FilterModal({ open, onClose, filters, setFilters, transactionType }: {
         </DialogHeader>
 
         <div className="p-4 space-y-6">
-          {/* BHK Type */}
           <div>
             <h4 className="text-sm font-bold mb-3">BHK Type</h4>
             <div className="grid grid-cols-3 gap-2">
@@ -74,7 +101,6 @@ function FilterModal({ open, onClose, filters, setFilters, transactionType }: {
             </div>
           </div>
 
-          {/* Rent/Price Range */}
           <div>
             <h4 className="text-sm font-bold mb-3">
               {transactionType === 'rent' ? 'Rent' : 'Price'} Range: {formatPrice(local.budget?.[0] || 0)} to {formatPrice(local.budget?.[1] || maxBudget)}
@@ -83,7 +109,6 @@ function FilterModal({ open, onClose, filters, setFilters, transactionType }: {
               min={0} max={maxBudget} step={budgetStep} className="w-full" />
           </div>
 
-          {/* Availability */}
           <div>
             <h4 className="text-sm font-bold mb-3">Availability</h4>
             <div className="grid grid-cols-2 gap-2">
@@ -96,7 +121,6 @@ function FilterModal({ open, onClose, filters, setFilters, transactionType }: {
             </div>
           </div>
 
-          {/* Preferred Tenants */}
           {transactionType === 'rent' && (
             <div>
               <h4 className="text-sm font-bold mb-3">Preferred Tenants</h4>
@@ -111,7 +135,6 @@ function FilterModal({ open, onClose, filters, setFilters, transactionType }: {
             </div>
           )}
 
-          {/* Furnishing */}
           <div>
             <h4 className="text-sm font-bold mb-3">Furnishing</h4>
             <div className="grid grid-cols-3 gap-2">
@@ -124,7 +147,6 @@ function FilterModal({ open, onClose, filters, setFilters, transactionType }: {
             </div>
           </div>
 
-          {/* Parking */}
           <div>
             <h4 className="text-sm font-bold mb-3">Parking</h4>
             <div className="grid grid-cols-2 gap-2">
@@ -138,7 +160,6 @@ function FilterModal({ open, onClose, filters, setFilters, transactionType }: {
           </div>
         </div>
 
-        {/* Apply */}
         <div className="sticky bottom-0 bg-card border-t border-border/30 p-4">
           <Button className="w-full rounded-lg" onClick={() => { setFilters(local); onClose(); }}>
             Apply Filters
@@ -159,7 +180,6 @@ export default function PropertyHomePage() {
   const [filters, setFilters] = useState<any>({ bhk: [], propertyType: [], availability: [], tenant: [], furnishing: [], parking: [], budget: [0, 50000000] });
   const [sortBy, setSortBy] = useState("newest");
 
-  // Search suggestions
   const [searchFocused, setSearchFocused] = useState(false);
   const { data: searchSuggestions = [] } = useQuery({
     queryKey: ['property-search-suggest', searchCity],
@@ -258,7 +278,6 @@ export default function PropertyHomePage() {
             </div>
           </div>
 
-          {/* Search with auto-suggest */}
           <div className="px-4 py-6">
             <div className="max-w-2xl mx-auto">
               <h1 className="text-xl md:text-3xl font-bold text-center mb-1">
@@ -278,7 +297,6 @@ export default function PropertyHomePage() {
                   </div>
                   <Button onClick={() => setSearchFocused(false)} className="h-12 px-6 rounded-xl"><Search className="h-4 w-4" /></Button>
                 </div>
-                {/* Auto-suggest dropdown */}
                 {searchFocused && searchSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-card rounded-xl border border-border shadow-lg z-50 max-h-60 overflow-y-auto">
                     {searchSuggestions.map((s: any, i: number) => (
@@ -297,7 +315,6 @@ export default function PropertyHomePage() {
             </div>
           </div>
 
-          {/* Popular Localities */}
           {localities && localities.length > 0 && (
             <div className="px-4 pb-4">
               <div className="flex gap-2 overflow-x-auto scrollbar-hide">
@@ -379,7 +396,6 @@ export default function PropertyHomePage() {
               <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
               {activeFilterCount > 0 && <span className="ml-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">{activeFilterCount}</span>}
             </Button>
-            {/* Quick filter chips */}
             {filters.bhk?.map((b: string) => (
               <Badge key={b} variant="secondary" className="shrink-0 text-[10px] gap-1">
                 {b} <X className="h-3 w-3 cursor-pointer" onClick={() => setFilters((p: any) => ({ ...p, bhk: p.bhk.filter((v: string) => v !== b) }))} />
@@ -407,7 +423,7 @@ export default function PropertyHomePage() {
 
         <div className="px-4 py-1 text-sm text-muted-foreground">{sortedProperties.length} properties found</div>
 
-        {/* Property Listings - NoBroker card style */}
+        {/* Property Listings */}
         <div className="px-4 space-y-4">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />)
@@ -421,7 +437,7 @@ export default function PropertyHomePage() {
               </Button>
             </div>
           ) : (
-            sortedProperties.map((property: any) => <PropertyCard key={property.id} property={property} />)
+            sortedProperties.map((property: any, idx: number) => <PropertyCard key={property.id} property={property} index={idx} />)
           )}
         </div>
 
@@ -440,12 +456,28 @@ export default function PropertyHomePage() {
   );
 }
 
-function PropertyCard({ property }: { property: any }) {
+function PropertyCard({ property, index }: { property: any; index: number }) {
   const navigate = useNavigate();
-  const images = Array.isArray(property.images) ? property.images : [];
+  const images = getPropertyImages(property, index);
   const [imgIdx, setImgIdx] = useState(0);
-  const displayImages = images.length > 0 ? images : ["/images/properties/apartment-2bhk.jpg", "/images/properties/apartment-2bhk-2.jpg"];
+  const scrollRef = useRef<HTMLDivElement>(null);
   const furnishingLabel = property.furnishing === 'fully_furnished' ? 'Full Furnished' : property.furnishing === 'semi_furnished' ? 'Semi Furnished' : 'Unfurnished';
+
+  const scrollToImage = (idx: number) => {
+    setImgIdx(idx);
+    if (scrollRef.current) {
+      const child = scrollRef.current.children[idx] as HTMLElement;
+      child?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  };
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const scrollLeft = scrollRef.current.scrollLeft;
+    const width = scrollRef.current.offsetWidth;
+    const newIdx = Math.round(scrollLeft / width);
+    if (newIdx !== imgIdx) setImgIdx(newIdx);
+  };
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all duration-300">
@@ -464,13 +496,45 @@ function PropertyCard({ property }: { property: any }) {
           </button>
         </div>
 
-        {/* Image carousel */}
-        <div className="flex overflow-hidden h-52 cursor-pointer" onClick={() => navigate(`/app/find-home/${property.id}`)}>
-          {displayImages.slice(0, 3).map((img: string, i: number) => (
-            <div key={i} className={`${displayImages.length >= 3 ? (i === 0 ? 'w-1/2' : 'w-1/4') : i === 0 ? 'w-2/3' : 'w-1/3'} h-full shrink-0`}>
-              <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+        {/* NoBroker-style horizontal scrollable image carousel */}
+        <div className="relative">
+          <div
+            ref={scrollRef}
+            className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide h-52 cursor-pointer"
+            onScroll={handleScroll}
+            onClick={() => navigate(`/app/find-home/${property.id}`)}
+          >
+            {images.map((img: string, i: number) => (
+              <div key={i} className="min-w-full h-full snap-center shrink-0">
+                <img src={img} alt={`Property ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+              </div>
+            ))}
+          </div>
+          {/* Prev/Next arrows */}
+          {images.length > 1 && (
+            <>
+              {imgIdx > 0 && (
+                <button className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-white/80 flex items-center justify-center shadow-sm z-10"
+                  onClick={(e) => { e.stopPropagation(); scrollToImage(imgIdx - 1); }}>
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+              )}
+              {imgIdx < images.length - 1 && (
+                <button className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-white/80 flex items-center justify-center shadow-sm z-10"
+                  onClick={(e) => { e.stopPropagation(); scrollToImage(imgIdx + 1); }}>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
+            </>
+          )}
+          {/* Dot indicators */}
+          {images.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+              {images.map((_, i) => (
+                <div key={i} className={`h-1.5 rounded-full transition-all ${i === imgIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`} />
+              ))}
             </div>
-          ))}
+          )}
         </div>
 
         {/* Tags */}
