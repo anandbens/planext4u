@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Plus, ChevronDown, Repeat2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -41,6 +42,20 @@ const FALLBACK_POSTS = [
   },
 ];
 
+const MOCK_STORIES = [
+  { id: "own", username: "Your Story", avatar: "", isOwn: true, seen: false },
+  { id: "s1", username: "vijay_kumar", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop", seen: false },
+  { id: "s2", username: "priya_designs", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", seen: false },
+  { id: "s3", username: "rahul_food", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop", seen: true },
+  { id: "s4", username: "anita_travel", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop", seen: true },
+  { id: "s5", username: "karthik_tech", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop", seen: false },
+  { id: "s6", username: "sneha_art", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop", seen: false },
+  { id: "s7", username: "planext4u", avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop", seen: true },
+  { id: "s8", username: "foodie_chen", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop", seen: false },
+  { id: "s9", username: "dev_rajan", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop", seen: true },
+  { id: "s10", username: "dance_queen", avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop", seen: false },
+];
+
 function formatCount(n: number): string {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
@@ -63,6 +78,8 @@ function PostCard({ post }: { post: any }) {
   const sharePost = useSharePost();
   const repost = useRepost();
   const [carouselIdx, setCarouselIdx] = useState(0);
+  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [commentText, setCommentText] = useState("");
 
   const userId = customerUser?.id;
   const postId = post.id;
@@ -89,6 +106,15 @@ function PostCard({ post }: { post: any }) {
     enabled: !isMock,
   });
 
+  const { data: commentCount = post.comment_count || 0 } = useQuery({
+    queryKey: ['social-comment-count', postId],
+    queryFn: async () => {
+      const { count } = await supabase.from('social_comments').select('*', { count: 'exact', head: true }).eq('post_id', postId).eq('status', 'active');
+      return count || 0;
+    },
+    enabled: !isMock,
+  });
+
   const { data: isSaved = false } = useQuery({
     queryKey: ['social-bookmark', postId, userId],
     queryFn: async () => {
@@ -99,7 +125,6 @@ function PostCard({ post }: { post: any }) {
     enabled: !!userId && !isMock,
   });
 
-  // Fetch profile info for DB posts
   const { data: postProfile } = useQuery({
     queryKey: ['social-post-profile', post.user_id],
     queryFn: async () => {
@@ -109,6 +134,16 @@ function PostCard({ post }: { post: any }) {
     enabled: !isMock && !!post.user_id,
   });
 
+  // Recent comments for inline display
+  const { data: recentComments = [] } = useQuery({
+    queryKey: ['social-recent-comments', postId],
+    queryFn: async () => {
+      const { data } = await supabase.from('social_comments').select('id, content, user_id').eq('post_id', postId).eq('status', 'active').is('parent_id', null).order('created_at', { ascending: false }).limit(2);
+      return data || [];
+    },
+    enabled: !isMock,
+  });
+
   const [localLiked, setLocalLiked] = useState(false);
   const [localSaved, setLocalSaved] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(post.like_count || 0);
@@ -116,6 +151,8 @@ function PostCard({ post }: { post: any }) {
   const liked = isMock ? localLiked : isLiked;
   const saved = isMock ? localSaved : isSaved;
   const likes = isMock ? localLikeCount : likeCount;
+  const comments = isMock ? (post.comment_count || 0) : commentCount;
+  const shareCount = post.share_count || 0;
 
   const toggleLike = useMutation({
     mutationFn: async () => {
@@ -150,14 +187,31 @@ function PostCard({ post }: { post: any }) {
     onSuccess: () => { if (!isMock) qc.invalidateQueries({ queryKey: ['social-bookmark', postId] }); },
   });
 
+  const submitComment = useMutation({
+    mutationFn: async () => {
+      if (!commentText.trim()) return;
+      if (isMock) { toast.success("Comment posted"); setCommentText(""); setShowCommentInput(false); return; }
+      if (!userId) { toast.error("Please login"); return; }
+      await supabase.from('social_comments').insert({ post_id: postId, user_id: userId, content: commentText.trim() });
+      setCommentText("");
+      setShowCommentInput(false);
+      toast.success("Comment posted");
+    },
+    onSuccess: () => {
+      if (!isMock) {
+        qc.invalidateQueries({ queryKey: ['social-comment-count', postId] });
+        qc.invalidateQueries({ queryKey: ['social-recent-comments', postId] });
+      }
+    },
+  });
+
   const username = isMock ? post.username : (postProfile?.username || post.user_id?.substring(0, 8) || 'user');
   const isVerified = isMock ? post.isVerified : (postProfile?.is_verified || false);
   const avatarUrl = isMock ? '' : (postProfile?.avatar_url || '');
-  const commentCount = post.comment_count || 0;
-  const shareCount = post.share_count || 0;
 
   return (
     <article className="border-b border-border/20">
+      {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3">
         <Link to={`/app/social/@${username}`}>
           <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 p-[1.5px]">
@@ -185,6 +239,7 @@ function PostCard({ post }: { post: any }) {
         </DropdownMenu>
       </div>
 
+      {/* Media */}
       <div className="relative aspect-square bg-muted overflow-hidden">
         {mediaItems.length > 0 ? (
           <img src={mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || ''} alt="" className="w-full h-full object-cover" loading="lazy"
@@ -203,9 +258,10 @@ function PostCard({ post }: { post: any }) {
         )}
       </div>
 
-      <div className="flex items-center justify-between px-4 py-2.5">
-        <div className="flex items-center gap-4">
-          <button onClick={() => toggleLike.mutate()}>
+      {/* Action Bar - single row with icons + counts inline */}
+      <div className="flex items-center justify-between px-4 py-2">
+        <div className="flex items-center gap-5">
+          <button className="flex items-center gap-1.5" onClick={() => toggleLike.mutate()}>
             <AnimatePresence mode="wait">
               {liked ? (
                 <motion.div key="liked" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 15 }}><Heart className="h-6 w-6 fill-red-500 text-red-500" /></motion.div>
@@ -213,21 +269,25 @@ function PostCard({ post }: { post: any }) {
                 <motion.div key="unliked"><Heart className="h-6 w-6" /></motion.div>
               )}
             </AnimatePresence>
+            <span className="text-sm font-semibold">{formatCount(likes)}</span>
           </button>
-          <button onClick={() => navigate(`/app/social/comments/${postId}`)}><MessageCircle className="h-6 w-6" /></button>
-          <button onClick={() => repost.mutate(postId)}><Repeat2 className="h-6 w-6" /></button>
-          <button onClick={() => sharePost(postId, post.caption)}><Send className="h-6 w-6" /></button>
+          <button className="flex items-center gap-1.5" onClick={() => navigate(`/app/social/comments/${postId}`)}>
+            <MessageCircle className="h-6 w-6" />
+            <span className="text-sm">{formatCount(comments)}</span>
+          </button>
+          <button className="flex items-center gap-1.5" onClick={() => repost.mutate(postId)}>
+            <Repeat2 className="h-6 w-6" />
+          </button>
+          <button className="flex items-center gap-1.5" onClick={() => sharePost(postId, post.caption)}>
+            <Send className="h-6 w-6" />
+            <span className="text-sm">{formatCount(shareCount)}</span>
+          </button>
         </div>
         <button onClick={() => toggleBookmark.mutate()}><Bookmark className={`h-6 w-6 ${saved ? 'fill-foreground' : ''}`} /></button>
       </div>
 
-      <div className="px-4 flex items-center gap-3 text-sm">
-        <span className="flex items-center gap-1"><Heart className="h-4 w-4" /> {formatCount(likes)}</span>
-        <span className="flex items-center gap-1"><MessageCircle className="h-4 w-4" /> {formatCount(commentCount)}</span>
-        <span className="flex items-center gap-1"><Send className="h-4 w-4" /> {formatCount(shareCount)}</span>
-      </div>
-
-      <div className="px-4 py-1.5">
+      {/* Caption */}
+      <div className="px-4 py-1">
         <p className="text-sm">
           <Link to={`/app/social/@${username}`} className="font-semibold mr-1">{username}</Link>
           {post.caption}
@@ -236,14 +296,43 @@ function PostCard({ post }: { post: any }) {
         {post.hashtags && Array.isArray(post.hashtags) && <p className="text-sm text-primary mt-0.5">{post.hashtags.join(' ')}</p>}
       </div>
 
-      <button className="px-4 py-1" onClick={() => navigate(`/app/social/comments/${postId}`)}>
-        <p className="text-sm text-muted-foreground">View all {formatCount(commentCount)} comments</p>
-      </button>
-      <div className="px-4 pb-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground" onClick={() => navigate(`/app/social/comments/${postId}`)}>
-          <span>Add a comment...</span>
-          <span className="ml-auto">😊</span>
+      {/* View all comments link */}
+      {comments > 0 && (
+        <button className="px-4 py-1" onClick={() => navigate(`/app/social/comments/${postId}`)}>
+          <p className="text-sm text-muted-foreground">View all {formatCount(comments)} comments</p>
+        </button>
+      )}
+
+      {/* Recent comments preview */}
+      {recentComments.length > 0 && (
+        <div className="px-4 space-y-0.5">
+          {recentComments.map((c: any) => (
+            <p key={c.id} className="text-sm"><span className="font-semibold mr-1">{c.user_id?.substring(0, 8)}</span><span className="text-muted-foreground">{c.content?.substring(0, 60)}{(c.content?.length || 0) > 60 ? '...' : ''}</span></p>
+          ))}
         </div>
+      )}
+
+      {/* Inline comment input */}
+      <div className="px-4 pb-3 pt-1">
+        {showCommentInput ? (
+          <div className="flex items-end gap-2">
+            <textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Add a comment..."
+              className="flex-1 text-sm bg-muted/50 rounded-lg p-2 resize-none min-h-[40px] max-h-[120px] border-0 outline-none focus:ring-1 focus:ring-primary/30"
+              rows={2}
+              autoFocus
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment.mutate(); } }}
+            />
+            <button onClick={() => submitComment.mutate()} disabled={!commentText.trim()} className="text-sm font-semibold text-primary disabled:opacity-40 pb-2">Post</button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer" onClick={() => setShowCommentInput(true)}>
+            <span>Add a comment...</span>
+            <span className="ml-auto">😊</span>
+          </div>
+        )}
       </div>
     </article>
   );
@@ -253,45 +342,29 @@ export default function SocialFeedPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
   const [feedMode, setFeedMode] = useState<'following' | 'for_you'>('for_you');
+  const storiesRef = useRef<HTMLDivElement>(null);
 
   const { data: dbPosts = [] } = useSocialFeed(feedMode);
 
-  // Fetch stories from DB for the stories row
+  // Fetch stories from DB
   const { data: storyUsers = [] } = useQuery({
     queryKey: ['social-feed-stories'],
     queryFn: async () => {
       const { data } = await supabase
         .from('social_stories')
-        .select('user_id, social_profiles!inner(username, avatar_url)')
+        .select('user_id')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
-
       if (!data?.length) return [];
-
-      // Deduplicate by user
       const seen = new Set<string>();
-      return data.filter((s: any) => {
-        if (seen.has(s.user_id)) return false;
-        seen.add(s.user_id);
-        return true;
-      }).map((s: any) => ({
-        id: s.user_id,
-        username: (s as any).social_profiles?.username || 'user',
-        avatar: (s as any).social_profiles?.avatar_url || '',
-        seen: false,
-      }));
+      return data.filter((s: any) => { if (seen.has(s.user_id)) return false; seen.add(s.user_id); return true; })
+        .map((s: any) => ({ id: s.user_id, username: s.user_id.substring(0, 8), avatar: '', seen: false }));
     },
   });
 
-  const MOCK_STORIES = [
-    { id: "own", username: "Your Story", avatar: "", isOwn: true, seen: false },
-    ...(storyUsers.length > 0 ? storyUsers : [
-      { id: "1", username: "vijay_kumar", avatar: "", seen: false },
-      { id: "2", username: "priya_designs", avatar: "", seen: false },
-      { id: "3", username: "rahul_food", avatar: "", seen: true },
-      { id: "4", username: "anita_travel", avatar: "", seen: true },
-      { id: "5", username: "karthik_tech", avatar: "", seen: false },
-    ]),
+  const stories = [
+    MOCK_STORIES[0],
+    ...(storyUsers.length > 0 ? storyUsers : MOCK_STORIES.slice(1)),
   ];
 
   const posts = dbPosts.length > 0 ? dbPosts.map((p: any) => ({
@@ -302,6 +375,7 @@ export default function SocialFeedPage() {
 
   const content = (
     <>
+      {/* Mobile header */}
       <header className="sticky top-0 z-30 bg-card border-b border-border/30 md:hidden">
         <div className="max-w-xl mx-auto flex items-center justify-between px-4 py-3">
           <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Socio</span>
@@ -316,14 +390,14 @@ export default function SocialFeedPage() {
         </div>
       </header>
 
+      {/* Desktop stories header */}
       <div className="hidden md:block px-4 pt-4">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Stories</span>
-        </div>
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Stories</span>
       </div>
 
-      <div className="flex gap-3 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-border/20">
-        {MOCK_STORIES.map((story: any) => (
+      {/* Stories - horizontally scrollable */}
+      <div ref={storiesRef} className="flex gap-3 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-border/20" style={{ WebkitOverflowScrolling: 'touch' }}>
+        {stories.map((story: any) => (
           <button key={story.id} className="flex flex-col items-center gap-1 shrink-0"
             onClick={() => navigate(story.isOwn ? "/app/social/create" : `/app/social/stories/${story.id}`)}>
             <div className={`relative p-[2px] rounded-full ${story.isOwn ? '' : story.seen ? 'bg-muted' : 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600'}`}>
@@ -346,6 +420,7 @@ export default function SocialFeedPage() {
         ))}
       </div>
 
+      {/* Feed */}
       <div className="pb-20 md:pb-8">
         {posts.map((post: any) => <PostCard key={post.id} post={post} />)}
         <div className="py-6 px-4 text-center">
