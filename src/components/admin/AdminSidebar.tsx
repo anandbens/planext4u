@@ -3,7 +3,7 @@ import {
   Megaphone, Star, Gift, BarChart3, Settings, Image, FileText, LogOut,
   Grid3X3, Wrench, Receipt, MapPin, Map, Tag, Briefcase, SlidersHorizontal,
   MessageSquare, MonitorPlay, ExternalLink, ClipboardList, Headphones, Key,
-  Home, Crown,
+  Home, Crown, Shield, Filter, Palette, Flag,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -20,7 +20,7 @@ interface NavItem {
   title: string;
   url: string;
   icon: any;
-  roles?: UserRole[]; // if undefined, all roles can see
+  roles?: UserRole[];
 }
 
 const mainItems: NavItem[] = [
@@ -53,6 +53,18 @@ const configItems: NavItem[] = [
   { title: "CF Products", url: "/cf/products", icon: Package, roles: ['admin'] },
 ];
 
+// P4U Homes admin section
+const homesItems: NavItem[] = [
+  { title: "All Properties", url: "/admin/properties", icon: Home, roles: ['admin'] },
+  { title: "Moderation Queue", url: "/admin/homes/moderation", icon: Flag, roles: ['admin'] },
+  { title: "Localities", url: "/admin/localities", icon: MapPin, roles: ['admin'] },
+  { title: "Plans & Pricing", url: "/admin/property-plans", icon: Crown, roles: ['admin'] },
+  { title: "Amenities & Filters", url: "/admin/homes/amenities", icon: Filter, roles: ['admin'] },
+  { title: "Property Users", url: "/admin/homes/users", icon: Users, roles: ['admin'] },
+  { title: "Homes CMS", url: "/admin/homes/cms", icon: Palette, roles: ['admin'] },
+  { title: "Property Reports", url: "/admin/property-reports", icon: BarChart3, roles: ['admin'] },
+];
+
 const systemItems: NavItem[] = [
   { title: "Occupations", url: "/occupations", icon: Briefcase, roles: ['admin'] },
   { title: "Platform Variables", url: "/platform-variables", icon: SlidersHorizontal, roles: ['admin'] },
@@ -63,10 +75,6 @@ const systemItems: NavItem[] = [
   { title: "Support Tickets", url: "/support-tickets", icon: Headphones, roles: ['admin', 'sales'] },
   { title: "Referrals", url: "/referrals", icon: Gift, roles: ['admin'] },
   { title: "Classified Ads", url: "/classifieds", icon: FileText, roles: ['admin', 'sales'] },
-  { title: "Properties", url: "/admin/properties", icon: Home, roles: ['admin'] },
-  { title: "Localities", url: "/admin/localities", icon: MapPin, roles: ['admin'] },
-  { title: "Property Plans", url: "/admin/property-plans", icon: Crown, roles: ['admin'] },
-  { title: "Property Reports", url: "/admin/property-reports", icon: BarChart3, roles: ['admin'] },
   { title: "Integrations", url: "/integrations", icon: Key, roles: ['admin'] },
   { title: "Settings", url: "/settings", icon: Settings, roles: ['admin'] },
 ];
@@ -158,6 +166,7 @@ export function AdminSidebar() {
         <NavGroup label="Finance" items={financeItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="Reports" items={reportItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="Configuration" items={configItems} collapsed={collapsed} userRole={role} />
+        <NavGroup label="P4U Homes" items={homesItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="System" items={systemItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="Portals" items={portalLinks} collapsed={collapsed} userRole={role} />
       </SidebarContent>

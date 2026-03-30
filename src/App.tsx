@@ -82,6 +82,10 @@ import AdminPropertiesPage from "./pages/admin/AdminPropertiesPage";
 import AdminLocalitiesPage from "./pages/admin/AdminLocalitiesPage";
 import AdminPropertyPlansPage from "./pages/admin/AdminPropertyPlansPage";
 import AdminPropertyReportsPage from "./pages/admin/AdminPropertyReportsPage";
+import AdminHomesAmenitiesPage from "./pages/admin/AdminHomesAmenitiesPage";
+import AdminHomesCMSPage from "./pages/admin/AdminHomesCMSPage";
+import AdminHomesUsersPage from "./pages/admin/AdminHomesUsersPage";
+import AdminHomesModerationPage from "./pages/admin/AdminHomesModerationPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
@@ -155,6 +159,10 @@ const App = () => (
             <Route path="/admin/localities" element={<ProtectedPage><AdminLocalitiesPage /></ProtectedPage>} />
             <Route path="/admin/property-plans" element={<ProtectedPage><AdminPropertyPlansPage /></ProtectedPage>} />
             <Route path="/admin/property-reports" element={<ProtectedPage><AdminPropertyReportsPage /></ProtectedPage>} />
+            <Route path="/admin/homes/moderation" element={<ProtectedPage><AdminHomesModerationPage /></ProtectedPage>} />
+            <Route path="/admin/homes/amenities" element={<ProtectedPage><AdminHomesAmenitiesPage /></ProtectedPage>} />
+            <Route path="/admin/homes/cms" element={<ProtectedPage><AdminHomesCMSPage /></ProtectedPage>} />
+            <Route path="/admin/homes/users" element={<ProtectedPage><AdminHomesUsersPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerHomePage />} />

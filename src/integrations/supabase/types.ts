@@ -412,6 +412,48 @@ export type Database = {
         }
         Relationships: []
       }
+      homes_cms: {
+        Row: {
+          content: string | null
+          content_type: string
+          created_at: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          sort_order: number | null
+          start_date: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          content_type: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          sort_order?: number | null
+          start_date?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          content_type?: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          sort_order?: number | null
+          start_date?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       occupations: {
         Row: {
           created_at: string
@@ -846,6 +888,36 @@ export type Database = {
         }
         Relationships: []
       }
+      property_amenities: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          sort_order: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sort_order?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       property_bookmarks: {
         Row: {
           created_at: string
@@ -916,29 +988,74 @@ export type Database = {
           },
         ]
       }
+      property_filter_options: {
+        Row: {
+          created_at: string | null
+          filter_type: string
+          id: string
+          is_active: boolean | null
+          label: string
+          sort_order: number | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          filter_type: string
+          id?: string
+          is_active?: boolean | null
+          label: string
+          sort_order?: number | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          filter_type?: string
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          sort_order?: number | null
+          value?: string
+        }
+        Relationships: []
+      }
       property_localities: {
         Row: {
+          avg_rent: number | null
+          avg_sale_price: number | null
           city: string
           created_at: string
           id: string
           is_popular: boolean | null
+          life_score: Json | null
           name: string
+          seo_description: string | null
+          seo_title: string | null
           status: string
         }
         Insert: {
+          avg_rent?: number | null
+          avg_sale_price?: number | null
           city: string
           created_at?: string
           id?: string
           is_popular?: boolean | null
+          life_score?: Json | null
           name: string
+          seo_description?: string | null
+          seo_title?: string | null
           status?: string
         }
         Update: {
+          avg_rent?: number | null
+          avg_sale_price?: number | null
           city?: string
           created_at?: string
           id?: string
           is_popular?: boolean | null
+          life_score?: Json | null
           name?: string
+          seo_description?: string | null
+          seo_title?: string | null
           status?: string
         }
         Relationships: []
@@ -982,10 +1099,12 @@ export type Database = {
           created_at: string
           description: string | null
           duration_days: number
+          features: Json | null
           id: string
           is_active: boolean | null
           listing_limit: number
           name: string
+          plan_type: string | null
           price: number
           visibility_boost: boolean | null
         }
@@ -994,10 +1113,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration_days?: number
+          features?: Json | null
           id: string
           is_active?: boolean | null
           listing_limit?: number
           name: string
+          plan_type?: string | null
           price?: number
           visibility_boost?: boolean | null
         }
@@ -1006,10 +1127,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           duration_days?: number
+          features?: Json | null
           id?: string
           is_active?: boolean | null
           listing_limit?: number
           name?: string
+          plan_type?: string | null
           price?: number
           visibility_boost?: boolean | null
         }
