@@ -20,7 +20,7 @@ interface CustomerLayoutProps {
   socialMode?: boolean;
 }
 
-export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
+export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { customerUser, customerLogout } = useAuth();
