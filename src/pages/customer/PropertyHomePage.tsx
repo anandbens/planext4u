@@ -244,6 +244,9 @@ export default function PropertyHomePage() {
     return 0;
   });
 
+  const totalPages = Math.ceil(sortedProperties.length / ITEMS_PER_PAGE);
+  const paginatedProperties = sortedProperties.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
   const activeFilterCount = [filters.bhk, filters.furnishing, filters.tenant, filters.availability, filters.parking]
     .reduce((sum, arr) => sum + (arr?.length || 0), 0) + ((filters.budget?.[0] > 0 || filters.budget?.[1] < maxBudget) ? 1 : 0);
 
