@@ -78,6 +78,13 @@ import SocialStoryViewerPage from "./pages/customer/SocialStoryViewerPage";
 import SocialDMPage from "./pages/customer/SocialDMPage";
 import SocialNotificationsPage from "./pages/customer/SocialNotificationsPage";
 import SocialSettingsPage from "./pages/customer/SocialSettingsPage";
+import SocialCommentsPage from "./pages/customer/SocialCommentsPage";
+import SocialFollowersPage from "./pages/customer/SocialFollowersPage";
+import SocialEditProfilePage from "./pages/customer/SocialEditProfilePage";
+import SocialCreatorDashboardPage from "./pages/customer/SocialCreatorDashboardPage";
+import SocialLivePage from "./pages/customer/SocialLivePage";
+import SocialBroadcastPage from "./pages/customer/SocialBroadcastPage";
+import SocialShopPage from "./pages/customer/SocialShopPage";
 import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
 
 // Property pages
