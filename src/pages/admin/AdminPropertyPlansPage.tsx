@@ -70,15 +70,12 @@ export default function AdminPropertyPlansPage() {
         total={(plans || []).length}
         page={1} perPage={50} totalPages={1}
         onPageChange={() => {}}
-        headerActions={
-          <Button size="sm" onClick={() => {
-            setEditing(null);
-            setForm({ id: "", name: "", price: "0", duration_days: "30", listing_limit: "5", contact_reveal_limit: "10", visibility_boost: false, description: "", is_active: true });
-            setShowModal(true);
-          }}>
-            <Plus className="h-4 w-4 mr-1" /> Add Plan
-          </Button>
-        }
+        onAdd={() => {
+          setEditing(null);
+          setForm({ id: "", name: "", price: "0", duration_days: "30", listing_limit: "5", contact_reveal_limit: "10", visibility_boost: false, description: "", is_active: true });
+          setShowModal(true);
+        }}
+        addLabel="Add Plan"
       />
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-sm">

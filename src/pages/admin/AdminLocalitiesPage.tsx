@@ -75,11 +75,8 @@ export default function AdminLocalitiesPage() {
         totalPages={1}
         onPageChange={() => {}}
         onSearch={setSearch}
-        headerActions={
-          <Button size="sm" onClick={() => { setEditing(null); setForm({ name: "", city: "", is_popular: false }); setShowModal(true); }}>
-            <Plus className="h-4 w-4 mr-1" /> Add Locality
-          </Button>
-        }
+        onAdd={() => { setEditing(null); setForm({ name: "", city: "", is_popular: false }); setShowModal(true); }}
+        addLabel="Add Locality"
       />
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-sm">
