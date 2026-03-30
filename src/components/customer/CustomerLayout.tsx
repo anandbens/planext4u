@@ -17,6 +17,7 @@ import p4uLogo from "@/assets/p4u-logo.png";
 interface CustomerLayoutProps {
   children: React.ReactNode;
   hideNav?: boolean;
+  socialMode?: boolean;
 }
 
 export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
