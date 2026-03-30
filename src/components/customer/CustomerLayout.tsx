@@ -423,8 +423,8 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         </div>
       </footer>
 
-      {/* Mobile Bottom Navigation - Zepto-style with raised active pill */}
-      {!hideNav && (
+      {/* Mobile Bottom Navigation */}
+      {!hideNav && !socialMode && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
           <div className="relative flex items-center justify-around px-1 py-2">
             {navItems.map((item) => {
@@ -472,6 +472,33 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                 </Link>
               );
             })}
+          </div>
+        </nav>
+      )}
+
+      {/* Social Mobile Bottom Navigation - Instagram-style */}
+      {!hideNav && socialMode && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+          <div className="flex items-center justify-around px-2 py-2.5 max-w-xl mx-auto">
+            <Link to="/app/social" className="flex flex-col items-center gap-0.5">
+              <Home className={`h-6 w-6 ${location.pathname === '/app/social' ? 'fill-current' : ''}`} />
+            </Link>
+            <Link to="/app/social/explore" className="flex flex-col items-center gap-0.5">
+              <Search className={`h-6 w-6 ${location.pathname.startsWith('/app/social/explore') ? 'stroke-[2.5]' : ''}`} />
+            </Link>
+            <Link to="/app/social/create" className="flex flex-col items-center gap-0.5">
+              <div className="h-7 w-7 rounded-lg border-2 border-foreground flex items-center justify-center">
+                <Plus className="h-4 w-4" />
+              </div>
+            </Link>
+            <Link to="/app/social/reels" className="flex flex-col items-center gap-0.5">
+              <Film className={`h-6 w-6 ${location.pathname.startsWith('/app/social/reels') ? 'fill-current' : ''}`} />
+            </Link>
+            <Link to="/app/social/profile" className="flex flex-col items-center gap-0.5">
+              <div className={`h-7 w-7 rounded-full bg-muted flex items-center justify-center overflow-hidden ${location.pathname.startsWith('/app/social/profile') ? 'border-2 border-foreground' : 'border border-border'}`}>
+                <span className="text-xs font-bold">{customerUser?.name?.charAt(0) || 'U'}</span>
+              </div>
+            </Link>
           </div>
         </nav>
       )}
