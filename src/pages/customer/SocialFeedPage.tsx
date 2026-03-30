@@ -119,12 +119,17 @@ function PostCard({ post }: { post: any }) {
   const [carouselIdx, setCarouselIdx] = useState(0);
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const userId = customerUser?.id;
   const postId = post.id;
   const mediaItems = Array.isArray(post.media) ? post.media : [];
   const isCarousel = mediaItems.length > 1;
   const isMock = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].includes(postId);
+
+  const EMOJI_PALETTE = ["😀","😂","😍","🥰","😎","🤩","😢","😡","👍","👏","🔥","❤️","💯","🎉","🙌","💪","🤔","😅","🥺","✨","💕","🎊","👀","🤗","😤","💀","🫡","🤝"];
+  const GIF_STICKERS = ["😊","🎉","🔥","💯","👏","❤️‍🔥","🥳","🫶","💐","🌟"];
 
   const { data: isLiked = false } = useQuery({
     queryKey: ['social-like', postId, userId],
@@ -173,7 +178,16 @@ function PostCard({ post }: { post: any }) {
     enabled: !isMock && !!post.user_id,
   });
 
-  // Recent comments for inline display
+  // All comments for inline display
+  const { data: allComments = [] } = useQuery({
+    queryKey: ['social-all-comments', postId],
+    queryFn: async () => {
+      const { data } = await supabase.from('social_comments').select('id, content, user_id, created_at, like_count').eq('post_id', postId).eq('status', 'active').is('parent_id', null).order('created_at', { ascending: false }).limit(20);
+      return data || [];
+    },
+    enabled: !isMock && showAllComments,
+  });
+
   const { data: recentComments = [] } = useQuery({
     queryKey: ['social-recent-comments', postId],
     queryFn: async () => {
@@ -186,6 +200,11 @@ function PostCard({ post }: { post: any }) {
   const [localLiked, setLocalLiked] = useState(false);
   const [localSaved, setLocalSaved] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(post.like_count || 0);
+  const [mockComments, setMockComments] = useState([
+    { id: 'mc1', user_id: 'user1', content: 'This is amazing! 🔥', created_at: new Date(Date.now() - 3600000).toISOString() },
+    { id: 'mc2', user_id: 'user2', content: 'Love this post ❤️', created_at: new Date(Date.now() - 7200000).toISOString() },
+    { id: 'mc3', user_id: 'user3', content: 'So beautiful 😍', created_at: new Date(Date.now() - 10800000).toISOString() },
+  ]);
 
   const liked = isMock ? localLiked : isLiked;
   const saved = isMock ? localSaved : isSaved;
@@ -229,17 +248,22 @@ function PostCard({ post }: { post: any }) {
   const submitComment = useMutation({
     mutationFn: async () => {
       if (!commentText.trim()) return;
-      if (isMock) { toast.success("Comment posted"); setCommentText(""); setShowCommentInput(false); return; }
+      if (isMock) {
+        setMockComments(prev => [{ id: `mc${Date.now()}`, user_id: userId || 'you', content: commentText.trim(), created_at: new Date().toISOString() }, ...prev]);
+        toast.success("Comment posted");
+        setCommentText("");
+        return;
+      }
       if (!userId) { toast.error("Please login"); return; }
       await supabase.from('social_comments').insert({ post_id: postId, user_id: userId, content: commentText.trim() });
       setCommentText("");
-      setShowCommentInput(false);
       toast.success("Comment posted");
     },
     onSuccess: () => {
       if (!isMock) {
         qc.invalidateQueries({ queryKey: ['social-comment-count', postId] });
         qc.invalidateQueries({ queryKey: ['social-recent-comments', postId] });
+        qc.invalidateQueries({ queryKey: ['social-all-comments', postId] });
       }
     },
   });
@@ -247,6 +271,8 @@ function PostCard({ post }: { post: any }) {
   const username = isMock ? post.username : (postProfile?.username || post.user_id?.substring(0, 8) || 'user');
   const isVerified = isMock ? post.isVerified : (postProfile?.is_verified || false);
   const avatarUrl = isMock ? '' : (postProfile?.avatar_url || '');
+
+  const displayComments = isMock ? mockComments : (showAllComments ? allComments : recentComments);
 
   return (
     <article className="border-b border-border/20">
@@ -311,7 +337,7 @@ function PostCard({ post }: { post: any }) {
         )}
       </div>
 
-      {/* Action Bar - single row with icons + counts inline */}
+      {/* Action Bar */}
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-5">
           <button className="flex items-center gap-1.5" onClick={() => toggleLike.mutate()}>
@@ -324,7 +350,7 @@ function PostCard({ post }: { post: any }) {
             </AnimatePresence>
             <span className="text-sm font-semibold">{formatCount(likes)}</span>
           </button>
-          <button className="flex items-center gap-1.5" onClick={() => navigate(`/app/social/comments/${postId}`)}>
+          <button className="flex items-center gap-1.5" onClick={() => { setShowCommentInput(v => !v); }}>
             <MessageCircle className="h-6 w-6" />
             <span className="text-sm">{formatCount(comments)}</span>
           </button>
@@ -349,43 +375,105 @@ function PostCard({ post }: { post: any }) {
         {post.hashtags && Array.isArray(post.hashtags) && <p className="text-sm text-primary mt-0.5">{post.hashtags.join(' ')}</p>}
       </div>
 
-      {/* View all comments link */}
-      {comments > 0 && (
-        <button className="px-4 py-1" onClick={() => navigate(`/app/social/comments/${postId}`)}>
+      {/* View all comments - inline expand */}
+      {comments > 0 && !showAllComments && (
+        <button className="px-4 py-1" onClick={() => setShowAllComments(true)}>
           <p className="text-sm text-muted-foreground">View all {formatCount(comments)} comments</p>
         </button>
       )}
 
-      {/* Recent comments preview */}
-      {recentComments.length > 0 && (
-        <div className="px-4 space-y-0.5">
-          {recentComments.map((c: any) => (
-            <p key={c.id} className="text-sm"><span className="font-semibold mr-1">{c.user_id?.substring(0, 8)}</span><span className="text-muted-foreground">{c.content?.substring(0, 60)}{(c.content?.length || 0) > 60 ? '...' : ''}</span></p>
-          ))}
-        </div>
-      )}
-
-      {/* Inline comment input */}
-      <div className="px-4 pb-3 pt-1">
-        {showCommentInput ? (
-          <div className="flex items-end gap-2">
-            <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Add a comment..."
-              className="flex-1 text-sm bg-muted/50 rounded-lg p-2 resize-none min-h-[40px] max-h-[120px] border-0 outline-none focus:ring-1 focus:ring-primary/30"
-              rows={2}
-              autoFocus
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment.mutate(); } }}
-            />
-            <button onClick={() => submitComment.mutate()} disabled={!commentText.trim()} className="text-sm font-semibold text-primary disabled:opacity-40 pb-2">Post</button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer" onClick={() => setShowCommentInput(true)}>
-            <span>Add a comment...</span>
-            <span className="ml-auto">😊</span>
-          </div>
+      {/* Inline comments with accordion */}
+      <AnimatePresence>
+        {(showAllComments || recentComments.length > 0 || (isMock && mockComments.length > 0)) && (
+          <motion.div
+            initial={showAllComments ? { height: 0, opacity: 0 } : false}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 space-y-1 max-h-60 overflow-y-auto">
+              {(!showAllComments && !isMock ? recentComments : displayComments).map((c: any) => (
+                <div key={c.id} className="flex items-start gap-2 py-1">
+                  <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <span className="text-[9px] font-bold">{(c.user_id || 'U').charAt(0).toUpperCase()}</span>
+                  </div>
+                  <p className="text-sm flex-1">
+                    <span className="font-semibold mr-1">{c.user_id?.substring(0, 8) || 'user'}</span>
+                    <span className="text-muted-foreground">{c.content}</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+            {showAllComments && (
+              <button className="px-4 py-1" onClick={() => setShowAllComments(false)}>
+                <p className="text-xs text-primary font-medium">Hide comments</p>
+              </button>
+            )}
+          </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* Inline comment input with accordion expand + emoji/GIF */}
+      <div className="px-4 pb-3 pt-1">
+        <AnimatePresence>
+          {showCommentInput ? (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="overflow-hidden"
+            >
+              <div className="space-y-2">
+                <textarea
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Add a comment..."
+                  className="w-full text-sm bg-muted/50 rounded-lg p-3 resize-none min-h-[60px] max-h-[140px] border border-border/30 outline-none focus:ring-1 focus:ring-primary/30"
+                  rows={3}
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment.mutate(); } }}
+                />
+                {/* Emoji quick bar */}
+                <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+                  {GIF_STICKERS.map(e => (
+                    <button key={e} className="text-lg shrink-0 hover:scale-125 transition-transform" onClick={() => setCommentText(prev => prev + e)}>{e}</button>
+                  ))}
+                  <button className="shrink-0 text-xs font-medium text-primary px-2 py-1 rounded-full border border-primary/30 ml-1"
+                    onClick={() => setShowEmojiPicker(v => !v)}>
+                    😊 More
+                  </button>
+                </div>
+                {/* Full emoji picker */}
+                <AnimatePresence>
+                  {showEmojiPicker && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="grid grid-cols-7 gap-1 p-2 bg-muted/30 rounded-lg max-h-32 overflow-y-auto">
+                        {EMOJI_PALETTE.map(e => (
+                          <button key={e} className="text-xl p-1 hover:bg-primary/10 rounded transition-colors" onClick={() => setCommentText(prev => prev + e)}>{e}</button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {/* Rich text hint + actions */}
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] text-muted-foreground">**bold** _italic_ ~strike~</p>
+                  <div className="flex gap-2 items-center">
+                    <button onClick={() => setShowCommentInput(false)} className="text-xs text-muted-foreground">Cancel</button>
+                    <button onClick={() => submitComment.mutate()} disabled={!commentText.trim()} className="text-sm font-semibold text-primary disabled:opacity-40">Post</button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer" onClick={() => setShowCommentInput(true)}>
+              <span>Add a comment...</span>
+              <span className="ml-auto">😊</span>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </article>
   );

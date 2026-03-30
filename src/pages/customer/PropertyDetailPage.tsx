@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Heart, Share2, Shield, MapPin, Bed, Bath, Maximize2, Building2, Compass, Car, Calendar, Phone, MessageCircle, Flag, ChevronLeft, ChevronRight, Star, Clock, Calculator, X, Wifi, Dumbbell, Trees, ShieldCheck, Baby, Zap, Droplets, Flame, ParkingCircle, Eye, Users, TrendingUp } from "lucide-react";
+import { ArrowLeft, Heart, Share2, Shield, MapPin, Bed, Bath, Maximize2, Building2, Compass, Car, Calendar, Phone, MessageCircle, Flag, ChevronLeft, ChevronRight, Star, Clock, Calculator, X, Wifi, Dumbbell, Trees, ShieldCheck, Baby, Zap, Droplets, Flame, ParkingCircle, Eye, Users, TrendingUp, Snowflake, CloudRain, Radio, DoorOpen, Warehouse, BatteryCharging, Siren, Cctv, Waves, Home, Dog, UtensilsCrossed, Key, Sofa } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,12 +33,16 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   commercial_shop: "Shop", commercial_warehouse: "Warehouse", commercial_showroom: "Showroom",
 };
 
-const AMENITY_ICONS: Record<string, any> = {
-  "Intercom": "🔔", "Air Conditioner": "❄️", "Rain Water Harvesting": "🌧️", "Internet Provider": "📶",
-  "Lift": "🛗", "Club House": "🏠", "Gas Pipeline": "🔥", "Fire Safety": "🧯",
-  "Park": "🌳", "Power Backup": "🔋", "Children Play Area": "🎪", "Security": "👮",
-  "Gym": "🏋️", "Visitor Parking": "🅿️", "Servant Room": "🚪", "Swimming Pool": "🏊",
-  "CCTV": "📹", "24x7 Water": "💧", "Gated Community": "🏘️",
+const AMENITY_ICON_MAP: Record<string, React.ComponentType<any>> = {
+  "Intercom": Radio, "Air Conditioner": Snowflake, "Rain Water Harvesting": CloudRain,
+  "Internet Provider": Wifi, "Lift": Building2, "Club House": Warehouse,
+  "Gas Pipeline": Flame, "Fire Safety": Siren, "Park": Trees,
+  "Power Backup": BatteryCharging, "Children Play Area": Baby, "Security": ShieldCheck,
+  "Gym": Dumbbell, "Visitor Parking": ParkingCircle, "Servant Room": DoorOpen,
+  "Swimming Pool": Waves, "CCTV": Cctv, "24x7 Water": Droplets,
+  "Gated Community": Home, "Security Guard": ShieldCheck, "Water Supply 24x7": Droplets,
+  "Garden": Trees, "Rainwater Harvesting": CloudRain,
+  "Pet Allowed": Dog, "Non-Veg Allowed": UtensilsCrossed, "Gated Security": ShieldCheck,
 };
 
 function formatPrice(price: number): string {
@@ -378,57 +382,37 @@ export default function PropertyDetailPage() {
           )}
         </div>
 
-        {/* Overview Grid */}
+        {/* Overview Grid - NoBroker style 2-column bordered */}
         <div className="px-4 py-4">
           <Card className="p-4">
-            <h3 className="text-sm font-bold mb-3">Overview</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {property.bhk && (
-                <div className="flex items-center gap-2">
-                  <Bed className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">BHK</p><p className="text-sm font-medium">{property.bhk === "studio" ? "Studio" : `${property.bhk} BHK`}</p></div>
+            <h3 className="text-sm font-bold mb-1">Overview</h3>
+            <div className="w-12 h-0.5 bg-destructive mb-4" />
+            <div className="grid grid-cols-2 border border-border/50 rounded-lg overflow-hidden">
+              {[
+                property.bhk && { icon: Bed, value: property.bhk === "studio" ? "Studio" : property.bhk, label: "Bedroom" },
+                { icon: Calendar, value: new Date(property.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" }), label: "Posted On" },
+                property.area_sqft > 0 && { icon: Bath, value: Math.ceil(parseInt(property.bhk || "1")), label: "Bathrooms" },
+                { icon: Key, value: property.availability_date ? new Date(property.availability_date).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "Immediately", label: "Possession" },
+                { icon: UtensilsCrossed, value: "Yes", label: "Nonveg Allowed" },
+                { icon: ShieldCheck, value: property.amenities?.includes?.("Gated Security") || property.amenities?.includes?.("Gated Community") ? "Yes" : "No", label: "Gated Security" },
+                property.parking && property.parking !== "none" && { icon: Car, value: property.parking === "four_wheeler" ? "Car" : property.parking === "two_wheeler" ? "Bike" : property.parking === "both" ? "Both" : "Car", label: "Parking" },
+                { icon: Building2, value: PROPERTY_TYPE_LABELS[property.property_type] || "Apartment", label: "" },
+                { icon: Dog, value: "NA", label: "Pet Allowed" },
+              ].filter(Boolean).map((item: any, i: number) => (
+                <div key={i} className={`flex items-center gap-3 p-3 ${i % 2 === 0 ? "border-r border-border/50" : ""} ${i < 7 ? "border-b border-border/50" : ""}`}>
+                  <item.icon className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold">{item.value}</p>
+                    {item.label && <p className="text-[11px] text-muted-foreground">{item.label}</p>}
+                  </div>
                 </div>
-              )}
-              {property.area_sqft > 0 && (
-                <div className="flex items-center gap-2">
-                  <Maximize2 className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Area</p><p className="text-sm font-medium">{property.area_sqft} sq.ft</p></div>
-                </div>
-              )}
-              {property.floor_number > 0 && (
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Floor</p><p className="text-sm font-medium">{property.floor_number} of {property.total_floors}</p></div>
-                </div>
-              )}
-              {property.facing && (
-                <div className="flex items-center gap-2">
-                  <Compass className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Facing</p><p className="text-sm font-medium capitalize">{property.facing.replace("_", " ")}</p></div>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <div><p className="text-xs text-muted-foreground">Furnishing</p><p className="text-sm font-medium capitalize">{property.furnishing?.replace("_", " ")}</p></div>
-              </div>
-              {property.parking && property.parking !== "none" && (
-                <div className="flex items-center gap-2">
-                  <Car className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Parking</p><p className="text-sm font-medium capitalize">{property.parking.replace("_", " ")}</p></div>
-                </div>
-              )}
-              {property.age_of_property && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Age</p><p className="text-sm font-medium">{property.age_of_property} yrs</p></div>
-                </div>
-              )}
-              {property.preferred_tenant && property.preferred_tenant !== "any" && (
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-muted-foreground" />
-                  <div><p className="text-xs text-muted-foreground">Preferred</p><p className="text-sm font-medium capitalize">{property.preferred_tenant}</p></div>
-                </div>
-              )}
+              ))}
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+              <div className="flex justify-between border-b border-border/30 pb-1"><span>Last Updated On</span><span className="font-medium text-foreground">{new Date(property.updated_at).toLocaleDateString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric" })}</span></div>
+              <div className="flex justify-between border-b border-border/30 pb-1"><span>Furnishing Status</span><span className="font-medium text-foreground capitalize">{property.furnishing?.replace("_", " ") || "Unfurnished"}</span></div>
+              {property.facing && <div className="flex justify-between border-b border-border/30 pb-1"><span>Facing</span><span className="font-medium text-foreground capitalize">{property.facing.replace("_", " ")}</span></div>}
+              {property.age_of_property && <div className="flex justify-between border-b border-border/30 pb-1"><span>Age</span><span className="font-medium text-foreground">{property.age_of_property} years</span></div>}
             </div>
           </Card>
         </div>
@@ -480,14 +464,17 @@ export default function PropertyDetailPage() {
               <h3 className="text-sm font-bold mb-1">Amenities</h3>
               <div className="w-12 h-0.5 bg-destructive mb-4" />
               <div className="grid grid-cols-4 gap-y-6 gap-x-2">
-                {amenities.map((a: string) => (
-                  <div key={a} className="flex flex-col items-center text-center gap-2">
-                    <div className="h-12 w-12 rounded-lg border border-border/50 flex items-center justify-center text-xl">
-                      {AMENITY_ICONS[a] || "🏠"}
+                {amenities.map((a: string) => {
+                  const IconComp = AMENITY_ICON_MAP[a] || Home;
+                  return (
+                    <div key={a} className="flex flex-col items-center text-center gap-2">
+                      <div className="h-12 w-12 rounded-lg border border-border/50 flex items-center justify-center">
+                        <IconComp className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <span className="text-[11px] text-muted-foreground leading-tight">{a}</span>
                     </div>
-                    <span className="text-[11px] text-muted-foreground leading-tight">{a}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           </div>

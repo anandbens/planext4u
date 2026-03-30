@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronRight, Upload, X, Check, Home, MapPin, Building2, IndianRupee, Image } from "lucide-react";
+import { ArrowLeft, ChevronRight, Upload, X, Check, Home, MapPin, Building2, IndianRupee, Image, Radio, Snowflake, CloudRain, Wifi, Warehouse, Flame, Siren, Trees, BatteryCharging, Baby, ShieldCheck, Dumbbell, ParkingCircle, DoorOpen, Waves, Cctv, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,10 +14,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
-const AMENITIES = [
-  "Lift", "Security Guard", "CCTV", "Gym", "Swimming Pool", "Power Backup",
-  "Water Supply 24x7", "Club House", "Children Play Area", "Garden",
-  "Gas Pipeline", "Intercom", "Rainwater Harvesting", "Visitor Parking", "Fire Safety",
+const AMENITIES_WITH_ICONS: { name: string; icon: React.ComponentType<any> }[] = [
+  { name: "Intercom", icon: Radio }, { name: "Air Conditioner", icon: Snowflake },
+  { name: "Rain Water Harvesting", icon: CloudRain }, { name: "Internet Provider", icon: Wifi },
+  { name: "Lift", icon: Building2 }, { name: "Club House", icon: Warehouse },
+  { name: "Gas Pipeline", icon: Flame }, { name: "Fire Safety", icon: Siren },
+  { name: "Park", icon: Trees }, { name: "Power Backup", icon: BatteryCharging },
+  { name: "Children Play Area", icon: Baby }, { name: "Security Guard", icon: ShieldCheck },
+  { name: "Gym", icon: Dumbbell }, { name: "Swimming Pool", icon: Waves },
+  { name: "CCTV", icon: Cctv }, { name: "Visitor Parking", icon: ParkingCircle },
+  { name: "Servant Room", icon: DoorOpen }, { name: "24x7 Water", icon: Droplets },
+  { name: "Gated Community", icon: Home },
 ];
 
 const STEPS = [
@@ -249,11 +256,14 @@ export default function PostPropertyPage() {
                   </div>
                   <div>
                     <Label>Amenities</Label>
-                    <div className="flex gap-2 mt-1 flex-wrap">
-                      {AMENITIES.map(a => (
-                        <button key={a} onClick={() => toggleAmenity(a)}
-                          className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all
-                            ${form.amenities.includes(a) ? "border-primary bg-primary/5 text-primary" : "border-border/50"}`}>{a}</button>
+                    <div className="grid grid-cols-4 gap-3 mt-2">
+                      {AMENITIES_WITH_ICONS.map(({ name, icon: IconComp }) => (
+                        <button key={name} onClick={() => toggleAmenity(name)}
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-xs font-medium transition-all
+                            ${form.amenities.includes(name) ? "border-primary bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/30"}`}>
+                          <IconComp className="h-5 w-5" />
+                          <span className="text-center text-[10px] leading-tight">{name}</span>
+                        </button>
                       ))}
                     </div>
                   </div>
