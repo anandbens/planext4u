@@ -169,24 +169,8 @@ export default function CustomerCartPage() {
     return <CustomerLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></CustomerLayout>;
   }
 
-  // Order success screen
-  if (orderPlaced) {
-    return (
-      <CustomerLayout>
-        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-          <div className="h-20 w-20 rounded-full bg-success/10 flex items-center justify-center mb-6">
-            <CheckCircle className="h-10 w-10 text-success" />
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Order Placed Successfully!</h2>
-          <p className="text-muted-foreground mb-6 max-w-sm">Your order has been placed and is being processed. You'll receive updates soon.</p>
-          <div className="flex gap-3">
-            <Button onClick={() => navigate('/app/orders')}>View Orders</Button>
-            <Button variant="outline" onClick={() => navigate('/app/browse')}>Continue Shopping</Button>
-          </div>
-        </div>
-      </CustomerLayout>
-    );
-  }
+
+
 
   return (
     <CustomerLayout>
