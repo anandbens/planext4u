@@ -83,16 +83,16 @@ const FALLBACK_POSTS = [
 
 const MOCK_STORIES = [
   { id: "own", username: "Your Story", avatar: "", isOwn: true, seen: false },
-  { id: "s1", username: "vijay_kumar", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop", seen: false },
-  { id: "s2", username: "priya_designs", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop", seen: false },
-  { id: "s3", username: "rahul_food", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop", seen: true },
-  { id: "s4", username: "anita_travel", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop", seen: true },
-  { id: "s5", username: "karthik_tech", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop", seen: false },
-  { id: "s6", username: "sneha_art", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop", seen: false },
-  { id: "s7", username: "planext4u", avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop", seen: true },
-  { id: "s8", username: "foodie_chen", avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop", seen: false },
-  { id: "s9", username: "dev_rajan", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop", seen: true },
-  { id: "s10", username: "dance_queen", avatar: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop", seen: false },
+  { id: "s1", username: "vijay_kumar", avatar: "https://i.pravatar.cc/100?u=vijay", seen: false },
+  { id: "s2", username: "priya_designs", avatar: "https://i.pravatar.cc/100?u=priya", seen: false },
+  { id: "s3", username: "rahul_food", avatar: "https://i.pravatar.cc/100?u=rahul", seen: true },
+  { id: "s4", username: "anita_travel", avatar: "https://i.pravatar.cc/100?u=anita", seen: true },
+  { id: "s5", username: "karthik_tech", avatar: "https://i.pravatar.cc/100?u=karthik", seen: false },
+  { id: "s6", username: "sneha_art", avatar: "https://i.pravatar.cc/100?u=sneha", seen: false },
+  { id: "s7", username: "planext4u", avatar: "https://i.pravatar.cc/100?u=planext", seen: true },
+  { id: "s8", username: "foodie_chen", avatar: "https://i.pravatar.cc/100?u=chen", seen: false },
+  { id: "s9", username: "dev_rajan", avatar: "https://i.pravatar.cc/100?u=rajan", seen: true },
+  { id: "s10", username: "dance_queen", avatar: "https://i.pravatar.cc/100?u=dance", seen: false },
 ];
 
 function formatCount(n: number): string {
