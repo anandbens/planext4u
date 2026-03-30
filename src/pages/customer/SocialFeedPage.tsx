@@ -119,7 +119,7 @@ export default function SocialFeedPage() {
         {/* Stories Row */}
         <div className="flex gap-3 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-border/20">
           {MOCK_STORIES.map((story) => (
-            <button key={story.id} className="flex flex-col items-center gap-1 shrink-0" onClick={() => toast.info("Stories coming soon")}>
+            <button key={story.id} className="flex flex-col items-center gap-1 shrink-0" onClick={() => navigate(story.isOwn ? "/app/social/create" : `/app/social/stories/${story.id}`)}>
               <div className={`relative p-[2px] rounded-full ${story.isOwn ? '' : story.seen ? 'bg-muted' : 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600'}`}>
                 <div className="h-16 w-16 rounded-full bg-card p-[2px]">
                   <div className="h-full w-full rounded-full bg-muted flex items-center justify-center overflow-hidden">
