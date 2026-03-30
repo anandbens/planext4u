@@ -256,11 +256,14 @@ export default function PostPropertyPage() {
                   </div>
                   <div>
                     <Label>Amenities</Label>
-                    <div className="flex gap-2 mt-1 flex-wrap">
-                      {AMENITIES.map(a => (
-                        <button key={a} onClick={() => toggleAmenity(a)}
-                          className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all
-                            ${form.amenities.includes(a) ? "border-primary bg-primary/5 text-primary" : "border-border/50"}`}>{a}</button>
+                    <div className="grid grid-cols-4 gap-3 mt-2">
+                      {AMENITIES_WITH_ICONS.map(({ name, icon: IconComp }) => (
+                        <button key={name} onClick={() => toggleAmenity(name)}
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-xs font-medium transition-all
+                            ${form.amenities.includes(name) ? "border-primary bg-primary/5 text-primary" : "border-border/50 text-muted-foreground hover:border-primary/30"}`}>
+                          <IconComp className="h-5 w-5" />
+                          <span className="text-center text-[10px] leading-tight">{name}</span>
+                        </button>
                       ))}
                     </div>
                   </div>
