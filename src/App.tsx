@@ -152,6 +152,9 @@ const App = () => (
             <Route path="/support-tickets" element={<ProtectedPage><SupportTicketsPage /></ProtectedPage>} />
             <Route path="/integrations" element={<ProtectedPage><IntegrationsPage /></ProtectedPage>} />
             <Route path="/admin/properties" element={<ProtectedPage><AdminPropertiesPage /></ProtectedPage>} />
+            <Route path="/admin/localities" element={<ProtectedPage><AdminLocalitiesPage /></ProtectedPage>} />
+            <Route path="/admin/property-plans" element={<ProtectedPage><AdminPropertyPlansPage /></ProtectedPage>} />
+            <Route path="/admin/property-reports" element={<ProtectedPage><AdminPropertyReportsPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerHomePage />} />
