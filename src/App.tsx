@@ -68,6 +68,14 @@ import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
 import CustomerClassifiedDetailPage from "./pages/customer/CustomerClassifiedDetailPage";
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 
+// Property pages
+import PropertyHomePage from "./pages/customer/PropertyHomePage";
+import PropertyDetailPage from "./pages/customer/PropertyDetailPage";
+import PostPropertyPage from "./pages/customer/PostPropertyPage";
+import PropertyEMIPage from "./pages/customer/PropertyEMIPage";
+import MyPropertiesPage from "./pages/customer/MyPropertiesPage";
+import AdminPropertiesPage from "./pages/admin/AdminPropertiesPage";
+
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
 import VendorDashboardPage from "./pages/vendor/VendorDashboardPage";
