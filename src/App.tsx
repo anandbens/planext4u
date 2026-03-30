@@ -93,9 +93,11 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Redirect root and admin login to customer app */}
+            {/* Redirect root to customer app, admin login available */}
             <Route path="/" element={<Navigate to="/app" replace />} />
-            <Route path="/login" element={<Navigate to="/app" replace />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/admin/login" element={<LoginPage />} />
+            <Route path="/dashboard" element={<ProtectedPage><DashboardPage /></ProtectedPage>} />
             <Route path="/customers" element={<ProtectedPage><CustomersPage /></ProtectedPage>} />
             <Route path="/vendors" element={<ProtectedPage><VendorsPage /></ProtectedPage>} />
             <Route path="/products" element={<ProtectedPage><ProductsPage /></ProtectedPage>} />
