@@ -41,7 +41,7 @@ const AMENITY_ICON_MAP: Record<string, React.ComponentType<any>> = {
   "Gym": Dumbbell, "Visitor Parking": ParkingCircle, "Servant Room": DoorOpen,
   "Swimming Pool": Waves, "CCTV": Cctv, "24x7 Water": Droplets,
   "Gated Community": Home, "Security Guard": ShieldCheck, "Water Supply 24x7": Droplets,
-  "Garden": Trees, "Rainwater Harvesting": CloudRain, "Fire Safety": Siren,
+  "Garden": Trees, "Rainwater Harvesting": CloudRain,
   "Pet Allowed": Dog, "Non-Veg Allowed": UtensilsCrossed, "Gated Security": ShieldCheck,
 };
 
