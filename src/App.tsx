@@ -200,7 +200,13 @@ const App = () => (
             <Route path="/app/social/create" element={<SocialCreatePostPage />} />
             <Route path="/app/social/profile" element={<SocialProfilePage />} />
             <Route path="/app/social/explore" element={<SocialExplorePage />} />
+            <Route path="/app/social/reels" element={<SocialReelsPage />} />
+            <Route path="/app/social/stories/:userId" element={<SocialStoryViewerPage />} />
+            <Route path="/app/social/messages" element={<SocialDMPage />} />
             <Route path="/app/social/@:username" element={<SocialProfilePage />} />
+
+            {/* Admin Social */}
+            <Route path="/admin/social" element={<ProtectedPage><AdminSocialDashboardPage /></ProtectedPage>} />
 
             {/* Property / Find Home routes */}
             <Route path="/app/find-home" element={<PropertyHomePage />} />
