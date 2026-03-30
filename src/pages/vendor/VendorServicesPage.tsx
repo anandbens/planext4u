@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, MoreVertical, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, MoreVertical, Edit, Trash2, Image, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,11 +23,13 @@ const statusStyle: Record<string, string> = {
 interface ServiceForm {
   title: string; description: string; price: string; tax: string; discount: string;
   duration: string; service_area: string; category_id: string; emoji: string; status: string;
+  image: string; working_days: string; workers: string;
 }
 
 const emptyForm: ServiceForm = {
   title: "", description: "", price: "", tax: "", discount: "0",
   duration: "", service_area: "", category_id: "", emoji: "🔧", status: "draft",
+  image: "", working_days: "Mon-Sat", workers: "1",
 };
 
 export default function VendorServicesPage() {
@@ -35,6 +37,7 @@ export default function VendorServicesPage() {
   const vendorId = vendorUser?.vendor_id || "VND-001";
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ServiceForm>(emptyForm);
@@ -55,8 +58,28 @@ export default function VendorServicesPage() {
     },
   });
 
+  // Check if vendor exists in service_vendors, create if not
+  const ensureServiceVendor = async () => {
+    const { data } = await supabase.from("service_vendors").select("id").eq("id", vendorId).single();
+    if (!data) {
+      // Try to get vendor info from vendors table
+      const { data: vendor } = await supabase.from("vendors").select("*").eq("id", vendorId).single();
+      await supabase.from("service_vendors").insert({
+        id: vendorId,
+        name: vendor?.name || vendorUser?.name || "Vendor",
+        business_name: vendor?.business_name || "",
+        mobile: vendor?.mobile || "",
+        email: vendor?.email || "",
+        status: "verified",
+      });
+    }
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (formData: ServiceForm) => {
+      // Ensure vendor exists in service_vendors table first
+      await ensureServiceVendor();
+      
       const payload = {
         title: formData.title, description: formData.description,
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
@@ -66,6 +89,7 @@ export default function VendorServicesPage() {
         category_name: categories?.find(c => c.id === formData.category_id)?.name || "",
         emoji: formData.emoji, status: formData.status,
         vendor_id: vendorId, vendor_name: vendorUser?.name || "",
+        image: formData.image || null,
       };
       if (editingId) {
         const { error } = await supabase.from("services").update(payload).eq("id", editingId);
@@ -98,11 +122,18 @@ export default function VendorServicesPage() {
       title: s.title, description: s.description, price: String(s.price), tax: String(s.tax),
       discount: String(s.discount), duration: s.duration || "", service_area: s.service_area || "",
       category_id: s.category_id || "", emoji: s.emoji || "🔧", status: s.status,
+      image: s.image || "", working_days: "Mon-Sat", workers: "1",
     });
     setModalOpen(true);
   };
 
-  const filtered = services?.filter((s) => s.title.toLowerCase().includes(search.toLowerCase())) || [];
+  const clearFilters = () => { setSearch(""); setStatusFilter(""); };
+
+  const filtered = services?.filter((s) => {
+    if (search && !s.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (statusFilter && s.status !== statusFilter) return false;
+    return true;
+  }) || [];
 
   return (
     <VendorLayout title={`My Services (${filtered.length})`}>
@@ -112,6 +143,16 @@ export default function VendorServicesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search services..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[120px]"><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+          {(search || statusFilter) && <Button variant="ghost" size="sm" className="text-xs" onClick={clearFilters}>Clear</Button>}
           <Button onClick={() => { setEditingId(null); setForm(emptyForm); setModalOpen(true); }}>
             <Plus className="h-4 w-4 mr-1" /> Add Service
           </Button>
@@ -123,7 +164,9 @@ export default function VendorServicesPage() {
             ) :
             filtered.map((s) => (
               <Card key={s.id} className="p-4 flex items-center gap-4">
-                <div className="h-14 w-14 bg-secondary/30 rounded-xl flex items-center justify-center text-2xl shrink-0">{s.emoji || "🔧"}</div>
+                <div className="h-14 w-14 bg-secondary/30 rounded-xl flex items-center justify-center text-2xl shrink-0 overflow-hidden">
+                  {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" /> : <span>{s.emoji || "🔧"}</span>}
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-medium truncate">{s.title}</h3>
@@ -156,6 +199,19 @@ export default function VendorServicesPage() {
           <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }} className="space-y-4">
             <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
             <div><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
+            
+            {/* Image URL */}
+            <div>
+              <Label>Service Image URL</Label>
+              <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://..." />
+              {form.image && (
+                <div className="relative mt-2 h-32 rounded-lg overflow-hidden bg-secondary/30">
+                  <img src={form.image} alt="" className="w-full h-full object-cover" />
+                  <button type="button" className="absolute top-1 right-1 h-6 w-6 rounded-full bg-card/80 flex items-center justify-center" onClick={() => setForm({ ...form, image: "" })}><X className="h-3 w-3" /></button>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Price (₹)</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required /></div>
               <div><Label>Tax (₹)</Label><Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: e.target.value })} /></div>
@@ -163,6 +219,10 @@ export default function VendorServicesPage() {
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Duration</Label><Input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} placeholder="e.g. 2 hrs" /></div>
               <div><Label>Service Area</Label><Input value={form.service_area} onChange={(e) => setForm({ ...form, service_area: e.target.value })} placeholder="e.g. Coimbatore" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Working Days</Label><Input value={form.working_days} onChange={(e) => setForm({ ...form, working_days: e.target.value })} placeholder="Mon-Sat" /></div>
+              <div><Label>No. of Workers</Label><Input type="number" value={form.workers} onChange={(e) => setForm({ ...form, workers: e.target.value })} placeholder="1" /></div>
             </div>
             <div><Label>Category</Label>
               <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
