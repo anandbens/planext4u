@@ -68,6 +68,12 @@ import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
 import CustomerClassifiedDetailPage from "./pages/customer/CustomerClassifiedDetailPage";
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 
+// Social pages
+import SocialFeedPage from "./pages/customer/SocialFeedPage";
+import SocialCreatePostPage from "./pages/customer/SocialCreatePostPage";
+import SocialProfilePage from "./pages/customer/SocialProfilePage";
+import SocialExplorePage from "./pages/customer/SocialExplorePage";
+
 // Property pages
 import PropertyHomePage from "./pages/customer/PropertyHomePage";
 import PropertyDetailPage from "./pages/customer/PropertyDetailPage";
