@@ -1,25 +1,49 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Clock, MapPin, Shield, Calendar, CheckCircle } from "lucide-react";
+import { Star, Clock, MapPin, Shield, Calendar, CheckCircle, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 
-const reviews = [
-  { user: "Priya M.", rating: 5, comment: "Excellent service! Very professional and thorough.", date: "2 days ago" },
-  { user: "Rahul K.", rating: 4, comment: "Good work, arrived on time. Will book again.", date: "1 week ago" },
-  { user: "Anita S.", rating: 5, comment: "Best service in Mumbai. Highly recommended!", date: "2 weeks ago" },
-];
+const serviceImages: Record<string, string> = {
+  "cleaning": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600",
+  "plumbing": "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=600",
+  "electrical": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600",
+  "painting": "https://images.unsplash.com/photo-1562259929-b4e1fd3aef09?w=600",
+  "pest": "https://images.unsplash.com/photo-1632935190508-b25c2e7dc9f7?w=600",
+  "carpentry": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600",
+  "ac": "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600",
+  "beauty": "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600",
+  "default": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600",
+};
+
+function getServiceImage(title: string, image?: string | null) {
+  if (image && image.startsWith('http')) return image;
+  const lower = title.toLowerCase();
+  for (const [key, url] of Object.entries(serviceImages)) {
+    if (lower.includes(key)) return url;
+  }
+  return serviceImages.default;
+}
 
 export default function CustomerServiceDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [showReview, setShowReview] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [booking, setBooking] = useState(false);
 
   const { data: service, isLoading } = useQuery({
     queryKey: ["service", id],
@@ -32,14 +56,47 @@ export default function CustomerServiceDetailPage() {
 
   const discountPct = service.discount ? Math.round((service.discount / service.price) * 100) : 0;
   const slots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+  const imgUrl = getServiceImage(service.title, service.image);
+  const finalPrice = service.price - (service.discount || 0) + (service.tax || 0);
+
+  const handleBookNow = () => {
+    if (!selectedDate || !selectedSlot) { toast.error("Select date and time"); return; }
+    setShowCheckout(true);
+  };
+
+  const confirmBooking = async () => {
+    setBooking(true);
+    await new Promise(r => setTimeout(r, 1000));
+    setBooking(false);
+    setShowCheckout(false);
+    toast.success("Service booked successfully!");
+    setShowReview(true);
+  };
+
+  const submitReview = () => {
+    toast.success("Thank you for your review!");
+    setShowReview(false);
+    navigate('/app/services');
+  };
+
+  const reviews = [
+    { user: "Priya M.", rating: 5, comment: "Excellent service! Very professional and thorough.", date: "2 days ago" },
+    { user: "Rahul K.", rating: 4, comment: "Good work, arrived on time. Will book again.", date: "1 week ago" },
+    { user: "Anita S.", rating: 5, comment: "Best service in Mumbai. Highly recommended!", date: "2 weeks ago" },
+  ];
 
   return (
     <CustomerLayout>
       <div className="max-w-5xl mx-auto px-4 py-6 pb-20 md:pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 rounded-2xl h-72 md:h-96 flex items-center justify-center text-8xl">
-            {service.emoji}
+          {/* Service Image */}
+          <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
+            <img src={imgUrl} alt={service.title} className="w-full h-full object-cover" />
+            <button onClick={() => navigate(-1)} className="absolute top-4 left-4 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center md:hidden">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
           </div>
+
           <div>
             <Badge variant="outline" className="mb-2">{service.category_name}</Badge>
             <h1 className="text-2xl font-bold">{service.title}</h1>
@@ -61,21 +118,16 @@ export default function CustomerServiceDetailPage() {
               )}
             </div>
 
-            {/* Date Selection */}
             <div className="mt-6">
               <h3 className="text-sm font-semibold mb-2 flex items-center gap-1"><Calendar className="h-4 w-4" /> Select Date</h3>
-              <div className="flex gap-2 overflow-x-auto">
+              <div className="flex gap-2 overflow-x-auto pb-1">
                 {Array.from({ length: 7 }).map((_, i) => {
-                  const d = new Date();
-                  d.setDate(d.getDate() + i);
+                  const d = new Date(); d.setDate(d.getDate() + i);
                   const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' });
                   const val = d.toISOString().split('T')[0];
                   return (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedDate(val)}
-                      className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap ${selectedDate === val ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}
-                    >
+                    <button key={i} onClick={() => setSelectedDate(val)}
+                      className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap ${selectedDate === val ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
                       {label}
                     </button>
                   );
@@ -83,27 +135,19 @@ export default function CustomerServiceDetailPage() {
               </div>
             </div>
 
-            {/* Time Slot */}
             <div className="mt-4">
               <h3 className="text-sm font-semibold mb-2 flex items-center gap-1"><Clock className="h-4 w-4" /> Select Time</h3>
               <div className="flex flex-wrap gap-2">
                 {slots.map((slot) => (
-                  <button
-                    key={slot}
-                    onClick={() => setSelectedSlot(slot)}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${selectedSlot === slot ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}
-                  >
+                  <button key={slot} onClick={() => setSelectedSlot(slot)}
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${selectedSlot === slot ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
                     {slot}
                   </button>
                 ))}
               </div>
             </div>
 
-            <Button
-              className="w-full mt-6"
-              disabled={!selectedDate || !selectedSlot}
-              onClick={() => toast.success(`Service booked for ${selectedDate} at ${selectedSlot}!`)}
-            >
+            <Button className="w-full mt-6" disabled={!selectedDate || !selectedSlot} onClick={handleBookNow}>
               Book Now — ₹{service.price.toLocaleString()}
             </Button>
 
@@ -122,7 +166,6 @@ export default function CustomerServiceDetailPage() {
           </div>
         </div>
 
-        {/* Description & Reviews */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-6">
             <h3 className="font-semibold mb-3">About this service</h3>
@@ -134,7 +177,10 @@ export default function CustomerServiceDetailPage() {
             </div>
           </Card>
           <Card className="p-6">
-            <h3 className="font-semibold mb-3">Customer Reviews</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold">Customer Reviews</h3>
+              <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowReview(true)}>Write Review</Button>
+            </div>
             <div className="space-y-3">
               {reviews.map((r, i) => (
                 <div key={i} className="border-b border-border/30 last:border-0 pb-3 last:pb-0">
@@ -152,6 +198,54 @@ export default function CustomerServiceDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Service Checkout Dialog */}
+      <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>Confirm Booking</DialogTitle>
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center gap-3">
+              <img src={imgUrl} alt="" className="h-16 w-16 rounded-xl object-cover" />
+              <div>
+                <h3 className="text-sm font-semibold">{service.title}</h3>
+                <p className="text-xs text-muted-foreground">{service.vendor_name}</p>
+              </div>
+            </div>
+            <Separator />
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">Date</span><span className="font-medium">{selectedDate}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Time</span><span className="font-medium">{selectedSlot}</span></div>
+              <Separator />
+              <div className="flex justify-between"><span className="text-muted-foreground">Service Fee</span><span>₹{service.price.toLocaleString()}</span></div>
+              {service.discount > 0 && <div className="flex justify-between text-success"><span>Discount</span><span>-₹{service.discount.toLocaleString()}</span></div>}
+              {service.tax > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>₹{service.tax.toLocaleString()}</span></div>}
+              <Separator />
+              <div className="flex justify-between font-bold text-base"><span>Total</span><span>₹{finalPrice.toLocaleString()}</span></div>
+            </div>
+            <Button className="w-full h-12" onClick={confirmBooking} disabled={booking}>
+              {booking ? "Processing..." : `Pay ₹${finalPrice.toLocaleString()}`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Dialog */}
+      <Dialog open={showReview} onOpenChange={setShowReview}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>Rate & Review</DialogTitle>
+          <div className="space-y-4 pt-2">
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map(n => (
+                <button key={n} onClick={() => setReviewRating(n)}>
+                  <Star className={`h-8 w-8 ${n <= reviewRating ? 'fill-warning text-warning' : 'text-muted-foreground'}`} />
+                </button>
+              ))}
+            </div>
+            <Textarea placeholder="Share your experience..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} rows={3} />
+            <Button className="w-full" onClick={submitReview}>Submit Review</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </CustomerLayout>
   );
 }

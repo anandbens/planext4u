@@ -1,18 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { Minus, Plus, Trash2, Tag, ShoppingBag, ChevronLeft, Share2, ChevronDown, ChevronRight, Truck, Clock, Save } from "lucide-react";
+import { Minus, Plus, Trash2, Tag, ShoppingBag, ChevronLeft, Share2, ChevronDown, ChevronRight, Truck, Clock, Save, Heart, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api, CartItem } from "@/lib/api";
-import { format, addDays, startOfWeek, addWeeks, isSameDay } from "date-fns";
+import { format, addDays, startOfWeek, isSameDay } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 const TIME_SLOTS = [
   { id: "morning", label: "Morning 9 - 11 AM" },
@@ -20,13 +22,19 @@ const TIME_SLOTS = [
   { id: "evening", label: "Evening 4-6 PM" },
 ];
 
+interface SavedAddress {
+  id: string; label: string; type: string; address_line: string; city: string; pincode: string; is_default: boolean;
+}
+
 export default function CustomerCartPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
   const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [savedForLater, setSavedForLater] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [pointsUsed, setPointsUsed] = useState(0);
@@ -34,15 +42,60 @@ export default function CustomerCartPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
   const [calendarWeekOffset, setCalendarWeekOffset] = useState(0);
-  const [deliveryAddress] = useState("P4U Complex - 605001");
+
+  // Address management
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [showAddressDialog, setShowAddressDialog] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
+  const [addressForm, setAddressForm] = useState({ label: "Home", type: "home", address_line: "", city: "", pincode: "" });
 
   useEffect(() => {
-    Promise.all([api.getCart(), api.getCustomerProfile(customerId)]).then(([cartItems, profile]) => {
+    Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses()]).then(([cartItems, profile]) => {
       setCart(cartItems);
       setWalletPoints(profile?.wallet_points || 0);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [customerId]);
+
+  const loadAddresses = async () => {
+    const { data } = await supabase.from('customer_addresses').select('*').eq('customer_id', customerId).order('is_default', { ascending: false });
+    if (data) {
+      setAddresses(data as SavedAddress[]);
+      const def = (data as SavedAddress[]).find(a => a.is_default);
+      if (def) setSelectedAddressId(def.id);
+    }
+  };
+
+  const saveAddress = async () => {
+    if (!addressForm.address_line.trim() || !addressForm.city.trim() || !addressForm.pincode.trim()) {
+      toast.error("Please fill all address fields"); return;
+    }
+    if (editingAddress) {
+      await supabase.from('customer_addresses').update({
+        label: addressForm.label, type: addressForm.type,
+        address_line: addressForm.address_line, city: addressForm.city, pincode: addressForm.pincode,
+      }).eq('id', editingAddress.id);
+      toast.success("Address updated!");
+    } else {
+      const isFirst = addresses.length === 0;
+      await supabase.from('customer_addresses').insert({
+        customer_id: customerId, label: addressForm.label, type: addressForm.type,
+        address_line: addressForm.address_line, city: addressForm.city, pincode: addressForm.pincode, is_default: isFirst,
+      });
+      toast.success("Address added!");
+    }
+    setShowAddressDialog(false);
+    setEditingAddress(null);
+    setAddressForm({ label: "Home", type: "home", address_line: "", city: "", pincode: "" });
+    await loadAddresses();
+  };
+
+  const editAddress = (addr: SavedAddress) => {
+    setEditingAddress(addr);
+    setAddressForm({ label: addr.label, type: addr.type, address_line: addr.address_line, city: addr.city, pincode: addr.pincode });
+    setShowAddressDialog(true);
+  };
 
   const updateQty = async (id: string, delta: number) => {
     const item = cart.find(i => i.id === id);
@@ -56,6 +109,20 @@ export default function CustomerCartPage() {
     await api.removeFromCart(id);
     setCart(prev => prev.filter(i => i.id !== id));
     toast.info("Item removed from cart");
+  };
+
+  const saveForLater = (item: CartItem) => {
+    setSavedForLater(prev => [...prev, item]);
+    setCart(prev => prev.filter(i => i.id !== item.id));
+    api.removeFromCart(item.id);
+    toast.success("Saved for later");
+  };
+
+  const moveToCart = async (item: CartItem) => {
+    await api.addToCart({ id: item.id, title: item.title, price: item.price, vendor_id: item.vendorId, vendor_name: item.vendor, emoji: item.emoji, image: item.image, tax: item.tax, discount: item.discount, max_points_redeemable: item.maxPoints } as any, 1);
+    setCart(prev => [...prev, { ...item, qty: 1 }]);
+    setSavedForLater(prev => prev.filter(i => i.id !== item.id));
+    toast.success("Moved to cart");
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -82,13 +149,13 @@ export default function CustomerCartPage() {
     try {
       const result = await api.placeOrder(cart, customerId, pointsUsed, discount);
       await api.clearCart();
+      setOrderPlaced(true);
       toast.success(`${result.orders.length} order(s) placed successfully!`);
-      navigate('/app/orders');
     } catch { toast.error("Failed to place order"); }
     finally { setPlacing(false); }
   };
 
-  // Calendar logic
+  const selectedAddress = addresses.find(a => a.id === selectedAddressId);
   const today = new Date();
   const weekStart = addDays(startOfWeek(today, { weekStartsOn: 5 }), calendarWeekOffset * 7);
   const calendarDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -98,9 +165,27 @@ export default function CustomerCartPage() {
     return <CustomerLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></CustomerLayout>;
   }
 
+  // Order success screen
+  if (orderPlaced) {
+    return (
+      <CustomerLayout>
+        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+          <div className="h-20 w-20 rounded-full bg-success/10 flex items-center justify-center mb-6">
+            <CheckCircle className="h-10 w-10 text-success" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Order Placed Successfully!</h2>
+          <p className="text-muted-foreground mb-6 max-w-sm">Your order has been placed and is being processed. You'll receive updates soon.</p>
+          <div className="flex gap-3">
+            <Button onClick={() => navigate('/app/orders')}>View Orders</Button>
+            <Button variant="outline" onClick={() => navigate('/app/browse')}>Continue Shopping</Button>
+          </div>
+        </div>
+      </CustomerLayout>
+    );
+  }
+
   return (
     <CustomerLayout>
-      {/* Mobile Header */}
       <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-md border-b border-border/50 px-4 py-3 flex items-center justify-between md:hidden">
         <button onClick={() => navigate(-1)} className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
           <ChevronLeft className="h-4 w-4" />
@@ -112,7 +197,7 @@ export default function CustomerCartPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-4 pb-28 md:pb-6">
-        {cart.length === 0 ? (
+        {cart.length === 0 && savedForLater.length === 0 ? (
           <div className="text-center py-16">
             <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-lg font-medium">Your cart is empty</p>
@@ -121,9 +206,7 @@ export default function CustomerCartPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Left Column - Cart Items + Delivery */}
             <div className="md:col-span-2 space-y-4">
-              {/* Breadcrumb */}
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Link to="/app" className="hover:text-foreground">Home</Link>
                 <ChevronRight className="h-3 w-3" />
@@ -132,19 +215,35 @@ export default function CustomerCartPage() {
                 <span className="text-foreground font-medium">Cart</span>
               </div>
 
-              {/* Tab Navigation */}
               <Tabs defaultValue="shop">
                 <TabsList className="w-full">
-                  <TabsTrigger value="shop" className="flex-1">Shop</TabsTrigger>
-                  <TabsTrigger value="services" className="flex-1">Services</TabsTrigger>
-                  <TabsTrigger value="booking" className="flex-1">Booking</TabsTrigger>
+                  <TabsTrigger value="shop" className="flex-1">Shop ({cart.length})</TabsTrigger>
+                  <TabsTrigger value="saved" className="flex-1">Saved ({savedForLater.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="shop">
                   {/* Delivery Address */}
                   <Card className="p-3 mt-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">Delivered To: <strong>{deliveryAddress}</strong></span>
-                      <Button variant="outline" size="sm" className="text-xs h-8">Change</Button>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm">Deliver To: <strong>{selectedAddress ? `${selectedAddress.label} - ${selectedAddress.address_line}, ${selectedAddress.city} ${selectedAddress.pincode}` : "Select address"}</strong></span>
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        {selectedAddress && (
+                          <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => editAddress(selectedAddress)}>Edit</Button>
+                        )}
+                        <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => {
+                          if (addresses.length > 0) {
+                            // Show address selection
+                            const next = addresses.find(a => a.id !== selectedAddressId) || addresses[0];
+                            setSelectedAddressId(next.id);
+                            toast.success(`Switched to ${next.label}`);
+                          } else {
+                            setEditingAddress(null);
+                            setAddressForm({ label: "Home", type: "home", address_line: "", city: "", pincode: "" });
+                            setShowAddressDialog(true);
+                          }
+                        }}>Change</Button>
+                      </div>
                     </div>
                   </Card>
 
@@ -154,23 +253,13 @@ export default function CustomerCartPage() {
                       <h3 className="text-sm font-semibold">Schedule your Delivery</h3>
                       <span className="text-xs text-muted-foreground">Select your time to deliver</span>
                     </div>
-
-                    {/* Calendar - like reference image */}
                     <div className="border border-border/50 rounded-xl p-4">
-                      <p className="text-sm font-medium mb-3">When will you like your service?*</p>
-
-                      {/* Month nav */}
+                      <p className="text-sm font-medium mb-3">When will you like your delivery?*</p>
                       <div className="flex items-center justify-end gap-2 mb-3">
                         <button onClick={() => setCalendarWeekOffset(p => p - 1)} className="text-xs text-primary hover:underline">← {format(addDays(weekStart, -7), "MMMM")}</button>
                         <button onClick={() => setCalendarWeekOffset(p => p + 1)} className="text-xs text-primary hover:underline">{format(addDays(weekStart, 14), "MMMM")} →</button>
                       </div>
-
-                      {/* Week header */}
-                      <div className="text-center mb-2">
-                        <span className="font-semibold text-sm">{currentMonth}</span>
-                      </div>
-
-                      {/* Day grid */}
+                      <div className="text-center mb-2"><span className="font-semibold text-sm">{currentMonth}</span></div>
                       <div className="grid grid-cols-7 gap-1 mb-4">
                         {["Fri", "Sat", "Sun", "Mon", "Tue", "Wed", "Thu"].map(d => (
                           <div key={d} className="text-center text-xs text-muted-foreground font-medium py-1">{d}</div>
@@ -192,8 +281,6 @@ export default function CustomerCartPage() {
                           );
                         })}
                       </div>
-
-                      {/* Time slots */}
                       <div className="grid grid-cols-3 gap-2">
                         {TIME_SLOTS.map(slot => (
                           <button key={slot.id} onClick={() => { setSelectedTimeSlot(slot.id); toast.success(`Delivery scheduled: ${slot.label}`); }}
@@ -214,24 +301,15 @@ export default function CustomerCartPage() {
                         <Card key={item.id} className="p-4">
                           <div className="flex gap-3">
                             <div className="h-20 w-20 bg-secondary/30 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
-                              {item.image ? (
-                                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                              ) : (
-                                <span className="text-3xl">{item.emoji}</span>
-                              )}
+                              {item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" /> : <span className="text-3xl">{item.emoji}</span>}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between">
                                 <div>
                                   <h3 className="text-sm font-semibold leading-tight">{item.title}</h3>
-                                  <p className="text-[10px] text-muted-foreground mt-0.5">Black Strap, Free Size</p>
                                   <p className="text-[10px] text-muted-foreground">Vendor: {item.vendor}</p>
                                 </div>
-                                <div className="text-right">
-                                  <p className="text-xs text-primary flex items-center gap-0.5">
-                                    <Clock className="h-2.5 w-2.5" /> Delivery in 30 Mins
-                                  </p>
-                                </div>
+                                <p className="text-xs text-primary flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" /> Delivery in 30 Mins</p>
                               </div>
                               <div className="flex items-center gap-2 mt-1.5">
                                 {item.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">₹{(item.price + item.discount).toLocaleString()}</span>}
@@ -245,7 +323,7 @@ export default function CustomerCartPage() {
                                   <span className="text-sm font-medium w-6 text-center">{item.qty}</span>
                                   <button onClick={() => updateQty(item.id, 1)} className="h-7 w-7 flex items-center justify-center hover:bg-accent rounded-r-lg"><Plus className="h-3 w-3" /></button>
                                 </div>
-                                <button className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1">
+                                <button onClick={() => saveForLater(item)} className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1">
                                   <Save className="h-3 w-3" /> SAVE FOR LATER
                                 </button>
                                 <button onClick={() => removeItem(item.id)} className="text-xs font-medium text-destructive hover:underline">REMOVE</button>
@@ -257,86 +335,97 @@ export default function CustomerCartPage() {
                     })}
                   </div>
                 </TabsContent>
-                <TabsContent value="services"><p className="text-sm text-muted-foreground text-center py-8">No service bookings in cart</p></TabsContent>
-                <TabsContent value="booking"><p className="text-sm text-muted-foreground text-center py-8">No bookings in cart</p></TabsContent>
+                <TabsContent value="saved">
+                  {savedForLater.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">No items saved for later</p>
+                  ) : (
+                    <div className="space-y-3 mt-3">
+                      {savedForLater.map(item => (
+                        <Card key={item.id} className="p-4 flex items-center gap-3">
+                          <div className="h-14 w-14 bg-secondary/30 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                            {item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" /> : <span className="text-2xl">{item.emoji}</span>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold truncate">{item.title}</h3>
+                            <p className="text-sm font-bold mt-0.5">₹{item.price.toLocaleString()}</p>
+                          </div>
+                          <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => moveToCart(item)}>Move to Cart</Button>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
               </Tabs>
             </div>
 
             {/* Right Column - Price Summary */}
-            <div className="space-y-4">
-              {/* Redeem Points */}
-              <Card className="p-4">
-                <h3 className="text-sm font-semibold mb-2">Redeem Points</h3>
-                <div className="flex gap-2">
-                  <Input type="number" placeholder="Enter Points" value={pointsUsed || ""} onChange={(e) => setPointsUsed(Math.min(Number(e.target.value), maxPoints))} className="h-10 flex-1" />
-                  <Button className="h-10 px-6" onClick={applyPoints}>Apply</Button>
-                </div>
-                <p className="text-[10px] text-success mt-1.5">Your have total reward points {walletPoints.toLocaleString()}</p>
-              </Card>
-
-              {/* Coupon */}
-              <Card className="p-4">
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Enter coupon code" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} className="h-10 flex-1" disabled={couponApplied} />
-                  <Button variant="secondary" className="h-10" onClick={applyCoupon} disabled={couponApplied}>
-                    {couponApplied ? '✓' : 'Apply'}
-                  </Button>
-                </div>
-              </Card>
-
-              {/* Price Details */}
-              <Card className="p-4">
-                <h3 className="text-sm font-semibold mb-3">Price details</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Price ({cart.reduce((s, i) => s + i.qty, 0)} item)</span>
-                    <span>₹{subtotal.toLocaleString()}.00</span>
+            {cart.length > 0 && (
+              <div className="space-y-4">
+                <Card className="p-4">
+                  <h3 className="text-sm font-semibold mb-2">Redeem Points</h3>
+                  <div className="flex gap-2">
+                    <Input type="number" placeholder="Enter Points" value={pointsUsed || ""} onChange={(e) => setPointsUsed(Math.min(Number(e.target.value), maxPoints))} className="h-10 flex-1" />
+                    <Button className="h-10 px-6" onClick={applyPoints}>Apply</Button>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Platform Fee</span>
-                    <span>₹{platformFee}</span>
+                  <p className="text-[10px] text-success mt-1.5">Your have total reward points {walletPoints.toLocaleString()}</p>
+                </Card>
+                <Card className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Enter coupon code" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} className="h-10 flex-1" disabled={couponApplied} />
+                    <Button variant="secondary" className="h-10" onClick={applyCoupon} disabled={couponApplied}>{couponApplied ? '✓' : 'Apply'}</Button>
                   </div>
-                  {pointsUsed > 0 && (
-                    <div className="flex justify-between text-success">
-                      <span>Redeem Points</span>
-                      <span>- ₹{pointsUsed.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {discount > 0 && (
-                    <div className="flex justify-between text-success">
-                      <span>Coupon Discount</span>
-                      <span>- ₹{discount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  <Separator />
-                  <div className="flex justify-between font-bold">
-                    <span>Total Amount</span>
-                    <span>₹{total.toLocaleString()}</span>
+                </Card>
+                <Card className="p-4">
+                  <h3 className="text-sm font-semibold mb-3">Price details</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Price ({cart.reduce((s, i) => s + i.qty, 0)} item)</span><span>₹{subtotal.toLocaleString()}.00</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>₹{platformFee}</span></div>
+                    {pointsUsed > 0 && <div className="flex justify-between text-success"><span>Redeem Points</span><span>- ₹{pointsUsed.toLocaleString()}</span></div>}
+                    {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>- ₹{discount.toLocaleString()}</span></div>}
+                    <Separator />
+                    <div className="flex justify-between font-bold"><span>Total Amount</span><span>₹{total.toLocaleString()}</span></div>
                   </div>
-                </div>
-                {savings > 0 && (
-                  <p className="text-xs text-success mt-2 font-medium">You will save ₹{savings.toLocaleString()} on this order</p>
-                )}
-
-                {/* Desktop Proceed Button */}
-                <Button className="w-full h-12 mt-4 text-base font-semibold" onClick={placeOrder} disabled={placing}>
-                  {placing ? "Placing..." : "Proceed Payment"}
-                </Button>
-              </Card>
-            </div>
+                  {savings > 0 && <p className="text-xs text-success mt-2 font-medium">You will save ₹{savings.toLocaleString()} on this order</p>}
+                  <Button className="w-full h-12 mt-4 text-base font-semibold" onClick={placeOrder} disabled={placing}>{placing ? "Placing..." : "Proceed Payment"}</Button>
+                </Card>
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* Sticky Bottom - Mobile */}
-      {cart.length > 0 && (
+      {cart.length > 0 && !orderPlaced && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
           <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={placeOrder} disabled={placing}>
             {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed Payment"}
           </Button>
         </div>
       )}
+
+      {/* Address Edit Dialog */}
+      <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>{editingAddress ? "Edit Address" : "Add Address"}</DialogTitle>
+          <div className="space-y-3 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="text-xs">Label</Label><Input value={addressForm.label} onChange={e => setAddressForm({...addressForm, label: e.target.value})} className="h-9 text-sm" /></div>
+              <div><Label className="text-xs">Type</Label>
+                <select value={addressForm.type} onChange={e => setAddressForm({...addressForm, type: e.target.value})} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm">
+                  <option value="home">Home</option><option value="work">Work</option><option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div><Label className="text-xs">Address</Label><Input value={addressForm.address_line} onChange={e => setAddressForm({...addressForm, address_line: e.target.value})} className="h-9 text-sm" placeholder="Street, building, area" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="text-xs">City</Label><Input value={addressForm.city} onChange={e => setAddressForm({...addressForm, city: e.target.value})} className="h-9 text-sm" /></div>
+              <div><Label className="text-xs">Pincode</Label><Input value={addressForm.pincode} onChange={e => setAddressForm({...addressForm, pincode: e.target.value})} className="h-9 text-sm" /></div>
+            </div>
+            <Button className="w-full" onClick={saveAddress}>{editingAddress ? "Update Address" : "Save Address"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </CustomerLayout>
   );
 }
