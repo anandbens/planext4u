@@ -166,6 +166,14 @@ const App = () => (
             <Route path="/app/classifieds/post" element={<CustomerPostAdPage />} />
             <Route path="/app/classifieds/:id" element={<CustomerClassifiedDetailPage />} />
 
+            {/* Property / Find Home routes */}
+            <Route path="/app/find-home" element={<PropertyHomePage />} />
+            <Route path="/app/find-home/post" element={<PostPropertyPage />} />
+            <Route path="/app/find-home/emi" element={<PropertyEMIPage />} />
+            <Route path="/app/find-home/my-properties" element={<MyPropertiesPage />} />
+            <Route path="/app/find-home/saved" element={<MyPropertiesPage />} />
+            <Route path="/app/find-home/:id" element={<PropertyDetailPage />} />
+
             {/* Vendor-facing routes */}
             <Route path="/vendor/login" element={<VendorLoginPage />} />
             <Route path="/vendor" element={<VendorDashboardPage />} />

@@ -97,15 +97,14 @@ export default function AdminPropertiesPage() {
   return (
     <AdminLayout>
       <DataTable
-        title="Property Listings"
         columns={columns}
         data={properties}
-        totalItems={total}
-        currentPage={page}
+        total={total}
+        page={page}
         perPage={perPage}
+        totalPages={Math.ceil(total / perPage)}
         onPageChange={setPage}
         onSearch={setSearch}
-        isLoading={isLoading}
         summaryWidgets={summaryWidgets}
         onRowClick={(p) => setSelectedProperty(p)}
         filters={[{ key: "status", label: "Status", options: [
