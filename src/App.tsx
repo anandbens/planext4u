@@ -74,7 +74,14 @@ import PropertyDetailPage from "./pages/customer/PropertyDetailPage";
 import PostPropertyPage from "./pages/customer/PostPropertyPage";
 import PropertyEMIPage from "./pages/customer/PropertyEMIPage";
 import MyPropertiesPage from "./pages/customer/MyPropertiesPage";
+import SavedSearchesPage from "./pages/customer/SavedSearchesPage";
+import PropertyMessagesPage from "./pages/customer/PropertyMessagesPage";
+import RentTrackerPage from "./pages/customer/RentTrackerPage";
+import PropertyValueEstimatorPage from "./pages/customer/PropertyValueEstimatorPage";
 import AdminPropertiesPage from "./pages/admin/AdminPropertiesPage";
+import AdminLocalitiesPage from "./pages/admin/AdminLocalitiesPage";
+import AdminPropertyPlansPage from "./pages/admin/AdminPropertyPlansPage";
+import AdminPropertyReportsPage from "./pages/admin/AdminPropertyReportsPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
