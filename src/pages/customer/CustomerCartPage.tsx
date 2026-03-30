@@ -33,8 +33,7 @@ export default function CustomerCartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [savedForLater, setSavedForLater] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [placing, setPlacing] = useState(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [placing] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [pointsUsed, setPointsUsed] = useState(0);
