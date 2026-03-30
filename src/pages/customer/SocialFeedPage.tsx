@@ -281,8 +281,22 @@ function PostCard({ post }: { post: any }) {
       {/* Media */}
       <div className="relative aspect-square bg-muted overflow-hidden">
         {mediaItems.length > 0 ? (
-          <img src={mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || ''} alt="" className="w-full h-full object-cover" loading="lazy"
-            onDoubleClick={() => toggleLike.mutate()} />
+          <img 
+            src={mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || ''} 
+            alt="" 
+            className="w-full h-full object-cover" 
+            loading="lazy"
+            referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
+            onDoubleClick={() => toggleLike.mutate()}
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.dataset.retried) {
+                target.dataset.retried = "1";
+                target.src = target.src.replace('&fit=crop', '&fit=crop&auto=format');
+              }
+            }}
+          />
         ) : (
           <div className="w-full h-full bg-accent/30 flex items-center justify-center"><span className="text-muted-foreground text-sm">No media</span></div>
         )}
