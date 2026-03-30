@@ -383,7 +383,7 @@ export default function CustomerCartPage() {
       </div>
 
       {/* Sticky Bottom - Mobile */}
-      {cart.length > 0 && !orderPlaced && (
+      {cart.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
           <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={placeOrder} disabled={placing}>
             {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed Payment"}
