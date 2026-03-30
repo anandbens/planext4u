@@ -193,6 +193,7 @@ const App = () => (
             <Route path="/app/product/:id" element={<CustomerProductPage />} />
             <Route path="/app/vendor/:id" element={<CustomerVendorPage />} />
             <Route path="/app/cart" element={<CustomerCartPage />} />
+            <Route path="/app/payment" element={<PaymentPage />} />
             <Route path="/app/orders" element={<CustomerOrdersPage />} />
             <Route path="/app/profile" element={<CustomerProfilePage />} />
             <Route path="/app/profile/edit" element={<CustomerProfileEditPage />} />
