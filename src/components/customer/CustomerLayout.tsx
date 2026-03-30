@@ -427,11 +427,10 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
           <div className="relative flex items-center justify-around px-1 py-2">
             {navItems.map((item) => {
-              const active = item.comingSoon ? false : isActive(item.to);
+              const active = isActive(item.to);
 
               const content = (
                 <div className="flex flex-col items-center relative z-10">
-                  {/* Raised pill for active item */}
                   {active ? (
                     <motion.div
                       layoutId="nav-active-pill"
@@ -464,15 +463,6 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
                   )}
                 </div>
               );
-
-              if (item.comingSoon) {
-                return (
-                  <button key={item.label} onClick={() => toast.info(`${item.label} is coming soon! Stay tuned.`, { duration: 2500 })}
-                    className="flex flex-col items-center relative min-w-[48px]">
-                    {content}
-                  </button>
-                );
-              }
 
               return (
                 <Link key={item.to + item.label} to={item.to}
