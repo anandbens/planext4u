@@ -145,14 +145,18 @@ export default function CustomerCartPage() {
 
   const placeOrder = async () => {
     if (cart.length === 0) return;
-    setPlacing(true);
-    try {
-      const result = await api.placeOrder(cart, customerId, pointsUsed, discount);
-      await api.clearCart();
-      setOrderPlaced(true);
-      toast.success(`${result.orders.length} order(s) placed successfully!`);
-    } catch { toast.error("Failed to place order"); }
-    finally { setPlacing(false); }
+    if (!selectedAddressId) { toast.error("Please select a delivery address"); return; }
+    navigate('/app/payment', {
+      state: {
+        cart,
+        subtotal,
+        platformFee,
+        discount,
+        pointsUsed,
+        total,
+        selectedAddress: addresses.find(a => a.id === selectedAddressId),
+      }
+    });
   };
 
   const selectedAddress = addresses.find(a => a.id === selectedAddressId);

@@ -423,86 +423,170 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         </div>
       </footer>
 
-      {/* Mobile Bottom Navigation */}
-      {!hideNav && !socialMode && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
-          <div className="relative flex items-center justify-around px-1 py-2">
-            {navItems.map((item) => {
-              const active = isActive(item.to);
-              const showBadge = item.badge !== undefined && item.badge > 0;
+      {/* Mobile Bottom Navigation - Vertical-based */}
+      {!hideNav && (() => {
+        const path = location.pathname;
+        // Determine active vertical
+        const isSocial = socialMode || path.startsWith('/app/social');
+        const isHome = path.startsWith('/app/find-home');
+        const isClassified = path.startsWith('/app/classifieds');
+        const isServices = path.startsWith('/app/services') || path.startsWith('/app/service/');
+        
+        // Social footer
+        if (isSocial) {
+          const socialTabs = [
+            { icon: Home, label: "Home", to: "/app/social", active: path === '/app/social' },
+            { icon: Search, label: "Explore", to: "/app/social/explore", active: path.startsWith('/app/social/explore') },
+            { icon: Plus, label: "Create", to: "/app/social/create", active: path.startsWith('/app/social/create'), isCenter: true },
+            { icon: Film, label: "Reels", to: "/app/social/reels", active: path.startsWith('/app/social/reels') },
+            { icon: User, label: "Profile", to: "/app/social/profile", active: path.startsWith('/app/social/profile') },
+          ];
+          return (
+            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+              <div className="flex items-center justify-around px-2 py-2 max-w-xl mx-auto">
+                {socialTabs.map(tab => (
+                  <Link key={tab.to} to={tab.to} className="flex-1 flex flex-col items-center gap-0.5 py-1">
+                    {tab.isCenter ? (
+                      <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                        <tab.icon className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                    ) : tab.label === 'Profile' ? (
+                      <div className={`h-7 w-7 rounded-full bg-muted flex items-center justify-center overflow-hidden ${tab.active ? 'border-2 border-foreground' : 'border border-border'}`}>
+                        <span className="text-xs font-bold">{customerUser?.name?.charAt(0) || 'U'}</span>
+                      </div>
+                    ) : (
+                      <tab.icon className={`h-5 w-5 ${tab.active ? 'text-foreground fill-current' : 'text-muted-foreground'}`} />
+                    )}
+                    <span className={`text-[9px] ${tab.active ? 'font-bold text-foreground' : 'text-muted-foreground'}`}>{tab.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          );
+        }
 
-              const content = (
-                <div className="flex flex-col items-center relative z-10">
-                  {active ? (
-                    <motion.div
-                      layoutId="nav-active-pill"
-                      className="flex flex-col items-center justify-center bg-primary rounded-[18px] px-4 py-2.5 -mt-7 relative"
-                      style={{ boxShadow: '0 4px 20px -2px hsl(180 100% 30% / 0.45), 0 0 10px 0 hsl(180 100% 30% / 0.2)' }}
-                      transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                    >
-                      <item.icon className="h-5 w-5 text-primary-foreground" />
-                      <span className="text-[9px] font-bold text-primary-foreground mt-0.5 leading-tight whitespace-nowrap">
-                        {item.label}
-                      </span>
-                      {showBadge && (
-                        <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[8px] flex items-center justify-center font-bold">
-                          {item.badge}
-                        </span>
-                      )}
-                    </motion.div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-1 relative">
-                      <item.icon className="h-5 w-5 text-muted-foreground" />
-                      <span className="text-[9px] font-medium text-muted-foreground mt-0.5 leading-tight whitespace-nowrap">
-                        {item.label}
-                      </span>
-                      {showBadge && (
-                        <span className="absolute -top-1 right-0 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[8px] flex items-center justify-center font-bold">
-                          {item.badge}
-                        </span>
+        // Find Home footer
+        if (isHome) {
+          const homeTabs = [
+            { icon: Home, label: "Home", to: "/app/find-home", active: path === '/app/find-home' },
+            { icon: Search, label: "Search", to: "/app/find-home", active: false },
+            { icon: Plus, label: "Post", to: "/app/find-home/post", active: path.startsWith('/app/find-home/post'), isCenter: true },
+            { icon: Heart, label: "Saved", to: "/app/find-home/saved", active: path.startsWith('/app/find-home/saved') },
+            { icon: User, label: "Profile", to: "/app/profile", active: false },
+          ];
+          return (
+            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+              <div className="flex items-center justify-around px-2 py-2 max-w-xl mx-auto">
+                {homeTabs.map(tab => (
+                  <Link key={tab.to + tab.label} to={tab.to} className="flex-1 flex flex-col items-center gap-0.5 py-1">
+                    {tab.isCenter ? (
+                      <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center -mt-4 shadow-lg">
+                        <tab.icon className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                    ) : (
+                      <tab.icon className={`h-5 w-5 ${tab.active ? 'text-primary' : 'text-muted-foreground'}`} />
+                    )}
+                    <span className={`text-[9px] ${tab.active ? 'font-bold text-primary' : 'text-muted-foreground'}`}>{tab.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          );
+        }
+
+        // Classified footer
+        if (isClassified) {
+          const classifiedTabs = [
+            { icon: Home, label: "Home", to: "/app/classifieds", active: path === '/app/classifieds' },
+            { icon: Search, label: "Browse", to: "/app/classifieds", active: false },
+            { icon: Plus, label: "Post Ad", to: "/app/classifieds/post", active: path.startsWith('/app/classifieds/post'), isCenter: true },
+            { icon: Megaphone, label: "My Ads", to: "/app/classifieds", active: false },
+            { icon: User, label: "Profile", to: "/app/profile", active: false },
+          ];
+          return (
+            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+              <div className="flex items-center justify-around px-2 py-2 max-w-xl mx-auto">
+                {classifiedTabs.map(tab => (
+                  <Link key={tab.to + tab.label} to={tab.to} className="flex-1 flex flex-col items-center gap-0.5 py-1">
+                    {tab.isCenter ? (
+                      <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center -mt-4 shadow-lg">
+                        <tab.icon className="h-4 w-4 text-primary-foreground" />
+                      </div>
+                    ) : (
+                      <tab.icon className={`h-5 w-5 ${tab.active ? 'text-primary' : 'text-muted-foreground'}`} />
+                    )}
+                    <span className={`text-[9px] ${tab.active ? 'font-bold text-primary' : 'text-muted-foreground'}`}>{tab.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          );
+        }
+
+        // Services footer
+        if (isServices) {
+          const serviceTabs = [
+            { icon: Home, label: "Home", to: "/app/services", active: path === '/app/services' },
+            { icon: Search, label: "Explore", to: "/app/services", active: false },
+            { icon: CalendarDays, label: "Bookings", to: "/app/orders", active: false },
+            { icon: Heart, label: "Saved", to: "/app/wishlist", active: false },
+            { icon: User, label: "Profile", to: "/app/profile", active: false },
+          ];
+          return (
+            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+              <div className="flex items-center justify-around px-2 py-2 max-w-xl mx-auto">
+                {serviceTabs.map(tab => (
+                  <Link key={tab.to + tab.label} to={tab.to} className="flex-1 flex flex-col items-center gap-0.5 py-1">
+                    <tab.icon className={`h-5 w-5 ${tab.active ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className={`text-[9px] ${tab.active ? 'font-bold text-primary' : 'text-muted-foreground'}`}>{tab.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          );
+        }
+
+        // Default Shop footer
+        const shopTabs = [
+          { icon: Home, label: "Home", to: "/app", badge: 0 },
+          { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: 0 },
+          { icon: Wrench, label: "Services", to: "/app/services", badge: 0 },
+          { icon: Building, label: "Find Home", to: "/app/find-home", badge: 0 },
+          { icon: Megaphone, label: "Socio", to: "/app/social", badge: 0 },
+          { icon: Newspaper, label: "Classified", to: "/app/classifieds", badge: 0 },
+        ];
+        return (
+          <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+            <div className="relative flex items-center justify-around px-1 py-2">
+              {shopTabs.map((item) => {
+                const active = isActive(item.to);
+                return (
+                  <Link key={item.to + item.label} to={item.to} className="flex-1 flex flex-col items-center relative">
+                    <div className="flex flex-col items-center relative z-10">
+                      {active ? (
+                        <motion.div
+                          layoutId="nav-active-pill"
+                          className="flex flex-col items-center justify-center bg-primary rounded-[18px] px-3 py-2 -mt-7 relative"
+                          style={{ boxShadow: '0 4px 20px -2px hsl(180 100% 30% / 0.45), 0 0 10px 0 hsl(180 100% 30% / 0.2)' }}
+                          transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                        >
+                          <item.icon className="h-4 w-4 text-primary-foreground" />
+                          <span className="text-[8px] font-bold text-primary-foreground mt-0.5 leading-tight whitespace-nowrap">{item.label}</span>
+                        </motion.div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-1">
+                          <item.icon className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-[8px] font-medium text-muted-foreground mt-0.5 leading-tight whitespace-nowrap">{item.label}</span>
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              );
-
-              return (
-                <Link key={item.to + item.label} to={item.to}
-                  className="flex-1 flex flex-col items-center relative">
-                  {content}
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      )}
-
-      {/* Social Mobile Bottom Navigation - Instagram-style */}
-      {!hideNav && socialMode && (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
-          <div className="flex items-center justify-around px-2 py-2.5 max-w-xl mx-auto">
-            <Link to="/app/social" className="flex flex-col items-center gap-0.5">
-              <Home className={`h-6 w-6 ${location.pathname === '/app/social' ? 'fill-current' : ''}`} />
-            </Link>
-            <Link to="/app/social/explore" className="flex flex-col items-center gap-0.5">
-              <Search className={`h-6 w-6 ${location.pathname.startsWith('/app/social/explore') ? 'stroke-[2.5]' : ''}`} />
-            </Link>
-            <Link to="/app/social/create" className="flex flex-col items-center gap-0.5">
-              <div className="h-7 w-7 rounded-lg border-2 border-foreground flex items-center justify-center">
-                <Plus className="h-4 w-4" />
-              </div>
-            </Link>
-            <Link to="/app/social/reels" className="flex flex-col items-center gap-0.5">
-              <Film className={`h-6 w-6 ${location.pathname.startsWith('/app/social/reels') ? 'fill-current' : ''}`} />
-            </Link>
-            <Link to="/app/social/profile" className="flex flex-col items-center gap-0.5">
-              <div className={`h-7 w-7 rounded-full bg-muted flex items-center justify-center overflow-hidden ${location.pathname.startsWith('/app/social/profile') ? 'border-2 border-foreground' : 'border border-border'}`}>
-                <span className="text-xs font-bold">{customerUser?.name?.charAt(0) || 'U'}</span>
-              </div>
-            </Link>
-          </div>
-        </nav>
-      )}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        );
+      })()}
 
       <LocationModal open={locationModalOpen} onOpenChange={setLocationModalOpen} onSelect={setSelectedLocation} />
     </div>
