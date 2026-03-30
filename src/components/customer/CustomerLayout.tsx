@@ -42,6 +42,7 @@ export function CustomerLayout({ children, hideNav }: CustomerLayoutProps) {
 
   useEffect(() => {
     setMobileMenuOpen(false);
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
   const handleSearch = (query: string) => {
