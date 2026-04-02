@@ -32,9 +32,10 @@ export interface UploadResult {
   blurHash?: string;
 }
 
-const QUALITY = 0.80;
+const QUALITY = 0.75; // High quality with maximum compression
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
+const MAX_VIDEO_DURATION = 20; // seconds
 
 const SIZE_CONFIGS = [
   { name: 'thumbnail', maxWidth: 150, maxHeight: 150, crop: true },
