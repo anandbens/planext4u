@@ -76,59 +76,140 @@ export default function PaymentPage() {
     }
   };
 
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) { resolve(true); return; }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePay = async () => {
     if (!isMethodValid()) { toast.error("Please complete payment details"); return; }
+
+    if (method === 'cod') {
+      // COD - create order directly
+      setPaymentState('processing');
+      await createOrder('cod', null);
+      return;
+    }
+
     setPaymentState('processing');
 
-    // Simulate payment processing
-    await new Promise(r => setTimeout(r, 2500));
+    try {
+      // Load Razorpay script
+      const loaded = await loadRazorpayScript();
+      if (!loaded) { toast.error("Failed to load payment gateway"); setPaymentState('select'); return; }
 
-    const success = Math.random() > 0.1; // 90% success rate
+      // Create Razorpay order via edge function
+      const { data, error } = await supabase.functions.invoke("razorpay", {
+        body: { action: "create_order", amount: total, currency: "INR" },
+      });
 
-    if (success) {
-      try {
-        const dateStr = format(new Date(), 'yyyyMMdd');
-        const rand = String(Math.floor(Math.random() * 99999)).padStart(5, '0');
-        const newOrderId = `P4U-${dateStr}-${rand}`;
-
-        // Group items by vendor
-        const vendorGroups: Record<string, any[]> = {};
-        (cart || []).forEach((item: any) => {
-          const vid = item.vendor_id || item.vendor || 'VND-001';
-          if (!vendorGroups[vid]) vendorGroups[vid] = [];
-          vendorGroups[vid].push(item);
-        });
-
-        const orderPromises = Object.entries(vendorGroups).map(async ([vendorId, items]) => {
-          const orderTotal = items.reduce((s: number, i: any) => s + i.price * i.qty, 0);
-          const orderData = {
-            id: newOrderId + '-' + vendorId.slice(-3),
-            customer_id: customerId,
-            customer_name: customerUser?.name || 'Customer',
-            vendor_id: vendorId,
-            vendor_name: items[0]?.vendor || 'Vendor',
-            items: items.map((i: any) => ({ id: i.id, title: i.title, qty: i.qty, price: i.price, image: i.image })),
-            subtotal: orderTotal,
-            tax: items.reduce((s: number, i: any) => s + (i.tax || 0) * i.qty, 0),
-            discount: discount || 0,
-            points_used: pointsUsed || 0,
-            total: orderTotal,
-            status: 'placed',
-          };
-          await supabase.from('orders').insert(orderData as any);
-          return orderData;
-        });
-
-        const results = await Promise.all(orderPromises);
-        await api.clearCart();
-        setOrderId(newOrderId);
-        setOrderItems(cart || []);
-        setPaymentState('success');
-      } catch (err) {
-        console.error('Order creation failed:', err);
-        setPaymentState('failure');
+      if (error || !data?.order_id) {
+        toast.error("Failed to create payment order");
+        setPaymentState('select');
+        return;
       }
-    } else {
+
+      setPaymentState('select'); // Hide processing while Razorpay modal is open
+
+      const options = {
+        key: data.key_id,
+        amount: data.amount,
+        currency: data.currency,
+        name: "Planext4u",
+        description: `Order - ${cart.length} item(s)`,
+        order_id: data.order_id,
+        handler: async (response: any) => {
+          setPaymentState('processing');
+          // Verify payment
+          const { data: verifyData, error: verifyError } = await supabase.functions.invoke("razorpay", {
+            body: {
+              action: "verify_payment",
+              order_id: data.order_id,
+              payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            },
+          });
+
+          if (verifyError || !verifyData?.verified) {
+            setPaymentState('failure');
+            return;
+          }
+
+          // Payment verified - create order
+          await createOrder(method, response.razorpay_payment_id);
+        },
+        prefill: {
+          name: customerUser?.name || "",
+          email: customerUser?.email || "",
+          contact: customerUser?.mobile || "",
+        },
+        theme: { color: "#0d9488" },
+        modal: {
+          ondismiss: () => {
+            setPaymentState('select');
+            toast.info("Payment cancelled");
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", () => {
+        setPaymentState('failure');
+      });
+      rzp.open();
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      toast.error("Payment failed: " + (err.message || "Unknown error"));
+      setPaymentState('select');
+    }
+  };
+
+  const createOrder = async (payMethod: string, paymentId: string | null) => {
+    try {
+      const dateStr = format(new Date(), 'yyyyMMdd');
+      const rand = String(Math.floor(Math.random() * 99999)).padStart(5, '0');
+      const newOrderId = `P4U-${dateStr}-${rand}`;
+
+      const vendorGroups: Record<string, any[]> = {};
+      (cart || []).forEach((item: any) => {
+        const vid = item.vendor_id || item.vendor || 'VND-001';
+        if (!vendorGroups[vid]) vendorGroups[vid] = [];
+        vendorGroups[vid].push(item);
+      });
+
+      const orderPromises = Object.entries(vendorGroups).map(async ([vendorId, items]) => {
+        const orderTotal = items.reduce((s: number, i: any) => s + i.price * i.qty, 0);
+        const orderData = {
+          id: newOrderId + '-' + vendorId.slice(-3),
+          customer_id: customerId,
+          customer_name: customerUser?.name || 'Customer',
+          vendor_id: vendorId,
+          vendor_name: items[0]?.vendor || 'Vendor',
+          items: items.map((i: any) => ({ id: i.id, title: i.title, qty: i.qty, price: i.price, image: i.image })),
+          subtotal: orderTotal,
+          tax: items.reduce((s: number, i: any) => s + (i.tax || 0) * i.qty, 0),
+          discount: discount || 0,
+          points_used: pointsUsed || 0,
+          total: orderTotal,
+          status: payMethod === 'cod' ? 'placed' : 'confirmed',
+        };
+        await supabase.from('orders').insert(orderData as any);
+        return orderData;
+      });
+
+      await Promise.all(orderPromises);
+      await api.clearCart();
+      setOrderId(newOrderId);
+      setOrderItems(cart || []);
+      setPaymentState('success');
+    } catch (err) {
+      console.error('Order creation failed:', err);
       setPaymentState('failure');
     }
   };
