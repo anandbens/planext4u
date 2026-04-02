@@ -131,11 +131,6 @@ export default function CustomerLoginPage() {
         </div>
 
         <div className="space-y-4 max-w-sm mx-auto">
-          <Button variant="outline" className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10" onClick={handleSeedUsers} disabled={seeding}>
-            <Database className="h-4 w-4" />
-            {seeding ? "Creating demo accounts..." : "🔧 First time? Seed Demo Users"}
-          </Button>
-
           {loginMethod === "otp" ? (
             <>
               {!otpSent ? (
