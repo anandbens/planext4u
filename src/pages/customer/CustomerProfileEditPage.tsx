@@ -136,18 +136,33 @@ export default function CustomerProfileEditPage() {
     if (err) { toast.error(err); return; }
     
     setLoading(true);
-    const updateData: any = {
-      name: form.name, email: form.email, mobile: form.mobile, occupation: form.occupation,
-      gender: form.gender, about: form.about, profile_photo: profilePhoto,
-      profile_completeness: completeness,
-    };
-    if (form.dob) updateData.dob = form.dob;
-    const { error } = await supabase.from('customers').update(updateData).eq('id', customerId);
-    if (error) { toast.error("Failed to save: " + error.message); setLoading(false); return; }
-    logActivity('profile_update', `Profile updated: ${form.name}`);
-    toast.success("Profile updated successfully!");
-    setLoading(false);
-    navigate("/app/profile");
+    try {
+      // Check phone uniqueness (excluding current user)
+      const cleanMobile = form.mobile.replace(/\+91/g, '');
+      const { data: phoneDup } = await supabase.from('customers').select('id').eq('mobile', cleanMobile).neq('id', customerId).maybeSingle();
+      const { data: phoneDup2 } = await supabase.from('customers').select('id').eq('mobile', `+91${cleanMobile}`).neq('id', customerId).maybeSingle();
+      if (phoneDup || phoneDup2) { toast.error("This phone number is already used by another account"); setLoading(false); return; }
+
+      // Check email uniqueness (excluding current user)
+      const { data: emailDup } = await supabase.from('customers').select('id').eq('email', form.email).neq('id', customerId).maybeSingle();
+      if (emailDup) { toast.error("This email is already used by another account"); setLoading(false); return; }
+
+      const updateData: any = {
+        name: form.name, email: form.email, mobile: cleanMobile, occupation: form.occupation,
+        gender: form.gender, about: form.about, profile_photo: profilePhoto,
+        profile_completeness: completeness,
+      };
+      if (form.dob) updateData.dob = form.dob;
+      const { error } = await supabase.from('customers').update(updateData).eq('id', customerId);
+      if (error) { toast.error("Failed to save: " + error.message); setLoading(false); return; }
+      logActivity('profile_update', `Profile updated: ${form.name}`);
+      toast.success("Profile updated successfully!");
+      navigate("/app/profile");
+    } catch (saveErr: any) {
+      toast.error(saveErr.message || "Failed to save profile");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // --- Map & Address Logic ---
