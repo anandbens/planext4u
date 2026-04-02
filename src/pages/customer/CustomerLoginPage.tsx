@@ -106,6 +106,26 @@ export default function CustomerLoginPage() {
     finally { setSeeding(false); }
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error(result.error instanceof Error ? result.error.message : "Google sign-in failed");
+        return;
+      }
+      if (result.redirected) return;
+      toast.success("Welcome to Planext4u!");
+      setTimeout(() => navigate("/app", { replace: true }), 500);
+    } catch (err: any) {
+      toast.error(err.message || "Google sign-in failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <div className="bg-primary pt-12 pb-16 px-6 flex flex-col items-center relative">
