@@ -26,10 +26,20 @@ export default function CustomerBrowsePage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {}
+      );
+    }
+  }, []);
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ["browseProducts", categoryFilter, sortBy, searchFilter],
-    queryFn: () => api.browseProducts({ category: categoryFilter, sort: sortBy, search: searchFilter }),
+    queryKey: ["browseProducts", categoryFilter, sortBy, searchFilter, userLocation.lat],
+    queryFn: () => api.browseProducts({ category: categoryFilter, sort: sortBy, search: searchFilter, userLat: userLocation.lat, userLng: userLocation.lng }),
   });
 
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });

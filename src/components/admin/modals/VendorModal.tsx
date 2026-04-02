@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail, Phone, Store, Percent, Crown, ArrowRight, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VendorModalProps {
   vendor: Vendor | null;
@@ -24,7 +26,7 @@ const statusFlow: Vendor["status"][] = ["pending", "level1_approved", "level2_ap
 const emptyForm = {
   name: "", business_name: "", email: "", mobile: "",
   commission_rate: 10, membership: "basic", status: "pending" as Vendor["status"],
-  category_id: "1", city_id: "1", area_id: "1",
+  category_id: "1", city_id: "1", area_id: "1", plan_id: "",
 };
 
 export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate, onDelete, vendorType = "product" }: VendorModalProps) {
@@ -32,6 +34,14 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
   const [editMode, setEditMode] = useState(mode === "edit" || isCreate);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+
+  const { data: vendorPlans = [] } = useQuery({
+    queryKey: ["vendorPlansDropdown"],
+    queryFn: async () => {
+      const { data } = await supabase.from("vendor_plans").select("id, plan_name, plan_type, visibility_type").eq("is_active", true).order("plan_tier");
+      return data || [];
+    },
+  });
 
   useEffect(() => {
     if (isCreate) {
@@ -44,6 +54,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
         commission_rate: vendor.commission_rate, membership: vendor.membership,
         status: vendor.status, category_id: vendor.category_id,
         city_id: vendor.city_id, area_id: vendor.area_id,
+        plan_id: (vendor as any).plan_id || "",
       });
       setEditMode(mode === "edit");
     }
@@ -150,6 +161,37 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                 </Select>
               ) : <p className="text-xl font-bold capitalize">{vendor?.membership}</p>}
             </div>
+          </div>
+
+          {/* Vendor Plan Assignment */}
+          <div className="p-4 rounded-lg bg-secondary/30">
+            <div className="flex items-center gap-2 mb-2"><Crown className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Vendor Plan</Label></div>
+            {editMode ? (
+              <Select value={form.plan_id || "none"} onValueChange={(v) => setForm({ ...form, plan_id: v === "none" ? "" : v })}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select a plan" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Plan</SelectItem>
+                  {vendorPlans.filter(p => p.plan_type === "local").length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Local Plans</div>
+                      {vendorPlans.filter(p => p.plan_type === "local").map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.plan_name} ({p.visibility_type.replace(/_/g, " ")})</SelectItem>
+                      ))}
+                    </>
+                  )}
+                  {vendorPlans.filter(p => p.plan_type === "vip").length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">VIP Plans</div>
+                      {vendorPlans.filter(p => p.plan_type === "vip").map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.plan_name} ({p.visibility_type.replace(/_/g, " ")})</SelectItem>
+                      ))}
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-sm font-medium">{vendorPlans.find(p => p.id === (vendor as any)?.plan_id)?.plan_name || "No Plan"}</p>
+            )}
           </div>
         </div>
 
