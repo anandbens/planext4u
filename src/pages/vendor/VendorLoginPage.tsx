@@ -78,29 +78,12 @@ export default function VendorLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-brand-dark via-brand-dark/90 to-brand-teal/30">
-      <nav className="w-full bg-card/10 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between">
-          <Link to="/app" className="flex items-center gap-2">
-            <div className="bg-white rounded-lg p-1.5 h-8 w-8 flex items-center justify-center">
-              <img src={p4uLogo} alt="Planext4u" className="w-full h-full object-contain" />
-            </div>
-            <span className="text-white font-bold text-sm hidden sm:block">Planext4u</span>
-          </Link>
-          <div className="flex items-center gap-1 flex-wrap">
-            <Link to="/app"><Button variant="ghost" size="sm" className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1"><Home className="h-3.5 w-3.5" /> Home</Button></Link>
-            <Link to="/app/browse"><Button variant="ghost" size="sm" className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1"><ShoppingBag className="h-3.5 w-3.5" /> Shop</Button></Link>
-            <Link to="/app/services"><Button variant="ghost" size="sm" className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1"><Wrench className="h-3.5 w-3.5" /> Services</Button></Link>
-            <Link to="/app/login"><Button variant="ghost" size="sm" className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1"><User className="h-3.5 w-3.5" /> Customer</Button></Link>
-            <Link to="/login"><Button variant="ghost" size="sm" className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1">Admin</Button></Link>
-          </div>
-        </div>
-      </nav>
-
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-amber-50 via-white to-teal-50">
       <div className="flex-1 flex items-center justify-center">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-brand-teal/10 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-brand-amber/5 blur-3xl" />
+          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-amber-200/30 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-teal-200/20 blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl" />
         </div>
 
         <div className="w-full max-w-md mx-4 relative z-10">
