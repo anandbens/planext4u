@@ -74,6 +74,7 @@ export interface Referral {
 export interface Category {
   id: string; name: string; parent_id: string | null; image: string;
   status: 'active' | 'inactive'; count?: number; created_at?: string;
+  banner_image?: string; icon?: string; is_trending?: boolean; description?: string;
 }
 
 export interface Banner {
