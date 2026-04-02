@@ -66,6 +66,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
 
   const handleSave = async () => {
     if (!form.name || !form.business_name) return;
+    if (form.status === 'rejected' && !form.rejection_reason?.trim()) return;
     setSaving(true);
     try {
       if (isCreate) { await onCreate?.(form); }
