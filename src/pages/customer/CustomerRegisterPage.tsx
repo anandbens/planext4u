@@ -11,11 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { logActivity } from "@/lib/auth";
-import { sendOTP, verifyOTP, clearRecaptcha } from "@/lib/firebase";
+import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, resetPhoneAuth } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
-// T&C content component
 function TermsContent() {
   return (
     <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -96,12 +95,9 @@ export default function CustomerRegisterPage() {
   const [states, setStates] = useState<{ id: string; name: string; code: string }[]>([]);
   const [districts, setDistricts] = useState<{ id: string; name: string }[]>([]);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-
-  // T&C popup state
   const [showTermsPopup, setShowTermsPopup] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const [otpStep, setOtpStep] = useState<"form" | "otp">("form");
   const [otp, setOtp] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
@@ -115,23 +111,39 @@ export default function CustomerRegisterPage() {
 
   useEffect(() => {
     if (form.state) {
-      const st = states.find(s => s.name === form.state);
+      const st = states.find((s) => s.name === form.state);
       if (st) api.getDistricts(st.id).then(setDistricts);
       else setDistricts([]);
-    } else setDistricts([]);
+    } else {
+      setDistricts([]);
+    }
   }, [form.state, states]);
 
   useEffect(() => {
-    if (timer > 0) { const t = setTimeout(() => setTimer(timer - 1), 1000); return () => clearTimeout(t); }
+    if (timer > 0) {
+      const t = setTimeout(() => setTimer(timer - 1), 1000);
+      return () => clearTimeout(t);
+    }
   }, [timer]);
 
-  useEffect(() => () => clearRecaptcha(), []);
+  useEffect(() => {
+    return () => {
+      resetPhoneAuth();
+    };
+  }, []);
 
   const captureLocation = () => {
     setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => { setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setGeoLoading(false); toast.success("Location captured!"); },
-      () => { setGeoLoading(false); toast.error("Location access denied"); },
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeoLoading(false);
+        toast.success("Location captured!");
+      },
+      () => {
+        setGeoLoading(false);
+        toast.error("Location access denied");
+      },
       { enableHighAccuracy: true }
     );
   };
@@ -159,27 +171,29 @@ export default function CustomerRegisterPage() {
     setOtpLoading(true);
     try {
       const isUnique = await checkMobileUnique();
-      if (!isUnique) { setOtpLoading(false); return; }
-      // Clear any previous recaptcha before sending
-      clearRecaptcha();
-      // Small delay to let DOM settle after clearing
-      await new Promise(r => setTimeout(r, 300));
+      if (!isUnique) return;
+      await resetPhoneAuth();
+      await new Promise((r) => setTimeout(r, 400));
       await sendOTP(`+91${form.mobile}`);
       setOtpStep("otp");
-      setTimer(60);
+      setTimer(45);
       toast.success("OTP sent to +91 " + form.mobile);
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
       if (err.code === "auth/too-many-requests") {
-        toast.error("Too many attempts. Please wait 1-2 minutes before trying again.", { duration: 6000 });
-        setTimer(120);
+        toast.error("OTP is temporarily rate limited by Firebase for this number/device. Please wait a few minutes or try a different test number.", { duration: 7000 });
+        setTimer(180);
+      } else if (err.code === "auth/invalid-phone-number") {
+        toast.error("Invalid phone number.");
       } else if (err.message?.includes("reCAPTCHA")) {
-        toast.error("Verification failed. Please try again.");
+        toast.error("Phone verification could not start. Please try again.");
       } else {
         toast.error(err.message || "Failed to send OTP");
       }
-      clearRecaptcha();
-    } finally { setOtpLoading(false); }
+      await resetPhoneAuth();
+    } finally {
+      setOtpLoading(false);
+    }
   };
 
   const handleVerifyAndRegister = async () => {
@@ -187,19 +201,48 @@ export default function CustomerRegisterPage() {
     setLoading(true);
     try {
       await verifyOTP(otp);
-      await api.registerCustomer({ ...form, city: form.district });
+      const idToken = await getFirebaseIdToken();
+      const { data, error } = await supabase.functions.invoke("firebase-phone-auth", {
+        body: { firebase_id_token: idToken },
+      });
+      if (error || !data?.success) {
+        throw new Error(data?.error || error?.message || "Authentication failed");
+      }
+
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: data.token_hash,
+        type: "magiclink",
+      });
+      if (verifyError) throw new Error(verifyError.message);
+
+      if (!data?.is_new_user) {
+        toast.error("This mobile number is already registered. Please login instead.");
+        await resetPhoneAuth();
+        navigate("/app/login", { replace: true });
+        return;
+      }
+
+      await supabase
+        .from("customers")
+        .update({
+          name: form.name,
+          email: form.email,
+          occupation: form.occupation || null,
+        } as never)
+        .eq("id", data.customer?.id);
+
       toast.success("🎉 Registration successful!", { duration: 5000 });
-      logActivity('registration', `New customer registered: ${form.name} (${form.email})`);
-      // Redirect to set-location page immediately after registration
+      logActivity("registration", `New customer registered: ${form.name} (${form.email})`);
       navigate("/app/set-location", { replace: true });
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
       else if (err.code === "auth/code-expired") toast.error("OTP expired.");
       else toast.error(err.message || "Registration failed");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Handle scroll tracking for T&C popup
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -230,17 +273,17 @@ export default function CustomerRegisterPage() {
         <Card className="p-6 mt-2">
           {otpStep === "form" ? (
             <div className="space-y-4">
-              <div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Full Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="pl-10 h-11" /></div>
+              <div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Full Name *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="pl-10 h-11" /></div>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="10-digit Mobile Number *" value={form.mobile} onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0,10); setForm({...form, mobile: v}); }} className="pl-10 h-11" type="tel" maxLength={10} inputMode="numeric" />
+                <Input placeholder="10-digit Mobile Number *" value={form.mobile} onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0, 10); setForm({ ...form, mobile: v }); }} className="pl-10 h-11" type="tel" maxLength={10} inputMode="numeric" />
                 {form.mobile && form.mobile.length !== 10 && <p className="text-xs text-destructive mt-1">Must be 10 digits</p>}
               </div>
-              <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Email Address *" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="pl-10 h-11" type="email" /></div>
-              
+              <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Email Address *" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="pl-10 h-11" type="email" /></div>
+
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">State *</Label>
-                <Select value={form.state} onValueChange={v => setForm({...form, state: v, district: ""})}>
+                <Select value={form.state} onValueChange={v => setForm({ ...form, state: v, district: "" })}>
                   <SelectTrigger className="h-11"><SelectValue placeholder="Select State" /></SelectTrigger>
                   <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
                     {states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
@@ -250,7 +293,7 @@ export default function CustomerRegisterPage() {
 
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">District *</Label>
-                <Select value={form.district} onValueChange={v => setForm({...form, district: v})} disabled={!form.state}>
+                <Select value={form.district} onValueChange={v => setForm({ ...form, district: v })} disabled={!form.state}>
                   <SelectTrigger className="h-11"><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
                   <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
                     {districts.length === 0 && form.state ? (
@@ -262,11 +305,11 @@ export default function CustomerRegisterPage() {
                 </Select>
               </div>
 
-              <Input placeholder="Area / Locality" value={form.area} onChange={e => setForm({...form, area: e.target.value})} className="h-11" />
+              <Input placeholder="Area / Locality" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} className="h-11" />
 
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">Occupation</Label>
-                <Select value={form.occupation} onValueChange={v => setForm({...form, occupation: v})}>
+                <Select value={form.occupation} onValueChange={v => setForm({ ...form, occupation: v })}>
                   <SelectTrigger className="h-11"><SelectValue placeholder="Select Occupation" /></SelectTrigger>
                   <SelectContent>{occupations.map(o => <SelectItem key={o.id} value={o.name}>{o.name}</SelectItem>)}</SelectContent>
                 </Select>
@@ -276,24 +319,12 @@ export default function CustomerRegisterPage() {
                 <MapPin className="h-4 w-4" /> {geoLoading ? "Capturing..." : location ? "📍 Location Captured" : "Capture Location"}
               </Button>
 
-              <div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Referral Code (optional)" value={form.referral_code} onChange={e => setForm({...form, referral_code: e.target.value.toUpperCase()})} className="pl-10 h-11" /></div>
+              <div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Referral Code (optional)" value={form.referral_code} onChange={e => setForm({ ...form, referral_code: e.target.value.toUpperCase() })} className="pl-10 h-11" /></div>
 
-              {/* Terms & Privacy - click checkbox or label to open popup */}
-              <div
-                className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors"
-                onClick={(e) => { e.preventDefault(); if (!acceptedTerms) openTermsPopup(); }}
-              >
-                <Checkbox
-                  id="terms"
-                  checked={acceptedTerms}
-                  className="mt-0.5"
-                  onCheckedChange={() => { if (!acceptedTerms) openTermsPopup(); }}
-                />
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors" onClick={(e) => { e.preventDefault(); if (!acceptedTerms) openTermsPopup(); }}>
+                <Checkbox id="terms" checked={acceptedTerms} className="mt-0.5" onCheckedChange={() => { if (!acceptedTerms) openTermsPopup(); }} />
                 <label className="text-xs text-muted-foreground leading-relaxed cursor-pointer select-none">
-                  I have read and agree to the{" "}
-                  <span className="text-primary font-semibold underline">Terms & Conditions</span>{" "}
-                  and{" "}
-                  <span className="text-primary font-semibold underline">Privacy Policy</span>.
+                  I have read and agree to the <span className="text-primary font-semibold underline">Terms & Conditions</span> and <span className="text-primary font-semibold underline">Privacy Policy</span>.
                   {!acceptedTerms && <span className="block text-[10px] text-primary mt-1">👆 Tap to read and accept</span>}
                 </label>
               </div>
@@ -310,12 +341,12 @@ export default function CustomerRegisterPage() {
               <p className="text-sm text-muted-foreground text-center">Enter the 6-digit OTP sent to +91 {form.mobile}</p>
 
               <div className="flex justify-center gap-2">
-                {[0,1,2,3,4,5].map(i => (
-                  <input key={i} type="text" inputMode="numeric" maxLength={1} value={otp[i] || ""} ref={i===0?otpRef:undefined}
+                {[0, 1, 2, 3, 4, 5].map(i => (
+                  <input key={i} type="text" inputMode="numeric" maxLength={1} value={otp[i] || ""} ref={i === 0 ? otpRef : undefined}
                     className="w-11 h-12 text-center text-lg font-bold rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    onChange={(e) => { const v=e.target.value.replace(/\D/g,""); if(v){const n=otp.split("");n[i]=v;setOtp(n.join("").slice(0,6));const next=e.target.nextElementSibling as HTMLInputElement;if(next)next.focus();} }}
-                    onKeyDown={(e) => { if(e.key==="Backspace"&&!otp[i]){const prev=(e.target as HTMLElement).previousElementSibling as HTMLInputElement;if(prev){prev.focus();const n=otp.split("");n[i-1]="";setOtp(n.join(""));}} }}
-                    onPaste={(e) => { e.preventDefault(); setOtp(e.clipboardData.getData("text").replace(/\D/g,"").slice(0,6)); }}
+                    onChange={(e) => { const v = e.target.value.replace(/\D/g, ""); if (v) { const n = otp.split(""); n[i] = v; setOtp(n.join("").slice(0, 6)); const next = e.target.nextElementSibling as HTMLInputElement; if (next) next.focus(); } }}
+                    onKeyDown={(e) => { if (e.key === "Backspace" && !otp[i]) { const prev = (e.target as HTMLElement).previousElementSibling as HTMLInputElement; if (prev) { prev.focus(); const n = otp.split(""); n[i - 1] = ""; setOtp(n.join("")); } } }}
+                    onPaste={(e) => { e.preventDefault(); setOtp(e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6)); }}
                   />
                 ))}
               </div>
@@ -325,16 +356,15 @@ export default function CustomerRegisterPage() {
               </Button>
 
               <div className="text-center">
-                {timer > 0 ? <p className="text-sm text-muted-foreground">Resend in <span className="font-semibold text-primary">{timer}s</span></p> : <button onClick={async () => { setOtp(""); clearRecaptcha(); await new Promise(r => setTimeout(r, 300)); handleSendOTP(); }} className="text-sm text-primary font-semibold hover:underline">Resend OTP</button>}
+                {timer > 0 ? <p className="text-sm text-muted-foreground">Resend in <span className="font-semibold text-primary">{timer}s</span></p> : <button onClick={async () => { setOtp(""); await resetPhoneAuth(); await new Promise(r => setTimeout(r, 400)); handleSendOTP(); }} className="text-sm text-primary font-semibold hover:underline">Resend OTP</button>}
               </div>
-              <button onClick={() => { setOtpStep("form"); setOtp(""); clearRecaptcha(); }} className="w-full text-sm text-muted-foreground hover:text-foreground">← Back to form</button>
+              <button onClick={async () => { setOtpStep("form"); setOtp(""); await resetPhoneAuth(); }} className="w-full text-sm text-muted-foreground hover:text-foreground">← Back to form</button>
             </div>
           )}
         </Card>
       </div>
       <div id="recaptcha-container" />
 
-      {/* Terms & Privacy Popup */}
       <Dialog open={showTermsPopup} onOpenChange={setShowTermsPopup}>
         <DialogContent className="max-w-lg p-0 gap-0 max-h-[85vh] flex flex-col">
           <DialogHeader className="p-4 border-b shrink-0">
@@ -344,11 +374,7 @@ export default function CustomerRegisterPage() {
             </DialogTitle>
             <p className="text-xs text-muted-foreground">Please scroll to the bottom to read all terms before accepting.</p>
           </DialogHeader>
-          <div
-            ref={scrollRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto p-5"
-          >
+          <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-5">
             <TermsContent />
             <PrivacyContent />
             <div className="h-4" />
@@ -357,11 +383,7 @@ export default function CustomerRegisterPage() {
             {!hasScrolledToBottom && (
               <p className="text-xs text-destructive text-center animate-pulse">⬇️ Please scroll down to read all terms before accepting</p>
             )}
-            <Button
-              onClick={handleAgreeTerms}
-              disabled={!hasScrolledToBottom}
-              className="w-full h-11 gap-2"
-            >
+            <Button onClick={handleAgreeTerms} disabled={!hasScrolledToBottom} className="w-full h-11 gap-2">
               <ShieldCheck className="h-4 w-4" />
               {hasScrolledToBottom ? "I Agree to Terms & Privacy Policy" : "Scroll down to accept"}
             </Button>
