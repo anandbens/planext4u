@@ -171,7 +171,8 @@ export const api = {
   registerCustomer: async (data: { name: string; mobile: string; email: string; city: string; area: string; referral_code?: string; occupation?: string }) => {
     const newId = genId('USR');
     const now = new Date().toISOString();
-    const refCode = `REF${Date.now().toString(36).toUpperCase()}`;
+    const seqNum = String(Math.floor(Math.random() * 999999)).padStart(6, '0');
+    const refCode = `MRCP4U${seqNum}`;
 
     const { error } = await supabase.from('customers').insert({
       id: newId, name: data.name, mobile: data.mobile, email: data.email,
