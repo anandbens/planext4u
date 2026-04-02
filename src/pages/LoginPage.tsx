@@ -22,8 +22,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast.success("Welcome back!");
-      // Small delay to allow onAuthStateChange to fire
-      setTimeout(() => navigate("/", { replace: true }), 500);
+      setTimeout(() => navigate("/dashboard", { replace: true }), 500);
     } catch (err: any) {
       toast.error(err.message || "Invalid credentials.");
     } finally { setLoading(false); }
