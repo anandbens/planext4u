@@ -162,6 +162,37 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
               ) : <p className="text-xl font-bold capitalize">{vendor?.membership}</p>}
             </div>
           </div>
+
+          {/* Vendor Plan Assignment */}
+          <div className="p-4 rounded-lg bg-secondary/30">
+            <div className="flex items-center gap-2 mb-2"><Crown className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Vendor Plan</Label></div>
+            {editMode ? (
+              <Select value={form.plan_id || "none"} onValueChange={(v) => setForm({ ...form, plan_id: v === "none" ? "" : v })}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="Select a plan" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Plan</SelectItem>
+                  {vendorPlans.filter(p => p.plan_type === "local").length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Local Plans</div>
+                      {vendorPlans.filter(p => p.plan_type === "local").map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.plan_name} ({p.visibility_type.replace(/_/g, " ")})</SelectItem>
+                      ))}
+                    </>
+                  )}
+                  {vendorPlans.filter(p => p.plan_type === "vip").length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">VIP Plans</div>
+                      {vendorPlans.filter(p => p.plan_type === "vip").map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.plan_name} ({p.visibility_type.replace(/_/g, " ")})</SelectItem>
+                      ))}
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-sm font-medium">{vendorPlans.find(p => p.id === (vendor as any)?.plan_id)?.plan_name || "No Plan"}</p>
+            )}
+          </div>
         </div>
 
         <DialogFooter className="mt-4">
