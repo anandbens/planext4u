@@ -38,6 +38,7 @@ const financeItems: NavItem[] = [
   { title: "Settlements", url: "/settlements", icon: Banknote, roles: ['admin', 'finance'] },
   { title: "Points", url: "/points", icon: Star, roles: ['admin', 'finance'] },
   { title: "Tax", url: "/tax", icon: Receipt, roles: ['admin', 'finance'] },
+  { title: "Vendor Plans", url: "/admin/vendor-plans", icon: Crown, roles: ['admin'] },
 ];
 
 const reportItems: NavItem[] = [
