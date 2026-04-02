@@ -23,6 +23,9 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
   },
+  android: {
+    appendUrlToIntentFilter: true,
+  },
 };
 
 export default config;
