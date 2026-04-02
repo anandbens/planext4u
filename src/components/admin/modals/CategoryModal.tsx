@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { ImageUploader } from "@/components/admin/ImageUploader";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 
 interface CategoryModalProps {
   category: Category | null;
@@ -102,7 +102,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
           <div>
             <Label className="text-xs text-muted-foreground">Banner Image</Label>
             {editMode ? (
-              <ImageUploader value={form.banner_image} onChange={(url) => setForm({ ...form, banner_image: url })} folder="categories" label="Upload Banner Image" className="mt-1" />
+              <MediaLibraryPicker value={form.banner_image} onChange={(url) => setForm({ ...form, banner_image: url })} folder="categories" label="Upload Banner Image" className="mt-1" />
             ) : form.banner_image ? (
               <img src={form.banner_image} alt="Banner" className="mt-1 h-20 w-full object-cover rounded" />
             ) : <p className="text-sm mt-1 text-muted-foreground">—</p>}

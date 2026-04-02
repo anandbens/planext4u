@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { ImageUploader } from "@/components/admin/ImageUploader";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 
 interface BannerModalProps {
   banner: Banner | null;
@@ -80,13 +80,13 @@ export function BannerModal({ banner, open, onOpenChange, mode, onSave, onCreate
             <div>
               <Label className="text-xs text-muted-foreground">Desktop Image</Label>
               {editMode ? (
-                <ImageUploader value={form.desktop_image} onChange={(url) => setForm({ ...form, desktop_image: url })} folder="banners" label="Desktop Image" className="mt-1" />
+                <MediaLibraryPicker value={form.desktop_image} onChange={(url) => setForm({ ...form, desktop_image: url })} folder="banners" label="Desktop Image" className="mt-1" />
               ) : <p className="text-xs mt-1 truncate">{banner?.desktop_image || "—"}</p>}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Mobile Image</Label>
               {editMode ? (
-                <ImageUploader value={form.mobile_image} onChange={(url) => setForm({ ...form, mobile_image: url })} folder="banners" label="Mobile Image" className="mt-1" />
+                <MediaLibraryPicker value={form.mobile_image} onChange={(url) => setForm({ ...form, mobile_image: url })} folder="banners" label="Mobile Image" className="mt-1" />
               ) : <p className="text-xs mt-1 truncate">{banner?.mobile_image || "—"}</p>}
             </div>
           </div>
