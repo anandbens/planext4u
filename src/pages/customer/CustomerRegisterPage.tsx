@@ -159,10 +159,14 @@ export default function CustomerRegisterPage() {
   };
 
   const checkMobileUnique = async (): Promise<boolean> => {
+    // Check mobile uniqueness
     const { data } = await supabase.from("customers").select("id").eq("mobile", `+91${form.mobile}`).maybeSingle();
     if (data) { toast.error("This mobile number is already registered. Please login instead."); return false; }
     const { data: data2 } = await supabase.from("customers").select("id").eq("mobile", form.mobile).maybeSingle();
     if (data2) { toast.error("This mobile number is already registered. Please login instead."); return false; }
+    // Check email uniqueness
+    const { data: emailData } = await supabase.from("customers").select("id").eq("email", form.email).maybeSingle();
+    if (emailData) { toast.error("This email is already registered. Please login instead."); return false; }
     return true;
   };
 

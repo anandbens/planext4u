@@ -16,7 +16,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select("role, vendor_id, customer_id")
       .eq("user_id", supabaseUid);
 
-    if (!roles || roles.length === 0) return;
+    if (!roles || roles.length === 0) {
+      // No role found — this user is not registered in the platform
+      // Sign them out to prevent dangling sessions
+      await supabase.auth.signOut();
+      return 'unregistered';
+    }
 
     const roleRecord = roles[0];
     const role = roleRecord.role as AppRole;
@@ -79,7 +84,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { id, email, user_metadata } = session.user;
         const name = user_metadata?.name || email?.split('@')[0] || '';
         // Use setTimeout to avoid potential deadlocks with Supabase client
-        setTimeout(() => loadUserRole(id, email || '', name), 0);
+        setTimeout(async () => {
+          const result = await loadUserRole(id, email || '', name);
+          if (result === 'unregistered') {
+            // User signed in via OAuth but has no platform registration
+            setIsLoading(false);
+          }
+        }, 0);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setCustomerUser(null);
