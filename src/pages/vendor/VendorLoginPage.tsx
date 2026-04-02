@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import p4uLogo from "@/assets/p4u-logo.png";
 
 export default function VendorLoginPage() {
-  const { vendorLogin, seedDemoUsers } = useAuth();
+  const { vendorLogin } = useAuth();
   const navigate = useNavigate();
   const [loginMethod, setLoginMethod] = useState<"otp" | "password">("otp");
 
