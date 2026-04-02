@@ -23,9 +23,10 @@ export interface Vendor {
 export interface Product {
   id: string; vendor_id: string; category_id: string; title: string; description: string;
   price: number; tax: number; discount: number; max_points_redeemable: number;
-  status: 'active' | 'inactive' | 'draft';
+  status: 'active' | 'inactive' | 'draft' | 'pending_approval' | 'rejected';
   vendor_name?: string; category_name?: string; emoji?: string; image?: string;
   rating?: number; reviews?: number; stock?: number; sales?: number;
+  rejection_reason?: string;
   created_at?: string; updated_at?: string;
 }
 
