@@ -72,6 +72,7 @@ const socialItems: NavItem[] = [
 ];
 
 const systemItems: NavItem[] = [
+  { title: "Media Library", url: "/admin/media-library", icon: Image, roles: ['admin'] },
   { title: "Occupations", url: "/occupations", icon: Briefcase, roles: ['admin'] },
   { title: "Platform Variables", url: "/platform-variables", icon: SlidersHorizontal, roles: ['admin'] },
   { title: "Popup Banners", url: "/popup-banners", icon: MonitorPlay, roles: ['admin'] },
