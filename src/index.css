@@ -222,3 +222,10 @@
     @apply bg-gradient-to-br from-secondary/60 to-secondary/20 flex items-center justify-center;
   }
 }
+
+/* Hide Google reCAPTCHA badge */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
