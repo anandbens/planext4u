@@ -101,8 +101,8 @@ export default function SocialCreatePostPage() {
           const path = `${basePath}/${sizeName}.webp`;
           const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: 'image/webp', upsert: true });
           if (error) throw error;
-          const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-          return data.publicUrl;
+          const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year
+          return data?.signedUrl || '';
         };
 
         const [thumbUrl, medUrl, lgUrl] = await Promise.all([

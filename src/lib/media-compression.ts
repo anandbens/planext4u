@@ -32,9 +32,10 @@ export interface UploadResult {
   blurHash?: string;
 }
 
-const QUALITY = 0.80;
+const QUALITY = 0.75; // High quality with maximum compression
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB
+const MAX_VIDEO_DURATION = 20; // seconds
 
 const SIZE_CONFIGS = [
   { name: 'thumbnail', maxWidth: 150, maxHeight: 150, crop: true },
@@ -119,6 +120,26 @@ export function validateVideoFile(file: File): string | null {
   return null;
 }
 
+export function validateVideoDuration(file: File): Promise<string | null> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(video.src);
+      if (video.duration > MAX_VIDEO_DURATION) {
+        resolve(`Video too long (${Math.round(video.duration)}s). Maximum: ${MAX_VIDEO_DURATION} seconds.`);
+      } else {
+        resolve(null);
+      }
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      resolve('Could not read video metadata.');
+    };
+    video.src = URL.createObjectURL(file);
+  });
+}
+
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -186,8 +207,8 @@ export async function uploadMediaToStorage(
       .from(bucket)
       .upload(path, blob, { contentType: 'image/webp', upsert: true });
     if (error) throw error;
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    return data.publicUrl;
+    const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 365);
+    return data?.signedUrl || '';
   };
 
   const [thumbnailUrl, mediumUrl, largeUrl, originalUrl] = await Promise.all([
