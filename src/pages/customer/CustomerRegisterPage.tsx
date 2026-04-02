@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { logActivity } from "@/lib/auth";
 import { sendOTP, verifyOTP, clearRecaptcha } from "@/lib/firebase";
+import { supabase } from "@/integrations/supabase/client";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerRegisterPage() {
@@ -21,8 +23,8 @@ export default function CustomerRegisterPage() {
   const [occupations, setOccupations] = useState<{ id: string; name: string }[]>([]);
   const [states, setStates] = useState<{ id: string; name: string; code: string }[]>([]);
   const [districts, setDistricts] = useState<{ id: string; name: string }[]>([]);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
-  // OTP verification state
   const [otpStep, setOtpStep] = useState<"form" | "otp">("form");
   const [otp, setOtp] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
@@ -63,6 +65,34 @@ export default function CustomerRegisterPage() {
     if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { toast.error("Enter a valid email address"); return false; }
     if (!form.state) { toast.error("Please select a state"); return false; }
     if (!form.district) { toast.error("Please select a district"); return false; }
+    if (!acceptedTerms) { toast.error("Please accept the Terms & Conditions and Privacy Policy"); return false; }
+    return true;
+  };
+
+  const checkMobileUnique = async (): Promise<boolean> => {
+    const { data } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("mobile", `+91${form.mobile}`)
+      .maybeSingle();
+    
+    if (data) {
+      toast.error("This mobile number is already registered. Please login instead.");
+      return false;
+    }
+
+    // Also check without country code
+    const { data: data2 } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("mobile", form.mobile)
+      .maybeSingle();
+
+    if (data2) {
+      toast.error("This mobile number is already registered. Please login instead.");
+      return false;
+    }
+
     return true;
   };
 
@@ -70,6 +100,10 @@ export default function CustomerRegisterPage() {
     if (!validateForm()) return;
     setOtpLoading(true);
     try {
+      // Check mobile uniqueness before sending OTP
+      const isUnique = await checkMobileUnique();
+      if (!isUnique) { setOtpLoading(false); return; }
+
       await sendOTP(`+91${form.mobile}`);
       setOtpStep("otp");
       setTimer(30);
@@ -87,7 +121,6 @@ export default function CustomerRegisterPage() {
     setLoading(true);
     try {
       await verifyOTP(otp);
-      // OTP verified, now register
       await api.registerCustomer({ ...form, city: form.district });
       toast.success("🎉 Registration successful!", { duration: 5000 });
       setTimeout(() => toast.info("📧 Welcome email sent to " + form.email, { description: "Check your inbox for activation link.", duration: 6000 }), 1000);
@@ -159,7 +192,23 @@ export default function CustomerRegisterPage() {
 
               <div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Referral Code (optional)" value={form.referral_code} onChange={e => setForm({...form, referral_code: e.target.value.toUpperCase()})} className="pl-10 h-11" /></div>
 
-              <Button type="button" className="w-full h-12 text-base bg-primary gap-2" onClick={handleSendOTP} disabled={otpLoading}>
+              {/* Terms & Privacy acceptance */}
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
+                <Checkbox
+                  id="terms"
+                  checked={acceptedTerms}
+                  onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                  className="mt-0.5"
+                />
+                <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                  I have read and agree to the{" "}
+                  <Link to="/app/terms" className="text-primary font-semibold hover:underline" target="_blank">Terms & Conditions</Link>{" "}
+                  and{" "}
+                  <Link to="/app/privacy" className="text-primary font-semibold hover:underline" target="_blank">Privacy Policy</Link>.
+                </label>
+              </div>
+
+              <Button type="button" className="w-full h-12 text-base bg-primary gap-2" onClick={handleSendOTP} disabled={otpLoading || !acceptedTerms}>
                 {otpLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending OTP...</> : <>Verify & Register <ArrowRight className="h-4 w-4" /></>}
               </Button>
 
@@ -192,7 +241,6 @@ export default function CustomerRegisterPage() {
             </div>
           )}
         </Card>
-        <p className="text-[10px] text-muted-foreground text-center mt-4">By registering, you agree to our Terms of Service and Privacy Policy.</p>
       </div>
       <div id="recaptcha-container" />
     </div>
