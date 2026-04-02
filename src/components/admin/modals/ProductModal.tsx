@@ -47,7 +47,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         vendor_id: product.vendor_id, vendor_name: product.vendor_name,
         category_id: product.category_id, category_name: product.category_name,
         stock: product.stock || 0, emoji: product.emoji || "📦",
-        image: product.image || "",
+        image: product.image || "", rejection_reason: product.rejection_reason || "",
       });
       setEditMode(mode === "edit");
     }
