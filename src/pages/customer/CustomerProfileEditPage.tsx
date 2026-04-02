@@ -151,11 +151,17 @@ export default function CustomerProfileEditPage() {
     if (!navigator.geolocation) { toast.error("Geolocation not supported"); return; }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => { reverseGeocode(pos.coords.latitude, pos.coords.longitude); setLocating(false); },
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        await reverseGeocode(latitude, longitude);
+        const loaded = await loadGoogleMapsScript();
+        if (loaded) initMap(latitude, longitude);
+        setLocating(false);
+      },
       () => { setLocating(false); toast.error("Could not get location"); },
       { enableHighAccuracy: true, timeout: 15000 }
     );
-  }, [reverseGeocode]);
+  }, [reverseGeocode, initMap, loadGoogleMapsScript]);
 
   const handleSearchMap = async () => {
     if (!searchQuery.trim()) return;
