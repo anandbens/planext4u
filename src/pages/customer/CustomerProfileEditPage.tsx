@@ -272,7 +272,7 @@ export default function CustomerProfileEditPage() {
 
   const openAddAddress = () => {
     setEditingAddress(null);
-    setAddrForm({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "" });
+    setAddrForm({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "", street: "" });
     setMapAddress(null); setMapRef(null); setMarkerRef(null); setSearchQuery("");
     setShowMapModal(true);
     setTimeout(() => getCurrentLocation(), 500);
