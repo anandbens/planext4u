@@ -207,7 +207,7 @@ export default function SetLocationPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <div className="flex items-center gap-3 p-4 border-b bg-card">
-        <button onClick={() => navigate("/app")} className="p-1">
+        <button onClick={() => navigate("/app", { replace: true })} className="p-1">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-lg font-bold">Set Delivery Location</h1>
