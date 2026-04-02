@@ -13,6 +13,7 @@ const statusStyles: Record<string, string> = {
   in_progress: "bg-warning/10 text-warning",
   placed: "bg-warning/10 text-warning",
   pending: "bg-warning/10 text-warning",
+  pending_approval: "bg-warning/10 text-warning",
   level1_approved: "bg-warning/10 text-warning",
   level2_approved: "bg-info/10 text-info",
   inactive: "bg-muted text-muted-foreground",
