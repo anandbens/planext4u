@@ -14,7 +14,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const firebaseAuth = getAuth(app);
 
-// Store confirmationResult globally
 let confirmationResultGlobal: ConfirmationResult | null = null;
 
 export function setupRecaptcha(containerId: string) {
@@ -41,6 +40,13 @@ export async function verifyOTP(otp: string) {
   }
   const result = await confirmationResultGlobal.confirm(otp);
   return result.user;
+}
+
+/** Get the Firebase ID token from the currently signed-in user */
+export async function getFirebaseIdToken(): Promise<string> {
+  const user = firebaseAuth.currentUser;
+  if (!user) throw new Error("No Firebase user signed in");
+  return user.getIdToken(true);
 }
 
 export function clearRecaptcha() {
