@@ -1,25 +1,38 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
 const FIREBASE_PROJECT_ID = "planext4u-ba50f";
+const FIREBASE_API_KEY = "AIzaSyBs9GdBSEK8BGjeGypEOjiHF_jkToy-Qlk";
 
-// Verify Firebase ID token using Google's tokeninfo endpoint
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
 async function verifyFirebaseToken(idToken: string) {
-  // First decode payload to do basic checks
+  if (!idToken || typeof idToken !== "string") throw new Error("Missing ID token");
+
   const parts = idToken.split(".");
   if (parts.length !== 3) throw new Error("Invalid token format");
 
-  const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
-  const now = Math.floor(Date.now() / 1000);
+  // Decode payload
+  let payload: any;
+  try {
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    payload = JSON.parse(atob(padded));
+  } catch {
+    throw new Error("Failed to decode token payload");
+  }
 
+  const now = Math.floor(Date.now() / 1000);
   if (payload.exp < now) throw new Error("Token expired");
   if (payload.aud !== FIREBASE_PROJECT_ID) throw new Error("Invalid audience");
   if (payload.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) throw new Error("Invalid issuer");
   if (!payload.sub) throw new Error("No sub in token");
 
-  // Verify token signature via Google's API
+  // Verify via Google Identity Toolkit
   const verifyRes = await fetch(
-    `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=AIzaSyBs9GdBSEK8BGjeGypEOjiHF_jkToy-Qlk`,
+    `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=${FIREBASE_API_KEY}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -29,7 +42,8 @@ async function verifyFirebaseToken(idToken: string) {
 
   if (!verifyRes.ok) {
     const errBody = await verifyRes.text();
-    throw new Error("Firebase token verification failed: " + errBody);
+    console.error("Google verify failed:", errBody);
+    throw new Error("Firebase token verification failed");
   }
 
   const verifyData = await verifyRes.json();
@@ -46,7 +60,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { firebase_id_token } = await req.json();
+    const body = await req.json();
+    const firebase_id_token = body?.firebase_id_token;
+
     if (!firebase_id_token) {
       return new Response(JSON.stringify({ error: "Missing firebase_id_token" }), {
         status: 400,
@@ -54,9 +70,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify Firebase token
+    console.log("Verifying Firebase token...");
     const firebaseClaims = await verifyFirebaseToken(firebase_id_token);
     const phoneNumber = firebaseClaims.phone_number;
+
     if (!phoneNumber) {
       return new Response(JSON.stringify({ error: "No phone number in Firebase token" }), {
         status: 400,
@@ -64,31 +81,33 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create Supabase admin client
+    console.log("Phone:", phoneNumber);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Normalize phone (remove spaces)
     const normalizedPhone = phoneNumber.replace(/\s/g, "");
     const phoneEmail = `${normalizedPhone.replace("+", "")}@phone.planext4u.local`;
 
-    // Check if Supabase user exists by email
+    // Find existing user
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
     let supabaseUser = existingUsers?.users?.find(
-      (u) => u.email === phoneEmail || u.phone === normalizedPhone
+      (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
     );
 
+    let isNewUser = false;
+
     if (!supabaseUser) {
-      // Create new Supabase user
+      isNewUser = true;
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: phoneEmail,
         phone: normalizedPhone,
         email_confirm: true,
         phone_confirm: true,
-        password: crypto.randomUUID(), // Random password, user logs in via OTP flow
+        password: crypto.randomUUID(),
         user_metadata: { phone: normalizedPhone, login_method: "firebase_phone" },
       });
       if (createError) throw createError;
@@ -113,18 +132,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate a magic link token for session creation
+    // Generate magic link token
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
       email: phoneEmail,
     });
     if (linkError) throw linkError;
 
-    // Extract token hash from the generated link
     const tokenHash = linkData?.properties?.hashed_token;
     if (!tokenHash) throw new Error("Failed to generate session token");
 
-    // Get user's customer info
+    // Get customer info
     const { data: customerData } = await supabase
       .from("user_roles")
       .select("customer_id")
@@ -142,6 +160,18 @@ Deno.serve(async (req) => {
       customerInfo = cust;
     }
 
+    // Check if customer has saved addresses (to determine first-time login)
+    let hasAddress = false;
+    if (customerData?.customer_id) {
+      const { count } = await supabase
+        .from("customer_addresses")
+        .select("id", { count: "exact", head: true })
+        .eq("customer_id", customerData.customer_id);
+      hasAddress = (count || 0) > 0;
+    }
+
+    console.log("Auth success for", phoneNumber, "isNew:", isNewUser, "hasAddress:", hasAddress);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -149,13 +179,15 @@ Deno.serve(async (req) => {
         email: phoneEmail,
         user_id: supabaseUser!.id,
         customer: customerInfo,
+        is_new_user: isNewUser,
+        has_address: hasAddress,
       }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("Firebase phone auth error:", err);
     return new Response(
       JSON.stringify({ error: err.message || "Authentication failed" }),
