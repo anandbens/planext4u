@@ -397,7 +397,7 @@ export default function CustomerProfileEditPage() {
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Date of Birth *</label>
               <Input value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} className="h-11" type="date" max={maxDob} />
-              <p className="text-[10px] text-muted-foreground mt-0.5">Must be at least 13 years old</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Date of birth must be on or before Dec 31, 2016</p>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Gender</label>
