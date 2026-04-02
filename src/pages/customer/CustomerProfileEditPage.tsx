@@ -29,6 +29,8 @@ export default function CustomerProfileEditPage() {
   const customerId = customerUser?.customer_id || customerUser?.id || '';
 
   const [form, setForm] = useState({ name: "", email: "", mobile: "", dob: "", gender: "Male", occupation: "" });
+  const [mapRef, setMapRef] = useState<any>(null);
+  const [markerRef, setMarkerRef] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
@@ -37,7 +39,6 @@ export default function CustomerProfileEditPage() {
   // Address map modal state
   const [showMapModal, setShowMapModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
-  const [mapUrl, setMapUrl] = useState("");
   const [locating, setLocating] = useState(false);
   const [mapAddress, setMapAddress] = useState<{ lat: number; lng: number; formatted: string; area: string; city: string; pincode: string } | null>(null);
   const [addrForm, setAddrForm] = useState({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "" });
@@ -55,7 +56,7 @@ export default function CustomerProfileEditPage() {
     setProfileLoading(true);
     const { data } = await supabase.from('customers').select('*').eq('id', customerId).single();
     if (data) {
-      setForm({ name: data.name || "", email: data.email || "", mobile: data.mobile || "", dob: "", gender: "Male", occupation: data.occupation || "" });
+      setForm({ name: data.name || "", email: data.email || "", mobile: data.mobile || "", dob: (data as any).dob || "", gender: (data as any).gender || "Male", occupation: data.occupation || "" });
     }
     setProfileLoading(false);
   };
@@ -73,9 +74,12 @@ export default function CustomerProfileEditPage() {
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error("Name is required"); return; }
     setLoading(true);
-    const { error } = await supabase.from('customers').update({
+    const updateData: any = {
       name: form.name, email: form.email, mobile: form.mobile, occupation: form.occupation,
-    }).eq('id', customerId);
+      gender: form.gender,
+    };
+    if (form.dob) updateData.dob = form.dob;
+    const { error } = await supabase.from('customers').update(updateData).eq('id', customerId);
     if (error) { toast.error("Failed to save: " + error.message); setLoading(false); return; }
     logActivity('profile_update', `Profile updated: ${form.name}`);
     toast.success("Profile updated successfully!");
@@ -100,22 +104,63 @@ export default function CustomerProfileEditPage() {
       } else {
         setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
       }
-      setMapUrl(`https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`);
     } catch {
       setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
-      setMapUrl(`https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`);
     }
+  }, []);
+
+  const initMap = useCallback((lat: number, lng: number) => {
+    const mapContainer = document.getElementById('addr-map-container');
+    if (!mapContainer || !(window as any).google?.maps) return;
+    const map = new (window as any).google.maps.Map(mapContainer, {
+      center: { lat, lng }, zoom: 16, disableDefaultUI: true, zoomControl: true,
+      gestureHandling: 'greedy',
+    });
+    const marker = new (window as any).google.maps.Marker({
+      position: { lat, lng }, map, draggable: true,
+      animation: (window as any).google.maps.Animation.DROP,
+    });
+    marker.addListener('dragend', () => {
+      const pos = marker.getPosition();
+      reverseGeocode(pos.lat(), pos.lng());
+    });
+    map.addListener('click', (e: any) => {
+      marker.setPosition(e.latLng);
+      reverseGeocode(e.latLng.lat(), e.latLng.lng());
+    });
+    setMapRef(map);
+    setMarkerRef(marker);
+  }, [reverseGeocode]);
+
+  const loadGoogleMapsScript = useCallback((): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if ((window as any).google?.maps) { resolve(true); return; }
+      const existing = document.querySelector('script[src*="maps.googleapis.com"]');
+      if (existing) { existing.addEventListener('load', () => resolve(true)); return; }
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places`;
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    });
   }, []);
 
   const getCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) { toast.error("Geolocation not supported"); return; }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => { reverseGeocode(pos.coords.latitude, pos.coords.longitude); setLocating(false); },
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        await reverseGeocode(latitude, longitude);
+        const loaded = await loadGoogleMapsScript();
+        if (loaded) initMap(latitude, longitude);
+        setLocating(false);
+      },
       () => { setLocating(false); toast.error("Could not get location"); },
       { enableHighAccuracy: true, timeout: 15000 }
     );
-  }, [reverseGeocode]);
+  }, [reverseGeocode, initMap, loadGoogleMapsScript]);
 
   const handleSearchMap = async () => {
     if (!searchQuery.trim()) return;
@@ -125,7 +170,19 @@ export default function CustomerProfileEditPage() {
       const data = await res.json();
       if (data.status === "OK" && data.results.length > 0) {
         const r = data.results[0];
-        await reverseGeocode(r.geometry.location.lat, r.geometry.location.lng);
+        const lat = r.geometry.location.lat;
+        const lng = r.geometry.location.lng;
+        await reverseGeocode(lat, lng);
+        const loaded = await loadGoogleMapsScript();
+        if (loaded) {
+          if (mapRef && markerRef) {
+            const pos = new (window as any).google.maps.LatLng(lat, lng);
+            mapRef.setCenter(pos);
+            markerRef.setPosition(pos);
+          } else {
+            initMap(lat, lng);
+          }
+        }
       } else { toast.error("Location not found"); }
     } catch { toast.error("Search failed"); }
     finally { setLocating(false); }
@@ -135,30 +192,35 @@ export default function CustomerProfileEditPage() {
     setEditingAddress(null);
     setAddrForm({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "" });
     setMapAddress(null);
-    setMapUrl("");
+    setMapRef(null);
+    setMarkerRef(null);
     setSearchQuery("");
     setShowMapModal(true);
-    setTimeout(() => getCurrentLocation(), 300);
+    setTimeout(() => getCurrentLocation(), 500);
   };
 
   const openEditAddress = (addr: SavedAddress) => {
     setEditingAddress(addr);
     setAddrForm({ label: addr.label, type: addr.type, apartment: addr.address_line, houseNo: "", landmark: "" });
     setMapAddress(null);
-    setMapUrl("");
+    setMapRef(null);
+    setMarkerRef(null);
     setSearchQuery(addr.address_line);
     setShowMapModal(true);
-    // Try to geocode existing address
     setTimeout(async () => {
       try {
         const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr.address_line + ", " + addr.city)}&key=${GOOGLE_MAPS_KEY}`);
         const data = await res.json();
         if (data.status === "OK" && data.results.length > 0) {
           const r = data.results[0];
-          await reverseGeocode(r.geometry.location.lat, r.geometry.location.lng);
+          const lat = r.geometry.location.lat;
+          const lng = r.geometry.location.lng;
+          await reverseGeocode(lat, lng);
+          const loaded = await loadGoogleMapsScript();
+          if (loaded) initMap(lat, lng);
         }
       } catch {}
-    }, 300);
+    }, 500);
   };
 
   const saveAddress = async () => {
@@ -292,16 +354,15 @@ export default function CustomerProfileEditPage() {
           </div>
 
           {/* Map */}
-          <div className="relative h-[200px] bg-secondary/20">
-            {mapUrl ? (
-              <iframe src={mapUrl} className="w-full h-full border-0" allowFullScreen loading="lazy" title="Map" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
+          <div className="relative h-[250px] bg-secondary/20">
+            <div id="addr-map-container" className="w-full h-full" />
+            {!mapAddress && (
+              <div className="absolute inset-0 flex items-center justify-center">
                 {locating ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : <MapPin className="h-8 w-8 text-muted-foreground" />}
               </div>
             )}
             <button onClick={getCurrentLocation} disabled={locating}
-              className="absolute bottom-3 right-3 bg-card shadow-lg rounded-full p-2 border hover:bg-accent">
+              className="absolute bottom-3 right-3 bg-card shadow-lg rounded-full p-2 border hover:bg-accent z-10">
               <Navigation className="h-4 w-4 text-primary" />
             </button>
           </div>

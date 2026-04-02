@@ -3,30 +3,16 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { ArrowLeft, CreditCard, Smartphone, Building2, Wallet, Truck, CheckCircle, XCircle, Copy, Share2, ShoppingBag } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Copy, Share2, ShoppingBag, CreditCard } from "lucide-react";
 import { api } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { format, addDays } from "date-fns";
 
-type PaymentMethod = 'upi' | 'card' | 'netbanking' | 'cod' | 'wallet';
 type PaymentState = 'select' | 'processing' | 'success' | 'failure';
-
-const UPI_APPS = [
-  { name: "GPay", icon: "💳" },
-  { name: "PhonePe", icon: "📱" },
-  { name: "Paytm", icon: "💰" },
-  { name: "BHIM", icon: "🏦" },
-];
-
-const BANKS = ["State Bank of India", "HDFC Bank", "ICICI Bank", "Axis Bank", "Punjab National Bank", "Bank of Baroda", "Kotak Mahindra", "Yes Bank", "IndusInd Bank", "Union Bank"];
 
 export default function PaymentPage() {
   const navigate = useNavigate();
@@ -36,16 +22,6 @@ export default function PaymentPage() {
 
   const { cart, subtotal, platformFee, discount, pointsUsed, total, selectedAddress } = location.state || {};
 
-  const [method, setMethod] = useState<PaymentMethod>('upi');
-  const [upiId, setUpiId] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
-  const [saveCard, setSaveCard] = useState(false);
-  const [selectedBank, setSelectedBank] = useState('');
-  const [useWallet, setUseWallet] = useState(false);
-  const [walletBalance] = useState(0);
   const [paymentState, setPaymentState] = useState<PaymentState>('select');
   const [orderId, setOrderId] = useState('');
   const [orderItems, setOrderItems] = useState<any[]>([]);
@@ -53,28 +29,6 @@ export default function PaymentPage() {
   useEffect(() => {
     if (!cart || cart.length === 0) navigate('/app/cart');
   }, [cart, navigate]);
-
-  const formatCardNumber = (val: string) => {
-    const nums = val.replace(/\D/g, '').slice(0, 16);
-    return nums.replace(/(.{4})/g, '$1 ').trim();
-  };
-
-  const formatExpiry = (val: string) => {
-    const nums = val.replace(/\D/g, '').slice(0, 4);
-    if (nums.length > 2) return nums.slice(0, 2) + '/' + nums.slice(2);
-    return nums;
-  };
-
-  const isMethodValid = () => {
-    switch (method) {
-      case 'upi': return upiId.includes('@');
-      case 'card': return cardNumber.replace(/\s/g, '').length === 16 && cardName.length > 1 && cardExpiry.length === 5 && cardCvv.length >= 3;
-      case 'netbanking': return selectedBank.length > 0;
-      case 'cod': return true;
-      case 'wallet': return walletBalance >= total;
-      default: return false;
-    }
-  };
 
   const loadRazorpayScript = (): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -88,23 +42,12 @@ export default function PaymentPage() {
   };
 
   const handlePay = async () => {
-    if (!isMethodValid()) { toast.error("Please complete payment details"); return; }
-
-    if (method === 'cod') {
-      // COD - create order directly
-      setPaymentState('processing');
-      await createOrder('cod', null);
-      return;
-    }
-
     setPaymentState('processing');
 
     try {
-      // Load Razorpay script
       const loaded = await loadRazorpayScript();
       if (!loaded) { toast.error("Failed to load payment gateway"); setPaymentState('select'); return; }
 
-      // Create Razorpay order via edge function
       const { data, error } = await supabase.functions.invoke("razorpay", {
         body: { action: "create_order", amount: total, currency: "INR" },
       });
@@ -115,7 +58,7 @@ export default function PaymentPage() {
         return;
       }
 
-      setPaymentState('select'); // Hide processing while Razorpay modal is open
+      setPaymentState('select');
 
       const options = {
         key: data.key_id,
@@ -126,7 +69,6 @@ export default function PaymentPage() {
         order_id: data.order_id,
         handler: async (response: any) => {
           setPaymentState('processing');
-          // Verify payment
           const { data: verifyData, error: verifyError } = await supabase.functions.invoke("razorpay", {
             body: {
               action: "verify_payment",
@@ -141,8 +83,7 @@ export default function PaymentPage() {
             return;
           }
 
-          // Payment verified - create order
-          await createOrder(method, response.razorpay_payment_id);
+          await createOrder(response.razorpay_payment_id);
         },
         prefill: {
           name: customerUser?.name || "",
@@ -170,7 +111,7 @@ export default function PaymentPage() {
     }
   };
 
-  const createOrder = async (payMethod: string, paymentId: string | null) => {
+  const createOrder = async (paymentId: string | null) => {
     try {
       const dateStr = format(new Date(), 'yyyyMMdd');
       const rand = String(Math.floor(Math.random() * 99999)).padStart(5, '0');
@@ -197,7 +138,7 @@ export default function PaymentPage() {
           discount: discount || 0,
           points_used: pointsUsed || 0,
           total: orderTotal,
-          status: payMethod === 'cod' ? 'placed' : 'confirmed',
+          status: 'confirmed',
         };
         await supabase.from('orders').insert(orderData as any);
         return orderData;
@@ -216,7 +157,6 @@ export default function PaymentPage() {
 
   if (!cart || cart.length === 0) return null;
 
-  // Processing overlay
   if (paymentState === 'processing') {
     return (
       <div className="fixed inset-0 z-[200] bg-background flex flex-col items-center justify-center">
@@ -228,7 +168,6 @@ export default function PaymentPage() {
     );
   }
 
-  // Success page
   if (paymentState === 'success') {
     const estDelivery = format(addDays(new Date(), 5), 'dd MMM yyyy');
     return (
@@ -270,17 +209,11 @@ export default function PaymentPage() {
           </Card>
 
           {selectedAddress && (
-            <Card className="p-4 text-left mb-4">
+            <Card className="p-4 text-left mb-6">
               <h3 className="text-sm font-semibold mb-1">Delivery Address</h3>
               <p className="text-xs text-muted-foreground">{selectedAddress.address_line}, {selectedAddress.city} - {selectedAddress.pincode}</p>
             </Card>
           )}
-
-          <Card className="p-4 text-left mb-6">
-            <h3 className="text-sm font-semibold mb-1">Payment</h3>
-            <p className="text-xs text-muted-foreground capitalize">{method === 'upi' ? `UPI (${upiId})` : method === 'card' ? 'Credit/Debit Card' : method === 'netbanking' ? `Net Banking (${selectedBank})` : method === 'cod' ? 'Cash on Delivery' : 'P4U Wallet'}</p>
-            <p className="text-xs font-bold mt-1">₹{total?.toLocaleString()}</p>
-          </Card>
 
           <div className="flex flex-col gap-3">
             <Button className="w-full h-12" onClick={() => navigate('/app/orders')}>
@@ -299,7 +232,6 @@ export default function PaymentPage() {
     );
   }
 
-  // Failure page
   if (paymentState === 'failure') {
     return (
       <CustomerLayout>
@@ -309,17 +241,15 @@ export default function PaymentPage() {
             <XCircle className="h-14 w-14 text-destructive" />
           </motion.div>
           <h2 className="text-2xl font-bold mb-2">Payment Failed</h2>
-          <p className="text-sm text-muted-foreground mb-8">Your payment could not be processed. Please try again or use a different payment method.</p>
+          <p className="text-sm text-muted-foreground mb-8">Your payment could not be processed. Please try again.</p>
           <div className="flex flex-col gap-3">
             <Button className="w-full h-12" onClick={() => setPaymentState('select')}>Retry Payment</Button>
-            <Button variant="outline" className="w-full h-11" onClick={() => { setMethod('upi'); setPaymentState('select'); }}>Try Different Method</Button>
           </div>
         </div>
       </CustomerLayout>
     );
   }
 
-  // Payment method selection page
   return (
     <CustomerLayout>
       <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-8">
@@ -330,9 +260,7 @@ export default function PaymentPage() {
         <h1 className="text-xl font-bold mb-6">Payment</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left - Payment Methods */}
           <div className="md:col-span-2 space-y-4">
-            {/* Order Summary Card */}
             <Card className="p-4">
               <h3 className="text-sm font-semibold mb-2">Order Summary</h3>
               <div className="flex items-center gap-2 text-sm">
@@ -342,112 +270,17 @@ export default function PaymentPage() {
               </div>
             </Card>
 
-            {/* Payment Methods */}
             <Card className="p-4">
-              <h3 className="text-sm font-semibold mb-4">Select Payment Method</h3>
-              <RadioGroup value={method} onValueChange={(v) => setMethod(v as PaymentMethod)} className="space-y-3">
-                {/* UPI */}
-                <div className={`border rounded-xl p-4 transition-colors ${method === 'upi' ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                  <div className="flex items-center gap-3">
-                    <RadioGroupItem value="upi" id="upi" />
-                    <Label htmlFor="upi" className="flex items-center gap-2 cursor-pointer flex-1">
-                      <Smartphone className="h-5 w-5 text-primary" />
-                      <span className="font-semibold text-sm">UPI</span>
-                    </Label>
-                  </div>
-                  {method === 'upi' && (
-                    <div className="mt-4 space-y-3 pl-7">
-                      <Input placeholder="Enter UPI ID (e.g. name@upi)" value={upiId} onChange={e => setUpiId(e.target.value)} className="h-10" />
-                      <div className="flex gap-2 flex-wrap">
-                        {UPI_APPS.map(app => (
-                          <button key={app.name} onClick={() => setUpiId(`user@${app.name.toLowerCase()}`)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border hover:bg-accent text-xs font-medium">
-                            <span>{app.icon}</span> {app.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+              <div className="flex items-center gap-3">
+                <CreditCard className="h-5 w-5 text-primary" />
+                <div>
+                  <h3 className="text-sm font-semibold">Razorpay Secure Payment</h3>
+                  <p className="text-xs text-muted-foreground">Pay via UPI, Credit/Debit Card, Net Banking, Wallet & more</p>
                 </div>
-
-                {/* Card */}
-                <div className={`border rounded-xl p-4 transition-colors ${method === 'card' ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                  <div className="flex items-center gap-3">
-                    <RadioGroupItem value="card" id="card" />
-                    <Label htmlFor="card" className="flex items-center gap-2 cursor-pointer flex-1">
-                      <CreditCard className="h-5 w-5 text-primary" />
-                      <span className="font-semibold text-sm">Credit / Debit Card</span>
-                    </Label>
-                  </div>
-                  {method === 'card' && (
-                    <div className="mt-4 space-y-3 pl-7">
-                      <Input placeholder="Card Number" value={cardNumber} onChange={e => setCardNumber(formatCardNumber(e.target.value))} className="h-10 font-mono" />
-                      <Input placeholder="Cardholder Name" value={cardName} onChange={e => setCardName(e.target.value)} className="h-10" />
-                      <div className="grid grid-cols-2 gap-3">
-                        <Input placeholder="MM/YY" value={cardExpiry} onChange={e => setCardExpiry(formatExpiry(e.target.value))} className="h-10 font-mono" />
-                        <Input type="password" placeholder="CVV" value={cardCvv} onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))} className="h-10 font-mono" />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox checked={saveCard} onCheckedChange={(v) => setSaveCard(!!v)} id="save-card" />
-                        <Label htmlFor="save-card" className="text-xs">Save card for future payments</Label>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Net Banking */}
-                <div className={`border rounded-xl p-4 transition-colors ${method === 'netbanking' ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                  <div className="flex items-center gap-3">
-                    <RadioGroupItem value="netbanking" id="netbanking" />
-                    <Label htmlFor="netbanking" className="flex items-center gap-2 cursor-pointer flex-1">
-                      <Building2 className="h-5 w-5 text-primary" />
-                      <span className="font-semibold text-sm">Net Banking</span>
-                    </Label>
-                  </div>
-                  {method === 'netbanking' && (
-                    <div className="mt-4 pl-7">
-                      <select value={selectedBank} onChange={e => setSelectedBank(e.target.value)}
-                        className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
-                        <option value="">Select Bank</option>
-                        {BANKS.map(b => <option key={b} value={b}>{b}</option>)}
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                {/* COD */}
-                <div className={`border rounded-xl p-4 transition-colors ${method === 'cod' ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                  <div className="flex items-center gap-3">
-                    <RadioGroupItem value="cod" id="cod" />
-                    <Label htmlFor="cod" className="flex items-center gap-2 cursor-pointer flex-1">
-                      <Truck className="h-5 w-5 text-primary" />
-                      <span className="font-semibold text-sm">Cash on Delivery</span>
-                    </Label>
-                  </div>
-                  {method === 'cod' && (
-                    <p className="text-xs text-muted-foreground mt-3 pl-7">Pay with cash when your order is delivered. Additional ₹30 COD charge applies.</p>
-                  )}
-                </div>
-
-                {/* Wallet */}
-                <div className={`border rounded-xl p-4 transition-colors ${method === 'wallet' ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                  <div className="flex items-center gap-3">
-                    <RadioGroupItem value="wallet" id="wallet" />
-                    <Label htmlFor="wallet" className="flex items-center gap-2 cursor-pointer flex-1">
-                      <Wallet className="h-5 w-5 text-primary" />
-                      <span className="font-semibold text-sm">P4U Wallet</span>
-                      <span className="text-xs text-muted-foreground ml-auto">Balance: ₹{walletBalance}</span>
-                    </Label>
-                  </div>
-                  {method === 'wallet' && walletBalance < total && (
-                    <p className="text-xs text-destructive mt-3 pl-7">Insufficient wallet balance. Please choose another method.</p>
-                  )}
-                </div>
-              </RadioGroup>
+              </div>
             </Card>
           </div>
 
-          {/* Right - Price Breakdown */}
           <div>
             <Card className="p-4 sticky top-24">
               <h3 className="text-sm font-semibold mb-3">Price Details</h3>
@@ -456,15 +289,14 @@ export default function PaymentPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>₹{platformFee}</span></div>
                 {discount > 0 && <div className="flex justify-between text-success"><span>Discount</span><span>-₹{discount}</span></div>}
                 {pointsUsed > 0 && <div className="flex justify-between text-success"><span>Points Redeemed</span><span>-₹{pointsUsed}</span></div>}
-                {method === 'cod' && <div className="flex justify-between"><span className="text-muted-foreground">COD Charge</span><span>₹30</span></div>}
                 <Separator />
                 <div className="flex justify-between font-bold text-base">
                   <span>Total Payable</span>
-                  <span>₹{(total + (method === 'cod' ? 30 : 0))?.toLocaleString()}</span>
+                  <span>₹{total?.toLocaleString()}</span>
                 </div>
               </div>
-              <Button className="w-full h-12 mt-4 text-base font-semibold" onClick={handlePay} disabled={!isMethodValid()}>
-                Pay ₹{(total + (method === 'cod' ? 30 : 0))?.toLocaleString()}
+              <Button className="w-full h-12 mt-4 text-base font-semibold" onClick={handlePay}>
+                Pay ₹{total?.toLocaleString()}
               </Button>
               <p className="text-[10px] text-muted-foreground text-center mt-2">🔒 100% Secure Payment</p>
             </Card>
@@ -472,10 +304,9 @@ export default function PaymentPage() {
         </div>
       </div>
 
-      {/* Mobile sticky pay button */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
-        <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={handlePay} disabled={!isMethodValid()}>
-          Pay ₹{(total + (method === 'cod' ? 30 : 0))?.toLocaleString()}
+        <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={handlePay}>
+          Pay ₹{total?.toLocaleString()}
         </Button>
       </div>
     </CustomerLayout>

@@ -7,16 +7,37 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
-import { api } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 const ITEMS_PER_PAGE = 8;
 
 export default function CustomerWalletPage() {
-  const { data: profile } = useQuery({ queryKey: ["customerProfile"], queryFn: () => api.getCustomerProfile("USR-001") });
-  const { data: transactions, isLoading } = useQuery({ queryKey: ["pointsTransactions"], queryFn: () => api.getPointsTransactions({ page: 1, per_page: 100 }) });
-  const [currentPage, setCurrentPage] = useState(1);
+  const { customerUser } = useAuth();
+  const customerId = customerUser?.customer_id || customerUser?.id || '';
 
-  const userTransactions = transactions?.data?.filter(t => t.user_id === 'USR-001') || [];
+  const { data: profile } = useQuery({
+    queryKey: ["customerProfile", customerId],
+    queryFn: async () => {
+      if (!customerId) return null;
+      const { data } = await supabase.from('customers').select('*').eq('id', customerId).single();
+      return data;
+    },
+    enabled: !!customerId,
+  });
+
+  const { data: transactions, isLoading } = useQuery({
+    queryKey: ["pointsTransactions", customerId],
+    queryFn: async () => {
+      if (!customerId) return [];
+      const { data } = await supabase.from('points_transactions').select('*').eq('user_id', customerId).order('created_at', { ascending: false });
+      return data || [];
+    },
+    enabled: !!customerId,
+  });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const userTransactions = transactions || [];
   const totalPages = Math.max(1, Math.ceil(userTransactions.length / ITEMS_PER_PAGE));
   const paginated = userTransactions.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
@@ -34,7 +55,6 @@ export default function CustomerWalletPage() {
           <h1 className="text-lg font-bold">My Wallet</h1>
         </div>
 
-        {/* Balance Card */}
         <Card className="p-6 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
           <div className="flex items-center gap-3 mb-4">
             <Wallet className="h-8 w-8" />
@@ -53,23 +73,21 @@ export default function CustomerWalletPage() {
           </div>
         </Card>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <Card className="p-3 text-center">
-            <p className="text-lg font-bold text-success">+{userTransactions.filter(t => t.type === 'referral').reduce((s, t) => s + t.points, 0)}</p>
+            <p className="text-lg font-bold text-success">+{userTransactions.filter(t => t.type === 'referral').reduce((s: number, t: any) => s + t.points, 0)}</p>
             <p className="text-[10px] text-muted-foreground">Referral Pts</p>
           </Card>
           <Card className="p-3 text-center">
-            <p className="text-lg font-bold text-warning">+{userTransactions.filter(t => t.type === 'order_reward').reduce((s, t) => s + t.points, 0)}</p>
+            <p className="text-lg font-bold text-warning">+{userTransactions.filter(t => t.type === 'order_reward').reduce((s: number, t: any) => s + t.points, 0)}</p>
             <p className="text-[10px] text-muted-foreground">Order Rewards</p>
           </Card>
           <Card className="p-3 text-center">
-            <p className="text-lg font-bold text-primary">200</p>
+            <p className="text-lg font-bold text-primary">{userTransactions.filter(t => t.type === 'welcome').reduce((s: number, t: any) => s + t.points, 0)}</p>
             <p className="text-[10px] text-muted-foreground">Welcome Bonus</p>
           </Card>
         </div>
 
-        {/* Transaction History with Pagination */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold">Transaction History</h2>
@@ -78,7 +96,7 @@ export default function CustomerWalletPage() {
           <div className="space-y-2">
             {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />) :
               paginated.length === 0 ? <p className="text-center py-8 text-muted-foreground text-sm">No transactions yet</p> :
-              paginated.map(t => (
+              paginated.map((t: any) => (
                 <Card key={t.id} className="p-3 flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
                     {typeIcon(t.type)}
@@ -92,7 +110,6 @@ export default function CustomerWalletPage() {
               ))}
           </div>
 
-          {/* Pagination */}
           {userTransactions.length > ITEMS_PER_PAGE && (
             <div className="flex items-center justify-center gap-2 mt-4">
               <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage <= 1}
