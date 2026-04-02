@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
-import { Search, Calendar, ChevronLeft, ChevronRight, Package, Truck, MapPin, RefreshCcw } from "lucide-react";
+import { Search, Calendar, ChevronLeft, ChevronRight, Package, Truck, MapPin, RefreshCcw, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const statusColor: Record<string, string> = {
