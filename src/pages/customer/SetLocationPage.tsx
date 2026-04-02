@@ -53,12 +53,14 @@ export default function SetLocationPage() {
         const districtName = get("administrative_area_level_2") || "";
         const stateName = get("administrative_area_level_1") || "";
         const countryName = get("country") || "";
+        const streetNumber = get("street_number") || get("premise") || get("subpremise") || "";
         setAddress({ lat, lng, formatted: result.formatted_address || `${lat}, ${lng}`, area, city, pincode });
         setApartment(area);
         setStreet(routeName);
         setDistrict(districtName);
         setState(stateName);
         setCountry(countryName);
+        if (streetNumber) setHouseNo(streetNumber);
       } else {
         setAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
       }
