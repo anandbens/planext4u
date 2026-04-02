@@ -77,20 +77,6 @@ export default function VendorLoginPage() {
     } finally { setLoading(false); }
   };
 
-  const quickLogin = async () => {
-    setEmail("vendor@planext4u.com"); setPassword("P4u@Vendor2026"); setLoading(true);
-    try { await vendorLogin("vendor@planext4u.com", "P4u@Vendor2026"); toast.success("Welcome, TechMart!"); setTimeout(() => navigate("/vendor", { replace: true }), 500); }
-    catch (err: any) { toast.error(err.message || "Login failed. Seed demo users first."); }
-    finally { setLoading(false); }
-  };
-
-  const handleSeedUsers = async () => {
-    setSeeding(true);
-    try { await seedDemoUsers(); toast.success("Demo users created!"); }
-    catch (err: any) { toast.error("Failed: " + (err.message || "Unknown error")); }
-    finally { setSeeding(false); }
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-brand-dark via-brand-dark/90 to-brand-teal/30">
       <nav className="w-full bg-card/10 backdrop-blur-sm border-b border-white/10">
