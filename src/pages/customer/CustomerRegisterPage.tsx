@@ -325,7 +325,7 @@ export default function CustomerRegisterPage() {
               </Button>
 
               <div className="text-center">
-                {timer > 0 ? <p className="text-sm text-muted-foreground">Resend in <span className="font-semibold text-primary">{timer}s</span></p> : <button onClick={() => { setOtp(""); clearRecaptcha(); handleSendOTP(); }} className="text-sm text-primary font-semibold hover:underline">Resend OTP</button>}
+                {timer > 0 ? <p className="text-sm text-muted-foreground">Resend in <span className="font-semibold text-primary">{timer}s</span></p> : <button onClick={async () => { setOtp(""); clearRecaptcha(); await new Promise(r => setTimeout(r, 300)); handleSendOTP(); }} className="text-sm text-primary font-semibold hover:underline">Resend OTP</button>}
               </div>
               <button onClick={() => { setOtpStep("form"); setOtp(""); clearRecaptcha(); }} className="w-full text-sm text-muted-foreground hover:text-foreground">← Back to form</button>
             </div>
