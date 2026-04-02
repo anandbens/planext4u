@@ -880,6 +880,34 @@ export const api = {
     return { success: true };
   },
 
+  createOccupation: async (data: Partial<Occupation>) => {
+    const newOcc = { id: genId('OCC'), name: data.name || '', status: data.status || 'active', customer_count: 0 };
+    const { error } = await supabase.from('occupations').insert(newOcc);
+    if (error) throw error;
+    return { success: true, occupation: newOcc };
+  },
+
+  deleteOccupation: async (id: string) => {
+    const { error } = await supabase.from('occupations').delete().eq('id', id);
+    if (error) throw error;
+    return { success: true };
+  },
+
+  getActiveOccupations: async () => {
+    const { data } = await supabase.from('occupations').select('id, name').eq('status', 'active').order('name');
+    return (data || []) as { id: string; name: string }[];
+  },
+
+  getStates: async () => {
+    const { data } = await supabase.from('states').select('*').eq('status', 'active').order('name');
+    return (data || []) as { id: string; name: string; code: string }[];
+  },
+
+  getDistricts: async (stateId: string) => {
+    const { data } = await supabase.from('districts').select('*').eq('state_id', stateId).eq('status', 'active').order('name');
+    return (data || []) as { id: string; name: string; state_id: string }[];
+  },
+
   // Cities
   getCities: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
     const page = params.page || 1;
