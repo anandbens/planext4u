@@ -75,9 +75,12 @@ export default function CustomerProfileEditPage() {
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error("Name is required"); return; }
     setLoading(true);
-    const { error } = await supabase.from('customers').update({
+    const updateData: any = {
       name: form.name, email: form.email, mobile: form.mobile, occupation: form.occupation,
-    }).eq('id', customerId);
+      gender: form.gender,
+    };
+    if (form.dob) updateData.dob = form.dob;
+    const { error } = await supabase.from('customers').update(updateData).eq('id', customerId);
     if (error) { toast.error("Failed to save: " + error.message); setLoading(false); return; }
     logActivity('profile_update', `Profile updated: ${form.name}`);
     toast.success("Profile updated successfully!");
