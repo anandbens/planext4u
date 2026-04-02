@@ -351,16 +351,17 @@ export default function CustomerProfileEditPage() {
         </div>
 
         {/* Profile Completeness */}
-        <Card className="p-4">
+        <Card className="p-4 cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => navigate("/app/kyc")}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold">Profile Completeness</p>
             <span className="text-sm font-bold text-primary">{completeness}%</span>
           </div>
           <Progress value={completeness} className="h-2" />
           <p className="text-xs text-muted-foreground mt-1">
-            {completeness < 50 ? "Complete your profile for better experience" :
-             completeness < 80 ? "Almost there! Add more details" : "Great! Your profile is well set up"}
+            {completeness < 50 ? "Complete your profile & KYC for better experience" :
+             completeness < 80 ? "Almost there! Complete KYC verification" : "Great! Your profile is well set up"}
           </p>
+          {completeness < 100 && <p className="text-xs text-primary mt-1 font-medium">Tap to complete KYC verification →</p>}
         </Card>
 
         {/* Profile Photo */}
