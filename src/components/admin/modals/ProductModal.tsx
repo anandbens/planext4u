@@ -57,6 +57,9 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
 
   const handleSave = async () => {
     if (!form.title) return;
+    if (form.status === 'rejected' && !form.rejection_reason?.trim()) {
+      return; // rejection reason required
+    }
     setSaving(true);
     try {
       if (isCreate) {
