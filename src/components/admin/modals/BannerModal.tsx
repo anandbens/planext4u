@@ -80,7 +80,7 @@ export function BannerModal({ banner, open, onOpenChange, mode, onSave, onCreate
             <div>
               <Label className="text-xs text-muted-foreground">Desktop Image</Label>
               {editMode ? (
-                <ImageUploader value={form.desktop_image} onChange={(url) => setForm({ ...form, desktop_image: url })} folder="banners" label="Desktop Image" className="mt-1" />
+                <MediaLibraryPicker value={form.desktop_image} onChange={(url) => setForm({ ...form, desktop_image: url })} folder="banners" label="Desktop Image" className="mt-1" />
               ) : <p className="text-xs mt-1 truncate">{banner?.desktop_image || "—"}</p>}
             </div>
             <div>
