@@ -199,7 +199,9 @@ const App = () => (
             <Route path="/app/login" element={<CustomerLoginPage />} />
             <Route path="/app/register" element={<CustomerRegisterPage />} />
             <Route path="/app/phone-login" element={<CustomerPhoneLoginPage />} />
-            <Route path="/app/set-location" element={<CustomerPage><SetLocationPage /></CustomerPage>} />
+            <Route path="/app/set-location" element={<SetLocationPage />} />
+            <Route path="/app/terms" element={<TermsPage />} />
+            <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
             <Route path="/app/browse" element={<CustomerPage><CustomerBrowsePage /></CustomerPage>} />
             <Route path="/app/product/:id" element={<CustomerPage><CustomerProductPage /></CustomerPage>} />
             <Route path="/app/vendor/:id" element={<CustomerPage><CustomerVendorPage /></CustomerPage>} />
