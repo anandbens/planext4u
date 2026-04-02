@@ -22,6 +22,8 @@ const trackingSteps = ["placed", "accepted", "in_progress", "delivered", "comple
 const ITEMS_PER_PAGE = 5;
 
 export default function CustomerOrdersPage() {
+  const { customerUser } = useAuth();
+  const customerId = customerUser?.customer_id || customerUser?.id || '';
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -30,8 +32,9 @@ export default function CustomerOrdersPage() {
   const [refundOrder, setRefundOrder] = useState<any>(null);
 
   const { data: orders, isLoading } = useQuery({
-    queryKey: ["customerOrders"],
-    queryFn: () => api.getCustomerOrders("USR-001"),
+    queryKey: ["customerOrders", customerId],
+    queryFn: () => api.getCustomerOrders(customerId),
+    enabled: !!customerId,
   });
 
   // Search by order ID or product name
