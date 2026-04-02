@@ -100,9 +100,12 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
           </div>
 
           <div>
-            <Label className="text-xs text-muted-foreground">Banner Image URL</Label>
-            {editMode ? <Input value={form.banner_image} onChange={(e) => setForm({ ...form, banner_image: e.target.value })} className="mt-1" placeholder="https://..." /> : <p className="text-sm mt-1">{category?.banner_image || '—'}</p>}
-            {editMode && form.banner_image && <img src={form.banner_image} alt="Banner preview" className="mt-2 h-20 w-full object-cover rounded" />}
+            <Label className="text-xs text-muted-foreground">Banner Image</Label>
+            {editMode ? (
+              <ImageUploader value={form.banner_image} onChange={(url) => setForm({ ...form, banner_image: url })} folder="categories" label="Upload Banner Image" className="mt-1" />
+            ) : form.banner_image ? (
+              <img src={form.banner_image} alt="Banner" className="mt-1 h-20 w-full object-cover rounded" />
+            ) : <p className="text-sm mt-1 text-muted-foreground">—</p>}
           </div>
 
           <div>
