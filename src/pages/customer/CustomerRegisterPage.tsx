@@ -278,15 +278,18 @@ export default function CustomerRegisterPage() {
 
               <div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Referral Code (optional)" value={form.referral_code} onChange={e => setForm({...form, referral_code: e.target.value.toUpperCase()})} className="pl-10 h-11" /></div>
 
-              {/* Terms & Privacy - click to open popup */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
+              {/* Terms & Privacy - click checkbox or label to open popup */}
+              <div
+                className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors"
+                onClick={(e) => { e.preventDefault(); if (!acceptedTerms) openTermsPopup(); }}
+              >
                 <Checkbox
                   id="terms"
                   checked={acceptedTerms}
-                  disabled={!acceptedTerms}
                   className="mt-0.5"
+                  onCheckedChange={() => { if (!acceptedTerms) openTermsPopup(); }}
                 />
-                <label className="text-xs text-muted-foreground leading-relaxed cursor-pointer" onClick={openTermsPopup}>
+                <label className="text-xs text-muted-foreground leading-relaxed cursor-pointer select-none">
                   I have read and agree to the{" "}
                   <span className="text-primary font-semibold underline">Terms & Conditions</span>{" "}
                   and{" "}
