@@ -160,14 +160,24 @@ export default function CustomerRegisterPage() {
     try {
       const isUnique = await checkMobileUnique();
       if (!isUnique) { setOtpLoading(false); return; }
+      // Clear any previous recaptcha before sending
+      clearRecaptcha();
+      // Small delay to let DOM settle after clearing
+      await new Promise(r => setTimeout(r, 300));
       await sendOTP(`+91${form.mobile}`);
       setOtpStep("otp");
-      setTimer(30);
+      setTimer(60);
       toast.success("OTP sent to +91 " + form.mobile);
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
-      if (err.code === "auth/too-many-requests") toast.error("Too many requests. Try later.");
-      else toast.error(err.message || "Failed to send OTP");
+      if (err.code === "auth/too-many-requests") {
+        toast.error("Too many attempts. Please wait 1-2 minutes before trying again.", { duration: 6000 });
+        setTimer(120);
+      } else if (err.message?.includes("reCAPTCHA")) {
+        toast.error("Verification failed. Please try again.");
+      } else {
+        toast.error(err.message || "Failed to send OTP");
+      }
       clearRecaptcha();
     } finally { setOtpLoading(false); }
   };
@@ -210,14 +220,14 @@ export default function CustomerRegisterPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-primary pt-8 pb-12 px-6 flex flex-col items-center relative">
+      <div className="bg-primary pt-10 pb-14 px-6 flex flex-col items-center relative">
         <Link to="/app/login" className="absolute top-4 left-4 text-primary-foreground/60 hover:text-primary-foreground"><ArrowLeft className="h-5 w-5" /></Link>
         <img src={p4uLogoTeal} alt="Planext4u" className="h-16 w-16 object-contain mb-2 rounded-xl" />
         <h2 className="text-primary-foreground text-lg font-bold">Create Account</h2>
         <p className="text-primary-foreground/60 text-xs">Join Planext4u and start shopping</p>
       </div>
-      <div className="max-w-md mx-auto -mt-6 px-4 pb-8">
-        <Card className="p-6">
+      <div className="max-w-md mx-auto -mt-8 px-4 pb-8 relative z-10">
+        <Card className="p-6 mt-2">
           {otpStep === "form" ? (
             <div className="space-y-4">
               <div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Full Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="pl-10 h-11" /></div>
@@ -268,15 +278,18 @@ export default function CustomerRegisterPage() {
 
               <div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Referral Code (optional)" value={form.referral_code} onChange={e => setForm({...form, referral_code: e.target.value.toUpperCase()})} className="pl-10 h-11" /></div>
 
-              {/* Terms & Privacy - click to open popup */}
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
+              {/* Terms & Privacy - click checkbox or label to open popup */}
+              <div
+                className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors"
+                onClick={(e) => { e.preventDefault(); if (!acceptedTerms) openTermsPopup(); }}
+              >
                 <Checkbox
                   id="terms"
                   checked={acceptedTerms}
-                  disabled={!acceptedTerms}
                   className="mt-0.5"
+                  onCheckedChange={() => { if (!acceptedTerms) openTermsPopup(); }}
                 />
-                <label className="text-xs text-muted-foreground leading-relaxed cursor-pointer" onClick={openTermsPopup}>
+                <label className="text-xs text-muted-foreground leading-relaxed cursor-pointer select-none">
                   I have read and agree to the{" "}
                   <span className="text-primary font-semibold underline">Terms & Conditions</span>{" "}
                   and{" "}
@@ -312,7 +325,7 @@ export default function CustomerRegisterPage() {
               </Button>
 
               <div className="text-center">
-                {timer > 0 ? <p className="text-sm text-muted-foreground">Resend in <span className="font-semibold text-primary">{timer}s</span></p> : <button onClick={() => { setOtp(""); clearRecaptcha(); handleSendOTP(); }} className="text-sm text-primary font-semibold hover:underline">Resend OTP</button>}
+                {timer > 0 ? <p className="text-sm text-muted-foreground">Resend in <span className="font-semibold text-primary">{timer}s</span></p> : <button onClick={async () => { setOtp(""); clearRecaptcha(); await new Promise(r => setTimeout(r, 300)); handleSendOTP(); }} className="text-sm text-primary font-semibold hover:underline">Resend OTP</button>}
               </div>
               <button onClick={() => { setOtpStep("form"); setOtp(""); clearRecaptcha(); }} className="w-full text-sm text-muted-foreground hover:text-foreground">← Back to form</button>
             </div>
