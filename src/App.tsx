@@ -117,6 +117,7 @@ import AdminHomesModerationPage from "./pages/admin/AdminHomesModerationPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
+import VendorRegisterStandalonePage from "./pages/vendor/VendorRegisterPage";
 import VendorDashboardPage from "./pages/vendor/VendorDashboardPage";
 import VendorProductsPage from "./pages/vendor/VendorProductsPage";
 import VendorServicesPage from "./pages/vendor/VendorServicesPage";
@@ -262,6 +263,7 @@ const App = () => (
 
             {/* Vendor-facing routes */}
             <Route path="/vendor/login" element={<VendorLoginPage />} />
+            <Route path="/vendor/register" element={<VendorRegisterStandalonePage />} />
             <Route path="/vendor" element={<VendorDashboardPage />} />
             <Route path="/vendor/products" element={<VendorProductsPage />} />
             <Route path="/vendor/services" element={<VendorServicesPage />} />
