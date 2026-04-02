@@ -107,6 +107,14 @@ export default function CustomerRegisterPage() {
   useEffect(() => {
     api.getActiveOccupations().then(setOccupations);
     api.getStates().then(setStates);
+    // Auto-capture location on load
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {},
+        { enableHighAccuracy: true }
+      );
+    }
   }, []);
 
   useEffect(() => {
