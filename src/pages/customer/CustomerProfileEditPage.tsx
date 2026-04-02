@@ -501,12 +501,16 @@ export default function CustomerProfileEditPage() {
 
           <div className="p-4 space-y-3">
             <div>
-              <label className="text-xs font-semibold text-primary uppercase">Apartment / Road / Area*</label>
-              <Input value={addrForm.apartment} onChange={e => setAddrForm({...addrForm, apartment: e.target.value})} className="mt-1 h-10" placeholder="Enter area name" />
+              <label className="text-xs font-semibold text-muted-foreground uppercase">House / Flat / Block No *</label>
+              <Input value={addrForm.houseNo} onChange={e => setAddrForm({...addrForm, houseNo: e.target.value})} className="mt-1 h-10" placeholder="Enter house/flat number" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase">House / Flat / Block No</label>
-              <Input value={addrForm.houseNo} onChange={e => setAddrForm({...addrForm, houseNo: e.target.value})} className="mt-1 h-10" placeholder="Enter house/flat number" />
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Street / Road</label>
+              <Input value={addrForm.street} onChange={e => setAddrForm({...addrForm, street: e.target.value})} className="mt-1 h-10" placeholder="Street name" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-primary uppercase">Apartment / Road / Area *</label>
+              <Input value={addrForm.apartment} onChange={e => setAddrForm({...addrForm, apartment: e.target.value})} className="mt-1 h-10" placeholder="Enter area name" />
             </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase">Landmark</label>
@@ -515,11 +519,19 @@ export default function CustomerProfileEditPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">City</label>
-                <Input value={mapAddress?.city || ""} className="h-10" disabled />
+                <Input value={mapAddress?.city || ""} className="h-10 bg-secondary/20" disabled />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Pincode</label>
-                <Input value={mapAddress?.pincode || ""} className="h-10" disabled />
+                <Input value={mapAddress?.pincode || ""} className="h-10 bg-secondary/20" disabled />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">District</label>
+                <Input value={mapAddress?.district || ""} className="h-10 bg-secondary/20" disabled />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">State</label>
+                <Input value={mapAddress?.state || ""} className="h-10 bg-secondary/20" disabled />
               </div>
             </div>
 
@@ -535,7 +547,7 @@ export default function CustomerProfileEditPage() {
               </div>
             </div>
 
-            <Button onClick={saveAddress} className="w-full h-11 mt-2" disabled={!addrForm.apartment.trim()}>
+            <Button onClick={saveAddress} className="w-full h-11 mt-2" disabled={!addrForm.apartment.trim() || !addrForm.houseNo.trim()}>
               {editingAddress ? "Update Address" : "Save Address"}
             </Button>
           </div>
