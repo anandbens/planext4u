@@ -115,6 +115,7 @@ export default function VendorRegisterPage() {
         aadhaar_back_url: form.aadhaar_back_url,
         bank_account_number: form.bank_account_number, bank_ifsc: form.bank_ifsc,
         bank_holder_name: form.bank_holder_name, store_logo_url: form.store_logo_url,
+        latitude: form.latitude, longitude: form.longitude, shop_address: form.shop_address,
         status: 'submitted',
       };
 
