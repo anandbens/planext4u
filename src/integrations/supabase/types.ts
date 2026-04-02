@@ -2617,12 +2617,15 @@ export type Database = {
           gst_number: string | null
           id: string
           instagram_link: string | null
+          latitude: number | null
+          longitude: number | null
           name: string
           pan_image_url: string | null
           pan_number: string | null
           phone: string
           rejection_reason: string | null
           secondary_phone: string | null
+          shop_address: string | null
           state: string | null
           status: string
           store_logo_url: string | null
@@ -2651,12 +2654,15 @@ export type Database = {
           gst_number?: string | null
           id?: string
           instagram_link?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           pan_image_url?: string | null
           pan_number?: string | null
           phone?: string
           rejection_reason?: string | null
           secondary_phone?: string | null
+          shop_address?: string | null
           state?: string | null
           status?: string
           store_logo_url?: string | null
@@ -2685,12 +2691,15 @@ export type Database = {
           gst_number?: string | null
           id?: string
           instagram_link?: string | null
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           pan_image_url?: string | null
           pan_number?: string | null
           phone?: string
           rejection_reason?: string | null
           secondary_phone?: string | null
+          shop_address?: string | null
           state?: string | null
           status?: string
           store_logo_url?: string | null
@@ -2740,6 +2749,66 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_plans: {
+        Row: {
+          banner_ads: boolean
+          commission_percentage: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          max_redemption_percentage: number
+          plan_name: string
+          plan_tier: number
+          plan_type: string
+          price: number
+          priority_listing: boolean
+          radius_km: number
+          updated_at: string
+          validity_days: number
+          video_ads: boolean
+          visibility_type: string
+        }
+        Insert: {
+          banner_ads?: boolean
+          commission_percentage?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_redemption_percentage?: number
+          plan_name: string
+          plan_tier?: number
+          plan_type?: string
+          price?: number
+          priority_listing?: boolean
+          radius_km?: number
+          updated_at?: string
+          validity_days?: number
+          video_ads?: boolean
+          visibility_type?: string
+        }
+        Update: {
+          banner_ads?: boolean
+          commission_percentage?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_redemption_percentage?: number
+          plan_name?: string
+          plan_tier?: number
+          plan_type?: string
+          price?: number
+          priority_listing?: boolean
+          radius_km?: number
+          updated_at?: string
+          validity_days?: number
+          video_ads?: boolean
+          visibility_type?: string
+        }
+        Relationships: []
+      }
       vendors: {
         Row: {
           area_id: string | null
@@ -2753,7 +2822,13 @@ export type Database = {
           membership: string
           mobile: string
           name: string
+          plan_end_date: string | null
+          plan_id: string | null
+          plan_start_date: string | null
           rating: number | null
+          shop_address: string | null
+          shop_latitude: number | null
+          shop_longitude: number | null
           status: string
           total_orders: number | null
           total_products: number | null
@@ -2771,7 +2846,13 @@ export type Database = {
           membership?: string
           mobile?: string
           name: string
+          plan_end_date?: string | null
+          plan_id?: string | null
+          plan_start_date?: string | null
           rating?: number | null
+          shop_address?: string | null
+          shop_latitude?: number | null
+          shop_longitude?: number | null
           status?: string
           total_orders?: number | null
           total_products?: number | null
@@ -2789,7 +2870,13 @@ export type Database = {
           membership?: string
           mobile?: string
           name?: string
+          plan_end_date?: string | null
+          plan_id?: string | null
+          plan_start_date?: string | null
           rating?: number | null
+          shop_address?: string | null
+          shop_latitude?: number | null
+          shop_longitude?: number | null
           status?: string
           total_orders?: number | null
           total_products?: number | null
@@ -2808,6 +2895,13 @@ export type Database = {
             columns: ["city_id"]
             isOneToOne: false
             referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendors_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_plans"
             referencedColumns: ["id"]
           },
         ]
