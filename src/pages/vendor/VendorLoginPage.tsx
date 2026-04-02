@@ -171,6 +171,9 @@ export default function VendorLoginPage() {
                 </>
               )}
             </div>
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              <Link to="/app" className="text-primary hover:underline font-medium">← Back to Home</Link>
+            </p>
           </div>
         </div>
       </div>
