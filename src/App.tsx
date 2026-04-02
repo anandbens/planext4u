@@ -114,6 +114,7 @@ import AdminHomesAmenitiesPage from "./pages/admin/AdminHomesAmenitiesPage";
 import AdminHomesCMSPage from "./pages/admin/AdminHomesCMSPage";
 import AdminHomesUsersPage from "./pages/admin/AdminHomesUsersPage";
 import AdminHomesModerationPage from "./pages/admin/AdminHomesModerationPage";
+import AdminVendorPlansPage from "./pages/admin/AdminVendorPlansPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
