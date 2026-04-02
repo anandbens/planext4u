@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { getOAuthRedirectUri } from "@/lib/capacitor-auth";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
@@ -103,8 +104,9 @@ export default function CustomerLoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      const redirectUri = getOAuthRedirectUri();
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: redirectUri,
         extraParams: { prompt: "select_account" },
       });
       if (result.error) {
