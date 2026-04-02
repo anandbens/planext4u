@@ -114,23 +114,20 @@ export default function CustomerLoginPage() {
       }
       if (result.redirected) return;
 
-      // Non-redirect flow: session is set, verify customer exists
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email) {
-        const { data: customer } = await supabase.from('customers').select('id').eq('email', session.user.email).maybeSingle();
-        if (!customer) {
-          await supabase.auth.signOut();
-          toast.error("Your Gmail is not registered with Planext4U. Create your account first to do a Google Sign-in.", { duration: 6000 });
-          setLoading(false);
-          return;
-        }
-        // Link via edge function
-        await supabase.functions.invoke("google-oauth-link");
-        await supabase.auth.refreshSession();
+      const { data, error } = await supabase.functions.invoke("google-oauth-link");
+      if (error || !data?.success || !data?.registered) {
+        await supabase.auth.signOut();
+        toast.error(
+          data?.error || "Your Gmail is not registered with Planext4U. Create your account first to do a Google Sign-in.",
+          { duration: 6000 }
+        );
+        return;
       }
-      setLoading(false);
+
+      await supabase.auth.refreshSession();
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
+    } finally {
       setLoading(false);
     }
   };
