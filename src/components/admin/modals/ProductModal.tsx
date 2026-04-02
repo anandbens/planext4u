@@ -116,7 +116,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Product Image</Label>
             {editMode ? (
-              <ImageUploader value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="products" label="Upload Product Image" />
+              <MediaLibraryPicker value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="products" label="Upload Product Image" />
             ) : form.image ? (
               <div className="h-32 w-full rounded-lg overflow-hidden bg-secondary/20 border border-border/30">
                 <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
