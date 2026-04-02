@@ -6,7 +6,7 @@ import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Product, PaginatedResponse } from "@/lib/api";
 import { ProductModal } from "@/components/admin/modals/ProductModal";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Trash2, Package, IndianRupee, Tag, TrendingUp } from "lucide-react";
+import { Eye, Pencil, Trash2, Package, IndianRupee, Tag, TrendingUp, CheckCircle, XCircle } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -21,6 +21,8 @@ export default function ProductsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<Product | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"delete" | "approve" | "reject">("delete");
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const fetchData = useCallback(() => {
     api.getProducts({ page, per_page: 10, search: search || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
@@ -48,6 +50,30 @@ export default function ProductsPage() {
     fetchData();
   };
 
+  const openConfirm = (product: Product, action: "delete" | "approve" | "reject") => {
+    setConfirmTarget(product); setConfirmAction(action); setConfirmOpen(true);
+  };
+
+  const handleConfirm = async (reason?: string) => {
+    if (!confirmTarget) return;
+    setConfirmLoading(true);
+    try {
+      if (confirmAction === "delete") {
+        await handleDelete(confirmTarget.id);
+      } else if (confirmAction === "approve") {
+        await api.updateProduct(confirmTarget.id, { status: "active" });
+        toast.success("Product approved");
+        fetchData();
+      } else if (confirmAction === "reject") {
+        await api.updateProduct(confirmTarget.id, { status: "rejected", rejection_reason: reason || "" });
+        toast.success("Product rejected");
+        fetchData();
+      }
+    } finally {
+      setConfirmLoading(false); setConfirmOpen(false); setConfirmTarget(null);
+    }
+  };
+
   const handleExport = () => {
     if (!data) return;
     exportToCSV(data.data, [
@@ -62,10 +88,9 @@ export default function ProductsPage() {
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
 
   const active = data.data.filter(p => p.status === 'active').length;
-  const avgPrice = data.data.length ? Math.round(data.data.reduce((s, p) => s + p.price, 0) / data.data.length) : 0;
-  const totalDiscount = data.data.reduce((s, p) => s + p.discount, 0);
-
   const pending = data.data.filter(p => p.status === 'pending_approval').length;
+  const rejected = data.data.filter(p => p.status === 'rejected').length;
+  const avgPrice = data.data.length ? Math.round(data.data.reduce((s, p) => s + p.price, 0) / data.data.length) : 0;
 
   const summaryWidgets: SummaryWidget[] = [
     { label: "Total Products", value: data.total, icon: <Package className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
@@ -89,12 +114,25 @@ export default function ProductsPage() {
           { key: "vendor_name", label: "Vendor" },
           { key: "price", label: "Price", render: (p) => <span className="font-semibold">₹{p.price.toLocaleString()}</span> },
           { key: "discount", label: "Discount", render: (p) => p.discount > 0 ? <span className="text-success font-medium">₹{p.discount}</span> : <span className="text-muted-foreground">—</span> },
-          { key: "status", label: "Status", render: (p) => <StatusBadge status={p.status} /> },
+          { key: "status", label: "Status", render: (p) => (
+            <div>
+              <StatusBadge status={p.status} />
+              {p.status === 'rejected' && p.rejection_reason && (
+                <p className="text-[10px] text-destructive mt-0.5 max-w-[150px] truncate" title={p.rejection_reason}>{p.rejection_reason}</p>
+              )}
+            </div>
+          )},
           { key: "actions", label: "", render: (p) => (
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(p, "view"); }}><Eye className="h-4 w-4" /></Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(p, "edit"); }}><Pencil className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); setConfirmTarget(p); setConfirmOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
+              {(p.status === 'pending_approval' || p.status === 'draft') && (
+                <>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={(e) => { e.stopPropagation(); openConfirm(p, "approve"); }} title="Approve"><CheckCircle className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(p, "reject"); }} title="Reject"><XCircle className="h-4 w-4" /></Button>
+                </>
+              )}
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(p, "delete"); }}><Trash2 className="h-4 w-4" /></Button>
             </div>
           )},
         ]}
@@ -123,8 +161,19 @@ export default function ProductsPage() {
         ]}
       />
       <ProductModal product={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
-      <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Delete Product" description={`Delete "${confirmTarget?.title}"? This cannot be undone.`} confirmLabel="Delete" variant="destructive"
-        onConfirm={async () => { if (confirmTarget) { await handleDelete(confirmTarget.id); setConfirmOpen(false); } }} />
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={confirmAction === "approve" ? "Approve Product" : confirmAction === "reject" ? "Reject Product" : "Delete Product"}
+        description={confirmAction === "approve" ? `Approve "${confirmTarget?.title}" and make it active?` : confirmAction === "reject" ? `Reject "${confirmTarget?.title}"? Please provide a reason.` : `Delete "${confirmTarget?.title}"? This cannot be undone.`}
+        confirmLabel={confirmAction === "approve" ? "Approve" : confirmAction === "reject" ? "Reject" : "Delete"}
+        variant={confirmAction === "approve" ? "default" : "destructive"}
+        onConfirm={handleConfirm}
+        loading={confirmLoading}
+        showReasonField={confirmAction === "reject"}
+        reasonLabel="Rejection Reason *"
+        reasonPlaceholder="Explain why this product is being rejected..."
+      />
     </AdminLayout>
   );
 }

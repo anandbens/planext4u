@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, Store, Percent, Crown, ArrowRight, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -24,7 +25,7 @@ interface VendorModalProps {
 const statusFlow: Vendor["status"][] = ["pending", "level1_approved", "level2_approved", "verified"];
 
 const emptyForm = {
-  name: "", business_name: "", email: "", mobile: "",
+  name: "", business_name: "", email: "", mobile: "", rejection_reason: "",
   commission_rate: 10, membership: "basic", status: "pending" as Vendor["status"],
   category_id: "1", city_id: "1", area_id: "1", plan_id: "",
 };
@@ -51,6 +52,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
       setForm({
         name: vendor.name, business_name: vendor.business_name,
         email: vendor.email, mobile: vendor.mobile,
+        rejection_reason: (vendor as any).rejection_reason || "",
         commission_rate: vendor.commission_rate, membership: vendor.membership,
         status: vendor.status, category_id: vendor.category_id,
         city_id: vendor.city_id, area_id: vendor.area_id,
@@ -64,6 +66,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
 
   const handleSave = async () => {
     if (!form.name || !form.business_name) return;
+    if (form.status === 'rejected' && !form.rejection_reason?.trim()) return;
     setSaving(true);
     try {
       if (isCreate) { await onCreate?.(form); }
@@ -140,6 +143,18 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                     <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+            {editMode && form.status === 'rejected' && (
+              <div className="col-span-2">
+                <Label className="text-xs text-destructive font-semibold">Rejection Reason *</Label>
+                <Textarea value={form.rejection_reason} onChange={(e) => setForm({ ...form, rejection_reason: e.target.value })} className="mt-1 border-destructive/50" rows={2} placeholder="Explain why this vendor is being rejected..." />
+              </div>
+            )}
+            {!editMode && vendor?.status === 'rejected' && (vendor as any).rejection_reason && (
+              <div className="col-span-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <Label className="text-xs text-destructive font-semibold">Rejection Reason</Label>
+                <p className="text-sm mt-1">{(vendor as any).rejection_reason}</p>
               </div>
             )}
           </div>

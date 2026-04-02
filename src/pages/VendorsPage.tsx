@@ -54,18 +54,24 @@ export default function VendorsPage() {
     setConfirmAction({ vendor, action }); setConfirmOpen(true);
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (reason?: string) => {
     if (!confirmAction) return;
     setConfirmLoading(true);
     const { vendor, action } = confirmAction;
     try {
       if (action === "delete") { await handleDelete(vendor.id); }
-      else {
-        const nextStatus: Vendor["status"] = action === "reject" ? "rejected"
-          : vendor.status === "pending" ? "level1_approved"
+      else if (action === "reject") {
+        await api.updateVendorStatus(vendor.id, "rejected");
+        // Save rejection reason on both vendors and vendor_applications tables
+        const { supabase: _sb } = await import("@/integrations/supabase/client");
+        await _sb.from("vendor_applications").update({ status: "rejected", rejection_reason: reason || "" }).eq("phone", vendor.mobile);
+        toast.success("Vendor rejected");
+        fetchData();
+      } else {
+        const nextStatus: Vendor["status"] = vendor.status === "pending" ? "level1_approved"
           : vendor.status === "level1_approved" ? "level2_approved" : "verified";
         await api.updateVendorStatus(vendor.id, nextStatus);
-        toast.success(action === "approve" ? `Vendor → ${nextStatus.replace(/_/g, " ")}` : "Vendor rejected");
+        toast.success(`Vendor → ${nextStatus.replace(/_/g, " ")}`);
         fetchData();
       }
     } finally { setConfirmLoading(false); setConfirmOpen(false); setConfirmAction(null); }
@@ -121,8 +127,8 @@ export default function VendorsPage() {
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(v, "edit"); }}><Pencil className="h-4 w-4" /></Button>
               {v.status !== 'verified' && v.status !== 'rejected' && (
                 <>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={(e) => { e.stopPropagation(); openConfirm(v, "approve"); }}><CheckCircle className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(v, "reject"); }}><XCircle className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={(e) => { e.stopPropagation(); openConfirm(v, "approve"); }} title="Approve"><CheckCircle className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(v, "reject"); }} title="Reject"><XCircle className="h-4 w-4" /></Button>
                 </>
               )}
               <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(v, "delete"); }}><Trash2 className="h-4 w-4" /></Button>
@@ -159,12 +165,19 @@ export default function VendorsPage() {
         ]}
       />
       <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
-      <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
         title={confirmAction?.action === "approve" ? "Approve Vendor" : confirmAction?.action === "delete" ? "Delete Vendor" : "Reject Vendor"}
-        description={confirmAction?.action === "approve" ? `Approve "${confirmAction.vendor.business_name}"?` : confirmAction?.action === "delete" ? `Delete "${confirmAction?.vendor.business_name}"?` : `Reject "${confirmAction?.vendor.business_name}"?`}
+        description={confirmAction?.action === "approve" ? `Approve "${confirmAction.vendor.business_name}"?` : confirmAction?.action === "delete" ? `Delete "${confirmAction?.vendor.business_name}"?` : `Reject "${confirmAction?.vendor.business_name}"? Please provide a reason.`}
         confirmLabel={confirmAction?.action === "approve" ? "Approve" : confirmAction?.action === "delete" ? "Delete" : "Reject"}
         variant={confirmAction?.action === "approve" ? "default" : "destructive"}
-        onConfirm={handleConfirm} loading={confirmLoading} />
+        onConfirm={handleConfirm}
+        loading={confirmLoading}
+        showReasonField={confirmAction?.action === "reject"}
+        reasonLabel="Rejection Reason *"
+        reasonPlaceholder="Explain why this vendor is being rejected..."
+      />
     </AdminLayout>
   );
 }
