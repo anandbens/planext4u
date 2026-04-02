@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, LogIn, Store, Home, ShoppingBag, Wrench, User, Phone, ArrowRight, ShieldCheck, Loader2, Mail } from "lucide-react";
+import { Eye, EyeOff, LogIn, Store, ShoppingBag, Wrench, Phone, ArrowRight, ShieldCheck, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,44 +78,27 @@ export default function VendorLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-brand-dark via-brand-dark/90 to-brand-teal/30">
-      <nav className="w-full bg-card/10 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between">
-          <Link to="/app" className="flex items-center gap-2">
-            <div className="bg-white rounded-lg p-1.5 h-8 w-8 flex items-center justify-center">
-              <img src={p4uLogo} alt="Planext4u" className="w-full h-full object-contain" />
-            </div>
-            <span className="text-white font-bold text-sm hidden sm:block">Planext4u</span>
-          </Link>
-          <div className="flex items-center gap-1 flex-wrap">
-            <Link to="/app"><Button variant="ghost" size="sm" className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1"><Home className="h-3.5 w-3.5" /> Home</Button></Link>
-            <Link to="/app/browse"><Button variant="ghost" size="sm" className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1"><ShoppingBag className="h-3.5 w-3.5" /> Shop</Button></Link>
-            <Link to="/app/services"><Button variant="ghost" size="sm" className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1"><Wrench className="h-3.5 w-3.5" /> Services</Button></Link>
-            <Link to="/app/login"><Button variant="ghost" size="sm" className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1"><User className="h-3.5 w-3.5" /> Customer</Button></Link>
-            <Link to="/login"><Button variant="ghost" size="sm" className="text-xs text-white/70 hover:text-white hover:bg-white/10 gap-1">Admin</Button></Link>
-          </div>
-        </div>
-      </nav>
-
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-amber-50 via-white to-teal-50">
       <div className="flex-1 flex items-center justify-center">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-brand-teal/10 blur-3xl" />
-          <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-brand-amber/5 blur-3xl" />
+          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-amber-200/30 blur-3xl" />
+          <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-teal-200/20 blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl" />
         </div>
 
         <div className="w-full max-w-md mx-4 relative z-10">
-          <div className="bg-card rounded-2xl shadow-2xl overflow-hidden border border-white/10">
-            <div className="bg-gradient-to-r from-brand-dark to-brand-dark/90 p-8 text-center relative">
-              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIvPjwvc3ZnPg==')] opacity-50" />
+            <div className="bg-card rounded-2xl shadow-2xl overflow-hidden border border-border/50">
+            <div className="bg-gradient-to-r from-primary to-primary/80 p-8 text-center relative">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA4KSIvPjwvc3ZnPg==')] opacity-50" />
               <div className="relative">
                 <div className="bg-white rounded-2xl p-3 w-16 h-16 mx-auto mb-3 shadow-lg">
                   <img src={p4uLogo} alt="Planext4u" className="w-full h-full object-contain" />
                 </div>
                 <div className="flex items-center justify-center gap-2 mb-1">
-                  <Store className="h-5 w-5 text-brand-amber" />
-                  <h1 className="text-xl font-bold text-white">Vendor Portal</h1>
+                  <Store className="h-5 w-5 text-primary-foreground/80" />
+                  <h1 className="text-xl font-bold text-primary-foreground">Vendor Portal</h1>
                 </div>
-                <p className="text-white/60 text-xs">Manage your store, orders & settlements</p>
+                <p className="text-primary-foreground/60 text-xs">Manage your store, orders & settlements</p>
               </div>
             </div>
 
@@ -144,7 +127,7 @@ export default function VendorLoginPage() {
                           <Input placeholder="Phone number" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0,10))} className="pl-10 h-12 rounded-xl" type="tel" maxLength={10} inputMode="numeric" />
                         </div>
                       </div>
-                      <Button onClick={handleSendOTP} className="w-full h-12 rounded-xl text-base gap-2 bg-brand-dark hover:bg-brand-dark/90 text-white" disabled={loading || phone.length < 10}>
+                      <Button onClick={handleSendOTP} className="w-full h-12 rounded-xl text-base gap-2 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading || phone.length < 10}>
                         {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending...</> : <>Send OTP <ArrowRight className="h-4 w-4" /></>}
                       </Button>
                     </>
@@ -161,7 +144,7 @@ export default function VendorLoginPage() {
                           />
                         ))}
                       </div>
-                      <Button onClick={handleVerifyOTP} className="w-full h-12 rounded-xl text-base gap-2 bg-brand-dark hover:bg-brand-dark/90 text-white" disabled={loading || otp.length<6}>
+                      <Button onClick={handleVerifyOTP} className="w-full h-12 rounded-xl text-base gap-2 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading || otp.length<6}>
                         {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Verifying...</> : <><ShieldCheck className="h-4 w-4" /> Verify OTP</>}
                       </Button>
                       <div className="text-center">
@@ -181,13 +164,16 @@ export default function VendorLoginPage() {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                    <Button type="submit" className="w-full h-12 rounded-xl text-base gap-2 bg-brand-dark hover:bg-brand-dark/90 text-white" disabled={loading}>
+                    <Button type="submit" className="w-full h-12 rounded-xl text-base gap-2 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
                       {loading ? "Signing in..." : <><LogIn className="h-4 w-4" /> Sign In</>}
                     </Button>
                   </form>
                 </>
               )}
             </div>
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              <Link to="/app" className="text-primary hover:underline font-medium">← Back to Home</Link>
+            </p>
           </div>
         </div>
       </div>

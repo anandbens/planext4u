@@ -175,7 +175,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             <SearchAutocomplete onSearch={handleSearch} className="flex-1 max-w-xl" />
 
             <div className="flex items-center gap-1 ml-auto">
-              <Link to="/vendor/login" className="hidden lg:block">
+              <Link to="/app/vendor-register" className="hidden lg:block">
                 <Button size="sm" className="text-xs font-semibold text-foreground hover:opacity-90 border-0" style={{ backgroundColor: '#f9ac1e' }}>Become a Seller</Button>
               </Link>
 
