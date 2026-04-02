@@ -350,16 +350,15 @@ export default function CustomerProfileEditPage() {
           </div>
 
           {/* Map */}
-          <div className="relative h-[200px] bg-secondary/20">
-            {mapUrl ? (
-              <iframe src={mapUrl} className="w-full h-full border-0" allowFullScreen loading="lazy" title="Map" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
+          <div className="relative h-[250px] bg-secondary/20">
+            <div id="addr-map-container" className="w-full h-full" />
+            {!mapAddress && (
+              <div className="absolute inset-0 flex items-center justify-center">
                 {locating ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : <MapPin className="h-8 w-8 text-muted-foreground" />}
               </div>
             )}
             <button onClick={getCurrentLocation} disabled={locating}
-              className="absolute bottom-3 right-3 bg-card shadow-lg rounded-full p-2 border hover:bg-accent">
+              className="absolute bottom-3 right-3 bg-card shadow-lg rounded-full p-2 border hover:bg-accent z-10">
               <Navigation className="h-4 w-4 text-primary" />
             </button>
           </div>
