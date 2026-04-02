@@ -390,25 +390,64 @@ export default function CustomerCartPage() {
         </div>
       )}
 
-      {/* Address Edit Dialog */}
+      {/* Address Picker Dialog (Zepto-style) */}
       <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogTitle>{editingAddress ? "Edit Address" : "Add Address"}</DialogTitle>
-          <div className="space-y-3 pt-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-xs">Label</Label><Input value={addressForm.label} onChange={e => setAddressForm({...addressForm, label: e.target.value})} className="h-9 text-sm" /></div>
-              <div><Label className="text-xs">Type</Label>
-                <select value={addressForm.type} onChange={e => setAddressForm({...addressForm, type: e.target.value})} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm">
-                  <option value="home">Home</option><option value="work">Work</option><option value="other">Other</option>
-                </select>
-              </div>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto p-0">
+          <div className="p-4 border-b sticky top-0 bg-background z-10">
+            <DialogTitle className="text-base font-bold">Choose Delivery Address</DialogTitle>
+          </div>
+
+          {addresses.length > 0 ? (
+            <div className="p-3 space-y-2">
+              {addresses.map((addr) => {
+                const isSelected = addr.id === selectedAddressId;
+                return (
+                  <button
+                    key={addr.id}
+                    onClick={() => {
+                      setSelectedAddressId(addr.id);
+                      setShowAddressDialog(false);
+                      toast.success(`Delivering to ${addr.label}`);
+                    }}
+                    className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
+                      isSelected
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border hover:border-primary/40 hover:bg-accent/30"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        isSelected ? "border-primary" : "border-muted-foreground/40"
+                      }`}>
+                        {isSelected && <div className="h-2.5 w-2.5 rounded-full bg-primary" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-semibold">{addr.label}</span>
+                          <Badge variant="outline" className="text-[10px] h-5">
+                            {addr.type === "home" ? "🏠 Home" : addr.type === "work" ? "🏢 Work" : "📍 Other"}
+                          </Badge>
+                          {addr.is_default && <Badge className="bg-primary/10 text-primary border-0 text-[10px] h-5">Default</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{addr.address_line}</p>
+                        <p className="text-xs text-muted-foreground">{addr.city} - {addr.pincode}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-            <div><Label className="text-xs">Address</Label><Input value={addressForm.address_line} onChange={e => setAddressForm({...addressForm, address_line: e.target.value})} className="h-9 text-sm" placeholder="Street, building, area" /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-xs">City</Label><Input value={addressForm.city} onChange={e => setAddressForm({...addressForm, city: e.target.value})} className="h-9 text-sm" /></div>
-              <div><Label className="text-xs">Pincode</Label><Input value={addressForm.pincode} onChange={e => setAddressForm({...addressForm, pincode: e.target.value})} className="h-9 text-sm" /></div>
+          ) : (
+            <div className="p-8 text-center">
+              <Truck className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground mb-3">No saved addresses yet</p>
             </div>
-            <Button className="w-full" onClick={saveAddress}>{editingAddress ? "Update Address" : "Save Address"}</Button>
+          )}
+
+          <div className="p-3 border-t sticky bottom-0 bg-background">
+            <Button variant="outline" className="w-full gap-2" onClick={() => navigate("/app/set-location")}>
+              <Save className="h-4 w-4" /> Add New Address
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
