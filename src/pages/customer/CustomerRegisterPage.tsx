@@ -160,14 +160,24 @@ export default function CustomerRegisterPage() {
     try {
       const isUnique = await checkMobileUnique();
       if (!isUnique) { setOtpLoading(false); return; }
+      // Clear any previous recaptcha before sending
+      clearRecaptcha();
+      // Small delay to let DOM settle after clearing
+      await new Promise(r => setTimeout(r, 300));
       await sendOTP(`+91${form.mobile}`);
       setOtpStep("otp");
-      setTimer(30);
+      setTimer(60);
       toast.success("OTP sent to +91 " + form.mobile);
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
-      if (err.code === "auth/too-many-requests") toast.error("Too many requests. Try later.");
-      else toast.error(err.message || "Failed to send OTP");
+      if (err.code === "auth/too-many-requests") {
+        toast.error("Too many attempts. Please wait 1-2 minutes before trying again.", { duration: 6000 });
+        setTimer(120);
+      } else if (err.message?.includes("reCAPTCHA")) {
+        toast.error("Verification failed. Please try again.");
+      } else {
+        toast.error(err.message || "Failed to send OTP");
+      }
       clearRecaptcha();
     } finally { setOtpLoading(false); }
   };
