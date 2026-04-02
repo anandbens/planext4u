@@ -35,27 +35,31 @@ export default function SetLocationPage() {
     );
   }, []);
 
+  const GOOGLE_MAPS_KEY = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
+
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
-      // Use Nominatim (free, no API key needed) as fallback
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_KEY}`
       );
       const data = await res.json();
-      const addr = data.address || {};
-      const area = addr.suburb || addr.neighbourhood || addr.village || addr.town || "";
-      const city = addr.city || addr.county || addr.state_district || "";
-      const pincode = addr.postcode || "";
-      
-      setAddress({
-        lat,
-        lng,
-        formatted: data.display_name || `${lat}, ${lng}`,
-        area,
-        city,
-        pincode,
-      });
-      setApartment(area);
+      if (data.status === "OK" && data.results.length > 0) {
+        const result = data.results[0];
+        const components = result.address_components || [];
+        const get = (type: string) => components.find((c: any) => c.types.includes(type))?.long_name || "";
+        const area = get("sublocality_level_1") || get("sublocality") || get("neighborhood") || get("locality");
+        const city = get("locality") || get("administrative_area_level_2") || "";
+        const pincode = get("postal_code") || "";
+
+        setAddress({
+          lat, lng,
+          formatted: result.formatted_address || `${lat}, ${lng}`,
+          area, city, pincode,
+        });
+        setApartment(area);
+      } else {
+        setAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
+      }
       updateMapUrl(lat, lng);
     } catch {
       setAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
@@ -97,12 +101,12 @@ export default function SetLocationPage() {
     setLocating(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${GOOGLE_MAPS_KEY}`
       );
-      const results = await res.json();
-      if (results.length > 0) {
-        const r = results[0];
-        await reverseGeocode(parseFloat(r.lat), parseFloat(r.lon));
+      const data = await res.json();
+      if (data.status === "OK" && data.results.length > 0) {
+        const r = data.results[0];
+        await reverseGeocode(r.geometry.location.lat, r.geometry.location.lng);
       } else {
         toast.error("Location not found. Try a different search.");
       }
