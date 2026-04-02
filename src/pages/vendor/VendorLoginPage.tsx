@@ -19,7 +19,6 @@ export default function VendorLoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [seeding, setSeeding] = useState(false);
 
   // OTP state
   const [phone, setPhone] = useState("");
