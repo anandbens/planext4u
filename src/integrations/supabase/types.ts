@@ -342,7 +342,9 @@ export type Database = {
           area_id: string | null
           city_id: string | null
           created_at: string
+          dob: string | null
           email: string
+          gender: string | null
           id: string
           latitude: number
           longitude: number
@@ -358,7 +360,9 @@ export type Database = {
           area_id?: string | null
           city_id?: string | null
           created_at?: string
+          dob?: string | null
           email?: string
+          gender?: string | null
           id: string
           latitude?: number
           longitude?: number
@@ -374,7 +378,9 @@ export type Database = {
           area_id?: string | null
           city_id?: string | null
           created_at?: string
+          dob?: string | null
           email?: string
+          gender?: string | null
           id?: string
           latitude?: number
           longitude?: number
