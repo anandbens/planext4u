@@ -69,6 +69,7 @@ import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
 import CustomerClassifiedDetailPage from "./pages/customer/CustomerClassifiedDetailPage";
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 import CustomerPhoneLoginPage from "./pages/customer/CustomerPhoneLoginPage";
+import SetLocationPage from "./pages/customer/SetLocationPage";
 
 // Social pages
 import SocialFeedPage from "./pages/customer/SocialFeedPage";
