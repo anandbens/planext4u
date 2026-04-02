@@ -228,7 +228,7 @@ export default function SetLocationPage() {
         )}
 
         <div>
-          <label className="text-xs font-semibold text-warning uppercase tracking-wide">
+          <label className="text-xs font-semibold text-primary uppercase tracking-wide">
             Apartment / Road / Area*
           </label>
           <Input
