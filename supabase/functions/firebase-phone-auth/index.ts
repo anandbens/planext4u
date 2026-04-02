@@ -3,59 +3,39 @@ import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
 const FIREBASE_PROJECT_ID = "planext4u-ba50f";
 
-// Verify Firebase ID token using Google's public keys
+// Verify Firebase ID token using Google's tokeninfo endpoint
 async function verifyFirebaseToken(idToken: string) {
-  // Decode header to get kid
+  // First decode payload to do basic checks
   const parts = idToken.split(".");
   if (parts.length !== 3) throw new Error("Invalid token format");
 
-  const header = JSON.parse(atob(parts[0].replace(/-/g, "+").replace(/_/g, "/")));
-  const kid = header.kid;
-  if (!kid) throw new Error("No kid in token header");
-
-  // Fetch Google's public keys
-  const keysRes = await fetch(
-    "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
-  );
-  const keys = await keysRes.json();
-  const certPem = keys[kid];
-  if (!certPem) throw new Error("Public key not found for kid: " + kid);
-
-  // Import the public key
-  const pemContents = certPem
-    .replace("-----BEGIN CERTIFICATE-----", "")
-    .replace("-----END CERTIFICATE-----", "")
-    .replace(/\s/g, "");
-  const binaryDer = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
-
-  const key = await crypto.subtle.importKey(
-    "x509",
-    binaryDer,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["verify"]
-  );
-
-  // Verify signature
-  const encoder = new TextEncoder();
-  const signedContent = encoder.encode(parts[0] + "." + parts[1]);
-  const signature = Uint8Array.from(
-    atob(parts[2].replace(/-/g, "+").replace(/_/g, "/")),
-    (c) => c.charCodeAt(0)
-  );
-
-  const valid = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, signature, signedContent);
-  if (!valid) throw new Error("Token signature invalid");
-
-  // Decode and validate payload
   const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
   const now = Math.floor(Date.now() / 1000);
 
   if (payload.exp < now) throw new Error("Token expired");
-  if (payload.iat > now + 300) throw new Error("Token issued in the future");
   if (payload.aud !== FIREBASE_PROJECT_ID) throw new Error("Invalid audience");
   if (payload.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) throw new Error("Invalid issuer");
   if (!payload.sub) throw new Error("No sub in token");
+
+  // Verify token signature via Google's API
+  const verifyRes = await fetch(
+    `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=AIzaSyBs9GdBSEK8BGjeGypEOjiHF_jkToy-Qlk`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    }
+  );
+
+  if (!verifyRes.ok) {
+    const errBody = await verifyRes.text();
+    throw new Error("Firebase token verification failed: " + errBody);
+  }
+
+  const verifyData = await verifyRes.json();
+  if (!verifyData.users || verifyData.users.length === 0) {
+    throw new Error("No user found for this token");
+  }
 
   return payload;
 }
