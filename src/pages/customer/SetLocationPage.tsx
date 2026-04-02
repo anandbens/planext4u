@@ -178,6 +178,7 @@ export default function SetLocationPage() {
   const handleSaveAndProceed = async () => {
     if (!address) { toast.error("Please set your location first"); return; }
     if (!apartment.trim()) { toast.error("Please enter your apartment/road/area"); return; }
+    if (!houseNo.trim()) { toast.error("Please enter your house/flat/block number"); return; }
 
     setLoading(true);
     try {
@@ -186,7 +187,7 @@ export default function SetLocationPage() {
         customer_id: customerId,
         label: saveAs === "home" ? "Home" : saveAs === "work" ? "Work" : "Other",
         type: saveAs,
-        address_line: [houseNo, apartment, landmark].filter(Boolean).join(", "),
+        address_line: [houseNo, street, apartment, landmark].filter(Boolean).join(", "),
         city: address.city,
         pincode: address.pincode,
         is_default: true,
