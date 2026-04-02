@@ -11,23 +11,28 @@ import { lovable } from "@/integrations/lovable/index";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
-  const { customerLogin } = useAuth();
+  const { customerLogin, customerUser } = useAuth();
   const navigate = useNavigate();
   const [loginMethod, setLoginMethod] = useState<"otp" | "password">("otp");
 
-  // Password login state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // OTP login state
   const [phone, setPhone] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [timer, setTimer] = useState(0);
   const otpRef = useRef<HTMLInputElement>(null);
+
+  // Watch for customerUser to be set and navigate
+  useEffect(() => {
+    if (customerUser) {
+      navigate("/app", { replace: true });
+    }
+  }, [customerUser, navigate]);
 
   useEffect(() => {
     if (timer > 0) {
@@ -45,7 +50,7 @@ export default function CustomerLoginPage() {
     try {
       await customerLogin(email, password);
       toast.success("Welcome to Planext4u!");
-      setTimeout(() => navigate("/app", { replace: true }), 500);
+      // Navigation will happen via useEffect watching customerUser
     } catch (err: any) {
       toast.error(err.message || "Invalid credentials");
     } finally { setLoading(false); }
@@ -77,10 +82,17 @@ export default function CustomerLoginPage() {
       const idToken = await getFirebaseIdToken();
       const { data, error } = await supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken } });
       if (error || !data?.success) throw new Error(data?.error || error?.message || "Authentication failed");
+      
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
       if (verifyError) throw new Error(verifyError.message);
+      
       toast.success("Login successful! 🎉");
-      setTimeout(() => navigate("/app", { replace: true }), 500);
+      
+      // If first-time (no address), redirect to set-location
+      if (!data.has_address) {
+        setTimeout(() => navigate("/app/set-location", { replace: true }), 1000);
+      }
+      // Otherwise, useEffect watching customerUser will redirect to /app
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
       else if (err.code === "auth/code-expired") toast.error("OTP expired. Please resend.");
@@ -100,7 +112,6 @@ export default function CustomerLoginPage() {
       }
       if (result.redirected) return;
       toast.success("Welcome to Planext4u!");
-      setTimeout(() => navigate("/app", { replace: true }), 500);
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
     } finally {
@@ -111,7 +122,6 @@ export default function CustomerLoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <div className="bg-primary pt-12 pb-16 px-6 flex flex-col items-center relative">
-        {/* Login required - no skip */}
         <img src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
         <h2 className="text-primary-foreground text-xl font-bold tracking-wider">Planext 4u</h2>
         <span className="text-primary-foreground/60 text-[10px] absolute top-14 right-[calc(50%-40px)] font-semibold">TM</span>
@@ -120,7 +130,6 @@ export default function CustomerLoginPage() {
       <div className="flex-1 bg-card -mt-6 rounded-t-3xl px-6 pt-8 pb-6">
         <h2 className="text-xl font-bold text-center mb-2">Log in or Sign up</h2>
 
-        {/* Toggle between OTP and Password */}
         <div className="flex gap-2 max-w-sm mx-auto mb-6">
           <Button variant={loginMethod === "otp" ? "default" : "outline"} className="flex-1 h-10 rounded-xl text-sm gap-1.5" onClick={() => { setLoginMethod("otp"); setOtpSent(false); setOtp(""); clearRecaptcha(); }}>
             <Phone className="h-4 w-4" /> Phone OTP
@@ -175,23 +184,21 @@ export default function CustomerLoginPage() {
               )}
             </>
           ) : (
-            <>
-              <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Enter E-mail ID" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12 text-base rounded-xl" type="email" />
-                </div>
-                <div className="relative">
-                  <Input type={showPassword ? "text" : "password"} placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 text-base pr-10 rounded-xl" />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                <Button type="submit" className="w-full h-12 rounded-xl text-base bg-primary" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign In →"}
-                </Button>
-              </form>
-            </>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Enter E-mail ID" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12 text-base rounded-xl" type="email" />
+              </div>
+              <div className="relative">
+                <Input type={showPassword ? "text" : "password"} placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} className="h-12 text-base pr-10 rounded-xl" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <Button type="submit" className="w-full h-12 rounded-xl text-base bg-primary" disabled={loading}>
+                {loading ? "Signing in..." : "Sign In →"}
+              </Button>
+            </form>
           )}
         </div>
 
@@ -214,9 +221,10 @@ export default function CustomerLoginPage() {
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center mt-6 max-w-sm mx-auto">
-          By continuing, you agree to our <span className="underline">Terms of service</span>{" "}<span className="underline">Privacy Policy</span>{" "}<span className="underline">Content Policies</span>
+          By continuing, you agree to our <Link to="/app/terms" className="underline">Terms of Service</Link>{" "}<Link to="/app/privacy" className="underline">Privacy Policy</Link>
         </p>
       </div>
+      <div id="recaptcha-container" />
     </div>
   );
 }
