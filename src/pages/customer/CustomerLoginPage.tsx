@@ -218,7 +218,6 @@ export default function CustomerLoginPage() {
           By continuing, you agree to our <span className="underline">Terms of service</span>{" "}<span className="underline">Privacy Policy</span>{" "}<span className="underline">Content Policies</span>
         </p>
       </div>
-      <div id="recaptcha-container" />
     </div>
   );
 }

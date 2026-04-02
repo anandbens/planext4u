@@ -273,7 +273,6 @@ export default function CustomerPhoneLoginPage() {
         </p>
       </div>
 
-      <div id="recaptcha-container" />
     </div>
   );
 }
