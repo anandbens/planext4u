@@ -22,7 +22,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast.success("Welcome back!");
-      setTimeout(() => navigate("/dashboard", { replace: true }), 500);
+      navigate("/dashboard", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Invalid credentials.");
     } finally { setLoading(false); }
