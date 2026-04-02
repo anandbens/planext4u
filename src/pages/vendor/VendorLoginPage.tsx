@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, LogIn, Store, Database, Home, ShoppingBag, Wrench, User, Phone, ArrowRight, ShieldCheck, Loader2, Mail } from "lucide-react";
+import { Eye, EyeOff, LogIn, Store, Home, ShoppingBag, Wrench, User, Phone, ArrowRight, ShieldCheck, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
