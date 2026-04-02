@@ -29,29 +29,6 @@ export default function LoginPage() {
     } finally { setLoading(false); }
   };
 
-  const quickLogin = async (cred: typeof QUICK_LOGINS[0]) => {
-    setEmail(cred.email);
-    setPassword(cred.password);
-    setLoading(true);
-    try {
-      await login(cred.email, cred.password);
-      toast.success(`Welcome, ${cred.role}!`);
-      setTimeout(() => navigate("/", { replace: true }), 500);
-    } catch (err: any) {
-      toast.error(err.message || "Login failed. Have you seeded demo users?");
-    } finally { setLoading(false); }
-  };
-
-  const handleSeedUsers = async () => {
-    setSeeding(true);
-    try {
-      await seedDemoUsers();
-      toast.success("Demo users created! You can now login with the quick login buttons.");
-    } catch (err: any) {
-      toast.error("Failed to seed users: " + (err.message || "Unknown error"));
-    } finally { setSeeding(false); }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-teal via-brand-teal/80 to-brand-dark">
       {/* Decorative shapes */}
