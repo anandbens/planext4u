@@ -67,6 +67,7 @@ import CustomerClassifiedsPage from "./pages/customer/CustomerClassifiedsPage";
 import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
 import CustomerClassifiedDetailPage from "./pages/customer/CustomerClassifiedDetailPage";
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
+import CustomerPhoneLoginPage from "./pages/customer/CustomerPhoneLoginPage";
 
 // Social pages
 import SocialFeedPage from "./pages/customer/SocialFeedPage";
@@ -189,6 +190,7 @@ const App = () => (
             <Route path="/app" element={<CustomerHomePage />} />
             <Route path="/app/login" element={<CustomerLoginPage />} />
             <Route path="/app/register" element={<CustomerRegisterPage />} />
+            <Route path="/app/phone-login" element={<CustomerPhoneLoginPage />} />
             <Route path="/app/browse" element={<CustomerBrowsePage />} />
             <Route path="/app/product/:id" element={<CustomerProductPage />} />
             <Route path="/app/vendor/:id" element={<CustomerVendorPage />} />

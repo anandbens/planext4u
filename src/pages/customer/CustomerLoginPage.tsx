@@ -114,7 +114,8 @@ export default function CustomerLoginPage() {
           </div>
         </div>
 
-        <div className="mt-6 text-center max-w-sm mx-auto">
+        <div className="mt-4 text-center max-w-sm mx-auto">
+          <Link to="/app/phone-login" className="text-sm text-primary font-semibold hover:underline block mb-2">Login with Phone (OTP) →</Link>
           <Link to="/app/register" className="text-sm text-primary font-semibold hover:underline">New user? Register here</Link>
         </div>
 
