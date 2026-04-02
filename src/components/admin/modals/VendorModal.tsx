@@ -25,7 +25,7 @@ interface VendorModalProps {
 const statusFlow: Vendor["status"][] = ["pending", "level1_approved", "level2_approved", "verified"];
 
 const emptyForm = {
-  name: "", business_name: "", email: "", mobile: "",
+  name: "", business_name: "", email: "", mobile: "", rejection_reason: "",
   commission_rate: 10, membership: "basic", status: "pending" as Vendor["status"],
   category_id: "1", city_id: "1", area_id: "1", plan_id: "",
 };
