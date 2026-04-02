@@ -193,27 +193,28 @@ const App = () => (
             <Route path="/admin/homes/users" element={<ProtectedPage><AdminHomesUsersPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
-            <Route path="/app" element={<CustomerHomePage />} />
+            <Route path="/app" element={<CustomerPage><CustomerHomePage /></CustomerPage>} />
             <Route path="/app/login" element={<CustomerLoginPage />} />
             <Route path="/app/register" element={<CustomerRegisterPage />} />
             <Route path="/app/phone-login" element={<CustomerPhoneLoginPage />} />
-            <Route path="/app/browse" element={<CustomerBrowsePage />} />
-            <Route path="/app/product/:id" element={<CustomerProductPage />} />
-            <Route path="/app/vendor/:id" element={<CustomerVendorPage />} />
-            <Route path="/app/cart" element={<CustomerCartPage />} />
-            <Route path="/app/payment" element={<PaymentPage />} />
-            <Route path="/app/orders" element={<CustomerOrdersPage />} />
-            <Route path="/app/profile" element={<CustomerProfilePage />} />
-            <Route path="/app/profile/edit" element={<CustomerProfileEditPage />} />
-            <Route path="/app/kyc" element={<CustomerKYCPage />} />
-            <Route path="/app/wallet" element={<CustomerWalletPage />} />
-            <Route path="/app/wishlist" element={<CustomerWishlistPage />} />
-            <Route path="/app/referrals" element={<CustomerReferralPage />} />
-            <Route path="/app/services" element={<CustomerServicesPage />} />
-            <Route path="/app/service/:id" element={<CustomerServiceDetailPage />} />
-            <Route path="/app/classifieds" element={<CustomerClassifiedsPage />} />
-            <Route path="/app/classifieds/post" element={<CustomerPostAdPage />} />
-            <Route path="/app/classifieds/:id" element={<CustomerClassifiedDetailPage />} />
+            <Route path="/app/set-location" element={<CustomerPage><SetLocationPage /></CustomerPage>} />
+            <Route path="/app/browse" element={<CustomerPage><CustomerBrowsePage /></CustomerPage>} />
+            <Route path="/app/product/:id" element={<CustomerPage><CustomerProductPage /></CustomerPage>} />
+            <Route path="/app/vendor/:id" element={<CustomerPage><CustomerVendorPage /></CustomerPage>} />
+            <Route path="/app/cart" element={<CustomerPage><CustomerCartPage /></CustomerPage>} />
+            <Route path="/app/payment" element={<CustomerPage><PaymentPage /></CustomerPage>} />
+            <Route path="/app/orders" element={<CustomerPage><CustomerOrdersPage /></CustomerPage>} />
+            <Route path="/app/profile" element={<CustomerPage><CustomerProfilePage /></CustomerPage>} />
+            <Route path="/app/profile/edit" element={<CustomerPage><CustomerProfileEditPage /></CustomerPage>} />
+            <Route path="/app/kyc" element={<CustomerPage><CustomerKYCPage /></CustomerPage>} />
+            <Route path="/app/wallet" element={<CustomerPage><CustomerWalletPage /></CustomerPage>} />
+            <Route path="/app/wishlist" element={<CustomerPage><CustomerWishlistPage /></CustomerPage>} />
+            <Route path="/app/referrals" element={<CustomerPage><CustomerReferralPage /></CustomerPage>} />
+            <Route path="/app/services" element={<CustomerPage><CustomerServicesPage /></CustomerPage>} />
+            <Route path="/app/service/:id" element={<CustomerPage><CustomerServiceDetailPage /></CustomerPage>} />
+            <Route path="/app/classifieds" element={<CustomerPage><CustomerClassifiedsPage /></CustomerPage>} />
+            <Route path="/app/classifieds/post" element={<CustomerPage><CustomerPostAdPage /></CustomerPage>} />
+            <Route path="/app/classifieds/:id" element={<CustomerPage><CustomerClassifiedDetailPage /></CustomerPage>} />
 
             {/* Social routes */}
             <Route path="/app/social" element={<SocialFeedPage />} />
