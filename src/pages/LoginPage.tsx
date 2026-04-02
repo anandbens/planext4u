@@ -8,14 +8,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import p4uLogo from "@/assets/p4u-logo.png";
 
-const QUICK_LOGINS = [
-  { email: "admin@planext4u.com", password: "P4u@Admin2026", role: "Admin", icon: Shield, color: "bg-brand-dark", desc: "Full access" },
-  { email: "finance@planext4u.com", password: "P4u@Finance2026", role: "Finance", icon: Banknote, color: "bg-success", desc: "Reports & Tax" },
-  { email: "sales@planext4u.com", password: "P4u@Sales2026", role: "Sales", icon: ShoppingCart, color: "bg-info", desc: "Orders & CRM" },
-];
-
 export default function LoginPage() {
-  const { login, seedDemoUsers } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
