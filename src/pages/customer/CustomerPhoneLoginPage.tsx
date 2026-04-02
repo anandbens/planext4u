@@ -176,44 +176,26 @@ export default function CustomerPhoneLoginPage() {
             </>
           ) : (
             <>
-              <div className="flex justify-center gap-2">
-                {[0, 1, 2, 3, 4, 5].map((i) => (
-                  <input
-                    key={i}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={otp[i] || ""}
-                    ref={i === 0 ? otpRef : undefined}
-                    className="w-11 h-12 text-center text-lg font-bold rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-all"
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "");
-                      if (val) {
-                        const newOtp = otp.split("");
-                        newOtp[i] = val;
-                        setOtp(newOtp.join("").slice(0, 6));
-                        const next = e.target.nextElementSibling as HTMLInputElement;
-                        if (next && val) next.focus();
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Backspace" && !otp[i]) {
-                        const prev = (e.target as HTMLElement).previousElementSibling as HTMLInputElement;
-                        if (prev) {
-                          prev.focus();
-                          const newOtp = otp.split("");
-                          newOtp[i - 1] = "";
-                          setOtp(newOtp.join(""));
-                        }
-                      }
-                    }}
-                    onPaste={(e) => {
-                      e.preventDefault();
-                      const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-                      setOtp(pasted);
-                    }}
-                  />
-                ))}
+              <div className="flex justify-center">
+                <input
+                  ref={otpRef}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={otp}
+                  className="w-full max-w-[280px] h-14 text-center text-2xl font-bold tracking-[0.5em] rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                    setOtp(val);
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+                    setOtp(pasted);
+                  }}
+                  placeholder="------"
+                />
               </div>
 
               <Button
