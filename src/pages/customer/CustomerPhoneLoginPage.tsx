@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { sendOTP, verifyOTP, clearRecaptcha } from "@/lib/firebase";
+import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
+import { supabase } from "@/integrations/supabase/client";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerPhoneLoginPage() {
@@ -63,20 +64,33 @@ export default function CustomerPhoneLoginPage() {
     }
     setLoading(true);
     try {
-      const user = await verifyOTP(otp);
+      // Step 1: Verify OTP with Firebase
+      await verifyOTP(otp);
+
+      // Step 2: Get Firebase ID token
+      const idToken = await getFirebaseIdToken();
+
+      // Step 3: Call edge function to create/verify Supabase session
+      const { data, error } = await supabase.functions.invoke("firebase-phone-auth", {
+        body: { firebase_id_token: idToken },
+      });
+
+      if (error || !data?.success) {
+        throw new Error(data?.error || error?.message || "Backend authentication failed");
+      }
+
+      // Step 4: Establish Supabase session using the magic link token
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: data.token_hash,
+        type: "magiclink",
+      });
+
+      if (verifyError) {
+        throw new Error(verifyError.message);
+      }
+
       toast.success("Login successful! 🎉");
-      // Store phone user info
-      localStorage.setItem(
-        "customer_user",
-        JSON.stringify({
-          id: user.uid,
-          name: user.phoneNumber || phone,
-          email: "",
-          mobile: user.phoneNumber || `${countryCode}${phone}`,
-          customer_id: user.uid,
-          supabase_uid: user.uid,
-        })
-      );
+      // The auth state change listener in AuthProvider will handle setting customerUser
       setTimeout(() => navigate("/app", { replace: true }), 500);
     } catch (err: any) {
       console.error("OTP verify error:", err);
@@ -100,7 +114,6 @@ export default function CustomerPhoneLoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
       <div className="bg-primary pt-12 pb-16 px-6 flex flex-col items-center relative">
         <Link
           to="/app"
@@ -112,7 +125,6 @@ export default function CustomerPhoneLoginPage() {
         <h2 className="text-primary-foreground text-xl font-bold tracking-wider">Planext 4u</h2>
       </div>
 
-      {/* Login Form */}
       <div className="flex-1 bg-card -mt-6 rounded-t-3xl px-6 pt-8 pb-6">
         <h2 className="text-xl font-bold text-center mb-2">
           {otpSent ? "Verify OTP" : "Login with Phone"}
@@ -126,7 +138,6 @@ export default function CustomerPhoneLoginPage() {
         <div className="space-y-4 max-w-sm mx-auto">
           {!otpSent ? (
             <>
-              {/* Phone Input */}
               <div className="flex gap-2">
                 <div className="relative w-24">
                   <select
@@ -170,7 +181,6 @@ export default function CustomerPhoneLoginPage() {
             </>
           ) : (
             <>
-              {/* OTP Input */}
               <div className="flex justify-center gap-2">
                 {[0, 1, 2, 3, 4, 5].map((i) => (
                   <input
@@ -187,7 +197,6 @@ export default function CustomerPhoneLoginPage() {
                         const newOtp = otp.split("");
                         newOtp[i] = val;
                         setOtp(newOtp.join("").slice(0, 6));
-                        // Auto-focus next
                         const next = e.target.nextElementSibling as HTMLInputElement;
                         if (next && val) next.focus();
                       }
@@ -224,7 +233,6 @@ export default function CustomerPhoneLoginPage() {
                 )}
               </Button>
 
-              {/* Resend */}
               <div className="text-center">
                 {timer > 0 ? (
                   <p className="text-sm text-muted-foreground">Resend OTP in <span className="font-semibold text-primary">{timer}s</span></p>
@@ -235,7 +243,6 @@ export default function CustomerPhoneLoginPage() {
                 )}
               </div>
 
-              {/* Change number */}
               <button
                 onClick={() => { setOtpSent(false); setOtp(""); clearRecaptcha(); }}
                 className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -246,7 +253,6 @@ export default function CustomerPhoneLoginPage() {
           )}
         </div>
 
-        {/* Divider */}
         <div className="mt-6 max-w-sm mx-auto">
           <div className="relative flex items-center justify-center">
             <div className="border-t border-border flex-1" />
@@ -272,7 +278,6 @@ export default function CustomerPhoneLoginPage() {
         </p>
       </div>
 
-      {/* Invisible reCAPTCHA container */}
       <div id="recaptcha-container" />
     </div>
   );
