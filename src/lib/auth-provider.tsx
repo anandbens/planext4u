@@ -16,7 +16,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select("role, vendor_id, customer_id")
       .eq("user_id", supabaseUid);
 
-    if (!roles || roles.length === 0) return;
+    if (!roles || roles.length === 0) {
+      // No role found — this user is not registered in the platform
+      // Sign them out to prevent dangling sessions
+      await supabase.auth.signOut();
+      return 'unregistered';
+    }
 
     const roleRecord = roles[0];
     const role = roleRecord.role as AppRole;
