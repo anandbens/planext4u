@@ -29,6 +29,10 @@ export default function SetLocationPage() {
   const [landmark, setLandmark] = useState("");
   const [saveAs, setSaveAs] = useState<"home" | "work" | "other">("home");
   const [searchQuery, setSearchQuery] = useState("");
+  const [street, setStreet] = useState("");
+  const [district, setDistrict] = useState("");
+  const [state, setState] = useState("");
+  const [country, setCountry] = useState("");
   const mapInstanceRef = useRef<any>(null);
   const markerInstanceRef = useRef<any>(null);
 
@@ -45,8 +49,16 @@ export default function SetLocationPage() {
         const area = get("sublocality_level_1") || get("sublocality") || get("neighborhood") || get("locality");
         const city = get("locality") || get("administrative_area_level_2") || "";
         const pincode = get("postal_code") || "";
+        const routeName = get("route") || "";
+        const districtName = get("administrative_area_level_2") || "";
+        const stateName = get("administrative_area_level_1") || "";
+        const countryName = get("country") || "";
         setAddress({ lat, lng, formatted: result.formatted_address || `${lat}, ${lng}`, area, city, pincode });
         setApartment(area);
+        setStreet(routeName);
+        setDistrict(districtName);
+        setState(stateName);
+        setCountry(countryName);
       } else {
         setAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
       }
