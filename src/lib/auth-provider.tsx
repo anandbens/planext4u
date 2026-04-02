@@ -91,8 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Use setTimeout to avoid potential deadlocks with Supabase client
         setTimeout(async () => {
           const result = await loadUserRole(id, email || '', name);
-          if (result === 'unregistered') {
-            // User signed in via OAuth but has no platform registration
+          if (result === 'unregistered' || result === 'pending') {
             setIsLoading(false);
           }
         }, 0);
