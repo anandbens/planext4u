@@ -45,8 +45,8 @@ export default function CustomerProfileEditPage() {
   const [showMapModal, setShowMapModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
   const [locating, setLocating] = useState(false);
-  const [mapAddress, setMapAddress] = useState<{ lat: number; lng: number; formatted: string; area: string; city: string; pincode: string } | null>(null);
-  const [addrForm, setAddrForm] = useState({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "" });
+  const [mapAddress, setMapAddress] = useState<{ lat: number; lng: number; formatted: string; area: string; city: string; pincode: string; street: string; district: string; state: string; country: string } | null>(null);
+  const [addrForm, setAddrForm] = useState({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "", street: "" });
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
