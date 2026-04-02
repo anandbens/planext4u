@@ -307,6 +307,8 @@ export type Database = {
           id: string
           is_default: boolean | null
           label: string
+          latitude: number | null
+          longitude: number | null
           pincode: string
           type: string
           updated_at: string | null
@@ -319,6 +321,8 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           label?: string
+          latitude?: number | null
+          longitude?: number | null
           pincode?: string
           type?: string
           updated_at?: string | null
@@ -331,6 +335,8 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           label?: string
+          latitude?: number | null
+          longitude?: number | null
           pincode?: string
           type?: string
           updated_at?: string | null

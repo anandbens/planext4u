@@ -181,8 +181,9 @@ export default function CustomerProfileEditPage() {
         const districtName = get("administrative_area_level_2") || "";
         const stateName = get("administrative_area_level_1") || "";
         const countryName = get("country") || "";
+        const streetNumber = get("street_number") || get("premise") || get("subpremise") || "";
         setMapAddress({ lat, lng, formatted: result.formatted_address || "", area, city, pincode, street: streetName, district: districtName, state: stateName, country: countryName });
-        setAddrForm(prev => ({ ...prev, apartment: area, street: streetName }));
+        setAddrForm(prev => ({ ...prev, apartment: area, street: streetName, houseNo: streetNumber || prev.houseNo }));
       } else {
         setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "", street: "", district: "", state: "", country: "" });
       }
@@ -304,17 +305,22 @@ export default function CustomerProfileEditPage() {
     const city = mapAddress?.city || "";
     const pincode = mapAddress?.pincode || "";
 
+    const lat = mapAddress?.lat || 0;
+    const lng = mapAddress?.lng || 0;
+
     if (editingAddress) {
       await supabase.from('customer_addresses').update({
         label: addrForm.label, type: addrForm.type, address_line: addressLine, city, pincode,
-      }).eq('id', editingAddress.id);
+        latitude: lat, longitude: lng,
+      } as any).eq('id', editingAddress.id);
       toast.success("Address updated!");
     } else {
       const isFirst = addresses.length === 0;
       await supabase.from('customer_addresses').insert({
         customer_id: customerId, label: addrForm.label, type: addrForm.type,
         address_line: addressLine, city, pincode, is_default: isFirst,
-      });
+        latitude: lat, longitude: lng,
+      } as any);
       toast.success("Address added!");
     }
     setShowMapModal(false);
@@ -351,16 +357,17 @@ export default function CustomerProfileEditPage() {
         </div>
 
         {/* Profile Completeness */}
-        <Card className="p-4">
+        <Card className="p-4 cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => navigate("/app/kyc")}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold">Profile Completeness</p>
             <span className="text-sm font-bold text-primary">{completeness}%</span>
           </div>
           <Progress value={completeness} className="h-2" />
           <p className="text-xs text-muted-foreground mt-1">
-            {completeness < 50 ? "Complete your profile for better experience" :
-             completeness < 80 ? "Almost there! Add more details" : "Great! Your profile is well set up"}
+            {completeness < 50 ? "Complete your profile & KYC for better experience" :
+             completeness < 80 ? "Almost there! Complete KYC verification" : "Great! Your profile is well set up"}
           </p>
+          {completeness < 100 && <p className="text-xs text-primary mt-1 font-medium">Tap to complete KYC verification →</p>}
         </Card>
 
         {/* Profile Photo */}
