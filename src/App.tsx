@@ -217,25 +217,25 @@ const App = () => (
             <Route path="/app/classifieds/:id" element={<CustomerPage><CustomerClassifiedDetailPage /></CustomerPage>} />
 
             {/* Social routes */}
-            <Route path="/app/social" element={<SocialFeedPage />} />
-            <Route path="/app/social/create" element={<SocialCreatePostPage />} />
-            <Route path="/app/social/profile" element={<SocialProfilePage />} />
-            <Route path="/app/social/explore" element={<SocialExplorePage />} />
-            <Route path="/app/social/reels" element={<SocialReelsPage />} />
-            <Route path="/app/social/stories/:userId" element={<SocialStoryViewerPage />} />
-            <Route path="/app/social/messages" element={<SocialDMPage />} />
-            <Route path="/app/social/messages/:recipientId" element={<SocioDMChatPage />} />
-            <Route path="/app/social/notifications" element={<SocialNotificationsPage />} />
-            <Route path="/app/social/settings" element={<SocialSettingsPage />} />
-            <Route path="/app/social/@:username" element={<SocialProfilePage />} />
-            <Route path="/app/social/comments/:postId" element={<SocialCommentsPage />} />
-            <Route path="/app/social/:username/followers" element={<SocialFollowersPage />} />
-            <Route path="/app/social/:username/following" element={<SocialFollowersPage />} />
-            <Route path="/app/social/edit-profile" element={<SocialEditProfilePage />} />
-            <Route path="/app/social/dashboard" element={<SocialCreatorDashboardPage />} />
-            <Route path="/app/social/live" element={<SocialLivePage />} />
-            <Route path="/app/social/channels" element={<SocialBroadcastPage />} />
-            <Route path="/app/social/shop" element={<SocialShopPage />} />
+            <Route path="/app/social" element={<CustomerPage><SocialFeedPage /></CustomerPage>} />
+            <Route path="/app/social/create" element={<CustomerPage><SocialCreatePostPage /></CustomerPage>} />
+            <Route path="/app/social/profile" element={<CustomerPage><SocialProfilePage /></CustomerPage>} />
+            <Route path="/app/social/explore" element={<CustomerPage><SocialExplorePage /></CustomerPage>} />
+            <Route path="/app/social/reels" element={<CustomerPage><SocialReelsPage /></CustomerPage>} />
+            <Route path="/app/social/stories/:userId" element={<CustomerPage><SocialStoryViewerPage /></CustomerPage>} />
+            <Route path="/app/social/messages" element={<CustomerPage><SocialDMPage /></CustomerPage>} />
+            <Route path="/app/social/messages/:recipientId" element={<CustomerPage><SocioDMChatPage /></CustomerPage>} />
+            <Route path="/app/social/notifications" element={<CustomerPage><SocialNotificationsPage /></CustomerPage>} />
+            <Route path="/app/social/settings" element={<CustomerPage><SocialSettingsPage /></CustomerPage>} />
+            <Route path="/app/social/@:username" element={<CustomerPage><SocialProfilePage /></CustomerPage>} />
+            <Route path="/app/social/comments/:postId" element={<CustomerPage><SocialCommentsPage /></CustomerPage>} />
+            <Route path="/app/social/:username/followers" element={<CustomerPage><SocialFollowersPage /></CustomerPage>} />
+            <Route path="/app/social/:username/following" element={<CustomerPage><SocialFollowersPage /></CustomerPage>} />
+            <Route path="/app/social/edit-profile" element={<CustomerPage><SocialEditProfilePage /></CustomerPage>} />
+            <Route path="/app/social/dashboard" element={<CustomerPage><SocialCreatorDashboardPage /></CustomerPage>} />
+            <Route path="/app/social/live" element={<CustomerPage><SocialLivePage /></CustomerPage>} />
+            <Route path="/app/social/channels" element={<CustomerPage><SocialBroadcastPage /></CustomerPage>} />
+            <Route path="/app/social/shop" element={<CustomerPage><SocialShopPage /></CustomerPage>} />
 
             {/* Admin Social */}
             <Route path="/admin/social" element={<ProtectedPage><AdminSocialDashboardPage /></ProtectedPage>} />
