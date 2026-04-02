@@ -1064,7 +1064,7 @@ export const api = {
     };
   },
 
-  browseProducts: async (params: { category?: string; search?: string; sort?: string }) => {
+  browseProducts: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number }) => {
     let query = supabase.from('products').select('*').eq('status', 'active');
     if (params.category) query = query.ilike('category_name', `%${params.category}%`);
     if (params.search) query = query.ilike('title', `%${params.search}%`);
@@ -1072,8 +1072,57 @@ export const api = {
     else if (params.sort === 'price_high') query = query.order('price', { ascending: false });
     else if (params.sort === 'rating') query = query.order('rating', { ascending: false });
 
-    const { data } = await query;
-    return (data || []) as Product[];
+    const { data: products } = await query;
+    if (!products?.length) return [] as Product[];
+
+    // Apply vendor plan visibility filtering
+    const vendorIds = [...new Set(products.map(p => p.vendor_id))];
+    const { data: vendors } = await supabase
+      .from('vendors')
+      .select('id, plan_id, shop_latitude, shop_longitude, city_id')
+      .in('id', vendorIds);
+
+    if (!vendors?.length) return (products || []) as Product[];
+
+    const planIds = [...new Set(vendors.filter(v => v.plan_id).map(v => v.plan_id!))];
+    let plansMap: Record<string, any> = {};
+    if (planIds.length) {
+      const { data: plans } = await supabase.from('vendor_plans').select('*').in('id', planIds);
+      plans?.forEach(p => { plansMap[p.id] = p; });
+    }
+
+    const vendorMap: Record<string, any> = {};
+    vendors.forEach(v => { vendorMap[v.id] = v; });
+
+    const userLat = params.userLat || 0;
+    const userLng = params.userLng || 0;
+
+    // Haversine distance in km
+    const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
+    const filtered = products.filter(p => {
+      const vendor = vendorMap[p.vendor_id];
+      if (!vendor?.plan_id) return true; // no plan = show everywhere (basic)
+      const plan = plansMap[vendor.plan_id];
+      if (!plan || !plan.is_active) return true;
+      // Check plan expiry on vendor
+      if (plan.visibility_type === 'pan_india') return true;
+      if (!userLat || !userLng) return true; // no user location = show all
+      if (plan.visibility_type === 'radius_based') {
+        const dist = haversine(userLat, userLng, vendor.shop_latitude || 0, vendor.shop_longitude || 0);
+        return dist <= (plan.radius_km || 5);
+      }
+      // city/state visibility - show all if we can't determine
+      return true;
+    });
+
+    return filtered as Product[];
   },
 
   getCustomerOrders: async (customerId: string) => {
