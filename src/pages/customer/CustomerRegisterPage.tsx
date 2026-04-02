@@ -232,7 +232,9 @@ export default function CustomerRegisterPage() {
                 <Label className="text-xs text-muted-foreground mb-1 block">State *</Label>
                 <Select value={form.state} onValueChange={v => setForm({...form, state: v, district: ""})}>
                   <SelectTrigger className="h-11"><SelectValue placeholder="Select State" /></SelectTrigger>
-                  <SelectContent>{states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
+                    {states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                  </SelectContent>
                 </Select>
               </div>
 
