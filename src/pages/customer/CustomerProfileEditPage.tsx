@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Save, Plus, Trash2, MapPin, Check, Edit, Navigation, Loader2, X } from "lucide-react";
+import { ArrowLeft, Camera, Save, Plus, Trash2, MapPin, Check, Edit, Navigation, Loader2, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -27,8 +29,11 @@ export default function CustomerProfileEditPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
   const customerId = customerUser?.customer_id || customerUser?.id || '';
+  const photoRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState({ name: "", email: "", mobile: "", dob: "", gender: "Male", occupation: "" });
+  const [form, setForm] = useState({ name: "", email: "", mobile: "", dob: "", gender: "", occupation: "", about: "" });
+  const [profilePhoto, setProfilePhoto] = useState("");
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [mapRef, setMapRef] = useState<any>(null);
   const [markerRef, setMarkerRef] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -56,7 +61,12 @@ export default function CustomerProfileEditPage() {
     setProfileLoading(true);
     const { data } = await supabase.from('customers').select('*').eq('id', customerId).single();
     if (data) {
-      setForm({ name: data.name || "", email: data.email || "", mobile: data.mobile || "", dob: data.dob || "", gender: data.gender || "Male", occupation: data.occupation || "" });
+      setForm({
+        name: data.name || "", email: data.email || "", mobile: data.mobile || "",
+        dob: data.dob || "", gender: (data as any).gender || "", occupation: data.occupation || "",
+        about: (data as any).about || "",
+      });
+      setProfilePhoto((data as any).profile_photo || "");
     }
     setProfileLoading(false);
   };
@@ -71,12 +81,68 @@ export default function CustomerProfileEditPage() {
     if (data) setOccupations(data);
   };
 
+  // Profile completeness calculation
+  const completeness = (() => {
+    let score = 0;
+    if (form.mobile) score += 20; // Mobile verified
+    if (form.name && form.name.length >= 2) score += 10; // Name
+    if (profilePhoto) score += 15; // Profile photo
+    if (form.about && form.about.length > 0) score += 10; // About
+    if (addresses.length > 0) score += 20; // Address
+    // KYC is checked separately on KYC page, add 15% placeholder
+    // We'll check from the customer record
+    return Math.min(score, 100);
+  })();
+
+  const validateForm = (): string | null => {
+    if (!form.name.trim() || form.name.length < 2) return "Name must be at least 2 characters";
+    if (form.name.length > 100) return "Name must be under 100 characters";
+    if (!/^[a-zA-Z\s]+$/.test(form.name)) return "Name can only contain letters and spaces";
+    if (!form.mobile || !/^\d{10}$/.test(form.mobile)) return "Valid 10-digit mobile required";
+    if (form.email && !/\S+@\S+\.\S+/.test(form.email)) return "Invalid email format";
+    if (form.dob) {
+      const dob = new Date(form.dob);
+      const today = new Date();
+      const age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate()) ? age - 1 : age;
+      if (actualAge < 13) return "You must be at least 13 years old";
+    }
+    if (form.about && form.about.length > 1000) return "About must be under 1000 characters";
+    return null;
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) { toast.error("Only JPG/PNG allowed"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Photo must be under 2MB"); return; }
+
+    setPhotoUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Please log in"); return; }
+      const ext = file.name.split('.').pop() || 'jpg';
+      const fileName = `${user.id}/profile-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('classified-images').upload(fileName, file, { contentType: file.type, upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('classified-images').getPublicUrl(fileName);
+      setProfilePhoto(urlData.publicUrl);
+      toast.success("Photo uploaded!");
+    } catch { toast.error("Upload failed"); }
+    setPhotoUploading(false);
+    if (e.target) e.target.value = "";
+  };
+
   const handleSave = async () => {
-    if (!form.name.trim()) { toast.error("Name is required"); return; }
+    const err = validateForm();
+    if (err) { toast.error(err); return; }
+    
     setLoading(true);
     const updateData: any = {
       name: form.name, email: form.email, mobile: form.mobile, occupation: form.occupation,
-      gender: form.gender,
+      gender: form.gender, about: form.about, profile_photo: profilePhoto,
+      profile_completeness: completeness,
     };
     if (form.dob) updateData.dob = form.dob;
     const { error } = await supabase.from('customers').update(updateData).eq('id', customerId);
@@ -191,10 +257,7 @@ export default function CustomerProfileEditPage() {
   const openAddAddress = () => {
     setEditingAddress(null);
     setAddrForm({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "" });
-    setMapAddress(null);
-    setMapRef(null);
-    setMarkerRef(null);
-    setSearchQuery("");
+    setMapAddress(null); setMapRef(null); setMarkerRef(null); setSearchQuery("");
     setShowMapModal(true);
     setTimeout(() => getCurrentLocation(), 500);
   };
@@ -202,10 +265,7 @@ export default function CustomerProfileEditPage() {
   const openEditAddress = (addr: SavedAddress) => {
     setEditingAddress(addr);
     setAddrForm({ label: addr.label, type: addr.type, apartment: addr.address_line, houseNo: "", landmark: "" });
-    setMapAddress(null);
-    setMapRef(null);
-    setMarkerRef(null);
-    setSearchQuery(addr.address_line);
+    setMapAddress(null); setMapRef(null); setMarkerRef(null); setSearchQuery(addr.address_line);
     setShowMapModal(true);
     setTimeout(async () => {
       try {
@@ -213,11 +273,9 @@ export default function CustomerProfileEditPage() {
         const data = await res.json();
         if (data.status === "OK" && data.results.length > 0) {
           const r = data.results[0];
-          const lat = r.geometry.location.lat;
-          const lng = r.geometry.location.lng;
-          await reverseGeocode(lat, lng);
+          await reverseGeocode(r.geometry.location.lat, r.geometry.location.lng);
           const loaded = await loadGoogleMapsScript();
-          if (loaded) initMap(lat, lng);
+          if (loaded) initMap(r.geometry.location.lat, r.geometry.location.lng);
         }
       } catch {}
     }, 500);
@@ -260,34 +318,89 @@ export default function CustomerProfileEditPage() {
     loadAddresses();
   };
 
+  // Max DOB: must be at least 13 years old
+  const maxDob = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 13);
+    return d.toISOString().split('T')[0];
+  })();
+
   if (profileLoading) {
     return <CustomerLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></CustomerLayout>;
   }
 
   return (
     <CustomerLayout>
-      <div className="max-w-2xl mx-auto px-4 py-6 pb-20 md:pb-6 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-6 space-y-6">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild><Link to="/app/profile"><ArrowLeft className="h-5 w-5" /></Link></Button>
           <h1 className="text-lg font-bold">Edit Profile</h1>
         </div>
 
+        {/* Profile Completeness */}
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold">Profile Completeness</p>
+            <span className="text-sm font-bold text-primary">{completeness}%</span>
+          </div>
+          <Progress value={completeness} className="h-2" />
+          <p className="text-xs text-muted-foreground mt-1">
+            {completeness < 50 ? "Complete your profile for better experience" :
+             completeness < 80 ? "Almost there! Add more details" : "Great! Your profile is well set up"}
+          </p>
+        </Card>
+
+        {/* Profile Photo */}
         <div className="flex justify-center">
           <div className="relative">
-            <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">{form.name.charAt(0)}</div>
-            <button className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg"><Camera className="h-4 w-4" /></button>
+            {profilePhoto ? (
+              <img src={profilePhoto} alt="Profile" className="h-24 w-24 rounded-full object-cover border-2 border-primary/20" />
+            ) : (
+              <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
+                {form.name.charAt(0) || <User className="h-10 w-10" />}
+              </div>
+            )}
+            <button
+              onClick={() => photoRef.current?.click()}
+              disabled={photoUploading}
+              className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg"
+            >
+              {photoUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+            </button>
+            <input ref={photoRef} type="file" accept=".jpg,.jpeg,.png" className="hidden" onChange={handlePhotoUpload} />
           </div>
         </div>
 
         <Card className="p-5 space-y-4">
           <h2 className="text-sm font-bold">Personal Information</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Full Name</label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="h-11" /></div>
-            <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Email</label><Input value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="h-11" type="email" /></div>
-            <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Mobile</label><Input value={form.mobile} onChange={e => setForm({...form, mobile: e.target.value})} className="h-11" disabled /></div>
-            <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Date of Birth</label><Input value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} className="h-11" type="date" max="2016-12-31" /></div>
-            <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Gender</label>
-              <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm"><option>Male</option><option>Female</option><option>Other</option></select>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Full Name *</label>
+              <Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="h-11" maxLength={100} placeholder="Letters and spaces only" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Email *</label>
+              <Input value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="h-11" type="email" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Mobile (verified)</label>
+              <Input value={form.mobile} className="h-11" disabled />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Date of Birth *</label>
+              <Input value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} className="h-11" type="date" max={maxDob} />
+              <p className="text-[10px] text-muted-foreground mt-0.5">Must be at least 13 years old</p>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Gender</label>
+              <Select value={form.gender} onValueChange={v => setForm({...form, gender: v})}>
+                <SelectTrigger className="h-11"><SelectValue placeholder="Select gender" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Occupation</label>
@@ -300,6 +413,11 @@ export default function CustomerProfileEditPage() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">About</label>
+            <Textarea value={form.about} onChange={e => setForm({...form, about: e.target.value})} placeholder="Tell us about yourself (max 1000 chars)" maxLength={1000} rows={3} />
+            <p className="text-[10px] text-muted-foreground mt-0.5 text-right">{form.about.length}/1000</p>
           </div>
         </Card>
 
@@ -344,7 +462,6 @@ export default function CustomerProfileEditPage() {
             <DialogTitle>{editingAddress ? "Edit Address" : "Add New Address"}</DialogTitle>
           </DialogHeader>
 
-          {/* Search */}
           <div className="p-3 border-b">
             <div className="flex gap-2">
               <Input placeholder="Search area, street, locality..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
@@ -353,7 +470,6 @@ export default function CustomerProfileEditPage() {
             </div>
           </div>
 
-          {/* Map */}
           <div className="relative h-[250px] bg-secondary/20">
             <div id="addr-map-container" className="w-full h-full" />
             {!mapAddress && (
@@ -371,7 +487,6 @@ export default function CustomerProfileEditPage() {
             <p className="text-xs text-muted-foreground bg-secondary/30 p-3 mx-3 mt-3 rounded-lg">📍 {mapAddress.formatted}</p>
           )}
 
-          {/* Address form */}
           <div className="p-4 space-y-3">
             <div>
               <label className="text-xs font-semibold text-primary uppercase">Apartment / Road / Area*</label>
