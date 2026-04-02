@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CustomerProfilePage() {
   const { customerUser, customerLogout } = useAuth();
@@ -21,6 +22,25 @@ export default function CustomerProfilePage() {
     enabled: !!customerId,
   });
 
+  const { data: counts } = useQuery({
+    queryKey: ["profileCounts", customerId],
+    queryFn: async () => {
+      const [wishlist, classifieds, addresses, orders] = await Promise.all([
+        supabase.from("property_bookmarks").select("id", { count: "exact", head: true }).eq("user_id", customerId),
+        supabase.from("classified_ads").select("id", { count: "exact", head: true }).eq("user_id", customerId),
+        supabase.from("customer_addresses").select("id", { count: "exact", head: true }).eq("customer_id", customerId),
+        supabase.from("orders").select("id", { count: "exact", head: true }).eq("customer_id", customerId),
+      ]);
+      return {
+        wishlist: wishlist.count || 0,
+        classifieds: classifieds.count || 0,
+        addresses: addresses.count || 0,
+        orders: orders.count || 0,
+      };
+    },
+    enabled: !!customerId,
+  });
+
   const handleLogout = () => {
     customerLogout();
     toast.success("Logged out successfully");
@@ -29,13 +49,13 @@ export default function CustomerProfilePage() {
 
   const menuItems = [
     { icon: Edit, label: "Edit Profile", to: "/app/profile/edit" },
-    { icon: Package, label: "My Orders", to: "/app/orders", count: String(profile?.total_orders || 0) },
-    { icon: Heart, label: "Wishlist", to: "/app/wishlist", count: "12" },
+    { icon: Package, label: "My Orders", to: "/app/orders", count: String(counts?.orders || 0) },
+    { icon: Heart, label: "Wishlist", to: "/app/wishlist", count: String(counts?.wishlist || 0) },
     { icon: Wallet, label: "Wallet & Points", to: "/app/wallet", info: `${profile?.wallet_points?.toLocaleString() || 0} pts` },
     { icon: Shield, label: "KYC Verification", to: "/app/kyc" },
-    { icon: MapPin, label: "Saved Addresses", to: "/app/profile/edit", count: "2" },
+    { icon: MapPin, label: "Saved Addresses", to: "/app/profile/edit", count: String(counts?.addresses || 0) },
     { icon: Gift, label: "Referrals", to: "/app/referrals", info: profile?.referral_code || "" },
-    { icon: Megaphone, label: "My Classifieds", to: "/app/classifieds", count: "3" },
+    { icon: Megaphone, label: "My Classifieds", to: "/app/classifieds", count: String(counts?.classifieds || 0) },
     { icon: FileText, label: "Support Tickets", to: "/app/profile" },
     { icon: Settings, label: "Settings", to: "/app/profile/edit" },
   ];
@@ -59,7 +79,7 @@ export default function CustomerProfilePage() {
 
         <div className="grid grid-cols-3 gap-3">
           <Card className="p-4 text-center"><p className="text-2xl font-bold text-primary">{profile?.wallet_points?.toLocaleString() || 0}</p><p className="text-xs text-muted-foreground">Points</p></Card>
-          <Card className="p-4 text-center"><p className="text-2xl font-bold">{profile?.total_orders || 0}</p><p className="text-xs text-muted-foreground">Orders</p></Card>
+          <Card className="p-4 text-center"><p className="text-2xl font-bold">{counts?.orders || 0}</p><p className="text-xs text-muted-foreground">Orders</p></Card>
           <Card className="p-4 text-center"><p className="text-2xl font-bold">{profile?.total_referrals || 0}</p><p className="text-xs text-muted-foreground">Referrals</p></Card>
         </div>
 
