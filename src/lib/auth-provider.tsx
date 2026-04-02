@@ -17,18 +17,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("user_id", supabaseUid);
 
     if (!roles || roles.length === 0) {
-      // No role found — check if we're in the OAuth callback flow
-      // If so, the google-oauth-link function will handle linking
-      const isCallbackFlow = window.location.pathname.includes('/auth/callback');
-      if (isCallbackFlow) {
-        return 'pending';
+      // No role found — check if this is an OAuth user who needs linking
+      const { data: { session } } = await supabase.auth.getSession();
+      const provider = session?.user?.app_metadata?.provider;
+      
+      if (provider === 'google') {
+        // Try to link via edge function
+        try {
+          const { data: linkData } = await supabase.functions.invoke("google-oauth-link");
+          if (linkData?.success && linkData?.registered) {
+            // Successfully linked - reload roles
+            const { data: newRoles } = await supabase
+              .from("user_roles")
+              .select("role, vendor_id, customer_id")
+              .eq("user_id", supabaseUid);
+            if (newRoles && newRoles.length > 0) {
+              // Continue with the found role below
+              const roleRecord = newRoles[0];
+              return await processRole(roleRecord, supabaseUid, email, name);
+            }
+          }
+        } catch {}
+        // Linking failed or user not registered
+        await supabase.auth.signOut();
+        return 'unregistered';
       }
-      // Not in callback — this user is not registered
+      
       await supabase.auth.signOut();
       return 'unregistered';
     }
 
-    const roleRecord = roles[0];
+    return await processRole(roles[0], supabaseUid, email, name);
+  }, []);
+
+  const processRole = useCallback(async (roleRecord: any, supabaseUid: string, email: string, name: string) => {
     const role = roleRecord.role as AppRole;
 
     if (role === 'admin' || role === 'finance' || role === 'sales') {
