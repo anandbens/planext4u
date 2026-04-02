@@ -25,7 +25,7 @@ export default function LoginPage() {
       // Small delay to allow onAuthStateChange to fire
       setTimeout(() => navigate("/", { replace: true }), 500);
     } catch (err: any) {
-      toast.error(err.message || "Invalid credentials. Make sure demo users are seeded first.");
+      toast.error(err.message || "Invalid credentials.");
     } finally { setLoading(false); }
   };
 
