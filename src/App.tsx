@@ -199,6 +199,7 @@ const App = () => (
             <Route path="/admin/homes/cms" element={<ProtectedPage><AdminHomesCMSPage /></ProtectedPage>} />
             <Route path="/admin/homes/users" element={<ProtectedPage><AdminHomesUsersPage /></ProtectedPage>} />
             <Route path="/admin/vendor-plans" element={<ProtectedPage><AdminVendorPlansPage /></ProtectedPage>} />
+            <Route path="/admin/media-library" element={<ProtectedPage><AdminMediaLibraryPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerPage><CustomerHomePage /></CustomerPage>} />

@@ -26,7 +26,7 @@ const statusFlow: Vendor["status"][] = ["pending", "level1_approved", "level2_ap
 const emptyForm = {
   name: "", business_name: "", email: "", mobile: "",
   commission_rate: 10, membership: "basic", status: "pending" as Vendor["status"],
-  category_id: "1", city_id: "1", area_id: "1",
+  category_id: "1", city_id: "1", area_id: "1", plan_id: "",
 };
 
 export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate, onDelete, vendorType = "product" }: VendorModalProps) {
