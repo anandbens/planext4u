@@ -323,7 +323,7 @@ export default function CustomerRegisterPage() {
                 <MapPin className="h-4 w-4" /> {geoLoading ? "Capturing..." : location ? "📍 Location Captured" : "Capture Location"}
               </Button>
 
-              <div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Referral Code (optional)" value={form.referral_code} onChange={e => setForm({ ...form, referral_code: e.target.value.toUpperCase() })} className="pl-10 h-11" /></div>
+              <div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Referral Code (optional)" value={form.referral_code} onChange={e => setForm({ ...form, referral_code: e.target.value.toUpperCase().slice(0, 12) })} className="pl-10 h-11" maxLength={12} /></div>
 
               <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30 cursor-pointer hover:bg-secondary/50 transition-colors" onClick={(e) => { e.preventDefault(); if (!acceptedTerms) openTermsPopup(); }}>
                 <Checkbox id="terms" checked={acceptedTerms} className="mt-0.5" onCheckedChange={() => { if (!acceptedTerms) openTermsPopup(); }} />
