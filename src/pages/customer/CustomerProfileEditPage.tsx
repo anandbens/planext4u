@@ -29,8 +29,8 @@ export default function CustomerProfileEditPage() {
   const customerId = customerUser?.customer_id || customerUser?.id || '';
 
   const [form, setForm] = useState({ name: "", email: "", mobile: "", dob: "", gender: "Male", occupation: "" });
-  const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
-  const [markerRef, setMarkerRef] = useState<google.maps.Marker | null>(null);
+  const [mapRef, setMapRef] = useState<any>(null);
+  const [markerRef, setMarkerRef] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
