@@ -171,7 +171,19 @@ export default function CustomerProfileEditPage() {
       const data = await res.json();
       if (data.status === "OK" && data.results.length > 0) {
         const r = data.results[0];
-        await reverseGeocode(r.geometry.location.lat, r.geometry.location.lng);
+        const lat = r.geometry.location.lat;
+        const lng = r.geometry.location.lng;
+        await reverseGeocode(lat, lng);
+        const loaded = await loadGoogleMapsScript();
+        if (loaded) {
+          if (mapRef && markerRef) {
+            const pos = new (window as any).google.maps.LatLng(lat, lng);
+            mapRef.setCenter(pos);
+            markerRef.setPosition(pos);
+          } else {
+            initMap(lat, lng);
+          }
+        }
       } else { toast.error("Location not found"); }
     } catch { toast.error("Search failed"); }
     finally { setLocating(false); }
