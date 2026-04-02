@@ -8,72 +8,84 @@ import { Loader2 } from "lucide-react";
 /**
  * Handles OAuth redirect callback.
  * After Google OAuth completes, the user lands here.
- * We wait for the session to initialize, validate the user exists
- * in the customers table, then redirect accordingly.
+ * We call the google-oauth-link edge function to verify & link the user,
+ * then wait for the auth provider to load the customer.
  */
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
   const { customerUser, isLoading } = useAuth();
-  const [checking, setChecking] = useState(true);
+  const [status, setStatus] = useState<"checking" | "linked" | "failed">("checking");
 
   useEffect(() => {
     let cancelled = false;
 
     const handleCallback = async () => {
-      // Wait for Supabase session to be established
+      // Wait a moment for Supabase to establish session from URL hash
+      await new Promise((r) => setTimeout(r, 1500));
+
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session?.user) {
-        // No session yet - wait for auth state change
-        // The auth provider will handle this
-        if (!cancelled) {
-          // Give it a few seconds for the session to establish
-          setTimeout(async () => {
-            const { data: { session: retrySession } } = await supabase.auth.getSession();
-            if (!retrySession?.user) {
-              toast.error("Authentication failed. Please try again.");
-              navigate("/app/login", { replace: true });
-            }
-            setChecking(false);
-          }, 3000);
+        // Retry once more after another delay
+        await new Promise((r) => setTimeout(r, 2000));
+        const { data: { session: retry } } = await supabase.auth.getSession();
+        if (!retry?.user) {
+          if (!cancelled) {
+            toast.error("Authentication failed. Please try again.");
+            navigate("/app/login", { replace: true });
+          }
+          return;
         }
-        return;
       }
 
-      // Session exists - check if user is a registered customer
-      if (session.user.email) {
-        const { data: customer } = await supabase
-          .from("customers")
-          .select("id")
-          .eq("email", session.user.email)
-          .maybeSingle();
+      // Session exists — call the linking edge function
+      try {
+        const { data, error } = await supabase.functions.invoke("google-oauth-link");
 
-        if (!customer) {
+        if (error) {
+          console.error("google-oauth-link error:", error);
+          await supabase.auth.signOut();
+          toast.error("Authentication failed. Please try again.");
+          if (!cancelled) navigate("/app/login", { replace: true });
+          return;
+        }
+
+        if (!data?.success || !data?.registered) {
           await supabase.auth.signOut();
           toast.error(
-            "Your Gmail is not registered with Planext4U. Create your account first to do a Google Sign-in.",
+            data?.error || "Your Gmail is not registered with Planext4U. Create your account first to do a Google Sign-in.",
             { duration: 6000 }
           );
           if (!cancelled) navigate("/app/login", { replace: true });
           return;
         }
-      }
 
-      if (!cancelled) setChecking(false);
+        // Successfully linked — now we need the auth provider to reload
+        // Force a session refresh so onAuthStateChange re-fires and loadUserRole picks up the new user_roles entry
+        if (!cancelled) {
+          setStatus("linked");
+          // Trigger a session refresh
+          await supabase.auth.refreshSession();
+        }
+      } catch (err: any) {
+        console.error("Callback error:", err);
+        await supabase.auth.signOut();
+        toast.error("Authentication failed. Please try again.");
+        if (!cancelled) navigate("/app/login", { replace: true });
+      }
     };
 
     handleCallback();
-
     return () => { cancelled = true; };
   }, [navigate]);
 
   // Once auth provider finishes loading and customerUser is set, redirect
   useEffect(() => {
-    if (!isLoading && !checking && customerUser) {
+    if (status === "linked" && !isLoading && customerUser) {
       toast.success("Welcome to Planext4u!");
       navigate("/app", { replace: true });
     }
-  }, [isLoading, checking, customerUser, navigate]);
+  }, [status, isLoading, customerUser, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
