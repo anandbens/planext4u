@@ -144,7 +144,7 @@ export default function VendorLoginPage() {
                           />
                         ))}
                       </div>
-                      <Button onClick={handleVerifyOTP} className="w-full h-12 rounded-xl text-base gap-2 bg-brand-dark hover:bg-brand-dark/90 text-white" disabled={loading || otp.length<6}>
+                      <Button onClick={handleVerifyOTP} className="w-full h-12 rounded-xl text-base gap-2 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading || otp.length<6}>
                         {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Verifying...</> : <><ShieldCheck className="h-4 w-4" /> Verify OTP</>}
                       </Button>
                       <div className="text-center">
