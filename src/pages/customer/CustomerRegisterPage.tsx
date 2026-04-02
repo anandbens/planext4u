@@ -232,7 +232,9 @@ export default function CustomerRegisterPage() {
                 <Label className="text-xs text-muted-foreground mb-1 block">State *</Label>
                 <Select value={form.state} onValueChange={v => setForm({...form, state: v, district: ""})}>
                   <SelectTrigger className="h-11"><SelectValue placeholder="Select State" /></SelectTrigger>
-                  <SelectContent>{states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
+                    {states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                  </SelectContent>
                 </Select>
               </div>
 
@@ -240,7 +242,13 @@ export default function CustomerRegisterPage() {
                 <Label className="text-xs text-muted-foreground mb-1 block">District *</Label>
                 <Select value={form.district} onValueChange={v => setForm({...form, district: v})} disabled={!form.state}>
                   <SelectTrigger className="h-11"><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
-                  <SelectContent>{districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}</SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
+                    {districts.length === 0 && form.state ? (
+                      <div className="py-2 px-3 text-sm text-muted-foreground">Loading districts...</div>
+                    ) : (
+                      districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)
+                    )}
+                  </SelectContent>
                 </Select>
               </div>
 
