@@ -1,4 +1,4 @@
-import { useEffect, useState, ReactNode, useCallback } from "react";
+import { useEffect, useState, ReactNode, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContext } from "@/lib/auth-context";
 import { logActivity } from "@/lib/activity-log";
@@ -9,46 +9,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [customerUser, setCustomerUser] = useState<CustomerUser | null>(null);
   const [vendorUser, setVendorUser] = useState<VendorUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string) => {
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role, vendor_id, customer_id")
-      .eq("user_id", supabaseUid);
-
-    if (!roles || roles.length === 0) {
-      // No role found — check if this is an OAuth user who needs linking
-      const { data: { session } } = await supabase.auth.getSession();
-      const provider = session?.user?.app_metadata?.provider;
-      
-      if (provider === 'google') {
-        // Try to link via edge function
-        try {
-          const { data: linkData } = await supabase.functions.invoke("google-oauth-link");
-          if (linkData?.success && linkData?.registered) {
-            // Successfully linked - reload roles
-            const { data: newRoles } = await supabase
-              .from("user_roles")
-              .select("role, vendor_id, customer_id")
-              .eq("user_id", supabaseUid);
-            if (newRoles && newRoles.length > 0) {
-              // Continue with the found role below
-              const roleRecord = newRoles[0];
-              return await processRole(roleRecord, supabaseUid, email, name);
-            }
-          }
-        } catch {}
-        // Linking failed or user not registered
-        await supabase.auth.signOut();
-        return 'unregistered';
-      }
-      
-      await supabase.auth.signOut();
-      return 'unregistered';
-    }
-
-    return await processRole(roles[0], supabaseUid, email, name);
-  }, []);
+  const loginResolveRef = useRef<(() => void) | null>(null);
 
   const processRole = useCallback(async (roleRecord: any, supabaseUid: string, email: string, name: string): Promise<string> => {
     const role = roleRecord.role as AppRole;
@@ -61,7 +22,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("admin_user", JSON.stringify(authUser));
     } else if (role === 'vendor') {
       const vendorId = roleRecord.vendor_id || 'VND-001';
-      const { data: vendor } = await supabase.from("vendors").select("id, name, business_name, email").eq("id", vendorId).single();
+      const { data: vendor } = await supabase.from("vendors").select("id, name, business_name, email, status").eq("id", vendorId).single();
+      
+      // Check if vendor is verified
+      if (vendor && vendor.status !== 'active' && vendor.status !== 'verified') {
+        await supabase.auth.signOut();
+        return 'vendor_not_verified';
+      }
+      
       const vu: VendorUser = {
         id: vendor?.id || vendorId, name: vendor?.name || name, email: vendor?.email || email,
         business_name: vendor?.business_name || '', vendor_id: vendorId, supabase_uid: supabaseUid,
@@ -81,17 +49,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return 'loaded';
   }, []);
 
+  const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string) => {
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role, vendor_id, customer_id")
+      .eq("user_id", supabaseUid);
+
+    if (!roles || roles.length === 0) {
+      const { data: { session } } = await supabase.auth.getSession();
+      const provider = session?.user?.app_metadata?.provider;
+      
+      if (provider === 'google') {
+        try {
+          const { data: linkData } = await supabase.functions.invoke("google-oauth-link");
+          if (linkData?.success && linkData?.registered) {
+            const { data: newRoles } = await supabase
+              .from("user_roles")
+              .select("role, vendor_id, customer_id")
+              .eq("user_id", supabaseUid);
+            if (newRoles && newRoles.length > 0) {
+              return await processRole(newRoles[0], supabaseUid, email, name);
+            }
+          }
+        } catch {}
+        await supabase.auth.signOut();
+        return 'unregistered';
+      }
+      
+      await supabase.auth.signOut();
+      return 'unregistered';
+    }
+
+    return await processRole(roles[0], supabaseUid, email, name);
+  }, [processRole]);
+
   useEffect(() => {
-    // Set up auth state listener BEFORE checking session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         const { id, email, user_metadata } = session.user;
         const name = user_metadata?.name || email?.split('@')[0] || '';
-        // Use setTimeout to avoid potential deadlocks with Supabase client
         setTimeout(async () => {
           const result = await loadUserRole(id, email || '', name);
-          if (result === 'unregistered' || result === 'pending') {
-            setIsLoading(false);
+          setIsLoading(false);
+          // Resolve any pending login promise
+          if (loginResolveRef.current) {
+            loginResolveRef.current();
+            loginResolveRef.current = null;
+          }
+          if (result === 'vendor_not_verified') {
+            // Will be handled by the caller
           }
         }, 0);
       } else if (event === 'SIGNED_OUT') {
@@ -104,14 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const { id, email, user_metadata } = session.user;
         const name = user_metadata?.name || email?.split('@')[0] || '';
         loadUserRole(id, email || '', name).finally(() => setIsLoading(false));
       } else {
-        // Try to restore from localStorage as fallback
         try {
           const savedUser = localStorage.getItem("admin_user");
           const savedCustomer = localStorage.getItem("customer_user");
@@ -128,20 +132,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadUserRole]);
 
   const login = async (email: string, password: string) => {
+    setIsLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
-    // Role loading happens in onAuthStateChange
+    if (error) {
+      setIsLoading(false);
+      throw new Error(error.message);
+    }
+    // Wait for onAuthStateChange to finish loading the role
+    await new Promise<void>((resolve) => {
+      loginResolveRef.current = resolve;
+      // Safety timeout
+      setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 5000);
+    });
   };
 
   const customerLogin = async (email: string, password: string) => {
+    setIsLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
+    if (error) {
+      setIsLoading(false);
+      throw new Error(error.message);
+    }
+    await new Promise<void>((resolve) => {
+      loginResolveRef.current = resolve;
+      setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 5000);
+    });
     logActivity('login', `Customer logged in with ${email}`);
   };
 
   const vendorLogin = async (email: string, password: string) => {
+    setIsLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
+    if (error) {
+      setIsLoading(false);
+      throw new Error(error.message);
+    }
+    await new Promise<void>((resolve) => {
+      loginResolveRef.current = resolve;
+      setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 5000);
+    });
   };
 
   const logout = async () => {

@@ -26,7 +26,7 @@ const emptyForm = {
   title: "", description: "", price: 0, tax: 0, discount: 0,
   max_points_redeemable: 0, status: "active" as Product["status"],
   vendor_id: "", vendor_name: "", category_id: "", category_name: "", stock: 0, emoji: "📦",
-  image: "",
+  image: "", rejection_reason: "",
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete }: ProductModalProps) {
@@ -47,7 +47,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         vendor_id: product.vendor_id, vendor_name: product.vendor_name,
         category_id: product.category_id, category_name: product.category_name,
         stock: product.stock || 0, emoji: product.emoji || "📦",
-        image: product.image || "",
+        image: product.image || "", rejection_reason: product.rejection_reason || "",
       });
       setEditMode(mode === "edit");
     }
@@ -57,6 +57,9 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
 
   const handleSave = async () => {
     if (!form.title) return;
+    if (form.status === 'rejected' && !form.rejection_reason?.trim()) {
+      return; // rejection reason required
+    }
     setSaving(true);
     try {
       if (isCreate) {
@@ -158,13 +161,27 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Product["status"] })}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="active">Active (Approved)</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                     <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="pending_approval">Pending Approval</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
               ) : <div className="mt-1"><StatusBadge status={product?.status || "active"} /></div>}
             </div>
+            {editMode && form.status === 'rejected' && (
+              <div className="col-span-2">
+                <Label className="text-xs text-destructive font-semibold">Rejection Reason *</Label>
+                <Textarea value={form.rejection_reason} onChange={(e) => setForm({ ...form, rejection_reason: e.target.value })} className="mt-1 border-destructive/50" rows={2} placeholder="Explain why this product is being rejected..." />
+              </div>
+            )}
+            {!editMode && product?.status === 'rejected' && product?.rejection_reason && (
+              <div className="col-span-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <Label className="text-xs text-destructive font-semibold">Rejection Reason</Label>
+                <p className="text-sm mt-1">{product.rejection_reason}</p>
+              </div>
+            )}
             {editMode && (
               <div>
                 <Label className="text-xs text-muted-foreground">Stock</Label>

@@ -48,6 +48,31 @@ export default function VendorLoginPage() {
     if (!/^\d{10}$/.test(cleaned)) { toast.error("Please enter a valid 10-digit phone number"); return; }
     setLoading(true);
     try {
+      // Check vendor verification status before sending OTP
+      const { data: vendorApp } = await supabase.from("vendor_applications").select("status").eq("phone", cleaned).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      const { data: vendor } = await supabase.from("vendors").select("status, mobile").eq("mobile", cleaned).maybeSingle();
+      
+      if (vendorApp && !vendor) {
+        // Vendor application exists but not yet approved
+        if (vendorApp.status !== 'approved' && vendorApp.status !== 'verified') {
+          setLoading(false);
+          toast.error("Your vendor profile is awaiting approval. You will be notified once verified.", { duration: 5000 });
+          return;
+        }
+      }
+      
+      if (vendor && vendor.status !== 'active' && vendor.status !== 'verified') {
+        setLoading(false);
+        toast.error("Your vendor profile is awaiting approval. Please wait for admin verification.", { duration: 5000 });
+        return;
+      }
+      
+      if (!vendorApp && !vendor) {
+        setLoading(false);
+        toast.error("No vendor account found with this phone number. Please register first.");
+        return;
+      }
+      
       await sendOTP(`${countryCode}${cleaned}`);
       setOtpSent(true); setTimer(30);
       toast.success("OTP sent successfully!");

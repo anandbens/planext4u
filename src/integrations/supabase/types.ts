@@ -124,6 +124,45 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          old_data: Json | null
+          operation: string
+          performed_by: string | null
+          performed_by_role: string | null
+          record_id: string | null
+          table_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          operation: string
+          performed_by?: string | null
+          performed_by_role?: string | null
+          record_id?: string | null
+          table_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          old_data?: Json | null
+          operation?: string
+          performed_by?: string | null
+          performed_by_role?: string | null
+          record_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       banners: {
         Row: {
           created_at: string
@@ -789,6 +828,7 @@ export type Database = {
           max_points_redeemable: number
           price: number
           rating: number | null
+          rejection_reason: string | null
           reviews: number | null
           sales: number | null
           status: string
@@ -811,6 +851,7 @@ export type Database = {
           max_points_redeemable?: number
           price?: number
           rating?: number | null
+          rejection_reason?: string | null
           reviews?: number | null
           sales?: number | null
           status?: string
@@ -833,6 +874,7 @@ export type Database = {
           max_points_redeemable?: number
           price?: number
           rating?: number | null
+          rejection_reason?: string | null
           reviews?: number | null
           sales?: number | null
           status?: string

@@ -65,11 +65,13 @@ export default function ProductsPage() {
   const avgPrice = data.data.length ? Math.round(data.data.reduce((s, p) => s + p.price, 0) / data.data.length) : 0;
   const totalDiscount = data.data.reduce((s, p) => s + p.discount, 0);
 
+  const pending = data.data.filter(p => p.status === 'pending_approval').length;
+
   const summaryWidgets: SummaryWidget[] = [
     { label: "Total Products", value: data.total, icon: <Package className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
     { label: "Active", value: active, icon: <TrendingUp className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
+    { label: "Pending Approval", value: pending, icon: <Tag className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
     { label: "Avg Price", value: `₹${avgPrice.toLocaleString()}`, icon: <IndianRupee className="h-5 w-5 text-info" />, color: "bg-info/5", textColor: "text-info" },
-    { label: "Total Discounts", value: `₹${totalDiscount.toLocaleString()}`, icon: <Tag className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
   ];
 
   return (
@@ -114,9 +116,10 @@ export default function ProductsPage() {
         onBulkDelete={handleBulkDelete}
         onBulkStatusUpdate={handleBulkStatus}
         bulkStatusOptions={[
-          { value: "active", label: "Active" },
+          { value: "active", label: "Approve (Active)" },
           { value: "inactive", label: "Inactive" },
           { value: "draft", label: "Draft" },
+          { value: "rejected", label: "Reject" },
         ]}
       />
       <ProductModal product={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
