@@ -16,19 +16,46 @@ export const firebaseAuth = getAuth(app);
 
 let confirmationResultGlobal: ConfirmationResult | null = null;
 
-export function setupRecaptcha(containerId: string) {
-  if (!(window as any).recaptchaVerifier) {
-    (window as any).recaptchaVerifier = new RecaptchaVerifier(
-      firebaseAuth,
-      containerId,
-      { size: "invisible" }
-    );
+/**
+ * Ensures a fresh reCAPTCHA container element exists in the DOM.
+ * Removes any previous one to avoid "already rendered" errors.
+ */
+function ensureRecaptchaContainer(): HTMLElement {
+  const existing = document.getElementById("recaptcha-container");
+  if (existing) {
+    existing.remove();
   }
-  return (window as any).recaptchaVerifier;
+  const el = document.createElement("div");
+  el.id = "recaptcha-container";
+  document.body.appendChild(el);
+  return el;
+}
+
+export function setupRecaptcha(): RecaptchaVerifier {
+  // Always clear old verifier first
+  if ((window as any).recaptchaVerifier) {
+    try {
+      (window as any).recaptchaVerifier.clear();
+    } catch {
+      // ignore if already cleared
+    }
+    (window as any).recaptchaVerifier = null;
+  }
+
+  // Create a fresh container
+  ensureRecaptchaContainer();
+
+  const verifier = new RecaptchaVerifier(
+    firebaseAuth,
+    "recaptcha-container",
+    { size: "invisible" }
+  );
+  (window as any).recaptchaVerifier = verifier;
+  return verifier;
 }
 
 export async function sendOTP(phoneNumber: string) {
-  const appVerifier = setupRecaptcha("recaptcha-container");
+  const appVerifier = setupRecaptcha();
   const result = await signInWithPhoneNumber(firebaseAuth, phoneNumber, appVerifier);
   confirmationResultGlobal = result;
   return result;
@@ -51,8 +78,16 @@ export async function getFirebaseIdToken(): Promise<string> {
 
 export function clearRecaptcha() {
   if ((window as any).recaptchaVerifier) {
-    (window as any).recaptchaVerifier.clear();
+    try {
+      (window as any).recaptchaVerifier.clear();
+    } catch {
+      // ignore
+    }
     (window as any).recaptchaVerifier = null;
   }
   confirmationResultGlobal = null;
+
+  // Remove the container element entirely
+  const el = document.getElementById("recaptcha-container");
+  if (el) el.remove();
 }
