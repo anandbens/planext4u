@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, signOut } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBs9GdBSEK8BGjeGypEOjiHF_jkToy-Qlk",
@@ -16,10 +16,6 @@ export const firebaseAuth = getAuth(app);
 
 let confirmationResultGlobal: ConfirmationResult | null = null;
 
-/**
- * Ensures a fresh reCAPTCHA container element exists in the DOM.
- * Removes any previous one to avoid "already rendered" errors.
- */
 function ensureRecaptchaContainer(): HTMLElement {
   const existing = document.getElementById("recaptcha-container");
   if (existing) {
@@ -32,7 +28,6 @@ function ensureRecaptchaContainer(): HTMLElement {
 }
 
 export function setupRecaptcha(): RecaptchaVerifier {
-  // Always clear old verifier first
   if ((window as any).recaptchaVerifier) {
     try {
       (window as any).recaptchaVerifier.clear();
@@ -42,19 +37,21 @@ export function setupRecaptcha(): RecaptchaVerifier {
     (window as any).recaptchaVerifier = null;
   }
 
-  // Create a fresh container
   ensureRecaptchaContainer();
 
-  const verifier = new RecaptchaVerifier(
-    firebaseAuth,
-    "recaptcha-container",
-    { size: "invisible" }
-  );
+  const verifier = new RecaptchaVerifier(firebaseAuth, "recaptcha-container", {
+    size: "invisible",
+  });
   (window as any).recaptchaVerifier = verifier;
   return verifier;
 }
 
 export async function sendOTP(phoneNumber: string) {
+  const currentPhone = firebaseAuth.currentUser?.phoneNumber?.replace(/\s/g, "");
+  if (firebaseAuth.currentUser && currentPhone !== phoneNumber.replace(/\s/g, "")) {
+    await signOut(firebaseAuth).catch(() => undefined);
+  }
+
   const appVerifier = setupRecaptcha();
   const result = await signInWithPhoneNumber(firebaseAuth, phoneNumber, appVerifier);
   confirmationResultGlobal = result;
@@ -69,14 +66,14 @@ export async function verifyOTP(otp: string) {
   return result.user;
 }
 
-/** Get the Firebase ID token from the currently signed-in user */
 export async function getFirebaseIdToken(): Promise<string> {
   const user = firebaseAuth.currentUser;
   if (!user) throw new Error("No Firebase user signed in");
   return user.getIdToken(true);
 }
 
-export function clearRecaptcha() {
+export async function resetPhoneAuth() {
+  confirmationResultGlobal = null;
   if ((window as any).recaptchaVerifier) {
     try {
       (window as any).recaptchaVerifier.clear();
@@ -85,9 +82,23 @@ export function clearRecaptcha() {
     }
     (window as any).recaptchaVerifier = null;
   }
-  confirmationResultGlobal = null;
+  const el = document.getElementById("recaptcha-container");
+  if (el) el.remove();
+  if (firebaseAuth.currentUser) {
+    await signOut(firebaseAuth).catch(() => undefined);
+  }
+}
 
-  // Remove the container element entirely
+export function clearRecaptcha() {
+  confirmationResultGlobal = null;
+  if ((window as any).recaptchaVerifier) {
+    try {
+      (window as any).recaptchaVerifier.clear();
+    } catch {
+      // ignore
+    }
+    (window as any).recaptchaVerifier = null;
+  }
   const el = document.getElementById("recaptcha-container");
   if (el) el.remove();
 }
