@@ -127,7 +127,7 @@ export default function VendorLoginPage() {
                           <Input placeholder="Phone number" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0,10))} className="pl-10 h-12 rounded-xl" type="tel" maxLength={10} inputMode="numeric" />
                         </div>
                       </div>
-                      <Button onClick={handleSendOTP} className="w-full h-12 rounded-xl text-base gap-2 bg-brand-dark hover:bg-brand-dark/90 text-white" disabled={loading || phone.length < 10}>
+                      <Button onClick={handleSendOTP} className="w-full h-12 rounded-xl text-base gap-2 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading || phone.length < 10}>
                         {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending...</> : <>Send OTP <ArrowRight className="h-4 w-4" /></>}
                       </Button>
                     </>
