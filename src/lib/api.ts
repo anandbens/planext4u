@@ -310,7 +310,7 @@ export const api = {
       latitude: data.latitude || 0,
       longitude: data.longitude || 0,
       wallet_points: data.wallet_points || 0,
-      referral_code: `REF${Date.now().toString(36).toUpperCase()}`,
+      referral_code: `MRCP4U${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`,
       referred_by: data.referred_by || null,
       status: data.status || 'active',
       occupation: data.occupation || '',
