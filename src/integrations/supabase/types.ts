@@ -339,6 +339,7 @@ export type Database = {
       }
       customers: {
         Row: {
+          about: string | null
           area_id: string | null
           city_id: string | null
           created_at: string
@@ -346,17 +347,21 @@ export type Database = {
           email: string
           gender: string | null
           id: string
+          kyc_status: string | null
           latitude: number
           longitude: number
           mobile: string
           name: string
           occupation: string | null
+          profile_completeness: number | null
+          profile_photo: string | null
           referral_code: string
           referred_by: string | null
           status: string
           wallet_points: number
         }
         Insert: {
+          about?: string | null
           area_id?: string | null
           city_id?: string | null
           created_at?: string
@@ -364,17 +369,21 @@ export type Database = {
           email?: string
           gender?: string | null
           id: string
+          kyc_status?: string | null
           latitude?: number
           longitude?: number
           mobile?: string
           name: string
           occupation?: string | null
+          profile_completeness?: number | null
+          profile_photo?: string | null
           referral_code?: string
           referred_by?: string | null
           status?: string
           wallet_points?: number
         }
         Update: {
+          about?: string | null
           area_id?: string | null
           city_id?: string | null
           created_at?: string
@@ -382,11 +391,14 @@ export type Database = {
           email?: string
           gender?: string | null
           id?: string
+          kyc_status?: string | null
           latitude?: number
           longitude?: number
           mobile?: string
           name?: string
           occupation?: string | null
+          profile_completeness?: number | null
+          profile_photo?: string | null
           referral_code?: string
           referred_by?: string | null
           status?: string
@@ -501,6 +513,48 @@ export type Database = {
           start_date?: string | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      kyc_documents: {
+        Row: {
+          admin_notes: string | null
+          back_image_url: string | null
+          created_at: string
+          document_number: string
+          document_type: string
+          front_image_url: string | null
+          id: string
+          rejection_reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          back_image_url?: string | null
+          created_at?: string
+          document_number?: string
+          document_type?: string
+          front_image_url?: string | null
+          id?: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          back_image_url?: string | null
+          created_at?: string
+          document_number?: string
+          document_type?: string
+          front_image_url?: string | null
+          id?: string
+          rejection_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2539,6 +2593,111 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
           vendor_id?: string | null
+        }
+        Relationships: []
+      }
+      vendor_applications: {
+        Row: {
+          aadhaar_back_url: string | null
+          aadhaar_front_url: string | null
+          aadhaar_number: string | null
+          bank_account_number: string | null
+          bank_holder_name: string | null
+          bank_ifsc: string | null
+          business_description: string | null
+          business_name: string
+          business_type: string | null
+          category: string | null
+          city: string | null
+          created_at: string
+          email: string
+          fb_link: string | null
+          fssai_url: string | null
+          gst_certificate_url: string | null
+          gst_number: string | null
+          id: string
+          instagram_link: string | null
+          name: string
+          pan_image_url: string | null
+          pan_number: string | null
+          phone: string
+          rejection_reason: string | null
+          secondary_phone: string | null
+          state: string | null
+          status: string
+          store_logo_url: string | null
+          store_name: string | null
+          subcategory: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aadhaar_back_url?: string | null
+          aadhaar_front_url?: string | null
+          aadhaar_number?: string | null
+          bank_account_number?: string | null
+          bank_holder_name?: string | null
+          bank_ifsc?: string | null
+          business_description?: string | null
+          business_name?: string
+          business_type?: string | null
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          fb_link?: string | null
+          fssai_url?: string | null
+          gst_certificate_url?: string | null
+          gst_number?: string | null
+          id?: string
+          instagram_link?: string | null
+          name?: string
+          pan_image_url?: string | null
+          pan_number?: string | null
+          phone?: string
+          rejection_reason?: string | null
+          secondary_phone?: string | null
+          state?: string | null
+          status?: string
+          store_logo_url?: string | null
+          store_name?: string | null
+          subcategory?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aadhaar_back_url?: string | null
+          aadhaar_front_url?: string | null
+          aadhaar_number?: string | null
+          bank_account_number?: string | null
+          bank_holder_name?: string | null
+          bank_ifsc?: string | null
+          business_description?: string | null
+          business_name?: string
+          business_type?: string | null
+          category?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          fb_link?: string | null
+          fssai_url?: string | null
+          gst_certificate_url?: string | null
+          gst_number?: string | null
+          id?: string
+          instagram_link?: string | null
+          name?: string
+          pan_image_url?: string | null
+          pan_number?: string | null
+          phone?: string
+          rejection_reason?: string | null
+          secondary_phone?: string | null
+          state?: string | null
+          status?: string
+          store_logo_url?: string | null
+          store_name?: string | null
+          subcategory?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

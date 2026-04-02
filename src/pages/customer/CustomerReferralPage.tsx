@@ -8,12 +8,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 
 export default function CustomerReferralPage() {
-  const { data: profile } = useQuery({ queryKey: ["customerProfile"], queryFn: () => api.getCustomerProfile("USR-001") });
+  const { customerUser } = useAuth();
+  const customerId = customerUser?.customer_id || customerUser?.id || '';
+  const { data: profile } = useQuery({ queryKey: ["customerProfile", customerId], queryFn: () => api.getCustomerProfile(customerId), enabled: !!customerId });
   const { data: referrals, isLoading } = useQuery({ queryKey: ["referrals"], queryFn: () => api.getReferrals({ page: 1, per_page: 50 }) });
 
-  const myReferrals = referrals?.data?.filter(r => r.referrer_id === 'USR-001') || [];
+  const myReferrals = referrals?.data?.filter(r => r.referrer_id === customerId) || [];
   const completed = myReferrals.filter(r => r.status === 'completed');
   const totalEarned = completed.reduce((s, r) => s + r.points_awarded, 0);
 

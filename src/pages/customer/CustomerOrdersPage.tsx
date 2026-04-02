@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
-import { Search, Calendar, ChevronLeft, ChevronRight, Package, Truck, MapPin, RefreshCcw } from "lucide-react";
+import { Search, Calendar, ChevronLeft, ChevronRight, Package, Truck, MapPin, RefreshCcw, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const statusColor: Record<string, string> = {
@@ -22,6 +23,8 @@ const trackingSteps = ["placed", "accepted", "in_progress", "delivered", "comple
 const ITEMS_PER_PAGE = 5;
 
 export default function CustomerOrdersPage() {
+  const { customerUser } = useAuth();
+  const customerId = customerUser?.customer_id || customerUser?.id || '';
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -30,8 +33,9 @@ export default function CustomerOrdersPage() {
   const [refundOrder, setRefundOrder] = useState<any>(null);
 
   const { data: orders, isLoading } = useQuery({
-    queryKey: ["customerOrders"],
-    queryFn: () => api.getCustomerOrders("USR-001"),
+    queryKey: ["customerOrders", customerId],
+    queryFn: () => api.getCustomerOrders(customerId),
+    enabled: !!customerId,
   });
 
   // Search by order ID or product name
@@ -60,7 +64,10 @@ export default function CustomerOrdersPage() {
   return (
     <CustomerLayout>
       <div className="max-w-3xl mx-auto px-4 py-6 pb-20 md:pb-6">
-        <h1 className="text-xl font-bold mb-4">My Orders</h1>
+        <div className="flex items-center gap-3 mb-4">
+          <Button variant="ghost" size="icon" asChild><Link to="/app/profile"><ArrowLeft className="h-5 w-5" /></Link></Button>
+          <h1 className="text-xl font-bold">My Orders</h1>
+        </div>
 
         <Card className="p-3 mb-4">
           <div className="flex flex-col sm:flex-row gap-2">

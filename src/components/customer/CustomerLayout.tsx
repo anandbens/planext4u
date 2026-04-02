@@ -90,7 +90,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
     { label: "Referrals", icon: Gift, to: "/app/referrals" },
     { label: "KYC Verification", icon: Shield, to: "/app/kyc" },
     { label: "Saved Addresses", icon: MapPinned, to: "/app/profile/edit" },
-    { label: "Become a Seller", icon: ShoppingBag, to: "/vendor/login" },
+    { label: "Become a Seller", icon: ShoppingBag, to: "/app/vendor-register" },
   ];
 
   return (

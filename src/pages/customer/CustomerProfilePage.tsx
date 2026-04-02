@@ -14,9 +14,11 @@ import { toast } from "sonner";
 export default function CustomerProfilePage() {
   const { customerUser, customerLogout } = useAuth();
   const navigate = useNavigate();
+  const customerId = customerUser?.customer_id || customerUser?.id || '';
   const { data: profile, isLoading } = useQuery({
-    queryKey: ["customerProfile"],
-    queryFn: () => api.getCustomerProfile("USR-001"),
+    queryKey: ["customerProfile", customerId],
+    queryFn: () => api.getCustomerProfile(customerId),
+    enabled: !!customerId,
   });
 
   const handleLogout = () => {

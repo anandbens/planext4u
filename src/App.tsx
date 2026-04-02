@@ -68,6 +68,7 @@ import CustomerClassifiedsPage from "./pages/customer/CustomerClassifiedsPage";
 import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
 import CustomerClassifiedDetailPage from "./pages/customer/CustomerClassifiedDetailPage";
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
+import VendorRegisterPage from "./pages/customer/VendorRegisterPage";
 import CustomerPhoneLoginPage from "./pages/customer/CustomerPhoneLoginPage";
 import SetLocationPage from "./pages/customer/SetLocationPage";
 import TermsPage from "./pages/customer/TermsPage";
@@ -221,6 +222,7 @@ const App = () => (
             <Route path="/app/classifieds" element={<CustomerPage><CustomerClassifiedsPage /></CustomerPage>} />
             <Route path="/app/classifieds/post" element={<CustomerPage><CustomerPostAdPage /></CustomerPage>} />
             <Route path="/app/classifieds/:id" element={<CustomerPage><CustomerClassifiedDetailPage /></CustomerPage>} />
+            <Route path="/app/vendor-register" element={<CustomerPage><VendorRegisterPage /></CustomerPage>} />
 
             {/* Social routes */}
             <Route path="/app/social" element={<CustomerPage><SocialFeedPage /></CustomerPage>} />
