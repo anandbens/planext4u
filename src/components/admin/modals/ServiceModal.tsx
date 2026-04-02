@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Wrench, DollarSign, Trash2, ImageIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MOCK_SERVICE_CATEGORIES, MOCK_SERVICE_VENDORS } from "@/lib/mockData";
-import { ImageUploader } from "@/components/admin/ImageUploader";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 
 interface ServiceModalProps {
   service: Service | null;

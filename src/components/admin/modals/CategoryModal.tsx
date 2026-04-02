@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { ImageUploader } from "@/components/admin/ImageUploader";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 
 interface CategoryModalProps {
   category: Category | null;
