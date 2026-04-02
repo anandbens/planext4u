@@ -216,24 +216,19 @@ export default function CustomerCartPage() {
                   <Card className="p-3 mt-3">
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm">Deliver To: <strong>{selectedAddress ? `${selectedAddress.label} - ${selectedAddress.address_line}, ${selectedAddress.city} ${selectedAddress.pincode}` : "Select address"}</strong></span>
-                      </div>
-                      <div className="flex gap-1 shrink-0">
-                        {selectedAddress && (
-                          <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => editAddress(selectedAddress)}>Edit</Button>
+                        <p className="text-xs text-muted-foreground mb-0.5">Deliver To</p>
+                        {selectedAddress ? (
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px] h-5 shrink-0">{selectedAddress.label}</Badge>
+                            <span className="text-sm font-medium truncate">{selectedAddress.address_line}, {selectedAddress.city} - {selectedAddress.pincode}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">No address selected</span>
                         )}
-                        <Button variant="outline" size="sm" className="text-xs h-8" onClick={() => {
-                          if (addresses.length > 0) {
-                            const next = addresses.find(a => a.id !== selectedAddressId) || addresses[0];
-                            setSelectedAddressId(next.id);
-                            toast.success(`Switched to ${next.label}`);
-                          } else {
-                            setEditingAddress(null);
-                            setAddressForm({ label: "Home", type: "home", address_line: "", city: "", pincode: "" });
-                            setShowAddressDialog(true);
-                          }
-                        }}>Change</Button>
                       </div>
+                      <Button variant="outline" size="sm" className="text-xs h-8 shrink-0 ml-2" onClick={() => setShowAddressDialog(true)}>
+                        {selectedAddress ? "Change" : "Add"}
+                      </Button>
                     </div>
                   </Card>
 
