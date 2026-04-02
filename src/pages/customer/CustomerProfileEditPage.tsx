@@ -280,7 +280,7 @@ export default function CustomerProfileEditPage() {
 
   const openEditAddress = (addr: SavedAddress) => {
     setEditingAddress(addr);
-    setAddrForm({ label: addr.label, type: addr.type, apartment: addr.address_line, houseNo: "", landmark: "" });
+    setAddrForm({ label: addr.label, type: addr.type, apartment: addr.address_line, houseNo: "", landmark: "", street: "" });
     setMapAddress(null); setMapRef(null); setMarkerRef(null); setSearchQuery(addr.address_line);
     setShowMapModal(true);
     setTimeout(async () => {
