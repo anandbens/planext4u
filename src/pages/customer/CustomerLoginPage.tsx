@@ -94,7 +94,7 @@ export default function CustomerLoginPage() {
       await customerLogin("customer@planext4u.com", "P4u@Customer2026");
       toast.success("Welcome to Planext4u!");
       setTimeout(() => navigate("/app", { replace: true }), 500);
-    } catch (err: any) { toast.error(err.message || "Login failed. Seed demo users first."); }
+    } catch (err: any) { toast.error(err.message || "Login failed."); }
     finally { setLoading(false); }
   };
 
