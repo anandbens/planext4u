@@ -256,7 +256,7 @@ export default function CustomerProductPage() {
       </div>
 
       {/* Sticky Bottom Bar - mobile - positioned above bottom nav */}
-      <div className="fixed bottom-14 left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
+      <div className="fixed bottom-16 left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden">
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <div className="flex items-center gap-2">
