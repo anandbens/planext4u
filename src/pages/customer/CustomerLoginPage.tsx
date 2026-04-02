@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Mail, Database, Phone, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Phone, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,7 @@ import { lovable } from "@/integrations/lovable/index";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
-  const { customerLogin, seedDemoUsers } = useAuth();
+  const { customerLogin } = useAuth();
   const navigate = useNavigate();
   const [loginMethod, setLoginMethod] = useState<"otp" | "password">("otp");
 
@@ -20,7 +20,6 @@ export default function CustomerLoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [seeding, setSeeding] = useState(false);
 
   // OTP login state
   const [phone, setPhone] = useState("");
@@ -89,23 +88,6 @@ export default function CustomerLoginPage() {
     } finally { setLoading(false); }
   };
 
-  const quickLogin = async () => {
-    setLoading(true);
-    try {
-      await customerLogin("customer@planext4u.com", "P4u@Customer2026");
-      toast.success("Welcome to Planext4u!");
-      setTimeout(() => navigate("/app", { replace: true }), 500);
-    } catch (err: any) { toast.error(err.message || "Login failed. Seed demo users first."); }
-    finally { setLoading(false); }
-  };
-
-  const handleSeedUsers = async () => {
-    setSeeding(true);
-    try { await seedDemoUsers(); toast.success("Demo users created!"); }
-    catch (err: any) { toast.error("Failed: " + (err.message || "Unknown error")); }
-    finally { setSeeding(false); }
-  };
-
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
@@ -149,11 +131,6 @@ export default function CustomerLoginPage() {
         </div>
 
         <div className="space-y-4 max-w-sm mx-auto">
-          <Button variant="outline" className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/10" onClick={handleSeedUsers} disabled={seeding}>
-            <Database className="h-4 w-4" />
-            {seeding ? "Creating demo accounts..." : "🔧 First time? Seed Demo Users"}
-          </Button>
-
           {loginMethod === "otp" ? (
             <>
               {!otpSent ? (
@@ -214,10 +191,6 @@ export default function CustomerLoginPage() {
                   {loading ? "Signing in..." : "Sign In →"}
                 </Button>
               </form>
-              <button onClick={quickLogin} disabled={loading} className="w-full bg-secondary/50 rounded-xl border border-border/50 p-3 text-center hover:border-primary/40 transition-all">
-                <p className="text-xs font-semibold">Quick Demo Login</p>
-                <p className="text-[10px] text-muted-foreground">customer@planext4u.com / P4u@Customer2026</p>
-              </button>
             </>
           )}
         </div>

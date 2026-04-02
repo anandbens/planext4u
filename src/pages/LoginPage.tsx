@@ -3,26 +3,18 @@ import { useAuth } from "@/lib/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, LogIn, Shield, Banknote, ShoppingCart, Database } from "lucide-react";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import p4uLogo from "@/assets/p4u-logo.png";
 
-const QUICK_LOGINS = [
-  { email: "admin@planext4u.com", password: "P4u@Admin2026", role: "Admin", icon: Shield, color: "bg-brand-dark", desc: "Full access" },
-  { email: "finance@planext4u.com", password: "P4u@Finance2026", role: "Finance", icon: Banknote, color: "bg-success", desc: "Reports & Tax" },
-  { email: "sales@planext4u.com", password: "P4u@Sales2026", role: "Sales", icon: ShoppingCart, color: "bg-info", desc: "Orders & CRM" },
-];
-
 export default function LoginPage() {
-  const { login, seedDemoUsers } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [seeding, setSeeding] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) { toast.error("Please enter email and password"); return; }
@@ -33,31 +25,8 @@ export default function LoginPage() {
       // Small delay to allow onAuthStateChange to fire
       setTimeout(() => navigate("/", { replace: true }), 500);
     } catch (err: any) {
-      toast.error(err.message || "Invalid credentials. Make sure demo users are seeded first.");
+      toast.error(err.message || "Invalid credentials.");
     } finally { setLoading(false); }
-  };
-
-  const quickLogin = async (cred: typeof QUICK_LOGINS[0]) => {
-    setEmail(cred.email);
-    setPassword(cred.password);
-    setLoading(true);
-    try {
-      await login(cred.email, cred.password);
-      toast.success(`Welcome, ${cred.role}!`);
-      setTimeout(() => navigate("/", { replace: true }), 500);
-    } catch (err: any) {
-      toast.error(err.message || "Login failed. Have you seeded demo users?");
-    } finally { setLoading(false); }
-  };
-
-  const handleSeedUsers = async () => {
-    setSeeding(true);
-    try {
-      await seedDemoUsers();
-      toast.success("Demo users created! You can now login with the quick login buttons.");
-    } catch (err: any) {
-      toast.error("Failed to seed users: " + (err.message || "Unknown error"));
-    } finally { setSeeding(false); }
   };
 
   return (
@@ -84,17 +53,6 @@ export default function LoginPage() {
 
           {/* Form */}
           <div className="p-6 space-y-4">
-            {/* Seed Button */}
-            <Button
-              variant="outline"
-              className="w-full gap-2 border-brand-amber/30 text-brand-amber hover:bg-brand-amber/10"
-              onClick={handleSeedUsers}
-              disabled={seeding}
-            >
-              <Database className="h-4 w-4" />
-              {seeding ? "Creating demo accounts..." : "🔧 First time? Seed Demo Users"}
-            </Button>
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input placeholder="Admin Email" value={email} onChange={(e) => setEmail(e.target.value)}
                 className="h-12 rounded-xl border-border/60 focus:border-brand-teal" type="email" />
@@ -111,23 +69,6 @@ export default function LoginPage() {
                 {loading ? "Signing in..." : <><LogIn className="h-4 w-4" /> Sign In</>}
               </Button>
             </form>
-
-            {/* Quick Login */}
-            <div className="border-t border-border/50 pt-4">
-              <p className="text-xs text-muted-foreground text-center mb-3">Quick Login (Demo)</p>
-              <div className="grid grid-cols-3 gap-2">
-                {QUICK_LOGINS.map((cred) => (
-                  <button key={cred.role} onClick={() => quickLogin(cred)} disabled={loading}
-                    className="bg-secondary/50 rounded-xl border border-border/50 p-3 text-center hover:border-brand-teal/40 hover:shadow-md transition-all group">
-                    <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center mx-auto mb-1.5", cred.color)}>
-                      <cred.icon className="h-4 w-4 text-white" />
-                    </div>
-                    <p className="text-xs font-semibold group-hover:text-brand-teal transition-colors">{cred.role}</p>
-                    <p className="text-[9px] text-muted-foreground">{cred.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="text-center space-y-2 pt-2">
               <Link to="/app/login" className="text-xs text-brand-teal hover:underline block">Customer Login →</Link>

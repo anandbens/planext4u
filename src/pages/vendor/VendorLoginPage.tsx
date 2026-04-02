@@ -3,14 +3,14 @@ import { useAuth } from "@/lib/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, LogIn, Store, Database, Home, ShoppingBag, Wrench, User, Phone, ArrowRight, ShieldCheck, Loader2, Mail } from "lucide-react";
+import { Eye, EyeOff, LogIn, Store, Home, ShoppingBag, Wrench, User, Phone, ArrowRight, ShieldCheck, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import p4uLogo from "@/assets/p4u-logo.png";
 
 export default function VendorLoginPage() {
-  const { vendorLogin, seedDemoUsers } = useAuth();
+  const { vendorLogin } = useAuth();
   const navigate = useNavigate();
   const [loginMethod, setLoginMethod] = useState<"otp" | "password">("otp");
 
@@ -19,7 +19,6 @@ export default function VendorLoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [seeding, setSeeding] = useState(false);
 
   // OTP state
   const [phone, setPhone] = useState("");
@@ -78,20 +77,6 @@ export default function VendorLoginPage() {
     } finally { setLoading(false); }
   };
 
-  const quickLogin = async () => {
-    setEmail("vendor@planext4u.com"); setPassword("P4u@Vendor2026"); setLoading(true);
-    try { await vendorLogin("vendor@planext4u.com", "P4u@Vendor2026"); toast.success("Welcome, TechMart!"); setTimeout(() => navigate("/vendor", { replace: true }), 500); }
-    catch (err: any) { toast.error(err.message || "Login failed. Seed demo users first."); }
-    finally { setLoading(false); }
-  };
-
-  const handleSeedUsers = async () => {
-    setSeeding(true);
-    try { await seedDemoUsers(); toast.success("Demo users created!"); }
-    catch (err: any) { toast.error("Failed: " + (err.message || "Unknown error")); }
-    finally { setSeeding(false); }
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-brand-dark via-brand-dark/90 to-brand-teal/30">
       <nav className="w-full bg-card/10 backdrop-blur-sm border-b border-white/10">
@@ -145,10 +130,6 @@ export default function VendorLoginPage() {
                 </Button>
               </div>
 
-              <Button variant="outline" className="w-full gap-2 border-brand-amber/30 text-brand-amber hover:bg-brand-amber/10" onClick={handleSeedUsers} disabled={seeding}>
-                <Database className="h-4 w-4" />
-                {seeding ? "Creating demo accounts..." : "🔧 First time? Seed Demo Users"}
-              </Button>
 
               {loginMethod === "otp" ? (
                 <>
@@ -204,10 +185,6 @@ export default function VendorLoginPage() {
                       {loading ? "Signing in..." : <><LogIn className="h-4 w-4" /> Sign In</>}
                     </Button>
                   </form>
-                  <button onClick={quickLogin} disabled={loading} className="w-full bg-secondary/50 rounded-xl border border-border/50 p-3 text-center hover:border-brand-teal/40 transition-all">
-                    <p className="text-xs font-semibold">Quick Demo Login</p>
-                    <p className="text-[10px] text-muted-foreground">vendor@planext4u.com / P4u@Vendor2026</p>
-                  </button>
                 </>
               )}
             </div>
