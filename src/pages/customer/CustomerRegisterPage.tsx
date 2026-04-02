@@ -1,18 +1,90 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { MapPin, Gift, User, Mail, Phone, ArrowLeft, Loader2, ShieldCheck, ArrowRight } from "lucide-react";
+import { MapPin, Gift, User, Mail, Phone, ArrowLeft, Loader2, ShieldCheck, ArrowRight, ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { logActivity } from "@/lib/auth";
 import { sendOTP, verifyOTP, clearRecaptcha } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
+
+// T&C content component
+function TermsContent() {
+  return (
+    <div className="prose prose-sm dark:prose-invert max-w-none">
+      <h2 className="text-lg font-bold text-primary">Terms & Conditions</h2>
+      <p className="text-muted-foreground text-xs">Last updated: April 2026</p>
+      <h3>1. Acceptance of Terms</h3>
+      <p>By accessing or using the Planext4u application ("App"), you agree to be bound by these Terms & Conditions ("Terms"). If you do not agree, do not use the App.</p>
+      <h3>2. Description of Service</h3>
+      <p>Planext4u is a super-app platform that provides e-commerce, property listings, classifieds, social networking, and service bookings. The platform connects customers with vendors and service providers.</p>
+      <h3>3. User Accounts</h3>
+      <ul><li>You must provide accurate and complete information during registration.</li><li>You are responsible for maintaining the confidentiality of your account credentials.</li><li>Each mobile number may be associated with only one account.</li><li>You must be at least 18 years old to create an account.</li><li>We reserve the right to suspend or terminate accounts that violate these Terms.</li></ul>
+      <h3>4. Orders & Payments</h3>
+      <ul><li>All prices are listed in Indian Rupees (INR) unless otherwise stated.</li><li>Payments are processed through secure payment gateways (Razorpay).</li><li>Once an order is confirmed and payment is processed, cancellation is subject to our cancellation policy.</li><li>Planext4u is not responsible for the quality or delivery of products/services provided by third-party vendors.</li></ul>
+      <h3>5. Wallet Points & Referrals</h3>
+      <ul><li>Wallet points are earned through registration, referrals, and promotional activities.</li><li>Points can be redeemed during checkout subject to maximum redemption limits per product/service.</li><li>Points have no cash value and cannot be transferred or sold.</li><li>Planext4u reserves the right to modify the points program at any time.</li></ul>
+      <h3>6. Property Listings</h3>
+      <ul><li>Users may post property listings for sale, rent, or PG accommodation.</li><li>All listings are subject to moderation and approval.</li><li>Planext4u does not guarantee the accuracy of property listings and is not a party to any property transaction.</li><li>Users are responsible for verifying property details independently.</li></ul>
+      <h3>7. Classified Ads</h3>
+      <ul><li>Users may post classified ads for buying and selling goods.</li><li>Prohibited items include illegal goods, weapons, counterfeit items, and regulated substances.</li><li>Planext4u reserves the right to remove any ad without notice.</li></ul>
+      <h3>8. Social Features</h3>
+      <ul><li>Users must not post content that is abusive, defamatory, obscene, or violates any law.</li><li>Planext4u may moderate and remove content at its discretion.</li><li>Users retain ownership of their content but grant Planext4u a license to display it on the platform.</li></ul>
+      <h3>9. Intellectual Property</h3>
+      <p>All content, trademarks, logos, and design elements of the App are the property of Planext4u and its licensors. Unauthorized use is prohibited.</p>
+      <h3>10. Limitation of Liability</h3>
+      <p>Planext4u is provided "as is" without warranties. We shall not be liable for any indirect, incidental, or consequential damages arising from the use of our services.</p>
+      <h3>11. Governing Law</h3>
+      <p>These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in Coimbatore, Tamil Nadu.</p>
+      <h3>12. Changes to Terms</h3>
+      <p>We may update these Terms at any time. Continued use of the App constitutes acceptance of the revised Terms.</p>
+      <h3>13. Contact</h3>
+      <p>For questions about these Terms, contact us at <strong>support@planext4u.com</strong>.</p>
+    </div>
+  );
+}
+
+function PrivacyContent() {
+  return (
+    <div className="prose prose-sm dark:prose-invert max-w-none">
+      <h2 className="text-lg font-bold text-primary mt-8 pt-6 border-t">Privacy Policy</h2>
+      <p className="text-muted-foreground text-xs">Last updated: April 2026</p>
+      <h3>1. Introduction</h3>
+      <p>Planext4u ("we", "our", "us") is committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and share your data when you use our application.</p>
+      <h3>2. Information We Collect</h3>
+      <h4>2.1 Information You Provide</h4>
+      <ul><li><strong>Account Data:</strong> Name, email address, mobile number, occupation, state, and district.</li><li><strong>Address Data:</strong> Delivery addresses, GPS coordinates, landmarks.</li><li><strong>Transaction Data:</strong> Order details, payment information (processed securely via Razorpay).</li><li><strong>Content:</strong> Posts, comments, photos, and messages shared on social features.</li><li><strong>Property Listings:</strong> Property details, images, and contact information.</li><li><strong>KYC Data:</strong> Identity documents submitted for verification.</li></ul>
+      <h4>2.2 Information Collected Automatically</h4>
+      <ul><li><strong>Device Information:</strong> Device type, operating system, browser type.</li><li><strong>Location Data:</strong> GPS coordinates when you enable location services.</li><li><strong>Usage Data:</strong> Pages viewed, features used, interaction patterns.</li><li><strong>Log Data:</strong> IP address, timestamps, error logs.</li></ul>
+      <h3>3. How We Use Your Information</h3>
+      <ul><li>To create and manage your account.</li><li>To process orders, payments, and deliveries.</li><li>To show relevant products, services, and properties based on your location.</li><li>To enable social features (posts, messaging, follows).</li><li>To send notifications about orders, promotions, and platform updates.</li><li>To process referrals and wallet point transactions.</li><li>To improve our services through analytics.</li><li>To prevent fraud and ensure platform security.</li></ul>
+      <h3>4. Data Sharing</h3>
+      <ul><li><strong>Vendors:</strong> Your name, delivery address, and order details are shared with vendors to fulfil orders.</li><li><strong>Payment Processors:</strong> Payment data is shared with Razorpay for transaction processing.</li><li><strong>Property Enquiries:</strong> Your contact details may be shared with property owners when you enquire about a listing.</li><li><strong>Legal Requirements:</strong> We may disclose data if required by law or to protect our rights.</li><li>We do <strong>not</strong> sell your personal information to third parties.</li></ul>
+      <h3>5. Data Storage & Security</h3>
+      <ul><li>Your data is stored on secure cloud servers.</li><li>We use encryption (TLS/SSL) for data in transit.</li><li>Access to personal data is restricted to authorized personnel only.</li><li>We retain your data for as long as your account is active or as required by law.</li></ul>
+      <h3>6. Your Rights</h3>
+      <ul><li><strong>Access:</strong> You can view your personal data through your profile settings.</li><li><strong>Correction:</strong> You can update your information at any time.</li><li><strong>Deletion:</strong> You can request account deletion by contacting support.</li><li><strong>Data Portability:</strong> You can request a copy of your data.</li><li><strong>Opt-out:</strong> You can opt out of promotional communications.</li></ul>
+      <h3>7. Cookies & Tracking</h3>
+      <p>We use local storage and session data to maintain your login state and preferences. We do not use third-party tracking cookies for advertising purposes.</p>
+      <h3>8. Children's Privacy</h3>
+      <p>Our services are not intended for users under 18 years of age. We do not knowingly collect data from minors.</p>
+      <h3>9. Third-Party Services</h3>
+      <p>Our App may contain links to third-party websites or services. We are not responsible for their privacy practices. We recommend reviewing their privacy policies.</p>
+      <h3>10. Changes to This Policy</h3>
+      <p>We may update this Privacy Policy periodically. We will notify you of significant changes through the App or via email.</p>
+      <h3>11. Contact Us</h3>
+      <p>For privacy-related queries, contact us at:</p>
+      <ul><li>Email: <strong>privacy@planext4u.com</strong></li><li>Support: <strong>support@planext4u.com</strong></li></ul>
+    </div>
+  );
+}
 
 export default function CustomerRegisterPage() {
   const navigate = useNavigate();
@@ -24,6 +96,11 @@ export default function CustomerRegisterPage() {
   const [states, setStates] = useState<{ id: string; name: string; code: string }[]>([]);
   const [districts, setDistricts] = useState<{ id: string; name: string }[]>([]);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  // T&C popup state
+  const [showTermsPopup, setShowTermsPopup] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const [otpStep, setOtpStep] = useState<"form" | "otp">("form");
   const [otp, setOtp] = useState("");
@@ -70,29 +147,10 @@ export default function CustomerRegisterPage() {
   };
 
   const checkMobileUnique = async (): Promise<boolean> => {
-    const { data } = await supabase
-      .from("customers")
-      .select("id")
-      .eq("mobile", `+91${form.mobile}`)
-      .maybeSingle();
-    
-    if (data) {
-      toast.error("This mobile number is already registered. Please login instead.");
-      return false;
-    }
-
-    // Also check without country code
-    const { data: data2 } = await supabase
-      .from("customers")
-      .select("id")
-      .eq("mobile", form.mobile)
-      .maybeSingle();
-
-    if (data2) {
-      toast.error("This mobile number is already registered. Please login instead.");
-      return false;
-    }
-
+    const { data } = await supabase.from("customers").select("id").eq("mobile", `+91${form.mobile}`).maybeSingle();
+    if (data) { toast.error("This mobile number is already registered. Please login instead."); return false; }
+    const { data: data2 } = await supabase.from("customers").select("id").eq("mobile", form.mobile).maybeSingle();
+    if (data2) { toast.error("This mobile number is already registered. Please login instead."); return false; }
     return true;
   };
 
@@ -100,10 +158,8 @@ export default function CustomerRegisterPage() {
     if (!validateForm()) return;
     setOtpLoading(true);
     try {
-      // Check mobile uniqueness before sending OTP
       const isUnique = await checkMobileUnique();
       if (!isUnique) { setOtpLoading(false); return; }
-
       await sendOTP(`+91${form.mobile}`);
       setOtpStep("otp");
       setTimer(30);
@@ -123,15 +179,33 @@ export default function CustomerRegisterPage() {
       await verifyOTP(otp);
       await api.registerCustomer({ ...form, city: form.district });
       toast.success("🎉 Registration successful!", { duration: 5000 });
-      setTimeout(() => toast.info("📧 Welcome email sent to " + form.email, { description: "Check your inbox for activation link.", duration: 6000 }), 1000);
-      setTimeout(() => toast.info("📱 Welcome SMS sent to " + form.mobile, { description: "You've earned 200 welcome points!", duration: 5000 }), 2500);
       logActivity('registration', `New customer registered: ${form.name} (${form.email})`);
-      navigate("/app/login");
+      // Redirect to set-location page immediately after registration
+      navigate("/app/set-location", { replace: true });
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
       else if (err.code === "auth/code-expired") toast.error("OTP expired.");
       else toast.error(err.message || "Registration failed");
     } finally { setLoading(false); }
+  };
+
+  // Handle scroll tracking for T&C popup
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 30;
+    if (atBottom) setHasScrolledToBottom(true);
+  }, []);
+
+  const openTermsPopup = () => {
+    setHasScrolledToBottom(false);
+    setShowTermsPopup(true);
+  };
+
+  const handleAgreeTerms = () => {
+    setAcceptedTerms(true);
+    setShowTermsPopup(false);
+    toast.success("Terms & Privacy Policy accepted ✓");
   };
 
   return (
@@ -158,9 +232,7 @@ export default function CustomerRegisterPage() {
                 <Label className="text-xs text-muted-foreground mb-1 block">State *</Label>
                 <Select value={form.state} onValueChange={v => setForm({...form, state: v, district: ""})}>
                   <SelectTrigger className="h-11"><SelectValue placeholder="Select State" /></SelectTrigger>
-                  <SelectContent>
-                    {states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
 
@@ -168,9 +240,7 @@ export default function CustomerRegisterPage() {
                 <Label className="text-xs text-muted-foreground mb-1 block">District *</Label>
                 <Select value={form.district} onValueChange={v => setForm({...form, district: v})} disabled={!form.state}>
                   <SelectTrigger className="h-11"><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
-                  <SelectContent>
-                    {districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
 
@@ -180,9 +250,7 @@ export default function CustomerRegisterPage() {
                 <Label className="text-xs text-muted-foreground mb-1 block">Occupation</Label>
                 <Select value={form.occupation} onValueChange={v => setForm({...form, occupation: v})}>
                   <SelectTrigger className="h-11"><SelectValue placeholder="Select Occupation" /></SelectTrigger>
-                  <SelectContent>
-                    {occupations.map(o => <SelectItem key={o.id} value={o.name}>{o.name}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{occupations.map(o => <SelectItem key={o.id} value={o.name}>{o.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
 
@@ -192,19 +260,20 @@ export default function CustomerRegisterPage() {
 
               <div className="relative"><Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Referral Code (optional)" value={form.referral_code} onChange={e => setForm({...form, referral_code: e.target.value.toUpperCase()})} className="pl-10 h-11" /></div>
 
-              {/* Terms & Privacy acceptance */}
+              {/* Terms & Privacy - click to open popup */}
               <div className="flex items-start gap-3 p-3 rounded-lg bg-secondary/30">
                 <Checkbox
                   id="terms"
                   checked={acceptedTerms}
-                  onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                  disabled={!acceptedTerms}
                   className="mt-0.5"
                 />
-                <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                <label className="text-xs text-muted-foreground leading-relaxed cursor-pointer" onClick={openTermsPopup}>
                   I have read and agree to the{" "}
-                  <Link to="/app/terms" className="text-primary font-semibold hover:underline" target="_blank">Terms & Conditions</Link>{" "}
+                  <span className="text-primary font-semibold underline">Terms & Conditions</span>{" "}
                   and{" "}
-                  <Link to="/app/privacy" className="text-primary font-semibold hover:underline" target="_blank">Privacy Policy</Link>.
+                  <span className="text-primary font-semibold underline">Privacy Policy</span>.
+                  {!acceptedTerms && <span className="block text-[10px] text-primary mt-1">👆 Tap to read and accept</span>}
                 </label>
               </div>
 
@@ -243,6 +312,41 @@ export default function CustomerRegisterPage() {
         </Card>
       </div>
       <div id="recaptcha-container" />
+
+      {/* Terms & Privacy Popup */}
+      <Dialog open={showTermsPopup} onOpenChange={setShowTermsPopup}>
+        <DialogContent className="max-w-lg p-0 gap-0 max-h-[85vh] flex flex-col">
+          <DialogHeader className="p-4 border-b shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <ScrollText className="h-5 w-5 text-primary" />
+              Terms & Privacy Policy
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">Please scroll to the bottom to read all terms before accepting.</p>
+          </DialogHeader>
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto p-5"
+          >
+            <TermsContent />
+            <PrivacyContent />
+            <div className="h-4" />
+          </div>
+          <div className="p-4 border-t bg-card shrink-0 space-y-2">
+            {!hasScrolledToBottom && (
+              <p className="text-xs text-destructive text-center animate-pulse">⬇️ Please scroll down to read all terms before accepting</p>
+            )}
+            <Button
+              onClick={handleAgreeTerms}
+              disabled={!hasScrolledToBottom}
+              className="w-full h-11 gap-2"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              {hasScrolledToBottom ? "I Agree to Terms & Privacy Policy" : "Scroll down to accept"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
