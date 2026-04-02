@@ -285,7 +285,7 @@ export default function CustomerProfileEditPage() {
             <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Full Name</label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="h-11" /></div>
             <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Email</label><Input value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="h-11" type="email" /></div>
             <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Mobile</label><Input value={form.mobile} onChange={e => setForm({...form, mobile: e.target.value})} className="h-11" disabled /></div>
-            <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Date of Birth</label><Input value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} className="h-11" type="date" /></div>
+            <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Date of Birth</label><Input value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} className="h-11" type="date" max="2016-12-31" /></div>
             <div><label className="text-xs font-medium text-muted-foreground mb-1 block">Gender</label>
               <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="w-full h-11 rounded-md border border-input bg-background px-3 text-sm"><option>Male</option><option>Female</option><option>Other</option></select>
             </div>
