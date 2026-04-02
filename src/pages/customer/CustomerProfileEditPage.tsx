@@ -45,8 +45,8 @@ export default function CustomerProfileEditPage() {
   const [showMapModal, setShowMapModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
   const [locating, setLocating] = useState(false);
-  const [mapAddress, setMapAddress] = useState<{ lat: number; lng: number; formatted: string; area: string; city: string; pincode: string } | null>(null);
-  const [addrForm, setAddrForm] = useState({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "" });
+  const [mapAddress, setMapAddress] = useState<{ lat: number; lng: number; formatted: string; area: string; city: string; pincode: string; street: string; district: string; state: string; country: string } | null>(null);
+  const [addrForm, setAddrForm] = useState({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "", street: "" });
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -98,15 +98,12 @@ export default function CustomerProfileEditPage() {
     if (!form.name.trim() || form.name.length < 2) return "Name must be at least 2 characters";
     if (form.name.length > 100) return "Name must be under 100 characters";
     if (!/^[a-zA-Z\s]+$/.test(form.name)) return "Name can only contain letters and spaces";
-    if (!form.mobile || !/^\d{10}$/.test(form.mobile)) return "Valid 10-digit mobile required";
-    if (form.email && !/\S+@\S+\.\S+/.test(form.email)) return "Invalid email format";
+    if (!form.mobile || !/^\d{10}$/.test(form.mobile.replace(/\+91/g, ''))) return "Valid 10-digit mobile required";
+    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) return "Valid email is required";
     if (form.dob) {
       const dob = new Date(form.dob);
-      const today = new Date();
-      const age = today.getFullYear() - dob.getFullYear();
-      const monthDiff = today.getMonth() - dob.getMonth();
-      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate()) ? age - 1 : age;
-      if (actualAge < 13) return "You must be at least 13 years old";
+      const maxDate = new Date(2016, 11, 31); // Dec 31, 2016
+      if (dob > maxDate) return "Date of birth must be on or before December 31, 2016";
     }
     if (form.about && form.about.length > 1000) return "About must be under 1000 characters";
     return null;
@@ -139,18 +136,33 @@ export default function CustomerProfileEditPage() {
     if (err) { toast.error(err); return; }
     
     setLoading(true);
-    const updateData: any = {
-      name: form.name, email: form.email, mobile: form.mobile, occupation: form.occupation,
-      gender: form.gender, about: form.about, profile_photo: profilePhoto,
-      profile_completeness: completeness,
-    };
-    if (form.dob) updateData.dob = form.dob;
-    const { error } = await supabase.from('customers').update(updateData).eq('id', customerId);
-    if (error) { toast.error("Failed to save: " + error.message); setLoading(false); return; }
-    logActivity('profile_update', `Profile updated: ${form.name}`);
-    toast.success("Profile updated successfully!");
-    setLoading(false);
-    navigate("/app/profile");
+    try {
+      // Check phone uniqueness (excluding current user)
+      const cleanMobile = form.mobile.replace(/\+91/g, '');
+      const { data: phoneDup } = await supabase.from('customers').select('id').eq('mobile', cleanMobile).neq('id', customerId).maybeSingle();
+      const { data: phoneDup2 } = await supabase.from('customers').select('id').eq('mobile', `+91${cleanMobile}`).neq('id', customerId).maybeSingle();
+      if (phoneDup || phoneDup2) { toast.error("This phone number is already used by another account"); setLoading(false); return; }
+
+      // Check email uniqueness (excluding current user)
+      const { data: emailDup } = await supabase.from('customers').select('id').eq('email', form.email).neq('id', customerId).maybeSingle();
+      if (emailDup) { toast.error("This email is already used by another account"); setLoading(false); return; }
+
+      const updateData: any = {
+        name: form.name, email: form.email, mobile: cleanMobile, occupation: form.occupation,
+        gender: form.gender, about: form.about, profile_photo: profilePhoto,
+        profile_completeness: completeness,
+      };
+      if (form.dob) updateData.dob = form.dob;
+      const { error } = await supabase.from('customers').update(updateData).eq('id', customerId);
+      if (error) { toast.error("Failed to save: " + error.message); setLoading(false); return; }
+      logActivity('profile_update', `Profile updated: ${form.name}`);
+      toast.success("Profile updated successfully!");
+      navigate("/app/profile");
+    } catch (saveErr: any) {
+      toast.error(saveErr.message || "Failed to save profile");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // --- Map & Address Logic ---
@@ -165,13 +177,17 @@ export default function CustomerProfileEditPage() {
         const area = get("sublocality_level_1") || get("sublocality") || get("neighborhood") || get("locality");
         const city = get("locality") || get("administrative_area_level_2") || "";
         const pincode = get("postal_code") || "";
-        setMapAddress({ lat, lng, formatted: result.formatted_address || "", area, city, pincode });
-        setAddrForm(prev => ({ ...prev, apartment: area }));
+        const streetName = get("route") || "";
+        const districtName = get("administrative_area_level_2") || "";
+        const stateName = get("administrative_area_level_1") || "";
+        const countryName = get("country") || "";
+        setMapAddress({ lat, lng, formatted: result.formatted_address || "", area, city, pincode, street: streetName, district: districtName, state: stateName, country: countryName });
+        setAddrForm(prev => ({ ...prev, apartment: area, street: streetName }));
       } else {
-        setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
+        setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "", street: "", district: "", state: "", country: "" });
       }
     } catch {
-      setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
+      setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "", street: "", district: "", state: "", country: "" });
     }
   }, []);
 
@@ -256,7 +272,7 @@ export default function CustomerProfileEditPage() {
 
   const openAddAddress = () => {
     setEditingAddress(null);
-    setAddrForm({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "" });
+    setAddrForm({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "", street: "" });
     setMapAddress(null); setMapRef(null); setMarkerRef(null); setSearchQuery("");
     setShowMapModal(true);
     setTimeout(() => getCurrentLocation(), 500);
@@ -264,7 +280,7 @@ export default function CustomerProfileEditPage() {
 
   const openEditAddress = (addr: SavedAddress) => {
     setEditingAddress(addr);
-    setAddrForm({ label: addr.label, type: addr.type, apartment: addr.address_line, houseNo: "", landmark: "" });
+    setAddrForm({ label: addr.label, type: addr.type, apartment: addr.address_line, houseNo: "", landmark: "", street: "" });
     setMapAddress(null); setMapRef(null); setMarkerRef(null); setSearchQuery(addr.address_line);
     setShowMapModal(true);
     setTimeout(async () => {
@@ -283,7 +299,8 @@ export default function CustomerProfileEditPage() {
 
   const saveAddress = async () => {
     if (!addrForm.apartment.trim()) { toast.error("Please enter apartment/road/area"); return; }
-    const addressLine = [addrForm.houseNo, addrForm.apartment, addrForm.landmark].filter(Boolean).join(", ");
+    if (!addrForm.houseNo.trim()) { toast.error("Please enter house/flat/block number"); return; }
+    const addressLine = [addrForm.houseNo, addrForm.street, addrForm.apartment, addrForm.landmark].filter(Boolean).join(", ");
     const city = mapAddress?.city || "";
     const pincode = mapAddress?.pincode || "";
 
@@ -318,12 +335,8 @@ export default function CustomerProfileEditPage() {
     loadAddresses();
   };
 
-  // Max DOB: must be at least 13 years old
-  const maxDob = (() => {
-    const d = new Date();
-    d.setFullYear(d.getFullYear() - 13);
-    return d.toISOString().split('T')[0];
-  })();
+  // Max DOB: must be on or before Dec 31, 2016
+  const maxDob = "2016-12-31";
 
   if (profileLoading) {
     return <CustomerLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></CustomerLayout>;
@@ -383,13 +396,13 @@ export default function CustomerProfileEditPage() {
               <Input value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="h-11" type="email" />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Mobile (verified)</label>
-              <Input value={form.mobile} className="h-11" disabled />
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Mobile *</label>
+              <Input value={form.mobile} onChange={e => setForm({...form, mobile: e.target.value.replace(/\D/g, '').slice(0, 10)})} className="h-11" type="tel" maxLength={10} inputMode="numeric" placeholder="10-digit mobile number" />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Date of Birth *</label>
               <Input value={form.dob} onChange={e => setForm({...form, dob: e.target.value})} className="h-11" type="date" max={maxDob} />
-              <p className="text-[10px] text-muted-foreground mt-0.5">Must be at least 13 years old</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Date of birth must be on or before Dec 31, 2016</p>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Gender</label>
@@ -489,12 +502,16 @@ export default function CustomerProfileEditPage() {
 
           <div className="p-4 space-y-3">
             <div>
-              <label className="text-xs font-semibold text-primary uppercase">Apartment / Road / Area*</label>
-              <Input value={addrForm.apartment} onChange={e => setAddrForm({...addrForm, apartment: e.target.value})} className="mt-1 h-10" placeholder="Enter area name" />
+              <label className="text-xs font-semibold text-muted-foreground uppercase">House / Flat / Block No *</label>
+              <Input value={addrForm.houseNo} onChange={e => setAddrForm({...addrForm, houseNo: e.target.value})} className="mt-1 h-10" placeholder="Enter house/flat number" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase">House / Flat / Block No</label>
-              <Input value={addrForm.houseNo} onChange={e => setAddrForm({...addrForm, houseNo: e.target.value})} className="mt-1 h-10" placeholder="Enter house/flat number" />
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Street / Road</label>
+              <Input value={addrForm.street} onChange={e => setAddrForm({...addrForm, street: e.target.value})} className="mt-1 h-10" placeholder="Street name" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-primary uppercase">Apartment / Road / Area *</label>
+              <Input value={addrForm.apartment} onChange={e => setAddrForm({...addrForm, apartment: e.target.value})} className="mt-1 h-10" placeholder="Enter area name" />
             </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground uppercase">Landmark</label>
@@ -503,11 +520,19 @@ export default function CustomerProfileEditPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">City</label>
-                <Input value={mapAddress?.city || ""} className="h-10" disabled />
+                <Input value={mapAddress?.city || ""} className="h-10 bg-secondary/20" disabled />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Pincode</label>
-                <Input value={mapAddress?.pincode || ""} className="h-10" disabled />
+                <Input value={mapAddress?.pincode || ""} className="h-10 bg-secondary/20" disabled />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">District</label>
+                <Input value={mapAddress?.district || ""} className="h-10 bg-secondary/20" disabled />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">State</label>
+                <Input value={mapAddress?.state || ""} className="h-10 bg-secondary/20" disabled />
               </div>
             </div>
 
@@ -523,7 +548,7 @@ export default function CustomerProfileEditPage() {
               </div>
             </div>
 
-            <Button onClick={saveAddress} className="w-full h-11 mt-2" disabled={!addrForm.apartment.trim()}>
+            <Button onClick={saveAddress} className="w-full h-11 mt-2" disabled={!addrForm.apartment.trim() || !addrForm.houseNo.trim()}>
               {editingAddress ? "Update Address" : "Save Address"}
             </Button>
           </div>

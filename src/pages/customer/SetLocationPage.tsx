@@ -29,6 +29,10 @@ export default function SetLocationPage() {
   const [landmark, setLandmark] = useState("");
   const [saveAs, setSaveAs] = useState<"home" | "work" | "other">("home");
   const [searchQuery, setSearchQuery] = useState("");
+  const [street, setStreet] = useState("");
+  const [district, setDistrict] = useState("");
+  const [state, setState] = useState("");
+  const [country, setCountry] = useState("");
   const mapInstanceRef = useRef<any>(null);
   const markerInstanceRef = useRef<any>(null);
 
@@ -45,8 +49,16 @@ export default function SetLocationPage() {
         const area = get("sublocality_level_1") || get("sublocality") || get("neighborhood") || get("locality");
         const city = get("locality") || get("administrative_area_level_2") || "";
         const pincode = get("postal_code") || "";
+        const routeName = get("route") || "";
+        const districtName = get("administrative_area_level_2") || "";
+        const stateName = get("administrative_area_level_1") || "";
+        const countryName = get("country") || "";
         setAddress({ lat, lng, formatted: result.formatted_address || `${lat}, ${lng}`, area, city, pincode });
         setApartment(area);
+        setStreet(routeName);
+        setDistrict(districtName);
+        setState(stateName);
+        setCountry(countryName);
       } else {
         setAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
       }
@@ -166,6 +178,7 @@ export default function SetLocationPage() {
   const handleSaveAndProceed = async () => {
     if (!address) { toast.error("Please set your location first"); return; }
     if (!apartment.trim()) { toast.error("Please enter your apartment/road/area"); return; }
+    if (!houseNo.trim()) { toast.error("Please enter your house/flat/block number"); return; }
 
     setLoading(true);
     try {
@@ -174,7 +187,7 @@ export default function SetLocationPage() {
         customer_id: customerId,
         label: saveAs === "home" ? "Home" : saveAs === "work" ? "Work" : "Other",
         type: saveAs,
-        address_line: [houseNo, apartment, landmark].filter(Boolean).join(", "),
+        address_line: [houseNo, street, apartment, landmark].filter(Boolean).join(", "),
         city: address.city,
         pincode: address.pincode,
         is_default: true,
@@ -194,7 +207,7 @@ export default function SetLocationPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <div className="flex items-center gap-3 p-4 border-b bg-card">
-        <button onClick={() => navigate("/app")} className="p-1">
+        <button onClick={() => navigate("/app", { replace: true })} className="p-1">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-lg font-bold">Set Delivery Location</h1>
@@ -249,18 +262,26 @@ export default function SetLocationPage() {
         )}
 
         <div>
-          <label className="text-xs font-semibold text-primary uppercase tracking-wide">
-            Apartment / Road / Area*
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            House / Flat / Block No *
           </label>
-          <Input value={apartment} onChange={(e) => setApartment(e.target.value)} placeholder="Enter area name"
+          <Input value={houseNo} onChange={(e) => setHouseNo(e.target.value)} placeholder="Enter house/flat number"
             className="mt-1 h-11 border-0 border-b border-border rounded-none focus-visible:ring-0 px-0" />
         </div>
 
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            House / Flat / Block No*
+            Street / Road
           </label>
-          <Input value={houseNo} onChange={(e) => setHouseNo(e.target.value)} placeholder="Enter house/flat number"
+          <Input value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Street name"
+            className="mt-1 h-11 border-0 border-b border-border rounded-none focus-visible:ring-0 px-0" />
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-primary uppercase tracking-wide">
+            Apartment / Road / Area *
+          </label>
+          <Input value={apartment} onChange={(e) => setApartment(e.target.value)} placeholder="Enter area name"
             className="mt-1 h-11 border-0 border-b border-border rounded-none focus-visible:ring-0 px-0" />
         </div>
 
@@ -272,8 +293,27 @@ export default function SetLocationPage() {
             className="mt-1 h-11 border-0 border-b border-border rounded-none focus-visible:ring-0 px-0" />
         </div>
 
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">City</label>
+            <Input value={address?.city || ""} className="h-10 bg-secondary/20" disabled />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Pincode</label>
+            <Input value={address?.pincode || ""} className="h-10 bg-secondary/20" disabled />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">District</label>
+            <Input value={district} className="h-10 bg-secondary/20" disabled />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">State</label>
+            <Input value={state} className="h-10 bg-secondary/20" disabled />
+          </div>
+        </div>
+
         <div>
-          <label className="text-sm font-bold uppercase tracking-wide">Save As*</label>
+          <label className="text-sm font-bold uppercase tracking-wide">Save As *</label>
           <div className="flex gap-3 mt-3">
             {(["home", "work", "other"] as const).map((type) => (
               <button key={type} onClick={() => setSaveAs(type)}
@@ -288,7 +328,7 @@ export default function SetLocationPage() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-card border-t safe-area-bottom">
-        <Button onClick={handleSaveAndProceed} disabled={loading || !address || !apartment.trim()}
+        <Button onClick={handleSaveAndProceed} disabled={loading || !address || !apartment.trim() || !houseNo.trim()}
           className="w-full h-12 rounded-xl text-base font-semibold">
           {loading ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" /> Saving...</>) : "Save and proceed"}
         </Button>
