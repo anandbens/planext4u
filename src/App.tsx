@@ -72,6 +72,7 @@ import CustomerPhoneLoginPage from "./pages/customer/CustomerPhoneLoginPage";
 import SetLocationPage from "./pages/customer/SetLocationPage";
 import TermsPage from "./pages/customer/TermsPage";
 import PrivacyPolicyPage from "./pages/customer/PrivacyPolicyPage";
+import AuthCallbackPage from "./pages/customer/AuthCallbackPage";
 
 // Social pages
 import SocialFeedPage from "./pages/customer/SocialFeedPage";
