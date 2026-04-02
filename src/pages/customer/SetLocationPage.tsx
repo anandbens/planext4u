@@ -101,12 +101,12 @@ export default function SetLocationPage() {
     setLocating(true);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${GOOGLE_MAPS_KEY}`
       );
-      const results = await res.json();
-      if (results.length > 0) {
-        const r = results[0];
-        await reverseGeocode(parseFloat(r.lat), parseFloat(r.lon));
+      const data = await res.json();
+      if (data.status === "OK" && data.results.length > 0) {
+        const r = data.results[0];
+        await reverseGeocode(r.geometry.location.lat, r.geometry.location.lng);
       } else {
         toast.error("Location not found. Try a different search.");
       }
