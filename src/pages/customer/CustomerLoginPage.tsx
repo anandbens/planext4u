@@ -20,7 +20,6 @@ export default function CustomerLoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [seeding, setSeeding] = useState(false);
 
   // OTP login state
   const [phone, setPhone] = useState("");
