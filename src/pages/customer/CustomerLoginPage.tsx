@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
-import { getOAuthRedirectUri } from "@/lib/capacitor-auth";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
@@ -104,9 +103,8 @@ export default function CustomerLoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const redirectUri = getOAuthRedirectUri();
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: redirectUri,
+        redirect_uri: window.location.origin,
         extraParams: { prompt: "select_account" },
       });
       if (result.error) {
@@ -114,11 +112,23 @@ export default function CustomerLoginPage() {
         setLoading(false);
         return;
       }
-      // For web: browser will redirect to /auth/callback — just return
       if (result.redirected) return;
 
-      // Non-redirect flow (rare) — navigate to callback to run linking logic
-      navigate("/auth/callback", { replace: true });
+      // Non-redirect flow: session is set, verify customer exists
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        const { data: customer } = await supabase.from('customers').select('id').eq('email', session.user.email).maybeSingle();
+        if (!customer) {
+          await supabase.auth.signOut();
+          toast.error("Your Gmail is not registered with Planext4U. Create your account first to do a Google Sign-in.", { duration: 6000 });
+          setLoading(false);
+          return;
+        }
+        // Link via edge function
+        await supabase.functions.invoke("google-oauth-link");
+        await supabase.auth.refreshSession();
+      }
+      setLoading(false);
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
       setLoading(false);

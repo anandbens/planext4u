@@ -17,69 +17,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("user_id", supabaseUid);
 
     if (!roles || roles.length === 0) {
-      // No role found — check if we're in the OAuth callback flow
-      // If so, the google-oauth-link function will handle linking
-      const isCallbackFlow = window.location.pathname.includes('/auth/callback');
-      if (isCallbackFlow) {
-        return 'pending';
+      // No role found — check if this is an OAuth user who needs linking
+      const { data: { session } } = await supabase.auth.getSession();
+      const provider = session?.user?.app_metadata?.provider;
+      
+      if (provider === 'google') {
+        // Try to link via edge function
+        try {
+          const { data: linkData } = await supabase.functions.invoke("google-oauth-link");
+          if (linkData?.success && linkData?.registered) {
+            // Successfully linked - reload roles
+            const { data: newRoles } = await supabase
+              .from("user_roles")
+              .select("role, vendor_id, customer_id")
+              .eq("user_id", supabaseUid);
+            if (newRoles && newRoles.length > 0) {
+              // Continue with the found role below
+              const roleRecord = newRoles[0];
+              return await processRole(roleRecord, supabaseUid, email, name);
+            }
+          }
+        } catch {}
+        // Linking failed or user not registered
+        await supabase.auth.signOut();
+        return 'unregistered';
       }
-      // Not in callback — this user is not registered
+      
       await supabase.auth.signOut();
       return 'unregistered';
     }
 
-    const roleRecord = roles[0];
+    return await processRole(roles[0], supabaseUid, email, name);
+  }, []);
+
+  const processRole = useCallback(async (roleRecord: any, supabaseUid: string, email: string, name: string): Promise<string> => {
     const role = roleRecord.role as AppRole;
 
     if (role === 'admin' || role === 'finance' || role === 'sales') {
       const authUser: AuthUser = {
-        id: supabaseUid,
-        name,
-        email,
-        role: role as UserRole,
-        portal: 'admin',
-        supabase_uid: supabaseUid,
+        id: supabaseUid, name, email, role: role as UserRole, portal: 'admin', supabase_uid: supabaseUid,
       };
       setUser(authUser);
       localStorage.setItem("admin_user", JSON.stringify(authUser));
     } else if (role === 'vendor') {
-      // Load vendor details
       const vendorId = roleRecord.vendor_id || 'VND-001';
-      const { data: vendor } = await supabase
-        .from("vendors")
-        .select("id, name, business_name, email")
-        .eq("id", vendorId)
-        .single();
-
+      const { data: vendor } = await supabase.from("vendors").select("id, name, business_name, email").eq("id", vendorId).single();
       const vu: VendorUser = {
-        id: vendor?.id || vendorId,
-        name: vendor?.name || name,
-        email: vendor?.email || email,
-        business_name: vendor?.business_name || '',
-        vendor_id: vendorId,
-        supabase_uid: supabaseUid,
+        id: vendor?.id || vendorId, name: vendor?.name || name, email: vendor?.email || email,
+        business_name: vendor?.business_name || '', vendor_id: vendorId, supabase_uid: supabaseUid,
       };
       setVendorUser(vu);
       localStorage.setItem("vendor_user", JSON.stringify(vu));
     } else if (role === 'customer') {
       const customerId = roleRecord.customer_id || 'USR-001';
-      const { data: customer } = await supabase
-        .from("customers")
-        .select("id, name, email, mobile")
-        .eq("id", customerId)
-        .single();
-
+      const { data: customer } = await supabase.from("customers").select("id, name, email, mobile").eq("id", customerId).single();
       const cu: CustomerUser = {
-        id: customer?.id || customerId,
-        name: customer?.name || name,
-        email: customer?.email || email,
-        mobile: customer?.mobile || '',
-        customer_id: customerId,
-        supabase_uid: supabaseUid,
+        id: customer?.id || customerId, name: customer?.name || name, email: customer?.email || email,
+        mobile: customer?.mobile || '', customer_id: customerId, supabase_uid: supabaseUid,
       };
       setCustomerUser(cu);
       localStorage.setItem("customer_user", JSON.stringify(cu));
     }
+    return 'loaded';
   }, []);
 
   useEffect(() => {
