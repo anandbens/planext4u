@@ -39,7 +39,6 @@ export default function CustomerProfileEditPage() {
   // Address map modal state
   const [showMapModal, setShowMapModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
-  const [mapUrl, setMapUrl] = useState("");
   const [locating, setLocating] = useState(false);
   const [mapAddress, setMapAddress] = useState<{ lat: number; lng: number; formatted: string; area: string; city: string; pincode: string } | null>(null);
   const [addrForm, setAddrForm] = useState({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "" });
