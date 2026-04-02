@@ -32,7 +32,9 @@ export default function VendorRegisterPage() {
     aadhaar_number: '', aadhaar_front_url: '', aadhaar_back_url: '',
     bank_account_number: '', bank_confirm_account: '', bank_ifsc: '', bank_holder_name: '',
     store_logo_url: '',
+    latitude: 0, longitude: 0, shop_address: '',
   });
+  const [locating, setLocating] = useState(false);
 
   const updateField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
 
