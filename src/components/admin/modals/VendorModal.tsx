@@ -35,6 +35,14 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
+  const { data: vendorPlans = [] } = useQuery({
+    queryKey: ["vendorPlansDropdown"],
+    queryFn: async () => {
+      const { data } = await supabase.from("vendor_plans").select("id, plan_name, plan_type, visibility_type").eq("is_active", true).order("plan_tier");
+      return data || [];
+    },
+  });
+
   useEffect(() => {
     if (isCreate) {
       setForm(emptyForm);
@@ -46,6 +54,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
         commission_rate: vendor.commission_rate, membership: vendor.membership,
         status: vendor.status, category_id: vendor.category_id,
         city_id: vendor.city_id, area_id: vendor.area_id,
+        plan_id: (vendor as any).plan_id || "",
       });
       setEditMode(mode === "edit");
     }
