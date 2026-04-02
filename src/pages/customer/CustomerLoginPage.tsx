@@ -88,16 +88,6 @@ export default function CustomerLoginPage() {
     } finally { setLoading(false); }
   };
 
-  const quickLogin = async () => {
-    setLoading(true);
-    try {
-      await customerLogin("customer@planext4u.com", "P4u@Customer2026");
-      toast.success("Welcome to Planext4u!");
-      setTimeout(() => navigate("/app", { replace: true }), 500);
-    } catch (err: any) { toast.error(err.message || "Login failed."); }
-    finally { setLoading(false); }
-  };
-
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
