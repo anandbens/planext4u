@@ -108,7 +108,7 @@ export default function CustomerLoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <div className="bg-primary pt-12 pb-16 px-6 flex flex-col items-center relative">
-        <Link to="/app" className="absolute top-4 right-4 bg-primary-foreground/20 text-primary-foreground text-xs px-4 py-1.5 rounded-full hover:bg-primary-foreground/30 transition-colors">skip</Link>
+        {/* Login required - no skip */}
         <img src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
         <h2 className="text-primary-foreground text-xl font-bold tracking-wider">Planext 4u</h2>
         <span className="text-primary-foreground/60 text-[10px] absolute top-14 right-[calc(50%-40px)] font-semibold">TM</span>
