@@ -220,14 +220,14 @@ export default function CustomerRegisterPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-primary pt-8 pb-12 px-6 flex flex-col items-center relative">
+      <div className="bg-primary pt-10 pb-14 px-6 flex flex-col items-center relative">
         <Link to="/app/login" className="absolute top-4 left-4 text-primary-foreground/60 hover:text-primary-foreground"><ArrowLeft className="h-5 w-5" /></Link>
         <img src={p4uLogoTeal} alt="Planext4u" className="h-16 w-16 object-contain mb-2 rounded-xl" />
         <h2 className="text-primary-foreground text-lg font-bold">Create Account</h2>
         <p className="text-primary-foreground/60 text-xs">Join Planext4u and start shopping</p>
       </div>
-      <div className="max-w-md mx-auto -mt-6 px-4 pb-8">
-        <Card className="p-6">
+      <div className="max-w-md mx-auto -mt-8 px-4 pb-8 relative z-10">
+        <Card className="p-6 mt-2">
           {otpStep === "form" ? (
             <div className="space-y-4">
               <div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Full Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="pl-10 h-11" /></div>
