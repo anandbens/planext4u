@@ -222,6 +222,7 @@ const App = () => (
             <Route path="/app/classifieds" element={<CustomerPage><CustomerClassifiedsPage /></CustomerPage>} />
             <Route path="/app/classifieds/post" element={<CustomerPage><CustomerPostAdPage /></CustomerPage>} />
             <Route path="/app/classifieds/:id" element={<CustomerPage><CustomerClassifiedDetailPage /></CustomerPage>} />
+            <Route path="/app/vendor-register" element={<CustomerPage><VendorRegisterPage /></CustomerPage>} />
 
             {/* Social routes */}
             <Route path="/app/social" element={<CustomerPage><SocialFeedPage /></CustomerPage>} />
