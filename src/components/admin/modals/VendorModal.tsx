@@ -52,6 +52,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
       setForm({
         name: vendor.name, business_name: vendor.business_name,
         email: vendor.email, mobile: vendor.mobile,
+        rejection_reason: (vendor as any).rejection_reason || "",
         commission_rate: vendor.commission_rate, membership: vendor.membership,
         status: vendor.status, category_id: vendor.category_id,
         city_id: vendor.city_id, area_id: vendor.area_id,
