@@ -177,13 +177,17 @@ export default function CustomerProfileEditPage() {
         const area = get("sublocality_level_1") || get("sublocality") || get("neighborhood") || get("locality");
         const city = get("locality") || get("administrative_area_level_2") || "";
         const pincode = get("postal_code") || "";
-        setMapAddress({ lat, lng, formatted: result.formatted_address || "", area, city, pincode });
-        setAddrForm(prev => ({ ...prev, apartment: area }));
+        const streetName = get("route") || "";
+        const districtName = get("administrative_area_level_2") || "";
+        const stateName = get("administrative_area_level_1") || "";
+        const countryName = get("country") || "";
+        setMapAddress({ lat, lng, formatted: result.formatted_address || "", area, city, pincode, street: streetName, district: districtName, state: stateName, country: countryName });
+        setAddrForm(prev => ({ ...prev, apartment: area, street: streetName }));
       } else {
-        setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
+        setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "", street: "", district: "", state: "", country: "" });
       }
     } catch {
-      setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
+      setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "", street: "", district: "", state: "", country: "" });
     }
   }, []);
 
