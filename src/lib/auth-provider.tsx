@@ -17,8 +17,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("user_id", supabaseUid);
 
     if (!roles || roles.length === 0) {
-      // No role found — this user is not registered in the platform
-      // Sign them out to prevent dangling sessions
+      // No role found — check if we're in the OAuth callback flow
+      // If so, the google-oauth-link function will handle linking
+      const isCallbackFlow = window.location.pathname.includes('/auth/callback');
+      if (isCallbackFlow) {
+        return 'pending';
+      }
+      // Not in callback — this user is not registered
       await supabase.auth.signOut();
       return 'unregistered';
     }
@@ -86,8 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Use setTimeout to avoid potential deadlocks with Supabase client
         setTimeout(async () => {
           const result = await loadUserRole(id, email || '', name);
-          if (result === 'unregistered') {
-            // User signed in via OAuth but has no platform registration
+          if (result === 'unregistered' || result === 'pending') {
             setIsLoading(false);
           }
         }, 0);

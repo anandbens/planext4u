@@ -111,30 +111,16 @@ export default function CustomerLoginPage() {
       });
       if (result.error) {
         toast.error(result.error instanceof Error ? result.error.message : "Google sign-in failed");
+        setLoading(false);
         return;
       }
+      // For web: browser will redirect to /auth/callback — just return
       if (result.redirected) return;
 
-      // After OAuth completes (non-redirect flow), check if this email is registered
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email) {
-        const { data: customer } = await supabase
-          .from("customers")
-          .select("id")
-          .eq("email", session.user.email)
-          .maybeSingle();
-
-        if (!customer) {
-          await supabase.auth.signOut();
-          toast.error("Your Gmail is not registered with Planext4U. Create your account first to do a Google Sign-in.", { duration: 6000 });
-          return;
-        }
-      }
-
-      toast.success("Welcome to Planext4u!");
+      // Non-redirect flow (rare) — navigate to callback to run linking logic
+      navigate("/auth/callback", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
-    } finally {
       setLoading(false);
     }
   };
