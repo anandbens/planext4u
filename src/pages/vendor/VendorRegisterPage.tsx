@@ -251,6 +251,52 @@ export default function VendorRegisterPage() {
                 <p className="text-[10px] text-muted-foreground text-right">{form.business_description.length}/2000</p></div>
             </div>
             <DocUploadButton field="store_logo_url" label="Store Logo (optional)" />
+            
+            {/* Shop Location */}
+            <div className="border-t pt-4 space-y-3">
+              <h4 className="text-xs font-bold flex items-center gap-1"><MapPin className="h-3 w-3 text-primary" /> Shop Location *</h4>
+              <p className="text-[10px] text-muted-foreground">Your shop location is used for vendor discovery and delivery radius.</p>
+              <Button type="button" variant="outline" size="sm" disabled={locating} onClick={() => {
+                setLocating(true);
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                      const lat = pos.coords.latitude;
+                      const lng = pos.coords.longitude;
+                      setForm(f => ({ ...f, latitude: lat, longitude: lng }));
+                      // Reverse geocode
+                      try {
+                        const { data: vars } = await supabase.from('platform_variables').select('value').eq('key', 'google_maps_api_key').single();
+                        const apiKey = vars?.value || '';
+                        if (apiKey) {
+                          const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`);
+                          const json = await res.json();
+                          if (json.results?.[0]) {
+                            setForm(f => ({ ...f, shop_address: json.results[0].formatted_address }));
+                          }
+                        }
+                      } catch {}
+                      toast.success("Location captured");
+                      setLocating(false);
+                    },
+                    () => { toast.error("Location access denied"); setLocating(false); },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                  );
+                } else {
+                  toast.error("Geolocation not supported"); setLocating(false);
+                }
+              }}>
+                {locating ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <MapPin className="h-3 w-3 mr-1" />}
+                {form.latitude ? "Update Location" : "Capture Shop Location"}
+              </Button>
+              {form.latitude !== 0 && (
+                <div className="p-3 rounded-lg bg-green-50 border border-green-200 space-y-1">
+                  <p className="text-xs font-medium text-green-800">📍 Location captured</p>
+                  <p className="text-[10px] text-green-700">{form.shop_address || `${form.latitude.toFixed(6)}, ${form.longitude.toFixed(6)}`}</p>
+                </div>
+              )}
+              <Input value={form.shop_address} onChange={e => updateField('shop_address', e.target.value)} placeholder="Or enter address manually" className="text-xs" />
+            </div>
           </Card>
         )}
 
