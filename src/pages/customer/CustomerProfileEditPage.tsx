@@ -305,17 +305,22 @@ export default function CustomerProfileEditPage() {
     const city = mapAddress?.city || "";
     const pincode = mapAddress?.pincode || "";
 
+    const lat = mapAddress?.lat || 0;
+    const lng = mapAddress?.lng || 0;
+
     if (editingAddress) {
       await supabase.from('customer_addresses').update({
         label: addrForm.label, type: addrForm.type, address_line: addressLine, city, pincode,
-      }).eq('id', editingAddress.id);
+        latitude: lat, longitude: lng,
+      } as any).eq('id', editingAddress.id);
       toast.success("Address updated!");
     } else {
       const isFirst = addresses.length === 0;
       await supabase.from('customer_addresses').insert({
         customer_id: customerId, label: addrForm.label, type: addrForm.type,
         address_line: addressLine, city, pincode, is_default: isFirst,
-      });
+        latitude: lat, longitude: lng,
+      } as any);
       toast.success("Address added!");
     }
     setShowMapModal(false);

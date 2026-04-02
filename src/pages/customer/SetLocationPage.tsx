@@ -193,6 +193,8 @@ export default function SetLocationPage() {
         city: address.city,
         pincode: address.pincode,
         is_default: true,
+        latitude: address.lat,
+        longitude: address.lng,
       } as any);
       if (error) throw error;
       await supabase.from("customers").update({ latitude: address.lat, longitude: address.lng } as any).eq("id", customerId);

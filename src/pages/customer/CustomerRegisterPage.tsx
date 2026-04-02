@@ -226,13 +226,18 @@ export default function CustomerRegisterPage() {
         return;
       }
 
-      await supabase
-        .from("customers")
-        .update({
+      const updateData: any = {
           name: form.name,
           email: form.email,
           occupation: form.occupation || null,
-        } as never)
+        };
+      if (location) {
+        updateData.latitude = location.lat;
+        updateData.longitude = location.lng;
+      }
+      await supabase
+        .from("customers")
+        .update(updateData)
         .eq("id", data.customer?.id);
 
       toast.success("🎉 Registration successful!", { duration: 5000 });
