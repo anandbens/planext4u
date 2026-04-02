@@ -144,6 +144,18 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                 </Select>
               </div>
             )}
+            {editMode && form.status === 'rejected' && (
+              <div className="col-span-2">
+                <Label className="text-xs text-destructive font-semibold">Rejection Reason *</Label>
+                <Textarea value={form.rejection_reason} onChange={(e) => setForm({ ...form, rejection_reason: e.target.value })} className="mt-1 border-destructive/50" rows={2} placeholder="Explain why this vendor is being rejected..." />
+              </div>
+            )}
+            {!editMode && vendor?.status === 'rejected' && (vendor as any).rejection_reason && (
+              <div className="col-span-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <Label className="text-xs text-destructive font-semibold">Rejection Reason</Label>
+                <p className="text-sm mt-1">{(vendor as any).rejection_reason}</p>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
