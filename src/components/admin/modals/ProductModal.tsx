@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MOCK_CATEGORIES, MOCK_VENDORS } from "@/lib/mockData";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface ProductModalProps {
   product: Product | null;
@@ -108,17 +109,16 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
-          {/* Image Preview + URL */}
+          {/* Image Upload */}
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Product Image</Label>
-            {form.image && (
+            {editMode ? (
+              <ImageUploader value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="products" label="Upload Product Image" />
+            ) : form.image ? (
               <div className="h-32 w-full rounded-lg overflow-hidden bg-secondary/20 border border-border/30">
                 <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
               </div>
-            )}
-            {editMode && (
-              <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="Image URL (e.g. /images/products/laptop.jpg)" />
-            )}
+            ) : null}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

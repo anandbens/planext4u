@@ -114,6 +114,7 @@ import AdminHomesAmenitiesPage from "./pages/admin/AdminHomesAmenitiesPage";
 import AdminHomesCMSPage from "./pages/admin/AdminHomesCMSPage";
 import AdminHomesUsersPage from "./pages/admin/AdminHomesUsersPage";
 import AdminHomesModerationPage from "./pages/admin/AdminHomesModerationPage";
+import AdminVendorPlansPage from "./pages/admin/AdminVendorPlansPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
@@ -196,6 +197,7 @@ const App = () => (
             <Route path="/admin/homes/amenities" element={<ProtectedPage><AdminHomesAmenitiesPage /></ProtectedPage>} />
             <Route path="/admin/homes/cms" element={<ProtectedPage><AdminHomesCMSPage /></ProtectedPage>} />
             <Route path="/admin/homes/users" element={<ProtectedPage><AdminHomesUsersPage /></ProtectedPage>} />
+            <Route path="/admin/vendor-plans" element={<ProtectedPage><AdminVendorPlansPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerPage><CustomerHomePage /></CustomerPage>} />
