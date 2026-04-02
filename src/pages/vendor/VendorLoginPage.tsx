@@ -184,11 +184,7 @@ export default function VendorLoginPage() {
                     <Button type="submit" className="w-full h-12 rounded-xl text-base gap-2 bg-brand-dark hover:bg-brand-dark/90 text-white" disabled={loading}>
                       {loading ? "Signing in..." : <><LogIn className="h-4 w-4" /> Sign In</>}
                     </Button>
-                  </form>
-                  <button onClick={quickLogin} disabled={loading} className="w-full bg-secondary/50 rounded-xl border border-border/50 p-3 text-center hover:border-brand-teal/40 transition-all">
-                    <p className="text-xs font-semibold">Quick Demo Login</p>
-                    <p className="text-[10px] text-muted-foreground">vendor@planext4u.com / P4u@Vendor2026</p>
-                  </button>
+                
                 </>
               )}
             </div>

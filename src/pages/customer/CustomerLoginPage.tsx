@@ -205,11 +205,6 @@ export default function CustomerLoginPage() {
                 <Button type="submit" className="w-full h-12 rounded-xl text-base bg-primary" disabled={loading}>
                   {loading ? "Signing in..." : "Sign In →"}
                 </Button>
-              </form>
-              <button onClick={quickLogin} disabled={loading} className="w-full bg-secondary/50 rounded-xl border border-border/50 p-3 text-center hover:border-primary/40 transition-all">
-                <p className="text-xs font-semibold">Quick Demo Login</p>
-                <p className="text-[10px] text-muted-foreground">customer@planext4u.com / P4u@Customer2026</p>
-              </button>
             </>
           )}
         </div>

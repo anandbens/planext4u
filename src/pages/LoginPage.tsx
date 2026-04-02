@@ -70,23 +70,6 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {/* Quick Login */}
-            <div className="border-t border-border/50 pt-4">
-              <p className="text-xs text-muted-foreground text-center mb-3">Quick Login (Demo)</p>
-              <div className="grid grid-cols-3 gap-2">
-                {QUICK_LOGINS.map((cred) => (
-                  <button key={cred.role} onClick={() => quickLogin(cred)} disabled={loading}
-                    className="bg-secondary/50 rounded-xl border border-border/50 p-3 text-center hover:border-brand-teal/40 hover:shadow-md transition-all group">
-                    <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center mx-auto mb-1.5", cred.color)}>
-                      <cred.icon className="h-4 w-4 text-white" />
-                    </div>
-                    <p className="text-xs font-semibold group-hover:text-brand-teal transition-colors">{cred.role}</p>
-                    <p className="text-[9px] text-muted-foreground">{cred.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="text-center space-y-2 pt-2">
               <Link to="/app/login" className="text-xs text-brand-teal hover:underline block">Customer Login →</Link>
               <Link to="/vendor/login" className="text-xs text-brand-teal hover:underline block">Vendor Login →</Link>
