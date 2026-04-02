@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MOCK_CATEGORIES, MOCK_VENDORS } from "@/lib/mockData";
+import { ImageUploader } from "@/components/admin/ImageUploader";
 
 interface ProductModalProps {
   product: Product | null;
