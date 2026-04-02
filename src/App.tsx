@@ -263,6 +263,7 @@ const App = () => (
 
             {/* Vendor-facing routes */}
             <Route path="/vendor/login" element={<VendorLoginPage />} />
+            <Route path="/vendor/register" element={<VendorRegisterStandalonePage />} />
             <Route path="/vendor" element={<VendorDashboardPage />} />
             <Route path="/vendor/products" element={<VendorProductsPage />} />
             <Route path="/vendor/services" element={<VendorServicesPage />} />
