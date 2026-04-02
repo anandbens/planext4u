@@ -171,28 +171,40 @@ export type Database = {
       }
       categories: {
         Row: {
+          banner_image: string | null
           count: number
           created_at: string
+          description: string | null
+          icon: string | null
           id: string
           image: string
+          is_trending: boolean | null
           name: string
           parent_id: string | null
           status: string
         }
         Insert: {
+          banner_image?: string | null
           count?: number
           created_at?: string
+          description?: string | null
+          icon?: string | null
           id: string
           image?: string
+          is_trending?: boolean | null
           name: string
           parent_id?: string | null
           status?: string
         }
         Update: {
+          banner_image?: string | null
           count?: number
           created_at?: string
+          description?: string | null
+          icon?: string | null
           id?: string
           image?: string
+          is_trending?: boolean | null
           name?: string
           parent_id?: string | null
           status?: string
@@ -391,6 +403,38 @@ export type Database = {
           },
         ]
       }
+      districts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          state_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          state_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          state_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "districts_state_id_fkey"
+            columns: ["state_id"]
+            isOneToOne: false
+            referencedRelation: "states"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_subscriptions: {
         Row: {
           created_at: string
@@ -451,6 +495,48 @@ export type Database = {
           start_date?: string | null
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      media_library: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string
+          file_url: string
+          folder: string | null
+          id: string
+          tags: string[] | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string
+          file_url: string
+          folder?: string | null
+          id?: string
+          tags?: string[] | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          folder?: string | null
+          id?: string
+          tags?: string[] | null
+          updated_at?: string
+          uploaded_by?: string | null
         }
         Relationships: []
       }
@@ -1351,28 +1437,40 @@ export type Database = {
       }
       service_categories: {
         Row: {
+          banner_image: string | null
           count: number
           created_at: string
+          description: string | null
+          icon: string | null
           id: string
           image: string
+          is_trending: boolean | null
           name: string
           parent_id: string | null
           status: string
         }
         Insert: {
+          banner_image?: string | null
           count?: number
           created_at?: string
+          description?: string | null
+          icon?: string | null
           id: string
           image?: string
+          is_trending?: boolean | null
           name: string
           parent_id?: string | null
           status?: string
         }
         Update: {
+          banner_image?: string | null
           count?: number
           created_at?: string
+          description?: string | null
+          icon?: string | null
           id?: string
           image?: string
+          is_trending?: boolean | null
           name?: string
           parent_id?: string | null
           status?: string
@@ -2314,6 +2412,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      states: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          status: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+        }
+        Relationships: []
       }
       support_tickets: {
         Row: {

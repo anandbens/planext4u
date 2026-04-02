@@ -74,6 +74,7 @@ export interface Referral {
 export interface Category {
   id: string; name: string; parent_id: string | null; image: string;
   status: 'active' | 'inactive'; count?: number; created_at?: string;
+  banner_image?: string; icon?: string; is_trending?: boolean; description?: string;
 }
 
 export interface Banner {
@@ -171,7 +172,8 @@ export const api = {
   registerCustomer: async (data: { name: string; mobile: string; email: string; city: string; area: string; referral_code?: string; occupation?: string }) => {
     const newId = genId('USR');
     const now = new Date().toISOString();
-    const refCode = `REF${Date.now().toString(36).toUpperCase()}`;
+    const seqNum = String(Math.floor(Math.random() * 999999)).padStart(6, '0');
+    const refCode = `MRCP4U${seqNum}`;
 
     const { error } = await supabase.from('customers').insert({
       id: newId, name: data.name, mobile: data.mobile, email: data.email,
@@ -309,7 +311,7 @@ export const api = {
       latitude: data.latitude || 0,
       longitude: data.longitude || 0,
       wallet_points: data.wallet_points || 0,
-      referral_code: `REF${Date.now().toString(36).toUpperCase()}`,
+      referral_code: `MRCP4U${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`,
       referred_by: data.referred_by || null,
       status: data.status || 'active',
       occupation: data.occupation || '',
@@ -878,6 +880,34 @@ export const api = {
     const { error } = await supabase.from('occupations').update(data as any).eq('id', id);
     if (error) throw error;
     return { success: true };
+  },
+
+  createOccupation: async (data: Partial<Occupation>) => {
+    const newOcc = { id: genId('OCC'), name: data.name || '', status: data.status || 'active', customer_count: 0 };
+    const { error } = await supabase.from('occupations').insert(newOcc);
+    if (error) throw error;
+    return { success: true, occupation: newOcc };
+  },
+
+  deleteOccupation: async (id: string) => {
+    const { error } = await supabase.from('occupations').delete().eq('id', id);
+    if (error) throw error;
+    return { success: true };
+  },
+
+  getActiveOccupations: async () => {
+    const { data } = await supabase.from('occupations').select('id, name').eq('status', 'active').order('name');
+    return (data || []) as { id: string; name: string }[];
+  },
+
+  getStates: async () => {
+    const { data } = await supabase.from('states').select('*').eq('status', 'active').order('name');
+    return (data || []) as { id: string; name: string; code: string }[];
+  },
+
+  getDistricts: async (stateId: string) => {
+    const { data } = await supabase.from('districts').select('*').eq('state_id', stateId).eq('status', 'active').order('name');
+    return (data || []) as { id: string; name: string; state_id: string }[];
   },
 
   // Cities
