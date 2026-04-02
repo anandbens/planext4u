@@ -11,7 +11,7 @@ import { lovable } from "@/integrations/lovable/index";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
-  const { customerLogin, seedDemoUsers } = useAuth();
+  const { customerLogin } = useAuth();
   const navigate = useNavigate();
   const [loginMethod, setLoginMethod] = useState<"otp" | "password">("otp");
 
