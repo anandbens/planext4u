@@ -181,8 +181,9 @@ export default function CustomerProfileEditPage() {
         const districtName = get("administrative_area_level_2") || "";
         const stateName = get("administrative_area_level_1") || "";
         const countryName = get("country") || "";
+        const streetNumber = get("street_number") || get("premise") || get("subpremise") || "";
         setMapAddress({ lat, lng, formatted: result.formatted_address || "", area, city, pincode, street: streetName, district: districtName, state: stateName, country: countryName });
-        setAddrForm(prev => ({ ...prev, apartment: area, street: streetName }));
+        setAddrForm(prev => ({ ...prev, apartment: area, street: streetName, houseNo: streetNumber || prev.houseNo }));
       } else {
         setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "", street: "", district: "", state: "", country: "" });
       }
