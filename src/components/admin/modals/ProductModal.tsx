@@ -26,7 +26,7 @@ const emptyForm = {
   title: "", description: "", price: 0, tax: 0, discount: 0,
   max_points_redeemable: 0, status: "active" as Product["status"],
   vendor_id: "", vendor_name: "", category_id: "", category_name: "", stock: 0, emoji: "📦",
-  image: "",
+  image: "", rejection_reason: "",
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete }: ProductModalProps) {
