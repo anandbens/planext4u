@@ -184,7 +184,7 @@ export default function VendorLoginPage() {
                     <Button type="submit" className="w-full h-12 rounded-xl text-base gap-2 bg-brand-dark hover:bg-brand-dark/90 text-white" disabled={loading}>
                       {loading ? "Signing in..." : <><LogIn className="h-4 w-4" /> Sign In</>}
                     </Button>
-                
+                  </form>
                 </>
               )}
             </div>

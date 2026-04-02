@@ -205,6 +205,7 @@ export default function CustomerLoginPage() {
                 <Button type="submit" className="w-full h-12 rounded-xl text-base bg-primary" disabled={loading}>
                   {loading ? "Signing in..." : "Sign In →"}
                 </Button>
+              </form>
             </>
           )}
         </div>
