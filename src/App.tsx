@@ -198,6 +198,7 @@ const App = () => (
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerPage><CustomerHomePage /></CustomerPage>} />
             <Route path="/app/login" element={<CustomerLoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/app/register" element={<CustomerRegisterPage />} />
             <Route path="/app/phone-login" element={<CustomerPhoneLoginPage />} />
             <Route path="/app/set-location" element={<SetLocationPage />} />
