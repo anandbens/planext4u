@@ -193,30 +193,35 @@ export default function CustomerProfileEditPage() {
     setEditingAddress(null);
     setAddrForm({ label: "Home", type: "home", apartment: "", houseNo: "", landmark: "" });
     setMapAddress(null);
-    setMapUrl("");
+    setMapRef(null);
+    setMarkerRef(null);
     setSearchQuery("");
     setShowMapModal(true);
-    setTimeout(() => getCurrentLocation(), 300);
+    setTimeout(() => getCurrentLocation(), 500);
   };
 
   const openEditAddress = (addr: SavedAddress) => {
     setEditingAddress(addr);
     setAddrForm({ label: addr.label, type: addr.type, apartment: addr.address_line, houseNo: "", landmark: "" });
     setMapAddress(null);
-    setMapUrl("");
+    setMapRef(null);
+    setMarkerRef(null);
     setSearchQuery(addr.address_line);
     setShowMapModal(true);
-    // Try to geocode existing address
     setTimeout(async () => {
       try {
         const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr.address_line + ", " + addr.city)}&key=${GOOGLE_MAPS_KEY}`);
         const data = await res.json();
         if (data.status === "OK" && data.results.length > 0) {
           const r = data.results[0];
-          await reverseGeocode(r.geometry.location.lat, r.geometry.location.lng);
+          const lat = r.geometry.location.lat;
+          const lng = r.geometry.location.lng;
+          await reverseGeocode(lat, lng);
+          const loaded = await loadGoogleMapsScript();
+          if (loaded) initMap(lat, lng);
         }
       } catch {}
-    }, 300);
+    }, 500);
   };
 
   const saveAddress = async () => {
