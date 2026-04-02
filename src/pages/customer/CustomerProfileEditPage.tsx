@@ -330,12 +330,8 @@ export default function CustomerProfileEditPage() {
     loadAddresses();
   };
 
-  // Max DOB: must be at least 13 years old
-  const maxDob = (() => {
-    const d = new Date();
-    d.setFullYear(d.getFullYear() - 13);
-    return d.toISOString().split('T')[0];
-  })();
+  // Max DOB: must be on or before Dec 31, 2016
+  const maxDob = "2016-12-31";
 
   if (profileLoading) {
     return <CustomerLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></CustomerLayout>;
