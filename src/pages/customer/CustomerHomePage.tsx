@@ -159,7 +159,9 @@ export default function CustomerHomePage() {
                 <p className="text-sm font-bold">"Ride in a Snap."</p>
               </div>
             </div>
-            <Button size="sm" className="h-8 text-xs rounded-full">Book Now</Button>
+            <Link to="/app/services?category=Transport">
+              <Button size="sm" className="h-8 text-xs rounded-full">Book Now</Button>
+            </Link>
           </div>
         </motion.div>
 
