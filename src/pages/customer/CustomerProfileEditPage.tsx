@@ -98,15 +98,12 @@ export default function CustomerProfileEditPage() {
     if (!form.name.trim() || form.name.length < 2) return "Name must be at least 2 characters";
     if (form.name.length > 100) return "Name must be under 100 characters";
     if (!/^[a-zA-Z\s]+$/.test(form.name)) return "Name can only contain letters and spaces";
-    if (!form.mobile || !/^\d{10}$/.test(form.mobile)) return "Valid 10-digit mobile required";
-    if (form.email && !/\S+@\S+\.\S+/.test(form.email)) return "Invalid email format";
+    if (!form.mobile || !/^\d{10}$/.test(form.mobile.replace(/\+91/g, ''))) return "Valid 10-digit mobile required";
+    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) return "Valid email is required";
     if (form.dob) {
       const dob = new Date(form.dob);
-      const today = new Date();
-      const age = today.getFullYear() - dob.getFullYear();
-      const monthDiff = today.getMonth() - dob.getMonth();
-      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate()) ? age - 1 : age;
-      if (actualAge < 13) return "You must be at least 13 years old";
+      const maxDate = new Date(2016, 11, 31); // Dec 31, 2016
+      if (dob > maxDate) return "Date of birth must be on or before December 31, 2016";
     }
     if (form.about && form.about.length > 1000) return "About must be under 1000 characters";
     return null;
