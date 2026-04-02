@@ -53,17 +53,6 @@ export default function LoginPage() {
 
           {/* Form */}
           <div className="p-6 space-y-4">
-            {/* Seed Button */}
-            <Button
-              variant="outline"
-              className="w-full gap-2 border-brand-amber/30 text-brand-amber hover:bg-brand-amber/10"
-              onClick={handleSeedUsers}
-              disabled={seeding}
-            >
-              <Database className="h-4 w-4" />
-              {seeding ? "Creating demo accounts..." : "🔧 First time? Seed Demo Users"}
-            </Button>
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input placeholder="Admin Email" value={email} onChange={(e) => setEmail(e.target.value)}
                 className="h-12 rounded-xl border-border/60 focus:border-brand-teal" type="email" />
