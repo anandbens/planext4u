@@ -105,11 +105,46 @@ export default function CustomerProfileEditPage() {
       } else {
         setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
       }
-      setMapUrl(`https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`);
     } catch {
       setMapAddress({ lat, lng, formatted: `${lat.toFixed(6)}, ${lng.toFixed(6)}`, area: "", city: "", pincode: "" });
-      setMapUrl(`https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`);
     }
+  }, []);
+
+  const initMap = useCallback((lat: number, lng: number) => {
+    const mapContainer = document.getElementById('addr-map-container');
+    if (!mapContainer || !(window as any).google?.maps) return;
+    const map = new (window as any).google.maps.Map(mapContainer, {
+      center: { lat, lng }, zoom: 16, disableDefaultUI: true, zoomControl: true,
+      gestureHandling: 'greedy',
+    });
+    const marker = new (window as any).google.maps.Marker({
+      position: { lat, lng }, map, draggable: true,
+      animation: (window as any).google.maps.Animation.DROP,
+    });
+    marker.addListener('dragend', () => {
+      const pos = marker.getPosition();
+      reverseGeocode(pos.lat(), pos.lng());
+    });
+    map.addListener('click', (e: any) => {
+      marker.setPosition(e.latLng);
+      reverseGeocode(e.latLng.lat(), e.latLng.lng());
+    });
+    setMapRef(map);
+    setMarkerRef(marker);
+  }, [reverseGeocode]);
+
+  const loadGoogleMapsScript = useCallback((): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if ((window as any).google?.maps) { resolve(true); return; }
+      const existing = document.querySelector('script[src*="maps.googleapis.com"]');
+      if (existing) { existing.addEventListener('load', () => resolve(true)); return; }
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places`;
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    });
   }, []);
 
   const getCurrentLocation = useCallback(() => {
