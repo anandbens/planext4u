@@ -56,7 +56,7 @@ export default function CustomerProfileEditPage() {
     setProfileLoading(true);
     const { data } = await supabase.from('customers').select('*').eq('id', customerId).single();
     if (data) {
-      setForm({ name: data.name || "", email: data.email || "", mobile: data.mobile || "", dob: (data as any).dob || "", gender: (data as any).gender || "Male", occupation: data.occupation || "" });
+      setForm({ name: data.name || "", email: data.email || "", mobile: data.mobile || "", dob: data.dob || "", gender: data.gender || "Male", occupation: data.occupation || "" });
     }
     setProfileLoading(false);
   };
