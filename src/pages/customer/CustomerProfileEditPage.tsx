@@ -391,8 +391,8 @@ export default function CustomerProfileEditPage() {
               <Input value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="h-11" type="email" />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Mobile (verified)</label>
-              <Input value={form.mobile} className="h-11" disabled />
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Mobile *</label>
+              <Input value={form.mobile} onChange={e => setForm({...form, mobile: e.target.value.replace(/\D/g, '').slice(0, 10)})} className="h-11" type="tel" maxLength={10} inputMode="numeric" placeholder="10-digit mobile number" />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Date of Birth *</label>
