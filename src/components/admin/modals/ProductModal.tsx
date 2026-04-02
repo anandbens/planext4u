@@ -158,13 +158,27 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Product["status"] })}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="active">Active (Approved)</SelectItem>
                     <SelectItem value="inactive">Inactive</SelectItem>
                     <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="pending_approval">Pending Approval</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
               ) : <div className="mt-1"><StatusBadge status={product?.status || "active"} /></div>}
             </div>
+            {editMode && form.status === 'rejected' && (
+              <div className="col-span-2">
+                <Label className="text-xs text-destructive font-semibold">Rejection Reason *</Label>
+                <Textarea value={form.rejection_reason} onChange={(e) => setForm({ ...form, rejection_reason: e.target.value })} className="mt-1 border-destructive/50" rows={2} placeholder="Explain why this product is being rejected..." />
+              </div>
+            )}
+            {!editMode && product?.status === 'rejected' && product?.rejection_reason && (
+              <div className="col-span-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <Label className="text-xs text-destructive font-semibold">Rejection Reason</Label>
+                <p className="text-sm mt-1">{product.rejection_reason}</p>
+              </div>
+            )}
             {editMode && (
               <div>
                 <Label className="text-xs text-muted-foreground">Stock</Label>
