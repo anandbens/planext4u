@@ -98,13 +98,6 @@ export default function CustomerLoginPage() {
     finally { setLoading(false); }
   };
 
-  const handleSeedUsers = async () => {
-    setSeeding(true);
-    try { await seedDemoUsers(); toast.success("Demo users created!"); }
-    catch (err: any) { toast.error("Failed: " + (err.message || "Unknown error")); }
-    finally { setSeeding(false); }
-  };
-
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
