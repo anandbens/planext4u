@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Store, Loader2, CheckCircle, Upload, X, ArrowLeft, AlertCircle } from "lucide-react";
+import { Store, Loader2, CheckCircle, Upload, X, ArrowLeft, AlertCircle, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
