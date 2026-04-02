@@ -299,7 +299,8 @@ export default function CustomerProfileEditPage() {
 
   const saveAddress = async () => {
     if (!addrForm.apartment.trim()) { toast.error("Please enter apartment/road/area"); return; }
-    const addressLine = [addrForm.houseNo, addrForm.apartment, addrForm.landmark].filter(Boolean).join(", ");
+    if (!addrForm.houseNo.trim()) { toast.error("Please enter house/flat/block number"); return; }
+    const addressLine = [addrForm.houseNo, addrForm.street, addrForm.apartment, addrForm.landmark].filter(Boolean).join(", ");
     const city = mapAddress?.city || "";
     const pincode = mapAddress?.pincode || "";
 
