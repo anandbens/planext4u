@@ -68,6 +68,7 @@ import CustomerClassifiedsPage from "./pages/customer/CustomerClassifiedsPage";
 import CustomerPostAdPage from "./pages/customer/CustomerPostAdPage";
 import CustomerClassifiedDetailPage from "./pages/customer/CustomerClassifiedDetailPage";
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
+import VendorRegisterPage from "./pages/customer/VendorRegisterPage";
 import CustomerPhoneLoginPage from "./pages/customer/CustomerPhoneLoginPage";
 import SetLocationPage from "./pages/customer/SetLocationPage";
 import TermsPage from "./pages/customer/TermsPage";
