@@ -334,7 +334,7 @@ export default function CustomerRegisterPage() {
           </div>
           <div className="p-4 border-t bg-card shrink-0 space-y-2">
             {!hasScrolledToBottom && (
-              <p className="text-xs text-amber-600 text-center animate-pulse">⬇️ Please scroll down to read all terms before accepting</p>
+              <p className="text-xs text-destructive text-center animate-pulse">⬇️ Please scroll down to read all terms before accepting</p>
             )}
             <Button
               onClick={handleAgreeTerms}
