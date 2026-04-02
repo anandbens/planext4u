@@ -70,6 +70,8 @@ import CustomerClassifiedDetailPage from "./pages/customer/CustomerClassifiedDet
 import CustomerRegisterPage from "./pages/customer/CustomerRegisterPage";
 import CustomerPhoneLoginPage from "./pages/customer/CustomerPhoneLoginPage";
 import SetLocationPage from "./pages/customer/SetLocationPage";
+import TermsPage from "./pages/customer/TermsPage";
+import PrivacyPolicyPage from "./pages/customer/PrivacyPolicyPage";
 
 // Social pages
 import SocialFeedPage from "./pages/customer/SocialFeedPage";
