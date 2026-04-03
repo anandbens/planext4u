@@ -373,7 +373,7 @@ export default function CustomerRegisterPage() {
 
               <p className="text-xs text-muted-foreground text-center">Already have an account? <Link to="/app/login" className="text-primary font-semibold hover:underline">Sign In</Link></p>
             </div>
-          ) : (
+          ) : otpStep === "otp" ? (
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-center">Verify Your Phone</h3>
               <p className="text-sm text-muted-foreground text-center">Enter the 6-digit OTP sent to +91 {form.mobile}</p>
