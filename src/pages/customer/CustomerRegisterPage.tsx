@@ -409,6 +409,59 @@ export default function CustomerRegisterPage() {
               </div>
               <button onClick={async () => { setOtpStep("form"); setOtp(""); await resetPhoneAuth(); }} className="w-full text-sm text-muted-foreground hover:text-foreground">← Back to form</button>
             </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                  <Lock className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold">Set Your Password</h3>
+                <p className="text-sm text-muted-foreground">Create a password so you can also sign in with email</p>
+              </div>
+
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type={showNewPassword ? "text" : "password"}
+                  placeholder="Create password (min 8 characters)"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  className="pl-10 pr-10 h-12 rounded-xl"
+                />
+                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="pl-10 pr-10 h-12 rounded-xl"
+                />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+
+              {newPassword && newPassword.length < 8 && (
+                <p className="text-xs text-destructive">Password must be at least 8 characters</p>
+              )}
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-destructive">Passwords do not match</p>
+              )}
+
+              <Button onClick={handleSetPassword} className="w-full h-12 text-base gap-2" disabled={passwordLoading || newPassword.length < 8 || newPassword !== confirmPassword}>
+                {passwordLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Setting up...</> : <>Set Password & Continue <ArrowRight className="h-4 w-4" /></>}
+              </Button>
+
+              <button onClick={() => { navigate("/app/set-location", { replace: true }); }} className="w-full text-sm text-muted-foreground hover:text-primary">
+                Skip for now →
+              </button>
+            </div>
           )}
         </Card>
       </div>
