@@ -104,18 +104,21 @@ export default function CustomerLoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const redirectUri = getOAuthRedirectUri();
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: redirectUri,
+        redirect_uri: window.location.origin,
         extraParams: { prompt: "select_account" },
       });
+
       if (result.error) {
         toast.error(result.error instanceof Error ? result.error.message : "Google sign-in failed");
         setLoading(false);
         return;
       }
+
+      // Browser will redirect to Google — just return
       if (result.redirected) return;
 
+      // Tokens received and session set — now verify registration
       const { data, error } = await supabase.functions.invoke("google-oauth-link");
       if (error || !data?.success || !data?.registered) {
         await supabase.auth.signOut();
@@ -123,10 +126,13 @@ export default function CustomerLoginPage() {
           data?.error || "Your Gmail is not registered with Planext4U. Create your account first to do a Google Sign-in.",
           { duration: 6000 }
         );
+        setLoading(false);
         return;
       }
 
+      // Force session refresh so auth provider picks up the role
       await supabase.auth.refreshSession();
+      // Navigation handled by useEffect watching customerUser
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
     } finally {
