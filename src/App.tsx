@@ -132,6 +132,8 @@ import VendorSettlementsPage from "./pages/vendor/VendorSettlementsPage";
 import VendorProfilePage from "./pages/vendor/VendorProfilePage";
 import VendorBankPage from "./pages/vendor/VendorBankPage";
 import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
+import VendorAccountControlPage from "./pages/vendor/VendorAccountControlPage";
+import AccountControlPage from "./pages/customer/AccountControlPage";
 
 const queryClient = new QueryClient();
 
@@ -284,6 +286,10 @@ const AppRoutes = () => {
         <Route path="/vendor/bank" element={<VendorPage><VendorBankPage /></VendorPage>} />
         <Route path="/vendor/profile" element={<VendorPage><VendorProfilePage /></VendorPage>} />
         <Route path="/vendor/settings" element={<VendorPage><VendorProfilePage /></VendorPage>} />
+        <Route path="/vendor/account-control" element={<VendorPage><VendorAccountControlPage /></VendorPage>} />
+
+        {/* Customer Account Control */}
+        <Route path="/app/account-control" element={<CustomerPage><AccountControlPage /></CustomerPage>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
