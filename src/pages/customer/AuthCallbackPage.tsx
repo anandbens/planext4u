@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
-import { closeOAuthBrowser, extractOAuthResultFromUrl } from "@/lib/capacitor-auth";
+import { closeOAuthBrowser } from "@/lib/capacitor-auth";
 
 type CallbackStatus = "checking" | "linked" | "failed";
 
@@ -22,22 +22,17 @@ export default function AuthCallbackPage() {
     const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
     const ensureSession = async () => {
-      const authResult = extractOAuthResultFromUrl(window.location.href);
+      const url = new URL(window.location.href);
+      const error = url.searchParams.get("error") || url.hash.match(/error=([^&]+)/)?.[1];
+      const errorDescription =
+        url.searchParams.get("error_description") ||
+        url.hash.match(/error_description=([^&]+)/)?.[1]?.replace(/\+/g, " ");
 
-      if (authResult.error) {
-        throw new Error(authResult.errorDescription || "Google sign-in was cancelled.");
+      if (error) {
+        throw new Error(decodeURIComponent(errorDescription || error));
       }
 
-      if (authResult.accessToken && authResult.refreshToken) {
-        const { error } = await supabase.auth.setSession({
-          access_token: authResult.accessToken,
-          refresh_token: authResult.refreshToken,
-        });
-
-        if (error) {
-          throw error;
-        }
-
+      if (url.search || url.hash) {
         window.history.replaceState({}, document.title, "/auth/callback");
       }
 

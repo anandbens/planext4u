@@ -9,7 +9,7 @@ import { useEffect } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { closeOAuthBrowser, extractOAuthResultFromUrl, isNativePlatform, isOAuthCallbackUrl } from "@/lib/capacitor-auth";
+import { closeOAuthBrowser, isNativePlatform, isOAuthCallbackUrl } from "@/lib/capacitor-auth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
@@ -175,25 +175,7 @@ const AppRoutes = () => {
           return;
         }
 
-        const { accessToken, refreshToken, errorDescription } = extractOAuthResultFromUrl(url);
         await closeOAuthBrowser();
-
-        if (!accessToken || !refreshToken) {
-          toast.error(errorDescription || "Google sign-in failed. Please try again.");
-          window.location.replace("/app/login");
-          return;
-        }
-
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-
-        if (error) {
-          toast.error(error.message || "Google sign-in failed. Please try again.");
-          window.location.replace("/app/login");
-          return;
-        }
 
         window.location.replace("/auth/callback");
       });
