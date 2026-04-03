@@ -92,6 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(async () => {
           const result = await loadUserRole(id, email || '', name);
           setIsLoading(false);
+          // Init push notifications & link token to user
+          initPushNotifications(id);
+          linkPushTokenToUser(id);
           // Resolve any pending login promise
           if (loginResolveRef.current) {
             loginResolveRef.current();
