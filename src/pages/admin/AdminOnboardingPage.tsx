@@ -87,8 +87,9 @@ export default function AdminOnboardingPage() {
   return (
     <AdminLayout>
       <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Onboarding Screens</h1>
+        <p className="text-sm text-muted-foreground">Manage first-time user experience slides • {slides.length} slides ({activeSlides.length} active)</p>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">{slides.length} slides ({activeSlides.length} active)</p>
           <div className="flex gap-2">
             {activeSlides.length > 0 && (
               <Button variant="outline" size="sm" onClick={() => { setPreviewIdx(0); setPreviewOpen(true); }}>
