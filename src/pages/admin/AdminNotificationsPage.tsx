@@ -85,7 +85,7 @@ export default function AdminNotificationsPage() {
   };
 
   return (
-    <AdminLayout title="Push Notifications">
+    <AdminLayout>
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
