@@ -669,6 +669,39 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_screens: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          image_url: string
+          is_active: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -2617,6 +2650,39 @@ export type Database = {
           rate?: number
           status?: string
           type?: string
+        }
+        Relationships: []
+      }
+      user_devices: {
+        Row: {
+          created_at: string
+          device_id: string
+          first_login: string
+          id: string
+          onboarding_completed: boolean
+          platform: string
+          push_token: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string
+          first_login?: string
+          id?: string
+          onboarding_completed?: boolean
+          platform?: string
+          push_token?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          first_login?: string
+          id?: string
+          onboarding_completed?: boolean
+          platform?: string
+          push_token?: string | null
+          user_id?: string
         }
         Relationships: []
       }
