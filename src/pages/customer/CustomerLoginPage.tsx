@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { getOAuthRedirectUri, isNativePlatform, openGoogleOAuthInBrowser } from "@/lib/capacitor-auth";
+import { getGoogleOAuthInitiateUrl, getOAuthRedirectUri, isNativePlatform, openGoogleOAuthInBrowser, shouldUsePublishedOAuthHost } from "@/lib/capacitor-auth";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
@@ -106,7 +106,11 @@ export default function CustomerLoginPage() {
     try {
       if (isNativePlatform()) {
         await openGoogleOAuthInBrowser();
-        setLoading(false);
+        return;
+      }
+
+      if (shouldUsePublishedOAuthHost()) {
+        window.location.assign(getGoogleOAuthInitiateUrl());
         return;
       }
 
@@ -119,10 +123,14 @@ export default function CustomerLoginPage() {
 
       if (!result.redirected) {
         navigate("/auth/callback", { replace: true });
+        return;
       }
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
-      setLoading(false);
+    } finally {
+      if (!isNativePlatform()) {
+        setLoading(false);
+      }
     }
   };
 
