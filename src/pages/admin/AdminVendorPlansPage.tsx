@@ -88,6 +88,9 @@ export default function AdminVendorPlansPage() {
     )},
     { key: "commission_percentage", label: "Commission", render: (p: any) => `${p.commission_percentage}%` },
     { key: "max_redemption_percentage", label: "Max Redeem", render: (p: any) => `${p.max_redemption_percentage}%` },
+    { key: "payment_mode", label: "Payment", render: (p: any) => (
+      <Badge variant="outline" className="text-[9px] capitalize">{(p.payment_mode || "both").replace("_", " ")}</Badge>
+    )},
     { key: "promotions", label: "Promotions", render: (p: any) => (
       <div className="flex gap-1">
         {p.banner_ads && <Badge variant="outline" className="text-[9px]">Banner</Badge>}
