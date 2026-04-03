@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
-import { getGoogleOAuthInitiateUrl, getOAuthRedirectUri, shouldUsePublishedOAuthHost } from "@/lib/capacitor-auth";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
@@ -104,13 +103,8 @@ export default function CustomerLoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      if (shouldUsePublishedOAuthHost()) {
-        window.location.assign(getGoogleOAuthInitiateUrl());
-        return;
-      }
-
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: getOAuthRedirectUri(),
+        redirect_uri: window.location.origin,
         extraParams: { prompt: "select_account" },
       });
 
@@ -245,8 +239,9 @@ export default function CustomerLoginPage() {
           </div>
         </div>
 
-        <div className="mt-4 text-center max-w-sm mx-auto">
-          <Link to="/app/register" className="text-sm text-primary font-semibold hover:underline">New user? Register here</Link>
+        <div className="mt-4 text-center max-w-sm mx-auto space-y-2">
+          <Link to="/app/forgot-password" className="text-sm text-muted-foreground hover:text-primary hover:underline block">Forgot Password?</Link>
+          <Link to="/app/register" className="text-sm text-primary font-semibold hover:underline block">New user? Register here</Link>
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center mt-6 max-w-sm mx-auto">
