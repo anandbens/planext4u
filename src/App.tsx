@@ -80,6 +80,8 @@ import SetLocationPage from "./pages/customer/SetLocationPage";
 import TermsPage from "./pages/customer/TermsPage";
 import PrivacyPolicyPage from "./pages/customer/PrivacyPolicyPage";
 import AuthCallbackPage from "./pages/customer/AuthCallbackPage";
+import ForgotPasswordPage from "./pages/customer/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/customer/ResetPasswordPage";
 
 // Social pages
 import SocialFeedPage from "./pages/customer/SocialFeedPage";
