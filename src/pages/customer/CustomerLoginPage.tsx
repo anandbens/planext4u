@@ -7,7 +7,6 @@ import { Eye, EyeOff, Mail, Phone, ArrowRight, ShieldCheck, Loader2 } from "luci
 import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
@@ -103,38 +102,17 @@ export default function CustomerLoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-        extraParams: { prompt: "select_account" },
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { prompt: "select_account" },
+        },
       });
-
-      if (result.error) {
-        toast.error(result.error instanceof Error ? result.error.message : "Google sign-in failed");
-        setLoading(false);
-        return;
-      }
-
-      // Browser will redirect to Google — just return
-      if (result.redirected) return;
-
-      // Tokens received and session set — now verify registration
-      const { data, error } = await supabase.functions.invoke("google-oauth-link");
-      if (error || !data?.success || !data?.registered) {
-        await supabase.auth.signOut();
-        toast.error(
-          data?.error || "Your Gmail is not registered with Planext4U. Create your account first to do a Google Sign-in.",
-          { duration: 6000 }
-        );
-        setLoading(false);
-        return;
-      }
-
-      // Force session refresh so auth provider picks up the role
-      await supabase.auth.refreshSession();
-      // Navigation handled by useEffect watching customerUser
+      if (error) throw error;
+      // Browser will redirect to Google automatically
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
-    } finally {
       setLoading(false);
     }
   };

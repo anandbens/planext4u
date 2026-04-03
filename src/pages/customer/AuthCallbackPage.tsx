@@ -4,35 +4,36 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 /**
  * Handles OAuth redirect callback.
- * After Google OAuth completes, the user lands here.
- * We call the google-oauth-link edge function to verify & link the user,
- * then wait for the auth provider to load the customer.
+ * After Google OAuth redirect, Supabase auto-establishes the session from
+ * the URL hash. We then call google-oauth-link to verify registration.
  */
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
   const { customerUser, isLoading } = useAuth();
-  const [status, setStatus] = useState<"checking" | "linked" | "failed">("checking");
+  const [status, setStatus] = useState<"checking" | "linked" | "failed" | "redirecting">("checking");
 
   useEffect(() => {
     let cancelled = false;
 
     const handleCallback = async () => {
-      // Wait a moment for Supabase to establish session from URL hash
-      await new Promise((r) => setTimeout(r, 1500));
+      // Give Supabase time to parse the URL hash/code and establish session
+      await new Promise((r) => setTimeout(r, 2000));
 
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session?.user) {
-        // Retry once more after another delay
+        // Retry once
         await new Promise((r) => setTimeout(r, 2000));
         const { data: { session: retry } } = await supabase.auth.getSession();
         if (!retry?.user) {
           if (!cancelled) {
-            toast.error("Authentication failed. Please try again.");
-            navigate("/app/login", { replace: true });
+            setStatus("redirecting");
+            toast.error("Sign-in could not be completed. Please try again.");
+            setTimeout(() => navigate("/app/login", { replace: true }), 2000);
           }
           return;
         }
@@ -45,7 +46,7 @@ export default function AuthCallbackPage() {
         if (error) {
           console.error("google-oauth-link error:", error);
           await supabase.auth.signOut();
-          toast.error("Authentication failed. Please try again.");
+          toast.error("Sign-in failed. Please try again.");
           if (!cancelled) navigate("/app/login", { replace: true });
           return;
         }
@@ -60,17 +61,15 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        // Successfully linked — now we need the auth provider to reload
-        // Force a session refresh so onAuthStateChange re-fires and loadUserRole picks up the new user_roles entry
+        // Successfully linked — refresh so auth provider picks up the role
         if (!cancelled) {
           setStatus("linked");
-          // Trigger a session refresh
           await supabase.auth.refreshSession();
         }
       } catch (err: any) {
         console.error("Callback error:", err);
         await supabase.auth.signOut();
-        toast.error("Authentication failed. Please try again.");
+        toast.error("Sign-in failed. Please try again.");
         if (!cancelled) navigate("/app/login", { replace: true });
       }
     };
@@ -89,8 +88,12 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+      <img src={p4uLogoTeal} alt="Planext4u" className="h-16 w-16 object-contain rounded-xl" />
       <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p className="text-muted-foreground text-sm">Signing you in...</p>
+      <p className="text-muted-foreground text-sm">
+        {status === "redirecting" ? "Redirecting to login..." : "Signing you in..."}
+      </p>
+      <p className="text-xs text-muted-foreground mt-4">Planext4U</p>
     </div>
   );
 }
