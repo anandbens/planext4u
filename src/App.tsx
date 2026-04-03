@@ -205,6 +205,7 @@ const App = () => (
             <Route path="/admin/vendor-plans" element={<ProtectedPage><AdminVendorPlansPage /></ProtectedPage>} />
             <Route path="/admin/media-library" element={<ProtectedPage><AdminMediaLibraryPage /></ProtectedPage>} />
             <Route path="/admin/onboarding" element={<ProtectedPage><AdminOnboardingPage /></ProtectedPage>} />
+            <Route path="/admin/notifications" element={<ProtectedPage><AdminNotificationsPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerPage><CustomerHomePage /></CustomerPage>} />
