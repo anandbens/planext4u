@@ -104,13 +104,8 @@ export default function CustomerLoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      if (shouldUsePublishedOAuthHost()) {
-        window.location.assign(getGoogleOAuthInitiateUrl());
-        return;
-      }
-
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: getOAuthRedirectUri(),
+        redirect_uri: window.location.origin,
         extraParams: { prompt: "select_account" },
       });
 
