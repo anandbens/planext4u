@@ -5,95 +5,125 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
+import { closeOAuthBrowser, extractOAuthResultFromUrl } from "@/lib/capacitor-auth";
 
-/**
- * Handles OAuth redirect callback.
- * After Google OAuth redirect, Supabase auto-establishes the session from
- * the URL hash. We then call google-oauth-link to verify registration.
- */
+type CallbackStatus = "checking" | "linked" | "failed";
+
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
   const { customerUser, isLoading } = useAuth();
-  const [status, setStatus] = useState<"checking" | "linked" | "failed" | "redirecting">("checking");
+  const [status, setStatus] = useState<CallbackStatus>("checking");
+  const [message, setMessage] = useState("Completing Google sign-in...");
+  const [redirectPath, setRedirectPath] = useState("/app");
 
   useEffect(() => {
     let cancelled = false;
 
-    const handleCallback = async () => {
-      // Give Supabase time to parse the URL hash/code and establish session
-      await new Promise((r) => setTimeout(r, 2000));
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-      const { data: { session } } = await supabase.auth.getSession();
+    const ensureSession = async () => {
+      const authResult = extractOAuthResultFromUrl(window.location.href);
 
-      if (!session?.user) {
-        // Retry once
-        await new Promise((r) => setTimeout(r, 2000));
-        const { data: { session: retry } } = await supabase.auth.getSession();
-        if (!retry?.user) {
-          if (!cancelled) {
-            setStatus("redirecting");
-            toast.error("Sign-in could not be completed. Please try again.");
-            setTimeout(() => navigate("/app/login", { replace: true }), 2000);
-          }
-          return;
-        }
+      if (authResult.error) {
+        throw new Error(authResult.errorDescription || "Google sign-in was cancelled.");
       }
 
-      // Session exists — call the linking edge function
+      if (authResult.accessToken && authResult.refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: authResult.accessToken,
+          refresh_token: authResult.refreshToken,
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        window.history.replaceState({}, document.title, "/auth/callback");
+      }
+
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          return session;
+        }
+
+        await wait(500);
+      }
+
+      return null;
+    };
+
+    const handleCallback = async () => {
       try {
+        const session = await ensureSession();
+
+        if (!session?.user) {
+          throw new Error("Sign-in could not be completed. Please try again.");
+        }
+
         const { data, error } = await supabase.functions.invoke("google-oauth-link");
 
         if (error) {
-          console.error("google-oauth-link error:", error);
-          await supabase.auth.signOut();
-          toast.error("Sign-in failed. Please try again.");
-          if (!cancelled) navigate("/app/login", { replace: true });
-          return;
+          throw error;
         }
 
         if (!data?.success || !data?.registered) {
           await supabase.auth.signOut();
-          toast.error(
-            data?.error || "Your Gmail is not registered with Planext4U. Create your account first to do a Google Sign-in.",
-            { duration: 6000 }
+          throw new Error(
+            data?.error ||
+              "Your Gmail is not registered with Planext4U. Create your account first to do a Google Sign-in."
           );
-          if (!cancelled) navigate("/app/login", { replace: true });
+        }
+
+        if (cancelled) {
           return;
         }
 
-        // Successfully linked — refresh so auth provider picks up the role
-        if (!cancelled) {
-          setStatus("linked");
-          await supabase.auth.refreshSession();
-        }
+        setRedirectPath(data?.has_address ? "/app" : "/app/set-location");
+        setMessage(data?.has_address ? "Signing you in..." : "Taking you to location setup...");
+        setStatus("linked");
+        await closeOAuthBrowser();
+        await supabase.auth.refreshSession();
       } catch (err: any) {
-        console.error("Callback error:", err);
+        console.error("Google auth callback failed:", err);
+        await closeOAuthBrowser();
         await supabase.auth.signOut();
-        toast.error("Sign-in failed. Please try again.");
-        if (!cancelled) navigate("/app/login", { replace: true });
+
+        if (!cancelled) {
+          const errorMessage = err?.message || "Google sign-in failed. Please try again.";
+          setStatus("failed");
+          setMessage(errorMessage);
+          toast.error(errorMessage, { duration: 6000 });
+          window.setTimeout(() => navigate("/app/login", { replace: true }), 1800);
+        }
       }
     };
 
-    handleCallback();
-    return () => { cancelled = true; };
+    void handleCallback();
+
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
-  // Once auth provider finishes loading and customerUser is set, redirect
   useEffect(() => {
     if (status === "linked" && !isLoading && customerUser) {
       toast.success("Welcome to Planext4u!");
-      navigate("/app", { replace: true });
+      navigate(redirectPath, { replace: true });
     }
-  }, [status, isLoading, customerUser, navigate]);
+  }, [status, isLoading, customerUser, navigate, redirectPath]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4 px-6 text-center">
       <img src={p4uLogoTeal} alt="Planext4u" className="h-16 w-16 object-contain rounded-xl" />
       <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p className="text-muted-foreground text-sm">
-        {status === "redirecting" ? "Redirecting to login..." : "Signing you in..."}
+      <p className="text-sm font-medium text-foreground">
+        {status === "failed" ? "Redirecting to login..." : message}
       </p>
-      <p className="text-xs text-muted-foreground mt-4">Planext4U</p>
+      <p className="max-w-xs text-xs text-muted-foreground">{message}</p>
     </div>
   );
 }
