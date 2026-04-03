@@ -147,6 +147,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <FTUXFlow>
         <BrowserRouter>
           <Routes>
             {/* Redirect root to customer app, admin login available */}
