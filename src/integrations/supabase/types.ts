@@ -2655,6 +2655,7 @@ export type Database = {
       }
       user_devices: {
         Row: {
+          app_version: string
           created_at: string
           device_id: string
           first_login: string
@@ -2665,6 +2666,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          app_version?: string
           created_at?: string
           device_id?: string
           first_login?: string
@@ -2675,6 +2677,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          app_version?: string
           created_at?: string
           device_id?: string
           first_login?: string
