@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { MapPin, Gift, User, Mail, Phone, ArrowLeft, Loader2, ShieldCheck, ArrowRight, ScrollText } from "lucide-react";
+import { MapPin, Gift, User, Mail, Phone, ArrowLeft, Loader2, ShieldCheck, ArrowRight, ScrollText, Eye, EyeOff, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -98,11 +98,16 @@ export default function CustomerRegisterPage() {
   const [showTermsPopup, setShowTermsPopup] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [otpStep, setOtpStep] = useState<"form" | "otp">("form");
+  const [otpStep, setOtpStep] = useState<"form" | "otp" | "password">("form");
   const [otp, setOtp] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [timer, setTimer] = useState(0);
   const otpRef = useRef<HTMLInputElement>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   useEffect(() => {
     api.getActiveOccupations().then(setOccupations);
@@ -248,15 +253,31 @@ export default function CustomerRegisterPage() {
         .update(updateData)
         .eq("id", data.customer?.id);
 
-      toast.success("🎉 Registration successful!", { duration: 5000 });
+      toast.success("🎉 Phone verified! Now set up your password.", { duration: 5000 });
       logActivity("registration", `New customer registered: ${form.name} (${form.email})`);
-      navigate("/app/set-location", { replace: true });
+      setOtpStep("password");
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
       else if (err.code === "auth/code-expired") toast.error("OTP expired.");
       else toast.error(err.message || "Registration failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSetPassword = async () => {
+    if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (newPassword !== confirmPassword) { toast.error("Passwords do not match"); return; }
+    setPasswordLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success("🎉 Account setup complete! Welcome to Planext4U!", { duration: 5000 });
+      navigate("/app/set-location", { replace: true });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to set password");
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -387,6 +408,59 @@ export default function CustomerRegisterPage() {
                 {timer > 0 ? <p className="text-sm text-muted-foreground">Resend in <span className="font-semibold text-primary">{timer}s</span></p> : <button onClick={async () => { setOtp(""); await resetPhoneAuth(); await new Promise(r => setTimeout(r, 400)); handleSendOTP(); }} className="text-sm text-primary font-semibold hover:underline">Resend OTP</button>}
               </div>
               <button onClick={async () => { setOtpStep("form"); setOtp(""); await resetPhoneAuth(); }} className="w-full text-sm text-muted-foreground hover:text-foreground">← Back to form</button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                  <Lock className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold">Set Your Password</h3>
+                <p className="text-sm text-muted-foreground">Create a password so you can also sign in with email</p>
+              </div>
+
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type={showNewPassword ? "text" : "password"}
+                  placeholder="Create password (min 8 characters)"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  className="pl-10 pr-10 h-12 rounded-xl"
+                />
+                <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="pl-10 pr-10 h-12 rounded-xl"
+                />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+
+              {newPassword && newPassword.length < 8 && (
+                <p className="text-xs text-destructive">Password must be at least 8 characters</p>
+              )}
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-xs text-destructive">Passwords do not match</p>
+              )}
+
+              <Button onClick={handleSetPassword} className="w-full h-12 text-base gap-2" disabled={passwordLoading || newPassword.length < 8 || newPassword !== confirmPassword}>
+                {passwordLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Setting up...</> : <>Set Password & Continue <ArrowRight className="h-4 w-4" /></>}
+              </Button>
+
+              <button onClick={() => { navigate("/app/set-location", { replace: true }); }} className="w-full text-sm text-muted-foreground hover:text-primary">
+                Skip for now →
+              </button>
             </div>
           )}
         </Card>
