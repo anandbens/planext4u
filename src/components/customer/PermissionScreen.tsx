@@ -70,7 +70,8 @@ export function PermissionScreen({ onComplete }: PermissionScreenProps) {
         setStatuses((s) => ({ ...s, [perm.id]: result.receive }));
       } else if (perm.id === "camera") {
         try {
-          const mod = await import("@capacitor/camera" as string);
+          const camPkg = "@capacitor/camera";
+          const mod = await import(/* @vite-ignore */ camPkg);
           if (mod?.Camera) {
             const result = await mod.Camera.requestPermissions();
             setStatuses((s) => ({ ...s, [perm.id]: result.camera }));
