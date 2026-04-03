@@ -114,7 +114,10 @@ export default function CustomerPhoneLoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <div className="bg-primary pt-12 pb-16 px-6 flex flex-col items-center relative">
+      <div
+        className="bg-primary pb-16 px-6 flex flex-col items-center relative"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 3rem)' }}
+      >
         {/* Login required - no skip */}
         <img src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
         <h2 className="text-primary-foreground text-xl font-bold tracking-wider">Planext 4u</h2>

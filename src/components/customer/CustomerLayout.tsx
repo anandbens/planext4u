@@ -97,8 +97,8 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
   return (
     <div className="min-h-screen bg-background">
       {/* ====== MOBILE HEADER (Zepto-style) ====== */}
-      <header className="sticky top-0 z-40 md:hidden bg-primary">
-        <div className="px-4 pt-3 pb-2">
+      <header className="sticky top-0 z-40 md:hidden bg-primary" data-no-safe-area>
+        <div className="px-4 pb-2" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
           {/* Row 1: Logo + Location + Wallet + Profile */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -256,7 +256,9 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             className="fixed inset-0 bg-background z-50 md:hidden flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center gap-3 px-4 py-4 border-b border-border/30 bg-card">
+            <div
+              className="flex items-center gap-3 px-4 pb-4 border-b border-border/30 bg-card safe-area-top"
+            >
               <button onClick={() => setMobileMenuOpen(false)} className="h-9 w-9 rounded-full border border-border/50 flex items-center justify-center">
                 <ArrowLeft className="h-4 w-4" />
               </button>

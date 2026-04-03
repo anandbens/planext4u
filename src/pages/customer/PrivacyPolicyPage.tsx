@@ -4,7 +4,9 @@ import { Link } from "react-router-dom";
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="flex items-center gap-3 p-4 border-b bg-card sticky top-0 z-10">
+      <div
+        className="flex items-center gap-3 px-4 pb-3 border-b bg-card sticky top-0 z-10 safe-area-top"
+      >
         <Link to="/app/login" className="p-1"><ArrowLeft className="h-5 w-5" /></Link>
         <h1 className="text-lg font-bold">Privacy Policy</h1>
       </div>

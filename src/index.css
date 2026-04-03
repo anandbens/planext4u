@@ -116,7 +116,6 @@
     font-family: var(--font-sans);
     font-size: clamp(14px, 1vw + 10px, 18px);
     line-height: 1.6;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
   /* Retina / High-DPI: scale up content on high-resolution displays */
@@ -145,6 +144,30 @@
   @media (min-width: 3840px) {
     html { zoom: 2; }
   }
+}
+
+/* =========================================================
+ * Capacitor Android Safe Area — Global Status Bar Fix
+ *
+ * With overlaysWebView: true the status bar overlays the
+ * WebView, so env(safe-area-inset-top) reports the real
+ * status-bar height. We push page-level sticky/fixed headers
+ * down by that amount automatically.
+ *
+ * NOTE: CustomerLayout's mobile header manages its own
+ * top padding via inline style (safe-area + 0.75rem).
+ * The .safe-area-top class opt-in is preferred for that
+ * header so it keeps its own base padding too.
+ * ========================================================= */
+header.sticky:not([data-no-safe-area]),
+div.sticky.safe-area-top,
+nav.sticky.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Fixed bottom navigation bars */
+nav.fixed {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @layer utilities {
@@ -205,6 +228,10 @@
 
   .page-description {
     @apply text-sm lg:text-base text-muted-foreground mt-1;
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   .safe-area-bottom {
