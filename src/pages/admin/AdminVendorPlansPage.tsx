@@ -55,6 +55,7 @@ export default function AdminVendorPlansPage() {
       max_redemption_percentage: Number(form.max_redemption_percentage),
       banner_ads: form.banner_ads, video_ads: form.video_ads, priority_listing: form.priority_listing,
       plan_tier: Number(form.plan_tier), is_active: form.is_active, description: form.description,
+      payment_mode: form.payment_mode,
     };
     if (editing) {
       await supabase.from("vendor_plans").update(payload).eq("id", editing.id);
