@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { getGoogleOAuthInitiateUrl, getOAuthRedirectUri, shouldUsePublishedOAuthHost } from "@/lib/capacitor-auth";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
@@ -103,8 +104,13 @@ export default function CustomerLoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
+      if (shouldUsePublishedOAuthHost()) {
+        window.location.assign(getGoogleOAuthInitiateUrl());
+        return;
+      }
+
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: getOAuthRedirectUri(),
         extraParams: { prompt: "select_account" },
       });
 
