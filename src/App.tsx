@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
+import { FTUXFlow } from "@/components/customer/FTUXFlow";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
