@@ -2,6 +2,7 @@ import { useEffect, useState, ReactNode, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContext } from "@/lib/auth-context";
 import { logActivity } from "@/lib/activity-log";
+import { initPushNotifications, linkPushTokenToUser } from "@/lib/push-notifications";
 import type { AuthUser, CustomerUser, VendorUser, UserRole, AppRole } from "@/lib/auth-types";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
