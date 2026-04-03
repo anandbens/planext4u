@@ -69,11 +69,15 @@ export function PermissionScreen({ onComplete }: PermissionScreenProps) {
         const result = await PushNotifications.requestPermissions();
         setStatuses((s) => ({ ...s, [perm.id]: result.receive }));
       } else if (perm.id === "camera") {
-        const { Camera: CapCamera } = await import("@capacitor/camera" as any).catch(() => null) || {};
-        if (CapCamera) {
-          const result = await CapCamera.requestPermissions();
-          setStatuses((s) => ({ ...s, [perm.id]: result.camera }));
-        } else {
+        try {
+          const mod = await import("@capacitor/camera" as string);
+          if (mod?.Camera) {
+            const result = await mod.Camera.requestPermissions();
+            setStatuses((s) => ({ ...s, [perm.id]: result.camera }));
+          } else {
+            setStatuses((s) => ({ ...s, [perm.id]: "granted" }));
+          }
+        } catch {
           setStatuses((s) => ({ ...s, [perm.id]: "granted" }));
         }
       } else {
