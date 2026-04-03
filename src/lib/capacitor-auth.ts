@@ -23,13 +23,15 @@ export function isNativePlatform(): boolean {
 }
 
 export function getOAuthRedirectUri(): string {
+  if (isNativePlatform()) {
+    return `${NATIVE_CALLBACK_SCHEME}://auth/callback`;
+  }
+
   if (typeof window === 'undefined') {
     return `${PUBLISHED_OAUTH_ORIGIN}${OAUTH_CALLBACK_PATH}`;
   }
 
-  return isNativePlatform()
-    ? `${PUBLISHED_OAUTH_ORIGIN}${OAUTH_CALLBACK_PATH}`
-    : `${window.location.origin}${OAUTH_CALLBACK_PATH}`;
+  return `${window.location.origin}${OAUTH_CALLBACK_PATH}`;
 }
 
 export function shouldUsePublishedOAuthHost(): boolean {
