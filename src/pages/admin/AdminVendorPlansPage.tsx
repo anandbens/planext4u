@@ -25,7 +25,7 @@ export default function AdminVendorPlansPage() {
     visibility_type: "radius_based", radius_km: "5",
     commission_percentage: "10", max_redemption_percentage: "5",
     banner_ads: false, video_ads: false, priority_listing: false,
-    plan_tier: "1", is_active: true, description: "",
+    plan_tier: "1", is_active: true, description: "", payment_mode: "both",
   });
 
   const { data: plans } = useQuery({
