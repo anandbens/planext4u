@@ -41,7 +41,7 @@ export default function AuthCallbackPage() {
         window.history.replaceState({}, document.title, "/auth/callback");
       }
 
-      for (let attempt = 0; attempt < 5; attempt++) {
+      for (let attempt = 0; attempt < 8; attempt++) {
         const {
           data: { session },
         } = await supabase.auth.getSession();
@@ -50,7 +50,7 @@ export default function AuthCallbackPage() {
           return session;
         }
 
-        await wait(500);
+        await wait(600);
       }
 
       return null;
