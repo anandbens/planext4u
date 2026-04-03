@@ -85,7 +85,7 @@ export default function AdminOnboardingPage() {
   const activeSlides = slides.filter((s) => s.is_active);
 
   return (
-    <AdminLayout title="Onboarding Screens" subtitle="Manage first-time user experience slides">
+    <AdminLayout>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">{slides.length} slides ({activeSlides.length} active)</p>

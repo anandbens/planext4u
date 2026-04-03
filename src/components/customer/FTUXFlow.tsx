@@ -19,8 +19,8 @@ function getDeviceId(): string {
 async function getNativeDeviceId(): Promise<string> {
   if (isNativePlatform()) {
     try {
-      const { Device } = await import("@capacitor/core");
-      const info = await (Device as any).getId();
+      const mod = await import("@capacitor/core");
+      const info = await (mod.Capacitor as any).Plugins?.Device?.getId();
       if (info?.identifier) {
         localStorage.setItem("p4u_device_id", info.identifier);
         return info.identifier;
