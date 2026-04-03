@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
+import { FTUXFlow } from "@/components/customer/FTUXFlow";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
@@ -116,6 +117,7 @@ import AdminHomesUsersPage from "./pages/admin/AdminHomesUsersPage";
 import AdminHomesModerationPage from "./pages/admin/AdminHomesModerationPage";
 import AdminVendorPlansPage from "./pages/admin/AdminVendorPlansPage";
 import AdminMediaLibraryPage from "./pages/admin/AdminMediaLibraryPage";
+import AdminOnboardingPage from "./pages/admin/AdminOnboardingPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
@@ -145,6 +147,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <FTUXFlow>
         <BrowserRouter>
           <Routes>
             {/* Redirect root to customer app, admin login available */}
@@ -200,6 +203,7 @@ const App = () => (
             <Route path="/admin/homes/users" element={<ProtectedPage><AdminHomesUsersPage /></ProtectedPage>} />
             <Route path="/admin/vendor-plans" element={<ProtectedPage><AdminVendorPlansPage /></ProtectedPage>} />
             <Route path="/admin/media-library" element={<ProtectedPage><AdminMediaLibraryPage /></ProtectedPage>} />
+            <Route path="/admin/onboarding" element={<ProtectedPage><AdminOnboardingPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerPage><CustomerHomePage /></CustomerPage>} />
@@ -281,6 +285,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </FTUXFlow>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
