@@ -118,6 +118,7 @@ import AdminHomesModerationPage from "./pages/admin/AdminHomesModerationPage";
 import AdminVendorPlansPage from "./pages/admin/AdminVendorPlansPage";
 import AdminMediaLibraryPage from "./pages/admin/AdminMediaLibraryPage";
 import AdminOnboardingPage from "./pages/admin/AdminOnboardingPage";
+import AdminNotificationsPage from "./pages/admin/AdminNotificationsPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
@@ -204,6 +205,7 @@ const App = () => (
             <Route path="/admin/vendor-plans" element={<ProtectedPage><AdminVendorPlansPage /></ProtectedPage>} />
             <Route path="/admin/media-library" element={<ProtectedPage><AdminMediaLibraryPage /></ProtectedPage>} />
             <Route path="/admin/onboarding" element={<ProtectedPage><AdminOnboardingPage /></ProtectedPage>} />
+            <Route path="/admin/notifications" element={<ProtectedPage><AdminNotificationsPage /></ProtectedPage>} />
 
             {/* Customer-facing routes */}
             <Route path="/app" element={<CustomerPage><CustomerHomePage /></CustomerPage>} />

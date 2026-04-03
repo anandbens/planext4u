@@ -72,6 +72,7 @@ const socialItems: NavItem[] = [
 ];
 
 const systemItems: NavItem[] = [
+  { title: "Push Notifications", url: "/admin/notifications", icon: Megaphone, roles: ['admin'] },
   { title: "Media Library", url: "/admin/media-library", icon: Image, roles: ['admin'] },
   { title: "Onboarding Screens", url: "/admin/onboarding", icon: MonitorPlay, roles: ['admin'] },
   { title: "Occupations", url: "/occupations", icon: Briefcase, roles: ['admin'] },

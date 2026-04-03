@@ -40,10 +40,10 @@ export async function initPushNotifications(userId?: string) {
     });
 
     // Notification received while app is in foreground
-    PushNotifications.addListener("pushNotificationReceived", (notification) => {
+    PushNotifications.addListener("pushNotificationReceived", async (notification) => {
       console.log("Push notification received:", notification);
-      // Show in-app notification (toast or custom UI)
-      const { toast } = require("sonner") as typeof import("sonner");
+      // Show in-app notification using dynamic import
+      const { toast } = await import("sonner");
       toast(notification.title || "Notification", {
         description: notification.body || "",
       });
