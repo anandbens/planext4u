@@ -286,6 +286,10 @@ const AppRoutes = () => {
         <Route path="/vendor/bank" element={<VendorPage><VendorBankPage /></VendorPage>} />
         <Route path="/vendor/profile" element={<VendorPage><VendorProfilePage /></VendorPage>} />
         <Route path="/vendor/settings" element={<VendorPage><VendorProfilePage /></VendorPage>} />
+        <Route path="/vendor/account-control" element={<VendorPage><VendorAccountControlPage /></VendorPage>} />
+
+        {/* Customer Account Control */}
+        <Route path="/app/account-control" element={<CustomerPage><AccountControlPage /></CustomerPage>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
