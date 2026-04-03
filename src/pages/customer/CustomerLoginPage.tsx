@@ -9,7 +9,6 @@ import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/fi
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
-import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
   const { customerLogin, customerUser } = useAuth();
