@@ -253,9 +253,9 @@ export default function CustomerRegisterPage() {
         .update(updateData)
         .eq("id", data.customer?.id);
 
-      toast.success("🎉 Registration successful!", { duration: 5000 });
+      toast.success("🎉 Phone verified! Now set up your password.", { duration: 5000 });
       logActivity("registration", `New customer registered: ${form.name} (${form.email})`);
-      navigate("/app/set-location", { replace: true });
+      setOtpStep("password");
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
       else if (err.code === "auth/code-expired") toast.error("OTP expired.");
