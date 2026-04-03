@@ -98,11 +98,16 @@ export default function CustomerRegisterPage() {
   const [showTermsPopup, setShowTermsPopup] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [otpStep, setOtpStep] = useState<"form" | "otp">("form");
+  const [otpStep, setOtpStep] = useState<"form" | "otp" | "password">("form");
   const [otp, setOtp] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [timer, setTimer] = useState(0);
   const otpRef = useRef<HTMLInputElement>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   useEffect(() => {
     api.getActiveOccupations().then(setOccupations);
