@@ -193,6 +193,17 @@ export default function AdminVendorPlansPage() {
               <div><Label className="text-xs">Commission %</Label><Input type="number" value={form.commission_percentage} onChange={(e) => setForm(f => ({ ...f, commission_percentage: e.target.value }))} /></div>
               <div><Label className="text-xs">Max Redemption %</Label><Input type="number" value={form.max_redemption_percentage} onChange={(e) => setForm(f => ({ ...f, max_redemption_percentage: e.target.value }))} /></div>
             </div>
+            <div className="border-t pt-3">
+              <Label className="text-xs font-medium">Payment Mode</Label>
+              <Select value={form.payment_mode} onValueChange={(v) => setForm(f => ({ ...f, payment_mode: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="online">Online (Razorpay)</SelectItem>
+                  <SelectItem value="offline">Offline (Bank Transfer)</SelectItem>
+                  <SelectItem value="both">Both</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="border-t pt-3 space-y-2">
               <Label className="text-xs font-medium">Promotion Flags</Label>
               <div className="flex items-center gap-3"><Switch checked={form.banner_ads} onCheckedChange={(v) => setForm(f => ({ ...f, banner_ads: v }))} /><Label className="text-xs">Banner Ads</Label></div>
