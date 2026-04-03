@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { MapPin, Gift, User, Mail, Phone, ArrowLeft, Loader2, ShieldCheck, ArrowRight, ScrollText } from "lucide-react";
+import { MapPin, Gift, User, Mail, Phone, ArrowLeft, Loader2, ShieldCheck, ArrowRight, ScrollText, Eye, EyeOff, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
