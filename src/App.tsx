@@ -143,6 +143,10 @@ function CustomerPage({ children }: { children: React.ReactNode }) {
   return <CustomerProtectedRoute>{children}</CustomerProtectedRoute>;
 }
 
+function VendorPage({ children }: { children: React.ReactNode }) {
+  return <VendorProtectedRoute>{children}</VendorProtectedRoute>;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
