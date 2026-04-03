@@ -8,9 +8,15 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+import { capacitorStorageAdapter } from '@/lib/storage-adapter';
+import { Capacitor } from '@capacitor/core';
+
+// Use Capacitor Preferences securely on devices, fallback to localStorage if needed
+const isNative = Capacitor.isNativePlatform();
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: isNative ? capacitorStorageAdapter : localStorage,
     persistSession: true,
     autoRefreshToken: true,
   }

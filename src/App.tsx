@@ -4,6 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { useEffect } from "react";
+import { App as CapacitorApp } from "@capacitor/app";
+import { supabase } from "@/integrations/supabase/client";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
 import { VendorProtectedRoute } from "@/components/vendor/VendorProtectedRoute";
@@ -151,6 +155,30 @@ function VendorPage({ children }: { children: React.ReactNode }) {
 
 const AppRoutes = () => {
   const { customerUser } = useAuth();
+  usePushNotifications();
+
+  useEffect(() => {
+    // Handle deep linking for Supabase Auth on native devices
+    CapacitorApp.addListener('appUrlOpen', (event) => {
+      if (event.url.includes('auth-callback') && event.url.includes('#')) {
+        const hash = event.url.split('#')[1];
+        const searchParams = new URLSearchParams(hash);
+        const accessToken = searchParams.get('access_token');
+        const refreshToken = searchParams.get('refresh_token');
+        if (accessToken && refreshToken) {
+          supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+        }
+      }
+    });
+
+    return () => {
+      CapacitorApp.removeAllListeners();
+    };
+  }, []);
+
   return (
     <FTUXFlow userId={customerUser?.supabase_uid}>
       <Routes>
