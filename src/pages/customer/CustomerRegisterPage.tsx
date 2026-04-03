@@ -265,6 +265,22 @@ export default function CustomerRegisterPage() {
     }
   };
 
+  const handleSetPassword = async () => {
+    if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (newPassword !== confirmPassword) { toast.error("Passwords do not match"); return; }
+    setPasswordLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success("🎉 Account setup complete! Welcome to Planext4U!", { duration: 5000 });
+      navigate("/app/set-location", { replace: true });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to set password");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
