@@ -2674,6 +2674,7 @@ export type Database = {
           rejection_reason: string | null
           secondary_phone: string | null
           shop_address: string | null
+          shop_photo_url: string | null
           state: string | null
           status: string
           store_logo_url: string | null
@@ -2711,6 +2712,7 @@ export type Database = {
           rejection_reason?: string | null
           secondary_phone?: string | null
           shop_address?: string | null
+          shop_photo_url?: string | null
           state?: string | null
           status?: string
           store_logo_url?: string | null
@@ -2748,6 +2750,7 @@ export type Database = {
           rejection_reason?: string | null
           secondary_phone?: string | null
           shop_address?: string | null
+          shop_photo_url?: string | null
           state?: string | null
           status?: string
           store_logo_url?: string | null
@@ -2806,6 +2809,7 @@ export type Database = {
           id: string
           is_active: boolean
           max_redemption_percentage: number
+          payment_mode: string
           plan_name: string
           plan_tier: number
           plan_type: string
@@ -2825,6 +2829,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_redemption_percentage?: number
+          payment_mode?: string
           plan_name: string
           plan_tier?: number
           plan_type?: string
@@ -2844,6 +2849,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_redemption_percentage?: number
+          payment_mode?: string
           plan_name?: string
           plan_tier?: number
           plan_type?: string
@@ -2872,11 +2878,14 @@ export type Database = {
           name: string
           plan_end_date: string | null
           plan_id: string | null
+          plan_payment_status: string
           plan_start_date: string | null
+          plan_transaction_id: string | null
           rating: number | null
           shop_address: string | null
           shop_latitude: number | null
           shop_longitude: number | null
+          shop_photo_url: string | null
           status: string
           total_orders: number | null
           total_products: number | null
@@ -2896,11 +2905,14 @@ export type Database = {
           name: string
           plan_end_date?: string | null
           plan_id?: string | null
+          plan_payment_status?: string
           plan_start_date?: string | null
+          plan_transaction_id?: string | null
           rating?: number | null
           shop_address?: string | null
           shop_latitude?: number | null
           shop_longitude?: number | null
+          shop_photo_url?: string | null
           status?: string
           total_orders?: number | null
           total_products?: number | null
@@ -2920,11 +2932,14 @@ export type Database = {
           name?: string
           plan_end_date?: string | null
           plan_id?: string | null
+          plan_payment_status?: string
           plan_start_date?: string | null
+          plan_transaction_id?: string | null
           rating?: number | null
           shop_address?: string | null
           shop_latitude?: number | null
           shop_longitude?: number | null
+          shop_photo_url?: string | null
           status?: string
           total_orders?: number | null
           total_products?: number | null

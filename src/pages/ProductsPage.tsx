@@ -6,11 +6,13 @@ import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Product, PaginatedResponse } from "@/lib/api";
 import { ProductModal } from "@/components/admin/modals/ProductModal";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Eye, Pencil, Trash2, Package, IndianRupee, Tag, TrendingUp, CheckCircle, XCircle } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
 export default function ProductsPage() {
+  const [activeTab, setActiveTab] = useState("pending");
   const [data, setData] = useState<PaginatedResponse<Product> | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -24,11 +26,14 @@ export default function ProductsPage() {
   const [confirmAction, setConfirmAction] = useState<"delete" | "approve" | "reject">("delete");
   const [confirmLoading, setConfirmLoading] = useState(false);
 
+  const statusFilter = activeTab === "pending" ? "pending_approval" : undefined;
+
   const fetchData = useCallback(() => {
-    api.getProducts({ page, per_page: 10, search: search || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
-  }, [page, search, dateFrom, dateTo]);
+    api.getProducts({ page, per_page: 10, search: search || undefined, date_from: dateFrom, date_to: dateTo, status: statusFilter }).then(setData);
+  }, [page, search, dateFrom, dateTo, statusFilter]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { setPage(1); }, [activeTab]);
 
   const openModal = (product: Product | null, mode: "view" | "edit" | "create") => {
     setSelected(product); setModalMode(mode); setModalOpen(true);
@@ -92,11 +97,43 @@ export default function ProductsPage() {
   const rejected = data.data.filter(p => p.status === 'rejected').length;
   const avgPrice = data.data.length ? Math.round(data.data.reduce((s, p) => s + p.price, 0) / data.data.length) : 0;
 
-  const summaryWidgets: SummaryWidget[] = [
+  const summaryWidgets: SummaryWidget[] = activeTab === "pending" ? [
+    { label: "Pending Approval", value: data.total, icon: <Tag className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+  ] : [
     { label: "Total Products", value: data.total, icon: <Package className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
     { label: "Active", value: active, icon: <TrendingUp className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
-    { label: "Pending Approval", value: pending, icon: <Tag className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
     { label: "Avg Price", value: `₹${avgPrice.toLocaleString()}`, icon: <IndianRupee className="h-5 w-5 text-info" />, color: "bg-info/5", textColor: "text-info" },
+  ];
+
+  const columns = [
+    { key: "id", label: "ID" },
+    { key: "title", label: "Product", render: (p: Product) => (
+      <div><p className="font-medium">{p.title}</p><p className="text-xs text-muted-foreground">{p.category_name}</p></div>
+    )},
+    { key: "vendor_name", label: "Vendor" },
+    { key: "price", label: "Price", render: (p: Product) => <span className="font-semibold">₹{p.price.toLocaleString()}</span> },
+    { key: "discount", label: "Discount", render: (p: Product) => p.discount > 0 ? <span className="text-success font-medium">₹{p.discount}</span> : <span className="text-muted-foreground">—</span> },
+    { key: "status", label: "Status", render: (p: Product) => (
+      <div>
+        <StatusBadge status={p.status} />
+        {p.status === 'rejected' && p.rejection_reason && (
+          <p className="text-[10px] text-destructive mt-0.5 max-w-[150px] truncate" title={p.rejection_reason}>{p.rejection_reason}</p>
+        )}
+      </div>
+    )},
+    { key: "actions", label: "", render: (p: Product) => (
+      <div className="flex gap-1">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(p, "view"); }}><Eye className="h-4 w-4" /></Button>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(p, "edit"); }}><Pencil className="h-4 w-4" /></Button>
+        {(p.status === 'pending_approval' || p.status === 'draft') && (
+          <>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={(e) => { e.stopPropagation(); openConfirm(p, "approve"); }} title="Approve"><CheckCircle className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(p, "reject"); }} title="Reject"><XCircle className="h-4 w-4" /></Button>
+          </>
+        )}
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(p, "delete"); }}><Trash2 className="h-4 w-4" /></Button>
+      </div>
+    )},
   ];
 
   return (
@@ -105,37 +142,16 @@ export default function ProductsPage() {
         <h1 className="page-title">Products</h1>
         <p className="page-description">{data.total.toLocaleString()} products across all vendors</p>
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
+        <TabsList>
+          <TabsTrigger value="pending">Pending Approval</TabsTrigger>
+          <TabsTrigger value="all">All Products</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <DataTable
-        columns={[
-          { key: "id", label: "ID" },
-          { key: "title", label: "Product", render: (p) => (
-            <div><p className="font-medium">{p.title}</p><p className="text-xs text-muted-foreground">{p.category_name}</p></div>
-          )},
-          { key: "vendor_name", label: "Vendor" },
-          { key: "price", label: "Price", render: (p) => <span className="font-semibold">₹{p.price.toLocaleString()}</span> },
-          { key: "discount", label: "Discount", render: (p) => p.discount > 0 ? <span className="text-success font-medium">₹{p.discount}</span> : <span className="text-muted-foreground">—</span> },
-          { key: "status", label: "Status", render: (p) => (
-            <div>
-              <StatusBadge status={p.status} />
-              {p.status === 'rejected' && p.rejection_reason && (
-                <p className="text-[10px] text-destructive mt-0.5 max-w-[150px] truncate" title={p.rejection_reason}>{p.rejection_reason}</p>
-              )}
-            </div>
-          )},
-          { key: "actions", label: "", render: (p) => (
-            <div className="flex gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(p, "view"); }}><Eye className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(p, "edit"); }}><Pencil className="h-4 w-4" /></Button>
-              {(p.status === 'pending_approval' || p.status === 'draft') && (
-                <>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={(e) => { e.stopPropagation(); openConfirm(p, "approve"); }} title="Approve"><CheckCircle className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(p, "reject"); }} title="Reject"><XCircle className="h-4 w-4" /></Button>
-                </>
-              )}
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(p, "delete"); }}><Trash2 className="h-4 w-4" /></Button>
-            </div>
-          )},
-        ]}
+        columns={columns}
         data={data.data}
         total={data.total}
         page={data.page}

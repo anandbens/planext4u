@@ -25,7 +25,7 @@ export default function AdminVendorPlansPage() {
     visibility_type: "radius_based", radius_km: "5",
     commission_percentage: "10", max_redemption_percentage: "5",
     banner_ads: false, video_ads: false, priority_listing: false,
-    plan_tier: "1", is_active: true, description: "",
+    plan_tier: "1", is_active: true, description: "", payment_mode: "both",
   });
 
   const { data: plans } = useQuery({
@@ -43,7 +43,7 @@ export default function AdminVendorPlansPage() {
     visibility_type: "radius_based", radius_km: "5",
     commission_percentage: "10", max_redemption_percentage: "5",
     banner_ads: false, video_ads: false, priority_listing: false,
-    plan_tier: "1", is_active: true, description: "",
+    plan_tier: "1", is_active: true, description: "", payment_mode: "both",
   });
 
   const handleSave = async () => {
@@ -55,6 +55,7 @@ export default function AdminVendorPlansPage() {
       max_redemption_percentage: Number(form.max_redemption_percentage),
       banner_ads: form.banner_ads, video_ads: form.video_ads, priority_listing: form.priority_listing,
       plan_tier: Number(form.plan_tier), is_active: form.is_active, description: form.description,
+      payment_mode: form.payment_mode,
     };
     if (editing) {
       await supabase.from("vendor_plans").update(payload).eq("id", editing.id);
@@ -87,6 +88,9 @@ export default function AdminVendorPlansPage() {
     )},
     { key: "commission_percentage", label: "Commission", render: (p: any) => `${p.commission_percentage}%` },
     { key: "max_redemption_percentage", label: "Max Redeem", render: (p: any) => `${p.max_redemption_percentage}%` },
+    { key: "payment_mode", label: "Payment", render: (p: any) => (
+      <Badge variant="outline" className="text-[9px] capitalize">{(p.payment_mode || "both").replace("_", " ")}</Badge>
+    )},
     { key: "promotions", label: "Promotions", render: (p: any) => (
       <div className="flex gap-1">
         {p.banner_ads && <Badge variant="outline" className="text-[9px]">Banner</Badge>}
@@ -111,6 +115,7 @@ export default function AdminVendorPlansPage() {
             max_redemption_percentage: String(p.max_redemption_percentage),
             banner_ads: p.banner_ads, video_ads: p.video_ads, priority_listing: p.priority_listing,
             plan_tier: String(p.plan_tier), is_active: p.is_active, description: p.description || "",
+            payment_mode: p.payment_mode || "both",
           });
           setShowModal(true);
         }}>Edit</Button>
@@ -190,6 +195,17 @@ export default function AdminVendorPlansPage() {
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-xs">Commission %</Label><Input type="number" value={form.commission_percentage} onChange={(e) => setForm(f => ({ ...f, commission_percentage: e.target.value }))} /></div>
               <div><Label className="text-xs">Max Redemption %</Label><Input type="number" value={form.max_redemption_percentage} onChange={(e) => setForm(f => ({ ...f, max_redemption_percentage: e.target.value }))} /></div>
+            </div>
+            <div className="border-t pt-3">
+              <Label className="text-xs font-medium">Payment Mode</Label>
+              <Select value={form.payment_mode} onValueChange={(v) => setForm(f => ({ ...f, payment_mode: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="online">Online (Razorpay)</SelectItem>
+                  <SelectItem value="offline">Offline (Bank Transfer)</SelectItem>
+                  <SelectItem value="both">Both</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="border-t pt-3 space-y-2">
               <Label className="text-xs font-medium">Promotion Flags</Label>

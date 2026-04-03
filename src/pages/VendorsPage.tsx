@@ -6,11 +6,14 @@ import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Vendor, PaginatedResponse } from "@/lib/api";
 import { VendorModal } from "@/components/admin/modals/VendorModal";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, Ban } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, Ban, CreditCard } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
 export default function VendorsPage() {
+  const [activeTab, setActiveTab] = useState("pending");
   const [data, setData] = useState<PaginatedResponse<Vendor> | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -24,11 +27,14 @@ export default function VendorsPage() {
   const [confirmAction, setConfirmAction] = useState<{ vendor: Vendor; action: "approve" | "reject" | "delete" } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
+  const tabStatusFilter = activeTab === "pending" ? "pending" : statusFilter || undefined;
+
   const fetchData = useCallback(() => {
-    api.getVendors({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
-  }, [page, search, statusFilter, dateFrom, dateTo]);
+    api.getVendors({ page, per_page: 10, search: search || undefined, status: tabStatusFilter, date_from: dateFrom, date_to: dateTo }).then(setData);
+  }, [page, search, tabStatusFilter, dateFrom, dateTo]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { setPage(1); setStatusFilter(""); }, [activeTab]);
 
   const openModal = (vendor: Vendor | null, mode: "view" | "edit" | "create") => {
     setSelected(vendor); setModalMode(mode); setModalOpen(true);
@@ -62,7 +68,6 @@ export default function VendorsPage() {
       if (action === "delete") { await handleDelete(vendor.id); }
       else if (action === "reject") {
         await api.updateVendorStatus(vendor.id, "rejected");
-        // Save rejection reason on both vendors and vendor_applications tables
         const { supabase: _sb } = await import("@/integrations/supabase/client");
         await _sb.from("vendor_applications").update({ status: "rejected", rejection_reason: reason || "" }).eq("phone", vendor.mobile);
         toast.success("Vendor rejected");
@@ -93,10 +98,12 @@ export default function VendorsPage() {
   const pending = data.data.filter(v => v.status === 'pending').length;
   const rejected = data.data.filter(v => v.status === 'rejected').length;
 
-  const summaryWidgets: SummaryWidget[] = [
+  const summaryWidgets: SummaryWidget[] = activeTab === "pending" ? [
+    { label: "Pending Approval", value: data.total, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+  ] : [
     { label: "Total Vendors", value: data.total, icon: <Store className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
     { label: "Verified", value: verified, icon: <ShieldCheck className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
-    { label: "Pending Approval", value: pending, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+    { label: "Pending", value: pending, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
     { label: "Rejected", value: rejected, icon: <Ban className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
   ];
 
@@ -106,6 +113,14 @@ export default function VendorsPage() {
         <h1 className="page-title">Vendors</h1>
         <p className="page-description">{data.total.toLocaleString()} registered vendors · Multi-level approval</p>
       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
+        <TabsList>
+          <TabsTrigger value="pending">Pending Approval</TabsTrigger>
+          <TabsTrigger value="all">All Vendors</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <DataTable
         columns={[
           { key: "id", label: "ID" },
@@ -115,11 +130,11 @@ export default function VendorsPage() {
           { key: "email", label: "Email" },
           { key: "mobile", label: "Mobile" },
           { key: "commission_rate", label: "Commission", render: (v) => <span>{v.commission_rate}%</span> },
-          { key: "membership", label: "Plan", render: (v) => (
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${v.membership === 'premium' ? 'bg-warning/10 text-warning' : 'bg-secondary text-secondary-foreground'}`}>
-              {v.membership}
-            </span>
-          )},
+          { key: "plan_payment_status", label: "Payment", render: (v: any) => {
+            const ps = v.plan_payment_status || "unpaid";
+            const color = ps === "paid" ? "bg-success/10 text-success" : ps === "offline_pending" ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive";
+            return <Badge className={`border-0 text-[10px] ${color}`}>{ps === "offline_pending" ? "Pending" : ps}</Badge>;
+          }},
           { key: "status", label: "Status", render: (v) => <StatusBadge status={v.status} /> },
           { key: "actions", label: "Actions", render: (v) => (
             <div className="flex gap-1">
@@ -149,11 +164,11 @@ export default function VendorsPage() {
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } }}
         onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
         searchPlaceholder="Search vendors..."
-        filters={[{ key: "status", label: "Status", options: [
+        filters={activeTab === "all" ? [{ key: "status", label: "Status", options: [
           { value: "pending", label: "Pending" }, { value: "level1_approved", label: "Level 1" },
           { value: "level2_approved", label: "Level 2" }, { value: "verified", label: "Verified" },
           { value: "rejected", label: "Rejected" },
-        ]}]}
+        ]}] : undefined}
         summaryWidgets={summaryWidgets}
         enableBulkSelect
         onBulkDelete={handleBulkDelete}
@@ -164,7 +179,7 @@ export default function VendorsPage() {
           { value: "rejected", label: "Rejected" },
         ]}
       />
-      <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
+      <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} onRefresh={fetchData} />
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
