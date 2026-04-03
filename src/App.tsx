@@ -131,6 +131,7 @@ import VendorOrdersPage from "./pages/vendor/VendorOrdersPage";
 import VendorSettlementsPage from "./pages/vendor/VendorSettlementsPage";
 import VendorProfilePage from "./pages/vendor/VendorProfilePage";
 import VendorBankPage from "./pages/vendor/VendorBankPage";
+import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
 import VendorAccountControlPage from "./pages/vendor/VendorAccountControlPage";
 import AccountControlPage from "./pages/customer/AccountControlPage";
 
