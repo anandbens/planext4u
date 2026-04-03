@@ -239,8 +239,9 @@ export default function CustomerLoginPage() {
           </div>
         </div>
 
-        <div className="mt-4 text-center max-w-sm mx-auto">
-          <Link to="/app/register" className="text-sm text-primary font-semibold hover:underline">New user? Register here</Link>
+        <div className="mt-4 text-center max-w-sm mx-auto space-y-2">
+          <Link to="/app/forgot-password" className="text-sm text-muted-foreground hover:text-primary hover:underline block">Forgot Password?</Link>
+          <Link to="/app/register" className="text-sm text-primary font-semibold hover:underline block">New user? Register here</Link>
         </div>
 
         <p className="text-[10px] text-muted-foreground text-center mt-6 max-w-sm mx-auto">
