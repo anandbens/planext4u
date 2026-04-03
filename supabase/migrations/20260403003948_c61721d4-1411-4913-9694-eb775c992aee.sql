@@ -1,0 +1,1 @@
+ALTER TABLE public.user_devices ADD COLUMN IF NOT EXISTS app_version text DEFAULT '' NOT NULL;
