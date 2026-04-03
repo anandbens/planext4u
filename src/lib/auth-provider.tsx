@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
         const { id, email, user_metadata } = session.user;
         const name = user_metadata?.name || email?.split('@')[0] || '';
         setTimeout(async () => {

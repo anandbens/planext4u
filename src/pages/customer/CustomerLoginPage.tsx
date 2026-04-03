@@ -7,6 +7,8 @@ import { Eye, EyeOff, Mail, Phone, ArrowRight, ShieldCheck, Loader2 } from "luci
 import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+import { getOAuthRedirectUri, isNativePlatform, openGoogleOAuthInBrowser } from "@/lib/capacitor-auth";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
@@ -102,15 +104,22 @@ export default function CustomerLoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: { prompt: "select_account" },
-        },
+      if (isNativePlatform()) {
+        await openGoogleOAuthInBrowser();
+        setLoading(false);
+        return;
+      }
+
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: getOAuthRedirectUri(),
+        extraParams: { prompt: "select_account" },
       });
-      if (error) throw error;
-      // Browser will redirect to Google automatically
+
+      if (result.error) throw result.error;
+
+      if (!result.redirected) {
+        navigate("/auth/callback", { replace: true });
+      }
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
       setLoading(false);

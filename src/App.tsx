@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { useEffect } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { closeOAuthBrowser, extractOAuthResultFromUrl, isNativePlatform, isOAuthCallbackUrl } from "@/lib/capacitor-auth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
@@ -161,24 +163,46 @@ const AppRoutes = () => {
   usePushNotifications();
 
   useEffect(() => {
-    // Handle deep linking for Supabase Auth on native devices
-    CapacitorApp.addListener('appUrlOpen', (event) => {
-      if (event.url.includes('auth-callback') && event.url.includes('#')) {
-        const hash = event.url.split('#')[1];
-        const searchParams = new URLSearchParams(hash);
-        const accessToken = searchParams.get('access_token');
-        const refreshToken = searchParams.get('refresh_token');
-        if (accessToken && refreshToken) {
-          supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
+    if (!isNativePlatform()) {
+      return;
+    }
+
+    let listener: { remove: () => Promise<void> } | null = null;
+
+    const registerListener = async () => {
+      listener = await CapacitorApp.addListener("appUrlOpen", async ({ url }) => {
+        if (!isOAuthCallbackUrl(url)) {
+          return;
         }
-      }
-    });
+
+        const { accessToken, refreshToken, errorDescription } = extractOAuthResultFromUrl(url);
+        await closeOAuthBrowser();
+
+        if (!accessToken || !refreshToken) {
+          toast.error(errorDescription || "Google sign-in failed. Please try again.");
+          window.location.replace("/app/login");
+          return;
+        }
+
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (error) {
+          toast.error(error.message || "Google sign-in failed. Please try again.");
+          window.location.replace("/app/login");
+          return;
+        }
+
+        window.location.replace("/auth/callback");
+      });
+    };
+
+    void registerListener();
 
     return () => {
-      CapacitorApp.removeAllListeners();
+      void listener?.remove();
     };
   }, []);
 
