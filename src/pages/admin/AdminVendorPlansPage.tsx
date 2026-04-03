@@ -112,6 +112,7 @@ export default function AdminVendorPlansPage() {
             max_redemption_percentage: String(p.max_redemption_percentage),
             banner_ads: p.banner_ads, video_ads: p.video_ads, priority_listing: p.priority_listing,
             plan_tier: String(p.plan_tier), is_active: p.is_active, description: p.description || "",
+            payment_mode: p.payment_mode || "both",
           });
           setShowModal(true);
         }}>Edit</Button>
