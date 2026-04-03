@@ -241,6 +241,8 @@ const AppRoutes = () => {
         {/* Customer-facing routes */}
         <Route path="/app" element={<CustomerPage><CustomerHomePage /></CustomerPage>} />
         <Route path="/app/login" element={<CustomerLoginPage />} />
+        <Route path="/app/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/app/reset-password" element={<ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/app/register" element={<CustomerRegisterPage />} />
         <Route path="/app/phone-login" element={<CustomerPhoneLoginPage />} />
