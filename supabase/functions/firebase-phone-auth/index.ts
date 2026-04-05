@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
       if (createError) throw createError;
       supabaseUser = newUser.user;
 
-      // Create customer record
+      // Create customer record with welcome bonus
       const customerId = `CUS-${Date.now()}`;
       await supabase.from("customers").insert({
         id: customerId,
@@ -125,6 +125,17 @@ Deno.serve(async (req) => {
         mobile: normalizedPhone,
         referral_code: `REF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
         status: "active",
+        wallet_points: 200,
+      });
+
+      // Add welcome bonus points transaction
+      await supabase.from("points_transactions").insert({
+        id: `PT-${Date.now()}`,
+        user_id: customerId,
+        type: "welcome",
+        points: 200,
+        description: "Welcome bonus on registration",
+        user_name: normalizedPhone,
       });
 
       // Assign customer role
