@@ -35,7 +35,10 @@ async function verifyFirebaseToken(idToken: string) {
     `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=${FIREBASE_API_KEY}`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Referer": "https://planext4u.net",
+      },
       body: JSON.stringify({ idToken }),
     }
   );
