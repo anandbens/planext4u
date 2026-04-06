@@ -35,6 +35,7 @@ export default function CustomerPhoneLoginPage() {
       toast.error("Please enter a valid 10-digit phone number");
       return;
     }
+    if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
       await sendOTP(`${countryCode}${cleaned}`);

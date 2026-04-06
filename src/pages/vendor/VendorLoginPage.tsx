@@ -46,6 +46,7 @@ export default function VendorLoginPage() {
   const handleSendOTP = async () => {
     const cleaned = phone.replace(/\s/g, "");
     if (!/^\d{10}$/.test(cleaned)) { toast.error("Please enter a valid 10-digit phone number"); return; }
+    if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
       // Check vendor verification status before sending OTP
