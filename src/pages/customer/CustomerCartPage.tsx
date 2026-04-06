@@ -443,10 +443,16 @@ export default function CustomerCartPage() {
                 <Card className="p-4">
                   <h3 className="text-sm font-semibold mb-2">Redeem Points</h3>
                   <div className="flex gap-2">
-                    <Input type="number" placeholder="Enter Points" value={pointsUsed || ""} onChange={(e) => setPointsUsed(Math.min(Number(e.target.value), maxPoints))} className="h-10 flex-1" />
+                    <Input type="number" placeholder={`Enter Points (max ${maxPoints})`} value={pointsUsed || ""} onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setPointsUsed(val);
+                    }} className="h-10 flex-1" min={0} max={maxPoints} />
                     <Button className="h-10 px-6" onClick={applyPoints}>Apply</Button>
                   </div>
-                  <p className="text-[10px] text-success mt-1.5">Your have total reward points {walletPoints.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1.5">Balance: {walletPoints.toLocaleString()} pts · Max redeemable: {maxPoints} pts</p>
+                  {pointsUsed > maxPoints && (
+                    <p className="text-[10px] text-destructive mt-1 font-medium">⚠ Enter between 1 and {maxPoints} points</p>
+                  )}
                 </Card>
                 <Card className="p-4">
                   <div className="flex items-center gap-2">
@@ -458,24 +464,39 @@ export default function CustomerCartPage() {
                 <Card className="p-4">
                   <h3 className="text-sm font-semibold mb-3">Bill Details</h3>
                   <div className="space-y-2.5 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>₹{mrpTotal.toLocaleString()}.00</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>₹{mrpTotal.toLocaleString()}</span></div>
+                    {totalDiscount > 0 && (
+                      <div className="flex justify-between pl-3 border-l-2 border-success/30 text-success">
+                        <span>Product Discount</span><span>- ₹{totalDiscount.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between pl-3 border-l-2 border-border/50">
                       <span className="text-muted-foreground font-medium">Subtotal</span><span className="font-medium">₹{subtotal.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between pl-3 border-l-2 border-border/50">
-                      <div><span className="text-muted-foreground">Platform Fee</span><p className="text-[10px] text-muted-foreground/70">Service charge</p></div>
-                      <span>+ ₹{platformFee}</span>
+                      <div>
+                        <span className="text-muted-foreground">Platform Fee</span>
+                        {referralCountThisMonth >= 4 && <p className="text-[10px] text-success font-medium">🎉 FREE (4+ referrals this month!)</p>}
+                        {referralCountThisMonth < 4 && <p className="text-[10px] text-muted-foreground/70">Service charge</p>}
+                      </div>
+                      <span>{referralCountThisMonth >= 4 ? <span className="line-through text-muted-foreground">₹{platformFeeValue}</span> : `+ ₹${platformFee}`}</span>
                     </div>
-                    <div className="flex justify-between pl-3 border-l-2 border-border/50">
-                      <div><span className="text-muted-foreground">GST on Platform Fee</span><p className="text-[10px] text-muted-foreground/70">{platformFeeGst}% on platform fee</p></div>
-                      <span>+ ₹{gstOnPlatformFee.toFixed(2)}</span>
-                    </div>
-                    {pointsUsed > 0 && <div className="flex justify-between text-success"><span>Redeem Points</span><span>- ₹{pointsUsed.toLocaleString()}</span></div>}
+                    {platformFee > 0 && (
+                      <div className="flex justify-between pl-3 border-l-2 border-border/50">
+                        <div><span className="text-muted-foreground">GST on Platform Fee</span><p className="text-[10px] text-muted-foreground/70">{platformFeeGst}% on platform fee</p></div>
+                        <span>+ ₹{gstOnPlatformFee.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {pointsUsed > 0 && <div className="flex justify-between text-success"><span>Points Redeemed</span><span>- ₹{pointsUsed.toLocaleString()}</span></div>}
                     {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>- ₹{discount.toLocaleString()}</span></div>}
                     <div className="border-t-2 border-dashed border-border/50 my-1" />
                     <div className="flex justify-between font-bold bg-success/5 rounded-lg px-3 py-2 -mx-1"><span>Total Amount</span><span className="text-success">₹{total.toLocaleString()}</span></div>
                   </div>
-                  {savings > 0 && <p className="text-xs text-success mt-2 font-medium">You will save ₹{savings.toLocaleString()} on this order</p>}
+                  {savings > 0 && (
+                    <div className="mt-2 p-2 bg-success/5 rounded-lg border border-success/20">
+                      <p className="text-xs text-success font-semibold text-center">🎉 You save ₹{savings.toLocaleString()} on this order!</p>
+                    </div>
+                  )}
 
                   <div className="mt-4 p-3 bg-secondary/30 rounded-lg text-xs text-muted-foreground">
                     <p className="font-semibold text-foreground mb-1">Review your order and address details to avoid cancellations</p>
