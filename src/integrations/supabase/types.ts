@@ -3614,6 +3614,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      are_mutual_followers: {
+        Args: { _user_a: string; _user_b: string }
+        Returns: boolean
+      }
+      create_social_notification: {
+        Args: {
+          _actor_id: string
+          _message: string
+          _reference_id: string
+          _reference_type: string
+          _type: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -3660,6 +3675,14 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      refresh_social_post_counts: {
+        Args: { _post_id: string }
+        Returns: undefined
+      }
+      refresh_social_profile_counts: {
+        Args: { _user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
