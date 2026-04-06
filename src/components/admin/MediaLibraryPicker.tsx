@@ -17,13 +17,24 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const FOLDERS = [
   { value: "all", label: "All Files" },
   { value: "banners", label: "Banners" },
-  { value: "products", label: "Products" },
-  { value: "services", label: "Services" },
-  { value: "categories", label: "Categories" },
-  { value: "icons", label: "Icons" },
-  { value: "vendors", label: "Vendors" },
+  { value: "product-images", label: "Product Images" },
+  { value: "service-images", label: "Service Images" },
+  { value: "category-images", label: "Category Images" },
+  { value: "category-icons", label: "Category Icons" },
+  { value: "vendor-logos", label: "Vendor Logos" },
+  { value: "popup-banners", label: "Popup Banners" },
+  { value: "onboarding", label: "Onboarding" },
   { value: "general", label: "General" },
 ];
+
+// Map legacy folder names to new ones
+const FOLDER_ALIAS: Record<string, string> = {
+  products: "product-images",
+  services: "service-images",
+  categories: "category-images",
+  icons: "category-icons",
+  vendors: "vendor-logos",
+};
 
 interface MediaItem {
   id: string;
