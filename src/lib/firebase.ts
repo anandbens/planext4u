@@ -33,16 +33,16 @@ export function ensureFirebaseHostname(): boolean {
 
 let confirmationResultGlobal: ConfirmationResult | null = null;
 
-function ensureRecaptchaContainer(): HTMLElement {
+function getOrCreateRecaptchaContainer(): HTMLElement {
   const existing = document.getElementById("recaptcha-container");
-  if (existing) {
-    existing.remove();
-  }
+  if (existing) return existing;
   const el = document.createElement("div");
   el.id = "recaptcha-container";
   document.body.appendChild(el);
   return el;
 }
+
+let recaptchaReady: Promise<void> | null = null;
 
 export function setupRecaptcha(): RecaptchaVerifier {
   if ((window as any).recaptchaVerifier) {
@@ -52,14 +52,19 @@ export function setupRecaptcha(): RecaptchaVerifier {
       // ignore if already cleared
     }
     (window as any).recaptchaVerifier = null;
+    recaptchaReady = null;
   }
 
-  ensureRecaptchaContainer();
+  // Remove old container to get a fresh one
+  const old = document.getElementById("recaptcha-container");
+  if (old) old.remove();
+  getOrCreateRecaptchaContainer();
 
   const verifier = new RecaptchaVerifier(firebaseAuth, "recaptcha-container", {
     size: "invisible",
   });
   (window as any).recaptchaVerifier = verifier;
+  recaptchaReady = verifier.render().then(() => {}).catch(() => {});
   return verifier;
 }
 
@@ -69,13 +74,13 @@ export function setupRecaptcha(): RecaptchaVerifier {
  */
 export function preRenderRecaptcha() {
   if ((window as any).recaptchaVerifier) return;
-  ensureRecaptchaContainer();
+  getOrCreateRecaptchaContainer();
   const verifier = new RecaptchaVerifier(firebaseAuth, "recaptcha-container", {
     size: "invisible",
   });
   (window as any).recaptchaVerifier = verifier;
-  // Pre-render in background so token is ready
-  verifier.render().catch(() => {});
+  // Pre-render and track readiness
+  recaptchaReady = verifier.render().then(() => {}).catch(() => {});
 }
 
 export async function sendOTP(phoneNumber: string) {
@@ -84,11 +89,15 @@ export async function sendOTP(phoneNumber: string) {
     await signOut(firebaseAuth).catch(() => undefined);
   }
 
-  // Reuse pre-rendered verifier if available, otherwise create new one
+  // Wait for pre-rendered verifier to be ready
   let appVerifier = (window as any).recaptchaVerifier;
-  if (!appVerifier) {
+  if (appVerifier && recaptchaReady) {
+    await recaptchaReady;
+  } else {
     appVerifier = setupRecaptcha();
+    if (recaptchaReady) await recaptchaReady;
   }
+
   const result = await signInWithPhoneNumber(firebaseAuth, phoneNumber, appVerifier);
   confirmationResultGlobal = result;
   return result;
@@ -110,6 +119,7 @@ export async function getFirebaseIdToken(): Promise<string> {
 
 export async function resetPhoneAuth() {
   confirmationResultGlobal = null;
+  recaptchaReady = null;
   if ((window as any).recaptchaVerifier) {
     try {
       (window as any).recaptchaVerifier.clear();
@@ -127,6 +137,7 @@ export async function resetPhoneAuth() {
 
 export function clearRecaptcha() {
   confirmationResultGlobal = null;
+  recaptchaReady = null;
   if ((window as any).recaptchaVerifier) {
     try {
       (window as any).recaptchaVerifier.clear();
