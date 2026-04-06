@@ -261,9 +261,9 @@ export default function CustomerHomePage() {
           <div className="bg-card rounded-2xl p-6 border border-border/30 shadow-sm">
             <div className="grid grid-cols-3 gap-8">
               {[
-                { label: "Emergency", image: "/images/services/emergency.jpg", to: "/app/services", color: "bg-destructive" },
-                { label: "Urgent", image: "/images/services/urgent.jpg", to: "/app/services", color: "bg-warning" },
-                { label: "Help", image: "/images/services/help.jpg", to: "/app/services", color: "bg-info" },
+                { label: "Emergency", image: data?.assets?.homepage_image_emergency || "/images/services/emergency.jpg", to: "/app/services", color: "bg-destructive" },
+                { label: "Urgent", image: data?.assets?.homepage_image_urgent || "/images/services/urgent.jpg", to: "/app/services", color: "bg-warning" },
+                { label: "Help", image: data?.assets?.homepage_image_help || "/images/services/help.jpg", to: "/app/services", color: "bg-info" },
               ].map((item) => (
                 <Link key={item.label} to={item.to} className="flex flex-col items-center gap-3 group">
                   <motion.div
