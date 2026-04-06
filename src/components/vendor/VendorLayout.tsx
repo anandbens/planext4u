@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Package, ShoppingCart, DollarSign, User, Wrench,
   Bell, Menu, X, LogOut, CreditCard, History, ChevronRight, Store,
-  ArrowLeft, Settings, HelpCircle, Shield, MapPin, TrendingUp, BarChart3
+  ArrowLeft, Settings, HelpCircle, Shield, MapPin, TrendingUp, BarChart3,
+  ImageIcon
 } from "lucide-react";
 import p4uLogo from "@/assets/p4u-logo.png";
 
