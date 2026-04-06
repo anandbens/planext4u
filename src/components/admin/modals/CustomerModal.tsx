@@ -42,6 +42,10 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersTotal, setOrdersTotal] = useState(0);
+  const [ordersStatusFilter, setOrdersStatusFilter] = useState("all");
+  const [ordersSearch, setOrdersSearch] = useState("");
+  const [ordersFromDate, setOrdersFromDate] = useState("");
+  const [ordersToDate, setOrdersToDate] = useState("");
   const ordersPerPage = 5;
 
   // Points data
@@ -50,6 +54,8 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
   const [pointsPage, setPointsPage] = useState(1);
   const [pointsTotal, setPointsTotal] = useState(0);
   const [pointsFilter, setPointsFilter] = useState<string>("all");
+  const [pointsFromDate, setPointsFromDate] = useState("");
+  const [pointsToDate, setPointsToDate] = useState("");
   const pointsPerPage = 8;
 
   // Profile completeness
