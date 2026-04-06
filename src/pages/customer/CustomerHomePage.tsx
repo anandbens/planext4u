@@ -133,9 +133,13 @@ export default function CustomerHomePage() {
                 transition={{ delay: i * 0.04, duration: 0.25 }}
               >
                 <Link to={cat.to} className="flex flex-col items-center gap-1.5 min-w-[56px]">
-                  <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-all shadow-sm
+                  <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-all shadow-sm overflow-hidden
                     ${i === 0 ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2' : 'bg-card border border-border/50 hover:border-primary/30 hover:shadow-md'}`}>
-                    <span className="text-lg">{cat.icon}</span>
+                    {cat.image ? (
+                      <img src={cat.image} alt={cat.label} className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <span className="text-lg">{cat.icon}</span>
+                    )}
                   </div>
                   <span className={`text-[10px] font-medium leading-tight text-center
                     ${i === 0 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>{cat.label}</span>
