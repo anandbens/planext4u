@@ -282,7 +282,7 @@ export const api = {
 
     let query = supabase.from('customers').select('*', { count: 'exact' });
     if (params.search) {
-      query = query.or(`name.ilike.%${params.search}%,email.ilike.%${params.search}%,mobile.ilike.%${params.search}%`);
+      query = query.or(`name.ilike.%${params.search}%,email.ilike.%${params.search}%,mobile.ilike.%${params.search}%,occupation.ilike.%${params.search}%`);
     }
     if (params.status && params.status !== 'all') query = query.eq('status', params.status);
     if (params.occupation) query = query.eq('occupation', params.occupation);
