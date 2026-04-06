@@ -408,68 +408,7 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* Seller List / Vendor Cards */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-2">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg md:text-xl font-bold">Seller List</h2>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="h-8 text-xs gap-1">Filters</Button>
-              <Button variant="outline" size="sm" className="h-8 text-xs gap-1">Sort by</Button>
-            </div>
-          </div>
-          <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-            {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-60 rounded-xl" />) :
-              data?.featuredProducts.slice(0, 8).map((p) => {
-                const discountPct = p.discount ? Math.round((p.discount / p.price) * 100) : 0;
-                return (
-                  <motion.div key={p.id} variants={itemAnim}>
-                    <Link to={`/app/vendor/${p.vendor_id}`}>
-                      <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
-                        <div className="bg-secondary/20 h-36 sm:h-44 md:h-48 flex items-center justify-center relative overflow-hidden">
-                          {discountPct > 0 && (
-                            <span className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-[9px] md:text-[10px] px-2 py-0.5 rounded-sm font-medium">
-                              {discountPct}% Off Every Purchase
-                            </span>
-                          )}
-                          {p.image ? (
-                            <img src={p.image} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                          ) : (
-                            <span className="text-5xl">{p.emoji}</span>
-                          )}
-                          <button className="absolute top-2 right-2 h-7 w-7 rounded-full bg-card/80 flex items-center justify-center z-10 hover:bg-card transition-colors">
-                            <Heart className="h-3.5 w-3.5 text-muted-foreground" />
-                          </button>
-                          <span className="absolute bottom-2 left-2 bg-card/90 text-[9px] px-1.5 py-0.5 rounded text-muted-foreground flex items-center gap-0.5 z-10">
-                            <MapPin className="h-2.5 w-2.5" /> 1.5 km
-                          </span>
-                        </div>
-                        <div className="p-3">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold truncate">{p.vendor_name}</h3>
-                            <div className="flex items-center gap-0.5">
-                              <Star className="h-3 w-3 fill-warning text-warning" />
-                              <span className="text-xs font-medium">{p.rating}</span>
-                            </div>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground">{p.category_name}</p>
-                          <div className="flex items-center justify-between mt-1.5">
-                            <span className="text-[10px] text-muted-foreground">Min ₹{Math.round(p.price * 0.3)}</span>
-                            <div className="flex items-center gap-0.5">
-                              <Star className="h-2.5 w-2.5 fill-warning text-warning" />
-                              <span className="text-[10px] font-medium">150 pts</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1 mt-1.5">
-                            <Clock className="h-2.5 w-2.5 text-muted-foreground" />
-                            <span className="text-[10px] text-muted-foreground">Delivery in 60 Min</span>
-                          </div>
-                        </div>
-                      </Card>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-          </motion.div>
-        </motion.section>
+        <SellerListSection data={data} isLoading={isLoading} parentCategories={parentCategories} containerAnim={containerAnim} itemAnim={itemAnim} slideUp={slideUp} />
 
         {/* Top Servicers Section */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="py-6">
