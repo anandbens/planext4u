@@ -28,6 +28,15 @@ export interface Product {
   rating?: number; reviews?: number; stock?: number; sales?: number;
   rejection_reason?: string;
   created_at?: string; updated_at?: string;
+  short_description?: string; long_description?: string;
+  discount_type?: string; inactivation_reason?: string;
+  images?: string[]; youtube_video_url?: string;
+  tax_slab_id?: string; product_attributes?: any[];
+  max_redemption_percentage?: number | null;
+  is_available?: boolean; duration_hours?: number; duration_minutes?: number;
+  promise_p4u?: string; helpline_number?: string;
+  thumbnail_image?: string; banner_image?: string;
+  subcategory_id?: string; subcategory_name?: string;
 }
 
 export interface Service {
