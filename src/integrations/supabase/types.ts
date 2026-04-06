@@ -2847,6 +2847,7 @@ export type Database = {
           category: string | null
           city: string | null
           created_at: string
+          district: string | null
           email: string
           fb_link: string | null
           fssai_url: string | null
@@ -2885,6 +2886,7 @@ export type Database = {
           category?: string | null
           city?: string | null
           created_at?: string
+          district?: string | null
           email?: string
           fb_link?: string | null
           fssai_url?: string | null
@@ -2923,6 +2925,7 @@ export type Database = {
           category?: string | null
           city?: string | null
           created_at?: string
+          district?: string | null
           email?: string
           fb_link?: string | null
           fssai_url?: string | null
