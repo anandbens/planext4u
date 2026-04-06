@@ -34,7 +34,7 @@ export default function SocialReelsPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from('social_posts')
-        .select('id, user_id, media, caption, like_count, comment_count, share_count, hashtags')
+        .select('id, user_id, media, caption, like_count, comment_count, share_count, hashtags, metadata')
         .eq('post_type', 'reel')
         .eq('status', 'published')
         .order('created_at', { ascending: false })
