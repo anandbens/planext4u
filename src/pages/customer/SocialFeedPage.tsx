@@ -111,6 +111,30 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function CommentItem({ comment, isMock }: { comment: any; isMock: boolean }) {
+  const { data: profile } = useQuery({
+    queryKey: ['social-comment-profile', comment.user_id],
+    queryFn: async () => {
+      const { data } = await supabase.from('social_profiles').select('username, display_name, avatar_url').eq('user_id', comment.user_id).maybeSingle();
+      return data;
+    },
+    enabled: !isMock && !!comment.user_id,
+  });
+  const name = isMock ? (comment.user_id === 'user1' ? 'vijay' : comment.user_id === 'user2' ? 'priya' : 'anita') : (profile?.display_name || profile?.username || 'user');
+  const avatar = profile?.avatar_url || '';
+  return (
+    <div className="flex items-start gap-2 py-1">
+      <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+        {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : <span className="text-[9px] font-bold">{name.charAt(0).toUpperCase()}</span>}
+      </div>
+      <p className="text-sm flex-1">
+        <span className="font-semibold mr-1">{name}</span>
+        <span className="text-muted-foreground">{comment.content}</span>
+      </p>
+    </div>
+  );
+}
+
 function PostCard({ post }: { post: any }) {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
