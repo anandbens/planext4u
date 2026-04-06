@@ -26,6 +26,7 @@ interface ProductForm {
   stock: string; category_id: string; emoji: string; status: string;
   image: string; sku: string; images: string[]; youtube_video_url: string;
   inactivation_reason: string; tax_slab_id: string; product_attributes: any[];
+  product_type: string; slug: string; meta_title: string; meta_description: string;
 }
 
 const emptyForm: ProductForm = {
@@ -34,6 +35,7 @@ const emptyForm: ProductForm = {
   stock: "", category_id: "", emoji: "📦", status: "draft",
   image: "", sku: "", images: [], youtube_video_url: "",
   inactivation_reason: "", tax_slab_id: "", product_attributes: [],
+  product_type: "simple", slug: "", meta_title: "", meta_description: "",
 };
 
 export default function VendorProductsPage() {
