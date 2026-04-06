@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { SplashScreen } from "@/components/customer/SplashScreen";
 import { motion, AnimatePresence } from "framer-motion";
