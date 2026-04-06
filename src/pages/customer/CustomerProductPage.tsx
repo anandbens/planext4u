@@ -272,8 +272,27 @@ export default function CustomerProductPage() {
 
         {/* Description + Reviews Tabs */}
         <Tabs defaultValue="description" className="mt-6">
-          <TabsList><TabsTrigger value="description">Description</TabsTrigger><TabsTrigger value="reviews">Reviews ({product.reviews})</TabsTrigger></TabsList>
-          <TabsContent value="description" className="mt-4"><p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p></TabsContent>
+          <TabsList>
+            <TabsTrigger value="description">Description</TabsTrigger>
+            {realAttrs.length > 0 && <TabsTrigger value="specs">Specifications</TabsTrigger>}
+            <TabsTrigger value="reviews">Reviews ({product.reviews})</TabsTrigger>
+          </TabsList>
+          <TabsContent value="description" className="mt-4">
+            {(product as any).short_description && <p className="text-sm font-medium mb-2">{(product as any).short_description}</p>}
+            <p className="text-sm text-muted-foreground leading-relaxed">{(product as any).long_description || product.description}</p>
+          </TabsContent>
+          {realAttrs.length > 0 && (
+            <TabsContent value="specs" className="mt-4">
+              <div className="space-y-2">
+                {realAttrs.map((attr: any, i: number) => (
+                  <div key={i} className="flex border-b border-border/30 py-2 last:border-0">
+                    <span className="text-sm text-muted-foreground w-1/3">{attr.attribute_name}</span>
+                    <span className="text-sm font-medium">{(attr.values || []).join(", ")}</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          )}
           <TabsContent value="reviews" className="mt-4 space-y-3">
             {reviews.map((r, i) => (
               <Card key={i} className="p-4">
