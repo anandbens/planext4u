@@ -35,6 +35,10 @@ const emptyForm = {
   image: "", rejection_reason: "", inactivation_reason: "", youtube_video_url: "",
   images: [] as string[], max_redemption_percentage: null as number | null,
   tax_slab_id: "" as string, product_attributes: [] as any[],
+  is_available: true, duration_hours: 0, duration_minutes: 0,
+  promise_p4u: "", helpline_number: "",
+  thumbnail_image: "", banner_image: "",
+  subcategory_id: "", subcategory_name: "",
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete, isVendor }: ProductModalProps) {
