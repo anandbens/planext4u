@@ -97,7 +97,7 @@ export default function CategoriesPage() {
       </div>
       <DataTable
         columns={[
-          { key: "id", label: "#", render: (_c, i) => <span className="text-muted-foreground">{(page - 1) * perPage + (i || 0) + 1}</span> },
+          { key: "id", label: "#" },
           { key: "name", label: "Category Name", render: (c) => {
             const subs = childMap[c.id] || [];
             const isExpanded = expandedCategories.has(c.id);
