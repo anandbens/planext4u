@@ -23,13 +23,13 @@ const statusStyle: Record<string, string> = {
 interface ProductForm {
   title: string; description: string; price: string; tax: string; discount: string;
   stock: string; category_id: string; emoji: string; status: string;
-  image: string; sku: string; images: string[];
+  image: string; sku: string; images: string[]; youtube_video_url: string;
 }
 
 const emptyForm: ProductForm = {
   title: "", description: "", price: "", tax: "", discount: "0",
   stock: "", category_id: "", emoji: "📦", status: "draft",
-  image: "", sku: "", images: [],
+  image: "", sku: "", images: [], youtube_video_url: "",
 };
 
 export default function VendorProductsPage() {
@@ -62,7 +62,7 @@ export default function VendorProductsPage() {
 
   const saveMutation = useMutation({
     mutationFn: async (formData: ProductForm) => {
-      const payload = {
+      const payload: any = {
         title: formData.title, description: formData.description,
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
         discount: parseFloat(formData.discount) || 0, stock: parseInt(formData.stock) || 0,
@@ -71,6 +71,7 @@ export default function VendorProductsPage() {
         emoji: formData.emoji, status: formData.status,
         vendor_id: vendorId, vendor_name: vendorUser?.name || "",
         image: formData.image || formData.images[0] || null,
+        youtube_video_url: formData.youtube_video_url || "",
       };
       if (editingId) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingId);
@@ -103,6 +104,7 @@ export default function VendorProductsPage() {
       title: p.title, description: p.description, price: String(p.price), tax: String(p.tax),
       discount: String(p.discount), stock: String(p.stock || 0), category_id: p.category_id || "",
       emoji: p.emoji || "📦", status: p.status, image: p.image || "", sku: "", images: p.image ? [p.image] : [],
+      youtube_video_url: p.youtube_video_url || "",
     });
     setModalOpen(true);
   };
@@ -260,6 +262,10 @@ export default function VendorProductsPage() {
               </Select>
             </div>
             <div><Label>Emoji Icon</Label><Input value={form.emoji} onChange={(e) => setForm({ ...form, emoji: e.target.value })} placeholder="📦" /></div>
+            <div>
+              <Label>YouTube Video URL</Label>
+              <Input value={form.youtube_video_url} onChange={(e) => setForm({ ...form, youtube_video_url: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
+            </div>
             <div><Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>

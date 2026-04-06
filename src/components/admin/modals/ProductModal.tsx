@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon } from "lucide-react";
+import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MOCK_CATEGORIES, MOCK_VENDORS } from "@/lib/mockData";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
@@ -26,7 +26,7 @@ const emptyForm = {
   title: "", description: "", price: 0, tax: 0, discount: 0,
   max_points_redeemable: 0, status: "active" as Product["status"],
   vendor_id: "", vendor_name: "", category_id: "", category_name: "", stock: 0, emoji: "📦",
-  image: "", rejection_reason: "",
+  image: "", rejection_reason: "", youtube_video_url: "",
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete }: ProductModalProps) {
@@ -48,6 +48,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         category_id: product.category_id, category_name: product.category_name,
         stock: product.stock || 0, emoji: product.emoji || "📦",
         image: product.image || "", rejection_reason: product.rejection_reason || "",
+        youtube_video_url: (product as any).youtube_video_url || "",
       });
       setEditMode(mode === "edit");
     }
@@ -219,6 +220,16 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
               <Label className="text-xs text-muted-foreground">Max Points Redeemable</Label>
               {editMode ? <Input type="number" value={form.max_points_redeemable} onChange={(e) => setForm({ ...form, max_points_redeemable: Number(e.target.value) })} className="mt-1 max-w-32" /> : <p className="text-xl font-bold">{product?.max_points_redeemable} pts</p>}
             </div>
+          </div>
+
+          {/* YouTube Video */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1"><Youtube className="h-3 w-3 text-destructive" /> YouTube Video URL</Label>
+            {editMode ? (
+              <Input value={form.youtube_video_url} onChange={(e) => setForm({ ...form, youtube_video_url: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." className="mt-1" />
+            ) : form.youtube_video_url ? (
+              <a href={form.youtube_video_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">{form.youtube_video_url}</a>
+            ) : <p className="text-xs text-muted-foreground">No video added</p>}
           </div>
         </div>
 
