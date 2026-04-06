@@ -56,6 +56,9 @@ export default function SocialCreatePostPage() {
   const [allowComments, setAllowComments] = useState("everyone");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<CompressionProgress | null>(null);
+  const [linkedProduct, setLinkedProduct] = useState<{ id: string; title: string } | null>(null);
+  const [productSearch, setProductSearch] = useState("");
+  const [showProductPicker, setShowProductPicker] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
