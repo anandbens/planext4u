@@ -119,6 +119,7 @@ export async function getFirebaseIdToken(): Promise<string> {
 
 export async function resetPhoneAuth() {
   confirmationResultGlobal = null;
+  recaptchaReady = null;
   if ((window as any).recaptchaVerifier) {
     try {
       (window as any).recaptchaVerifier.clear();
