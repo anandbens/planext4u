@@ -456,11 +456,24 @@ export default function SocialCreatePostPage() {
             <span className="text-sm flex-1 text-left">Tag People</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
-          <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => toast.info("Product tagging coming soon")}>
-            <Tag className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm flex-1 text-left">Tag Products</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => setShowProductPicker(!showProductPicker)}>
+            <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+            <span className="text-sm flex-1 text-left">
+              {linkedProduct ? `🔗 ${linkedProduct.title}` : 'Link Product'}
+            </span>
+            {linkedProduct ? (
+              <button onClick={(e) => { e.stopPropagation(); setLinkedProduct(null); }} className="text-destructive"><X className="h-4 w-4" /></button>
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
           </button>
+          {showProductPicker && (
+            <ProductSearchPicker
+              search={productSearch}
+              onSearchChange={setProductSearch}
+              onSelect={(p) => { setLinkedProduct(p); setShowProductPicker(false); setProductSearch(""); }}
+            />
+          )}
           <div className="flex items-center gap-3 py-3.5">
             <Eye className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm flex-1">Audience</span>
