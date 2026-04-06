@@ -217,10 +217,12 @@ export type Database = {
           icon: string | null
           id: string
           image: string
+          is_emergency: boolean | null
           is_trending: boolean | null
           name: string
           parent_id: string | null
           status: string
+          verification_status: string | null
         }
         Insert: {
           banner_image?: string | null
@@ -230,10 +232,12 @@ export type Database = {
           icon?: string | null
           id: string
           image?: string
+          is_emergency?: boolean | null
           is_trending?: boolean | null
           name: string
           parent_id?: string | null
           status?: string
+          verification_status?: string | null
         }
         Update: {
           banner_image?: string | null
@@ -243,10 +247,12 @@ export type Database = {
           icon?: string | null
           id?: string
           image?: string
+          is_emergency?: boolean | null
           is_trending?: boolean | null
           name?: string
           parent_id?: string | null
           status?: string
+          verification_status?: string | null
         }
         Relationships: []
       }
@@ -954,7 +960,9 @@ export type Database = {
           emoji: string | null
           id: string
           image: string | null
+          images: Json | null
           max_points_redeemable: number
+          max_redemption_percentage: number | null
           price: number
           rating: number | null
           rejection_reason: string | null
@@ -978,7 +986,9 @@ export type Database = {
           emoji?: string | null
           id: string
           image?: string | null
+          images?: Json | null
           max_points_redeemable?: number
+          max_redemption_percentage?: number | null
           price?: number
           rating?: number | null
           rejection_reason?: string | null
@@ -1002,7 +1012,9 @@ export type Database = {
           emoji?: string | null
           id?: string
           image?: string | null
+          images?: Json | null
           max_points_redeemable?: number
+          max_redemption_percentage?: number | null
           price?: number
           rating?: number | null
           rejection_reason?: string | null
@@ -1684,10 +1696,12 @@ export type Database = {
           icon: string | null
           id: string
           image: string
+          is_emergency: boolean | null
           is_trending: boolean | null
           name: string
           parent_id: string | null
           status: string
+          verification_status: string | null
         }
         Insert: {
           banner_image?: string | null
@@ -1697,10 +1711,12 @@ export type Database = {
           icon?: string | null
           id: string
           image?: string
+          is_emergency?: boolean | null
           is_trending?: boolean | null
           name: string
           parent_id?: string | null
           status?: string
+          verification_status?: string | null
         }
         Update: {
           banner_image?: string | null
@@ -1710,10 +1726,12 @@ export type Database = {
           icon?: string | null
           id?: string
           image?: string
+          is_emergency?: boolean | null
           is_trending?: boolean | null
           name?: string
           parent_id?: string | null
           status?: string
+          verification_status?: string | null
         }
         Relationships: []
       }
@@ -1800,6 +1818,7 @@ export type Database = {
           emoji: string | null
           id: string
           image: string | null
+          images: Json | null
           max_points_redeemable: number
           price: number
           rating: number | null
@@ -1821,6 +1840,7 @@ export type Database = {
           emoji?: string | null
           id: string
           image?: string | null
+          images?: Json | null
           max_points_redeemable?: number
           price?: number
           rating?: number | null
@@ -1842,6 +1862,7 @@ export type Database = {
           emoji?: string | null
           id?: string
           image?: string | null
+          images?: Json | null
           max_points_redeemable?: number
           price?: number
           rating?: number | null
@@ -3225,6 +3246,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      haversine_distance: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
       }
       is_admin_user: { Args: { _user_id: string }; Returns: boolean }
       is_conversation_participant: {
