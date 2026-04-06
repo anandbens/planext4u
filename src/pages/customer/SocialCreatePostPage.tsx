@@ -264,6 +264,9 @@ export default function SocialCreatePostPage() {
         metadata.linked_product_id = linkedProduct.id;
         metadata.linked_product_title = linkedProduct.title;
       }
+      if (taggedPeople.length > 0) {
+        metadata.tagged_users = taggedPeople.map(t => ({ id: t.id, username: t.username }));
+      }
 
       const { error } = await supabase.from('social_posts' as any).insert({
         id: postId,
