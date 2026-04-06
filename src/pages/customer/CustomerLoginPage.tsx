@@ -69,8 +69,10 @@ export default function CustomerLoginPage() {
       toast.success("OTP sent successfully!");
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
-      if (err.code === "auth/too-many-requests") toast.error("Too many requests. Try again later.");
-      else if (err.code === "auth/invalid-phone-number") toast.error("Invalid phone number.");
+      if (err.code === "auth/too-many-requests") {
+        toast.error("OTP limit reached. Please wait 2-3 minutes before retrying.", { duration: 6000 });
+        setTimer(120);
+      } else if (err.code === "auth/invalid-phone-number") toast.error("Invalid phone number.");
       else toast.error(err.message || "Failed to send OTP");
       clearRecaptcha();
     } finally { setLoading(false); }
