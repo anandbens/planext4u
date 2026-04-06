@@ -58,6 +58,27 @@ export default function IntegrationsPage() {
     toast.success("Hyperverge configuration saved");
   };
 
+  const saveGoogleOAuth = async () => {
+    if (!googleConfig.clientId || !googleConfig.clientSecret) {
+      toast.error("Please fill both Client ID and Client Secret");
+      return;
+    }
+    await Promise.all([
+      supabase.from("platform_variables").upsert({ id: "pv-google-client-id", key: "GOOGLE_CLIENT_ID", value: googleConfig.clientId, description: "Google OAuth Client ID" } as any),
+      supabase.from("platform_variables").upsert({ id: "pv-google-client-secret", key: "GOOGLE_CLIENT_SECRET", value: googleConfig.clientSecret, description: "Google OAuth Client Secret" } as any),
+    ]);
+    toast.success("Google OAuth configuration saved");
+  };
+
+  const saveFirebase = async () => {
+    if (!firebaseConfig.serviceAccount) {
+      toast.error("Please fill Firebase Service Account JSON");
+      return;
+    }
+    await supabase.from("platform_variables").upsert({ id: "pv-firebase-sa", key: "FIREBASE_SERVICE_ACCOUNT", value: firebaseConfig.serviceAccount, description: "Firebase Service Account JSON" } as any);
+    toast.success("Firebase configuration saved");
+  };
+
   const saveMaps = async () => {
     await supabase.from("platform_variables").upsert({ id: "pv-google-maps-key", key: "GOOGLE_MAPS_API_KEY", value: mapsConfig.apiKey, description: "Google Maps API Key" } as any);
     toast.success("Google Maps configuration saved");
@@ -71,8 +92,10 @@ export default function IntegrationsPage() {
       </div>
 
       <Tabs defaultValue="razorpay" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="razorpay" className="gap-2"><CreditCard className="h-4 w-4" /> Razorpay</TabsTrigger>
+          <TabsTrigger value="google-oauth" className="gap-2"><Globe className="h-4 w-4" /> Google OAuth</TabsTrigger>
+          <TabsTrigger value="firebase" className="gap-2"><Key className="h-4 w-4" /> Firebase</TabsTrigger>
           <TabsTrigger value="hyperverge" className="gap-2"><Shield className="h-4 w-4" /> Hyperverge KYC</TabsTrigger>
           <TabsTrigger value="maps" className="gap-2"><MapPin className="h-4 w-4" /> Google Maps</TabsTrigger>
         </TabsList>
