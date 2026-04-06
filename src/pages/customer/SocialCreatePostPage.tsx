@@ -226,20 +226,30 @@ export default function SocialCreatePostPage() {
               <Camera className="h-10 w-10 text-muted-foreground" />
             </div>
             <h2 className="text-xl font-bold mb-2">Create a new post</h2>
-            <p className="text-sm text-muted-foreground mb-6">Share photos with your followers</p>
-            <Button onClick={() => fileInputRef.current?.click()} className="gap-2">
-              <Image className="h-4 w-4" /> Select from Gallery
-            </Button>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
+            <p className="text-sm text-muted-foreground mb-6">Share photos & videos with your followers</p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => fileInputRef.current?.click()} className="gap-2">
+                <Image className="h-4 w-4" /> Gallery
+              </Button>
+              <Button variant="outline" onClick={() => videoInputRef.current?.click()} className="gap-2">
+                <Video className="h-4 w-4" /> Video
+              </Button>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileSelect} />
+            <input ref={videoInputRef} type="file" accept="video/*" capture="environment" className="hidden" onChange={handleFileSelect} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center gap-2 p-6 rounded-xl border border-dashed border-border hover:border-primary transition-colors">
-              <Image className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">Photo</span>
+          <div className="grid grid-cols-3 gap-3">
+            <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border hover:border-primary transition-colors">
+              <Image className="h-7 w-7 text-muted-foreground" />
+              <span className="text-xs font-medium">Photo</span>
             </button>
-            <button onClick={() => toast.info("Video posts coming soon")} className="flex flex-col items-center gap-2 p-6 rounded-xl border border-dashed border-border hover:border-primary transition-colors">
-              <Camera className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">Video</span>
+            <button onClick={() => videoInputRef.current?.click()} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border hover:border-primary transition-colors">
+              <Video className="h-7 w-7 text-muted-foreground" />
+              <span className="text-xs font-medium">Video</span>
+            </button>
+            <button onClick={() => { const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.capture='environment'; inp.onchange=(e:any)=>handleFileSelect(e); inp.click(); }} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border hover:border-primary transition-colors">
+              <Camera className="h-7 w-7 text-muted-foreground" />
+              <span className="text-xs font-medium">Camera</span>
             </button>
           </div>
         </div>
