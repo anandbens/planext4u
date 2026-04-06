@@ -195,14 +195,14 @@ export default function CustomerProductPage() {
             </div>
 
             {discountPct > 0 && (
-              <p className="text-sm text-success font-semibold mt-2">Extra ₹{product.discount.toLocaleString()} off</p>
+              <p className="text-sm text-success font-semibold mt-2">Extra ₹{discountAmount.toLocaleString()} off</p>
             )}
 
             <div className="flex items-baseline gap-3 mt-2">
-              <span className="text-2xl md:text-3xl font-bold">₹{product.price.toLocaleString()}</span>
+              <span className="text-2xl md:text-3xl font-bold">₹{(product.price - discountAmount + (product.tax || 0)).toLocaleString()}</span>
               {discountPct > 0 && <>
-                <span className="text-base text-muted-foreground line-through">₹{originalPrice.toLocaleString()}</span>
-                <Badge className="bg-primary/10 text-primary border-0 text-xs">{discountPct}% OFF</Badge>
+                <span className="text-base text-muted-foreground line-through">MRP ₹{originalPrice.toLocaleString()}</span>
+                <Badge className="bg-success/10 text-success border-0 text-xs font-bold">{discountPct}% OFF</Badge>
               </>}
             </div>
 
