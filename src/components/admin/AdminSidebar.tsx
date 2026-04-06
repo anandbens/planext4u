@@ -127,11 +127,11 @@ function NavGroup({ label, items, collapsed, userRole }: NavGroupProps) {
         <SidebarMenu>
           {filteredItems.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
+              <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
                 <NavLink to={item.url} end={item.url === "/dashboard"}
                   className={cn(
                     "flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-200",
-                    collapsed ? "px-2 justify-center" : "px-3",
+                    collapsed ? "px-3 justify-center" : "px-3",
                     "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent",
                   )}
                   activeClassName="bg-sidebar-primary/20 text-sidebar-primary-foreground border-l-2 border-sidebar-primary">
@@ -158,8 +158,8 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="px-4 py-5">
-        <div className="flex items-center gap-3">
+      <SidebarHeader className={cn("py-5", collapsed ? "px-2" : "px-4")}>
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-3")}>
           <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shrink-0">
             <span className="text-sm font-bold text-sidebar-primary-foreground">M</span>
           </div>
@@ -183,8 +183,8 @@ export function AdminSidebar() {
         <NavGroup label="Portals" items={portalLinks} collapsed={collapsed} userRole={role} />
       </SidebarContent>
 
-      <SidebarFooter className="px-4 py-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3">
+      <SidebarFooter className={cn("py-4 border-t border-sidebar-border", collapsed ? "px-2" : "px-4")}>
+        <div className={cn("flex items-center", collapsed ? "flex-col gap-2" : "gap-3")}>
           <div className="h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center shrink-0">
             <span className="text-xs font-semibold text-sidebar-accent-foreground">
               {user?.name?.charAt(0) || "A"}
