@@ -1029,22 +1029,28 @@ export type Database = {
       }
       products: {
         Row: {
+          banner_image: string | null
           category_id: string | null
           category_name: string | null
           created_at: string
           description: string
           discount: number
           discount_type: string | null
+          duration_hours: number | null
+          duration_minutes: number | null
           emoji: string | null
+          helpline_number: string | null
           id: string
           image: string | null
           images: Json | null
           inactivation_reason: string | null
+          is_available: boolean | null
           long_description: string | null
           max_points_redeemable: number
           max_redemption_percentage: number | null
           price: number
           product_attributes: Json | null
+          promise_p4u: string | null
           rating: number | null
           rejection_reason: string | null
           reviews: number | null
@@ -1052,8 +1058,11 @@ export type Database = {
           short_description: string | null
           status: string
           stock: number | null
+          subcategory_id: string | null
+          subcategory_name: string | null
           tax: number
           tax_slab_id: string | null
+          thumbnail_image: string | null
           title: string
           updated_at: string
           vendor_id: string
@@ -1061,22 +1070,28 @@ export type Database = {
           youtube_video_url: string | null
         }
         Insert: {
+          banner_image?: string | null
           category_id?: string | null
           category_name?: string | null
           created_at?: string
           description?: string
           discount?: number
           discount_type?: string | null
+          duration_hours?: number | null
+          duration_minutes?: number | null
           emoji?: string | null
+          helpline_number?: string | null
           id: string
           image?: string | null
           images?: Json | null
           inactivation_reason?: string | null
+          is_available?: boolean | null
           long_description?: string | null
           max_points_redeemable?: number
           max_redemption_percentage?: number | null
           price?: number
           product_attributes?: Json | null
+          promise_p4u?: string | null
           rating?: number | null
           rejection_reason?: string | null
           reviews?: number | null
@@ -1084,8 +1099,11 @@ export type Database = {
           short_description?: string | null
           status?: string
           stock?: number | null
+          subcategory_id?: string | null
+          subcategory_name?: string | null
           tax?: number
           tax_slab_id?: string | null
+          thumbnail_image?: string | null
           title: string
           updated_at?: string
           vendor_id: string
@@ -1093,22 +1111,28 @@ export type Database = {
           youtube_video_url?: string | null
         }
         Update: {
+          banner_image?: string | null
           category_id?: string | null
           category_name?: string | null
           created_at?: string
           description?: string
           discount?: number
           discount_type?: string | null
+          duration_hours?: number | null
+          duration_minutes?: number | null
           emoji?: string | null
+          helpline_number?: string | null
           id?: string
           image?: string | null
           images?: Json | null
           inactivation_reason?: string | null
+          is_available?: boolean | null
           long_description?: string | null
           max_points_redeemable?: number
           max_redemption_percentage?: number | null
           price?: number
           product_attributes?: Json | null
+          promise_p4u?: string | null
           rating?: number | null
           rejection_reason?: string | null
           reviews?: number | null
@@ -1116,8 +1140,11 @@ export type Database = {
           short_description?: string | null
           status?: string
           stock?: number | null
+          subcategory_id?: string | null
+          subcategory_name?: string | null
           tax?: number
           tax_slab_id?: string | null
+          thumbnail_image?: string | null
           title?: string
           updated_at?: string
           vendor_id?: string

@@ -8,10 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X } from "lucide-react";
+import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X, Clock, Phone, Shield, ToggleLeft } from "lucide-react";
 import { useState, useEffect } from "react";
-import { MOCK_CATEGORIES, MOCK_VENDORS } from "@/lib/mockData";
+import { MOCK_VENDORS } from "@/lib/mockData";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -35,6 +36,10 @@ const emptyForm = {
   image: "", rejection_reason: "", inactivation_reason: "", youtube_video_url: "",
   images: [] as string[], max_redemption_percentage: null as number | null,
   tax_slab_id: "" as string, product_attributes: [] as any[],
+  is_available: true, duration_hours: 0, duration_minutes: 0,
+  promise_p4u: "", helpline_number: "",
+  thumbnail_image: "", banner_image: "",
+  subcategory_id: "", subcategory_name: "",
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete, isVendor }: ProductModalProps) {
@@ -96,6 +101,15 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         max_redemption_percentage: (product as any).max_redemption_percentage ?? null,
         tax_slab_id: (product as any).tax_slab_id || "",
         product_attributes: (product as any).product_attributes || [],
+        is_available: (product as any).is_available !== false,
+        duration_hours: (product as any).duration_hours || 0,
+        duration_minutes: (product as any).duration_minutes || 0,
+        promise_p4u: (product as any).promise_p4u || "",
+        helpline_number: (product as any).helpline_number || "",
+        thumbnail_image: (product as any).thumbnail_image || "",
+        banner_image: (product as any).banner_image || "",
+        subcategory_id: (product as any).subcategory_id || "",
+        subcategory_name: (product as any).subcategory_name || "",
       });
       setEditMode(mode === "edit");
     }
@@ -148,9 +162,33 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     setForm({ ...form, vendor_id: vendorId, vendor_name: vendor?.business_name || "" });
   };
 
+  // Fetch categories from DB
+  const { data: dbCategories } = useQuery({
+    queryKey: ["categoriesForProduct"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("id, name, parent_id").is("parent_id", null).eq("status", "active").order("name");
+      return data || [];
+    },
+  });
+
+  const { data: dbSubcategories } = useQuery({
+    queryKey: ["subcategoriesForProduct", form.category_id],
+    queryFn: async () => {
+      if (!form.category_id) return [];
+      const { data } = await supabase.from("categories").select("id, name").eq("parent_id", form.category_id).eq("status", "active").order("name");
+      return data || [];
+    },
+    enabled: !!form.category_id,
+  });
+
   const handleCategoryChange = (catId: string) => {
-    const cat = MOCK_CATEGORIES.find(c => c.id === catId);
-    setForm({ ...form, category_id: catId, category_name: cat?.name || "" });
+    const cat = (dbCategories || []).find((c: any) => c.id === catId);
+    setForm({ ...form, category_id: catId, category_name: cat?.name || "", subcategory_id: "", subcategory_name: "" });
+  };
+
+  const handleSubcategoryChange = (subId: string) => {
+    const sub = (dbSubcategories || []).find((s: any) => s.id === subId);
+    setForm({ ...form, subcategory_id: subId, subcategory_name: sub?.name || "" });
   };
 
   const toggleAttribute = (attrId: string, attrName: string, value: string) => {
@@ -259,11 +297,33 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                   <Label className="text-xs text-muted-foreground">Category *</Label>
                   <Select value={form.category_id} onValueChange={handleCategoryChange}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Select category" /></SelectTrigger>
-                    <SelectContent>{MOCK_CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{(dbCategories || []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Subcategory</Label>
+                  <Select value={form.subcategory_id} onValueChange={handleSubcategoryChange}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select subcategory" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {(dbSubcategories || []).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
                   </Select>
                 </div>
               </>
             )}
+            {/* Availability Toggle */}
+            <div className="flex items-center justify-between col-span-2 p-3 rounded-lg bg-secondary/10 border border-border/30">
+              <div>
+                <Label className="text-xs text-muted-foreground flex items-center gap-1"><ToggleLeft className="h-3 w-3" /> Availability</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Show product to customers</p>
+              </div>
+              {editMode ? (
+                <Switch checked={form.is_available} onCheckedChange={(v) => setForm({ ...form, is_available: v })} />
+              ) : (
+                <Badge variant={form.is_available ? "default" : "secondary"}>{form.is_available ? "Available" : "Unavailable"}</Badge>
+              )}
+            </div>
             <div>
               <Label className="text-xs text-muted-foreground">Status</Label>
               {editMode ? (
@@ -418,6 +478,45 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
               <div className="flex-1">
                 <Label className="text-xs text-muted-foreground">Max Redemption %</Label>
                 {editMode ? <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1 max-w-32" placeholder="Vendor default" /> : <p className="text-xl font-bold">{(product as any)?.max_redemption_percentage != null ? `${(product as any).max_redemption_percentage}%` : "Vendor default"}</p>}
+              </div>
+            </div>
+          )}
+
+          {/* Duration, Promise, Helpline */}
+          {editMode && !vendorRestricted && (
+            <div className="p-4 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> Duration & Support</h4>
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Hours</Label>
+                  <Input type="number" min={0} value={form.duration_hours} onChange={(e) => setForm({ ...form, duration_hours: Number(e.target.value) })} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Minutes</Label>
+                  <Input type="number" min={0} max={59} value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Shield className="h-3 w-3" /> Promise P4U</Label>
+                  <Input value={form.promise_p4u} onChange={(e) => setForm({ ...form, promise_p4u: e.target.value })} className="mt-1" placeholder="Quality guarantee..." />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Helpline</Label>
+                  <Input value={form.helpline_number} onChange={(e) => setForm({ ...form, helpline_number: e.target.value })} className="mt-1" placeholder="+91-XXXXXXXXXX" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Thumbnail & Banner */}
+          {editMode && !vendorRestricted && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Thumbnail Image</Label>
+                <MediaLibraryPicker value={form.thumbnail_image} onChange={(url) => setForm({ ...form, thumbnail_image: url })} folder="product-images" label="Set Thumbnail" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Banner Image</Label>
+                <MediaLibraryPicker value={form.banner_image} onChange={(url) => setForm({ ...form, banner_image: url })} folder="product-images" label="Set Banner" />
               </div>
             </div>
           )}
