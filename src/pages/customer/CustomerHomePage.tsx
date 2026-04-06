@@ -635,7 +635,7 @@ export default function CustomerHomePage() {
         {/* Classifieds CTA */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
           <div className="rounded-2xl overflow-hidden relative">
-            <img src="/images/banners/classifieds-banner.jpg" alt="Classifieds" className="w-full h-44 md:h-56 object-cover" />
+            <img src={data?.assets?.homepage_image_classifieds_banner || "/images/banners/classifieds-banner.jpg"} alt="Classifieds" className="w-full h-44 md:h-56 object-cover" />
             <div className="absolute inset-0 bg-gradient-to-r from-foreground/70 to-foreground/20 flex items-center">
               <div className="p-6 md:p-8">
                 <h2 className="text-lg md:text-2xl font-bold text-card">Buy & Sell Locally</h2>
