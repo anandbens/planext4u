@@ -457,11 +457,32 @@ export default function SocialCreatePostPage() {
             <MapPin className="h-5 w-5 text-muted-foreground" />
             <Input placeholder="Add location" value={location} onChange={(e) => setLocation(e.target.value)} className="border-0 p-0 h-auto focus-visible:ring-0" />
           </div>
-          <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => toast.info("Tag people coming soon")}>
+          <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => setShowTagPicker(!showTagPicker)}>
             <Users className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm flex-1 text-left">Tag People</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm flex-1 text-left">
+              {taggedPeople.length > 0 ? `${taggedPeople.length} tagged` : 'Tag People'}
+            </span>
+            {taggedPeople.length > 0 ? (
+              <button onClick={(e) => { e.stopPropagation(); setTaggedPeople([]); }} className="text-destructive"><X className="h-4 w-4" /></button>
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
           </button>
+          {showTagPicker && (
+            <PeopleTagPicker
+              search={tagSearch}
+              onSearchChange={setTagSearch}
+              selectedIds={taggedPeople.map(t => t.id)}
+              onToggle={(user) => {
+                setTaggedPeople(prev => {
+                  const exists = prev.find(t => t.id === user.id);
+                  if (exists) return prev.filter(t => t.id !== user.id);
+                  return [...prev, user];
+                });
+              }}
+              currentUserId={customerUser?.id || ''}
+            />
+          )
           <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => setShowProductPicker(!showProductPicker)}>
             <ShoppingBag className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm flex-1 text-left">
