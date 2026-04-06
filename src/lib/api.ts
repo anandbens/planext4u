@@ -1131,7 +1131,7 @@ export const api = {
 
   getCustomerOrders: async (customerId: string) => {
     const { data } = await supabase.from('orders').select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
-    return (data || []) as Order[];
+    return (data || []) as unknown as Order[];
   },
 
   getCustomerProfile: async (customerId: string) => {
