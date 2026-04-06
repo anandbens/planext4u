@@ -297,11 +297,33 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                   <Label className="text-xs text-muted-foreground">Category *</Label>
                   <Select value={form.category_id} onValueChange={handleCategoryChange}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Select category" /></SelectTrigger>
-                    <SelectContent>{MOCK_CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{(dbCategories || []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Subcategory</Label>
+                  <Select value={form.subcategory_id} onValueChange={handleSubcategoryChange}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select subcategory" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {(dbSubcategories || []).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
                   </Select>
                 </div>
               </>
             )}
+            {/* Availability Toggle */}
+            <div className="flex items-center justify-between col-span-2 p-3 rounded-lg bg-secondary/10 border border-border/30">
+              <div>
+                <Label className="text-xs text-muted-foreground flex items-center gap-1"><ToggleLeft className="h-3 w-3" /> Availability</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">Show product to customers</p>
+              </div>
+              {editMode ? (
+                <Switch checked={form.is_available} onCheckedChange={(v) => setForm({ ...form, is_available: v })} />
+              ) : (
+                <Badge variant={form.is_available ? "default" : "secondary"}>{form.is_available ? "Available" : "Unavailable"}</Badge>
+              )}
+            </div>
             <div>
               <Label className="text-xs text-muted-foreground">Status</Label>
               {editMode ? (
