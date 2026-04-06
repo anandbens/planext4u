@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { MapPin, Mail, Phone, Star, Gift, Calendar, Trash2, ShieldCheck, ShoppingCart, Coins, Download, ChevronLeft, ChevronRight, FileText, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
+import { MapPin, Mail, Phone, Star, Gift, Calendar, Trash2, ShieldCheck, ShoppingCart, Coins, Download, ChevronLeft, ChevronRight, FileText, CheckCircle, XCircle, Clock, Eye, Search, Filter } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { exportToCSV } from "@/lib/csv";
