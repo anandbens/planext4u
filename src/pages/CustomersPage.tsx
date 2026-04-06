@@ -10,6 +10,7 @@ import { Eye, Pencil, Trash2, Users, UserCheck, UserX, Star } from "lucide-react
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { MOCK_OCCUPATIONS } from "@/lib/mockData";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function CustomersPage() {
   const [data, setData] = useState<PaginatedResponse<User> | null>(null);
@@ -24,31 +25,47 @@ export default function CustomersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<User | null>(null);
+  const [totalStats, setTotalStats] = useState({ total: 0, active: 0, inactive: 0, points: 0 });
 
   const fetchData = useCallback(() => {
     api.getCustomers({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined, occupation: occupationFilter || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
   }, [page, search, statusFilter, occupationFilter, dateFrom, dateTo]);
 
+  const fetchStats = useCallback(async () => {
+    const [
+      { count: total },
+      { count: active },
+      { data: pointsData },
+    ] = await Promise.all([
+      supabase.from('customers').select('*', { count: 'exact', head: true }),
+      supabase.from('customers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('customers').select('wallet_points'),
+    ]);
+    const totalPoints = (pointsData || []).reduce((s, c) => s + (c.wallet_points || 0), 0);
+    setTotalStats({ total: total || 0, active: active || 0, inactive: (total || 0) - (active || 0), points: totalPoints });
+  }, []);
+
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const openModal = (user: User | null, mode: "view" | "edit" | "create") => {
     setSelected(user); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<User>) => { await api.updateCustomer(id, updates); toast.success("Customer updated"); fetchData(); };
-  const handleCreate = async (data: Partial<User>) => { await api.createCustomer(data); toast.success("Customer created"); fetchData(); };
-  const handleDelete = async (id: string) => { await api.deleteCustomer(id); toast.success("Customer deleted"); fetchData(); };
+  const handleSave = async (id: string, updates: Partial<User>) => { await api.updateCustomer(id, updates); toast.success("Customer updated"); fetchData(); fetchStats(); };
+  const handleCreate = async (data: Partial<User>) => { await api.createCustomer(data); toast.success("Customer created"); fetchData(); fetchStats(); };
+  const handleDelete = async (id: string) => { await api.deleteCustomer(id); toast.success("Customer deleted"); fetchData(); fetchStats(); };
 
   const handleBulkDelete = async (ids: string[]) => {
     await api.bulkDeleteCustomers(ids);
     toast.success(`${ids.length} customers deleted`);
-    fetchData();
+    fetchData(); fetchStats();
   };
 
   const handleBulkStatus = async (ids: string[], status: string) => {
     await api.bulkUpdateCustomerStatus(ids, status);
     toast.success(`${ids.length} customers updated to ${status}`);
-    fetchData();
+    fetchData(); fetchStats();
   };
 
   const handleExport = () => {
@@ -65,15 +82,11 @@ export default function CustomersPage() {
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
 
-  const allCustomers = data.data;
-  const activeCount = allCustomers.filter(c => c.status === 'active').length;
-  const totalPoints = allCustomers.reduce((s, c) => s + c.wallet_points, 0);
-
   const summaryWidgets: SummaryWidget[] = [
-    { label: "Total Customers", value: data.total, icon: <Users className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
-    { label: "Active", value: activeCount, icon: <UserCheck className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
-    { label: "Inactive / Suspended", value: data.total - activeCount, icon: <UserX className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
-    { label: "Total Wallet Points", value: totalPoints, icon: <Star className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+    { label: "Total Customers", value: totalStats.total, icon: <Users className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
+    { label: "Active", value: totalStats.active, icon: <UserCheck className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
+    { label: "Inactive / Suspended", value: totalStats.inactive, icon: <UserX className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
+    { label: "Total Wallet Points", value: totalStats.points, icon: <Star className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
   ];
 
   return (

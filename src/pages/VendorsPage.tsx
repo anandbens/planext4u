@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, Ban, CreditCard } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function VendorsPage() {
   const [activeTab, setActiveTab] = useState("pending");
@@ -18,6 +19,7 @@ export default function VendorsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("");
   const [dateFrom, setDateFrom] = useState<string>();
   const [dateTo, setDateTo] = useState<string>();
   const [selected, setSelected] = useState<Vendor | null>(null);
@@ -26,34 +28,51 @@ export default function VendorsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ vendor: Vendor; action: "approve" | "reject" | "delete" } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [totalStats, setTotalStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0 });
 
   const tabStatusFilter = activeTab === "pending" ? "pending" : statusFilter || undefined;
 
   const fetchData = useCallback(() => {
-    api.getVendors({ page, per_page: 10, search: search || undefined, status: tabStatusFilter, date_from: dateFrom, date_to: dateTo }).then(setData);
-  }, [page, search, tabStatusFilter, dateFrom, dateTo]);
+    api.getVendors({ page, per_page: 10, search: search || undefined, status: tabStatusFilter, date_from: dateFrom, date_to: dateTo, payment_status: paymentFilter || undefined }).then(setData);
+  }, [page, search, tabStatusFilter, paymentFilter, dateFrom, dateTo]);
+
+  const fetchStats = useCallback(async () => {
+    const [
+      { count: total },
+      { count: verified },
+      { count: pending },
+      { count: rejected },
+    ] = await Promise.all([
+      supabase.from('vendors').select('*', { count: 'exact', head: true }),
+      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'verified'),
+      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
+    ]);
+    setTotalStats({ total: total || 0, verified: verified || 0, pending: pending || 0, rejected: rejected || 0 });
+  }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  useEffect(() => { setPage(1); setStatusFilter(""); }, [activeTab]);
+  useEffect(() => { fetchStats(); }, [fetchStats]);
+  useEffect(() => { setPage(1); setStatusFilter(""); setPaymentFilter(""); }, [activeTab]);
 
   const openModal = (vendor: Vendor | null, mode: "view" | "edit" | "create") => {
     setSelected(vendor); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<Vendor>) => { await api.updateVendor(id, updates); toast.success("Vendor updated"); fetchData(); };
-  const handleCreate = async (data: Partial<Vendor>) => { await api.createVendor(data); toast.success("Vendor created"); fetchData(); };
-  const handleDelete = async (id: string) => { await api.deleteVendor(id); toast.success("Vendor deleted"); fetchData(); };
+  const handleSave = async (id: string, updates: Partial<Vendor>) => { await api.updateVendor(id, updates); toast.success("Vendor updated"); fetchData(); fetchStats(); };
+  const handleCreate = async (data: Partial<Vendor>) => { await api.createVendor(data); toast.success("Vendor created"); fetchData(); fetchStats(); };
+  const handleDelete = async (id: string) => { await api.deleteVendor(id); toast.success("Vendor deleted"); fetchData(); fetchStats(); };
 
   const handleBulkDelete = async (ids: string[]) => {
     await api.bulkDeleteVendors(ids);
     toast.success(`${ids.length} vendors deleted`);
-    fetchData();
+    fetchData(); fetchStats();
   };
 
   const handleBulkStatus = async (ids: string[], status: string) => {
     await api.bulkUpdateVendorStatus(ids, status);
     toast.success(`${ids.length} vendors updated to ${status}`);
-    fetchData();
+    fetchData(); fetchStats();
   };
 
   const openConfirm = (vendor: Vendor, action: "approve" | "reject" | "delete") => {
@@ -71,13 +90,13 @@ export default function VendorsPage() {
         const { supabase: _sb } = await import("@/integrations/supabase/client");
         await _sb.from("vendor_applications").update({ status: "rejected", rejection_reason: reason || "" }).eq("phone", vendor.mobile);
         toast.success("Vendor rejected");
-        fetchData();
+        fetchData(); fetchStats();
       } else {
         const nextStatus: Vendor["status"] = vendor.status === "pending" ? "level1_approved"
           : vendor.status === "level1_approved" ? "level2_approved" : "verified";
         await api.updateVendorStatus(vendor.id, nextStatus);
         toast.success(`Vendor → ${nextStatus.replace(/_/g, " ")}`);
-        fetchData();
+        fetchData(); fetchStats();
       }
     } finally { setConfirmLoading(false); setConfirmOpen(false); setConfirmAction(null); }
   };
@@ -94,17 +113,13 @@ export default function VendorsPage() {
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
 
-  const verified = data.data.filter(v => v.status === 'verified').length;
-  const pending = data.data.filter(v => v.status === 'pending').length;
-  const rejected = data.data.filter(v => v.status === 'rejected').length;
-
   const summaryWidgets: SummaryWidget[] = activeTab === "pending" ? [
-    { label: "Pending Approval", value: data.total, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+    { label: "Pending Approval", value: totalStats.pending, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
   ] : [
-    { label: "Total Vendors", value: data.total, icon: <Store className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
-    { label: "Verified", value: verified, icon: <ShieldCheck className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
-    { label: "Pending", value: pending, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
-    { label: "Rejected", value: rejected, icon: <Ban className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
+    { label: "Total Vendors", value: totalStats.total, icon: <Store className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
+    { label: "Verified", value: totalStats.verified, icon: <ShieldCheck className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
+    { label: "Pending", value: totalStats.pending, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+    { label: "Rejected", value: totalStats.rejected, icon: <Ban className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
   ];
 
   return (
@@ -161,13 +176,16 @@ export default function VendorsPage() {
         onAdd={() => openModal(null, "create")}
         addLabel="Add Vendor"
         onRowClick={(v) => openModal(v, "view")}
-        onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } }}
+        onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } if (key === "payment") { setPaymentFilter(val); setPage(1); } }}
         onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
         searchPlaceholder="Search vendors..."
         filters={activeTab === "all" ? [{ key: "status", label: "Status", options: [
           { value: "pending", label: "Pending" }, { value: "level1_approved", label: "Level 1" },
           { value: "level2_approved", label: "Level 2" }, { value: "verified", label: "Verified" },
           { value: "rejected", label: "Rejected" },
+        ]}, { key: "payment", label: "Payment", options: [
+          { value: "paid", label: "Paid" }, { value: "unpaid", label: "Unpaid" },
+          { value: "offline_pending", label: "Pending" },
         ]}] : undefined}
         summaryWidgets={summaryWidgets}
         enableBulkSelect

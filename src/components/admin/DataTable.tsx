@@ -219,7 +219,7 @@ export function DataTable<T extends Record<string, any>>({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="end">
-                    <CalendarWidget mode="single" selected={dateTo} onSelect={handleDateToChange} initialFocus />
+                    <CalendarWidget mode="single" selected={dateTo} onSelect={handleDateToChange} initialFocus disabled={(date) => date > new Date()} />
                   </PopoverContent>
                 </Popover>
                 {(dateFrom || dateTo) && (
