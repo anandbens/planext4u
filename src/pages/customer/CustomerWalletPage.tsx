@@ -94,6 +94,20 @@ export default function CustomerWalletPage() {
           </div>
         </Card>
 
+        {/* Expiring points alert */}
+        {(expiringPoints || 0) > 0 && (
+          <Card className="p-3 bg-warning/10 border-warning/30 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-warning">{expiringPoints} points expiring this month!</p>
+              <p className="text-[10px] text-muted-foreground">Use them before month-end by placing orders</p>
+            </div>
+            <Button size="sm" variant="outline" className="shrink-0 text-xs h-7" asChild>
+              <Link to="/app/browse">Shop Now</Link>
+            </Button>
+          </Card>
+        )}
+
         <div className="grid grid-cols-3 gap-3">
           <Card className="p-3 text-center">
             <p className="text-lg font-bold text-success">+{userTransactions.filter(t => t.type === 'referral').reduce((s: number, t: any) => s + t.points, 0)}</p>
