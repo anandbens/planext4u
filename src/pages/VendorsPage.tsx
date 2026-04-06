@@ -176,7 +176,7 @@ export default function VendorsPage() {
         onAdd={() => openModal(null, "create")}
         addLabel="Add Vendor"
         onRowClick={(v) => openModal(v, "view")}
-        onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } }}
+        onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } if (key === "payment") { setPaymentFilter(val); setPage(1); } }}
         onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
         searchPlaceholder="Search vendors..."
         filters={activeTab === "all" ? [{ key: "status", label: "Status", options: [
