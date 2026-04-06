@@ -100,9 +100,10 @@ export default function CustomerProfileEditPage() {
     if (!/^[a-zA-Z\s]+$/.test(form.name)) return "Name can only contain letters and spaces";
     if (!form.mobile || !/^\d{10}$/.test(form.mobile.replace(/\+91/g, ''))) return "Valid 10-digit mobile required";
     if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) return "Valid email is required";
+    if (!form.dob) return "Date of birth is required";
     if (form.dob) {
       const dob = new Date(form.dob);
-      const maxDate = new Date(2016, 11, 31); // Dec 31, 2016
+      const maxDate = new Date(2016, 11, 31);
       if (dob > maxDate) return "Date of birth must be on or before December 31, 2016";
     }
     if (form.about && form.about.length > 1000) return "About must be under 1000 characters";
