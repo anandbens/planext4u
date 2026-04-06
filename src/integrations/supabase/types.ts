@@ -967,6 +967,7 @@ export type Database = {
           updated_at: string
           vendor_id: string
           vendor_name: string | null
+          youtube_video_url: string | null
         }
         Insert: {
           category_id?: string | null
@@ -990,6 +991,7 @@ export type Database = {
           updated_at?: string
           vendor_id: string
           vendor_name?: string | null
+          youtube_video_url?: string | null
         }
         Update: {
           category_id?: string | null
@@ -1013,6 +1015,7 @@ export type Database = {
           updated_at?: string
           vendor_id?: string
           vendor_name?: string | null
+          youtube_video_url?: string | null
         }
         Relationships: [
           {
@@ -3058,6 +3061,7 @@ export type Database = {
       vendors: {
         Row: {
           area_id: string | null
+          background_image: string | null
           business_name: string
           category_id: string | null
           city_id: string | null
@@ -3085,6 +3089,7 @@ export type Database = {
         }
         Insert: {
           area_id?: string | null
+          background_image?: string | null
           business_name?: string
           category_id?: string | null
           city_id?: string | null
@@ -3112,6 +3117,7 @@ export type Database = {
         }
         Update: {
           area_id?: string | null
+          background_image?: string | null
           business_name?: string
           category_id?: string | null
           city_id?: string | null
