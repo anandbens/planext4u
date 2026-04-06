@@ -21,15 +21,19 @@ const statusStyle: Record<string, string> = {
 };
 
 interface ProductForm {
-  title: string; description: string; price: string; tax: string; discount: string;
+  title: string; description: string; short_description: string; long_description: string;
+  price: string; tax: string; discount: string; discount_type: string;
   stock: string; category_id: string; emoji: string; status: string;
   image: string; sku: string; images: string[]; youtube_video_url: string;
+  inactivation_reason: string; tax_slab_id: string; product_attributes: any[];
 }
 
 const emptyForm: ProductForm = {
-  title: "", description: "", price: "", tax: "", discount: "0",
+  title: "", description: "", short_description: "", long_description: "",
+  price: "", tax: "", discount: "0", discount_type: "fixed",
   stock: "", category_id: "", emoji: "📦", status: "draft",
   image: "", sku: "", images: [], youtube_video_url: "",
+  inactivation_reason: "", tax_slab_id: "", product_attributes: [],
 };
 
 export default function VendorProductsPage() {
