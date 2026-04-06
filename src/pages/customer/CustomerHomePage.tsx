@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ChevronLeft, Star, Heart, Clock, Shield, Sparkles, MapPin, Phone, Headphones, ShoppingBag, Shirt, UtensilsCrossed, Apple, Home as HomeIcon, Laptop, PhoneCall, AlertTriangle, HelpCircle } from "lucide-react";
+import { ChevronRight, ChevronLeft, Star, Heart, Clock, Shield, Sparkles, MapPin, Phone, Headphones, ShoppingBag, Shirt, UtensilsCrossed, Apple, Home as HomeIcon, Laptop, PhoneCall, AlertTriangle, HelpCircle, Filter, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
