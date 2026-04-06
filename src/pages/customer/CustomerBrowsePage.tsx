@@ -27,14 +27,39 @@ export default function CustomerBrowsePage() {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
+  const [radiusInfo, setRadiusInfo] = useState<string>("");
 
+  // Try to get customer's default address first, fallback to GPS
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => {}
-      );
-    }
+    const loadLocation = async () => {
+      try {
+        const { data: { user } } = await (await import("@/integrations/supabase/client")).supabase.auth.getUser();
+        if (user) {
+          const { data: addr } = await (await import("@/integrations/supabase/client")).supabase
+            .from('customer_addresses')
+            .select('latitude, longitude')
+            .eq('customer_id', user.id)
+            .eq('is_default', true)
+            .maybeSingle();
+          if (addr?.latitude && addr?.longitude) {
+            setUserLocation({ lat: addr.latitude, lng: addr.longitude });
+            setRadiusInfo("Showing results near your default address");
+            return;
+          }
+        }
+      } catch {}
+      // Fallback to GPS
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setRadiusInfo("Showing results near your location");
+          },
+          () => {}
+        );
+      }
+    };
+    loadLocation();
   }, []);
 
   const { data: products, isLoading } = useQuery({
