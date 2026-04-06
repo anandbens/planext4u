@@ -18,10 +18,11 @@ export default function IntegrationsPage() {
   const [hvConfig, setHvConfig] = useState({ appId: "", appKey: "", sandbox: true });
   const [mapsConfig, setMapsConfig] = useState({ apiKey: "", defaultLat: "19.076", defaultLng: "72.877", defaultZoom: "12" });
   const [razorpayConfig, setRazorpayConfig] = useState({ keyId: "", keySecret: "" });
+  const [googleConfig, setGoogleConfig] = useState({ clientId: "", clientSecret: "" });
+  const [firebaseConfig, setFirebaseConfig] = useState({ serviceAccount: "" });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load from platform_variables
     supabase.from("platform_variables").select("*").then(({ data }) => {
       if (data) {
         const vars: Record<string, string> = {};
@@ -29,6 +30,9 @@ export default function IntegrationsPage() {
         if (vars.RAZORPAY_KEY_ID) setRazorpayConfig(prev => ({ ...prev, keyId: vars.RAZORPAY_KEY_ID }));
         if (vars.RAZORPAY_KEY_SECRET) setRazorpayConfig(prev => ({ ...prev, keySecret: vars.RAZORPAY_KEY_SECRET }));
         if (vars.GOOGLE_MAPS_API_KEY) setMapsConfig(prev => ({ ...prev, apiKey: vars.GOOGLE_MAPS_API_KEY }));
+        if (vars.GOOGLE_CLIENT_ID) setGoogleConfig(prev => ({ ...prev, clientId: vars.GOOGLE_CLIENT_ID }));
+        if (vars.GOOGLE_CLIENT_SECRET) setGoogleConfig(prev => ({ ...prev, clientSecret: vars.GOOGLE_CLIENT_SECRET }));
+        if (vars.FIREBASE_SERVICE_ACCOUNT) setFirebaseConfig(prev => ({ ...prev, serviceAccount: vars.FIREBASE_SERVICE_ACCOUNT }));
       }
       setLoading(false);
     });
