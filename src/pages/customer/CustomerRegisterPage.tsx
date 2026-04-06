@@ -185,6 +185,7 @@ export default function CustomerRegisterPage() {
 
   const handleSendOTP = async () => {
     if (!validateForm()) return;
+    if (!ensureFirebaseHostname()) return;
     setOtpLoading(true);
     try {
       const isUnique = await checkMobileUnique();
