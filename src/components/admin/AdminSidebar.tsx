@@ -183,8 +183,8 @@ export function AdminSidebar() {
         <NavGroup label="Portals" items={portalLinks} collapsed={collapsed} userRole={role} />
       </SidebarContent>
 
-      <SidebarFooter className="px-4 py-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3">
+      <SidebarFooter className={cn("py-4 border-t border-sidebar-border", collapsed ? "px-2" : "px-4")}>
+        <div className={cn("flex items-center", collapsed ? "flex-col gap-2" : "gap-3")}>
           <div className="h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center shrink-0">
             <span className="text-xs font-semibold text-sidebar-accent-foreground">
               {user?.name?.charAt(0) || "A"}
