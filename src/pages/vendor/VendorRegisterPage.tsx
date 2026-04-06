@@ -121,7 +121,7 @@ export default function VendorRegisterPage() {
       const payload = {
         user_id: form.email,
         name: form.name, phone: form.phone, secondary_phone: form.secondary_phone,
-        email: form.email, state: form.state, city: form.city,
+        email: form.email, state: form.state, city: form.district, district: form.district,
         fb_link: form.fb_link, instagram_link: form.instagram_link,
         business_name: form.business_name, business_type: form.business_type,
         store_name: form.store_name, category: form.category,
