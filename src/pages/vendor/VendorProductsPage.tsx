@@ -261,6 +261,10 @@ export default function VendorProductsPage() {
               </Select>
             </div>
             <div><Label>Emoji Icon</Label><Input value={form.emoji} onChange={(e) => setForm({ ...form, emoji: e.target.value })} placeholder="📦" /></div>
+            <div>
+              <Label>YouTube Video URL</Label>
+              <Input value={form.youtube_video_url} onChange={(e) => setForm({ ...form, youtube_video_url: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
+            </div>
             <div><Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
