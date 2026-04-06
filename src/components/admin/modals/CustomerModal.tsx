@@ -111,9 +111,11 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
       .order("created_at", { ascending: false });
     if (pointsFilter === "earned") query = query.gt("points", 0);
     if (pointsFilter === "redeemed") query = query.lt("points", 0);
+    if (pointsFromDate) query = query.gte("created_at", pointsFromDate);
+    if (pointsToDate) query = query.lte("created_at", pointsToDate + "T23:59:59");
     query.range(from, from + pointsPerPage - 1)
       .then(({ data, count }) => { setPoints(data || []); setPointsTotal(count || 0); setPointsLoading(false); });
-  }, [customer, activeTab, pointsPage, pointsFilter]);
+  }, [customer, activeTab, pointsPage, pointsFilter, pointsFromDate, pointsToDate]);
 
   const handleSave = async () => {
     if (!form.name || !form.email) return;
