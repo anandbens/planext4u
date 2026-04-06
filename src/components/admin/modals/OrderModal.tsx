@@ -119,12 +119,8 @@ export function OrderModal({ order, open, onOpenChange, mode, onSave }: OrderMod
 
         <div className="space-y-3 p-4 rounded-lg bg-secondary/20 border border-border/30">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-muted-foreground">Item Total (MRP)</span>
             <span>₹{order.subtotal.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Tax</span>
-            <span>₹{order.tax.toLocaleString()}</span>
           </div>
           {order.discount > 0 && (
             <div className="flex justify-between text-sm">
@@ -138,11 +134,37 @@ export function OrderModal({ order, open, onOpenChange, mode, onSave }: OrderMod
               <span className="text-primary font-medium">{order.points_used} pts</span>
             </div>
           )}
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Platform Fee</span>
+            <span>₹{((order as any).platform_fee || 0).toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">GST on Platform Fee (18%)</span>
+            <span>₹{((order as any).gst_on_platform_fee || 0).toLocaleString()}</span>
+          </div>
+          {order.tax > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Product Tax</span>
+              <span>₹{order.tax.toLocaleString()}</span>
+            </div>
+          )}
           <Separator />
           <div className="flex justify-between text-base font-bold">
-            <span>Total</span>
+            <span>Grand Total</span>
             <span>₹{order.total.toLocaleString()}</span>
           </div>
+          {(order as any).payment_reference_id && (
+            <div className="flex justify-between text-sm pt-2 border-t border-border/30">
+              <span className="text-muted-foreground">Payment Ref ID</span>
+              <span className="font-mono text-xs">{(order as any).payment_reference_id}</span>
+            </div>
+          )}
+          {(order as any).razorpay_order_id && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Gateway Order ID</span>
+              <span className="font-mono text-xs">{(order as any).razorpay_order_id}</span>
+            </div>
+          )}
         </div>
 
         {editMode && order.status !== "cancelled" && order.status !== "completed" && (
