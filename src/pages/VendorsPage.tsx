@@ -183,6 +183,9 @@ export default function VendorsPage() {
           { value: "pending", label: "Pending" }, { value: "level1_approved", label: "Level 1" },
           { value: "level2_approved", label: "Level 2" }, { value: "verified", label: "Verified" },
           { value: "rejected", label: "Rejected" },
+        ]}, { key: "payment", label: "Payment", options: [
+          { value: "paid", label: "Paid" }, { value: "unpaid", label: "Unpaid" },
+          { value: "offline_pending", label: "Pending" },
         ]}] : undefined}
         summaryWidgets={summaryWidgets}
         enableBulkSelect
