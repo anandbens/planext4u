@@ -108,13 +108,22 @@ export default function VendorProductsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["vendorProducts"] }); toast.success("Product deleted"); },
   });
 
+  const isApproved = (p: any) => p.status === "active";
+
   const openEdit = (p: any) => {
     setEditingId(p.id);
     setForm({
-      title: p.title, description: p.description, price: String(p.price), tax: String(p.tax),
-      discount: String(p.discount), stock: String(p.stock || 0), category_id: p.category_id || "",
-      emoji: p.emoji || "📦", status: p.status, image: p.image || "", sku: "", images: p.image ? [p.image] : [],
+      title: p.title, description: p.description,
+      short_description: p.short_description || "", long_description: p.long_description || "",
+      price: String(p.price), tax: String(p.tax),
+      discount: String(p.discount), discount_type: p.discount_type || "fixed",
+      stock: String(p.stock || 0), category_id: p.category_id || "",
+      emoji: p.emoji || "📦", status: p.status, image: p.image || "", sku: "",
+      images: Array.isArray(p.images) ? p.images : p.image ? [p.image] : [],
       youtube_video_url: p.youtube_video_url || "",
+      inactivation_reason: p.inactivation_reason || "",
+      tax_slab_id: p.tax_slab_id || "",
+      product_attributes: p.product_attributes || [],
     });
     setModalOpen(true);
   };
