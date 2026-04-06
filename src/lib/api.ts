@@ -37,6 +37,21 @@ export interface Product {
   promise_p4u?: string; helpline_number?: string;
   thumbnail_image?: string; banner_image?: string;
   subcategory_id?: string; subcategory_name?: string;
+  product_type?: 'simple' | 'variable' | 'service';
+  sku?: string; slug?: string;
+  meta_title?: string; meta_description?: string;
+  manage_stock?: boolean; stock_status?: string;
+  weight?: number; dimensions?: any;
+}
+
+export interface ProductVariant {
+  id: string; product_id: string; sku?: string;
+  price: number; compare_at_price?: number;
+  stock_quantity: number; stock_status: string;
+  weight?: number; dimensions?: any;
+  variant_attributes: Record<string, string>;
+  image_url?: string; is_active: boolean; sort_order?: number;
+  created_at?: string; updated_at?: string;
 }
 
 export interface Service {
