@@ -62,7 +62,7 @@ export default function VendorProductsPage() {
 
   const saveMutation = useMutation({
     mutationFn: async (formData: ProductForm) => {
-      const payload = {
+      const payload: any = {
         title: formData.title, description: formData.description,
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
         discount: parseFloat(formData.discount) || 0, stock: parseInt(formData.stock) || 0,
@@ -71,6 +71,7 @@ export default function VendorProductsPage() {
         emoji: formData.emoji, status: formData.status,
         vendor_id: vendorId, vendor_name: vendorUser?.name || "",
         image: formData.image || formData.images[0] || null,
+        youtube_video_url: formData.youtube_video_url || "",
       };
       if (editingId) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingId);
