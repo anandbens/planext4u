@@ -71,6 +71,21 @@ export default function VendorRegisterPage() {
   const [locating, setLocating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Load categories based on vendor type
+  useEffect(() => {
+    const loadCategories = async () => {
+      if (form.category === 'product' || form.category === 'both') {
+        const cats = await api.getCategories();
+        setProductCategories(cats || []);
+      }
+      if (form.category === 'service' || form.category === 'both') {
+        const cats = await api.getServiceCategories();
+        setServiceCategories(cats || []);
+      }
+    };
+    loadCategories();
+  }, [form.category]);
+
   useEffect(() => {
     if (customerId) loadExistingApp();
     api.getStates().then(setStates);
