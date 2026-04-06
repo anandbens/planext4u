@@ -794,10 +794,13 @@ export type Database = {
           created_at: string
           customer_id: string
           customer_name: string | null
+          delivery_rating: number | null
           discount: number
           id: string
           items: Json | null
           points_used: number
+          rated_at: string | null
+          rating_comment: string | null
           status: string
           subtotal: number
           tax: number
@@ -810,10 +813,13 @@ export type Database = {
           created_at?: string
           customer_id: string
           customer_name?: string | null
+          delivery_rating?: number | null
           discount?: number
           id: string
           items?: Json | null
           points_used?: number
+          rated_at?: string | null
+          rating_comment?: string | null
           status?: string
           subtotal?: number
           tax?: number
@@ -826,10 +832,13 @@ export type Database = {
           created_at?: string
           customer_id?: string
           customer_name?: string | null
+          delivery_rating?: number | null
           discount?: number
           id?: string
           items?: Json | null
           points_used?: number
+          rated_at?: string | null
+          rating_comment?: string | null
           status?: string
           subtotal?: number
           tax?: number

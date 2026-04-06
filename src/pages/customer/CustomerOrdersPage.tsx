@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
-import { Search, Calendar, ChevronLeft, ChevronRight, Package, Truck, MapPin, RefreshCcw, ArrowLeft } from "lucide-react";
+import { Search, Calendar, ChevronLeft, ChevronRight, Package, Truck, MapPin, RefreshCcw, ArrowLeft, Star } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
@@ -95,41 +95,39 @@ export default function CustomerOrdersPage() {
           {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />) :
             filtered.length === 0 ? <p className="text-center py-16 text-muted-foreground">{searchTerm || dateFrom || dateTo ? 'No matching orders' : 'No orders yet'}</p> :
             paginated.map((o) => (
-              <Card key={o.id} className="p-4 hover:shadow-sm transition-shadow">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="text-sm font-semibold">{o.id}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })} • {o.vendor_name}</p>
-                  </div>
-                  <Badge className={(statusColor[o.status] || "bg-muted") + " border-0"}>{o.status.replace("_", " ")}</Badge>
-                </div>
-                {o.items?.map((item: any, i: number) => (
-                  <div key={i} className="flex items-center gap-3 mb-1">
-                    <div className="h-10 w-10 bg-secondary/30 rounded-lg flex items-center justify-center text-lg shrink-0 overflow-hidden">
-                      {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji}</span>}
+              <Link to={`/app/orders/${o.id}`} key={o.id}>
+                <Card className="p-4 hover:shadow-sm transition-shadow">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="text-sm font-semibold">{o.id}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })} • {o.vendor_name}</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">Qty: {item.qty} × ₹{(item.price || 0).toLocaleString()}</p>
+                    <Badge className={(statusColor[o.status] || "bg-muted") + " border-0"}>{o.status.replace("_", " ")}</Badge>
+                  </div>
+                  {o.items?.map((item: any, i: number) => (
+                    <div key={i} className="flex items-center gap-3 mb-1">
+                      <div className="h-10 w-10 bg-secondary/30 rounded-lg flex items-center justify-center text-lg shrink-0 overflow-hidden">
+                        {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji}</span>}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{item.title}</p>
+                        <p className="text-xs text-muted-foreground">Qty: {item.qty} × ₹{(item.price || 0).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/30">
+                    <p className="text-sm font-bold">₹{o.total.toLocaleString()}</p>
+                    <div className="flex gap-2 items-center">
+                      {(o as any).delivery_rating ? (
+                        <span className="flex items-center gap-1 text-xs text-amber-500">
+                          <Star className="h-3 w-3 fill-amber-400" /> {(o as any).delivery_rating}/5
+                        </span>
+                      ) : null}
+                      <span className="text-xs text-primary font-medium">View Details →</span>
                     </div>
                   </div>
-                ))}
-                <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/30">
-                  <p className="text-sm font-bold">₹{o.total.toLocaleString()}</p>
-                  <div className="flex gap-2">
-                    {!["cancelled", "completed"].includes(o.status) && (
-                      <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => setTrackingOrder(o)}>
-                        <Truck className="h-3 w-3" /> Track
-                      </Button>
-                    )}
-                    {o.status === "delivered" || o.status === "completed" ? (
-                      <Button size="sm" variant="outline" className="text-xs h-7 gap-1 text-destructive" onClick={() => setRefundOrder(o)}>
-                        <RefreshCcw className="h-3 w-3" /> Refund
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </Link>
             ))}
         </div>
 

@@ -80,6 +80,11 @@ export default function SocialCommentsPage() {
   };
 
   const postComment = () => {
+    if (!customerUser?.id) {
+      toast.error("Please login to comment");
+      navigate("/app/login");
+      return;
+    }
     if (!newComment.trim()) return;
     if (isMock) {
       toast.success("Comment posted");

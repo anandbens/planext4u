@@ -65,6 +65,7 @@ import CustomerVendorPage from "./pages/customer/CustomerVendorPage";
 import CustomerProductPage from "./pages/customer/CustomerProductPage";
 import CustomerCartPage from "./pages/customer/CustomerCartPage";
 import CustomerOrdersPage from "./pages/customer/CustomerOrdersPage";
+import CustomerOrderDetailPage from "./pages/customer/CustomerOrderDetailPage";
 import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
 import CustomerProfileEditPage from "./pages/customer/CustomerProfileEditPage";
 import CustomerKYCPage from "./pages/customer/CustomerKYCPage";
@@ -282,6 +283,7 @@ const AppRoutes = () => {
         <Route path="/app/cart" element={<CustomerPage><CustomerCartPage /></CustomerPage>} />
         <Route path="/app/payment" element={<CustomerPage><PaymentPage /></CustomerPage>} />
         <Route path="/app/orders" element={<CustomerPage><CustomerOrdersPage /></CustomerPage>} />
+        <Route path="/app/orders/:orderId" element={<CustomerPage><CustomerOrderDetailPage /></CustomerPage>} />
         <Route path="/app/profile" element={<CustomerPage><CustomerProfilePage /></CustomerPage>} />
         <Route path="/app/profile/edit" element={<CustomerPage><CustomerProfileEditPage /></CustomerPage>} />
         <Route path="/app/kyc" element={<CustomerPage><CustomerKYCPage /></CustomerPage>} />

@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Plus, ChevronDown, Repeat2 } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Plus, ChevronDown, Repeat2, X } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
@@ -121,6 +122,7 @@ function PostCard({ post }: { post: any }) {
   const [commentText, setCommentText] = useState("");
   const [showAllComments, setShowAllComments] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
 
   const userId = customerUser?.id;
   const postId = post.id;
@@ -310,11 +312,12 @@ function PostCard({ post }: { post: any }) {
           <img 
             src={mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || ''} 
             alt="" 
-            className="w-full h-full object-cover" 
+            className="w-full h-full object-cover cursor-pointer" 
             loading="lazy"
             referrerPolicy="no-referrer"
             crossOrigin="anonymous"
-            onDoubleClick={() => toggleLike.mutate()}
+            onClick={() => setFullscreenImg(mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || '')}
+            onDoubleClick={(e) => { e.stopPropagation(); toggleLike.mutate(); }}
             onError={(e) => {
               const target = e.currentTarget;
               if (!target.dataset.retried) {
@@ -337,6 +340,26 @@ function PostCard({ post }: { post: any }) {
         )}
       </div>
 
+      {/* Fullscreen Image Viewer */}
+      <Dialog open={!!fullscreenImg} onOpenChange={() => setFullscreenImg(null)}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black border-0 overflow-hidden">
+          <button onClick={() => setFullscreenImg(null)} className="absolute top-3 right-3 z-50 h-8 w-8 rounded-full bg-black/60 flex items-center justify-center">
+            <X className="h-5 w-5 text-white" />
+          </button>
+          {fullscreenImg && (
+            <img src={fullscreenImg} alt="" className="w-full h-full object-contain max-h-[90vh]" />
+          )}
+          {isCarousel && fullscreenImg && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+              {mediaItems.map((_: any, i: number) => (
+                <button key={i} onClick={() => setFullscreenImg(mediaItems[i]?.url || mediaItems[i]?.mediumUrl || '')}
+                  className={`h-2 w-2 rounded-full ${(mediaItems[i]?.url || mediaItems[i]?.mediumUrl) === fullscreenImg ? 'bg-white' : 'bg-white/40'}`} />
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Action Bar */}
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-5">
@@ -350,7 +373,7 @@ function PostCard({ post }: { post: any }) {
             </AnimatePresence>
             <span className="text-sm font-semibold">{formatCount(likes)}</span>
           </button>
-          <button className="flex items-center gap-1.5" onClick={() => { setShowCommentInput(v => !v); }}>
+          <button className="flex items-center gap-1.5" onClick={() => { if (!userId) { toast.error("Please login to comment"); navigate("/app/login"); return; } setShowCommentInput(v => !v); }}>
             <MessageCircle className="h-6 w-6" />
             <span className="text-sm">{formatCount(comments)}</span>
           </button>
@@ -468,7 +491,7 @@ function PostCard({ post }: { post: any }) {
               </div>
             </motion.div>
           ) : (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer" onClick={() => setShowCommentInput(true)}>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer" onClick={() => { if (!userId) { toast.error("Please login to comment"); navigate("/app/login"); return; } setShowCommentInput(true); }}>
               <span>Add a comment...</span>
               <span className="ml-auto">😊</span>
             </div>
