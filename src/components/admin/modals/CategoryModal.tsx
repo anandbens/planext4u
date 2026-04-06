@@ -22,7 +22,7 @@ interface CategoryModalProps {
   parentCategories?: Category[];
 }
 
-const emptyForm = { name: "", image: "📦", status: "active" as Category["status"], banner_image: "", icon: "", is_trending: false, description: "", parent_id: "" as string | null };
+const emptyForm = { name: "", image: "📦", status: "active" as Category["status"], banner_image: "", icon: "", is_trending: false, description: "", parent_id: "" as string | null, commission_rate: "" as string, promotion_banner_url: "", promotion_title: "", promotion_active: false };
 
 export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories }: CategoryModalProps) {
   const isCreate = mode === "create";
@@ -38,6 +38,10 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         banner_image: category.banner_image || "", icon: category.icon || "",
         is_trending: category.is_trending || false, description: category.description || "",
         parent_id: category.parent_id || null,
+        commission_rate: (category as any).commission_rate?.toString() || "",
+        promotion_banner_url: (category as any).promotion_banner_url || "",
+        promotion_title: (category as any).promotion_title || "",
+        promotion_active: (category as any).promotion_active || false,
       });
       setEditMode(mode === "edit");
     }
@@ -47,7 +51,12 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
     if (!form.name) return;
     setSaving(true);
     try {
-      const payload = { ...form, parent_id: form.parent_id || null };
+      const payload: any = { ...form, parent_id: form.parent_id || null, commission_rate: form.commission_rate ? parseFloat(form.commission_rate) : null };
+      delete payload.promotion_banner_url; delete payload.promotion_title; delete payload.promotion_active;
+      // Include promotion fields only if they exist in DB
+      payload.promotion_banner_url = form.promotion_banner_url || null;
+      payload.promotion_title = form.promotion_title || null;
+      payload.promotion_active = form.promotion_active;
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
       onOpenChange(false);
@@ -120,6 +129,39 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
             ) : (
               <span className={`text-xs font-semibold ${category?.is_trending ? 'text-success' : 'text-muted-foreground'}`}>{category?.is_trending ? 'Yes' : 'No'}</span>
             )}
+          </div>
+
+          {/* Commission Rate */}
+          <div>
+            <Label className="text-xs text-muted-foreground">Category Commission Rate (%)</Label>
+            {editMode ? (
+              <Input type="number" min="0" max="100" step="0.5" value={form.commission_rate} onChange={(e) => setForm({ ...form, commission_rate: e.target.value })} className="mt-1" placeholder="e.g., 10" />
+            ) : <p className="text-sm mt-1">{(category as any)?.commission_rate ? `${(category as any).commission_rate}%` : '—'}</p>}
+          </div>
+
+          {/* Promotion Banner */}
+          <div className="space-y-2 p-3 rounded-lg border border-border/50 bg-muted/20">
+            <Label className="text-xs font-semibold">Category Promotion</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground">Active</Label>
+              {editMode ? (
+                <Switch checked={form.promotion_active} onCheckedChange={(v) => setForm({ ...form, promotion_active: v })} />
+              ) : (
+                <span className={`text-xs font-semibold ${(category as any)?.promotion_active ? 'text-success' : 'text-muted-foreground'}`}>{(category as any)?.promotion_active ? 'Yes' : 'No'}</span>
+              )}
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Promotion Title</Label>
+              {editMode ? <Input value={form.promotion_title} onChange={(e) => setForm({ ...form, promotion_title: e.target.value })} className="mt-1" placeholder="e.g., Summer Sale" /> : <p className="text-sm mt-1">{(category as any)?.promotion_title || '—'}</p>}
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Promotion Banner</Label>
+              {editMode ? (
+                <MediaLibraryPicker value={form.promotion_banner_url} onChange={(url) => setForm({ ...form, promotion_banner_url: url })} folder="promotions" label="Upload Promotion Banner" className="mt-1" />
+              ) : form.promotion_banner_url ? (
+                <img src={form.promotion_banner_url} alt="Promotion" className="mt-1 h-16 w-full object-cover rounded" />
+              ) : <p className="text-sm mt-1 text-muted-foreground">—</p>}
+            </div>
           </div>
 
           <div>

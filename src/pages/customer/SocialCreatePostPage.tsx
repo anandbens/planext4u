@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Image, MapPin, Users, Tag, ChevronRight, X, Plus, Eye, Heart } from "lucide-react";
+import { ArrowLeft, Camera, Image, MapPin, Users, Tag, ChevronRight, X, Plus, Eye, Heart, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { compressImage, validateImageFile, formatFileSize, type CompressionProgress } from "@/lib/media-compression";
+import { compressImage, validateImageFile, validateVideoFile, validateVideoDuration, formatFileSize, type CompressionProgress } from "@/lib/media-compression";
 
 const FILTERS = [
   "Normal", "Clarendon", "Gingham", "Moon", "Lark", "Reyes", "Juno", "Slumber",
@@ -40,10 +40,12 @@ export default function SocialCreatePostPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<'select' | 'edit' | 'details'>('select');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [fileTypes, setFileTypes] = useState<('image' | 'video')[]>([]);
   const [selectedFilter, setSelectedFilter] = useState("Normal");
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
@@ -58,14 +60,25 @@ export default function SocialCreatePostPage() {
     if (!files) return;
     const newFiles: File[] = [];
     const newUrls: string[] = [];
+    const newTypes: ('image' | 'video')[] = [];
     Array.from(files).slice(0, 20).forEach(file => {
-      const err = validateImageFile(file);
-      if (err) { toast.error(err); return; }
-      newFiles.push(file);
-      newUrls.push(URL.createObjectURL(file));
+      if (file.type.startsWith('video/')) {
+        const err = validateVideoFile(file);
+        if (err) { toast.error(err); return; }
+        newFiles.push(file);
+        newUrls.push(URL.createObjectURL(file));
+        newTypes.push('video');
+      } else {
+        const err = validateImageFile(file);
+        if (err) { toast.error(err); return; }
+        newFiles.push(file);
+        newUrls.push(URL.createObjectURL(file));
+        newTypes.push('image');
+      }
     });
     setSelectedFiles(prev => [...prev, ...newFiles].slice(0, 20));
     setPreviewUrls(prev => [...prev, ...newUrls].slice(0, 20));
+    setFileTypes(prev => [...prev, ...newTypes].slice(0, 20));
     if (newFiles.length > 0) setStep('edit');
   };
 
@@ -73,6 +86,7 @@ export default function SocialCreatePostPage() {
     URL.revokeObjectURL(previewUrls[index]);
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setFileTypes(prev => prev.filter((_, i) => i !== index));
     if (selectedFiles.length <= 1) setStep('select');
   };
 
@@ -83,55 +97,97 @@ export default function SocialCreatePostPage() {
     try {
       const postId = crypto.randomUUID();
       const mediaItems: any[] = [];
+      let hasVideo = false;
 
-      // Compress and upload each image
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
-        setUploadProgress({ stage: 'compressing', percent: 0, originalSize: file.size });
+        const isVideo = fileTypes[i] === 'video';
 
-        const { sizes, blurPlaceholder } = await compressImage(file, (p) => setUploadProgress(p));
+        if (isVideo) {
+          // Validate video duration
+          const durErr = await validateVideoDuration(file);
+          if (durErr) { toast.error(durErr); continue; }
 
-        setUploadProgress({ stage: 'uploading', percent: 50, originalSize: file.size });
+          hasVideo = true;
+          setUploadProgress({ stage: 'uploading', percent: 30, originalSize: file.size });
 
-        const bucket = 'social-media';
-        const basePath = `${customerUser.id}/social/${postId}/${i}`;
+          // Upload video to social-videos bucket
+          const videoPath = `${customerUser.id}/${postId}/video_${i}.mp4`;
+          const { error: vErr } = await supabase.storage.from('social-videos').upload(videoPath, file, {
+            contentType: file.type, upsert: true,
+          });
+          if (vErr) throw vErr;
+          const { data: vUrl } = supabase.storage.from('social-videos').getPublicUrl(videoPath);
 
-        // Upload medium and large sizes
-        const uploadBlob = async (blob: Blob, sizeName: string) => {
-          const path = `${basePath}/${sizeName}.webp`;
-          const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: 'image/webp', upsert: true });
-          if (error) throw error;
-          const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year
-          return data?.signedUrl || '';
-        };
+          // Generate thumbnail from video
+          let thumbUrl = '';
+          try {
+            const { extractVideoThumbnail } = await import('@/lib/media-compression');
+            const thumbBlob = await extractVideoThumbnail(file);
+            const thumbPath = `${customerUser.id}/${postId}/video_${i}_thumb.webp`;
+            await supabase.storage.from('social-media').upload(thumbPath, thumbBlob, { contentType: 'image/webp', upsert: true });
+            const { data: tData } = await supabase.storage.from('social-media').createSignedUrl(thumbPath, 60 * 60 * 24 * 365);
+            thumbUrl = tData?.signedUrl || '';
+          } catch {}
 
-        const [thumbUrl, medUrl, lgUrl] = await Promise.all([
-          uploadBlob(sizes.thumbnail, 'thumb'),
-          uploadBlob(sizes.medium, 'medium'),
-          uploadBlob(sizes.large, 'large'),
-        ]);
+          mediaItems.push({
+            type: 'video',
+            url: vUrl?.publicUrl || '',
+            thumbnailUrl: thumbUrl,
+            order: i,
+          });
 
-        mediaItems.push({
-          type: 'photo',
-          url: lgUrl,
-          thumbnailUrl: thumbUrl,
-          mediumUrl: medUrl,
-          blurPlaceholder,
-          order: i,
-        });
+          setUploadProgress({
+            stage: 'complete', percent: 100, originalSize: file.size,
+            savedText: `Video uploaded: ${formatFileSize(file.size)} ✓`,
+          });
+        } else {
+          // Image compression & upload (existing logic)
+          setUploadProgress({ stage: 'compressing', percent: 0, originalSize: file.size });
+          const { sizes, blurPlaceholder } = await compressImage(file, (p) => setUploadProgress(p));
+          setUploadProgress({ stage: 'uploading', percent: 50, originalSize: file.size });
 
-        setUploadProgress({
-          stage: 'complete', percent: 100, originalSize: file.size,
-          compressedSize: sizes.medium.size,
-          savedText: `Optimized: ${formatFileSize(file.size)} → ${formatFileSize(sizes.medium.size)} ✓`,
-        });
+          const bucket = 'social-media';
+          const basePath = `${customerUser.id}/social/${postId}/${i}`;
+
+          const uploadBlob = async (blob: Blob, sizeName: string) => {
+            const path = `${basePath}/${sizeName}.webp`;
+            const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: 'image/webp', upsert: true });
+            if (error) throw error;
+            const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 365);
+            return data?.signedUrl || '';
+          };
+
+          const [thumbUrl, medUrl, lgUrl] = await Promise.all([
+            uploadBlob(sizes.thumbnail, 'thumb'),
+            uploadBlob(sizes.medium, 'medium'),
+            uploadBlob(sizes.large, 'large'),
+          ]);
+
+          mediaItems.push({
+            type: 'photo',
+            url: lgUrl,
+            thumbnailUrl: thumbUrl,
+            mediumUrl: medUrl,
+            blurPlaceholder,
+            order: i,
+          });
+
+          setUploadProgress({
+            stage: 'complete', percent: 100, originalSize: file.size,
+            compressedSize: sizes.medium.size,
+            savedText: `Optimized: ${formatFileSize(file.size)} → ${formatFileSize(sizes.medium.size)} ✓`,
+          });
+        }
       }
+
+      const postType = hasVideo ? 'reel' : (mediaItems.length > 1 ? 'carousel' : 'photo');
 
       // Insert post into DB
       const { error } = await supabase.from('social_posts').insert({
         id: postId,
         user_id: customerUser.id,
-        post_type: mediaItems.length > 1 ? 'carousel' : 'photo',
+        post_type: postType,
         caption,
         location_name: location,
         media: mediaItems,
@@ -170,20 +226,30 @@ export default function SocialCreatePostPage() {
               <Camera className="h-10 w-10 text-muted-foreground" />
             </div>
             <h2 className="text-xl font-bold mb-2">Create a new post</h2>
-            <p className="text-sm text-muted-foreground mb-6">Share photos with your followers</p>
-            <Button onClick={() => fileInputRef.current?.click()} className="gap-2">
-              <Image className="h-4 w-4" /> Select from Gallery
-            </Button>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
+            <p className="text-sm text-muted-foreground mb-6">Share photos & videos with your followers</p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => fileInputRef.current?.click()} className="gap-2">
+                <Image className="h-4 w-4" /> Gallery
+              </Button>
+              <Button variant="outline" onClick={() => videoInputRef.current?.click()} className="gap-2">
+                <Video className="h-4 w-4" /> Video
+              </Button>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileSelect} />
+            <input ref={videoInputRef} type="file" accept="video/*" capture="environment" className="hidden" onChange={handleFileSelect} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center gap-2 p-6 rounded-xl border border-dashed border-border hover:border-primary transition-colors">
-              <Image className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">Photo</span>
+          <div className="grid grid-cols-3 gap-3">
+            <button onClick={() => fileInputRef.current?.click()} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border hover:border-primary transition-colors">
+              <Image className="h-7 w-7 text-muted-foreground" />
+              <span className="text-xs font-medium">Photo</span>
             </button>
-            <button onClick={() => toast.info("Video posts coming soon")} className="flex flex-col items-center gap-2 p-6 rounded-xl border border-dashed border-border hover:border-primary transition-colors">
-              <Camera className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm font-medium">Video</span>
+            <button onClick={() => videoInputRef.current?.click()} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border hover:border-primary transition-colors">
+              <Video className="h-7 w-7 text-muted-foreground" />
+              <span className="text-xs font-medium">Video</span>
+            </button>
+            <button onClick={() => { const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.capture='environment'; inp.onchange=(e:any)=>handleFileSelect(e); inp.click(); }} className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border hover:border-primary transition-colors">
+              <Camera className="h-7 w-7 text-muted-foreground" />
+              <span className="text-xs font-medium">Camera</span>
             </button>
           </div>
         </div>
@@ -204,17 +270,27 @@ export default function SocialCreatePostPage() {
         </header>
         <div className="aspect-square bg-black relative">
           {previewUrls.length > 0 && (
-            <img src={previewUrls[0]} alt="" className="w-full h-full object-contain" style={{ filter: FILTER_CSS[selectedFilter] }} />
+            fileTypes[0] === 'video' ? (
+              <video src={previewUrls[0]} className="w-full h-full object-contain" controls muted />
+            ) : (
+              <img src={previewUrls[0]} alt="" className="w-full h-full object-contain" style={{ filter: FILTER_CSS[selectedFilter] }} />
+            )
           )}
           {previewUrls.length > 1 && (
-            <div className="absolute top-3 right-3 bg-foreground/60 text-background text-xs font-bold px-2 py-0.5 rounded-full">{previewUrls.length} photos</div>
+            <div className="absolute top-3 right-3 bg-foreground/60 text-background text-xs font-bold px-2 py-0.5 rounded-full">{previewUrls.length} items</div>
           )}
         </div>
         {previewUrls.length > 1 && (
           <div className="flex gap-2 p-3 overflow-x-auto bg-card border-b border-border/30">
-            {previewUrls.map((img, i) => (
+            {previewUrls.map((url, i) => (
               <div key={i} className="relative shrink-0">
-                <img src={img} alt="" className="h-16 w-16 rounded object-cover" style={{ filter: FILTER_CSS[selectedFilter] }} />
+                {fileTypes[i] === 'video' ? (
+                  <div className="h-16 w-16 rounded bg-muted flex items-center justify-center">
+                    <Video className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                ) : (
+                  <img src={url} alt="" className="h-16 w-16 rounded object-cover" style={{ filter: FILTER_CSS[selectedFilter] }} />
+                )}
                 <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
                   <X className="h-3 w-3 text-destructive-foreground" />
                 </button>
@@ -223,7 +299,7 @@ export default function SocialCreatePostPage() {
             <button onClick={() => fileInputRef.current?.click()} className="h-16 w-16 rounded border-2 border-dashed border-border flex items-center justify-center shrink-0">
               <Plus className="h-5 w-5 text-muted-foreground" />
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
+            <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileSelect} />
           </div>
         )}
         <div className="p-3">
