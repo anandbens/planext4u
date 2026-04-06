@@ -533,6 +533,111 @@ function PostCard({ post }: { post: any }) {
   );
 }
 
+function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: any; customerUser: any }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const qc = useQueryClient();
+
+  // Check if current user has active stories
+  const { data: hasOwnStories = false } = useQuery({
+    queryKey: ['own-stories-exist', customerUser?.id],
+    queryFn: async () => {
+      if (!customerUser?.id) return false;
+      const { count } = await supabase.from('social_stories').select('*', { count: 'exact', head: true })
+        .eq('user_id', customerUser.id).gt('expires_at', new Date().toISOString());
+      return (count || 0) > 0;
+    },
+    enabled: story.isOwn && !!customerUser?.id,
+  });
+
+  const handleYourStoryClick = () => {
+    if (!story.isOwn) {
+      navigate(`/app/social/stories/${story.id}`);
+      return;
+    }
+    if (!customerUser?.id) { toast.error("Please login"); navigate("/app/login"); return; }
+    if (hasOwnStories) {
+      navigate(`/app/social/stories/${customerUser.id}`);
+    } else {
+      fileRef.current?.click();
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    if (!customerUser?.id) return;
+
+    // Ensure social profile exists
+    const { data: existingProfile } = await supabase.from('social_profiles').select('id').eq('user_id', customerUser.id).maybeSingle();
+    if (!existingProfile) {
+      await supabase.from('social_profiles').insert({
+        user_id: customerUser.id,
+        username: customerUser.name?.toLowerCase().replace(/\s+/g, '_') || 'user',
+        display_name: customerUser.name || 'User',
+      } as any);
+    }
+
+    toast.info(`Uploading ${files.length} story item(s)...`);
+
+    for (const file of files) {
+      const isVideo = file.type.startsWith('video/');
+      const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error(`${file.name} is too large. Max ${isVideo ? '50MB' : '10MB'}.`);
+        continue;
+      }
+
+      const storyId = crypto.randomUUID();
+      const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg');
+      const path = `${customerUser.id}/stories/${storyId}.${ext}`;
+
+      const { error: uploadErr } = await supabase.storage.from('social-media').upload(path, file, { contentType: file.type, upsert: true });
+      if (uploadErr) { toast.error(`Upload failed: ${uploadErr.message}`); continue; }
+
+      const { data: signedUrl } = await supabase.storage.from('social-media').createSignedUrl(path, 60 * 60 * 24);
+      const url = signedUrl?.signedUrl || '';
+
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      await supabase.from('social_stories').insert({
+        id: storyId,
+        user_id: customerUser.id,
+        media_url: url,
+        media_type: isVideo ? 'video' : 'image',
+        expires_at: expiresAt,
+      } as any);
+    }
+
+    toast.success("Story posted! 🎉");
+    qc.invalidateQueries({ queryKey: ['social-feed-stories'] });
+    qc.invalidateQueries({ queryKey: ['own-stories-exist'] });
+    e.target.value = '';
+  };
+
+  return (
+    <>
+      <input ref={fileRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileSelect} />
+      <button className="flex flex-col items-center gap-1 shrink-0 w-[68px]" onClick={handleYourStoryClick}>
+        <div className={`relative p-[2px] rounded-full ${story.isOwn ? (hasOwnStories ? 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600' : '') : story.seen ? 'bg-muted' : 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600'}`}>
+          <div className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-card p-[2px]">
+            <div className="h-full w-full rounded-full bg-muted flex items-center justify-center overflow-hidden">
+              {story.isOwn ? (
+                <div className="relative h-full w-full bg-accent flex items-center justify-center"><Plus className="h-5 w-5 text-muted-foreground" /></div>
+              ) : story.avatar ? (
+                <img src={story.avatar} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-bold text-muted-foreground">{story.username.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+          </div>
+        </div>
+        <span className="text-[10px] max-w-[56px] truncate text-center">
+          {story.isOwn ? "Your Story" : story.username.split('_')[0]}
+        </span>
+      </button>
+    </>
+  );
+}
+
 export default function SocialFeedPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
