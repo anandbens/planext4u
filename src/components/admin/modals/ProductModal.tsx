@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X, Clock, Phone, Shield, ToggleLeft, Plus, Layers } from "lucide-react";
+import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X, Clock, Phone, Shield, ToggleLeft, Plus, Layers, Search, MapPin } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,7 @@ interface ProductModalProps {
   onCreate?: (data: Partial<Product>) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
   isVendor?: boolean;
+  preselectedVendorId?: string;
 }
 
 const emptyForm = {
@@ -45,7 +46,7 @@ const emptyForm = {
   manage_stock: false, stock_status: "in_stock",
 };
 
-export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete, isVendor }: ProductModalProps) {
+export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete, isVendor, preselectedVendorId }: ProductModalProps) {
   const isCreate = mode === "create";
   const qc = useQueryClient();
   const [editMode, setEditMode] = useState(mode === "edit" || isCreate);
@@ -54,6 +55,11 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
   const [showInactivateDialog, setShowInactivateDialog] = useState(false);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [activeTab, setActiveTab] = useState("general");
+
+  // Vendor filtering state
+  const [vendorState, setVendorState] = useState("");
+  const [vendorDistrict, setVendorDistrict] = useState("");
+  const [vendorSearch, setVendorSearch] = useState("");
 
   const isApproved = !isCreate && product?.status === "active";
   const vendorRestricted = isVendor && isApproved;
@@ -66,13 +72,61 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     },
   });
 
-  const { data: dbVendors } = useQuery({
-    queryKey: ["vendorsForProduct"],
+  // Fetch all vendors with city/state info for filtering
+  const { data: allVendors } = useQuery({
+    queryKey: ["vendorsWithLocation"],
     queryFn: async () => {
-      const { data } = await supabase.from("vendors").select("id, business_name").eq("status", "active").order("business_name");
-      return (data || []) as any[];
+      const { data } = await supabase
+        .from("vendors")
+        .select("id, business_name, mobile, city_id, status")
+        .in("status", ["active", "verified"])
+        .order("business_name");
+      if (!data) return [];
+      // Fetch city details for state/district mapping
+      const cityIds = [...new Set(data.map((v: any) => v.city_id).filter(Boolean))];
+      let cityMap: Record<string, { name: string; state: string }> = {};
+      if (cityIds.length > 0) {
+        const { data: cities } = await supabase.from("cities").select("id, name, state").in("id", cityIds);
+        (cities || []).forEach((c: any) => { cityMap[c.id] = { name: c.name, state: c.state }; });
+      }
+      return data.map((v: any) => ({
+        ...v,
+        city_name: cityMap[v.city_id]?.name || "",
+        state: cityMap[v.city_id]?.state || "",
+      }));
     },
+    enabled: !isVendor,
   });
+
+  // Derive unique states and districts
+  const vendorStates = useMemo(() => {
+    if (!allVendors) return [];
+    return [...new Set(allVendors.map((v: any) => v.state).filter(Boolean))].sort();
+  }, [allVendors]);
+
+  const vendorDistricts = useMemo(() => {
+    if (!allVendors) return [];
+    let filtered = allVendors;
+    if (vendorState) filtered = filtered.filter((v: any) => v.state === vendorState);
+    return [...new Set(filtered.map((v: any) => v.city_name).filter(Boolean))].sort();
+  }, [allVendors, vendorState]);
+
+  // Filtered vendors based on state, district, and search
+  const filteredVendors = useMemo(() => {
+    if (!allVendors) return [];
+    let list = allVendors;
+    if (vendorState) list = list.filter((v: any) => v.state === vendorState);
+    if (vendorDistrict) list = list.filter((v: any) => v.city_name === vendorDistrict);
+    if (vendorSearch) {
+      const q = vendorSearch.toLowerCase();
+      list = list.filter((v: any) =>
+        v.business_name?.toLowerCase().includes(q) ||
+        v.mobile?.includes(q) ||
+        v.id?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [allVendors, vendorState, vendorDistrict, vendorSearch]);
 
   const { data: attributes } = useQuery({
     queryKey: ["productAttributes"],
@@ -90,7 +144,6 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     },
   });
 
-  // Fetch variants for existing product
   const { data: dbVariants } = useQuery({
     queryKey: ["productVariants", product?.id],
     queryFn: async () => {
@@ -107,10 +160,17 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
 
   useEffect(() => {
     if (isCreate) {
-      setForm(emptyForm);
+      setForm({
+        ...emptyForm,
+        vendor_id: preselectedVendorId || "",
+        vendor_name: preselectedVendorId ? (allVendors?.find((v: any) => v.id === preselectedVendorId)?.business_name || "") : "",
+      });
       setVariants([]);
       setEditMode(true);
       setActiveTab("general");
+      setVendorState("");
+      setVendorDistrict("");
+      setVendorSearch("");
     } else if (product) {
       setForm({
         title: product.title, description: product.description,
@@ -149,7 +209,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
       setEditMode(mode === "edit");
       setActiveTab("general");
     }
-  }, [product, mode]);
+  }, [product, mode, preselectedVendorId]);
 
   const taxRate = taxSlabs?.find((t: any) => t.id === form.tax_slab_id)?.rate || 0;
   const taxAmount = form.tax_slab_id ? Math.round(form.price * taxRate / 100) : form.tax;
@@ -167,7 +227,6 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         await onCreate?.(payload);
       } else if (product) {
         await onSave?.(product.id, payload);
-        // Save variants for variable products
         if (form.product_type === "variable" && product.id) {
           await supabase.from("product_variants").delete().eq("product_id", product.id);
           for (const v of variants) {
@@ -211,7 +270,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
   };
 
   const handleVendorChange = (vendorId: string) => {
-    const vendor = (dbVendors || []).find((v: any) => v.id === vendorId);
+    const vendor = (allVendors || []).find((v: any) => v.id === vendorId);
     setForm({ ...form, vendor_id: vendorId, vendor_name: vendor?.business_name || "" });
   };
 
@@ -269,7 +328,6 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     return attr?.values || [];
   };
 
-  // Generate variant combinations from selected attributes
   const generateVariants = () => {
     const selectedAttrs = (form.product_attributes || []).filter((a: any) => a.values?.length > 0);
     if (selectedAttrs.length === 0) { toast.error("Select attribute values first"); return; }
@@ -425,14 +483,65 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <Label className="text-xs text-muted-foreground">Long Description</Label>
                 {editMode && !vendorRestricted ? <Textarea value={form.long_description || form.description} onChange={(e) => setForm({ ...form, long_description: e.target.value, description: e.target.value })} className="mt-1" rows={3} /> : <p className="text-sm mt-1 text-muted-foreground">{form.long_description || form.description || "—"}</p>}
               </div>
+
+              {/* Vendor Selection with State/District Filtering (Admin only) */}
               {editMode && !vendorRestricted && !isVendor && (
                 <>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Vendor *</Label>
-                    <Select value={form.vendor_id || undefined} onValueChange={handleVendorChange}>
-                      <SelectTrigger className="mt-1"><SelectValue placeholder="Select vendor" /></SelectTrigger>
-                      <SelectContent>{(dbVendors || []).map((v: any) => <SelectItem key={v.id} value={v.id}>{v.business_name}</SelectItem>)}</SelectContent>
-                    </Select>
+                  <div className="col-span-2 p-4 rounded-lg bg-accent/30 border border-primary/10 space-y-3">
+                    <h4 className="text-sm font-semibold flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-primary" /> Select Vendor
+                    </h4>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">State</Label>
+                        <Select value={vendorState || "__all__"} onValueChange={(v) => { setVendorState(v === "__all__" ? "" : v); setVendorDistrict(""); }}>
+                          <SelectTrigger className="mt-1 h-8 text-xs"><SelectValue placeholder="All States" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__all__">All States</SelectItem>
+                            {vendorStates.map((s: string) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">District</Label>
+                        <Select value={vendorDistrict || "__all__"} onValueChange={(v) => setVendorDistrict(v === "__all__" ? "" : v)}>
+                          <SelectTrigger className="mt-1 h-8 text-xs"><SelectValue placeholder="All Districts" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__all__">All Districts</SelectItem>
+                            {vendorDistricts.map((d: string) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] text-muted-foreground">Search (Name / Phone / ID)</Label>
+                        <div className="relative mt-1">
+                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                          <Input
+                            value={vendorSearch}
+                            onChange={(e) => setVendorSearch(e.target.value)}
+                            className="h-8 text-xs pl-7"
+                            placeholder="Search vendor..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-[10px] text-muted-foreground">Vendor * ({filteredVendors.length} found)</Label>
+                      <Select value={form.vendor_id || undefined} onValueChange={handleVendorChange}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select vendor" /></SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                          {filteredVendors.map((v: any) => (
+                            <SelectItem key={v.id} value={v.id}>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{v.business_name}</span>
+                                <span className="text-[10px] text-muted-foreground">{v.mobile}</span>
+                                {v.city_name && <span className="text-[10px] text-muted-foreground">• {v.city_name}</span>}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Category *</Label>
