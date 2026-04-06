@@ -1228,7 +1228,7 @@ export const api = {
 
   getVendorOrders: async (vendorId: string) => {
     const { data } = await supabase.from('orders').select('*').eq('vendor_id', vendorId).order('created_at', { ascending: false });
-    return (data || []) as Order[];
+    return (data || []) as unknown as Order[];
   },
 
   getVendorSettlements: async (vendorId: string) => {
