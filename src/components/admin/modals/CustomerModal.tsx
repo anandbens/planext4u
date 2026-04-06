@@ -383,12 +383,39 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
 
             {/* ORDERS TAB */}
             <TabsContent value="orders" className="space-y-3 mt-3">
+              {/* Order Filters */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative flex-1 min-w-[140px]">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input placeholder="Search order ID or vendor..." className="pl-8 h-8 text-xs" value={ordersSearch}
+                    onChange={(e) => { setOrdersSearch(e.target.value); setOrdersPage(1); }} />
+                </div>
+                <Select value={ordersStatusFilter} onValueChange={(v) => { setOrdersStatusFilter(v); setOrdersPage(1); }}>
+                  <SelectTrigger className="w-[110px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input type="date" className="w-[130px] h-8 text-xs" value={ordersFromDate}
+                  onChange={(e) => { setOrdersFromDate(e.target.value); setOrdersPage(1); }} />
+                <Input type="date" className="w-[130px] h-8 text-xs" value={ordersToDate} max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => { setOrdersToDate(e.target.value); setOrdersPage(1); }} />
+                <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={handleExportOrders}>
+                  <Download className="h-3 w-3" /> Export
+                </Button>
+              </div>
+
               {ordersLoading ? (
                 <div className="flex items-center justify-center h-32"><div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>
               ) : orders.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <ShoppingCart className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No orders placed yet</p>
+                  <p className="text-sm">No orders found</p>
                 </div>
               ) : (
                 <>
@@ -453,7 +480,6 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
                     </Card>
                   ))}
 
-                  {/* Pagination */}
                   <div className="flex items-center justify-between pt-2">
                     <span className="text-xs text-muted-foreground">Page {ordersPage} of {Math.ceil(ordersTotal / ordersPerPage)}</span>
                     <div className="flex gap-1">
