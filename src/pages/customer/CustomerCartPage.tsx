@@ -163,7 +163,6 @@ export default function CustomerCartPage() {
   }));
 
   // Check if 4+ referrals completed this month → zero platform fee
-  const [referralCountThisMonth, setReferralCountThisMonth] = useState(0);
   useEffect(() => {
     if (!customerId) return;
     const startOfMonth = new Date();
