@@ -168,10 +168,17 @@ export default function CustomerCartPage() {
   };
 
   const selectedAddress = addresses.find(a => a.id === selectedAddressId);
-  const today = new Date();
-  const weekStart = addDays(startOfWeek(today, { weekStartsOn: 5 }), calendarWeekOffset * 7);
-  const calendarDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const currentMonth = format(calendarDays[3], "MMMM");
+  const today = startOfDay(new Date());
+
+  // Build full month calendar grid
+  const monthStart = startOfMonth(calendarMonth);
+  const monthEnd = endOfMonth(calendarMonth);
+  const calStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const calEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+  const calendarDays: Date[] = [];
+  let d = calStart;
+  while (d <= calEnd) { calendarDays.push(d); d = addDays(d, 1); }
+  const canGoPrev = !isBefore(startOfMonth(subMonths(calendarMonth, 1)), monthStart) ? false : !isBefore(endOfMonth(subMonths(calendarMonth, 1)), today);
 
   if (loading) {
     return <CustomerLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></CustomerLayout>;
