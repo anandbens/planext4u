@@ -1115,7 +1115,7 @@ export const api = {
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     };
 
-    const filtered = products.filter(p => {
+    const filtered = filteredProducts.filter(p => {
       const vendor = vendorMap[p.vendor_id];
       if (!vendor?.plan_id) return true; // no plan = show everywhere (basic)
       const plan = plansMap[vendor.plan_id];
