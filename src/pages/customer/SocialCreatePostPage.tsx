@@ -266,7 +266,7 @@ export default function SocialCreatePostPage() {
           user_id: authUserId,
           username: profileName.toLowerCase().replace(/\s+/g, '_'),
           display_name: profileName,
-          avatar_url: customerUser?.profile_photo || null,
+          avatar_url: null,
         } as any);
       }
 
