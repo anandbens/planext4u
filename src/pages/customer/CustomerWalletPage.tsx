@@ -31,7 +31,8 @@ export default function CustomerWalletPage() {
     queryFn: async () => {
       if (!customerId) return [];
       const { data } = await supabase.from('points_transactions').select('*').eq('user_id', customerId).order('created_at', { ascending: false });
-      return data || [];
+      // Only show transactions where points were actually earned or used (> 0)
+      return (data || []).filter((t: any) => t.points > 0);
     },
     enabled: !!customerId,
   });
