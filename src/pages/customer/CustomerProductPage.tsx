@@ -125,23 +125,52 @@ export default function CustomerProductPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Product Image */}
           <div className="relative">
-            <div className="bg-secondary/20 rounded-2xl h-64 md:h-96 flex items-center justify-center relative overflow-hidden">
-              {product.image ? (
-                <img src={product.image} alt={product.title} className="w-full h-full object-cover rounded-2xl" />
-              ) : (
-                <span className="text-8xl">{product.emoji}</span>
-              )}
-              <button onClick={toggleWishlist}
-                className="absolute top-3 right-3 h-8 w-8 rounded-full bg-card/80 flex items-center justify-center">
-                <Heart className={`h-4 w-4 ${wishlisted ? "fill-destructive text-destructive" : "text-muted-foreground"}`} />
-              </button>
-            </div>
-            <div className="flex gap-1.5 justify-center mt-3">
-              {[0,1,2].map(i => (
-                <button key={i} onClick={() => setImgIdx(i)}
-                  className={`h-2 rounded-full transition-all ${i === imgIdx ? 'w-5 bg-foreground' : 'w-2 bg-muted-foreground/30'}`} />
-              ))}
-            </div>
+            {(() => {
+              const allImages = [product.image, ...((product as any).images || [])].filter(Boolean);
+              if (allImages.length <= 1) {
+                return (
+                  <div className="bg-secondary/20 rounded-2xl h-64 md:h-96 flex items-center justify-center relative overflow-hidden">
+                    {product.image ? (
+                      <img src={product.image} alt={product.title} className="w-full h-full object-cover rounded-2xl" />
+                    ) : (
+                      <span className="text-8xl">{product.emoji}</span>
+                    )}
+                    <button onClick={toggleWishlist}
+                      className="absolute top-3 right-3 h-8 w-8 rounded-full bg-card/80 flex items-center justify-center">
+                      <Heart className={`h-4 w-4 ${wishlisted ? "fill-destructive text-destructive" : "text-muted-foreground"}`} />
+                    </button>
+                  </div>
+                );
+              }
+              return (
+                <div className="relative">
+                  <div className="bg-secondary/20 rounded-2xl h-64 md:h-96 flex items-center justify-center relative overflow-hidden">
+                    <img src={allImages[imgIdx] || ''} alt={product.title} className="w-full h-full object-cover rounded-2xl" />
+                    <button onClick={toggleWishlist}
+                      className="absolute top-3 right-3 h-8 w-8 rounded-full bg-card/80 flex items-center justify-center z-10">
+                      <Heart className={`h-4 w-4 ${wishlisted ? "fill-destructive text-destructive" : "text-muted-foreground"}`} />
+                    </button>
+                    {imgIdx > 0 && (
+                      <button onClick={() => setImgIdx(i => i - 1)} className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-card/80 flex items-center justify-center">
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                    )}
+                    {imgIdx < allImages.length - 1 && (
+                      <button onClick={() => setImgIdx(i => i + 1)} className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-card/80 flex items-center justify-center">
+                        <ChevronLeft className="h-4 w-4 rotate-180" />
+                      </button>
+                    )}
+                    <div className="absolute top-3 left-3 bg-card/80 text-xs font-medium px-2 py-0.5 rounded-full">{imgIdx + 1}/{allImages.length}</div>
+                  </div>
+                  <div className="flex gap-1.5 justify-center mt-3">
+                    {allImages.map((_: string, i: number) => (
+                      <button key={i} onClick={() => setImgIdx(i)}
+                        className={`h-2 rounded-full transition-all ${i === imgIdx ? 'w-5 bg-foreground' : 'w-2 bg-muted-foreground/30'}`} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Product Info */}

@@ -241,6 +241,10 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
               <Label className="text-xs text-muted-foreground">Max Points Redeemable</Label>
               {editMode ? <Input type="number" value={form.max_points_redeemable} onChange={(e) => setForm({ ...form, max_points_redeemable: Number(e.target.value) })} className="mt-1 max-w-32" /> : <p className="text-xl font-bold">{product?.max_points_redeemable} pts</p>}
             </div>
+            <div className="flex-1">
+              <Label className="text-xs text-muted-foreground">Max Redemption % (overrides vendor)</Label>
+              {editMode ? <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1 max-w-32" placeholder="Vendor default" /> : <p className="text-xl font-bold">{(product as any)?.max_redemption_percentage != null ? `${(product as any).max_redemption_percentage}%` : "Vendor default"}</p>}
+            </div>
           </div>
 
           {/* YouTube Video */}

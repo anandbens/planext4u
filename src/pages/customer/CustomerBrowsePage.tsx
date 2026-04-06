@@ -189,11 +189,22 @@ export default function CustomerBrowsePage() {
                       <Link to={`/app/product/${p.id}`} className={viewMode === "list" ? "flex flex-1" : "block"}>
                         <div className={`bg-secondary/30 flex items-center justify-center relative overflow-hidden ${viewMode === "list" ? "w-28 h-28 shrink-0" : "h-36"}`}>
                           {discountPct > 0 && <span className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">{discountPct}% Off</span>}
-                          {p.image ? (
-                            <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-4xl">{p.emoji}</span>
-                          )}
+                          {(() => {
+                            const allImages = [p.image, ...((p as any).images || [])].filter(Boolean);
+                            if (allImages.length > 1) {
+                              return (
+                                <div className="relative w-full h-full">
+                                  <img src={allImages[0]} alt={p.title} className="w-full h-full object-cover" />
+                                  <div className="absolute bottom-1 right-1 bg-card/80 text-[9px] font-medium px-1.5 py-0.5 rounded-full">{allImages.length} 📷</div>
+                                </div>
+                              );
+                            }
+                            return p.image ? (
+                              <img src={p.image} alt={p.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-4xl">{p.emoji}</span>
+                            );
+                          })()}
                           {/* Wishlist always visible */}
                           <button className="absolute top-2 right-2 h-7 w-7 rounded-full bg-card/80 flex items-center justify-center z-10"
                             onClick={(e) => toggleWishlist(p.id, e)}>
