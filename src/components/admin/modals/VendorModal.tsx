@@ -47,7 +47,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
   const { data: vendorPlans = [] } = useQuery({
     queryKey: ["vendorPlansDropdown"],
     queryFn: async () => {
-      const { data } = await supabase.from("vendor_plans").select("id, plan_name, plan_type, visibility_type, payment_mode, price").eq("is_active", true).order("plan_tier");
+      const { data } = await supabase.from("vendor_plans").select("id, plan_name, plan_type, visibility_type, payment_mode, price, commission_percentage").eq("is_active", true).order("plan_tier");
       return data || [];
     },
   });
@@ -233,20 +233,34 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-lg bg-secondary/30">
-                    <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Commission Rate</Label></div>
+                    <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">P4U Commission Rate</Label></div>
                     {editMode ? <Input type="number" value={form.commission_rate} onChange={(e) => setForm({ ...form, commission_rate: Number(e.target.value) })} className="mt-1" /> : <p className="text-xl font-bold">{vendor?.commission_rate}%</p>}
                   </div>
                   <div className="p-4 rounded-lg bg-secondary/30">
-                    <div className="flex items-center gap-2 mb-1"><Crown className="h-4 w-4 text-warning" /><Label className="text-xs text-muted-foreground">Membership</Label></div>
+                    <div className="flex items-center gap-2 mb-1"><Crown className="h-4 w-4 text-warning" /><Label className="text-xs text-muted-foreground">Vendor Plan</Label></div>
                     {editMode ? (
-                      <Select value={form.membership} onValueChange={(v) => setForm({ ...form, membership: v })}>
-                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <Select value={form.plan_id || "none"} onValueChange={(v) => {
+                        const plan = vendorPlans.find((p: any) => p.id === v);
+                        setForm({
+                          ...form,
+                          plan_id: v === "none" ? "" : v,
+                          membership: plan?.plan_name?.toLowerCase() || form.membership,
+                          commission_rate: plan?.commission_percentage ?? form.commission_rate,
+                        });
+                      }}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select plan" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="basic">Basic</SelectItem>
-                          <SelectItem value="premium">Premium</SelectItem>
+                          <SelectItem value="none">No Plan</SelectItem>
+                          {vendorPlans.map((p: any) => (
+                            <SelectItem key={p.id} value={p.id}>{p.plan_name} ({p.plan_type}) — ₹{p.price}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
-                    ) : <p className="text-xl font-bold capitalize">{vendor?.membership}</p>}
+                    ) : (
+                      <p className="text-xl font-bold capitalize">
+                        {vendorPlans.find((p: any) => p.id === form.plan_id)?.plan_name || vendor?.membership || "No Plan"}
+                      </p>
+                    )}
                   </div>
                 </div>
 

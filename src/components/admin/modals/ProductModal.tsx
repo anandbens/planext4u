@@ -27,6 +27,7 @@ const emptyForm = {
   max_points_redeemable: 0, status: "active" as Product["status"],
   vendor_id: "", vendor_name: "", category_id: "", category_name: "", stock: 0, emoji: "📦",
   image: "", rejection_reason: "", youtube_video_url: "",
+  images: [] as string[], max_redemption_percentage: null as number | null,
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete }: ProductModalProps) {
@@ -49,6 +50,8 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         stock: product.stock || 0, emoji: product.emoji || "📦",
         image: product.image || "", rejection_reason: product.rejection_reason || "",
         youtube_video_url: (product as any).youtube_video_url || "",
+        images: (product as any).images || [],
+        max_redemption_percentage: (product as any).max_redemption_percentage ?? null,
       });
       setEditMode(mode === "edit");
     }
@@ -113,9 +116,9 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
-          {/* Image Upload */}
+          {/* Product Images */}
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Product Image</Label>
+            <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Product Image (Primary)</Label>
             {editMode ? (
               <MediaLibraryPicker value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="product-images" label="Upload Product Image" />
             ) : form.image ? (
@@ -123,6 +126,24 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
               </div>
             ) : null}
+          </div>
+
+          {/* Additional Images for Carousel */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Additional Images (Carousel)</Label>
+            <div className="flex flex-wrap gap-2">
+              {(form.images || []).map((img: string, i: number) => (
+                <div key={i} className="relative h-16 w-16 rounded-lg overflow-hidden border border-border/30">
+                  <img src={img} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
+                  {editMode && (
+                    <button className="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-bl text-[10px] px-1" onClick={() => setForm({ ...form, images: form.images.filter((_: string, j: number) => j !== i) })}>×</button>
+                  )}
+                </div>
+              ))}
+              {editMode && (
+                <MediaLibraryPicker value="" onChange={(url) => setForm({ ...form, images: [...(form.images || []), url] })} folder="product-images" label="+ Add" />
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -219,6 +240,10 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
             <div className="flex-1">
               <Label className="text-xs text-muted-foreground">Max Points Redeemable</Label>
               {editMode ? <Input type="number" value={form.max_points_redeemable} onChange={(e) => setForm({ ...form, max_points_redeemable: Number(e.target.value) })} className="mt-1 max-w-32" /> : <p className="text-xl font-bold">{product?.max_points_redeemable} pts</p>}
+            </div>
+            <div className="flex-1">
+              <Label className="text-xs text-muted-foreground">Max Redemption % (overrides vendor)</Label>
+              {editMode ? <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1 max-w-32" placeholder="Vendor default" /> : <p className="text-xl font-bold">{(product as any)?.max_redemption_percentage != null ? `${(product as any).max_redemption_percentage}%` : "Vendor default"}</p>}
             </div>
           </div>
 
