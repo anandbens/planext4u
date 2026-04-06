@@ -103,19 +103,24 @@ export default function CustomerLoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      if (isNativePlatform()) {
-        await openGoogleOAuthInBrowser();
-        return;
-      }
+      const redirectTo = isNativePlatform()
+        ? 'https://planext4u.lovable.app/auth/callback'
+        : `${window.location.origin}/auth/callback`;
 
-      window.location.assign(getGoogleOAuthInitiateUrl());
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: { prompt: 'select_account' },
+        },
+      });
+
+      if (error) throw error;
+      // Browser will redirect to Google — nothing more to do
       return;
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
-    } finally {
-      if (!isNativePlatform()) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
