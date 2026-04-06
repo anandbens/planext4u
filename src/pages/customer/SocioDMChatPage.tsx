@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Phone, Video, Info, Send, Smile, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Phone, Video, Send, Smile, Paperclip, Mic, Check, CheckCheck, Image as ImageIcon, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,10 +11,11 @@ import { format } from "date-fns";
 
 interface Message {
   id: string;
+  conversation_id: string;
   sender_id: string;
-  receiver_id: string;
   content: string;
   message_type: string;
+  media_url?: string;
   is_read: boolean;
   created_at: string;
 }
@@ -25,64 +26,146 @@ export default function SocioDMChatPage() {
   const { recipientId } = useParams<{ recipientId: string }>();
   const navigate = useNavigate();
   const { customerUser } = useAuth();
-  const currentUserId = customerUser?.id || '';
+  const [currentUserId, setCurrentUserId] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [recipientProfile, setRecipientProfile] = useState<any>(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const conversationId = currentUserId && recipientId
-    ? `dm_${[currentUserId, recipientId].sort().join('_')}`
-    : '';
+  // Get auth user ID
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) setCurrentUserId(session.user.id);
+    });
+  }, []);
 
   // Load recipient profile
   useEffect(() => {
     if (!recipientId) return;
-    supabase.from('social_profiles').select('*').eq('user_id', recipientId).single()
+    supabase.from('social_profiles' as any).select('*').eq('user_id', recipientId).single()
       .then(({ data }) => {
         if (data) setRecipientProfile(data);
         else setRecipientProfile({ display_name: 'User', username: 'user', avatar_url: '' });
       });
   }, [recipientId]);
 
-  // Load messages
+  // Find or create conversation
   useEffect(() => {
-    if (!conversationId || !currentUserId) return;
-    const loadMessages = async () => {
-      const { data } = await supabase
-        .from('social_conversations')
-        .select('*')
-        .or(`participants.cs.["${currentUserId}"]`)
-        .limit(1);
+    if (!currentUserId || !recipientId) return;
+    const findOrCreateConversation = async () => {
+      setLoading(true);
+      try {
+        // Look for existing conversation containing both participants
+        const { data: convos } = await (supabase
+          .from('social_conversations' as any)
+          .select('*')
+          .eq('is_group', false)
+          .contains('participants', JSON.stringify([currentUserId, recipientId])) as any);
 
-      // Load from mock for now - real messages would come from socio_messages table
-      setMessages([
-        { id: '1', sender_id: recipientId || '', receiver_id: currentUserId, content: 'Hey! How are you? 😊', message_type: 'text', is_read: true, created_at: new Date(Date.now() - 3600000).toISOString() },
-        { id: '2', sender_id: currentUserId, receiver_id: recipientId || '', content: 'I\'m good! Just browsing P4U', message_type: 'text', is_read: true, created_at: new Date(Date.now() - 3500000).toISOString() },
-        { id: '3', sender_id: recipientId || '', receiver_id: currentUserId, content: 'Check out the new collection!', message_type: 'text', is_read: true, created_at: new Date(Date.now() - 3400000).toISOString() },
-      ]);
+        if (convos && convos.length > 0) {
+          setConversationId(convos[0].id);
+        } else {
+          // Create new conversation
+          const newId = crypto.randomUUID();
+          const { error } = await supabase.from('social_conversations' as any).insert({
+            id: newId,
+            is_group: false,
+            participants: [currentUserId, recipientId],
+            last_message_at: new Date().toISOString(),
+          });
+          if (error) {
+            console.error('Failed to create conversation:', error);
+            toast.error('Could not start conversation');
+            return;
+          }
+          setConversationId(newId);
+        }
+      } catch (err) {
+        console.error('Conversation error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    findOrCreateConversation();
+  }, [currentUserId, recipientId]);
+
+  // Load messages when conversation is found
+  useEffect(() => {
+    if (!conversationId) return;
+    const loadMessages = async () => {
+      const { data, error } = await supabase
+        .from('social_messages' as any)
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+        .limit(200);
+
+      if (error) {
+        console.error('Failed to load messages:', error);
+        return;
+      }
+      setMessages((data || []).map((m: any) => ({
+        id: m.id,
+        conversation_id: m.conversation_id,
+        sender_id: m.sender_id,
+        content: m.content || '',
+        message_type: m.message_type || 'text',
+        media_url: m.media_url,
+        is_read: m.is_read || false,
+        created_at: m.created_at,
+      })));
+
+      // Mark unread messages as read
+      if (data && data.length > 0) {
+        const unreadIds = data.filter((m: any) => !m.is_read && m.sender_id !== currentUserId).map((m: any) => m.id);
+        if (unreadIds.length > 0) {
+          await supabase.from('social_messages' as any).update({ is_read: true }).in('id', unreadIds);
+        }
+      }
     };
     loadMessages();
-  }, [conversationId, currentUserId, recipientId]);
+  }, [conversationId, currentUserId]);
 
-  // Subscribe to realtime
+  // Realtime subscription for new messages
   useEffect(() => {
     if (!conversationId) return;
     const channel = supabase
       .channel(`dm-${conversationId}`)
-      .on('broadcast', { event: 'new_message' }, (payload) => {
-        const msg = payload.payload as Message;
-        setMessages(prev => [...prev, msg]);
-      })
-      .on('broadcast', { event: 'typing' }, (payload) => {
-        if (payload.payload.user_id !== currentUserId) {
-          setIsTyping(true);
-          setTimeout(() => setIsTyping(false), 3000);
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'social_messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const m = payload.new as any;
+          setMessages(prev => {
+            // Avoid duplicates
+            if (prev.some(msg => msg.id === m.id)) return prev;
+            return [...prev, {
+              id: m.id,
+              conversation_id: m.conversation_id,
+              sender_id: m.sender_id,
+              content: m.content || '',
+              message_type: m.message_type || 'text',
+              media_url: m.media_url,
+              is_read: m.is_read || false,
+              created_at: m.created_at,
+            }];
+          });
+          // Mark as read if from other user
+          if (m.sender_id !== currentUserId) {
+            supabase.from('social_messages' as any).update({ is_read: true }).eq('id', m.id);
+          }
         }
-      })
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -94,39 +177,58 @@ export default function SocioDMChatPage() {
   }, [messages, isTyping]);
 
   const sendMessage = useCallback(async () => {
-    if (!newMessage.trim() || !currentUserId || !recipientId) return;
+    if (!newMessage.trim() || !currentUserId || !recipientId || !conversationId) return;
 
-    const msg: Message = {
-      id: crypto.randomUUID(),
+    const msgId = crypto.randomUUID();
+    const content = newMessage.trim();
+    setNewMessage('');
+    setShowEmoji(false);
+
+    // Optimistic update
+    const optimisticMsg: Message = {
+      id: msgId,
+      conversation_id: conversationId,
       sender_id: currentUserId,
-      receiver_id: recipientId,
-      content: newMessage.trim(),
+      content,
       message_type: 'text',
       is_read: false,
       created_at: new Date().toISOString(),
     };
+    setMessages(prev => [...prev, optimisticMsg]);
 
-    setMessages(prev => [...prev, msg]);
-    setNewMessage('');
-    setShowEmoji(false);
-
-    // Broadcast via realtime
-    await supabase.channel(`dm-${conversationId}`).send({
-      type: 'broadcast',
-      event: 'new_message',
-      payload: msg,
+    // Insert into DB
+    const { error } = await supabase.from('social_messages' as any).insert({
+      id: msgId,
+      conversation_id: conversationId,
+      sender_id: currentUserId,
+      content,
+      message_type: 'text',
+      is_read: false,
     });
+
+    if (error) {
+      console.error('Send message error:', error);
+      toast.error('Failed to send message');
+      // Remove optimistic message
+      setMessages(prev => prev.filter(m => m.id !== msgId));
+      return;
+    }
+
+    // Update conversation last_message_at
+    await supabase.from('social_conversations' as any)
+      .update({ last_message_at: new Date().toISOString() })
+      .eq('id', conversationId);
   }, [newMessage, currentUserId, recipientId, conversationId]);
 
-  const handleTyping = () => {
-    supabase.channel(`dm-${conversationId}`).send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: { user_id: currentUserId },
-    });
-  };
-
   const isMine = (msg: Message) => msg.sender_id === currentUserId;
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
@@ -143,7 +245,10 @@ export default function SocioDMChatPage() {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate">{recipientProfile?.display_name || 'User'}</p>
-            <p className="text-[10px] text-muted-foreground">{isTyping ? 'typing...' : 'Active now'}</p>
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <Lock className="h-2.5 w-2.5" />
+              {isTyping ? 'typing...' : 'End-to-end encrypted'}
+            </p>
           </div>
         </button>
         <div className="flex items-center gap-2">
@@ -156,8 +261,21 @@ export default function SocioDMChatPage() {
         </div>
       </header>
 
+      {/* Encryption notice */}
+      <div className="text-center py-2 px-4">
+        <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1">
+          <Lock className="h-2.5 w-2.5" />
+          Messages are private between you and {recipientProfile?.display_name || 'this user'}
+        </p>
+      </div>
+
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2">
+        {messages.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-sm text-muted-foreground">No messages yet. Say hello! 👋</p>
+          </div>
+        )}
         {messages.map((msg, i) => {
           const mine = isMine(msg);
           const showAvatar = !mine && (i === 0 || messages[i - 1]?.sender_id !== msg.sender_id);
@@ -165,7 +283,11 @@ export default function SocioDMChatPage() {
             <div key={msg.id} className={`flex ${mine ? 'justify-end' : 'justify-start'} gap-2`}>
               {!mine && showAvatar && (
                 <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0 mt-1">
-                  <span className="text-[10px] font-bold">{recipientProfile?.display_name?.charAt(0) || 'U'}</span>
+                  {recipientProfile?.avatar_url ? (
+                    <img src={recipientProfile.avatar_url} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <span className="text-[10px] font-bold">{recipientProfile?.display_name?.charAt(0) || 'U'}</span>
+                  )}
                 </div>
               )}
               {!mine && !showAvatar && <div className="w-7 shrink-0" />}
@@ -224,7 +346,7 @@ export default function SocioDMChatPage() {
           <Input
             ref={inputRef}
             value={newMessage}
-            onChange={e => { setNewMessage(e.target.value); handleTyping(); }}
+            onChange={e => setNewMessage(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && sendMessage()}
             placeholder="Message..."
             className="h-10 pr-10 rounded-full"

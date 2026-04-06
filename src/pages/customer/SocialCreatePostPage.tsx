@@ -12,6 +12,8 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { compressImage, validateImageFile, validateVideoFile, validateVideoDuration, formatFileSize, type CompressionProgress } from "@/lib/media-compression";
 
+const MAX_VIDEO_SIZE_MB = 100;
+
 const FILTERS = [
   "Normal", "Clarendon", "Gingham", "Moon", "Lark", "Reyes", "Juno", "Slumber",
   "Crema", "Ludwig", "Aden", "Perpetua", "Amaro", "Mayfair", "Rise", "Valencia"
@@ -63,6 +65,12 @@ export default function SocialCreatePostPage() {
     const newTypes: ('image' | 'video')[] = [];
     Array.from(files).slice(0, 20).forEach(file => {
       if (file.type.startsWith('video/')) {
+        // Check video size with user-friendly message
+        const sizeMB = file.size / (1024 * 1024);
+        if (sizeMB > MAX_VIDEO_SIZE_MB) {
+          toast.error(`Video is too large (${sizeMB.toFixed(0)}MB). Please record a shorter video under ${MAX_VIDEO_SIZE_MB}MB.`, { duration: 5000 });
+          return;
+        }
         const err = validateVideoFile(file);
         if (err) { toast.error(err); return; }
         newFiles.push(file);
@@ -92,6 +100,16 @@ export default function SocialCreatePostPage() {
 
   const handlePublish = async () => {
     if (!customerUser?.id) { toast.error("Please login to post"); return; }
+    if (selectedFiles.length === 0) { toast.error("Please select at least one image or video"); return; }
+
+    // Verify we have an active session
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      toast.error("Session expired. Please login again.");
+      return;
+    }
+    const authUserId = session.user.id;
+
     setIsSubmitting(true);
 
     try {
@@ -104,31 +122,50 @@ export default function SocialCreatePostPage() {
         const isVideo = fileTypes[i] === 'video';
 
         if (isVideo) {
-          // Validate video duration
-          const durErr = await validateVideoDuration(file);
-          if (durErr) { toast.error(durErr); continue; }
+          // Check video duration
+          try {
+            const durErr = await validateVideoDuration(file);
+            if (durErr) {
+              toast.error(`${durErr} Please record a shorter clip.`, { duration: 5000 });
+              continue;
+            }
+          } catch {
+            // Duration check failed, allow upload
+          }
 
           hasVideo = true;
-          setUploadProgress({ stage: 'uploading', percent: 30, originalSize: file.size });
+          setUploadProgress({ stage: 'uploading', percent: 20, originalSize: file.size });
 
-          // Upload video to social-videos bucket
-          const videoPath = `${customerUser.id}/${postId}/video_${i}.mp4`;
+          // Upload video - use auth user ID for storage path
+          const videoPath = `${authUserId}/${postId}/video_${i}.mp4`;
           const { error: vErr } = await supabase.storage.from('social-videos').upload(videoPath, file, {
-            contentType: file.type, upsert: true,
+            contentType: 'video/mp4',
+            upsert: true,
           });
-          if (vErr) throw vErr;
+          if (vErr) {
+            console.error('Video upload error:', vErr);
+            if (vErr.message?.includes('Payload too large') || vErr.message?.includes('413')) {
+              toast.error(`Video is too large. Please record a shorter video (under ${MAX_VIDEO_SIZE_MB}MB).`, { duration: 5000 });
+            } else {
+              toast.error(`Video upload failed: ${vErr.message}`);
+            }
+            continue;
+          }
+
           const { data: vUrl } = supabase.storage.from('social-videos').getPublicUrl(videoPath);
 
-          // Generate thumbnail from video
+          // Generate thumbnail
           let thumbUrl = '';
           try {
             const { extractVideoThumbnail } = await import('@/lib/media-compression');
             const thumbBlob = await extractVideoThumbnail(file);
-            const thumbPath = `${customerUser.id}/${postId}/video_${i}_thumb.webp`;
+            const thumbPath = `${authUserId}/${postId}/video_${i}_thumb.webp`;
             await supabase.storage.from('social-media').upload(thumbPath, thumbBlob, { contentType: 'image/webp', upsert: true });
             const { data: tData } = await supabase.storage.from('social-media').createSignedUrl(thumbPath, 60 * 60 * 24 * 365);
             thumbUrl = tData?.signedUrl || '';
-          } catch {}
+          } catch (thumbErr) {
+            console.warn('Thumbnail extraction failed:', thumbErr);
+          }
 
           mediaItems.push({
             type: 'video',
@@ -142,13 +179,40 @@ export default function SocialCreatePostPage() {
             savedText: `Video uploaded: ${formatFileSize(file.size)} ✓`,
           });
         } else {
-          // Image compression & upload (existing logic)
+          // Image compression & upload
           setUploadProgress({ stage: 'compressing', percent: 0, originalSize: file.size });
-          const { sizes, blurPlaceholder } = await compressImage(file, (p) => setUploadProgress(p));
+
+          let sizes: any;
+          let blurPlaceholder: string = '';
+          try {
+            const result = await compressImage(file, (p) => setUploadProgress(p));
+            sizes = result.sizes;
+            blurPlaceholder = result.blurPlaceholder;
+          } catch (compErr) {
+            console.error('Image compression failed:', compErr);
+            // Fallback: upload original file as-is
+            setUploadProgress({ stage: 'uploading', percent: 50, originalSize: file.size });
+            const fallbackPath = `${authUserId}/social/${postId}/${i}/original.webp`;
+            const { error: fbErr } = await supabase.storage.from('social-media').upload(fallbackPath, file, {
+              contentType: file.type,
+              upsert: true,
+            });
+            if (fbErr) {
+              console.error('Fallback upload error:', fbErr);
+              toast.error(`Image upload failed: ${fbErr.message}`);
+              continue;
+            }
+            const { data: fbUrl } = await supabase.storage.from('social-media').createSignedUrl(fallbackPath, 60 * 60 * 24 * 365);
+            const url = fbUrl?.signedUrl || '';
+            mediaItems.push({ type: 'photo', url, thumbnailUrl: url, mediumUrl: url, blurPlaceholder: '', order: i });
+            setUploadProgress({ stage: 'complete', percent: 100, originalSize: file.size, savedText: `Uploaded ✓` });
+            continue;
+          }
+
           setUploadProgress({ stage: 'uploading', percent: 50, originalSize: file.size });
 
           const bucket = 'social-media';
-          const basePath = `${customerUser.id}/social/${postId}/${i}`;
+          const basePath = `${authUserId}/social/${postId}/${i}`;
 
           const uploadBlob = async (blob: Blob, sizeName: string) => {
             const path = `${basePath}/${sizeName}.webp`;
@@ -181,28 +245,43 @@ export default function SocialCreatePostPage() {
         }
       }
 
+      if (mediaItems.length === 0) {
+        toast.error("No media could be uploaded. Please try again with different files.");
+        return;
+      }
+
       const postType = hasVideo ? 'reel' : (mediaItems.length > 1 ? 'carousel' : 'photo');
 
-      // Insert post into DB
-      const { error } = await supabase.from('social_posts').insert({
+      // Insert post into DB - use the customer user_id for the post record
+      const { error } = await supabase.from('social_posts' as any).insert({
         id: postId,
-        user_id: customerUser.id,
+        user_id: authUserId,
         post_type: postType,
         caption,
-        location_name: location,
+        location_name: location || null,
         media: mediaItems,
         audience,
         hide_like_count: hidelikeCounts,
         allow_comments: allowComments,
         status: 'published',
-      } as any);
+      });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Post insert error:', error);
+        toast.error(`Failed to publish: ${error.message}`);
+        return;
+      }
+
       toast.success("Post published! 🎉");
       navigate("/app/social");
     } catch (err: any) {
       console.error('Post creation error:', err);
-      toast.error("Failed to publish post");
+      const msg = err?.message || "Unknown error";
+      if (msg.includes('Payload too large') || msg.includes('413')) {
+        toast.error("File is too large. Please use a smaller file or record a shorter video.", { duration: 5000 });
+      } else {
+        toast.error(`Failed to publish post: ${msg}`);
+      }
     } finally {
       setIsSubmitting(false);
       setUploadProgress(null);
@@ -227,6 +306,7 @@ export default function SocialCreatePostPage() {
             </div>
             <h2 className="text-xl font-bold mb-2">Create a new post</h2>
             <p className="text-sm text-muted-foreground mb-6">Share photos & videos with your followers</p>
+            <p className="text-xs text-muted-foreground mb-4">Videos up to {MAX_VIDEO_SIZE_MB}MB • Images up to 10MB</p>
             <div className="flex gap-3 justify-center">
               <Button onClick={() => fileInputRef.current?.click()} className="gap-2">
                 <Image className="h-4 w-4" /> Gallery
@@ -309,7 +389,8 @@ export default function SocialCreatePostPage() {
               <button key={filter} onClick={() => setSelectedFilter(filter)}
                 className={`flex flex-col items-center gap-1.5 shrink-0 ${selectedFilter === filter ? 'opacity-100' : 'opacity-60'}`}>
                 <div className={`h-16 w-16 rounded-lg overflow-hidden border-2 ${selectedFilter === filter ? 'border-primary' : 'border-transparent'}`}>
-                  {previewUrls[0] && <img src={previewUrls[0]} alt="" className="h-full w-full object-cover" style={{ filter: FILTER_CSS[filter] }} />}
+                  {previewUrls[0] && fileTypes[0] !== 'video' && <img src={previewUrls[0]} alt="" className="h-full w-full object-cover" style={{ filter: FILTER_CSS[filter] }} />}
+                  {previewUrls[0] && fileTypes[0] === 'video' && <div className="h-full w-full bg-muted flex items-center justify-center"><Video className="h-4 w-4" /></div>}
                 </div>
                 <span className="text-[10px] font-medium">{filter}</span>
               </button>
@@ -347,7 +428,8 @@ export default function SocialCreatePostPage() {
       <div className="p-4 space-y-4">
         <div className="flex gap-3">
           <div className="h-12 w-12 rounded-lg overflow-hidden shrink-0">
-            {previewUrls[0] && <img src={previewUrls[0]} alt="" className="h-full w-full object-cover" style={{ filter: FILTER_CSS[selectedFilter] }} />}
+            {previewUrls[0] && fileTypes[0] !== 'video' && <img src={previewUrls[0]} alt="" className="h-full w-full object-cover" style={{ filter: FILTER_CSS[selectedFilter] }} />}
+            {previewUrls[0] && fileTypes[0] === 'video' && <div className="h-full w-full bg-muted flex items-center justify-center rounded-lg"><Video className="h-5 w-5 text-muted-foreground" /></div>}
           </div>
           <Textarea placeholder="Write a caption..." value={caption} onChange={(e) => setCaption(e.target.value.slice(0, 2200))}
             className="min-h-[100px] border-0 resize-none p-0 focus-visible:ring-0" />
