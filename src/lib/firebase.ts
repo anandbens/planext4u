@@ -31,7 +31,7 @@ const PRODUCTION_URL = "https://planext4u.lovable.app";
  */
 export function ensureFirebaseHostname(): boolean {
   const host = window.location.hostname;
-  if (ALLOWED_HOSTNAMES.includes(host)) return true;
+  if (isAllowedHostname(host)) return true;
   // Redirect to production with same path
   const target = `${PRODUCTION_URL}${window.location.pathname}${window.location.search}`;
   window.location.href = target;
