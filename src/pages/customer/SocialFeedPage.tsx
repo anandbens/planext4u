@@ -526,8 +526,15 @@ export default function SocialFeedPage() {
         .order('created_at', { ascending: false });
       if (!data?.length) return [];
       const seen = new Set<string>();
-      return data.filter((s: any) => { if (seen.has(s.user_id)) return false; seen.add(s.user_id); return true; })
-        .map((s: any) => ({ id: s.user_id, username: s.user_id.substring(0, 8), avatar: '', seen: false }));
+      const uniqueUsers = data.filter((s: any) => { if (seen.has(s.user_id)) return false; seen.add(s.user_id); return true; });
+      // Fetch profiles for story users
+      const uids = uniqueUsers.map((s: any) => s.user_id);
+      const { data: profiles } = await supabase.from('social_profiles').select('user_id, username, display_name, avatar_url').in('user_id', uids);
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      return uniqueUsers.map((s: any) => {
+        const prof = profileMap.get(s.user_id);
+        return { id: s.user_id, username: prof?.display_name || prof?.username || 'user', avatar: prof?.avatar_url || '', seen: false };
+      });
     },
   });
 
@@ -538,7 +545,6 @@ export default function SocialFeedPage() {
 
   const posts = dbPosts.length > 0 ? dbPosts.map((p: any) => ({
     ...p,
-    username: p.user_id?.substring(0, 8) || 'user',
     media: Array.isArray(p.media) ? p.media : [],
   })) : FALLBACK_POSTS;
 
