@@ -75,6 +75,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         promotion_title: form.promotion_title || null,
         promotion_active: form.promotion_active,
         is_emergency: form.is_emergency,
+        verification_status: form.verification_status,
       };
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
