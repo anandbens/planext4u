@@ -381,14 +381,18 @@ export default function CustomerCartPage() {
         )}
       </div>
 
-      {/* Sticky Bottom - Mobile - above bottom nav */}
+      {/* Single sticky bottom CTA for mobile - no duplicate */}
       {cart.length > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden">
+        <div className="fixed bottom-16 left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs text-muted-foreground">{cart.reduce((s, i) => s + i.qty, 0)} item(s)</span>
+            <span className="text-sm font-bold">₹{total.toLocaleString()}</span>
+          </div>
           <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={placeOrder} disabled={placing}>
             {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed Payment"}
           </Button>
         </div>
-      )}
+      )
 
       {/* Address Picker Dialog (Zepto-style) */}
       <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
