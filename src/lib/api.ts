@@ -1087,7 +1087,11 @@ export const api = {
       .in('id', vendorIds)
       .in('status', ['active', 'verified']);
 
-    if (!vendors?.length) return (products || []) as Product[];
+    if (!vendors?.length) return [] as Product[];
+
+    // Only show products from verified/active vendors
+    const verifiedVendorIds = new Set(vendors.map(v => v.id));
+    const filteredProducts = products.filter(p => verifiedVendorIds.has(p.vendor_id));
 
     const planIds = [...new Set(vendors.filter(v => v.plan_id).map(v => v.plan_id!))];
     let plansMap: Record<string, any> = {};
