@@ -24,7 +24,7 @@ export default function VendorRegisterPage() {
 
   const [form, setForm] = useState({
     name: '', phone: '', secondary_phone: '',
-    email: '', state: '', city: '',
+    email: '', state: '', district: '',
     fb_link: '', instagram_link: '',
     business_name: '', business_type: 'proprietorship', store_name: '', category: 'product',
     subcategory: '', business_description: '',
@@ -36,6 +36,22 @@ export default function VendorRegisterPage() {
     latitude: 0, longitude: 0, shop_address: '',
   });
   const [locating, setLocating] = useState(false);
+  const [states, setStates] = useState<{ id: string; name: string }[]>([]);
+  const [districts, setDistricts] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    api.getStates().then(setStates);
+  }, []);
+
+  useEffect(() => {
+    if (form.state) {
+      const st = states.find(s => s.name === form.state);
+      if (st) api.getDistricts(st.id).then(setDistricts);
+      else setDistricts([]);
+    } else {
+      setDistricts([]);
+    }
+  }, [form.state, states]);
 
   const updateField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
 
