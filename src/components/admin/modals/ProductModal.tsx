@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X, Clock, Phone, Shield, ToggleLeft } from "lucide-react";
 import { useState, useEffect } from "react";
-import { MOCK_CATEGORIES, MOCK_VENDORS } from "@/lib/mockData";
+import { MOCK_VENDORS } from "@/lib/mockData";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
