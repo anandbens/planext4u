@@ -22,7 +22,7 @@ interface CategoryModalProps {
   parentCategories?: Category[];
 }
 
-const emptyForm = { name: "", image: "📦", status: "active" as Category["status"], banner_image: "", icon: "", is_trending: false, description: "", parent_id: "" as string | null };
+const emptyForm = { name: "", image: "📦", status: "active" as Category["status"], banner_image: "", icon: "", is_trending: false, description: "", parent_id: "" as string | null, commission_rate: "" as string, promotion_banner_url: "", promotion_title: "", promotion_active: false };
 
 export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories }: CategoryModalProps) {
   const isCreate = mode === "create";
