@@ -127,11 +127,11 @@ function NavGroup({ label, items, collapsed, userRole }: NavGroupProps) {
         <SidebarMenu>
           {filteredItems.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
+              <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
                 <NavLink to={item.url} end={item.url === "/dashboard"}
                   className={cn(
                     "flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium transition-all duration-200",
-                    collapsed ? "px-2 justify-center" : "px-3",
+                    collapsed ? "px-3 justify-center" : "px-3",
                     "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent",
                   )}
                   activeClassName="bg-sidebar-primary/20 text-sidebar-primary-foreground border-l-2 border-sidebar-primary">

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell, ShoppingCart, UserCheck, AlertTriangle, Check, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,16 +18,17 @@ interface Notification {
   message: string;
   time: string;
   read: boolean;
+  route: string;
 }
 
 const MOCK_NOTIFICATIONS: Notification[] = [
-  { id: "1", type: "order", title: "New Order Placed", message: "Rahul Sharma placed order #ORD-1842 worth ₹2,750", time: "2 min ago", read: false },
-  { id: "2", type: "vendor", title: "Vendor Approval Request", message: "GreenMart submitted verification documents", time: "15 min ago", read: false },
-  { id: "3", type: "system", title: "Settlement Batch Ready", message: "42 settlements worth ₹3.2L are eligible for payout", time: "1 hr ago", read: false },
-  { id: "4", type: "order", title: "Order Cancelled", message: "Meera Joshi cancelled order #ORD-1838", time: "2 hrs ago", read: true },
-  { id: "5", type: "vendor", title: "Vendor Verified", message: "TechMart completed Level 2 verification", time: "3 hrs ago", read: true },
-  { id: "6", type: "system", title: "High Traffic Alert", message: "Platform experiencing 2x normal traffic", time: "5 hrs ago", read: true },
-  { id: "7", type: "order", title: "Refund Requested", message: "Karan Mehta requested refund for #ORD-1835", time: "6 hrs ago", read: true },
+  { id: "1", type: "order", title: "New Order Placed", message: "Rahul Sharma placed order #ORD-1842 worth ₹2,750", time: "2 min ago", read: false, route: "/orders" },
+  { id: "2", type: "vendor", title: "Vendor Approval Request", message: "GreenMart submitted verification documents", time: "15 min ago", read: false, route: "/vendors" },
+  { id: "3", type: "system", title: "Settlement Batch Ready", message: "42 settlements worth ₹3.2L are eligible for payout", time: "1 hr ago", read: false, route: "/settlements" },
+  { id: "4", type: "order", title: "Order Cancelled", message: "Meera Joshi cancelled order #ORD-1838", time: "2 hrs ago", read: true, route: "/orders" },
+  { id: "5", type: "vendor", title: "Vendor Verified", message: "TechMart completed Level 2 verification", time: "3 hrs ago", read: true, route: "/vendors" },
+  { id: "6", type: "system", title: "High Traffic Alert", message: "Platform experiencing 2x normal traffic", time: "5 hrs ago", read: true, route: "/dashboard" },
+  { id: "7", type: "order", title: "Refund Requested", message: "Karan Mehta requested refund for #ORD-1835", time: "6 hrs ago", read: true, route: "/orders" },
 ];
 
 const iconMap = {
@@ -42,19 +44,23 @@ const colorMap = {
 };
 
 export function NotificationDropdown() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  const [open, setOpen] = useState(false);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
-  const markRead = (id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const handleClick = (n: Notification) => {
+    setNotifications((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
+    setOpen(false);
+    navigate(n.route);
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative text-muted-foreground">
           <Bell className="h-[18px] w-[18px]" />
@@ -65,7 +71,7 @@ export function NotificationDropdown() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[380px] p-0">
+      <DropdownMenuContent align="end" sideOffset={8} className="w-[min(380px,calc(100vw-2rem))] p-0">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
           <h4 className="text-sm font-semibold">Notifications</h4>
           {unreadCount > 0 && (
@@ -80,7 +86,7 @@ export function NotificationDropdown() {
             return (
               <div
                 key={n.id}
-                onClick={() => markRead(n.id)}
+                onClick={() => handleClick(n)}
                 className={cn(
                   "flex gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors border-b border-border/20 last:border-0",
                   !n.read && "bg-primary/5"
@@ -105,7 +111,9 @@ export function NotificationDropdown() {
         </ScrollArea>
         <DropdownMenuSeparator />
         <div className="p-2 text-center">
-          <button className="text-xs text-primary hover:underline">View all notifications</button>
+          <button onClick={() => { setOpen(false); navigate("/admin/notifications"); }} className="text-xs text-primary hover:underline">
+            View all notifications
+          </button>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
