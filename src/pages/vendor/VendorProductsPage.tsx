@@ -120,12 +120,14 @@ export default function VendorProductsPage() {
       price: String(p.price), tax: String(p.tax),
       discount: String(p.discount), discount_type: p.discount_type || "fixed",
       stock: String(p.stock || 0), category_id: p.category_id || "",
-      emoji: p.emoji || "📦", status: p.status, image: p.image || "", sku: "",
+      emoji: p.emoji || "📦", status: p.status, image: p.image || "", sku: p.sku || "",
       images: Array.isArray(p.images) ? p.images : p.image ? [p.image] : [],
       youtube_video_url: p.youtube_video_url || "",
       inactivation_reason: p.inactivation_reason || "",
       tax_slab_id: p.tax_slab_id || "",
       product_attributes: p.product_attributes || [],
+      product_type: p.product_type || "simple",
+      slug: p.slug || "", meta_title: p.meta_title || "", meta_description: p.meta_description || "",
     });
     setModalOpen(true);
   };
