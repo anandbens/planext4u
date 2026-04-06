@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Image, MapPin, Users, Tag, ChevronRight, X, Plus, Eye, Heart, Video } from "lucide-react";
+import { ArrowLeft, Camera, Image, MapPin, Users, Tag, ChevronRight, X, Plus, Eye, Heart, Video, ShoppingBag, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,9 @@ export default function SocialCreatePostPage() {
   const [allowComments, setAllowComments] = useState("everyone");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<CompressionProgress | null>(null);
+  const [linkedProduct, setLinkedProduct] = useState<{ id: string; title: string } | null>(null);
+  const [productSearch, setProductSearch] = useState("");
+  const [showProductPicker, setShowProductPicker] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -253,6 +256,12 @@ export default function SocialCreatePostPage() {
       const postType = hasVideo ? 'reel' : (mediaItems.length > 1 ? 'carousel' : 'photo');
 
       // Insert post into DB - use the customer user_id for the post record
+      const metadata: Record<string, any> = {};
+      if (linkedProduct) {
+        metadata.linked_product_id = linkedProduct.id;
+        metadata.linked_product_title = linkedProduct.title;
+      }
+
       const { error } = await supabase.from('social_posts' as any).insert({
         id: postId,
         user_id: authUserId,
@@ -264,6 +273,7 @@ export default function SocialCreatePostPage() {
         hide_like_count: hidelikeCounts,
         allow_comments: allowComments,
         status: 'published',
+        metadata: Object.keys(metadata).length > 0 ? metadata : null,
       });
 
       if (error) {
@@ -446,11 +456,24 @@ export default function SocialCreatePostPage() {
             <span className="text-sm flex-1 text-left">Tag People</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
-          <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => toast.info("Product tagging coming soon")}>
-            <Tag className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm flex-1 text-left">Tag Products</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => setShowProductPicker(!showProductPicker)}>
+            <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+            <span className="text-sm flex-1 text-left">
+              {linkedProduct ? `🔗 ${linkedProduct.title}` : 'Link Product'}
+            </span>
+            {linkedProduct ? (
+              <button onClick={(e) => { e.stopPropagation(); setLinkedProduct(null); }} className="text-destructive"><X className="h-4 w-4" /></button>
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
           </button>
+          {showProductPicker && (
+            <ProductSearchPicker
+              search={productSearch}
+              onSearchChange={setProductSearch}
+              onSelect={(p) => { setLinkedProduct(p); setShowProductPicker(false); setProductSearch(""); }}
+            />
+          )}
           <div className="flex items-center gap-3 py-3.5">
             <Eye className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm flex-1">Audience</span>
@@ -482,6 +505,42 @@ export default function SocialCreatePostPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ProductSearchPicker({ search, onSearchChange, onSelect }: { search: string; onSearchChange: (v: string) => void; onSelect: (p: { id: string; title: string }) => void }) {
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const doSearch = async (q: string) => {
+    onSearchChange(q);
+    if (q.length < 2) { setResults([]); return; }
+    setLoading(true);
+    const { data } = await supabase.from('products').select('id, title, image, price').eq('status', 'active').ilike('title', `%${q}%`).limit(10);
+    setResults(data || []);
+    setLoading(false);
+  };
+
+  return (
+    <div className="border border-border/50 rounded-lg p-3 space-y-2 bg-muted/30">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search products..." value={search} onChange={(e) => doSearch(e.target.value)} className="pl-8 h-9 text-sm" />
+      </div>
+      {loading && <p className="text-xs text-muted-foreground">Searching...</p>}
+      {results.map(p => (
+        <button key={p.id} onClick={() => onSelect({ id: p.id, title: p.title })} className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent text-left">
+          <div className="h-10 w-10 rounded bg-secondary/30 overflow-hidden shrink-0">
+            {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <ShoppingBag className="h-5 w-5 m-auto mt-2.5 text-muted-foreground" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{p.title}</p>
+            <p className="text-xs text-muted-foreground">₹{p.price?.toLocaleString()}</p>
+          </div>
+        </button>
+      ))}
+      {search.length >= 2 && !loading && results.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">No products found</p>}
     </div>
   );
 }

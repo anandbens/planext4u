@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Music2, Plus, Search, Home, Film } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Music2, Plus, Search, Home, Film, ShoppingBag } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -34,7 +34,7 @@ export default function SocialReelsPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from('social_posts')
-        .select('id, user_id, media, caption, like_count, comment_count, share_count, hashtags')
+        .select('id, user_id, media, caption, like_count, comment_count, share_count, hashtags, metadata')
         .eq('post_type', 'reel')
         .eq('status', 'published')
         .order('created_at', { ascending: false })
@@ -45,6 +45,7 @@ export default function SocialReelsPage() {
 
   const reels = dbReels.length > 0 ? dbReels.map((r: any) => {
     const media = Array.isArray(r.media) && r.media.length > 0 ? r.media[0] : null;
+    const metadata = r.metadata || {};
     return {
       id: r.id, user_id: r.user_id,
       videoUrl: media?.url || media?.thumbnailUrl || '',
@@ -52,6 +53,8 @@ export default function SocialReelsPage() {
       likes: r.like_count || 0, comments: r.comment_count || 0, shares: r.share_count || 0,
       audio: "Original Audio",
       isLiked: false, isSaved: false, isVerified: false, username: '',
+      linkedProductId: metadata.linked_product_id || null,
+      linkedProductTitle: metadata.linked_product_title || null,
     };
   }) : FALLBACK_REELS;
 
@@ -216,6 +219,15 @@ function ReelCard({ reel }: { reel: any }) {
           <button className="border border-white/60 text-white text-xs font-semibold px-3 py-0.5 rounded-lg ml-1">Follow</button>
         </div>
         <p className="text-white text-sm leading-snug line-clamp-2">{reel.caption}</p>
+        {/* Product deeplink overlay */}
+        {reel.linkedProductId && (
+          <Link to={`/app/product/${reel.linkedProductId}`}
+            className="mt-2 flex items-center gap-2 bg-card/90 backdrop-blur-sm rounded-lg px-3 py-2 w-fit hover:bg-card transition-colors">
+            <ShoppingBag className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold text-foreground truncate max-w-[180px]">{reel.linkedProductTitle || 'View Product'}</span>
+            <span className="text-[10px] text-primary font-bold">Shop →</span>
+          </Link>
+        )}
         <div className="flex items-center gap-1.5 mt-2">
           <Music2 className="h-3.5 w-3.5 text-white/80" />
           <p className="text-white/80 text-xs truncate">{reel.audio}</p>

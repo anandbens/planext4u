@@ -103,16 +103,16 @@ export default function CustomerHomePage() {
   const itemAnim = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
   const slideUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
 
-  // Category icons for horizontal scroll
+  // Build category icons from DB data (parent categories only)
+  const parentCategories = (data?.categories || []).filter((c: any) => !c.parent_id);
   const categoryIcons = [
-    { icon: "📦", label: "All", to: "/app/browse" },
-    { icon: "🎧", label: "Electronics", to: "/app/browse?category=Electronics" },
-    { icon: "👕", label: "Fashion", to: "/app/browse?category=Fashion" },
-    { icon: "🍽️", label: "Food", to: "/app/browse?category=Food" },
-    { icon: "🛒", label: "Groceries", to: "/app/browse?category=Groceries" },
-    { icon: "🏠", label: "Home", to: "/app/browse?category=Home & Living" },
-    { icon: "📚", label: "Books", to: "/app/browse?category=Books" },
-    { icon: "🏋️", label: "Sports", to: "/app/browse?category=Sports & Fitness" },
+    { icon: "📦", label: "All", to: "/app/browse", image: "" },
+    ...parentCategories.slice(0, 7).map((c: any) => ({
+      icon: c.image?.startsWith('http') ? '' : (c.image || '📦'),
+      label: c.name.length > 10 ? c.name.slice(0, 10) : c.name,
+      to: `/app/browse?category=${c.name}`,
+      image: c.image?.startsWith('http') ? c.image : '',
+    })),
   ];
 
   if (showSplash) {
@@ -133,9 +133,13 @@ export default function CustomerHomePage() {
                 transition={{ delay: i * 0.04, duration: 0.25 }}
               >
                 <Link to={cat.to} className="flex flex-col items-center gap-1.5 min-w-[56px]">
-                  <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-all shadow-sm
+                  <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-all shadow-sm overflow-hidden
                     ${i === 0 ? 'bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2' : 'bg-card border border-border/50 hover:border-primary/30 hover:shadow-md'}`}>
-                    <span className="text-lg">{cat.icon}</span>
+                    {cat.image ? (
+                      <img src={cat.image} alt={cat.label} className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <span className="text-lg">{cat.icon}</span>
+                    )}
                   </div>
                   <span className={`text-[10px] font-medium leading-tight text-center
                     ${i === 0 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>{cat.label}</span>
@@ -386,12 +390,12 @@ export default function CustomerHomePage() {
           <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
             className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3 md:gap-4">
             {isLoading ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
-              data?.categories.map((c) => (
+              parentCategories.map((c: any) => (
                 <motion.div key={c.id} variants={itemAnim}>
                   <Link to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-2 group">
                     <div className="h-14 w-14 md:h-20 md:w-20 rounded-full bg-secondary/50 border-2 border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/50 group-hover:shadow-md transition-all duration-300">
-                      {c.image && c.image.startsWith('/') ? (
-                        <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-full" />
+                      {c.image && c.image.startsWith('http') ? (
+                        <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-full" loading="lazy" />
                       ) : (
                         <span className="text-2xl md:text-3xl">{c.image || '📦'}</span>
                       )}
