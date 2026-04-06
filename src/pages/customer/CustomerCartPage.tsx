@@ -392,7 +392,8 @@ export default function CustomerCartPage() {
             {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed Payment"}
           </Button>
         </div>
-      )
+      )}
+
 
       {/* Address Picker Dialog (Zepto-style) */}
       <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
