@@ -79,8 +79,10 @@ export default function VendorLoginPage() {
       toast.success("OTP sent successfully!");
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
-      if (err.code === "auth/too-many-requests") toast.error("Too many requests.");
-      else toast.error(err.message || "Failed to send OTP");
+      if (err.code === "auth/too-many-requests") {
+        toast.error("OTP limit reached. Please wait 2-3 minutes before retrying.", { duration: 6000 });
+        setTimer(120);
+      } else toast.error(err.message || "Failed to send OTP");
       clearRecaptcha();
     } finally { setLoading(false); }
   };

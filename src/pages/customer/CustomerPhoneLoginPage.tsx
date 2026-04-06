@@ -46,11 +46,14 @@ export default function CustomerPhoneLoginPage() {
     } catch (err: any) {
       console.error("OTP send error:", err);
       if (err.code === "auth/too-many-requests") {
-        toast.error("Too many requests. Please try again later.");
+        toast.error("OTP limit reached. Please wait 2-3 minutes before retrying.", { duration: 6000 });
+        setTimer(120);
       } else if (err.code === "auth/invalid-phone-number") {
         toast.error("Invalid phone number. Check and try again.");
+      } else if (err.code === "auth/captcha-check-failed") {
+        toast.error("Security check failed. Please refresh and try again.");
       } else {
-        toast.error(err.message || "Failed to send OTP");
+        toast.error(err.message || "Failed to send OTP. Please try again.");
       }
       clearRecaptcha();
     } finally {
