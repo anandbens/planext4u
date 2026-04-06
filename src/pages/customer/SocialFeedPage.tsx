@@ -111,6 +111,30 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function CommentItem({ comment, isMock }: { comment: any; isMock: boolean }) {
+  const { data: profile } = useQuery({
+    queryKey: ['social-comment-profile', comment.user_id],
+    queryFn: async () => {
+      const { data } = await supabase.from('social_profiles').select('username, display_name, avatar_url').eq('user_id', comment.user_id).maybeSingle();
+      return data;
+    },
+    enabled: !isMock && !!comment.user_id,
+  });
+  const name = isMock ? (comment.user_id === 'user1' ? 'vijay' : comment.user_id === 'user2' ? 'priya' : 'anita') : (profile?.display_name || profile?.username || 'user');
+  const avatar = profile?.avatar_url || '';
+  return (
+    <div className="flex items-start gap-2 py-1">
+      <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+        {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : <span className="text-[9px] font-bold">{name.charAt(0).toUpperCase()}</span>}
+      </div>
+      <p className="text-sm flex-1">
+        <span className="font-semibold mr-1">{name}</span>
+        <span className="text-muted-foreground">{comment.content}</span>
+      </p>
+    </div>
+  );
+}
+
 function PostCard({ post }: { post: any }) {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
@@ -270,7 +294,7 @@ function PostCard({ post }: { post: any }) {
     },
   });
 
-  const username = isMock ? post.username : (postProfile?.username || post.user_id?.substring(0, 8) || 'user');
+  const username = isMock ? post.username : (postProfile?.display_name || postProfile?.username || 'user');
   const isVerified = isMock ? post.isVerified : (postProfile?.is_verified || false);
   const avatarUrl = isMock ? '' : (postProfile?.avatar_url || '');
 
@@ -430,15 +454,7 @@ function PostCard({ post }: { post: any }) {
           >
             <div className="px-4 space-y-1 max-h-60 overflow-y-auto">
               {(!showAllComments && !isMock ? recentComments : displayComments).map((c: any) => (
-                <div key={c.id} className="flex items-start gap-2 py-1">
-                  <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <span className="text-[9px] font-bold">{(c.user_id || 'U').charAt(0).toUpperCase()}</span>
-                  </div>
-                  <p className="text-sm flex-1">
-                    <span className="font-semibold mr-1">{c.user_id?.substring(0, 8) || 'user'}</span>
-                    <span className="text-muted-foreground">{c.content}</span>
-                  </p>
-                </div>
+                <CommentItem key={c.id} comment={c} isMock={isMock} />
               ))}
             </div>
             {showAllComments && (
@@ -534,8 +550,15 @@ export default function SocialFeedPage() {
         .order('created_at', { ascending: false });
       if (!data?.length) return [];
       const seen = new Set<string>();
-      return data.filter((s: any) => { if (seen.has(s.user_id)) return false; seen.add(s.user_id); return true; })
-        .map((s: any) => ({ id: s.user_id, username: s.user_id.substring(0, 8), avatar: '', seen: false }));
+      const uniqueUsers = data.filter((s: any) => { if (seen.has(s.user_id)) return false; seen.add(s.user_id); return true; });
+      // Fetch profiles for story users
+      const uids = uniqueUsers.map((s: any) => s.user_id);
+      const { data: profiles } = await supabase.from('social_profiles').select('user_id, username, display_name, avatar_url').in('user_id', uids);
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      return uniqueUsers.map((s: any) => {
+        const prof = profileMap.get(s.user_id);
+        return { id: s.user_id, username: prof?.display_name || prof?.username || 'user', avatar: prof?.avatar_url || '', seen: false };
+      });
     },
   });
 
@@ -546,7 +569,6 @@ export default function SocialFeedPage() {
 
   const posts = dbPosts.length > 0 ? dbPosts.map((p: any) => ({
     ...p,
-    username: p.user_id?.substring(0, 8) || 'user',
     media: Array.isArray(p.media) ? p.media : [],
   })) : FALLBACK_POSTS;
 

@@ -133,7 +133,7 @@ function ReelCard({ reel }: { reel: any }) {
     enabled: !isMock && !!reel.user_id,
   });
 
-  const username = isMock ? reel.username : (profile?.username || 'user');
+  const username = isMock ? reel.username : (profile?.display_name || profile?.username || 'user');
   const isVerified = isMock ? reel.isVerified : (profile?.is_verified || false);
 
   const toggleLike = useMutation({

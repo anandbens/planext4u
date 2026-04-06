@@ -59,6 +59,9 @@ export default function SocialCreatePostPage() {
   const [linkedProduct, setLinkedProduct] = useState<{ id: string; title: string } | null>(null);
   const [productSearch, setProductSearch] = useState("");
   const [showProductPicker, setShowProductPicker] = useState(false);
+  const [taggedPeople, setTaggedPeople] = useState<{ id: string; username: string }[]>([]);
+  const [showTagPicker, setShowTagPicker] = useState(false);
+  const [tagSearch, setTagSearch] = useState("");
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -261,6 +264,9 @@ export default function SocialCreatePostPage() {
         metadata.linked_product_id = linkedProduct.id;
         metadata.linked_product_title = linkedProduct.title;
       }
+      if (taggedPeople.length > 0) {
+        metadata.tagged_users = taggedPeople.map(t => ({ id: t.id, username: t.username }));
+      }
 
       const { error } = await supabase.from('social_posts' as any).insert({
         id: postId,
@@ -451,11 +457,32 @@ export default function SocialCreatePostPage() {
             <MapPin className="h-5 w-5 text-muted-foreground" />
             <Input placeholder="Add location" value={location} onChange={(e) => setLocation(e.target.value)} className="border-0 p-0 h-auto focus-visible:ring-0" />
           </div>
-          <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => toast.info("Tag people coming soon")}>
+          <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => setShowTagPicker(!showTagPicker)}>
             <Users className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm flex-1 text-left">Tag People</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm flex-1 text-left">
+              {taggedPeople.length > 0 ? `${taggedPeople.length} tagged` : 'Tag People'}
+            </span>
+            {taggedPeople.length > 0 ? (
+              <button onClick={(e) => { e.stopPropagation(); setTaggedPeople([]); }} className="text-destructive"><X className="h-4 w-4" /></button>
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
           </button>
+          {showTagPicker && (
+            <PeopleTagPicker
+              search={tagSearch}
+              onSearchChange={setTagSearch}
+              selectedIds={taggedPeople.map(t => t.id)}
+              onToggle={(user) => {
+                setTaggedPeople(prev => {
+                  const exists = prev.find(t => t.id === user.id);
+                  if (exists) return prev.filter(t => t.id !== user.id);
+                  return [...prev, user];
+                });
+              }}
+              currentUserId={customerUser?.id || ''}
+            />
+          )}
           <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => setShowProductPicker(!showProductPicker)}>
             <ShoppingBag className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm flex-1 text-left">
@@ -541,6 +568,61 @@ function ProductSearchPicker({ search, onSearchChange, onSelect }: { search: str
         </button>
       ))}
       {search.length >= 2 && !loading && results.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">No products found</p>}
+    </div>
+  );
+}
+
+function PeopleTagPicker({ search, onSearchChange, selectedIds, onToggle, currentUserId }: {
+  search: string; onSearchChange: (v: string) => void;
+  selectedIds: string[];
+  onToggle: (user: { id: string; username: string }) => void;
+  currentUserId: string;
+}) {
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Search followers the user follows
+  const doSearch = async (q: string) => {
+    onSearchChange(q);
+    if (q.length < 2) { setResults([]); return; }
+    setLoading(true);
+    // Get people the user follows
+    const { data: follows } = await supabase.from('social_follows').select('following_id').eq('follower_id', currentUserId).eq('status', 'active');
+    const followIds = (follows || []).map((f: any) => f.following_id);
+    if (followIds.length === 0) { setResults([]); setLoading(false); return; }
+    const { data } = await supabase.from('social_profiles').select('user_id, username, display_name, avatar_url')
+      .in('user_id', followIds)
+      .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
+      .limit(10);
+    setResults(data || []);
+    setLoading(false);
+  };
+
+  return (
+    <div className="border border-border/50 rounded-lg p-3 space-y-2 bg-muted/30">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search people you follow..." value={search} onChange={(e) => doSearch(e.target.value)} className="pl-8 h-9 text-sm" />
+      </div>
+      {loading && <p className="text-xs text-muted-foreground">Searching...</p>}
+      {results.map((p: any) => {
+        const isSelected = selectedIds.includes(p.user_id);
+        return (
+          <button key={p.user_id} onClick={() => onToggle({ id: p.user_id, username: p.display_name || p.username })}
+            className={`flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent text-left ${isSelected ? 'bg-primary/10' : ''}`}>
+            <div className="h-8 w-8 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+              {p.avatar_url ? <img src={p.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                <span className="text-xs font-bold">{(p.display_name || p.username || 'U').charAt(0).toUpperCase()}</span>}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{p.display_name || p.username}</p>
+              <p className="text-xs text-muted-foreground">@{p.username}</p>
+            </div>
+            {isSelected && <span className="text-primary text-xs font-semibold">✓</span>}
+          </button>
+        );
+      })}
+      {search.length >= 2 && !loading && results.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">No people found</p>}
     </div>
   );
 }
