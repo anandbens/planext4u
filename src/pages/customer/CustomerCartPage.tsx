@@ -210,9 +210,13 @@ export default function CustomerCartPage() {
       if (!selectedDate) { toast.error("Please select a delivery date"); return; }
       if (!selectedTimeSlot) { toast.error("Please select a delivery time slot"); return; }
     }
+    if (pointsUsed > maxPoints) {
+      toast.error(`You can redeem a maximum of ${maxPoints} points for this order. Please enter a value between 1 and ${maxPoints}.`);
+      return;
+    }
     navigate('/app/payment', {
       state: {
-        cart, subtotal, platformFee, gstOnPlatformFee, discount, pointsUsed, total,
+        cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings,
         selectedAddress: addresses.find(a => a.id === selectedAddressId),
         deliveryMode,
         deliveryDate: deliveryMode === "scheduled" ? selectedDate?.toISOString() : null,
