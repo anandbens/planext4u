@@ -182,7 +182,7 @@ function SellerListSection({ data, isLoading, parentCategories, containerAnim, i
   );
 }
 
-
+export default function CustomerHomePage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { data, isLoading } = useQuery({ queryKey: ["customerHome"], queryFn: api.getCustomerHome });
