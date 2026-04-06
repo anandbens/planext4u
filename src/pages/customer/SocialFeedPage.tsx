@@ -430,15 +430,7 @@ function PostCard({ post }: { post: any }) {
           >
             <div className="px-4 space-y-1 max-h-60 overflow-y-auto">
               {(!showAllComments && !isMock ? recentComments : displayComments).map((c: any) => (
-                <div key={c.id} className="flex items-start gap-2 py-1">
-                  <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <span className="text-[9px] font-bold">{(c.user_id || 'U').charAt(0).toUpperCase()}</span>
-                  </div>
-                  <p className="text-sm flex-1">
-                    <span className="font-semibold mr-1">{c.user_id?.substring(0, 8) || 'user'}</span>
-                    <span className="text-muted-foreground">{c.content}</span>
-                  </p>
-                </div>
+                <CommentItem key={c.id} comment={c} isMock={isMock} />
               ))}
             </div>
             {showAllComments && (
