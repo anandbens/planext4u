@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Store, Save, Loader2, Camera, X, MapPin, Navigation, CheckCircle, Clock, AlertCircle, Upload } from "lucide-react";
+import { ArrowLeft, Store, Save, Loader2, Camera, X, MapPin, Navigation, CheckCircle, Clock, AlertCircle, Upload, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -41,6 +41,13 @@ export default function VendorRegisterPage() {
   const logoCameraRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<string>('');
   const [logoUploading, setLogoUploading] = useState(false);
+
+  // Category/subcategory state
+  const [productCategories, setProductCategories] = useState<any[]>([]);
+  const [serviceCategories, setServiceCategories] = useState<any[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
+  const [catSearchQuery, setCatSearchQuery] = useState("");
 
   const [form, setForm] = useState({
     name: customerUser?.name || '', phone: customerUser?.mobile || '', secondary_phone: '',
