@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
+import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
