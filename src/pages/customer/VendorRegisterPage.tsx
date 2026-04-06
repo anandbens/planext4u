@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
+const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const GOOGLE_MAPS_KEY = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
 
@@ -36,7 +37,10 @@ export default function VendorRegisterPage() {
   const [appLoading, setAppLoading] = useState(true);
   const [step, setStep] = useState(1); // 1=personal, 2=business, 3=kyc, 4=bank, 5=location
   const fileRef = useRef<HTMLInputElement>(null);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const logoCameraRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<string>('');
+  const [logoUploading, setLogoUploading] = useState(false);
 
   const [form, setForm] = useState({
     name: customerUser?.name || '', phone: customerUser?.mobile || '', secondary_phone: '',
@@ -121,9 +125,39 @@ export default function VendorRegisterPage() {
     }
   };
 
+  const uploadStoreLogo = async (file: File) => {
+    if (!IMAGE_TYPES.includes(file.type) && !ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Only JPG, PNG, WebP allowed"); return;
+    }
+    if (file.size > MAX_FILE_SIZE) { toast.error("File must be under 2MB"); return; }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setLogoUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const fileName = `store-logos/${user.id}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('vendor-assets').upload(fileName, file, { contentType: file.type, upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('vendor-assets').getPublicUrl(fileName);
+      updateField('store_logo_url', urlData.publicUrl);
+      toast.success("Store logo uploaded ✓");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && uploadTarget) uploadFile(file, uploadTarget);
+    if (e.target) e.target.value = "";
+  };
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadStoreLogo(file);
     if (e.target) e.target.value = "";
   };
 
@@ -389,8 +423,31 @@ export default function VendorRegisterPage() {
                 <p className="text-[10px] text-muted-foreground text-right mt-0.5">{form.business_description.length}/2000</p></div>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Store Logo</label>
-              <DocUploadButton field="store_logo_url" label="Store Logo (optional)" />
+              <label className="text-xs font-medium text-muted-foreground">Store Logo / Shop Photo</label>
+              {form.store_logo_url ? (
+                <div className="relative mt-2 group">
+                  <div className="aspect-square w-28 rounded-lg overflow-hidden border border-border/30 bg-secondary/20">
+                    <img src={form.store_logo_url} alt="Store Logo" className="w-full h-full object-cover" />
+                  </div>
+                  <button type="button" onClick={() => updateField('store_logo_url', '')} className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2 mt-2">
+                  <button type="button" onClick={() => logoCameraRef.current?.click()} disabled={logoUploading}
+                    className="h-16 w-16 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                    {logoUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-5 w-5" />}
+                    <span className="text-[8px] mt-0.5">Camera</span>
+                  </button>
+                  <button type="button" onClick={() => logoFileRef.current?.click()} disabled={logoUploading}
+                    className="h-16 w-16 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                    {logoUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-5 w-5" />}
+                    <span className="text-[8px] mt-0.5">Gallery</span>
+                  </button>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">JPG/PNG/WebP, max 2MB</p>
             </div>
           </Card>
         )}
@@ -496,6 +553,8 @@ export default function VendorRegisterPage() {
       </div>
 
       <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.pdf" capture="environment" className="hidden" onChange={handleFileChange} />
+      <input ref={logoFileRef} type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden" onChange={handleLogoFileChange} />
+      <input ref={logoCameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleLogoFileChange} />
     </CustomerLayout>
   );
 }

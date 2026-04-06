@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { logActivity } from "@/lib/auth";
-import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, resetPhoneAuth } from "@/lib/firebase";
+import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, resetPhoneAuth, ensureFirebaseHostname } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
@@ -185,6 +185,7 @@ export default function CustomerRegisterPage() {
 
   const handleSendOTP = async () => {
     if (!validateForm()) return;
+    if (!ensureFirebaseHostname()) return;
     setOtpLoading(true);
     try {
       const isUnique = await checkMobileUnique();

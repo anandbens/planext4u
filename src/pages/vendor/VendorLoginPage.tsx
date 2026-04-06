@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, LogIn, Store, ShoppingBag, Wrench, Phone, ArrowRight, ShieldCheck, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
+import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import p4uLogo from "@/assets/p4u-logo.png";
 
@@ -46,6 +46,7 @@ export default function VendorLoginPage() {
   const handleSendOTP = async () => {
     const cleaned = phone.replace(/\s/g, "");
     if (!/^\d{10}$/.test(cleaned)) { toast.error("Please enter a valid 10-digit phone number"); return; }
+    if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
       // Check vendor verification status before sending OTP
