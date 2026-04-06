@@ -49,6 +49,7 @@ export default function CustomerCartPage() {
   const [showAddressDialog, setShowAddressDialog] = useState(false);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
   const [addressForm, setAddressForm] = useState({ label: "Home", type: "home", address_line: "", city: "", pincode: "" });
+  const [referralCountThisMonth, setReferralCountThisMonth] = useState(0);
 
   useEffect(() => {
     Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses(), loadPlatformFees()]).then(([cartItems, profile]) => {
