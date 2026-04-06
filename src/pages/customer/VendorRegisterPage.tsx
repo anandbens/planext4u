@@ -131,12 +131,11 @@ export default function VendorRegisterPage() {
     }
     if (file.size > MAX_FILE_SIZE) { toast.error("File must be under 2MB"); return; }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
     setLogoUploading(true);
     try {
+      const uid = customerId || Date.now().toString();
       const ext = file.name.split('.').pop() || 'jpg';
-      const fileName = `store-logos/${user.id}-${Date.now()}.${ext}`;
+      const fileName = `store-logos/${uid}-${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from('vendor-assets').upload(fileName, file, { contentType: file.type, upsert: true });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from('vendor-assets').getPublicUrl(fileName);
