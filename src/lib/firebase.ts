@@ -136,6 +136,7 @@ export async function resetPhoneAuth() {
 
 export function clearRecaptcha() {
   confirmationResultGlobal = null;
+  recaptchaReady = null;
   if ((window as any).recaptchaVerifier) {
     try {
       (window as any).recaptchaVerifier.clear();
