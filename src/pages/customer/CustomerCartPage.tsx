@@ -417,17 +417,33 @@ export default function CustomerCartPage() {
                   </div>
                 </Card>
                 <Card className="p-4">
-                  <h3 className="text-sm font-semibold mb-3">Price details</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Price ({cart.reduce((s, i) => s + i.qty, 0)} item)</span><span>₹{subtotal.toLocaleString()}.00</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>₹{platformFee}</span></div>
+                  <h3 className="text-sm font-semibold mb-3">Bill Details</h3>
+                  <div className="space-y-2.5 text-sm">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>₹{mrpTotal.toLocaleString()}.00</span></div>
+                    <div className="flex justify-between pl-3 border-l-2 border-border/50">
+                      <span className="text-muted-foreground font-medium">Subtotal</span><span className="font-medium">₹{subtotal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between pl-3 border-l-2 border-border/50">
+                      <div><span className="text-muted-foreground">Platform Fee</span><p className="text-[10px] text-muted-foreground/70">Service charge</p></div>
+                      <span>+ ₹{platformFee}</span>
+                    </div>
+                    <div className="flex justify-between pl-3 border-l-2 border-border/50">
+                      <div><span className="text-muted-foreground">GST on Platform Fee</span><p className="text-[10px] text-muted-foreground/70">{platformFeeGst}% on platform fee</p></div>
+                      <span>+ ₹{gstOnPlatformFee.toFixed(2)}</span>
+                    </div>
                     {pointsUsed > 0 && <div className="flex justify-between text-success"><span>Redeem Points</span><span>- ₹{pointsUsed.toLocaleString()}</span></div>}
                     {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>- ₹{discount.toLocaleString()}</span></div>}
-                    <Separator />
-                    <div className="flex justify-between font-bold"><span>Total Amount</span><span>₹{total.toLocaleString()}</span></div>
+                    <div className="border-t-2 border-dashed border-border/50 my-1" />
+                    <div className="flex justify-between font-bold bg-success/5 rounded-lg px-3 py-2 -mx-1"><span>Total Amount</span><span className="text-success">₹{total.toLocaleString()}</span></div>
                   </div>
                   {savings > 0 && <p className="text-xs text-success mt-2 font-medium">You will save ₹{savings.toLocaleString()} on this order</p>}
-                  <Button className="w-full h-12 mt-4 text-base font-semibold hidden md:flex" onClick={placeOrder} disabled={placing}>{placing ? "Placing..." : "Proceed Payment"}</Button>
+
+                  <div className="mt-4 p-3 bg-secondary/30 rounded-lg text-xs text-muted-foreground">
+                    <p className="font-semibold text-foreground mb-1">Review your order and address details to avoid cancellations</p>
+                    <p><strong>Note :-</strong> You can only cancel the order until your order is not accepted by the vendor and it can lead to some amount deduction from your order amount and your wallet points won't be refundable.</p>
+                  </div>
+
+                  <Button className="w-full h-12 mt-4 text-base font-semibold hidden md:flex" onClick={placeOrder} disabled={placing}>{placing ? "Placing..." : "Proceed To Checkout"}</Button>
                 </Card>
               </div>
             )}
