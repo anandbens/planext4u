@@ -40,10 +40,12 @@ export default function SocialCreatePostPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<'select' | 'edit' | 'details'>('select');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [fileTypes, setFileTypes] = useState<('image' | 'video')[]>([]);
   const [selectedFilter, setSelectedFilter] = useState("Normal");
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
@@ -58,14 +60,25 @@ export default function SocialCreatePostPage() {
     if (!files) return;
     const newFiles: File[] = [];
     const newUrls: string[] = [];
+    const newTypes: ('image' | 'video')[] = [];
     Array.from(files).slice(0, 20).forEach(file => {
-      const err = validateImageFile(file);
-      if (err) { toast.error(err); return; }
-      newFiles.push(file);
-      newUrls.push(URL.createObjectURL(file));
+      if (file.type.startsWith('video/')) {
+        const err = validateVideoFile(file);
+        if (err) { toast.error(err); return; }
+        newFiles.push(file);
+        newUrls.push(URL.createObjectURL(file));
+        newTypes.push('video');
+      } else {
+        const err = validateImageFile(file);
+        if (err) { toast.error(err); return; }
+        newFiles.push(file);
+        newUrls.push(URL.createObjectURL(file));
+        newTypes.push('image');
+      }
     });
     setSelectedFiles(prev => [...prev, ...newFiles].slice(0, 20));
     setPreviewUrls(prev => [...prev, ...newUrls].slice(0, 20));
+    setFileTypes(prev => [...prev, ...newTypes].slice(0, 20));
     if (newFiles.length > 0) setStep('edit');
   };
 
@@ -73,6 +86,7 @@ export default function SocialCreatePostPage() {
     URL.revokeObjectURL(previewUrls[index]);
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
     setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setFileTypes(prev => prev.filter((_, i) => i !== index));
     if (selectedFiles.length <= 1) setStep('select');
   };
 
