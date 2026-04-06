@@ -158,8 +158,8 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="px-4 py-5">
-        <div className="flex items-center gap-3">
+      <SidebarHeader className={cn("py-5", collapsed ? "px-2" : "px-4")}>
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-3")}>
           <div className="h-9 w-9 rounded-xl gradient-primary flex items-center justify-center shrink-0">
             <span className="text-sm font-bold text-sidebar-primary-foreground">M</span>
           </div>
