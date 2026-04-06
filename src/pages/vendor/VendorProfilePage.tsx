@@ -18,6 +18,8 @@ export default function VendorProfilePage() {
   const vendorId = vendorUser?.vendor_id || "VND-001";
   const queryClient = useQueryClient();
   const [txnId, setTxnId] = useState("");
+  const bgInputRef = useRef<HTMLInputElement>(null);
+  const [bgUploading, setBgUploading] = useState(false);
 
   const { data: vendor, isLoading } = useQuery({
     queryKey: ["vendorProfile", vendorId],
