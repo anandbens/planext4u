@@ -38,7 +38,7 @@ export default function CustomerProductPage() {
     queryKey: ["productVariants", id],
     queryFn: async () => {
       const { data } = await supabase.from("product_variants" as any).select("*").eq("product_id", id).eq("is_active", true).order("sort_order");
-      return (data || []) as ProductVariant[];
+      return (data || []) as unknown as ProductVariant[];
     },
     enabled: !!id,
   });

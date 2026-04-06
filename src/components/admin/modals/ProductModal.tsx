@@ -41,7 +41,7 @@ const emptyForm = {
   promise_p4u: "", helpline_number: "",
   thumbnail_image: "", banner_image: "",
   subcategory_id: "", subcategory_name: "",
-  product_type: "simple" as string,
+  product_type: "simple" as 'simple' | 'variable' | 'service',
   sku: "", slug: "", meta_title: "", meta_description: "",
   manage_stock: false, stock_status: "in_stock",
 };
