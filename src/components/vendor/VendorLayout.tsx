@@ -25,6 +25,7 @@ const sidebarItems = [
   { label: "Payment History", to: "/vendor/payments", icon: History },
   { label: "Bank Account", to: "/vendor/bank", icon: CreditCard },
   { label: "Profile & Settings", to: "/vendor/profile", icon: User },
+  { label: "Media Library", to: "/vendor/media", icon: Image },
 ];
 
 const bottomNavItems = [
