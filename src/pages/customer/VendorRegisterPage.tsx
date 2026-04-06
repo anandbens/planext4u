@@ -553,6 +553,8 @@ export default function VendorRegisterPage() {
       </div>
 
       <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.pdf" capture="environment" className="hidden" onChange={handleFileChange} />
+      <input ref={logoFileRef} type="file" accept=".jpg,.jpeg,.png,.webp" className="hidden" onChange={handleLogoFileChange} />
+      <input ref={logoCameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleLogoFileChange} />
     </CustomerLayout>
   );
 }
