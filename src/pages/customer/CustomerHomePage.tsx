@@ -77,8 +77,8 @@ function DiscountSubscriptionSection() {
     </>
   );
 }
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, SlidersHorizontal } from "lucide-react";
+
+
 
 function SellerListSection({ data, isLoading, parentCategories, containerAnim, itemAnim, slideUp }: any) {
   const [categoryFilter, setCategoryFilter] = useState("all");
