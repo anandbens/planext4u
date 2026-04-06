@@ -132,9 +132,35 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
     try { await onDelete?.(customer.id); onOpenChange(false); } finally { setSaving(false); }
   };
 
+  const handleExportOrders = async () => {
+    if (!customer) return;
+    let query = supabase.from("orders").select("*").eq("customer_id", customer.id).order("created_at", { ascending: false });
+    if (ordersStatusFilter !== "all") query = query.eq("status", ordersStatusFilter);
+    if (ordersFromDate) query = query.gte("created_at", ordersFromDate);
+    if (ordersToDate) query = query.lte("created_at", ordersToDate + "T23:59:59");
+    const { data } = await query;
+    if (!data?.length) { toast.info("No orders to export"); return; }
+    exportToCSV(data.map(o => ({ ...o, items: JSON.stringify(o.items) })), [
+      { key: "id", label: "Order ID" }, { key: "vendor_name", label: "Vendor" },
+      { key: "status", label: "Status" }, { key: "subtotal", label: "Subtotal" },
+      { key: "tax", label: "Tax" }, { key: "discount", label: "Discount" },
+      { key: "points_used", label: "Points Used" }, { key: "total", label: "Total" },
+      { key: "delivery_rating", label: "Rating" }, { key: "created_at", label: "Date" },
+      { key: "items", label: "Items" },
+    ], `orders_${customer.name.replace(/\s/g, '_')}`);
+    toast.success("Orders exported");
+  };
+
   const handleExportPoints = async () => {
     if (!customer) return;
-    const { data } = await supabase.from("points_transactions").select("*").eq("user_id", customer.id).order("created_at", { ascending: false });
+    let query = supabase.from("points_transactions").select("*").eq("user_id", customer.id).order("created_at", { ascending: false });
+    if (pointsFilter !== "all") {
+      if (pointsFilter === "earned") query = query.gt("points", 0);
+      if (pointsFilter === "redeemed") query = query.lt("points", 0);
+    }
+    if (pointsFromDate) query = query.gte("created_at", pointsFromDate);
+    if (pointsToDate) query = query.lte("created_at", pointsToDate + "T23:59:59");
+    const { data } = await query;
     if (!data?.length) { toast.info("No points data to export"); return; }
     exportToCSV(data, [
       { key: "id", label: "Transaction ID" },
