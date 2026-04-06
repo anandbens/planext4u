@@ -247,33 +247,38 @@ export default function CustomerCartPage() {
                     </div>
                     <div className="border border-border/50 rounded-xl p-4">
                       <p className="text-sm font-medium mb-3">When will you like your delivery?*</p>
-                      <div className="flex items-center justify-end gap-2 mb-3">
-                        <button onClick={() => setCalendarWeekOffset(p => p - 1)} className="text-xs text-primary hover:underline">← {format(addDays(weekStart, -7), "MMMM")}</button>
-                        <button onClick={() => setCalendarWeekOffset(p => p + 1)} className="text-xs text-primary hover:underline">{format(addDays(weekStart, 14), "MMMM")} →</button>
+                      <div className="flex items-center justify-between mb-3">
+                        <button onClick={() => canGoPrev && setCalendarMonth(subMonths(calendarMonth, 1))}
+                          className={`text-xs font-medium ${canGoPrev ? 'text-primary hover:underline' : 'text-muted-foreground/30 cursor-not-allowed'}`}
+                          disabled={!canGoPrev}>← {format(subMonths(calendarMonth, 1), "MMM")}</button>
+                        <span className="font-semibold text-sm">{format(calendarMonth, "MMMM yyyy")}</span>
+                        <button onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}
+                          className="text-xs text-primary hover:underline font-medium">{format(addMonths(calendarMonth, 1), "MMM")} →</button>
                       </div>
-                      <div className="text-center mb-2"><span className="font-semibold text-sm">{currentMonth}</span></div>
-                      <div className="grid grid-cols-7 gap-1 mb-4">
-                        {["Fri", "Sat", "Sun", "Mon", "Tue", "Wed", "Thu"].map(d => (
-                          <div key={d} className="text-center text-xs text-muted-foreground font-medium py-1">{d}</div>
+                      <div className="grid grid-cols-7 gap-1 mb-2">
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+                          <div key={d} className="text-center text-[10px] text-muted-foreground font-semibold py-1">{d}</div>
                         ))}
                         {calendarDays.map((day) => {
+                          const inMonth = isSameMonth(day, calendarMonth);
                           const isToday = isSameDay(day, today);
                           const isSelected = selectedDate && isSameDay(day, selectedDate);
-                          const isPast = day < today && !isToday;
+                          const isPast = isBefore(day, today) && !isToday;
                           return (
-                            <button key={day.toISOString()} disabled={isPast}
+                            <button key={day.toISOString()} disabled={isPast || !inMonth}
                               onClick={() => setSelectedDate(day)}
-                              className={`py-2 rounded-lg text-sm font-medium transition-colors
-                                ${isPast ? 'text-muted-foreground/30 cursor-not-allowed' : ''}
-                                ${isSelected ? 'bg-primary text-primary-foreground' : ''}
-                                ${isToday && !isSelected ? 'text-primary font-bold' : ''}
-                                ${!isPast && !isSelected ? 'hover:bg-accent' : ''}`}>
+                              className={`h-9 w-full rounded-full text-sm font-medium transition-all
+                                ${!inMonth ? 'text-transparent pointer-events-none' : ''}
+                                ${isPast && inMonth ? 'text-muted-foreground/25 cursor-not-allowed' : ''}
+                                ${isSelected ? 'bg-primary text-primary-foreground shadow-md' : ''}
+                                ${isToday && !isSelected ? 'ring-2 ring-primary/40 text-primary font-bold' : ''}
+                                ${!isPast && !isSelected && inMonth ? 'hover:bg-primary/10' : ''}`}>
                               {format(day, "d")}
                             </button>
                           );
                         })}
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-2 mt-3">
                         {TIME_SLOTS.map(slot => (
                           <button key={slot.id} onClick={() => { setSelectedTimeSlot(slot.id); toast.success(`Delivery scheduled: ${slot.label}`); }}
                             className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-colors
