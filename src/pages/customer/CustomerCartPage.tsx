@@ -51,10 +51,9 @@ export default function CustomerCartPage() {
   const [addressForm, setAddressForm] = useState({ label: "Home", type: "home", address_line: "", city: "", pincode: "" });
 
   useEffect(() => {
-    Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses()]).then(([cartItems, profile]) => {
+    Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses(), loadPlatformFees()]).then(([cartItems, profile]) => {
       setCart(cartItems);
       setWalletPoints(profile?.wallet_points || 0);
-      // Load saved-for-later from localStorage
       try {
         const saved = JSON.parse(localStorage.getItem('app_db_saved_for_later') || '[]');
         setSavedForLater(saved);
@@ -62,6 +61,16 @@ export default function CustomerCartPage() {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [customerId]);
+
+  const loadPlatformFees = async () => {
+    const { data } = await supabase.from('platform_variables').select('key, value').in('key', ['platform_fee', 'platform_fee_gst_percent']);
+    if (data) {
+      data.forEach((v: any) => {
+        if (v.key === 'platform_fee') setPlatformFeeValue(Number(v.value) || 10);
+        if (v.key === 'platform_fee_gst_percent') setPlatformFeeGst(Number(v.value) || 18);
+      });
+    }
+  };
 
   const loadAddresses = async () => {
     const { data } = await supabase.from('customer_addresses').select('*').eq('customer_id', customerId).order('is_default', { ascending: false });
