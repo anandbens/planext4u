@@ -23,13 +23,13 @@ const statusStyle: Record<string, string> = {
 interface ProductForm {
   title: string; description: string; price: string; tax: string; discount: string;
   stock: string; category_id: string; emoji: string; status: string;
-  image: string; sku: string; images: string[];
+  image: string; sku: string; images: string[]; youtube_video_url: string;
 }
 
 const emptyForm: ProductForm = {
   title: "", description: "", price: "", tax: "", discount: "0",
   stock: "", category_id: "", emoji: "📦", status: "draft",
-  image: "", sku: "", images: [],
+  image: "", sku: "", images: [], youtube_video_url: "",
 };
 
 export default function VendorProductsPage() {
