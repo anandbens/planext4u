@@ -68,14 +68,20 @@ export default function VendorProductsPage() {
     mutationFn: async (formData: ProductForm) => {
       const payload: any = {
         title: formData.title, description: formData.description,
+        short_description: formData.short_description, long_description: formData.long_description,
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
-        discount: parseFloat(formData.discount) || 0, stock: parseInt(formData.stock) || 0,
+        discount: parseFloat(formData.discount) || 0, discount_type: formData.discount_type,
+        stock: parseInt(formData.stock) || 0,
         category_id: formData.category_id || null,
         category_name: categories?.find(c => c.id === formData.category_id)?.name || "",
         emoji: formData.emoji, status: formData.status,
         vendor_id: vendorId, vendor_name: vendorUser?.name || "",
         image: formData.image || formData.images[0] || null,
+        images: formData.images,
         youtube_video_url: formData.youtube_video_url || "",
+        inactivation_reason: formData.inactivation_reason || "",
+        tax_slab_id: formData.tax_slab_id || null,
+        product_attributes: formData.product_attributes || [],
       };
       if (editingId) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingId);
