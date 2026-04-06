@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X, Clock, Phone, Shield, ToggleLeft } from "lucide-react";
 import { useState, useEffect } from "react";
