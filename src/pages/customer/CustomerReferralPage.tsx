@@ -82,10 +82,13 @@ export default function CustomerReferralPage() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{r.referee_name}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {r.status === 'completed' ? '✅ First order placed' : '⏳ Registered · Waiting for first order'}
+                    </p>
                     <p className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                   </div>
                   {r.status === 'completed' && <Badge className="bg-success/10 text-success border-0 text-xs">+{r.points_awarded} pts</Badge>}
-                  {r.status === 'pending' && <Badge className="bg-warning/10 text-warning border-0 text-xs">Pending</Badge>}
+                  {r.status === 'pending' && <Badge className="bg-warning/10 text-warning border-0 text-xs">Cooling</Badge>}
                 </Card>
               ))}
           </div>
