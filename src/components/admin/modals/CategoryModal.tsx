@@ -57,6 +57,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         promotion_title: (category as any).promotion_title || "",
         promotion_active: (category as any).promotion_active || false,
         is_emergency: (category as any).is_emergency || false,
+        verification_status: (category as any).verification_status || "unverified",
       });
       setEditMode(mode === "edit");
     }

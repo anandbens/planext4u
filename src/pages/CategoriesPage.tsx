@@ -140,7 +140,7 @@ export default function CategoriesPage() {
 
       <DataTable
         columns={[
-          { key: "id", label: "S.No", render: (_c, _i) => {
+          { key: "id", label: "S.No", render: (_c) => {
             const idx = filtered.indexOf(_c);
             return <span className="text-sm font-medium">{idx + 1}</span>;
           }},
