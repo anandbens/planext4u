@@ -256,6 +256,12 @@ export default function SocialCreatePostPage() {
       const postType = hasVideo ? 'reel' : (mediaItems.length > 1 ? 'carousel' : 'photo');
 
       // Insert post into DB - use the customer user_id for the post record
+      const metadata: Record<string, any> = {};
+      if (linkedProduct) {
+        metadata.linked_product_id = linkedProduct.id;
+        metadata.linked_product_title = linkedProduct.title;
+      }
+
       const { error } = await supabase.from('social_posts' as any).insert({
         id: postId,
         user_id: authUserId,
@@ -267,6 +273,7 @@ export default function SocialCreatePostPage() {
         hide_like_count: hidelikeCounts,
         allow_comments: allowComments,
         status: 'published',
+        metadata: Object.keys(metadata).length > 0 ? metadata : null,
       });
 
       if (error) {
