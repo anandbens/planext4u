@@ -390,12 +390,12 @@ export default function CustomerHomePage() {
           <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
             className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3 md:gap-4">
             {isLoading ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
-              data?.categories.map((c) => (
+              parentCategories.map((c: any) => (
                 <motion.div key={c.id} variants={itemAnim}>
                   <Link to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-2 group">
                     <div className="h-14 w-14 md:h-20 md:w-20 rounded-full bg-secondary/50 border-2 border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/50 group-hover:shadow-md transition-all duration-300">
-                      {c.image && c.image.startsWith('/') ? (
-                        <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-full" />
+                      {c.image && c.image.startsWith('http') ? (
+                        <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-full" loading="lazy" />
                       ) : (
                         <span className="text-2xl md:text-3xl">{c.image || '📦'}</span>
                       )}
