@@ -459,7 +459,7 @@ export default function CustomerCartPage() {
             <span className="text-sm font-bold">₹{total.toLocaleString()}</span>
           </div>
           <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={placeOrder} disabled={placing}>
-            {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed Payment"}
+            {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed To Checkout"}
           </Button>
         </div>
       )}
