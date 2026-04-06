@@ -1,35 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Navigation, X, Plus } from "lucide-react";
-import { MOCK_AREAS } from "@/lib/mockData";
+import { Search, Navigation, Loader2 } from "lucide-react";
 
-interface SavedAddress {
-  id: string;
-  label: string;
-  type: "home" | "work" | "other";
-  address: string;
-  pincode: string;
-}
-
-const DEFAULT_ADDRESSES: SavedAddress[] = [
-  { id: "addr-1", label: "P4U", type: "home", address: "SF NO 250/2 JJ NAGAR, SITE NO 15, NAGAMANAICKEN PALAYAM ROAD, PATTANAM POST - COIMBATORE - 641016", pincode: "641016" },
-  { id: "addr-2", label: "P4U Office", type: "work", address: "SF NO 250/2 JJ NAGAR, SITE NO 15, NAGAMANAICKEN PALAYAM ROAD, PATTANAM POST - COIMBATORE - 641016", pincode: "641016" },
-];
-
-function loadAddresses(): SavedAddress[] {
-  try {
-    const raw = localStorage.getItem("app_db_addresses");
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return [...DEFAULT_ADDRESSES];
-}
-
-function saveAddresses(addrs: SavedAddress[]) {
-  localStorage.setItem("app_db_addresses", JSON.stringify(addrs));
-}
+const GOOGLE_MAPS_KEY = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
 
 export function loadSelectedLocation(): string {
   return localStorage.getItem("app_db_selected_location") || "";
@@ -37,6 +12,18 @@ export function loadSelectedLocation(): string {
 
 export function saveSelectedLocation(loc: string) {
   localStorage.setItem("app_db_selected_location", loc);
+}
+
+export function loadSelectedCoords(): { lat: number; lng: number } | null {
+  try {
+    const raw = localStorage.getItem("app_db_selected_coords");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
+export function saveSelectedCoords(lat: number, lng: number) {
+  localStorage.setItem("app_db_selected_coords", JSON.stringify({ lat, lng }));
 }
 
 interface LocationModalProps {
@@ -47,47 +34,69 @@ interface LocationModalProps {
 
 export function LocationModal({ open, onOpenChange, onSelect }: LocationModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [addresses, setAddresses] = useState<SavedAddress[]>(loadAddresses);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newLabel, setNewLabel] = useState("");
-  const [newAddress, setNewAddress] = useState("");
-  const [newPincode, setNewPincode] = useState("");
+  const [locating, setLocating] = useState(false);
+  const [suggestions, setSuggestions] = useState<Array<{ description: string; place_id: string }>>([]);
+  const [searching, setSearching] = useState(false);
 
-  const filteredAddresses = searchQuery
-    ? addresses.filter(a => a.address.toLowerCase().includes(searchQuery.toLowerCase()) || a.label.toLowerCase().includes(searchQuery.toLowerCase()))
-    : addresses;
+  const handleUseCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        saveSelectedCoords(latitude, longitude);
+        try {
+          const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_KEY}`);
+          const data = await res.json();
+          if (data.status === "OK" && data.results.length > 0) {
+            const components = data.results[0].address_components || [];
+            const get = (type: string) => components.find((c: any) => c.types.includes(type))?.long_name || "";
+            const area = get("sublocality_level_1") || get("sublocality") || get("neighborhood") || get("locality");
+            const city = get("locality") || get("administrative_area_level_2") || "";
+            const label = area ? `${area}, ${city}` : city || data.results[0].formatted_address?.slice(0, 30) || "Current Location";
+            onSelect(label);
+            saveSelectedLocation(label);
+          } else {
+            onSelect("Current Location");
+            saveSelectedLocation("Current Location");
+          }
+        } catch {
+          onSelect("Current Location");
+          saveSelectedLocation("Current Location");
+        }
+        setLocating(false);
+        onOpenChange(false);
+      },
+      () => { setLocating(false); },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  }, [onSelect, onOpenChange]);
 
-  const areas = MOCK_AREAS.filter(a => a.status === "active" && a.city_name === "Coimbatore");
+  const handleSearch = useCallback(async (query: string) => {
+    setSearchQuery(query);
+    if (query.length < 3) { setSuggestions([]); return; }
+    setSearching(true);
+    try {
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=country:IN&key=${GOOGLE_MAPS_KEY}`);
+      const data = await res.json();
+      if (data.status === "OK") {
+        setSuggestions(data.results.slice(0, 5).map((r: any) => ({
+          description: r.formatted_address,
+          place_id: r.place_id,
+          lat: r.geometry.location.lat,
+          lng: r.geometry.location.lng,
+        })));
+      }
+    } catch {}
+    setSearching(false);
+  }, []);
 
-  const handleUseCurrentLocation = () => {
-    onSelect("JJ Nagar, Coimbator...");
-    saveSelectedLocation("JJ Nagar, Coimbator...");
-    onOpenChange(false);
-  };
-
-  const handleSelectAddress = (addr: SavedAddress) => {
-    const short = addr.label + " - " + addr.pincode;
+  const handleSelectSuggestion = (s: any) => {
+    if (s.lat && s.lng) saveSelectedCoords(s.lat, s.lng);
+    const short = s.description.length > 35 ? s.description.slice(0, 35) + "..." : s.description;
     onSelect(short);
     saveSelectedLocation(short);
     onOpenChange(false);
-  };
-
-  const handleAddAddress = () => {
-    if (!newLabel || !newAddress) return;
-    const addr: SavedAddress = {
-      id: `addr-${Date.now()}`,
-      label: newLabel,
-      type: "other",
-      address: newAddress,
-      pincode: newPincode,
-    };
-    const updated = [...addresses, addr];
-    setAddresses(updated);
-    saveAddresses(updated);
-    setShowAddForm(false);
-    setNewLabel("");
-    setNewAddress("");
-    setNewPincode("");
   };
 
   return (
@@ -100,83 +109,44 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
         <div className="relative mt-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search a Address"
+            placeholder="Search for area, city..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="pl-9 h-11"
           />
         </div>
 
         <button
           onClick={handleUseCurrentLocation}
+          disabled={locating}
           className="flex items-center gap-3 w-full p-3 rounded-xl border border-border/50 hover:bg-accent/50 transition-colors mt-2"
         >
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-            <Navigation className="h-5 w-5 text-primary" />
+            {locating ? <Loader2 className="h-5 w-5 text-primary animate-spin" /> : <Navigation className="h-5 w-5 text-primary" />}
           </div>
           <div className="text-left flex-1">
             <p className="text-sm font-semibold text-primary">Use My Current Location</p>
             <p className="text-xs text-muted-foreground">Enable your current location for better services</p>
           </div>
-          <Button variant="outline" size="sm" className="text-xs border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-            Enable
+          <Button variant="outline" size="sm" className="text-xs border-primary text-primary hover:bg-primary hover:text-primary-foreground" disabled={locating}>
+            {locating ? "Detecting..." : "Enable"}
           </Button>
         </button>
 
-        <div className="mt-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-sm">Saved Address</h3>
-            <Button variant="ghost" size="sm" className="text-xs gap-1 text-primary" onClick={() => setShowAddForm(true)}>
-              <Plus className="h-3 w-3" /> Add New
-            </Button>
-          </div>
-
-          {showAddForm && (
-            <div className="p-3 border border-primary/20 rounded-xl mb-3 space-y-2 bg-accent/30">
-              <Input placeholder="Label (e.g. Home, Office)" value={newLabel} onChange={e => setNewLabel(e.target.value)} className="h-9 text-sm" />
-              <Input placeholder="Full address" value={newAddress} onChange={e => setNewAddress(e.target.value)} className="h-9 text-sm" />
-              <Input placeholder="Pincode" value={newPincode} onChange={e => setNewPincode(e.target.value)} className="h-9 text-sm" />
-              <div className="flex gap-2">
-                <Button size="sm" className="text-xs" onClick={handleAddAddress}>Save Address</Button>
-                <Button size="sm" variant="ghost" className="text-xs" onClick={() => setShowAddForm(false)}>Cancel</Button>
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            {filteredAddresses.map((addr) => (
-              <button
-                key={addr.id}
-                onClick={() => handleSelectAddress(addr)}
-                className="w-full text-left p-3 rounded-xl border border-primary/20 hover:border-primary/50 hover:bg-accent/30 transition-colors"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-sm text-primary">{addr.label}</span>
-                  <Badge className="bg-primary/10 text-primary border-0 text-[9px]">
-                    {addr.type === "home" ? "Home" : addr.type === "work" ? "Work" : "Other"}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground uppercase leading-relaxed">{addr.address}</p>
+        {suggestions.length > 0 && (
+          <div className="mt-3 space-y-1">
+            <h3 className="font-semibold text-sm mb-2">Search Results</h3>
+            {suggestions.map((s, i) => (
+              <button key={i} onClick={() => handleSelectSuggestion(s)}
+                className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-accent/50 text-sm flex items-center gap-2 transition-colors">
+                <Navigation className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="truncate">{s.description}</span>
               </button>
             ))}
           </div>
-        </div>
-
-        {searchQuery && (
-          <div className="mt-3">
-            <h3 className="font-semibold text-sm mb-2">Nearby Areas</h3>
-            <div className="space-y-1">
-              {areas.filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase())).map(area => (
-                <button key={area.id}
-                  onClick={() => { onSelect(`${area.name}, ${area.city_name}`); saveSelectedLocation(`${area.name}, ${area.city_name}`); onOpenChange(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-accent/50 text-sm flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                  {area.name}, {area.city_name} - {area.pincode}
-                </button>
-              ))}
-            </div>
-          </div>
         )}
+
+        {searching && <p className="text-xs text-muted-foreground text-center py-4">Searching...</p>}
       </DialogContent>
     </Dialog>
   );
