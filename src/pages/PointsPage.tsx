@@ -1,25 +1,42 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { StatCard } from "@/components/admin/StatCard";
 import { Star, Gift, Users, TrendingUp } from "lucide-react";
-import { api, PointsTransaction } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const typeStyle: Record<string, string> = {
   welcome: "bg-primary/10 text-primary",
   referral: "bg-info/10 text-info",
   order_reward: "bg-success/10 text-success",
+  redemption: "bg-destructive/10 text-destructive",
 };
 
 export default function PointsPage() {
-  const { data } = useQuery({
-    queryKey: ["pointsTransactions"],
-    queryFn: () => api.getPointsTransactions({ page: 1, per_page: 20 }),
-  });
+  const [stats, setStats] = useState({ totalIssued: 0, totalRedeemed: 0, welcomePts: 0, referralPts: 0 });
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const transactions = data?.data || [];
-  const totalIssued = transactions.reduce((s, t) => s + t.points, 0);
+  useEffect(() => {
+    const fetch = async () => {
+      setLoading(true);
+      const { data: pts } = await supabase.from("points_transactions").select("*").order("created_at", { ascending: false }).limit(20);
+      setTransactions(pts || []);
+
+      // Stats from all points
+      const { data: allPts } = await supabase.from("points_transactions").select("points, type");
+      const all = allPts || [];
+      const totalIssued = all.filter(p => p.points > 0).reduce((s, p) => s + p.points, 0);
+      const totalRedeemed = Math.abs(all.filter(p => p.points < 0).reduce((s, p) => s + p.points, 0));
+      const welcomePts = all.filter(p => p.type === 'welcome').reduce((s, p) => s + p.points, 0);
+      const referralPts = all.filter(p => p.type === 'referral').reduce((s, p) => s + p.points, 0);
+      setStats({ totalIssued, totalRedeemed, welcomePts, referralPts });
+      setLoading(false);
+    };
+    fetch();
+  }, []);
 
   return (
     <AdminLayout>
@@ -29,10 +46,14 @@ export default function PointsPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Points Issued" value="4,85,200" trend={18.3} icon={Star} gradient="gradient-warning" />
-        <StatCard title="Points Redeemed" value="1,92,400" trend={12.5} icon={TrendingUp} gradient="gradient-success" />
-        <StatCard title="Welcome Points" value="49,700" trend={8.1} icon={Gift} gradient="gradient-primary" />
-        <StatCard title="Referral Points" value="28,300" trend={22.6} icon={Users} gradient="gradient-info" />
+        {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) : (
+          <>
+            <StatCard title="Total Points Issued" value={stats.totalIssued.toLocaleString('en-IN')} trend={0} icon={Star} gradient="gradient-warning" />
+            <StatCard title="Points Redeemed" value={stats.totalRedeemed.toLocaleString('en-IN')} trend={0} icon={TrendingUp} gradient="gradient-success" />
+            <StatCard title="Welcome Points" value={stats.welcomePts.toLocaleString('en-IN')} trend={0} icon={Gift} gradient="gradient-primary" />
+            <StatCard title="Referral Points" value={stats.referralPts.toLocaleString('en-IN')} trend={0} icon={Users} gradient="gradient-info" />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -56,21 +77,24 @@ export default function PointsPage() {
         <div className="md:col-span-2 bg-card rounded-xl border border-border/50 p-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
           <h3 className="text-base font-semibold mb-4">Recent Transactions</h3>
           <div className="space-y-3">
-            {transactions.map((t) => (
-              <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20">
-                <div className="flex items-center gap-3">
-                  <Badge className={`${typeStyle[t.type] || ''} border-0 text-[10px]`}>{t.type.replace('_', ' ')}</Badge>
-                  <div>
-                    <p className="text-sm font-medium">{t.user_name}</p>
-                    <p className="text-xs text-muted-foreground">{t.description}</p>
+            {loading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />) :
+              transactions.map((t) => (
+                <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20">
+                  <div className="flex items-center gap-3">
+                    <Badge className={`${typeStyle[t.type] || ''} border-0 text-[10px]`}>{t.type?.replace(/_/g, ' ')}</Badge>
+                    <div>
+                      <p className="text-sm font-medium">{t.user_name || 'Unknown'}</p>
+                      <p className="text-xs text-muted-foreground">{t.description}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-sm font-bold ${t.points >= 0 ? 'text-success' : 'text-destructive'}`}>
+                      {t.points >= 0 ? '+' : ''}{t.points}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-success">+{t.points}</p>
-                  <p className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</p>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       </div>
