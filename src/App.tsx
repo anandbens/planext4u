@@ -349,6 +349,7 @@ const AppRoutes = () => {
         <Route path="/vendor/profile" element={<VendorPage><VendorProfilePage /></VendorPage>} />
         <Route path="/vendor/settings" element={<VendorPage><VendorProfilePage /></VendorPage>} />
         <Route path="/vendor/account-control" element={<VendorPage><VendorAccountControlPage /></VendorPage>} />
+        <Route path="/vendor/media" element={<VendorPage><VendorMediaLibraryPage /></VendorPage>} />
 
         {/* Customer Account Control */}
         <Route path="/app/account-control" element={<CustomerPage><AccountControlPage /></CustomerPage>} />
