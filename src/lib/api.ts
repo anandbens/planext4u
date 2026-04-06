@@ -329,7 +329,7 @@ export const api = {
   },
 
   // Vendors
-  getVendors: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
+  getVendors: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string; payment_status?: string }) => {
     const page = params.page || 1;
     const perPage = params.per_page || 10;
     const from = (page - 1) * perPage;
@@ -339,6 +339,7 @@ export const api = {
     let vQuery = supabase.from('vendors').select('*', { count: 'exact' });
     if (params.search) vQuery = vQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%`);
     if (params.status && params.status !== 'all') vQuery = vQuery.eq('status', params.status);
+    if (params.payment_status && params.payment_status !== 'all') vQuery = vQuery.eq('plan_payment_status', params.payment_status);
     if (params.date_from) vQuery = vQuery.gte('created_at', params.date_from);
     if (params.date_to) vQuery = vQuery.lte('created_at', params.date_to + 'T23:59:59Z');
     vQuery = vQuery.order('created_at', { ascending: false });
