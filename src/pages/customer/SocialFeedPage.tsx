@@ -122,6 +122,7 @@ function PostCard({ post }: { post: any }) {
   const [commentText, setCommentText] = useState("");
   const [showAllComments, setShowAllComments] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
 
   const userId = customerUser?.id;
   const postId = post.id;
