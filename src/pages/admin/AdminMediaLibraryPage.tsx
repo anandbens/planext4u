@@ -25,6 +25,7 @@ const FOLDERS = [
   { value: "service-images", label: "Service Images" },
   { value: "vendor-logos", label: "Vendor Logos" },
   { value: "popup-banners", label: "Popup Banners" },
+  { value: "onboarding", label: "Onboarding" },
   { value: "general", label: "General" },
 ];
 
