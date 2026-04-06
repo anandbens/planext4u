@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api, CartItem } from "@/lib/api";
-import { format, addDays, startOfWeek, isSameDay } from "date-fns";
+import { format, addDays, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, isSameMonth, isBefore, startOfDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 const TIME_SLOTS = [
@@ -40,7 +40,7 @@ export default function CustomerCartPage() {
   const [walletPoints, setWalletPoints] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
-  const [calendarWeekOffset, setCalendarWeekOffset] = useState(0);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressDialog, setShowAddressDialog] = useState(false);
@@ -168,10 +168,17 @@ export default function CustomerCartPage() {
   };
 
   const selectedAddress = addresses.find(a => a.id === selectedAddressId);
-  const today = new Date();
-  const weekStart = addDays(startOfWeek(today, { weekStartsOn: 5 }), calendarWeekOffset * 7);
-  const calendarDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const currentMonth = format(calendarDays[3], "MMMM");
+  const today = startOfDay(new Date());
+
+  // Build full month calendar grid
+  const monthStart = startOfMonth(calendarMonth);
+  const monthEnd = endOfMonth(calendarMonth);
+  const calStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const calEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+  const calendarDays: Date[] = [];
+  let d = calStart;
+  while (d <= calEnd) { calendarDays.push(d); d = addDays(d, 1); }
+  const canGoPrev = !isBefore(startOfMonth(subMonths(calendarMonth, 1)), monthStart) ? false : !isBefore(endOfMonth(subMonths(calendarMonth, 1)), today);
 
   if (loading) {
     return <CustomerLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></CustomerLayout>;
@@ -240,33 +247,38 @@ export default function CustomerCartPage() {
                     </div>
                     <div className="border border-border/50 rounded-xl p-4">
                       <p className="text-sm font-medium mb-3">When will you like your delivery?*</p>
-                      <div className="flex items-center justify-end gap-2 mb-3">
-                        <button onClick={() => setCalendarWeekOffset(p => p - 1)} className="text-xs text-primary hover:underline">← {format(addDays(weekStart, -7), "MMMM")}</button>
-                        <button onClick={() => setCalendarWeekOffset(p => p + 1)} className="text-xs text-primary hover:underline">{format(addDays(weekStart, 14), "MMMM")} →</button>
+                      <div className="flex items-center justify-between mb-3">
+                        <button onClick={() => canGoPrev && setCalendarMonth(subMonths(calendarMonth, 1))}
+                          className={`text-xs font-medium ${canGoPrev ? 'text-primary hover:underline' : 'text-muted-foreground/30 cursor-not-allowed'}`}
+                          disabled={!canGoPrev}>← {format(subMonths(calendarMonth, 1), "MMM")}</button>
+                        <span className="font-semibold text-sm">{format(calendarMonth, "MMMM yyyy")}</span>
+                        <button onClick={() => setCalendarMonth(addMonths(calendarMonth, 1))}
+                          className="text-xs text-primary hover:underline font-medium">{format(addMonths(calendarMonth, 1), "MMM")} →</button>
                       </div>
-                      <div className="text-center mb-2"><span className="font-semibold text-sm">{currentMonth}</span></div>
-                      <div className="grid grid-cols-7 gap-1 mb-4">
-                        {["Fri", "Sat", "Sun", "Mon", "Tue", "Wed", "Thu"].map(d => (
-                          <div key={d} className="text-center text-xs text-muted-foreground font-medium py-1">{d}</div>
+                      <div className="grid grid-cols-7 gap-1 mb-2">
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+                          <div key={d} className="text-center text-[10px] text-muted-foreground font-semibold py-1">{d}</div>
                         ))}
                         {calendarDays.map((day) => {
+                          const inMonth = isSameMonth(day, calendarMonth);
                           const isToday = isSameDay(day, today);
                           const isSelected = selectedDate && isSameDay(day, selectedDate);
-                          const isPast = day < today && !isToday;
+                          const isPast = isBefore(day, today) && !isToday;
                           return (
-                            <button key={day.toISOString()} disabled={isPast}
+                            <button key={day.toISOString()} disabled={isPast || !inMonth}
                               onClick={() => setSelectedDate(day)}
-                              className={`py-2 rounded-lg text-sm font-medium transition-colors
-                                ${isPast ? 'text-muted-foreground/30 cursor-not-allowed' : ''}
-                                ${isSelected ? 'bg-primary text-primary-foreground' : ''}
-                                ${isToday && !isSelected ? 'text-primary font-bold' : ''}
-                                ${!isPast && !isSelected ? 'hover:bg-accent' : ''}`}>
+                              className={`h-9 w-full rounded-full text-sm font-medium transition-all
+                                ${!inMonth ? 'text-transparent pointer-events-none' : ''}
+                                ${isPast && inMonth ? 'text-muted-foreground/25 cursor-not-allowed' : ''}
+                                ${isSelected ? 'bg-primary text-primary-foreground shadow-md' : ''}
+                                ${isToday && !isSelected ? 'ring-2 ring-primary/40 text-primary font-bold' : ''}
+                                ${!isPast && !isSelected && inMonth ? 'hover:bg-primary/10' : ''}`}>
                               {format(day, "d")}
                             </button>
                           );
                         })}
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-2 mt-3">
                         {TIME_SLOTS.map(slot => (
                           <button key={slot.id} onClick={() => { setSelectedTimeSlot(slot.id); toast.success(`Delivery scheduled: ${slot.label}`); }}
                             className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-colors
@@ -285,9 +297,9 @@ export default function CustomerCartPage() {
                       return (
                         <Card key={item.id} className="p-4">
                           <div className="flex gap-3">
-                            <div className="h-20 w-20 bg-secondary/30 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+                            <Link to={`/app/product/${item.id}`} className="h-20 w-20 bg-secondary/30 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
                               {item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" /> : <span className="text-3xl">{item.emoji}</span>}
-                            </div>
+                            </Link>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1 min-w-0">
@@ -373,7 +385,7 @@ export default function CustomerCartPage() {
                     <div className="flex justify-between font-bold"><span>Total Amount</span><span>₹{total.toLocaleString()}</span></div>
                   </div>
                   {savings > 0 && <p className="text-xs text-success mt-2 font-medium">You will save ₹{savings.toLocaleString()} on this order</p>}
-                  <Button className="w-full h-12 mt-4 text-base font-semibold" onClick={placeOrder} disabled={placing}>{placing ? "Placing..." : "Proceed Payment"}</Button>
+                  <Button className="w-full h-12 mt-4 text-base font-semibold hidden md:flex" onClick={placeOrder} disabled={placing}>{placing ? "Placing..." : "Proceed Payment"}</Button>
                 </Card>
               </div>
             )}
@@ -381,14 +393,19 @@ export default function CustomerCartPage() {
         )}
       </div>
 
-      {/* Sticky Bottom - Mobile - above bottom nav */}
+      {/* Single sticky bottom CTA for mobile - no duplicate */}
       {cart.length > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden">
+        <div className="fixed bottom-16 left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs text-muted-foreground">{cart.reduce((s, i) => s + i.qty, 0)} item(s)</span>
+            <span className="text-sm font-bold">₹{total.toLocaleString()}</span>
+          </div>
           <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={placeOrder} disabled={placing}>
             {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed Payment"}
           </Button>
         </div>
       )}
+
 
       {/* Address Picker Dialog (Zepto-style) */}
       <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
