@@ -154,6 +154,57 @@ export default function IntegrationsPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="google-oauth">
+          <Card className="p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Globe className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Google OAuth Credentials</h3>
+                <p className="text-sm text-muted-foreground">Client ID and Secret for Google Sign-In</p>
+              </div>
+            </div>
+            <div className="space-y-4 border-t border-border pt-4">
+              <div>
+                <Label>Google Client ID</Label>
+                <Input placeholder="xxxx.apps.googleusercontent.com" value={googleConfig.clientId} onChange={(e) => setGoogleConfig({ ...googleConfig, clientId: e.target.value })} className="mt-1.5 font-mono text-sm" />
+              </div>
+              <div>
+                <Label>Google Client Secret</Label>
+                <Input placeholder="GOCSPX-..." value={googleConfig.clientSecret} onChange={(e) => setGoogleConfig({ ...googleConfig, clientSecret: e.target.value })} className="mt-1.5 font-mono text-sm" />
+              </div>
+              <Button onClick={saveGoogleOAuth}>Save Configuration</Button>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="firebase">
+          <Card className="p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-xl bg-accent/20 flex items-center justify-center">
+                <Key className="h-6 w-6 text-accent-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Firebase Service Account</h3>
+                <p className="text-sm text-muted-foreground">Service account JSON for Firebase Admin SDK (phone auth, push notifications)</p>
+              </div>
+            </div>
+            <div className="space-y-4 border-t border-border pt-4">
+              <div>
+                <Label>Service Account JSON</Label>
+                <textarea
+                  placeholder='{"type":"service_account","project_id":"...","private_key":"..."}'
+                  value={firebaseConfig.serviceAccount}
+                  onChange={(e) => setFirebaseConfig({ serviceAccount: e.target.value })}
+                  className="mt-1.5 w-full min-h-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+              <Button onClick={saveFirebase}>Save Configuration</Button>
+            </div>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="hyperverge">
           <Card className="p-6 space-y-6">
             <div className="flex items-center justify-between">
