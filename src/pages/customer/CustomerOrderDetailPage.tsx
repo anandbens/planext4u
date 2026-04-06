@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Package, Truck, MapPin, Star, CheckCircle2, Clock, Store } from "lucide-react";
+import { ArrowLeft, Package, Truck, MapPin, Star, CheckCircle2, Clock, Store, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +85,9 @@ export default function CustomerOrderDetailPage() {
     );
   }
 
+  const pf = order.platform_fee || 0;
+  const gstPf = order.gst_on_platform_fee || 0;
+
   return (
     <CustomerLayout>
       <div className="max-w-2xl mx-auto px-4 py-6 pb-20 md:pb-6 space-y-4">
@@ -109,7 +112,6 @@ export default function CustomerOrderDetailPage() {
                 const Icon = step.icon;
                 return (
                   <div key={step.key} className="flex items-start gap-3 relative">
-                    {/* Vertical line */}
                     {i < trackingSteps.length - 1 && (
                       <div className={`absolute left-[15px] top-8 w-0.5 h-8 ${i < currentStepIdx ? 'bg-success' : 'bg-border'}`} />
                     )}
@@ -143,31 +145,41 @@ export default function CustomerOrderDetailPage() {
           </div>
         </Card>
 
-        {/* Items */}
+        {/* Items - with images and product links */}
         <Card className="p-4">
           <h3 className="text-sm font-semibold mb-3">Items ({items.length})</h3>
           <div className="divide-y divide-border/30">
             {items.map((item: any, i: number) => (
-              <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+              <Link
+                to={`/app/products/${item.id}`}
+                key={i}
+                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 hover:bg-accent/30 rounded-lg transition-colors -mx-1 px-1"
+              >
                 <div className="h-14 w-14 bg-secondary/30 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
-                  {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <span className="text-2xl">{item.emoji}</span>}
+                  {item.image ? (
+                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <Package className="h-6 w-6 text-muted-foreground" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.title}</p>
-                  <p className="text-xs text-muted-foreground">Qty: {item.qty}</p>
+                  <p className="text-sm font-medium truncate text-primary">{item.title}</p>
+                  <p className="text-xs text-muted-foreground">Qty: {item.qty} × ₹{(item.price || 0).toLocaleString()}</p>
                 </div>
                 <p className="text-sm font-semibold whitespace-nowrap">₹{((item.price || 0) * (item.qty || 1)).toLocaleString()}</p>
-              </div>
+              </Link>
             ))}
           </div>
         </Card>
 
         {/* Bill Breakdown */}
         <Card className="p-4">
-          <h3 className="text-sm font-semibold mb-3">Bill Details</h3>
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Receipt className="h-4 w-4" /> Bill Details
+          </h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Item Total</span>
+              <span className="text-muted-foreground">Item Total (MRP)</span>
               <span>₹{(order.subtotal || 0).toLocaleString()}</span>
             </div>
             {order.discount > 0 && (
@@ -183,9 +195,19 @@ export default function CustomerOrderDetailPage() {
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Tax & Charges</span>
-              <span>₹{(order.tax || 0).toLocaleString()}</span>
+              <span className="text-muted-foreground">Platform Fee</span>
+              <span>₹{pf.toLocaleString()}</span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">GST on Platform Fee (18%)</span>
+              <span>₹{gstPf.toLocaleString()}</span>
+            </div>
+            {(order.tax || 0) > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Product Tax</span>
+                <span>₹{(order.tax || 0).toLocaleString()}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Delivery Fee</span>
               <span className="text-success font-medium">FREE</span>
@@ -197,7 +219,7 @@ export default function CustomerOrderDetailPage() {
           </div>
         </Card>
 
-        {/* Order Info */}
+        {/* Order Info with Payment Reference */}
         <Card className="p-4">
           <h3 className="text-sm font-semibold mb-3">Order Info</h3>
           <div className="space-y-2 text-sm">
@@ -213,6 +235,18 @@ export default function CustomerOrderDetailPage() {
               <span className="text-muted-foreground">Payment</span>
               <span className="text-success font-medium">Paid ✓</span>
             </div>
+            {order.payment_reference_id && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Payment Ref ID</span>
+                <span className="font-mono text-xs">{order.payment_reference_id}</span>
+              </div>
+            )}
+            {order.razorpay_order_id && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Gateway Order ID</span>
+                <span className="font-mono text-xs">{order.razorpay_order_id}</span>
+              </div>
+            )}
           </div>
         </Card>
 

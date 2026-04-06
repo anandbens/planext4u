@@ -83,7 +83,7 @@ export default function PaymentPage() {
             return;
           }
 
-          await createOrder(response.razorpay_payment_id);
+          await createOrder(response.razorpay_payment_id, data.order_id);
         },
         prefill: {
           name: customerUser?.name || "",
