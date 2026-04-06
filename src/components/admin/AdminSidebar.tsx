@@ -24,7 +24,7 @@ interface NavItem {
 }
 
 const mainItems: NavItem[] = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Orders", url: "/orders", icon: ShoppingCart },
   { title: "Customers", url: "/customers", icon: Users, roles: ['admin', 'sales'] },
   { title: "Product Vendors", url: "/vendors", icon: Store, roles: ['admin', 'sales'] },
