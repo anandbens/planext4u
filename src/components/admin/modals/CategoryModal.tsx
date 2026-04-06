@@ -51,7 +51,12 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
     if (!form.name) return;
     setSaving(true);
     try {
-      const payload = { ...form, parent_id: form.parent_id || null };
+      const payload: any = { ...form, parent_id: form.parent_id || null, commission_rate: form.commission_rate ? parseFloat(form.commission_rate) : null };
+      delete payload.promotion_banner_url; delete payload.promotion_title; delete payload.promotion_active;
+      // Include promotion fields only if they exist in DB
+      payload.promotion_banner_url = form.promotion_banner_url || null;
+      payload.promotion_title = form.promotion_title || null;
+      payload.promotion_active = form.promotion_active;
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
       onOpenChange(false);
