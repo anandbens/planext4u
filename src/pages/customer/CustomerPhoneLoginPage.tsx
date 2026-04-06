@@ -26,6 +26,10 @@ export default function CustomerPhoneLoginPage() {
   }, [timer]);
 
   useEffect(() => {
+    // Pre-render reCAPTCHA on mount for faster OTP delivery
+    if (ensureFirebaseHostname()) {
+      preRenderRecaptcha();
+    }
     return () => clearRecaptcha();
   }, []);
 
