@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Store, Mail, Phone, MapPin, Shield, Star, CreditCard, Building2, Crown, ExternalLink } from "lucide-react";
+import { Store, Mail, Phone, MapPin, Shield, Star, CreditCard, Building2, Crown, ImagePlus, Camera } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
