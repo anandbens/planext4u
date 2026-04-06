@@ -116,9 +116,9 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
-          {/* Image Upload */}
+          {/* Product Images */}
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Product Image</Label>
+            <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Product Image (Primary)</Label>
             {editMode ? (
               <MediaLibraryPicker value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="product-images" label="Upload Product Image" />
             ) : form.image ? (
@@ -126,6 +126,24 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
               </div>
             ) : null}
+          </div>
+
+          {/* Additional Images for Carousel */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Additional Images (Carousel)</Label>
+            <div className="flex flex-wrap gap-2">
+              {(form.images || []).map((img: string, i: number) => (
+                <div key={i} className="relative h-16 w-16 rounded-lg overflow-hidden border border-border/30">
+                  <img src={img} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
+                  {editMode && (
+                    <button className="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-bl text-[10px] px-1" onClick={() => setForm({ ...form, images: form.images.filter((_: string, j: number) => j !== i) })}>×</button>
+                  )}
+                </div>
+              ))}
+              {editMode && (
+                <MediaLibraryPicker value="" onChange={(url) => setForm({ ...form, images: [...(form.images || []), url] })} folder="product-images" label="+ Add" />
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
