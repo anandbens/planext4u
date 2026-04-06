@@ -28,7 +28,7 @@ const emptyForm = {
   banner_image: "", icon: "", is_trending: false, description: "",
   parent_id: "" as string | null, commission_rate: "" as string,
   promotion_banner_url: "", promotion_title: "", promotion_active: false,
-  is_emergency: false,
+  is_emergency: false, verification_status: "unverified" as string,
 };
 
 export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories, defaultAsSubcategory }: CategoryModalProps) {
