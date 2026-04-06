@@ -162,9 +162,33 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     setForm({ ...form, vendor_id: vendorId, vendor_name: vendor?.business_name || "" });
   };
 
+  // Fetch categories from DB
+  const { data: dbCategories } = useQuery({
+    queryKey: ["categoriesForProduct"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("id, name, parent_id").is("parent_id", null).eq("status", "active").order("name");
+      return data || [];
+    },
+  });
+
+  const { data: dbSubcategories } = useQuery({
+    queryKey: ["subcategoriesForProduct", form.category_id],
+    queryFn: async () => {
+      if (!form.category_id) return [];
+      const { data } = await supabase.from("categories").select("id, name").eq("parent_id", form.category_id).eq("status", "active").order("name");
+      return data || [];
+    },
+    enabled: !!form.category_id,
+  });
+
   const handleCategoryChange = (catId: string) => {
-    const cat = MOCK_CATEGORIES.find(c => c.id === catId);
-    setForm({ ...form, category_id: catId, category_name: cat?.name || "" });
+    const cat = (dbCategories || []).find((c: any) => c.id === catId);
+    setForm({ ...form, category_id: catId, category_name: cat?.name || "", subcategory_id: "", subcategory_name: "" });
+  };
+
+  const handleSubcategoryChange = (subId: string) => {
+    const sub = (dbSubcategories || []).find((s: any) => s.id === subId);
+    setForm({ ...form, subcategory_id: subId, subcategory_name: sub?.name || "" });
   };
 
   const toggleAttribute = (attrId: string, attrName: string, value: string) => {
