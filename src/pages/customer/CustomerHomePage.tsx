@@ -79,8 +79,7 @@ function DiscountSubscriptionSection() {
   );
 }
 
-
-
+export default function CustomerHomePage() {
 function SellerListSection({ data, isLoading, parentCategories, containerAnim, itemAnim, slideUp }: any) {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState("default");
