@@ -106,9 +106,16 @@ export default function CustomerProductPage() {
   if (isLoading) return <CustomerLayout><div className="p-8"><Skeleton className="h-96 rounded-2xl" /></div></CustomerLayout>;
   if (!product) return <CustomerLayout><div className="p-8 text-center">Product not found</div></CustomerLayout>;
 
-  const discountPct = product.discount ? Math.round((product.discount / product.price) * 100) : 0;
-  const originalPrice = product.price + product.discount;
-  const variants = getProductVariants(product.title);
+  const discountType = (product as any).discount_type || "fixed";
+  const discountPct = discountType === "percentage" ? product.discount : (product.price > 0 ? Math.round((product.discount / product.price) * 100) : 0);
+  const discountAmount = discountType === "percentage" ? Math.round(product.price * product.discount / 100) : product.discount;
+  const originalPrice = product.price + discountAmount;
+  
+  // Use real product attributes if available, fallback to title-based
+  const realAttrs = (product as any).product_attributes || [];
+  const variants = realAttrs.length > 0 
+    ? realAttrs.map((a: any) => ({ label: a.attribute_name, options: a.values || [], selected: (a.values || [])[0] || "" }))
+    : getProductVariants(product.title);
 
   return (
     <CustomerLayout>
