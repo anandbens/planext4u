@@ -868,11 +868,15 @@ export type Database = {
           customer_name: string | null
           delivery_rating: number | null
           discount: number
+          gst_on_platform_fee: number | null
           id: string
           items: Json | null
+          payment_reference_id: string | null
+          platform_fee: number | null
           points_used: number
           rated_at: string | null
           rating_comment: string | null
+          razorpay_order_id: string | null
           status: string
           subtotal: number
           tax: number
@@ -887,11 +891,15 @@ export type Database = {
           customer_name?: string | null
           delivery_rating?: number | null
           discount?: number
+          gst_on_platform_fee?: number | null
           id: string
           items?: Json | null
+          payment_reference_id?: string | null
+          platform_fee?: number | null
           points_used?: number
           rated_at?: string | null
           rating_comment?: string | null
+          razorpay_order_id?: string | null
           status?: string
           subtotal?: number
           tax?: number
@@ -906,11 +914,15 @@ export type Database = {
           customer_name?: string | null
           delivery_rating?: number | null
           discount?: number
+          gst_on_platform_fee?: number | null
           id?: string
           items?: Json | null
+          payment_reference_id?: string | null
+          platform_fee?: number | null
           points_used?: number
           rated_at?: string | null
           rating_comment?: string | null
+          razorpay_order_id?: string | null
           status?: string
           subtotal?: number
           tax?: number
