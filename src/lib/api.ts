@@ -512,9 +512,20 @@ export const api = {
     if (status === 'completed') {
       const { data: order } = await supabase.from('orders').select('*').eq('id', id).single();
       if (order) {
-        // Fetch vendor
+        // Fetch vendor and their active plan for commission
         const { data: vendor } = await supabase.from('vendors').select('*').eq('id', order.vendor_id).single();
-        const commRate = vendor?.commission_rate || 10;
+        let commRate = vendor?.commission_rate || 10;
+
+        // Use plan-based commission if vendor has an active plan
+        if (vendor?.plan_id) {
+          const { data: plan } = await supabase.from('vendor_plans').select('commission_percentage, max_redemption_percentage').eq('id', vendor.plan_id).single();
+          if (plan?.commission_percentage != null) {
+            commRate = Number(plan.commission_percentage);
+            // Also sync the vendor's commission_rate field for consistency
+            await supabase.from('vendors').update({ commission_rate: commRate }).eq('id', vendor.id);
+          }
+        }
+
         const commission = Math.round(Number(order.total) * commRate / 100);
 
         await supabase.from('settlements').insert({
@@ -523,14 +534,22 @@ export const api = {
           status: 'pending', vendor_name: order.vendor_name,
         });
 
-        // Award loyalty points
+        // Award loyalty points (2% of order total)
         const rewardPoints = Math.round(Number(order.total) * 0.02);
         const { data: customer } = await supabase.from('customers').select('*').eq('id', order.customer_id).single();
         if (customer) {
           await supabase.from('customers').update({ wallet_points: customer.wallet_points + rewardPoints }).eq('id', customer.id);
           await supabase.from('points_transactions').insert({
             id: genId('PT'), user_id: customer.id, type: 'order_reward', points: rewardPoints,
-            description: `2% reward on order ${order.id}`, user_name: customer.name,
+            description: `2% reward on order ${order.id} (₹${Number(order.total).toLocaleString('en-IN')})`, user_name: customer.name,
+          });
+        }
+
+        // Record points redemption if any were used
+        if (order.points_used > 0 && customer) {
+          await supabase.from('points_transactions').insert({
+            id: genId('PT'), user_id: customer.id, type: 'redemption', points: -order.points_used,
+            description: `Redeemed on order ${order.id}`, user_name: customer.name,
           });
         }
 
