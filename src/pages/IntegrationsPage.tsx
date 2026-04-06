@@ -18,10 +18,11 @@ export default function IntegrationsPage() {
   const [hvConfig, setHvConfig] = useState({ appId: "", appKey: "", sandbox: true });
   const [mapsConfig, setMapsConfig] = useState({ apiKey: "", defaultLat: "19.076", defaultLng: "72.877", defaultZoom: "12" });
   const [razorpayConfig, setRazorpayConfig] = useState({ keyId: "", keySecret: "" });
+  const [googleConfig, setGoogleConfig] = useState({ clientId: "", clientSecret: "" });
+  const [firebaseConfig, setFirebaseConfig] = useState({ serviceAccount: "" });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load from platform_variables
     supabase.from("platform_variables").select("*").then(({ data }) => {
       if (data) {
         const vars: Record<string, string> = {};
@@ -29,6 +30,9 @@ export default function IntegrationsPage() {
         if (vars.RAZORPAY_KEY_ID) setRazorpayConfig(prev => ({ ...prev, keyId: vars.RAZORPAY_KEY_ID }));
         if (vars.RAZORPAY_KEY_SECRET) setRazorpayConfig(prev => ({ ...prev, keySecret: vars.RAZORPAY_KEY_SECRET }));
         if (vars.GOOGLE_MAPS_API_KEY) setMapsConfig(prev => ({ ...prev, apiKey: vars.GOOGLE_MAPS_API_KEY }));
+        if (vars.GOOGLE_CLIENT_ID) setGoogleConfig(prev => ({ ...prev, clientId: vars.GOOGLE_CLIENT_ID }));
+        if (vars.GOOGLE_CLIENT_SECRET) setGoogleConfig(prev => ({ ...prev, clientSecret: vars.GOOGLE_CLIENT_SECRET }));
+        if (vars.FIREBASE_SERVICE_ACCOUNT) setFirebaseConfig(prev => ({ ...prev, serviceAccount: vars.FIREBASE_SERVICE_ACCOUNT }));
       }
       setLoading(false);
     });
@@ -54,6 +58,27 @@ export default function IntegrationsPage() {
     toast.success("Hyperverge configuration saved");
   };
 
+  const saveGoogleOAuth = async () => {
+    if (!googleConfig.clientId || !googleConfig.clientSecret) {
+      toast.error("Please fill both Client ID and Client Secret");
+      return;
+    }
+    await Promise.all([
+      supabase.from("platform_variables").upsert({ id: "pv-google-client-id", key: "GOOGLE_CLIENT_ID", value: googleConfig.clientId, description: "Google OAuth Client ID" } as any),
+      supabase.from("platform_variables").upsert({ id: "pv-google-client-secret", key: "GOOGLE_CLIENT_SECRET", value: googleConfig.clientSecret, description: "Google OAuth Client Secret" } as any),
+    ]);
+    toast.success("Google OAuth configuration saved");
+  };
+
+  const saveFirebase = async () => {
+    if (!firebaseConfig.serviceAccount) {
+      toast.error("Please fill Firebase Service Account JSON");
+      return;
+    }
+    await supabase.from("platform_variables").upsert({ id: "pv-firebase-sa", key: "FIREBASE_SERVICE_ACCOUNT", value: firebaseConfig.serviceAccount, description: "Firebase Service Account JSON" } as any);
+    toast.success("Firebase configuration saved");
+  };
+
   const saveMaps = async () => {
     await supabase.from("platform_variables").upsert({ id: "pv-google-maps-key", key: "GOOGLE_MAPS_API_KEY", value: mapsConfig.apiKey, description: "Google Maps API Key" } as any);
     toast.success("Google Maps configuration saved");
@@ -67,8 +92,10 @@ export default function IntegrationsPage() {
       </div>
 
       <Tabs defaultValue="razorpay" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="razorpay" className="gap-2"><CreditCard className="h-4 w-4" /> Razorpay</TabsTrigger>
+          <TabsTrigger value="google-oauth" className="gap-2"><Globe className="h-4 w-4" /> Google OAuth</TabsTrigger>
+          <TabsTrigger value="firebase" className="gap-2"><Key className="h-4 w-4" /> Firebase</TabsTrigger>
           <TabsTrigger value="hyperverge" className="gap-2"><Shield className="h-4 w-4" /> Hyperverge KYC</TabsTrigger>
           <TabsTrigger value="maps" className="gap-2"><MapPin className="h-4 w-4" /> Google Maps</TabsTrigger>
         </TabsList>
@@ -95,12 +122,11 @@ export default function IntegrationsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Key ID</Label>
-                    <Input placeholder="rzp_live_..." value={razorpayConfig.keyId} onChange={(e) => setRazorpayConfig({ ...razorpayConfig, keyId: e.target.value })} className="mt-1.5" />
+                    <Input placeholder="rzp_live_..." value={razorpayConfig.keyId} onChange={(e) => setRazorpayConfig({ ...razorpayConfig, keyId: e.target.value })} className="mt-1.5 font-mono text-sm" />
                   </div>
                   <div>
                     <Label>Key Secret</Label>
-                    <Input type="password" placeholder="Enter secret key" value={razorpayConfig.keySecret} onChange={(e) => setRazorpayConfig({ ...razorpayConfig, keySecret: e.target.value })} className="mt-1.5" />
-                    <p className="text-[10px] text-muted-foreground mt-1">⚠️ Stored securely in database</p>
+                    <Input placeholder="Enter secret key" value={razorpayConfig.keySecret} onChange={(e) => setRazorpayConfig({ ...razorpayConfig, keySecret: e.target.value })} className="mt-1.5 font-mono text-sm" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -125,6 +151,57 @@ export default function IntegrationsPage() {
                 <Button onClick={saveRazorpay}>Save Configuration</Button>
               </div>
             )}
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="google-oauth">
+          <Card className="p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Globe className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Google OAuth Credentials</h3>
+                <p className="text-sm text-muted-foreground">Client ID and Secret for Google Sign-In</p>
+              </div>
+            </div>
+            <div className="space-y-4 border-t border-border pt-4">
+              <div>
+                <Label>Google Client ID</Label>
+                <Input placeholder="xxxx.apps.googleusercontent.com" value={googleConfig.clientId} onChange={(e) => setGoogleConfig({ ...googleConfig, clientId: e.target.value })} className="mt-1.5 font-mono text-sm" />
+              </div>
+              <div>
+                <Label>Google Client Secret</Label>
+                <Input placeholder="GOCSPX-..." value={googleConfig.clientSecret} onChange={(e) => setGoogleConfig({ ...googleConfig, clientSecret: e.target.value })} className="mt-1.5 font-mono text-sm" />
+              </div>
+              <Button onClick={saveGoogleOAuth}>Save Configuration</Button>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="firebase">
+          <Card className="p-6 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-xl bg-accent/20 flex items-center justify-center">
+                <Key className="h-6 w-6 text-accent-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Firebase Service Account</h3>
+                <p className="text-sm text-muted-foreground">Service account JSON for Firebase Admin SDK (phone auth, push notifications)</p>
+              </div>
+            </div>
+            <div className="space-y-4 border-t border-border pt-4">
+              <div>
+                <Label>Service Account JSON</Label>
+                <textarea
+                  placeholder='{"type":"service_account","project_id":"...","private_key":"..."}'
+                  value={firebaseConfig.serviceAccount}
+                  onChange={(e) => setFirebaseConfig({ serviceAccount: e.target.value })}
+                  className="mt-1.5 w-full min-h-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+              <Button onClick={saveFirebase}>Save Configuration</Button>
+            </div>
           </Card>
         </TabsContent>
 
