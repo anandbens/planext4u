@@ -92,10 +92,15 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
     if (!customer || activeTab !== "orders") return;
     setOrdersLoading(true);
     const from = (ordersPage - 1) * ordersPerPage;
-    supabase.from("orders").select("*", { count: "exact" }).eq("customer_id", customer.id)
-      .order("created_at", { ascending: false }).range(from, from + ordersPerPage - 1)
+    let query = supabase.from("orders").select("*", { count: "exact" }).eq("customer_id", customer.id)
+      .order("created_at", { ascending: false });
+    if (ordersStatusFilter !== "all") query = query.eq("status", ordersStatusFilter);
+    if (ordersFromDate) query = query.gte("created_at", ordersFromDate);
+    if (ordersToDate) query = query.lte("created_at", ordersToDate + "T23:59:59");
+    if (ordersSearch) query = query.or(`id.ilike.%${ordersSearch}%,vendor_name.ilike.%${ordersSearch}%`);
+    query.range(from, from + ordersPerPage - 1)
       .then(({ data, count }) => { setOrders(data || []); setOrdersTotal(count || 0); setOrdersLoading(false); });
-  }, [customer, activeTab, ordersPage]);
+  }, [customer, activeTab, ordersPage, ordersStatusFilter, ordersSearch, ordersFromDate, ordersToDate]);
 
   // Fetch points
   useEffect(() => {
