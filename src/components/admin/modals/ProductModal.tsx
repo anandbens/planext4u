@@ -27,6 +27,7 @@ const emptyForm = {
   max_points_redeemable: 0, status: "active" as Product["status"],
   vendor_id: "", vendor_name: "", category_id: "", category_name: "", stock: 0, emoji: "📦",
   image: "", rejection_reason: "", youtube_video_url: "",
+  images: [] as string[], max_redemption_percentage: null as number | null,
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete }: ProductModalProps) {
