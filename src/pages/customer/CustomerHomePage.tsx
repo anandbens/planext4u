@@ -103,16 +103,16 @@ export default function CustomerHomePage() {
   const itemAnim = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
   const slideUp = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
 
-  // Category icons for horizontal scroll
+  // Build category icons from DB data (parent categories only)
+  const parentCategories = (data?.categories || []).filter((c: any) => !c.parent_id);
   const categoryIcons = [
-    { icon: "📦", label: "All", to: "/app/browse" },
-    { icon: "🎧", label: "Electronics", to: "/app/browse?category=Electronics" },
-    { icon: "👕", label: "Fashion", to: "/app/browse?category=Fashion" },
-    { icon: "🍽️", label: "Food", to: "/app/browse?category=Food" },
-    { icon: "🛒", label: "Groceries", to: "/app/browse?category=Groceries" },
-    { icon: "🏠", label: "Home", to: "/app/browse?category=Home & Living" },
-    { icon: "📚", label: "Books", to: "/app/browse?category=Books" },
-    { icon: "🏋️", label: "Sports", to: "/app/browse?category=Sports & Fitness" },
+    { icon: "📦", label: "All", to: "/app/browse", image: "" },
+    ...parentCategories.slice(0, 7).map((c: any) => ({
+      icon: c.image?.startsWith('http') ? '' : (c.image || '📦'),
+      label: c.name.length > 10 ? c.name.slice(0, 10) : c.name,
+      to: `/app/browse?category=${c.name}`,
+      image: c.image?.startsWith('http') ? c.image : '',
+    })),
   ];
 
   if (showSplash) {
