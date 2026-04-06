@@ -152,13 +152,37 @@ export default function CustomerCartPage() {
 
   const mrpTotal = cart.reduce((sum, item) => sum + (item.price + item.discount) * item.qty, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const platformFee = platformFeeValue;
+  const totalDiscount = mrpTotal - subtotal;
+
+  // Calculate per-product max redeemable points
+  const perItemMaxPoints = cart.map(item => ({
+    id: item.id,
+    title: item.title,
+    maxRedeemable: item.maxPoints * item.qty,
+  }));
+
+  // Check if 4+ referrals completed this month → zero platform fee
+  const [referralCountThisMonth, setReferralCountThisMonth] = useState(0);
+  useEffect(() => {
+    if (!customerId) return;
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    supabase.from('referrals')
+      .select('id', { count: 'exact', head: true })
+      .eq('referrer_id', customerId)
+      .eq('first_order_placed', true)
+      .gte('created_at', startOfMonth.toISOString())
+      .then(({ count }) => setReferralCountThisMonth(count || 0));
+  }, [customerId]);
+
+  const platformFee = referralCountThisMonth >= 4 ? 0 : platformFeeValue;
   const gstOnPlatformFee = Math.round(platformFee * platformFeeGst / 100 * 100) / 100;
   const tax = cart.reduce((sum, item) => sum + item.tax * item.qty, 0);
   const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
   const maxPoints = Math.min(walletPoints, cart.reduce((s, i) => s + i.maxPoints * i.qty, 0));
   const total = subtotal + platformFee + gstOnPlatformFee - discount - pointsUsed;
-  const savings = (mrpTotal - subtotal) + discount + pointsUsed;
+  const savings = totalDiscount + discount + pointsUsed;
 
   const applyCoupon = () => {
     if (coupon === "WELCOME") { setCouponApplied(true); toast.success("Coupon applied! 10% discount"); }
@@ -166,7 +190,16 @@ export default function CustomerCartPage() {
   };
 
   const applyPoints = () => {
-    if (pointsUsed > maxPoints) { setPointsUsed(maxPoints); }
+    if (pointsUsed > maxPoints) {
+      toast.error(`Maximum redeemable points for this order is ${maxPoints}. Enter a value between 1 and ${maxPoints}.`);
+      setPointsUsed(maxPoints);
+      return;
+    }
+    if (pointsUsed < 0) {
+      toast.error("Points must be a positive number");
+      setPointsUsed(0);
+      return;
+    }
     toast.success(`${pointsUsed} points applied`);
   };
 
