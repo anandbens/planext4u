@@ -45,6 +45,7 @@ export default function SocialReelsPage() {
 
   const reels = dbReels.length > 0 ? dbReels.map((r: any) => {
     const media = Array.isArray(r.media) && r.media.length > 0 ? r.media[0] : null;
+    const metadata = r.metadata || {};
     return {
       id: r.id, user_id: r.user_id,
       videoUrl: media?.url || media?.thumbnailUrl || '',
@@ -52,6 +53,8 @@ export default function SocialReelsPage() {
       likes: r.like_count || 0, comments: r.comment_count || 0, shares: r.share_count || 0,
       audio: "Original Audio",
       isLiked: false, isSaved: false, isVerified: false, username: '',
+      linkedProductId: metadata.linked_product_id || null,
+      linkedProductTitle: metadata.linked_product_title || null,
     };
   }) : FALLBACK_REELS;
 
