@@ -1,4 +1,5 @@
 import { Category } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ const emptyForm = {
   banner_image: "", icon: "", is_trending: false, description: "",
   parent_id: "" as string | null, commission_rate: "" as string,
   promotion_banner_url: "", promotion_title: "", promotion_active: false,
-  is_emergency: false,
+  is_emergency: false, verification_status: "unverified" as string,
 };
 
 export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories, defaultAsSubcategory }: CategoryModalProps) {
@@ -57,6 +58,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         promotion_title: (category as any).promotion_title || "",
         promotion_active: (category as any).promotion_active || false,
         is_emergency: (category as any).is_emergency || false,
+        verification_status: (category as any).verification_status || "unverified",
       });
       setEditMode(mode === "edit");
     }
@@ -74,6 +76,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         promotion_title: form.promotion_title || null,
         promotion_active: form.promotion_active,
         is_emergency: form.is_emergency,
+        verification_status: form.verification_status,
       };
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
@@ -225,6 +228,26 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
                 </SelectContent>
               </Select>
             ) : <div className="mt-1"><StatusBadge status={category?.status || "active"} /></div>}
+          </div>
+
+          {/* Verification Status */}
+          <div>
+            <Label className="text-xs text-muted-foreground">Verification Status</Label>
+            {editMode ? (
+              <Select value={form.verification_status} onValueChange={(v) => setForm({ ...form, verification_status: v })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="verified">Verified</SelectItem>
+                  <SelectItem value="unverified">Unverified</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="mt-1">
+                <Badge className={`text-[10px] border-0 ${(category as any)?.verification_status === 'verified' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                  {(category as any)?.verification_status === 'verified' ? 'VERIFIED' : 'UNVERIFIED'}
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter className="mt-4">
