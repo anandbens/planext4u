@@ -122,12 +122,11 @@ export default function IntegrationsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Key ID</Label>
-                    <Input placeholder="rzp_live_..." value={razorpayConfig.keyId} onChange={(e) => setRazorpayConfig({ ...razorpayConfig, keyId: e.target.value })} className="mt-1.5" />
+                    <Input placeholder="rzp_live_..." value={razorpayConfig.keyId} onChange={(e) => setRazorpayConfig({ ...razorpayConfig, keyId: e.target.value })} className="mt-1.5 font-mono text-sm" />
                   </div>
                   <div>
                     <Label>Key Secret</Label>
-                    <Input type="password" placeholder="Enter secret key" value={razorpayConfig.keySecret} onChange={(e) => setRazorpayConfig({ ...razorpayConfig, keySecret: e.target.value })} className="mt-1.5" />
-                    <p className="text-[10px] text-muted-foreground mt-1">⚠️ Stored securely in database</p>
+                    <Input placeholder="Enter secret key" value={razorpayConfig.keySecret} onChange={(e) => setRazorpayConfig({ ...razorpayConfig, keySecret: e.target.value })} className="mt-1.5 font-mono text-sm" />
                   </div>
                 </div>
                 <div className="space-y-2">
