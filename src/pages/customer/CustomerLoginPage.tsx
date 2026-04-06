@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Mail, Phone, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname } from "@/lib/firebase";
+import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { isNativePlatform } from "@/lib/capacitor-auth";
@@ -42,7 +42,7 @@ export default function CustomerLoginPage() {
     }
   }, [timer]);
 
-  useEffect(() => () => clearRecaptcha(), []);
+  useEffect(() => { if (ensureFirebaseHostname()) preRenderRecaptcha(); return () => clearRecaptcha(); }, []);
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

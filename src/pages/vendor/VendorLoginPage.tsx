@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, LogIn, Store, ShoppingBag, Wrench, Phone, ArrowRight, ShieldCheck, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname } from "@/lib/firebase";
+import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import p4uLogo from "@/assets/p4u-logo.png";
 
@@ -29,7 +29,7 @@ export default function VendorLoginPage() {
   const otpRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (timer > 0) { const t = setTimeout(() => setTimer(timer - 1), 1000); return () => clearTimeout(t); } }, [timer]);
-  useEffect(() => () => clearRecaptcha(), []);
+  useEffect(() => { if (ensureFirebaseHostname()) preRenderRecaptcha(); return () => clearRecaptcha(); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

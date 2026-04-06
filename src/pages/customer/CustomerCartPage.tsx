@@ -49,6 +49,7 @@ export default function CustomerCartPage() {
   const [showAddressDialog, setShowAddressDialog] = useState(false);
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
   const [addressForm, setAddressForm] = useState({ label: "Home", type: "home", address_line: "", city: "", pincode: "" });
+  const [referralCountThisMonth, setReferralCountThisMonth] = useState(0);
 
   useEffect(() => {
     Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses(), loadPlatformFees()]).then(([cartItems, profile]) => {
@@ -152,13 +153,36 @@ export default function CustomerCartPage() {
 
   const mrpTotal = cart.reduce((sum, item) => sum + (item.price + item.discount) * item.qty, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const platformFee = platformFeeValue;
+  const totalDiscount = mrpTotal - subtotal;
+
+  // Calculate per-product max redeemable points
+  const perItemMaxPoints = cart.map(item => ({
+    id: item.id,
+    title: item.title,
+    maxRedeemable: item.maxPoints * item.qty,
+  }));
+
+  // Check if 4+ referrals completed this month → zero platform fee
+  useEffect(() => {
+    if (!customerId) return;
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    supabase.from('referrals')
+      .select('id', { count: 'exact', head: true })
+      .eq('referrer_id', customerId)
+      .eq('first_order_placed', true)
+      .gte('created_at', startOfMonth.toISOString())
+      .then(({ count }) => setReferralCountThisMonth(count || 0));
+  }, [customerId]);
+
+  const platformFee = referralCountThisMonth >= 4 ? 0 : platformFeeValue;
   const gstOnPlatformFee = Math.round(platformFee * platformFeeGst / 100 * 100) / 100;
   const tax = cart.reduce((sum, item) => sum + item.tax * item.qty, 0);
   const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
   const maxPoints = Math.min(walletPoints, cart.reduce((s, i) => s + i.maxPoints * i.qty, 0));
   const total = subtotal + platformFee + gstOnPlatformFee - discount - pointsUsed;
-  const savings = (mrpTotal - subtotal) + discount + pointsUsed;
+  const savings = totalDiscount + discount + pointsUsed;
 
   const applyCoupon = () => {
     if (coupon === "WELCOME") { setCouponApplied(true); toast.success("Coupon applied! 10% discount"); }
@@ -166,7 +190,16 @@ export default function CustomerCartPage() {
   };
 
   const applyPoints = () => {
-    if (pointsUsed > maxPoints) { setPointsUsed(maxPoints); }
+    if (pointsUsed > maxPoints) {
+      toast.error(`Maximum redeemable points for this order is ${maxPoints}. Enter a value between 1 and ${maxPoints}.`);
+      setPointsUsed(maxPoints);
+      return;
+    }
+    if (pointsUsed < 0) {
+      toast.error("Points must be a positive number");
+      setPointsUsed(0);
+      return;
+    }
     toast.success(`${pointsUsed} points applied`);
   };
 
@@ -177,9 +210,13 @@ export default function CustomerCartPage() {
       if (!selectedDate) { toast.error("Please select a delivery date"); return; }
       if (!selectedTimeSlot) { toast.error("Please select a delivery time slot"); return; }
     }
+    if (pointsUsed > maxPoints) {
+      toast.error(`You can redeem a maximum of ${maxPoints} points for this order. Please enter a value between 1 and ${maxPoints}.`);
+      return;
+    }
     navigate('/app/payment', {
       state: {
-        cart, subtotal, platformFee, gstOnPlatformFee, discount, pointsUsed, total,
+        cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings,
         selectedAddress: addresses.find(a => a.id === selectedAddressId),
         deliveryMode,
         deliveryDate: deliveryMode === "scheduled" ? selectedDate?.toISOString() : null,
@@ -356,7 +393,9 @@ export default function CustomerCartPage() {
                                 {discountPct > 0 && <span className="text-[10px] text-success font-medium">{discountPct}% Off</span>}
                               </div>
                               <p className="text-[10px] text-success mt-0.5">Eligible for FREE Shipping</p>
-                              {/* Aligned left: qty, save, remove */}
+                              {item.maxPoints > 0 && (
+                                <p className="text-[10px] text-primary mt-0.5">🎁 Up to {item.maxPoints * item.qty} points redeemable</p>
+                              )}
                               <div className="flex items-center gap-3 mt-2 flex-wrap">
                                 <div className="flex items-center gap-1 border border-border rounded-lg">
                                   <button onClick={() => updateQty(item.id, -1)} className="h-7 w-7 flex items-center justify-center hover:bg-accent rounded-l-lg"><Minus className="h-3 w-3" /></button>
@@ -404,10 +443,16 @@ export default function CustomerCartPage() {
                 <Card className="p-4">
                   <h3 className="text-sm font-semibold mb-2">Redeem Points</h3>
                   <div className="flex gap-2">
-                    <Input type="number" placeholder="Enter Points" value={pointsUsed || ""} onChange={(e) => setPointsUsed(Math.min(Number(e.target.value), maxPoints))} className="h-10 flex-1" />
+                    <Input type="number" placeholder={`Enter Points (max ${maxPoints})`} value={pointsUsed || ""} onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setPointsUsed(val);
+                    }} className="h-10 flex-1" min={0} max={maxPoints} />
                     <Button className="h-10 px-6" onClick={applyPoints}>Apply</Button>
                   </div>
-                  <p className="text-[10px] text-success mt-1.5">Your have total reward points {walletPoints.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1.5">Balance: {walletPoints.toLocaleString()} pts · Max redeemable: {maxPoints} pts</p>
+                  {pointsUsed > maxPoints && (
+                    <p className="text-[10px] text-destructive mt-1 font-medium">⚠ Enter between 1 and {maxPoints} points</p>
+                  )}
                 </Card>
                 <Card className="p-4">
                   <div className="flex items-center gap-2">
@@ -419,24 +464,39 @@ export default function CustomerCartPage() {
                 <Card className="p-4">
                   <h3 className="text-sm font-semibold mb-3">Bill Details</h3>
                   <div className="space-y-2.5 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>₹{mrpTotal.toLocaleString()}.00</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>₹{mrpTotal.toLocaleString()}</span></div>
+                    {totalDiscount > 0 && (
+                      <div className="flex justify-between pl-3 border-l-2 border-success/30 text-success">
+                        <span>Product Discount</span><span>- ₹{totalDiscount.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between pl-3 border-l-2 border-border/50">
                       <span className="text-muted-foreground font-medium">Subtotal</span><span className="font-medium">₹{subtotal.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between pl-3 border-l-2 border-border/50">
-                      <div><span className="text-muted-foreground">Platform Fee</span><p className="text-[10px] text-muted-foreground/70">Service charge</p></div>
-                      <span>+ ₹{platformFee}</span>
+                      <div>
+                        <span className="text-muted-foreground">Platform Fee</span>
+                        {referralCountThisMonth >= 4 && <p className="text-[10px] text-success font-medium">🎉 FREE (4+ referrals this month!)</p>}
+                        {referralCountThisMonth < 4 && <p className="text-[10px] text-muted-foreground/70">Service charge</p>}
+                      </div>
+                      <span>{referralCountThisMonth >= 4 ? <span className="line-through text-muted-foreground">₹{platformFeeValue}</span> : `+ ₹${platformFee}`}</span>
                     </div>
-                    <div className="flex justify-between pl-3 border-l-2 border-border/50">
-                      <div><span className="text-muted-foreground">GST on Platform Fee</span><p className="text-[10px] text-muted-foreground/70">{platformFeeGst}% on platform fee</p></div>
-                      <span>+ ₹{gstOnPlatformFee.toFixed(2)}</span>
-                    </div>
-                    {pointsUsed > 0 && <div className="flex justify-between text-success"><span>Redeem Points</span><span>- ₹{pointsUsed.toLocaleString()}</span></div>}
+                    {platformFee > 0 && (
+                      <div className="flex justify-between pl-3 border-l-2 border-border/50">
+                        <div><span className="text-muted-foreground">GST on Platform Fee</span><p className="text-[10px] text-muted-foreground/70">{platformFeeGst}% on platform fee</p></div>
+                        <span>+ ₹{gstOnPlatformFee.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {pointsUsed > 0 && <div className="flex justify-between text-success"><span>Points Redeemed</span><span>- ₹{pointsUsed.toLocaleString()}</span></div>}
                     {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>- ₹{discount.toLocaleString()}</span></div>}
                     <div className="border-t-2 border-dashed border-border/50 my-1" />
                     <div className="flex justify-between font-bold bg-success/5 rounded-lg px-3 py-2 -mx-1"><span>Total Amount</span><span className="text-success">₹{total.toLocaleString()}</span></div>
                   </div>
-                  {savings > 0 && <p className="text-xs text-success mt-2 font-medium">You will save ₹{savings.toLocaleString()} on this order</p>}
+                  {savings > 0 && (
+                    <div className="mt-2 p-2 bg-success/5 rounded-lg border border-success/20">
+                      <p className="text-xs text-success font-semibold text-center">🎉 You save ₹{savings.toLocaleString()} on this order!</p>
+                    </div>
+                  )}
 
                   <div className="mt-4 p-3 bg-secondary/30 rounded-lg text-xs text-muted-foreground">
                     <p className="font-semibold text-foreground mb-1">Review your order and address details to avoid cancellations</p>

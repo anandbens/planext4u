@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Wallet, ArrowUpRight, ArrowDownLeft, Gift, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Wallet, ArrowUpRight, ArrowDownLeft, Gift, ShoppingBag, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +31,28 @@ export default function CustomerWalletPage() {
     queryFn: async () => {
       if (!customerId) return [];
       const { data } = await supabase.from('points_transactions').select('*').eq('user_id', customerId).order('created_at', { ascending: false });
-      return data || [];
+      // Only show transactions where points were actually earned or used (> 0)
+      return (data || []).filter((t: any) => t.points > 0);
+    },
+    enabled: !!customerId,
+  });
+
+  // Points expiring this month
+  const { data: expiringPoints } = useQuery({
+    queryKey: ["expiringPoints", customerId],
+    queryFn: async () => {
+      if (!customerId) return 0;
+      const endOfMonth = new Date();
+      endOfMonth.setMonth(endOfMonth.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
+      const { data } = await supabase.from('points_transactions')
+        .select('points')
+        .eq('user_id', customerId)
+        .eq('type', 'referral')
+        .eq('is_expired', false)
+        .lte('expires_at', endOfMonth.toISOString())
+        .gt('points', 0);
+      return (data || []).reduce((s: number, t: any) => s + t.points, 0);
     },
     enabled: !!customerId,
   });
@@ -72,6 +93,20 @@ export default function CustomerWalletPage() {
             </Button>
           </div>
         </Card>
+
+        {/* Expiring points alert */}
+        {(expiringPoints || 0) > 0 && (
+          <Card className="p-3 bg-warning/10 border-warning/30 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-warning">{expiringPoints} points expiring this month!</p>
+              <p className="text-[10px] text-muted-foreground">Use them before month-end by placing orders</p>
+            </div>
+            <Button size="sm" variant="outline" className="shrink-0 text-xs h-7" asChild>
+              <Link to="/app/browse">Shop Now</Link>
+            </Button>
+          </Card>
+        )}
 
         <div className="grid grid-cols-3 gap-3">
           <Card className="p-3 text-center">

@@ -63,13 +63,32 @@ export function setupRecaptcha(): RecaptchaVerifier {
   return verifier;
 }
 
+/**
+ * Pre-render reCAPTCHA so it's ready when user clicks "Send OTP".
+ * Call this on page mount.
+ */
+export function preRenderRecaptcha() {
+  if ((window as any).recaptchaVerifier) return;
+  ensureRecaptchaContainer();
+  const verifier = new RecaptchaVerifier(firebaseAuth, "recaptcha-container", {
+    size: "invisible",
+  });
+  (window as any).recaptchaVerifier = verifier;
+  // Pre-render in background so token is ready
+  verifier.render().catch(() => {});
+}
+
 export async function sendOTP(phoneNumber: string) {
   const currentPhone = firebaseAuth.currentUser?.phoneNumber?.replace(/\s/g, "");
   if (firebaseAuth.currentUser && currentPhone !== phoneNumber.replace(/\s/g, "")) {
     await signOut(firebaseAuth).catch(() => undefined);
   }
 
-  const appVerifier = setupRecaptcha();
+  // Reuse pre-rendered verifier if available, otherwise create new one
+  let appVerifier = (window as any).recaptchaVerifier;
+  if (!appVerifier) {
+    appVerifier = setupRecaptcha();
+  }
   const result = await signInWithPhoneNumber(firebaseAuth, phoneNumber, appVerifier);
   confirmationResultGlobal = result;
   return result;
