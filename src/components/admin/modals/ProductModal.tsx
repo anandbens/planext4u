@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X } from "lucide-react";
+import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X, Clock, Phone, Shield, ToggleLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MOCK_CATEGORIES, MOCK_VENDORS } from "@/lib/mockData";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
