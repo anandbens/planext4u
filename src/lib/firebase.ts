@@ -15,6 +15,13 @@ const app = initializeApp(firebaseConfig);
 export const firebaseAuth = getAuth(app);
 
 const ALLOWED_HOSTNAMES = ["localhost", "127.0.0.1", "planext4u.lovable.app", "www.planext4u.net", "planext4u.net"];
+
+function isAllowedHostname(host: string): boolean {
+  if (ALLOWED_HOSTNAMES.includes(host)) return true;
+  // Allow all *.lovable.app preview/published domains
+  if (host.endsWith(".lovable.app")) return true;
+  return false;
+}
 const PRODUCTION_URL = "https://planext4u.lovable.app";
 
 /**
