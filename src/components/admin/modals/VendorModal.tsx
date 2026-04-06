@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Mail, Phone, Store, Percent, Crown, ArrowRight, Trash2, FileText, Download, Camera, CreditCard, Building2, Image as ImageIcon } from "lucide-react";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
