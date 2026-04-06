@@ -125,9 +125,39 @@ export default function VendorRegisterPage() {
     }
   };
 
+  const uploadStoreLogo = async (file: File) => {
+    if (!IMAGE_TYPES.includes(file.type) && !ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Only JPG, PNG, WebP allowed"); return;
+    }
+    if (file.size > MAX_FILE_SIZE) { toast.error("File must be under 2MB"); return; }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setLogoUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const fileName = `store-logos/${user.id}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('vendor-assets').upload(fileName, file, { contentType: file.type, upsert: true });
+      if (error) throw error;
+      const { data: urlData } = supabase.storage.from('vendor-assets').getPublicUrl(fileName);
+      updateField('store_logo_url', urlData.publicUrl);
+      toast.success("Store logo uploaded ✓");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && uploadTarget) uploadFile(file, uploadTarget);
+    if (e.target) e.target.value = "";
+  };
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadStoreLogo(file);
     if (e.target) e.target.value = "";
   };
 
