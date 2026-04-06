@@ -283,6 +283,7 @@ const AppRoutes = () => {
         <Route path="/app/cart" element={<CustomerPage><CustomerCartPage /></CustomerPage>} />
         <Route path="/app/payment" element={<CustomerPage><PaymentPage /></CustomerPage>} />
         <Route path="/app/orders" element={<CustomerPage><CustomerOrdersPage /></CustomerPage>} />
+        <Route path="/app/orders/:orderId" element={<CustomerPage><CustomerOrderDetailPage /></CustomerPage>} />
         <Route path="/app/profile" element={<CustomerPage><CustomerProfilePage /></CustomerPage>} />
         <Route path="/app/profile/edit" element={<CustomerPage><CustomerProfileEditPage /></CustomerPage>} />
         <Route path="/app/kyc" element={<CustomerPage><CustomerKYCPage /></CustomerPage>} />
