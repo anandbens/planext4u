@@ -228,6 +228,26 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
               </Select>
             ) : <div className="mt-1"><StatusBadge status={category?.status || "active"} /></div>}
           </div>
+
+          {/* Verification Status */}
+          <div>
+            <Label className="text-xs text-muted-foreground">Verification Status</Label>
+            {editMode ? (
+              <Select value={form.verification_status} onValueChange={(v) => setForm({ ...form, verification_status: v })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="verified">Verified</SelectItem>
+                  <SelectItem value="unverified">Unverified</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="mt-1">
+                <Badge className={`text-[10px] border-0 ${(category as any)?.verification_status === 'verified' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+                  {(category as any)?.verification_status === 'verified' ? 'VERIFIED' : 'UNVERIFIED'}
+                </Badge>
+              </div>
+            )}
+          </div>
         </div>
         <DialogFooter className="mt-4">
           {!isCreate && onDelete && editMode && (
