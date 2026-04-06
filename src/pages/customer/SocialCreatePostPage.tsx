@@ -508,3 +508,39 @@ export default function SocialCreatePostPage() {
     </div>
   );
 }
+
+function ProductSearchPicker({ search, onSearchChange, onSelect }: { search: string; onSearchChange: (v: string) => void; onSelect: (p: { id: string; title: string }) => void }) {
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const doSearch = async (q: string) => {
+    onSearchChange(q);
+    if (q.length < 2) { setResults([]); return; }
+    setLoading(true);
+    const { data } = await supabase.from('products').select('id, title, image, price').eq('status', 'active').ilike('title', `%${q}%`).limit(10);
+    setResults(data || []);
+    setLoading(false);
+  };
+
+  return (
+    <div className="border border-border/50 rounded-lg p-3 space-y-2 bg-muted/30">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search products..." value={search} onChange={(e) => doSearch(e.target.value)} className="pl-8 h-9 text-sm" />
+      </div>
+      {loading && <p className="text-xs text-muted-foreground">Searching...</p>}
+      {results.map(p => (
+        <button key={p.id} onClick={() => onSelect({ id: p.id, title: p.title })} className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent text-left">
+          <div className="h-10 w-10 rounded bg-secondary/30 overflow-hidden shrink-0">
+            {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <ShoppingBag className="h-5 w-5 m-auto mt-2.5 text-muted-foreground" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{p.title}</p>
+            <p className="text-xs text-muted-foreground">₹{p.price?.toLocaleString()}</p>
+          </div>
+        </button>
+      ))}
+      {search.length >= 2 && !loading && results.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">No products found</p>}
+    </div>
+  );
+}
