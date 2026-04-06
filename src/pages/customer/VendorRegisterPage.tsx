@@ -61,7 +61,18 @@ export default function VendorRegisterPage() {
 
   useEffect(() => {
     if (customerId) loadExistingApp();
+    api.getStates().then(setStates);
   }, [customerId]);
+
+  useEffect(() => {
+    if (form.state) {
+      const st = states.find(s => s.name === form.state);
+      if (st) api.getDistricts(st.id).then(setDistricts);
+      else setDistricts([]);
+    } else {
+      setDistricts([]);
+    }
+  }, [form.state, states]);
 
   const loadExistingApp = async () => {
     setAppLoading(true);
