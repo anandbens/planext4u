@@ -144,6 +144,7 @@ import VendorProfilePage from "./pages/vendor/VendorProfilePage";
 import VendorBankPage from "./pages/vendor/VendorBankPage";
 import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
 import VendorAccountControlPage from "./pages/vendor/VendorAccountControlPage";
+import VendorMediaLibraryPage from "./pages/vendor/VendorMediaLibraryPage";
 import AccountControlPage from "./pages/customer/AccountControlPage";
 
 const queryClient = new QueryClient();
