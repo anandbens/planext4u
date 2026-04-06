@@ -159,10 +159,14 @@ export default function CustomerCartPage() {
   const placeOrder = async () => {
     if (cart.length === 0) return;
     if (!selectedAddressId) { toast.error("Please select a delivery address"); return; }
+    if (!selectedDate) { toast.error("Please select a delivery date"); return; }
+    if (!selectedTimeSlot) { toast.error("Please select a delivery time slot"); return; }
     navigate('/app/payment', {
       state: {
         cart, subtotal, platformFee, discount, pointsUsed, total,
         selectedAddress: addresses.find(a => a.id === selectedAddressId),
+        deliveryDate: selectedDate.toISOString(),
+        deliverySlot: selectedTimeSlot,
       }
     });
   };
