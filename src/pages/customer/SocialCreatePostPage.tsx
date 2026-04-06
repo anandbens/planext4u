@@ -270,17 +270,27 @@ export default function SocialCreatePostPage() {
         </header>
         <div className="aspect-square bg-black relative">
           {previewUrls.length > 0 && (
-            <img src={previewUrls[0]} alt="" className="w-full h-full object-contain" style={{ filter: FILTER_CSS[selectedFilter] }} />
+            fileTypes[0] === 'video' ? (
+              <video src={previewUrls[0]} className="w-full h-full object-contain" controls muted />
+            ) : (
+              <img src={previewUrls[0]} alt="" className="w-full h-full object-contain" style={{ filter: FILTER_CSS[selectedFilter] }} />
+            )
           )}
           {previewUrls.length > 1 && (
-            <div className="absolute top-3 right-3 bg-foreground/60 text-background text-xs font-bold px-2 py-0.5 rounded-full">{previewUrls.length} photos</div>
+            <div className="absolute top-3 right-3 bg-foreground/60 text-background text-xs font-bold px-2 py-0.5 rounded-full">{previewUrls.length} items</div>
           )}
         </div>
         {previewUrls.length > 1 && (
           <div className="flex gap-2 p-3 overflow-x-auto bg-card border-b border-border/30">
-            {previewUrls.map((img, i) => (
+            {previewUrls.map((url, i) => (
               <div key={i} className="relative shrink-0">
-                <img src={img} alt="" className="h-16 w-16 rounded object-cover" style={{ filter: FILTER_CSS[selectedFilter] }} />
+                {fileTypes[i] === 'video' ? (
+                  <div className="h-16 w-16 rounded bg-muted flex items-center justify-center">
+                    <Video className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                ) : (
+                  <img src={url} alt="" className="h-16 w-16 rounded object-cover" style={{ filter: FILTER_CSS[selectedFilter] }} />
+                )}
                 <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
                   <X className="h-3 w-3 text-destructive-foreground" />
                 </button>
@@ -289,7 +299,7 @@ export default function SocialCreatePostPage() {
             <button onClick={() => fileInputRef.current?.click()} className="h-16 w-16 rounded border-2 border-dashed border-border flex items-center justify-center shrink-0">
               <Plus className="h-5 w-5 text-muted-foreground" />
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileSelect} />
+            <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileSelect} />
           </div>
         )}
         <div className="p-3">
