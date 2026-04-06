@@ -48,6 +48,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         category_id: product.category_id, category_name: product.category_name,
         stock: product.stock || 0, emoji: product.emoji || "📦",
         image: product.image || "", rejection_reason: product.rejection_reason || "",
+        youtube_video_url: (product as any).youtube_video_url || "",
       });
       setEditMode(mode === "edit");
     }
