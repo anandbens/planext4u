@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X, Clock, Phone, Shield, ToggleLeft, Plus, Layers } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
-import { MOCK_VENDORS } from "@/lib/mockData";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -67,10 +66,18 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     },
   });
 
+  const { data: dbVendors } = useQuery({
+    queryKey: ["vendorsForProduct"],
+    queryFn: async () => {
+      const { data } = await supabase.from("vendors").select("id, business_name").eq("status", "active").order("business_name");
+      return (data || []) as any[];
+    },
+  });
+
   const { data: attributes } = useQuery({
     queryKey: ["productAttributes"],
     queryFn: async () => {
-      const { data } = await supabase.from("product_attributes" as any).select("*").eq("is_active", true).order("sort_order");
+      const { data } = await supabase.from("product_attributes").select("*").eq("is_active", true).order("sort_order");
       return (data || []) as any[];
     },
   });
@@ -78,7 +85,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
   const { data: attributeValues } = useQuery({
     queryKey: ["productAttributeValues"],
     queryFn: async () => {
-      const { data } = await supabase.from("product_attribute_values" as any).select("*").order("sort_order");
+      const { data } = await supabase.from("product_attribute_values").select("*").order("sort_order");
       return (data || []) as any[];
     },
   });
@@ -88,7 +95,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     queryKey: ["productVariants", product?.id],
     queryFn: async () => {
       if (!product?.id) return [];
-      const { data } = await supabase.from("product_variants" as any).select("*").eq("product_id", product.id).order("sort_order");
+      const { data } = await supabase.from("product_variants").select("*").eq("product_id", product.id).order("sort_order");
       return (data || []) as any[];
     },
     enabled: !!product?.id && open,
@@ -162,10 +169,9 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         await onSave?.(product.id, payload);
         // Save variants for variable products
         if (form.product_type === "variable" && product.id) {
-          // Delete existing variants and re-insert
-          await supabase.from("product_variants" as any).delete().eq("product_id", product.id);
+          await supabase.from("product_variants").delete().eq("product_id", product.id);
           for (const v of variants) {
-            await supabase.from("product_variants" as any).insert({
+            await supabase.from("product_variants").insert({
               product_id: product.id,
               sku: v.sku || null,
               price: v.price,
@@ -205,7 +211,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
   };
 
   const handleVendorChange = (vendorId: string) => {
-    const vendor = MOCK_VENDORS.find(v => v.id === vendorId);
+    const vendor = (dbVendors || []).find((v: any) => v.id === vendorId);
     setForm({ ...form, vendor_id: vendorId, vendor_name: vendor?.business_name || "" });
   };
 
@@ -233,6 +239,10 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
   };
 
   const handleSubcategoryChange = (subId: string) => {
+    if (subId === "__none__") {
+      setForm({ ...form, subcategory_id: "", subcategory_name: "" });
+      return;
+    }
     const sub = (dbSubcategories || []).find((s: any) => s.id === subId);
     setForm({ ...form, subcategory_id: subId, subcategory_name: sub?.name || "" });
   };
@@ -264,7 +274,6 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     const selectedAttrs = (form.product_attributes || []).filter((a: any) => a.values?.length > 0);
     if (selectedAttrs.length === 0) { toast.error("Select attribute values first"); return; }
 
-    // Cartesian product of all attribute values
     const combos: Record<string, string>[] = [{}];
     for (const attr of selectedAttrs) {
       const newCombos: Record<string, string>[] = [];
@@ -278,7 +287,6 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     }
 
     const newVariants: ProductVariant[] = combos.map((combo, i) => {
-      // Check if variant already exists
       const existing = variants.find(v => JSON.stringify(v.variant_attributes) === JSON.stringify(combo));
       if (existing) return existing;
       const label = Object.values(combo).join(" / ");
@@ -421,24 +429,24 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <>
                   <div>
                     <Label className="text-xs text-muted-foreground">Vendor *</Label>
-                    <Select value={form.vendor_id} onValueChange={handleVendorChange}>
+                    <Select value={form.vendor_id || undefined} onValueChange={handleVendorChange}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Select vendor" /></SelectTrigger>
-                      <SelectContent>{MOCK_VENDORS.map(v => <SelectItem key={v.id} value={v.id}>{v.business_name}</SelectItem>)}</SelectContent>
+                      <SelectContent>{(dbVendors || []).map((v: any) => <SelectItem key={v.id} value={v.id}>{v.business_name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Category *</Label>
-                    <Select value={form.category_id} onValueChange={handleCategoryChange}>
+                    <Select value={form.category_id || undefined} onValueChange={handleCategoryChange}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Select category" /></SelectTrigger>
                       <SelectContent>{(dbCategories || []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label className="text-xs text-muted-foreground">Subcategory</Label>
-                    <Select value={form.subcategory_id} onValueChange={handleSubcategoryChange}>
+                    <Select value={form.subcategory_id || "__none__"} onValueChange={handleSubcategoryChange}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Select subcategory" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="__none__">None</SelectItem>
                         {(dbSubcategories || []).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -526,10 +534,10 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <div>
                   <Label className="text-xs text-muted-foreground">Tax Slab</Label>
                   {editMode && !vendorRestricted ? (
-                    <Select value={form.tax_slab_id} onValueChange={(v) => setForm({ ...form, tax_slab_id: v })}>
+                    <Select value={form.tax_slab_id || "__manual__"} onValueChange={(v) => setForm({ ...form, tax_slab_id: v === "__manual__" ? "" : v })}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Select tax" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Manual</SelectItem>
+                        <SelectItem value="__manual__">Manual</SelectItem>
                         {(taxSlabs || []).map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name} ({t.rate}%)</SelectItem>)}
                       </SelectContent>
                     </Select>

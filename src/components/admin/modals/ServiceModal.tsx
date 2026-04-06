@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Wrench, DollarSign, Trash2, ImageIcon } from "lucide-react";
 import { useState, useEffect } from "react";
-import { MOCK_SERVICE_CATEGORIES, MOCK_SERVICE_VENDORS } from "@/lib/mockData";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface ServiceModalProps {
   service: Service | null;
@@ -35,6 +36,22 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
   const [editMode, setEditMode] = useState(mode === "edit" || isCreate);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+
+  const { data: dbVendors } = useQuery({
+    queryKey: ["serviceVendorsForModal"],
+    queryFn: async () => {
+      const { data } = await supabase.from("service_vendors" as any).select("id, business_name").eq("status", "active").order("business_name");
+      return (data || []) as any[];
+    },
+  });
+
+  const { data: dbCategories } = useQuery({
+    queryKey: ["serviceCategoriesForModal"],
+    queryFn: async () => {
+      const { data } = await supabase.from("service_categories" as any).select("id, name").eq("status", "active").order("name");
+      return (data || []) as any[];
+    },
+  });
 
   useEffect(() => {
     if (isCreate) { setForm(emptyForm); setEditMode(true); }
@@ -70,12 +87,12 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
   };
 
   const handleVendorChange = (id: string) => {
-    const v = MOCK_SERVICE_VENDORS.find(sv => sv.id === id);
+    const v = (dbVendors || []).find((sv: any) => sv.id === id);
     setForm({ ...form, vendor_id: id, vendor_name: v?.business_name || "" });
   };
 
   const handleCategoryChange = (id: string) => {
-    const c = MOCK_SERVICE_CATEGORIES.find(sc => sc.id === id);
+    const c = (dbCategories || []).find((sc: any) => sc.id === id);
     setForm({ ...form, category_id: id, category_name: c?.name || "" });
   };
 
@@ -126,19 +143,19 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
               <>
                 <div>
                   <Label className="text-xs text-muted-foreground">Vendor *</Label>
-                  <Select value={form.vendor_id} onValueChange={handleVendorChange}>
+                  <Select value={form.vendor_id || undefined} onValueChange={handleVendorChange}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Select vendor" /></SelectTrigger>
                     <SelectContent>
-                      {MOCK_SERVICE_VENDORS.map(v => <SelectItem key={v.id} value={v.id}>{v.business_name}</SelectItem>)}
+                      {(dbVendors || []).map((v: any) => <SelectItem key={v.id} value={v.id}>{v.business_name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Category *</Label>
-                  <Select value={form.category_id} onValueChange={handleCategoryChange}>
+                  <Select value={form.category_id || undefined} onValueChange={handleCategoryChange}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Select category" /></SelectTrigger>
                     <SelectContent>
-                      {MOCK_SERVICE_CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      {(dbCategories || []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
