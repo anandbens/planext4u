@@ -310,15 +310,23 @@ export default function PaymentPage() {
             <Card className="p-4 sticky top-24">
               <h3 className="text-sm font-semibold mb-3">Price Details</h3>
               <div className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>₹{(mrpTotal || subtotal)?.toLocaleString()}</span></div>
+                {(totalDiscount || 0) > 0 && <div className="flex justify-between text-success"><span>Product Discount</span><span>-₹{totalDiscount?.toLocaleString()}</span></div>}
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{subtotal?.toLocaleString()}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>₹{platformFee}</span></div>
-                {discount > 0 && <div className="flex justify-between text-success"><span>Discount</span><span>-₹{discount}</span></div>}
+                <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>{platformFee === 0 ? <span className="text-success">FREE</span> : `₹${platformFee}`}</span></div>
+                {(gstOnPlatformFee || 0) > 0 && <div className="flex justify-between"><span className="text-muted-foreground">GST on Platform Fee</span><span>₹{gstOnPlatformFee?.toFixed(2)}</span></div>}
+                {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>-₹{discount}</span></div>}
                 {pointsUsed > 0 && <div className="flex justify-between text-success"><span>Points Redeemed</span><span>-₹{pointsUsed}</span></div>}
                 <Separator />
                 <div className="flex justify-between font-bold text-base">
                   <span>Total Payable</span>
                   <span>₹{total?.toLocaleString()}</span>
                 </div>
+                {(savings || 0) > 0 && (
+                  <div className="p-2 bg-success/5 rounded-lg border border-success/20">
+                    <p className="text-xs text-success font-semibold text-center">🎉 You save ₹{savings?.toLocaleString()} on this order!</p>
+                  </div>
+                )}
               </div>
               <Button className="w-full h-12 mt-4 text-base font-semibold" onClick={handlePay}>
                 Pay ₹{total?.toLocaleString()}

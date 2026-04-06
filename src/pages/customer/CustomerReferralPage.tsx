@@ -37,8 +37,10 @@ export default function CustomerReferralPage() {
         <Card className="p-6 bg-gradient-to-r from-warning/20 to-warning/5 border-warning/30">
           <div className="text-center">
             <Gift className="h-10 w-10 text-warning mx-auto mb-2" />
-            <h2 className="text-lg font-bold">Refer & Earn 100 Points</h2>
-            <p className="text-xs text-muted-foreground mt-1">Share your code with friends. Get 100 points for each successful signup!</p>
+            <h2 className="text-lg font-bold">Refer & Earn 50 Points</h2>
+            <p className="text-xs text-muted-foreground mt-1">Share your code with friends. Get 50 points when they place their first order!</p>
+            <p className="text-[10px] text-muted-foreground mt-1">Points are credited after your friend's first order · Referral points expire monthly</p>
+            <p className="text-[10px] text-primary font-semibold mt-1">🎉 Refer 4+ friends who order this month → Platform Fee becomes FREE!</p>
             <div className="flex items-center justify-center gap-2 mt-4">
               <div className="bg-card px-6 py-2.5 rounded-lg border border-border font-mono text-lg font-bold tracking-widest">
                 {profile?.referral_code || 'REF0001'}
