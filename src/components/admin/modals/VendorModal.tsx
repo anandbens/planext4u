@@ -253,14 +253,24 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                 {/* Shop Photo */}
                 <div className="p-4 rounded-lg bg-secondary/30">
                   <div className="flex items-center gap-2 mb-2"><Camera className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Shop Photo</Label></div>
-                  {(form.shop_photo_url || (vendor as any)?.shop_photo_url) ? (
-                    <img src={form.shop_photo_url || (vendor as any)?.shop_photo_url} alt="Shop" className="rounded-lg max-h-40 object-cover w-full" />
+                  {editMode ? (
+                    <MediaLibraryPicker
+                      value={form.shop_photo_url || ""}
+                      onChange={(url) => setForm({ ...form, shop_photo_url: url })}
+                      folder="vendor-logos"
+                      label="Shop Photo"
+                      aspectRatio="aspect-video"
+                    />
                   ) : (
-                    <div className="h-24 rounded-lg border-2 border-dashed border-muted-foreground/20 flex items-center justify-center text-muted-foreground text-sm">
-                      <ImageIcon className="h-5 w-5 mr-2" /> No shop photo uploaded
-                    </div>
+                    (form.shop_photo_url || (vendor as any)?.shop_photo_url) ? (
+                      <img src={form.shop_photo_url || (vendor as any)?.shop_photo_url} alt="Shop" className="rounded-lg max-h-40 object-cover w-full" />
+                    ) : (
+                      <div className="h-24 rounded-lg border-2 border-dashed border-muted-foreground/20 flex items-center justify-center text-muted-foreground text-sm">
+                        <ImageIcon className="h-5 w-5 mr-2" /> No shop photo uploaded
+                      </div>
+                    )
                   )}
-                  {vendorApp?.shop_photo_url && !form.shop_photo_url && (
+                  {vendorApp?.shop_photo_url && !form.shop_photo_url && !editMode && (
                     <div className="mt-2">
                       <p className="text-xs text-muted-foreground mb-1">From application:</p>
                       <img src={vendorApp.shop_photo_url} alt="Shop from application" className="rounded-lg max-h-32 object-cover" />
