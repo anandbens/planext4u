@@ -1050,6 +1050,7 @@ export const api = {
       { data: featuredProducts },
       { data: featuredServices },
       { data: storeBanners },
+      { data: platformVars },
     ] = await Promise.all([
       supabase.from('banners').select('*').eq('status', 'active').order('priority', { ascending: false }),
       supabase.from('categories').select('*'),
@@ -1057,7 +1058,12 @@ export const api = {
       supabase.from('products').select('*').eq('status', 'active').limit(50),
       supabase.from('services').select('*').eq('status', 'active').limit(4),
       supabase.from('popup_banners').select('*').eq('status', 'active').order('created_at', { ascending: false }),
+      supabase.from('platform_variables').select('key, value').ilike('key', 'homepage_image_%'),
     ]);
+
+    // Build assets map from platform variables
+    const assets: Record<string, string> = {};
+    (platformVars || []).forEach((v: any) => { assets[v.key] = v.value; });
 
     // Filter products by verified/active vendors only
     let verifiedProducts = featuredProducts || [];
@@ -1079,6 +1085,7 @@ export const api = {
       featuredProducts: verifiedProducts.slice(0, 8),
       featuredServices: featuredServices || [],
       storeBanners: storeBanners || [],
+      assets,
     };
   },
 
