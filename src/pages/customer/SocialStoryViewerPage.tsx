@@ -168,9 +168,15 @@ export default function SocialStoryViewerPage() {
 
         {/* Story content */}
         {story.media_url ? (
-          <img src={story.media_url} alt="" className="w-full h-full object-cover"
-            onMouseDown={() => setIsPaused(true)} onMouseUp={() => setIsPaused(false)}
-            onTouchStart={() => setIsPaused(true)} onTouchEnd={() => setIsPaused(false)} />
+          story.media_type === 'video' || story.media_url.match(/\.(mp4|webm|mov)/i) ? (
+            <video src={story.media_url} className="w-full h-full object-cover" autoPlay muted playsInline loop
+              onMouseDown={() => setIsPaused(true)} onMouseUp={() => setIsPaused(false)}
+              onTouchStart={() => setIsPaused(true)} onTouchEnd={() => setIsPaused(false)} />
+          ) : (
+            <img src={story.media_url} alt="" className="w-full h-full object-cover"
+              onMouseDown={() => setIsPaused(true)} onMouseUp={() => setIsPaused(false)}
+              onTouchStart={() => setIsPaused(true)} onTouchEnd={() => setIsPaused(false)} />
+          )
         ) : (
           <div className={`w-full h-full flex items-center justify-center ${story.background_color || 'bg-gradient-to-br from-purple-600 to-pink-500'}`}
             onMouseDown={() => setIsPaused(true)} onMouseUp={() => setIsPaused(false)}
