@@ -14,6 +14,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const firebaseAuth = getAuth(app);
 
+const ALLOWED_HOSTNAMES = ["localhost", "127.0.0.1", "planext4u.lovable.app", "www.planext4u.net", "planext4u.net"];
+const PRODUCTION_URL = "https://planext4u.lovable.app";
+
+/**
+ * Check if Firebase Phone Auth is supported on the current hostname.
+ * If not, redirect the user to the production domain preserving the path.
+ * Returns true if the current host is allowed, false if redirecting.
+ */
+export function ensureFirebaseHostname(): boolean {
+  const host = window.location.hostname;
+  if (ALLOWED_HOSTNAMES.includes(host)) return true;
+  // Redirect to production with same path
+  const target = `${PRODUCTION_URL}${window.location.pathname}${window.location.search}`;
+  window.location.href = target;
+  return false;
+}
+
 let confirmationResultGlobal: ConfirmationResult | null = null;
 
 function ensureRecaptchaContainer(): HTMLElement {

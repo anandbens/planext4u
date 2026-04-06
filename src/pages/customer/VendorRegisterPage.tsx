@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
+const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const GOOGLE_MAPS_KEY = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
 
