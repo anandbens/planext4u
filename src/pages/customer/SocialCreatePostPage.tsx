@@ -97,55 +97,97 @@ export default function SocialCreatePostPage() {
     try {
       const postId = crypto.randomUUID();
       const mediaItems: any[] = [];
+      let hasVideo = false;
 
-      // Compress and upload each image
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
-        setUploadProgress({ stage: 'compressing', percent: 0, originalSize: file.size });
+        const isVideo = fileTypes[i] === 'video';
 
-        const { sizes, blurPlaceholder } = await compressImage(file, (p) => setUploadProgress(p));
+        if (isVideo) {
+          // Validate video duration
+          const durErr = await validateVideoDuration(file);
+          if (durErr) { toast.error(durErr); continue; }
 
-        setUploadProgress({ stage: 'uploading', percent: 50, originalSize: file.size });
+          hasVideo = true;
+          setUploadProgress({ stage: 'uploading', percent: 30, originalSize: file.size });
 
-        const bucket = 'social-media';
-        const basePath = `${customerUser.id}/social/${postId}/${i}`;
+          // Upload video to social-videos bucket
+          const videoPath = `${customerUser.id}/${postId}/video_${i}.mp4`;
+          const { error: vErr } = await supabase.storage.from('social-videos').upload(videoPath, file, {
+            contentType: file.type, upsert: true,
+          });
+          if (vErr) throw vErr;
+          const { data: vUrl } = supabase.storage.from('social-videos').getPublicUrl(videoPath);
 
-        // Upload medium and large sizes
-        const uploadBlob = async (blob: Blob, sizeName: string) => {
-          const path = `${basePath}/${sizeName}.webp`;
-          const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: 'image/webp', upsert: true });
-          if (error) throw error;
-          const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year
-          return data?.signedUrl || '';
-        };
+          // Generate thumbnail from video
+          let thumbUrl = '';
+          try {
+            const { extractVideoThumbnail } = await import('@/lib/media-compression');
+            const thumbBlob = await extractVideoThumbnail(file);
+            const thumbPath = `${customerUser.id}/${postId}/video_${i}_thumb.webp`;
+            await supabase.storage.from('social-media').upload(thumbPath, thumbBlob, { contentType: 'image/webp', upsert: true });
+            const { data: tData } = await supabase.storage.from('social-media').createSignedUrl(thumbPath, 60 * 60 * 24 * 365);
+            thumbUrl = tData?.signedUrl || '';
+          } catch {}
 
-        const [thumbUrl, medUrl, lgUrl] = await Promise.all([
-          uploadBlob(sizes.thumbnail, 'thumb'),
-          uploadBlob(sizes.medium, 'medium'),
-          uploadBlob(sizes.large, 'large'),
-        ]);
+          mediaItems.push({
+            type: 'video',
+            url: vUrl?.publicUrl || '',
+            thumbnailUrl: thumbUrl,
+            order: i,
+          });
 
-        mediaItems.push({
-          type: 'photo',
-          url: lgUrl,
-          thumbnailUrl: thumbUrl,
-          mediumUrl: medUrl,
-          blurPlaceholder,
-          order: i,
-        });
+          setUploadProgress({
+            stage: 'complete', percent: 100, originalSize: file.size,
+            savedText: `Video uploaded: ${formatFileSize(file.size)} ✓`,
+          });
+        } else {
+          // Image compression & upload (existing logic)
+          setUploadProgress({ stage: 'compressing', percent: 0, originalSize: file.size });
+          const { sizes, blurPlaceholder } = await compressImage(file, (p) => setUploadProgress(p));
+          setUploadProgress({ stage: 'uploading', percent: 50, originalSize: file.size });
 
-        setUploadProgress({
-          stage: 'complete', percent: 100, originalSize: file.size,
-          compressedSize: sizes.medium.size,
-          savedText: `Optimized: ${formatFileSize(file.size)} → ${formatFileSize(sizes.medium.size)} ✓`,
-        });
+          const bucket = 'social-media';
+          const basePath = `${customerUser.id}/social/${postId}/${i}`;
+
+          const uploadBlob = async (blob: Blob, sizeName: string) => {
+            const path = `${basePath}/${sizeName}.webp`;
+            const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: 'image/webp', upsert: true });
+            if (error) throw error;
+            const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 365);
+            return data?.signedUrl || '';
+          };
+
+          const [thumbUrl, medUrl, lgUrl] = await Promise.all([
+            uploadBlob(sizes.thumbnail, 'thumb'),
+            uploadBlob(sizes.medium, 'medium'),
+            uploadBlob(sizes.large, 'large'),
+          ]);
+
+          mediaItems.push({
+            type: 'photo',
+            url: lgUrl,
+            thumbnailUrl: thumbUrl,
+            mediumUrl: medUrl,
+            blurPlaceholder,
+            order: i,
+          });
+
+          setUploadProgress({
+            stage: 'complete', percent: 100, originalSize: file.size,
+            compressedSize: sizes.medium.size,
+            savedText: `Optimized: ${formatFileSize(file.size)} → ${formatFileSize(sizes.medium.size)} ✓`,
+          });
+        }
       }
+
+      const postType = hasVideo ? 'reel' : (mediaItems.length > 1 ? 'carousel' : 'photo');
 
       // Insert post into DB
       const { error } = await supabase.from('social_posts').insert({
         id: postId,
         user_id: customerUser.id,
-        post_type: mediaItems.length > 1 ? 'carousel' : 'photo',
+        post_type: postType,
         caption,
         location_name: location,
         media: mediaItems,
