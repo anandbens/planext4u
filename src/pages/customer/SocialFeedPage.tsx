@@ -318,7 +318,9 @@ function PostCard({ post }: { post: any }) {
             {isVerified && <svg className="h-3.5 w-3.5 text-primary fill-current shrink-0" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>}
             {post.collabUser && <span className="text-sm text-muted-foreground"> and <span className="font-semibold text-foreground">{post.collabUser}</span></span>}
           </div>
-          {post.location_name && <p className="text-[11px] text-muted-foreground">{post.location_name} · {timeAgo(post.created_at)}</p>}
+          <p className="text-[11px] text-muted-foreground">
+            {post.location_name ? `${post.location_name} · ` : ''}{timeAgo(post.created_at)}
+          </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild><button className="p-1"><MoreHorizontal className="h-5 w-5" /></button></DropdownMenuTrigger>
