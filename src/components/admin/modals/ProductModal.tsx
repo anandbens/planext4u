@@ -100,6 +100,15 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         max_redemption_percentage: (product as any).max_redemption_percentage ?? null,
         tax_slab_id: (product as any).tax_slab_id || "",
         product_attributes: (product as any).product_attributes || [],
+        is_available: (product as any).is_available !== false,
+        duration_hours: (product as any).duration_hours || 0,
+        duration_minutes: (product as any).duration_minutes || 0,
+        promise_p4u: (product as any).promise_p4u || "",
+        helpline_number: (product as any).helpline_number || "",
+        thumbnail_image: (product as any).thumbnail_image || "",
+        banner_image: (product as any).banner_image || "",
+        subcategory_id: (product as any).subcategory_id || "",
+        subcategory_name: (product as any).subcategory_name || "",
       });
       setEditMode(mode === "edit");
     }
