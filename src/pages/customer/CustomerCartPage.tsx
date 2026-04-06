@@ -40,7 +40,7 @@ export default function CustomerCartPage() {
   const [walletPoints, setWalletPoints] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
-  const [calendarWeekOffset, setCalendarWeekOffset] = useState(0);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressDialog, setShowAddressDialog] = useState(false);
