@@ -39,7 +39,7 @@ export default function VendorRegisterPage() {
 
   const [form, setForm] = useState({
     name: customerUser?.name || '', phone: customerUser?.mobile || '', secondary_phone: '',
-    email: customerUser?.email || '', state: '', city: '',
+    email: customerUser?.email || '', state: '', district: '',
     fb_link: '', instagram_link: '',
     business_name: '', business_type: 'proprietorship', store_name: '', category: 'product',
     subcategory: '', business_description: '',
@@ -49,6 +49,9 @@ export default function VendorRegisterPage() {
     bank_account_number: '', bank_confirm_account: '', bank_ifsc: '', bank_holder_name: '',
     store_logo_url: '',
   });
+
+  const [states, setStates] = useState<{ id: string; name: string }[]>([]);
+  const [districts, setDistricts] = useState<{ id: string; name: string }[]>([]);
 
   // Location state
   const [showMapModal, setShowMapModal] = useState(false);
