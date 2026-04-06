@@ -261,9 +261,9 @@ export default function CustomerHomePage() {
           <div className="bg-card rounded-2xl p-6 border border-border/30 shadow-sm">
             <div className="grid grid-cols-3 gap-8">
               {[
-                { label: "Emergency", image: "/images/services/emergency.jpg", to: "/app/services", color: "bg-destructive" },
-                { label: "Urgent", image: "/images/services/urgent.jpg", to: "/app/services", color: "bg-warning" },
-                { label: "Help", image: "/images/services/help.jpg", to: "/app/services", color: "bg-info" },
+                { label: "Emergency", image: data?.assets?.homepage_image_emergency || "/images/services/emergency.jpg", to: "/app/services", color: "bg-destructive" },
+                { label: "Urgent", image: data?.assets?.homepage_image_urgent || "/images/services/urgent.jpg", to: "/app/services", color: "bg-warning" },
+                { label: "Help", image: data?.assets?.homepage_image_help || "/images/services/help.jpg", to: "/app/services", color: "bg-info" },
               ].map((item) => (
                 <Link key={item.label} to={item.to} className="flex flex-col items-center gap-3 group">
                   <motion.div
@@ -327,9 +327,9 @@ export default function CustomerHomePage() {
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { brand: "IPHONE", image: "/images/banners/iphone-deal.jpg", to: "/app/browse?search=iphone", label: "UP to 80% OFF" },
-              { brand: "REALME", image: "/images/banners/realme-deal.jpg", to: "/app/browse?search=realme", label: "UP to 80% OFF" },
-              { brand: "XIAOMI", image: "/images/banners/xiaomi-deal.jpg", to: "/app/browse?search=xiaomi", label: "UP to 60% OFF" },
+              { brand: "IPHONE", image: data?.assets?.homepage_image_iphone_deal || "/images/banners/iphone-deal.jpg", to: "/app/browse?search=iphone", label: "UP to 80% OFF" },
+              { brand: "REALME", image: data?.assets?.homepage_image_realme_deal || "/images/banners/realme-deal.jpg", to: "/app/browse?search=realme", label: "UP to 80% OFF" },
+              { brand: "XIAOMI", image: data?.assets?.homepage_image_xiaomi_deal || "/images/banners/xiaomi-deal.jpg", to: "/app/browse?search=xiaomi", label: "UP to 60% OFF" },
             ].map((deal) => (
               <motion.div key={deal.brand} whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 300 }}>
                 <Link to={deal.to} className="block rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
@@ -635,7 +635,7 @@ export default function CustomerHomePage() {
         {/* Classifieds CTA */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
           <div className="rounded-2xl overflow-hidden relative">
-            <img src="/images/banners/classifieds-banner.jpg" alt="Classifieds" className="w-full h-44 md:h-56 object-cover" />
+            <img src={data?.assets?.homepage_image_classifieds_banner || "/images/banners/classifieds-banner.jpg"} alt="Classifieds" className="w-full h-44 md:h-56 object-cover" />
             <div className="absolute inset-0 bg-gradient-to-r from-foreground/70 to-foreground/20 flex items-center">
               <div className="p-6 md:p-8">
                 <h2 className="text-lg md:text-2xl font-bold text-card">Buy & Sell Locally</h2>
