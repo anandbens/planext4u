@@ -331,8 +331,6 @@ export default function CustomerCartPage() {
                       </div>
                     )}
                   </Card>
-                    </div>
-                  </Card>
 
                   {/* Cart Items */}
                   <div className="space-y-3 mt-3">
