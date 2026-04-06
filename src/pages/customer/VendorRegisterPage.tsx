@@ -423,8 +423,31 @@ export default function VendorRegisterPage() {
                 <p className="text-[10px] text-muted-foreground text-right mt-0.5">{form.business_description.length}/2000</p></div>
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Store Logo</label>
-              <DocUploadButton field="store_logo_url" label="Store Logo (optional)" />
+              <label className="text-xs font-medium text-muted-foreground">Store Logo / Shop Photo</label>
+              {form.store_logo_url ? (
+                <div className="relative mt-2 group">
+                  <div className="aspect-square w-28 rounded-lg overflow-hidden border border-border/30 bg-secondary/20">
+                    <img src={form.store_logo_url} alt="Store Logo" className="w-full h-full object-cover" />
+                  </div>
+                  <button type="button" onClick={() => updateField('store_logo_url', '')} className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2 mt-2">
+                  <button type="button" onClick={() => logoCameraRef.current?.click()} disabled={logoUploading}
+                    className="h-16 w-16 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                    {logoUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-5 w-5" />}
+                    <span className="text-[8px] mt-0.5">Camera</span>
+                  </button>
+                  <button type="button" onClick={() => logoFileRef.current?.click()} disabled={logoUploading}
+                    className="h-16 w-16 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                    {logoUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-5 w-5" />}
+                    <span className="text-[8px] mt-0.5">Gallery</span>
+                  </button>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">JPG/PNG/WebP, max 2MB</p>
             </div>
           </Card>
         )}
