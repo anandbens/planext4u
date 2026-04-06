@@ -104,21 +104,23 @@ export default function CustomerLoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const redirectTo = isNativePlatform()
-        ? 'https://planext4u.lovable.app/auth/callback'
-        : `${window.location.origin}/auth/callback`;
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo,
-          queryParams: { prompt: 'select_account' },
-        },
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+        extraParams: { prompt: "select_account" },
       });
 
-      if (error) throw error;
-      // Browser will redirect to Google — nothing more to do
-      return;
+      if (result.error) {
+        throw result.error;
+      }
+
+      if (result.redirected) {
+        // Browser will redirect to Google — nothing more to do
+        return;
+      }
+
+      // Session already set — user is authenticated
+      toast.success("Welcome to Planext4u!");
+      // useEffect watching customerUser will handle redirect
     } catch (err: any) {
       toast.error(err.message || "Google sign-in failed");
       setLoading(false);
