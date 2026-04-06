@@ -966,7 +966,9 @@ export type Database = {
         Row: {
           created_at: string
           description: string
+          expires_at: string | null
           id: string
+          is_expired: boolean
           points: number
           type: string
           user_id: string
@@ -975,7 +977,9 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string
+          expires_at?: string | null
           id: string
+          is_expired?: boolean
           points?: number
           type: string
           user_id: string
@@ -984,7 +988,9 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string
+          expires_at?: string | null
           id?: string
+          is_expired?: boolean
           points?: number
           type?: string
           user_id?: string
@@ -1918,7 +1924,10 @@ export type Database = {
       }
       referrals: {
         Row: {
+          bonus_credited: boolean
+          cooling_until: string | null
           created_at: string
+          first_order_placed: boolean
           id: string
           points_awarded: number
           referee_id: string
@@ -1928,7 +1937,10 @@ export type Database = {
           status: string
         }
         Insert: {
+          bonus_credited?: boolean
+          cooling_until?: string | null
           created_at?: string
+          first_order_placed?: boolean
           id: string
           points_awarded?: number
           referee_id: string
@@ -1938,7 +1950,10 @@ export type Database = {
           status?: string
         }
         Update: {
+          bonus_credited?: boolean
+          cooling_until?: string | null
           created_at?: string
+          first_order_placed?: boolean
           id?: string
           points_awarded?: number
           referee_id?: string
