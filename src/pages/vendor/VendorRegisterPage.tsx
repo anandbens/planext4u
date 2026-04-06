@@ -224,10 +224,20 @@ export default function VendorRegisterPage() {
                 <Input value={form.secondary_phone} onChange={e => updateField('secondary_phone', e.target.value.replace(/\D/g, ''))} maxLength={10} /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Email *</label>
                 <Input value={form.email} onChange={e => updateField('email', e.target.value)} type="email" /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">State</label>
-                <Input value={form.state} onChange={e => updateField('state', e.target.value)} /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">City</label>
-                <Input value={form.city} onChange={e => updateField('city', e.target.value)} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">State *</label>
+                <Select value={form.state} onValueChange={v => { updateField('state', v); updateField('district', ''); }}>
+                  <SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger>
+                  <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
+                    {states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select></div>
+              <div><label className="text-xs font-medium text-muted-foreground">District *</label>
+                <Select value={form.district} onValueChange={v => updateField('district', v)} disabled={!form.state}>
+                  <SelectTrigger><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
+                  <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
+                    {districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select></div>
               <div><label className="text-xs font-medium text-muted-foreground">Facebook</label>
                 <Input value={form.fb_link} onChange={e => updateField('fb_link', e.target.value)} placeholder="https://..." /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Instagram</label>
