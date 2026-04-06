@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api, CartItem } from "@/lib/api";
-import { format, addDays, startOfWeek, isSameDay } from "date-fns";
+import { format, addDays, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, isSameMonth, isBefore, startOfDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 const TIME_SLOTS = [

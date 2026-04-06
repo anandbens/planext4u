@@ -261,12 +261,26 @@ export default function PaymentPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-4">
-            <Card className="p-4">
-              <h3 className="text-sm font-semibold mb-2">Order Summary</h3>
-              <div className="flex items-center gap-2 text-sm">
-                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                <span>{cart.reduce((s: number, i: any) => s + i.qty, 0)} item(s)</span>
-                <span className="ml-auto font-bold">₹{total?.toLocaleString()}</span>
+        <Card className="p-4">
+              <h3 className="text-sm font-semibold mb-3">Order Summary ({cart.reduce((s: number, i: any) => s + i.qty, 0)} items)</h3>
+              <div className="space-y-3">
+                {cart.map((item: any, i: number) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="h-14 w-14 bg-secondary/30 rounded-lg overflow-hidden shrink-0">
+                      {item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" /> : <span className="flex items-center justify-center h-full text-lg">{item.emoji}</span>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold truncate">{item.title}</p>
+                      <p className="text-[10px] text-muted-foreground">Vendor: {item.vendor} · Qty: {item.qty}</p>
+                    </div>
+                    <p className="text-xs font-bold shrink-0">₹{(item.price * item.qty).toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+              <Separator className="my-3" />
+              <div className="flex justify-between text-sm font-bold">
+                <span>Total</span>
+                <span>₹{total?.toLocaleString()}</span>
               </div>
             </Card>
 
