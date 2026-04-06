@@ -1058,11 +1058,25 @@ export const api = {
       supabase.from('services').select('*').eq('status', 'active').limit(4),
       supabase.from('popup_banners').select('*').eq('status', 'active').order('created_at', { ascending: false }),
     ]);
+
+    // Filter products by verified/active vendors only
+    let verifiedProducts = featuredProducts || [];
+    if (verifiedProducts.length) {
+      const vIds = [...new Set(verifiedProducts.map((p: any) => p.vendor_id))];
+      const { data: vendors } = await supabase.from('vendors').select('id, status').in('id', vIds).in('status', ['active', 'verified']);
+      if (vendors?.length) {
+        const validIds = new Set(vendors.map(v => v.id));
+        verifiedProducts = verifiedProducts.filter((p: any) => validIds.has(p.vendor_id));
+      } else {
+        verifiedProducts = [];
+      }
+    }
+
     return {
       banners: banners || [],
       categories: categories || [],
       serviceCategories: serviceCategories || [],
-      featuredProducts: featuredProducts || [],
+      featuredProducts: verifiedProducts.slice(0, 8),
       featuredServices: featuredServices || [],
       storeBanners: storeBanners || [],
     };
