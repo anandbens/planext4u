@@ -50,6 +50,8 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         stock: product.stock || 0, emoji: product.emoji || "📦",
         image: product.image || "", rejection_reason: product.rejection_reason || "",
         youtube_video_url: (product as any).youtube_video_url || "",
+        images: (product as any).images || [],
+        max_redemption_percentage: (product as any).max_redemption_percentage ?? null,
       });
       setEditMode(mode === "edit");
     }

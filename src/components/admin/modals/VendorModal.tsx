@@ -47,7 +47,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
   const { data: vendorPlans = [] } = useQuery({
     queryKey: ["vendorPlansDropdown"],
     queryFn: async () => {
-      const { data } = await supabase.from("vendor_plans").select("id, plan_name, plan_type, visibility_type, payment_mode, price").eq("is_active", true).order("plan_tier");
+      const { data } = await supabase.from("vendor_plans").select("id, plan_name, plan_type, visibility_type, payment_mode, price, commission_percentage").eq("is_active", true).order("plan_tier");
       return data || [];
     },
   });
