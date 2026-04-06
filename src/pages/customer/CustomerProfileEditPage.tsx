@@ -100,9 +100,10 @@ export default function CustomerProfileEditPage() {
     if (!/^[a-zA-Z\s]+$/.test(form.name)) return "Name can only contain letters and spaces";
     if (!form.mobile || !/^\d{10}$/.test(form.mobile.replace(/\+91/g, ''))) return "Valid 10-digit mobile required";
     if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) return "Valid email is required";
+    if (!form.dob) return "Date of birth is required";
     if (form.dob) {
       const dob = new Date(form.dob);
-      const maxDate = new Date(2016, 11, 31); // Dec 31, 2016
+      const maxDate = new Date(2016, 11, 31);
       if (dob > maxDate) return "Date of birth must be on or before December 31, 2016";
     }
     if (form.about && form.about.length > 1000) return "About must be under 1000 characters";
@@ -137,15 +138,7 @@ export default function CustomerProfileEditPage() {
     
     setLoading(true);
     try {
-      // Check phone uniqueness (excluding current user)
-      const cleanMobile = form.mobile.replace(/\+91/g, '');
-      const { data: phoneDup } = await supabase.from('customers').select('id').eq('mobile', cleanMobile).neq('id', customerId).maybeSingle();
-      const { data: phoneDup2 } = await supabase.from('customers').select('id').eq('mobile', `+91${cleanMobile}`).neq('id', customerId).maybeSingle();
-      if (phoneDup || phoneDup2) { toast.error("This phone number is already used by another account"); setLoading(false); return; }
-
-      // Check email uniqueness (excluding current user)
-      const { data: emailDup } = await supabase.from('customers').select('id').eq('email', form.email).neq('id', customerId).maybeSingle();
-      if (emailDup) { toast.error("This email is already used by another account"); setLoading(false); return; }
+      const cleanMobile = form.mobile.replace(/\+91/g, '').replace(/\s/g, '');
 
       const updateData: any = {
         name: form.name, email: form.email, mobile: cleanMobile, occupation: form.occupation,
@@ -154,7 +147,15 @@ export default function CustomerProfileEditPage() {
       };
       if (form.dob) updateData.dob = form.dob;
       const { error } = await supabase.from('customers').update(updateData).eq('id', customerId);
-      if (error) { toast.error("Failed to save: " + error.message); setLoading(false); return; }
+      if (error) {
+        if (error.message.includes('customers_mobile_unique')) {
+          toast.error("This phone number is already used by another account");
+        } else {
+          toast.error("Failed to save: " + error.message);
+        }
+        setLoading(false);
+        return;
+      }
       logActivity('profile_update', `Profile updated: ${form.name}`);
       toast.success("Profile updated successfully!");
       navigate("/app/profile");

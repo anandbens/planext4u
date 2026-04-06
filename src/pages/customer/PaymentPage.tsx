@@ -131,16 +131,20 @@ export default function PaymentPage() {
           customer_id: customerId,
           customer_name: customerUser?.name || 'Customer',
           vendor_id: vendorId,
-          vendor_name: items[0]?.vendor || 'Vendor',
+          vendor_name: items[0]?.vendor_name || items[0]?.vendor || 'Vendor',
           items: items.map((i: any) => ({ id: i.id, title: i.title, qty: i.qty, price: i.price, image: i.image })),
           subtotal: orderTotal,
           tax: items.reduce((s: number, i: any) => s + (i.tax || 0) * i.qty, 0),
           discount: discount || 0,
           points_used: pointsUsed || 0,
           total: orderTotal,
-          status: 'confirmed',
+          status: 'placed',
         };
-        await supabase.from('orders').insert(orderData as any);
+        const { error: insertErr } = await supabase.from('orders').insert(orderData as any);
+        if (insertErr) {
+          console.error('Order insert error:', insertErr);
+          throw new Error(insertErr.message);
+        }
         return orderData;
       });
 
