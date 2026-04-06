@@ -37,6 +37,26 @@ export default function CustomerWalletPage() {
     enabled: !!customerId,
   });
 
+  // Points expiring this month
+  const { data: expiringPoints } = useQuery({
+    queryKey: ["expiringPoints", customerId],
+    queryFn: async () => {
+      if (!customerId) return 0;
+      const endOfMonth = new Date();
+      endOfMonth.setMonth(endOfMonth.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
+      const { data } = await supabase.from('points_transactions')
+        .select('points')
+        .eq('user_id', customerId)
+        .eq('type', 'referral')
+        .eq('is_expired', false)
+        .lte('expires_at', endOfMonth.toISOString())
+        .gt('points', 0);
+      return (data || []).reduce((s: number, t: any) => s + t.points, 0);
+    },
+    enabled: !!customerId,
+  });
+
   const [currentPage, setCurrentPage] = useState(1);
   const userTransactions = transactions || [];
   const totalPages = Math.max(1, Math.ceil(userTransactions.length / ITEMS_PER_PAGE));
