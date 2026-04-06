@@ -1,31 +1,34 @@
-## Phase 1: Admin Image Upload Infrastructure
-1. Create a `vendor-assets` storage bucket for product/service/category images
-2. Build a reusable `ImageUploader` component that uploads to storage and returns the URL
-3. Wire image upload into Product, Service, Category, and Banner admin modals
+## Phase 1: Vendor Plans & Commission (This session)
+1. Replace "Membership" dropdown with "Vendor Plans" in admin VendorModal
+2. Wire commission/redemption logic to plan settings
+3. Add "P4U Commission Rate" label, max redemption override at product level
 
-## Phase 2: Vendor Plans Database & Admin UI
-1. **Migration**: Extend `property_plans` or create a new `vendor_plans` table with fields:
-   - plan_name, plan_type (local/vip), price, validity_days
-   - visibility_type (radius_based/city/state/pan_india), radius_km
-   - commission_percentage, max_redemption_percentage
-   - promotion_flags (banner_ads, video_ads, priority_listing)
-2. Seed default plans: Basic, Standard, Premium, Bronze, Silver, Gold, Diamond, Platinum
-3. Build Admin "Vendor Plans" management page
-4. Link vendors to plans via `plan_id` column on vendors table
+## Phase 2: Product Image Carousel & Multi-image Support
+1. Support multiple images in product listings (carousel slider)
+2. Product detail page carousel for multiple images
+3. Same for services
 
-## Phase 3: Vendor Geo-location in KYC
-1. Add latitude/longitude/address fields to `vendor_applications` table
-2. Integrate Google Maps pin-drop (reuse existing customer location component) in vendor registration
-3. Validate serviceable region (admin-configured radius)
+## Phase 3: Categories & Subcategories System
+1. Add `parent_id` based subcategory support to existing categories/service_categories tables
+2. Admin CRUD for categories + subcategories with tag-style chips
+3. Bulk upload (CSV/JSON), deduplication, active/inactive toggle
+4. Wire vendor registration to category/subcategory selection
+5. Frontend: category → subcategory → products flow
 
-## Phase 4: Distance-based Product Visibility
-1. Add Haversine distance utility function
-2. Update product listing to filter by vendor plan visibility type and user location
-3. Add "X KM away" display and plan badges on product cards
+## Phase 4: Radius-based Product Visibility (DB function)
+1. Create PostgreSQL function for Haversine distance filtering
+2. Add bounding-box pre-filter + indexes on vendor lat/lng
+3. Update product listing API to filter by customer's default address
+4. Show "Results within X km" in UI
+5. Recalculate on address change
 
-## Phase 5: Inventory & Redemption Enhancements
-1. Stock deduction on order success
-2. Plan-based redemption percentage calculation at checkout
-3. Promotion flag checks for banner/video ads
+## Phase 5: Socio Enhancements
+1. Fix stories horizontal scroll + viewing others' stories
+2. Video upload from camera + gallery with H.264 compression
+3. Separate storage bucket for socio videos
+4. Ensure all socio features work end-to-end
 
-**Starting with Phases 1-3 in this session.**
+## Phase 6: Category-level Enhancements
+1. Category-based commission configuration
+2. Category-level promotions & banners
+3. Map categories to vendor discovery + geo filtering
