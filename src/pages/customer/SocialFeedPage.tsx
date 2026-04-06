@@ -312,11 +312,12 @@ function PostCard({ post }: { post: any }) {
           <img 
             src={mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || ''} 
             alt="" 
-            className="w-full h-full object-cover" 
+            className="w-full h-full object-cover cursor-pointer" 
             loading="lazy"
             referrerPolicy="no-referrer"
             crossOrigin="anonymous"
-            onDoubleClick={() => toggleLike.mutate()}
+            onClick={() => setFullscreenImg(mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || '')}
+            onDoubleClick={(e) => { e.stopPropagation(); toggleLike.mutate(); }}
             onError={(e) => {
               const target = e.currentTarget;
               if (!target.dataset.retried) {
@@ -338,6 +339,26 @@ function PostCard({ post }: { post: any }) {
           </>
         )}
       </div>
+
+      {/* Fullscreen Image Viewer */}
+      <Dialog open={!!fullscreenImg} onOpenChange={() => setFullscreenImg(null)}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black border-0 overflow-hidden">
+          <button onClick={() => setFullscreenImg(null)} className="absolute top-3 right-3 z-50 h-8 w-8 rounded-full bg-black/60 flex items-center justify-center">
+            <X className="h-5 w-5 text-white" />
+          </button>
+          {fullscreenImg && (
+            <img src={fullscreenImg} alt="" className="w-full h-full object-contain max-h-[90vh]" />
+          )}
+          {isCarousel && fullscreenImg && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+              {mediaItems.map((_: any, i: number) => (
+                <button key={i} onClick={() => setFullscreenImg(mediaItems[i]?.url || mediaItems[i]?.mediumUrl || '')}
+                  className={`h-2 w-2 rounded-full ${(mediaItems[i]?.url || mediaItems[i]?.mediumUrl) === fullscreenImg ? 'bg-white' : 'bg-white/40'}`} />
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Action Bar */}
       <div className="flex items-center justify-between px-4 py-2">
