@@ -103,6 +103,7 @@ export default function VendorProductsPage() {
       title: p.title, description: p.description, price: String(p.price), tax: String(p.tax),
       discount: String(p.discount), stock: String(p.stock || 0), category_id: p.category_id || "",
       emoji: p.emoji || "📦", status: p.status, image: p.image || "", sku: "", images: p.image ? [p.image] : [],
+      youtube_video_url: p.youtube_video_url || "",
     });
     setModalOpen(true);
   };
