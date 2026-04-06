@@ -482,7 +482,7 @@ export default function SocialCreatePostPage() {
               }}
               currentUserId={customerUser?.id || ''}
             />
-          )
+          )}
           <button className="flex items-center gap-3 py-3.5 w-full" onClick={() => setShowProductPicker(!showProductPicker)}>
             <ShoppingBag className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm flex-1 text-left">
