@@ -1,46 +1,91 @@
-## Phase 1: Database Schema Changes
 
-### 1.1 Product Attributes Master System
-- Create `product_attributes` table (id, name, type, sort_order, is_active) — e.g. Color, Size, Weight, Volume
-- Create `product_attribute_values` table (id, attribute_id, value, sort_order) — e.g. Red, Blue, S, M, L, 500ml
-- Seed with comprehensive ecommerce attributes (Color, Size, Weight, Volume, Material, Pattern, etc.)
+## WooCommerce-Like Product Management System
 
-### 1.2 Product Schema Updates
-- Add `short_description`, `long_description` columns to products
-- Add `discount_type` column (enum: 'fixed' | 'percentage')
-- Add `inactivation_reason` column
-- Add `product_attribute_values` JSONB column for storing selected attributes per product
+### Phase 1: Database Schema Redesign
 
-### 1.3 Tax Slabs Table
-- Create `tax_slabs` table (id, name, rate, is_active) — e.g. GST 0%, 5%, 12%, 18%, 28%
-- Products will reference tax slab instead of free-text tax
+**1.1 Update `products` table**
+- Add `product_type` enum: `simple`, `variable`, `service`
+- Add `sku`, `slug` (unique, SEO-friendly)
+- Add `meta_title`, `meta_description` (SEO)
+- Add `manage_stock` boolean, `stock_status` enum
+- Add `weight`, `dimensions` JSONB
+- Keep existing fields (price, tax, discount, etc.)
 
-### 1.4 Vendor Media
-- Use existing `vendor-assets` bucket with vendor-specific folder paths (vendor-id/products/, vendor-id/logos/, etc.)
-- Add vendor_id to media_library table entries for ownership filtering
+**1.2 Create `product_variants` table**
+- `id`, `product_id` (FK → products), `sku` (unique)
+- `price`, `compare_at_price` (MRP)
+- `stock_quantity`, `stock_status`
+- `weight`, `dimensions`
+- `variant_attributes` JSONB — e.g. `{"Color": "Red", "Size": "M"}`
+- `image_url`, `is_active`, `sort_order`
+- Unique constraint on `(product_id, variant_attributes)` to prevent duplicates
 
-## Phase 2: Vendor Media Library
-- Add media library page to vendor portal (reuse admin component with vendor_id filter)
-- Vendor can only see/manage their own uploads
-- Folder structure: products/, logos/, backgrounds/, icons/
+**1.3 Create `product_variant_images` table**
+- `id`, `variant_id` (FK → product_variants)
+- `image_url`, `sort_order`, `is_primary`
 
-## Phase 3: Product Creation/Edit Updates
-- **Admin & Vendor**: Multi-image upload via media library picker
-- **Tax**: Dropdown from tax_slabs table
-- **Discount**: Toggle between Fixed (₹) and Percentage (%), show calculated values
-- **Icon**: Pick from media library
-- **Descriptions**: Short + Long description fields
-- **Attributes**: Multi-select attributes with values
+**1.4 Rename existing tables for clarity**
+- Keep `product_attributes` (global master: Color, Size, Weight, etc.)
+- Keep `product_attribute_values` (master values: Red, Blue, S, M, L)
+- Create `product_attribute_map` — links attributes to a specific product (which attributes apply to this product)
 
-## Phase 4: Edit Restrictions for Vendors
-- Approved products: vendor can only edit images, price, discount, status
-- Status change to inactive requires reason (modal prompt)
-- All other fields locked after approval
+**1.5 Create `inventory_log` table**
+- `id`, `product_id`, `variant_id`, `change_qty`, `reason`, `created_at`
+- Tracks stock changes for audit
 
-## Phase 5: Frontend Discount Display
-- Calculate & show MRP, selling price, and discount % on product cards and detail pages
-- Works for both fixed and percentage discount types
+### Phase 2: Admin — Attribute & Variant Management
 
-## Phase 6: Admin Attribute Management
-- Admin page to manage product attributes and their values (CRUD)
-- Integrated into existing admin navigation
+- Update `AdminProductAttributesPage` with:
+  - Color attribute values show **hex color** field + swatch preview
+  - Size values show display labels
+- Update `ProductModal` (admin):
+  - Product type selector (Simple / Variable / Service)
+  - **Simple**: single price, stock, SKU
+  - **Variable**: select applicable attributes → auto-generate variant combinations
+  - **Service**: duration fields, no stock
+  - Variant table: inline edit price, stock, SKU, image per variant
+  - Bulk variant generation from attribute combinations
+  - SEO fields (slug, meta title, meta description)
+
+### Phase 3: Vendor Portal — Product Management
+
+- Vendor product creation mirrors admin but scoped to own products
+- Select category → system shows applicable attributes
+- Auto-generate variants from selected attribute values
+- Manage stock per variant
+- Vendor can only edit allowed fields on approved products
+
+### Phase 4: Customer Frontend — Attribute Selection
+
+- **Color swatches**: circular color buttons with hex values
+- **Size selector**: pill/chip buttons (S, M, L, XL)
+- **Other attributes**: dropdown selectors
+- Only show **available combinations** (in-stock variants)
+- When user selects Color=Red → only show sizes available for Red
+- Price updates dynamically based on selected variant
+- Image changes based on variant selection
+
+### Phase 5: Filtering & Search
+
+- Category page: faceted filtering by attributes (Color, Size, Price range)
+- Attribute filters are dynamic based on products in category
+- Server-side pagination with attribute filters
+
+### Phase 6: Integrations
+
+- Razorpay: already integrated — variant price flows to checkout
+- Loyalty points: `max_redemption_percentage` per product (inherited by variants)
+- Geo filter: existing vendor distance logic applies
+
+### Phase 7: Performance & Validation
+
+- Cache categories & attributes with React Query stale times
+- Unique constraint on variant attribute combinations per product
+- No duplicate global attributes (unique name constraint)
+- Slug auto-generation with uniqueness check
+- API-first: all operations via Supabase client
+
+### Migration Strategy
+- Non-breaking: existing simple products get `product_type = 'simple'`
+- No data loss: existing price/stock fields remain on products table as defaults
+- Variants are additive — simple products don't need variants
