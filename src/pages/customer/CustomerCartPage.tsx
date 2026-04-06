@@ -38,9 +38,12 @@ export default function CustomerCartPage() {
   const [couponApplied, setCouponApplied] = useState(false);
   const [pointsUsed, setPointsUsed] = useState(0);
   const [walletPoints, setWalletPoints] = useState(0);
+  const [deliveryMode, setDeliveryMode] = useState<"anytime" | "scheduled">("anytime");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
   const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [platformFeeValue, setPlatformFeeValue] = useState(10);
+  const [platformFeeGst, setPlatformFeeGst] = useState(18);
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [showAddressDialog, setShowAddressDialog] = useState(false);
