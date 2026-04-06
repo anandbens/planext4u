@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { MapPin, Mail, Phone, Star, Gift, Calendar, Trash2, ShieldCheck, ShoppingCart, Coins, Download, ChevronLeft, ChevronRight, FileText, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
+import { MapPin, Mail, Phone, Star, Gift, Calendar, Trash2, ShieldCheck, ShoppingCart, Coins, Download, ChevronLeft, ChevronRight, FileText, CheckCircle, XCircle, Clock, Eye, Search, Filter } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { exportToCSV } from "@/lib/csv";
@@ -42,6 +42,10 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersTotal, setOrdersTotal] = useState(0);
+  const [ordersStatusFilter, setOrdersStatusFilter] = useState("all");
+  const [ordersSearch, setOrdersSearch] = useState("");
+  const [ordersFromDate, setOrdersFromDate] = useState("");
+  const [ordersToDate, setOrdersToDate] = useState("");
   const ordersPerPage = 5;
 
   // Points data
@@ -50,6 +54,8 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
   const [pointsPage, setPointsPage] = useState(1);
   const [pointsTotal, setPointsTotal] = useState(0);
   const [pointsFilter, setPointsFilter] = useState<string>("all");
+  const [pointsFromDate, setPointsFromDate] = useState("");
+  const [pointsToDate, setPointsToDate] = useState("");
   const pointsPerPage = 8;
 
   // Profile completeness
@@ -86,10 +92,15 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
     if (!customer || activeTab !== "orders") return;
     setOrdersLoading(true);
     const from = (ordersPage - 1) * ordersPerPage;
-    supabase.from("orders").select("*", { count: "exact" }).eq("customer_id", customer.id)
-      .order("created_at", { ascending: false }).range(from, from + ordersPerPage - 1)
+    let query = supabase.from("orders").select("*", { count: "exact" }).eq("customer_id", customer.id)
+      .order("created_at", { ascending: false });
+    if (ordersStatusFilter !== "all") query = query.eq("status", ordersStatusFilter);
+    if (ordersFromDate) query = query.gte("created_at", ordersFromDate);
+    if (ordersToDate) query = query.lte("created_at", ordersToDate + "T23:59:59");
+    if (ordersSearch) query = query.or(`id.ilike.%${ordersSearch}%,vendor_name.ilike.%${ordersSearch}%`);
+    query.range(from, from + ordersPerPage - 1)
       .then(({ data, count }) => { setOrders(data || []); setOrdersTotal(count || 0); setOrdersLoading(false); });
-  }, [customer, activeTab, ordersPage]);
+  }, [customer, activeTab, ordersPage, ordersStatusFilter, ordersSearch, ordersFromDate, ordersToDate]);
 
   // Fetch points
   useEffect(() => {
@@ -100,9 +111,11 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
       .order("created_at", { ascending: false });
     if (pointsFilter === "earned") query = query.gt("points", 0);
     if (pointsFilter === "redeemed") query = query.lt("points", 0);
+    if (pointsFromDate) query = query.gte("created_at", pointsFromDate);
+    if (pointsToDate) query = query.lte("created_at", pointsToDate + "T23:59:59");
     query.range(from, from + pointsPerPage - 1)
       .then(({ data, count }) => { setPoints(data || []); setPointsTotal(count || 0); setPointsLoading(false); });
-  }, [customer, activeTab, pointsPage, pointsFilter]);
+  }, [customer, activeTab, pointsPage, pointsFilter, pointsFromDate, pointsToDate]);
 
   const handleSave = async () => {
     if (!form.name || !form.email) return;
@@ -119,9 +132,35 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
     try { await onDelete?.(customer.id); onOpenChange(false); } finally { setSaving(false); }
   };
 
+  const handleExportOrders = async () => {
+    if (!customer) return;
+    let query = supabase.from("orders").select("*").eq("customer_id", customer.id).order("created_at", { ascending: false });
+    if (ordersStatusFilter !== "all") query = query.eq("status", ordersStatusFilter);
+    if (ordersFromDate) query = query.gte("created_at", ordersFromDate);
+    if (ordersToDate) query = query.lte("created_at", ordersToDate + "T23:59:59");
+    const { data } = await query;
+    if (!data?.length) { toast.info("No orders to export"); return; }
+    exportToCSV(data.map(o => ({ ...o, items: JSON.stringify(o.items) })), [
+      { key: "id", label: "Order ID" }, { key: "vendor_name", label: "Vendor" },
+      { key: "status", label: "Status" }, { key: "subtotal", label: "Subtotal" },
+      { key: "tax", label: "Tax" }, { key: "discount", label: "Discount" },
+      { key: "points_used", label: "Points Used" }, { key: "total", label: "Total" },
+      { key: "delivery_rating", label: "Rating" }, { key: "created_at", label: "Date" },
+      { key: "items", label: "Items" },
+    ], `orders_${customer.name.replace(/\s/g, '_')}`);
+    toast.success("Orders exported");
+  };
+
   const handleExportPoints = async () => {
     if (!customer) return;
-    const { data } = await supabase.from("points_transactions").select("*").eq("user_id", customer.id).order("created_at", { ascending: false });
+    let query = supabase.from("points_transactions").select("*").eq("user_id", customer.id).order("created_at", { ascending: false });
+    if (pointsFilter !== "all") {
+      if (pointsFilter === "earned") query = query.gt("points", 0);
+      if (pointsFilter === "redeemed") query = query.lt("points", 0);
+    }
+    if (pointsFromDate) query = query.gte("created_at", pointsFromDate);
+    if (pointsToDate) query = query.lte("created_at", pointsToDate + "T23:59:59");
+    const { data } = await query;
     if (!data?.length) { toast.info("No points data to export"); return; }
     exportToCSV(data, [
       { key: "id", label: "Transaction ID" },
@@ -344,12 +383,39 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
 
             {/* ORDERS TAB */}
             <TabsContent value="orders" className="space-y-3 mt-3">
+              {/* Order Filters */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative flex-1 min-w-[140px]">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input placeholder="Search order ID or vendor..." className="pl-8 h-8 text-xs" value={ordersSearch}
+                    onChange={(e) => { setOrdersSearch(e.target.value); setOrdersPage(1); }} />
+                </div>
+                <Select value={ordersStatusFilter} onValueChange={(v) => { setOrdersStatusFilter(v); setOrdersPage(1); }}>
+                  <SelectTrigger className="w-[110px] h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input type="date" className="w-[130px] h-8 text-xs" value={ordersFromDate}
+                  onChange={(e) => { setOrdersFromDate(e.target.value); setOrdersPage(1); }} />
+                <Input type="date" className="w-[130px] h-8 text-xs" value={ordersToDate} max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => { setOrdersToDate(e.target.value); setOrdersPage(1); }} />
+                <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={handleExportOrders}>
+                  <Download className="h-3 w-3" /> Export
+                </Button>
+              </div>
+
               {ordersLoading ? (
                 <div className="flex items-center justify-center h-32"><div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>
               ) : orders.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <ShoppingCart className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No orders placed yet</p>
+                  <p className="text-sm">No orders found</p>
                 </div>
               ) : (
                 <>
@@ -414,7 +480,6 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
                     </Card>
                   ))}
 
-                  {/* Pagination */}
                   <div className="flex items-center justify-between pt-2">
                     <span className="text-xs text-muted-foreground">Page {ordersPage} of {Math.ceil(ordersTotal / ordersPerPage)}</span>
                     <div className="flex gap-1">
@@ -428,7 +493,8 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
 
             {/* POINTS TAB */}
             <TabsContent value="points" className="space-y-3 mt-3">
-              <div className="flex items-center justify-between">
+              {/* Points Filters */}
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="flex gap-1">
                   {["all", "earned", "redeemed"].map((f) => (
                     <Button key={f} variant={pointsFilter === f ? "default" : "outline"} size="sm" className="h-7 text-xs capitalize"
@@ -437,7 +503,11 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
                     </Button>
                   ))}
                 </div>
-                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportPoints}>
+                <Input type="date" className="w-[120px] h-7 text-xs" value={pointsFromDate}
+                  onChange={(e) => { setPointsFromDate(e.target.value); setPointsPage(1); }} />
+                <Input type="date" className="w-[120px] h-7 text-xs" value={pointsToDate} max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => { setPointsToDate(e.target.value); setPointsPage(1); }} />
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1 ml-auto" onClick={handleExportPoints}>
                   <Download className="h-3 w-3" /> Export
                 </Button>
               </div>
