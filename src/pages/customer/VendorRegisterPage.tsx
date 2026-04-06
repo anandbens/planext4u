@@ -37,7 +37,10 @@ export default function VendorRegisterPage() {
   const [appLoading, setAppLoading] = useState(true);
   const [step, setStep] = useState(1); // 1=personal, 2=business, 3=kyc, 4=bank, 5=location
   const fileRef = useRef<HTMLInputElement>(null);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const logoCameraRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<string>('');
+  const [logoUploading, setLogoUploading] = useState(false);
 
   const [form, setForm] = useState({
     name: customerUser?.name || '', phone: customerUser?.mobile || '', secondary_phone: '',
