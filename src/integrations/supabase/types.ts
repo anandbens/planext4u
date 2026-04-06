@@ -721,6 +721,7 @@ export type Database = {
           tags: string[] | null
           updated_at: string
           uploaded_by: string | null
+          vendor_id: string | null
         }
         Insert: {
           alt_text?: string | null
@@ -734,6 +735,7 @@ export type Database = {
           tags?: string[] | null
           updated_at?: string
           uploaded_by?: string | null
+          vendor_id?: string | null
         }
         Update: {
           alt_text?: string | null
@@ -747,6 +749,7 @@ export type Database = {
           tags?: string[] | null
           updated_at?: string
           uploaded_by?: string | null
+          vendor_id?: string | null
         }
         Relationships: []
       }
@@ -962,6 +965,68 @@ export type Database = {
         }
         Relationships: []
       }
+      product_attribute_values: {
+        Row: {
+          attribute_id: string
+          created_at: string | null
+          id: string
+          sort_order: number | null
+          value: string
+        }
+        Insert: {
+          attribute_id: string
+          created_at?: string | null
+          id?: string
+          sort_order?: number | null
+          value: string
+        }
+        Update: {
+          attribute_id?: string
+          created_at?: string | null
+          id?: string
+          sort_order?: number | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_attribute_values_attribute_id_fkey"
+            columns: ["attribute_id"]
+            isOneToOne: false
+            referencedRelation: "product_attributes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_attributes: {
+        Row: {
+          attribute_type: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          attribute_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          attribute_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category_id: string | null
@@ -969,20 +1034,26 @@ export type Database = {
           created_at: string
           description: string
           discount: number
+          discount_type: string | null
           emoji: string | null
           id: string
           image: string | null
           images: Json | null
+          inactivation_reason: string | null
+          long_description: string | null
           max_points_redeemable: number
           max_redemption_percentage: number | null
           price: number
+          product_attributes: Json | null
           rating: number | null
           rejection_reason: string | null
           reviews: number | null
           sales: number | null
+          short_description: string | null
           status: string
           stock: number | null
           tax: number
+          tax_slab_id: string | null
           title: string
           updated_at: string
           vendor_id: string
@@ -995,20 +1066,26 @@ export type Database = {
           created_at?: string
           description?: string
           discount?: number
+          discount_type?: string | null
           emoji?: string | null
           id: string
           image?: string | null
           images?: Json | null
+          inactivation_reason?: string | null
+          long_description?: string | null
           max_points_redeemable?: number
           max_redemption_percentage?: number | null
           price?: number
+          product_attributes?: Json | null
           rating?: number | null
           rejection_reason?: string | null
           reviews?: number | null
           sales?: number | null
+          short_description?: string | null
           status?: string
           stock?: number | null
           tax?: number
+          tax_slab_id?: string | null
           title: string
           updated_at?: string
           vendor_id: string
@@ -1021,20 +1098,26 @@ export type Database = {
           created_at?: string
           description?: string
           discount?: number
+          discount_type?: string | null
           emoji?: string | null
           id?: string
           image?: string | null
           images?: Json | null
+          inactivation_reason?: string | null
+          long_description?: string | null
           max_points_redeemable?: number
           max_redemption_percentage?: number | null
           price?: number
+          product_attributes?: Json | null
           rating?: number | null
           rejection_reason?: string | null
           reviews?: number | null
           sales?: number | null
+          short_description?: string | null
           status?: string
           stock?: number | null
           tax?: number
+          tax_slab_id?: string | null
           title?: string
           updated_at?: string
           vendor_id?: string
@@ -1047,6 +1130,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_tax_slab_id_fkey"
+            columns: ["tax_slab_id"]
+            isOneToOne: false
+            referencedRelation: "tax_slabs"
             referencedColumns: ["id"]
           },
           {
@@ -2818,6 +2908,30 @@ export type Database = {
           rate?: number
           status?: string
           type?: string
+        }
+        Relationships: []
+      }
+      tax_slabs: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          rate: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          rate?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          rate?: number
         }
         Relationships: []
       }
