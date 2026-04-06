@@ -482,6 +482,45 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
             </div>
           )}
 
+          {/* Duration, Promise, Helpline */}
+          {editMode && !vendorRestricted && (
+            <div className="p-4 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> Duration & Support</h4>
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Hours</Label>
+                  <Input type="number" min={0} value={form.duration_hours} onChange={(e) => setForm({ ...form, duration_hours: Number(e.target.value) })} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Minutes</Label>
+                  <Input type="number" min={0} max={59} value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })} className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Shield className="h-3 w-3" /> Promise P4U</Label>
+                  <Input value={form.promise_p4u} onChange={(e) => setForm({ ...form, promise_p4u: e.target.value })} className="mt-1" placeholder="Quality guarantee..." />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Helpline</Label>
+                  <Input value={form.helpline_number} onChange={(e) => setForm({ ...form, helpline_number: e.target.value })} className="mt-1" placeholder="+91-XXXXXXXXXX" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Thumbnail & Banner */}
+          {editMode && !vendorRestricted && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Thumbnail Image</Label>
+                <MediaLibraryPicker value={form.thumbnail_image} onChange={(url) => setForm({ ...form, thumbnail_image: url })} folder="product-images" label="Set Thumbnail" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Banner Image</Label>
+                <MediaLibraryPicker value={form.banner_image} onChange={(url) => setForm({ ...form, banner_image: url })} folder="product-images" label="Set Banner" />
+              </div>
+            </div>
+          )}
+
           {/* Emoji / Icon */}
           <div className="grid grid-cols-2 gap-4">
             <div>
