@@ -491,7 +491,7 @@ function PostCard({ post }: { post: any }) {
               </div>
             </motion.div>
           ) : (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer" onClick={() => setShowCommentInput(true)}>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer" onClick={() => { if (!userId) { toast.error("Please login to comment"); navigate("/app/login"); return; } setShowCommentInput(true); }}>
               <span>Add a comment...</span>
               <span className="ml-auto">😊</span>
             </div>
