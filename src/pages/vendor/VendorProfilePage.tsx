@@ -89,13 +89,50 @@ export default function VendorProfilePage() {
 
   const getVar = (key: string) => platformVars.find(v => v.key === key)?.value || "";
   const paymentStatus = (vendor as any)?.plan_payment_status || "unpaid";
+  const backgroundImage = (vendor as any)?.background_image || "";
+
+  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBgUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `vendor-backgrounds/${vendorId}-${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("vendor-assets").upload(path, file, { contentType: file.type, upsert: true });
+      if (uploadErr) throw uploadErr;
+      const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(path);
+      await supabase.from("vendors").update({ background_image: urlData.publicUrl }).eq("id", vendorId);
+      toast.success("Background image updated");
+      queryClient.invalidateQueries({ queryKey: ["vendorProfile"] });
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setBgUploading(false);
+      e.target.value = "";
+    }
+  };
 
   if (isLoading) return <VendorLayout title="Profile"><div className="p-8"><Skeleton className="h-48 rounded-xl" /></div></VendorLayout>;
 
   return (
     <VendorLayout title="Business Profile">
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-        <Card className="p-6">
+        {/* Background Image */}
+        <div className="relative rounded-2xl overflow-hidden h-40 bg-gradient-to-r from-primary/20 to-primary/5">
+          {backgroundImage && <img src={backgroundImage} alt="Background" className="w-full h-full object-cover" />}
+          <input ref={bgInputRef} type="file" className="hidden" accept="image/*" onChange={handleBgUpload} />
+          <Button
+            size="sm"
+            variant="secondary"
+            className="absolute bottom-3 right-3 gap-1 text-xs opacity-80 hover:opacity-100"
+            onClick={() => bgInputRef.current?.click()}
+            disabled={bgUploading}
+          >
+            {bgUploading ? "Uploading..." : <><ImagePlus className="h-3.5 w-3.5" /> Change Cover</>}
+          </Button>
+        </div>
+
+        <Card className="p-6 -mt-10 relative z-10">
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center"><Store className="h-8 w-8 text-primary" /></div>
             <div>
