@@ -356,7 +356,11 @@ function PostCard({ post }: { post: any }) {
             <X className="h-5 w-5 text-white" />
           </button>
           {fullscreenImg && (
-            <img src={fullscreenImg} alt="" className="w-full h-full object-contain max-h-[90vh]" />
+            fullscreenImg.includes('video') || fullscreenImg.endsWith('.mp4') ? (
+              <video src={fullscreenImg} className="w-full h-full object-contain max-h-[90vh]" controls autoPlay />
+            ) : (
+              <img src={fullscreenImg} alt="" className="w-full h-full object-contain max-h-[90vh]" />
+            )
           )}
           {isCarousel && fullscreenImg && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
