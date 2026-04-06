@@ -48,10 +48,10 @@ export default function PointsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) : (
           <>
-            <StatCard title="Total Points Issued" value={stats.totalIssued.toLocaleString('en-IN')} icon={Star} gradient="gradient-warning" />
-            <StatCard title="Points Redeemed" value={stats.totalRedeemed.toLocaleString('en-IN')} icon={TrendingUp} gradient="gradient-success" />
-            <StatCard title="Welcome Points" value={stats.welcomePts.toLocaleString('en-IN')} icon={Gift} gradient="gradient-primary" />
-            <StatCard title="Referral Points" value={stats.referralPts.toLocaleString('en-IN')} icon={Users} gradient="gradient-info" />
+            <StatCard title="Total Points Issued" value={stats.totalIssued.toLocaleString('en-IN')} trend={0} icon={Star} gradient="gradient-warning" />
+            <StatCard title="Points Redeemed" value={stats.totalRedeemed.toLocaleString('en-IN')} trend={0} icon={TrendingUp} gradient="gradient-success" />
+            <StatCard title="Welcome Points" value={stats.welcomePts.toLocaleString('en-IN')} trend={0} icon={Gift} gradient="gradient-primary" />
+            <StatCard title="Referral Points" value={stats.referralPts.toLocaleString('en-IN')} trend={0} icon={Users} gradient="gradient-info" />
           </>
         )}
       </div>
