@@ -61,11 +61,11 @@ export default function SocioDMChatPage() {
       setLoading(true);
       try {
         // Look for existing conversation containing both participants
-        const { data: convos } = await supabase
+        const { data: convos } = await (supabase
           .from('social_conversations' as any)
           .select('*')
           .eq('is_group', false)
-          .contains('participants', JSON.stringify([currentUserId, recipientId]));
+          .contains('participants', JSON.stringify([currentUserId, recipientId])) as any);
 
         if (convos && convos.length > 0) {
           setConversationId(convos[0].id);
