@@ -117,14 +117,15 @@ export function MediaLibraryDialog({ open, onOpenChange, onSelect, defaultFolder
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [folderFilter, setFolderFilter] = useState(defaultFolder === "general" ? "all" : defaultFolder);
+  const resolvedDefault = FOLDER_ALIAS[defaultFolder] || defaultFolder;
+  const [folderFilter, setFolderFilter] = useState(resolvedDefault === "general" ? "all" : resolvedDefault);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [uploading, setUploading] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Upload state
-  const [uploadFolder, setUploadFolder] = useState(defaultFolder);
+  const [uploadFolder, setUploadFolder] = useState(resolvedDefault);
   const [altText, setAltText] = useState("");
   const [previewFile, setPreviewFile] = useState<{ file: File; preview: string } | null>(null);
 
