@@ -481,6 +481,3 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
   );
 }
 
-function toast(msg: string) {
-  import("sonner").then(m => m.toast.error(msg));
-}
