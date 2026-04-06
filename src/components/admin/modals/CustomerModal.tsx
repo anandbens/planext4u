@@ -493,7 +493,8 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
 
             {/* POINTS TAB */}
             <TabsContent value="points" className="space-y-3 mt-3">
-              <div className="flex items-center justify-between">
+              {/* Points Filters */}
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="flex gap-1">
                   {["all", "earned", "redeemed"].map((f) => (
                     <Button key={f} variant={pointsFilter === f ? "default" : "outline"} size="sm" className="h-7 text-xs capitalize"
@@ -502,7 +503,11 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
                     </Button>
                   ))}
                 </div>
-                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleExportPoints}>
+                <Input type="date" className="w-[120px] h-7 text-xs" value={pointsFromDate}
+                  onChange={(e) => { setPointsFromDate(e.target.value); setPointsPage(1); }} />
+                <Input type="date" className="w-[120px] h-7 text-xs" value={pointsToDate} max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => { setPointsToDate(e.target.value); setPointsPage(1); }} />
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1 ml-auto" onClick={handleExportPoints}>
                   <Download className="h-3 w-3" /> Export
                 </Button>
               </div>
