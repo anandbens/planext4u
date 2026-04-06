@@ -84,6 +84,11 @@ export default function VendorProductsPage() {
         inactivation_reason: formData.inactivation_reason || "",
         tax_slab_id: formData.tax_slab_id || null,
         product_attributes: formData.product_attributes || [],
+        product_type: formData.product_type || "simple",
+        sku: formData.sku || null,
+        slug: formData.slug || null,
+        meta_title: formData.meta_title || "",
+        meta_description: formData.meta_description || "",
       };
       if (editingId) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingId);
