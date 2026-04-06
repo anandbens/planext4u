@@ -385,7 +385,7 @@ export default function CustomerCartPage() {
                     <div className="flex justify-between font-bold"><span>Total Amount</span><span>₹{total.toLocaleString()}</span></div>
                   </div>
                   {savings > 0 && <p className="text-xs text-success mt-2 font-medium">You will save ₹{savings.toLocaleString()} on this order</p>}
-                  <Button className="w-full h-12 mt-4 text-base font-semibold" onClick={placeOrder} disabled={placing}>{placing ? "Placing..." : "Proceed Payment"}</Button>
+                  <Button className="w-full h-12 mt-4 text-base font-semibold hidden md:flex" onClick={placeOrder} disabled={placing}>{placing ? "Placing..." : "Proceed Payment"}</Button>
                 </Card>
               </div>
             )}
