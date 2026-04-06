@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon } from "lucide-react";
+import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MOCK_CATEGORIES, MOCK_VENDORS } from "@/lib/mockData";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
