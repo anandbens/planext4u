@@ -1054,7 +1054,7 @@ export const api = {
       supabase.from('banners').select('*').eq('status', 'active').order('priority', { ascending: false }),
       supabase.from('categories').select('*'),
       supabase.from('service_categories').select('*'),
-      supabase.from('products').select('*').eq('status', 'active').limit(8),
+      supabase.from('products').select('*').eq('status', 'active').limit(50),
       supabase.from('services').select('*').eq('status', 'active').limit(4),
       supabase.from('popup_banners').select('*').eq('status', 'active').order('created_at', { ascending: false }),
     ]);
