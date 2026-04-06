@@ -267,6 +267,7 @@ const AppRoutes = () => {
         <Route path="/admin/media-library" element={<ProtectedPage><AdminMediaLibraryPage /></ProtectedPage>} />
         <Route path="/admin/onboarding" element={<ProtectedPage><AdminOnboardingPage /></ProtectedPage>} />
         <Route path="/admin/notifications" element={<ProtectedPage><AdminNotificationsPage /></ProtectedPage>} />
+        <Route path="/admin/product-attributes" element={<ProtectedPage><AdminProductAttributesPage /></ProtectedPage>} />
 
         {/* Customer-facing routes */}
         <Route path="/app" element={<CustomerPage><CustomerHomePage /></CustomerPage>} />
