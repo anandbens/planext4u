@@ -270,7 +270,7 @@ function PostCard({ post }: { post: any }) {
     },
   });
 
-  const username = isMock ? post.username : (postProfile?.username || post.user_id?.substring(0, 8) || 'user');
+  const username = isMock ? post.username : (postProfile?.display_name || postProfile?.username || 'user');
   const isVerified = isMock ? post.isVerified : (postProfile?.is_verified || false);
   const avatarUrl = isMock ? '' : (postProfile?.avatar_url || '');
 
