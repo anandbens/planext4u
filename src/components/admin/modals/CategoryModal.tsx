@@ -38,6 +38,10 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         banner_image: category.banner_image || "", icon: category.icon || "",
         is_trending: category.is_trending || false, description: category.description || "",
         parent_id: category.parent_id || null,
+        commission_rate: (category as any).commission_rate?.toString() || "",
+        promotion_banner_url: (category as any).promotion_banner_url || "",
+        promotion_title: (category as any).promotion_title || "",
+        promotion_active: (category as any).promotion_active || false,
       });
       setEditMode(mode === "edit");
     }
