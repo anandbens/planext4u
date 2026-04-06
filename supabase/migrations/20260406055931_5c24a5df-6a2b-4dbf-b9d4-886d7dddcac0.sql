@@ -1,0 +1,1 @@
+ALTER TABLE public.vendor_applications ADD COLUMN IF NOT EXISTS district text DEFAULT '';

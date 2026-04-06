@@ -1054,15 +1054,29 @@ export const api = {
       supabase.from('banners').select('*').eq('status', 'active').order('priority', { ascending: false }),
       supabase.from('categories').select('*'),
       supabase.from('service_categories').select('*'),
-      supabase.from('products').select('*').eq('status', 'active').limit(8),
+      supabase.from('products').select('*').eq('status', 'active').limit(50),
       supabase.from('services').select('*').eq('status', 'active').limit(4),
       supabase.from('popup_banners').select('*').eq('status', 'active').order('created_at', { ascending: false }),
     ]);
+
+    // Filter products by verified/active vendors only
+    let verifiedProducts = featuredProducts || [];
+    if (verifiedProducts.length) {
+      const vIds = [...new Set(verifiedProducts.map((p: any) => p.vendor_id))];
+      const { data: vendors } = await supabase.from('vendors').select('id, status').in('id', vIds).in('status', ['active', 'verified']);
+      if (vendors?.length) {
+        const validIds = new Set(vendors.map(v => v.id));
+        verifiedProducts = verifiedProducts.filter((p: any) => validIds.has(p.vendor_id));
+      } else {
+        verifiedProducts = [];
+      }
+    }
+
     return {
       banners: banners || [],
       categories: categories || [],
       serviceCategories: serviceCategories || [],
-      featuredProducts: featuredProducts || [],
+      featuredProducts: verifiedProducts.slice(0, 8),
       featuredServices: featuredServices || [],
       storeBanners: storeBanners || [],
     };
@@ -1083,10 +1097,15 @@ export const api = {
     const vendorIds = [...new Set(products.map(p => p.vendor_id))];
     const { data: vendors } = await supabase
       .from('vendors')
-      .select('id, plan_id, shop_latitude, shop_longitude, city_id')
-      .in('id', vendorIds);
+      .select('id, plan_id, shop_latitude, shop_longitude, city_id, status')
+      .in('id', vendorIds)
+      .in('status', ['active', 'verified']);
 
-    if (!vendors?.length) return (products || []) as Product[];
+    if (!vendors?.length) return [] as Product[];
+
+    // Only show products from verified/active vendors
+    const verifiedVendorIds = new Set(vendors.map(v => v.id));
+    const filteredProducts = products.filter(p => verifiedVendorIds.has(p.vendor_id));
 
     const planIds = [...new Set(vendors.filter(v => v.plan_id).map(v => v.plan_id!))];
     let plansMap: Record<string, any> = {};
@@ -1110,7 +1129,7 @@ export const api = {
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     };
 
-    const filtered = products.filter(p => {
+    const filtered = filteredProducts.filter(p => {
       const vendor = vendorMap[p.vendor_id];
       if (!vendor?.plan_id) return true; // no plan = show everywhere (basic)
       const plan = plansMap[vendor.plan_id];

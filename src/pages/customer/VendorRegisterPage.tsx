@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { api } from "@/lib/api";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
@@ -39,7 +40,7 @@ export default function VendorRegisterPage() {
 
   const [form, setForm] = useState({
     name: customerUser?.name || '', phone: customerUser?.mobile || '', secondary_phone: '',
-    email: customerUser?.email || '', state: '', city: '',
+    email: customerUser?.email || '', state: '', district: '',
     fb_link: '', instagram_link: '',
     business_name: '', business_type: 'proprietorship', store_name: '', category: 'product',
     subcategory: '', business_description: '',
@@ -50,6 +51,9 @@ export default function VendorRegisterPage() {
     store_logo_url: '',
   });
 
+  const [states, setStates] = useState<{ id: string; name: string }[]>([]);
+  const [districts, setDistricts] = useState<{ id: string; name: string }[]>([]);
+
   // Location state
   const [showMapModal, setShowMapModal] = useState(false);
   const [shopLocation, setShopLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
@@ -58,7 +62,18 @@ export default function VendorRegisterPage() {
 
   useEffect(() => {
     if (customerId) loadExistingApp();
+    api.getStates().then(setStates);
   }, [customerId]);
+
+  useEffect(() => {
+    if (form.state) {
+      const st = states.find(s => s.name === form.state);
+      if (st) api.getDistricts(st.id).then(setDistricts);
+      else setDistricts([]);
+    } else {
+      setDistricts([]);
+    }
+  }, [form.state, states]);
 
   const loadExistingApp = async () => {
     setAppLoading(true);
@@ -68,7 +83,7 @@ export default function VendorRegisterPage() {
       setExistingApp(app);
       setForm({
         name: app.name || '', phone: app.phone || '', secondary_phone: app.secondary_phone || '',
-        email: app.email || '', state: app.state || '', city: app.city || '',
+        email: app.email || '', state: app.state || '', district: app.district || app.city || '',
         fb_link: app.fb_link || '', instagram_link: app.instagram_link || '',
         business_name: app.business_name || '', business_type: app.business_type || 'proprietorship',
         store_name: app.store_name || '', category: app.category || 'product',
@@ -155,7 +170,7 @@ export default function VendorRegisterPage() {
       const payload = {
         user_id: customerId,
         name: form.name, phone: form.phone, secondary_phone: form.secondary_phone,
-        email: form.email, state: form.state, city: form.city,
+        email: form.email, state: form.state, city: form.district, district: form.district,
         fb_link: form.fb_link, instagram_link: form.instagram_link,
         business_name: form.business_name, business_type: form.business_type,
         store_name: form.store_name, category: form.category,
@@ -320,10 +335,20 @@ export default function VendorRegisterPage() {
                 <Input value={form.secondary_phone} onChange={e => updateField('secondary_phone', e.target.value.replace(/\D/g, ''))} maxLength={10} /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Email *</label>
                 <Input value={form.email} onChange={e => updateField('email', e.target.value)} type="email" /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">State</label>
-                <Input value={form.state} onChange={e => updateField('state', e.target.value)} /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">City</label>
-                <Input value={form.city} onChange={e => updateField('city', e.target.value)} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">State *</label>
+                <Select value={form.state} onValueChange={v => { updateField('state', v); updateField('district', ''); }}>
+                  <SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger>
+                  <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
+                    {states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select></div>
+              <div><label className="text-xs font-medium text-muted-foreground">District *</label>
+                <Select value={form.district} onValueChange={v => updateField('district', v)} disabled={!form.state}>
+                  <SelectTrigger><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
+                  <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
+                    {districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select></div>
               <div><label className="text-xs font-medium text-muted-foreground">Facebook Link</label>
                 <Input value={form.fb_link} onChange={e => updateField('fb_link', e.target.value)} placeholder="https://..." /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Instagram Link</label>

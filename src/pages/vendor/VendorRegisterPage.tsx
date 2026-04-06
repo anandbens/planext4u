@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import p4uLogo from "@/assets/p4u-logo.png";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
@@ -23,7 +24,7 @@ export default function VendorRegisterPage() {
 
   const [form, setForm] = useState({
     name: '', phone: '', secondary_phone: '',
-    email: '', state: '', city: '',
+    email: '', state: '', district: '',
     fb_link: '', instagram_link: '',
     business_name: '', business_type: 'proprietorship', store_name: '', category: 'product',
     subcategory: '', business_description: '',
@@ -35,6 +36,22 @@ export default function VendorRegisterPage() {
     latitude: 0, longitude: 0, shop_address: '',
   });
   const [locating, setLocating] = useState(false);
+  const [states, setStates] = useState<{ id: string; name: string }[]>([]);
+  const [districts, setDistricts] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    api.getStates().then(setStates);
+  }, []);
+
+  useEffect(() => {
+    if (form.state) {
+      const st = states.find(s => s.name === form.state);
+      if (st) api.getDistricts(st.id).then(setDistricts);
+      else setDistricts([]);
+    } else {
+      setDistricts([]);
+    }
+  }, [form.state, states]);
 
   const updateField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
 
@@ -104,7 +121,7 @@ export default function VendorRegisterPage() {
       const payload = {
         user_id: form.email,
         name: form.name, phone: form.phone, secondary_phone: form.secondary_phone,
-        email: form.email, state: form.state, city: form.city,
+        email: form.email, state: form.state, city: form.district, district: form.district,
         fb_link: form.fb_link, instagram_link: form.instagram_link,
         business_name: form.business_name, business_type: form.business_type,
         store_name: form.store_name, category: form.category,
@@ -207,10 +224,20 @@ export default function VendorRegisterPage() {
                 <Input value={form.secondary_phone} onChange={e => updateField('secondary_phone', e.target.value.replace(/\D/g, ''))} maxLength={10} /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Email *</label>
                 <Input value={form.email} onChange={e => updateField('email', e.target.value)} type="email" /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">State</label>
-                <Input value={form.state} onChange={e => updateField('state', e.target.value)} /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">City</label>
-                <Input value={form.city} onChange={e => updateField('city', e.target.value)} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">State *</label>
+                <Select value={form.state} onValueChange={v => { updateField('state', v); updateField('district', ''); }}>
+                  <SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger>
+                  <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
+                    {states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select></div>
+              <div><label className="text-xs font-medium text-muted-foreground">District *</label>
+                <Select value={form.district} onValueChange={v => updateField('district', v)} disabled={!form.state}>
+                  <SelectTrigger><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
+                  <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
+                    {districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select></div>
               <div><label className="text-xs font-medium text-muted-foreground">Facebook</label>
                 <Input value={form.fb_link} onChange={e => updateField('fb_link', e.target.value)} placeholder="https://..." /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Instagram</label>
