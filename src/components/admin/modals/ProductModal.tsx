@@ -221,6 +221,16 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
               {editMode ? <Input type="number" value={form.max_points_redeemable} onChange={(e) => setForm({ ...form, max_points_redeemable: Number(e.target.value) })} className="mt-1 max-w-32" /> : <p className="text-xl font-bold">{product?.max_points_redeemable} pts</p>}
             </div>
           </div>
+
+          {/* YouTube Video */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1"><Youtube className="h-3 w-3 text-destructive" /> YouTube Video URL</Label>
+            {editMode ? (
+              <Input value={form.youtube_video_url} onChange={(e) => setForm({ ...form, youtube_video_url: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." className="mt-1" />
+            ) : form.youtube_video_url ? (
+              <a href={form.youtube_video_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">{form.youtube_video_url}</a>
+            ) : <p className="text-xs text-muted-foreground">No video added</p>}
+          </div>
         </div>
 
         <DialogFooter className="mt-4">
