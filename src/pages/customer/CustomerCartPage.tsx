@@ -393,7 +393,9 @@ export default function CustomerCartPage() {
                                 {discountPct > 0 && <span className="text-[10px] text-success font-medium">{discountPct}% Off</span>}
                               </div>
                               <p className="text-[10px] text-success mt-0.5">Eligible for FREE Shipping</p>
-                              {/* Aligned left: qty, save, remove */}
+                              {item.maxPoints > 0 && (
+                                <p className="text-[10px] text-primary mt-0.5">🎁 Up to {item.maxPoints * item.qty} points redeemable</p>
+                              )}
                               <div className="flex items-center gap-3 mt-2 flex-wrap">
                                 <div className="flex items-center gap-1 border border-border rounded-lg">
                                   <button onClick={() => updateQty(item.id, -1)} className="h-7 w-7 flex items-center justify-center hover:bg-accent rounded-l-lg"><Minus className="h-3 w-3" /></button>
