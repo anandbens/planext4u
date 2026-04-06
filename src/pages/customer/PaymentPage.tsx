@@ -111,7 +111,7 @@ export default function PaymentPage() {
     }
   };
 
-  const createOrder = async (paymentId: string | null) => {
+  const createOrder = async (paymentId: string | null, rzpOrderId?: string) => {
     try {
       const dateStr = format(new Date(), 'yyyyMMdd');
       const rand = String(Math.floor(Math.random() * 99999)).padStart(5, '0');
@@ -124,8 +124,11 @@ export default function PaymentPage() {
         vendorGroups[vid].push(item);
       });
 
+      const pf = platformFee || 0;
+      const gstPf = pf * 0.18;
+
       const orderPromises = Object.entries(vendorGroups).map(async ([vendorId, items]) => {
-        const orderTotal = items.reduce((s: number, i: any) => s + i.price * i.qty, 0);
+        const itemTotal = items.reduce((s: number, i: any) => s + i.price * i.qty, 0);
         const orderData = {
           id: newOrderId + '-' + vendorId.slice(-3),
           customer_id: customerId,
@@ -133,12 +136,16 @@ export default function PaymentPage() {
           vendor_id: vendorId,
           vendor_name: items[0]?.vendor_name || items[0]?.vendor || 'Vendor',
           items: items.map((i: any) => ({ id: i.id, title: i.title, qty: i.qty, price: i.price, image: i.image })),
-          subtotal: orderTotal,
+          subtotal: itemTotal,
           tax: items.reduce((s: number, i: any) => s + (i.tax || 0) * i.qty, 0),
           discount: discount || 0,
           points_used: pointsUsed || 0,
-          total: orderTotal,
+          platform_fee: pf,
+          gst_on_platform_fee: Math.round(gstPf * 100) / 100,
+          total: total || (itemTotal + pf + gstPf - (discount || 0)),
           status: 'placed',
+          payment_reference_id: paymentId || null,
+          razorpay_order_id: rzpOrderId || null,
         };
         const { error: insertErr } = await supabase.from('orders').insert(orderData as any);
         if (insertErr) {
