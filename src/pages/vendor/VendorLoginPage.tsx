@@ -29,7 +29,7 @@ export default function VendorLoginPage() {
   const otpRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (timer > 0) { const t = setTimeout(() => setTimer(timer - 1), 1000); return () => clearTimeout(t); } }, [timer]);
-  useEffect(() => () => clearRecaptcha(), []);
+  useEffect(() => { if (ensureFirebaseHostname()) preRenderRecaptcha(); return () => clearRecaptcha(); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

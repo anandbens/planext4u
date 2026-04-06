@@ -42,7 +42,7 @@ export default function CustomerLoginPage() {
     }
   }, [timer]);
 
-  useEffect(() => () => clearRecaptcha(), []);
+  useEffect(() => { if (ensureFirebaseHostname()) preRenderRecaptcha(); return () => clearRecaptcha(); }, []);
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
