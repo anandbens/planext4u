@@ -129,6 +129,7 @@ import AdminHomesModerationPage from "./pages/admin/AdminHomesModerationPage";
 import AdminVendorPlansPage from "./pages/admin/AdminVendorPlansPage";
 import AdminMediaLibraryPage from "./pages/admin/AdminMediaLibraryPage";
 import AdminOnboardingPage from "./pages/admin/AdminOnboardingPage";
+import AdminProductAttributesPage from "./pages/admin/AdminProductAttributesPage";
 import AdminNotificationsPage from "./pages/admin/AdminNotificationsPage";
 
 // Vendor pages
