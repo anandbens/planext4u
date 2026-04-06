@@ -150,13 +150,15 @@ export default function CustomerCartPage() {
     toast.success("Moved to cart");
   };
 
+  const mrpTotal = cart.reduce((sum, item) => sum + (item.price + item.discount) * item.qty, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const platformFee = 50;
+  const platformFee = platformFeeValue;
+  const gstOnPlatformFee = Math.round(platformFee * platformFeeGst / 100 * 100) / 100;
   const tax = cart.reduce((sum, item) => sum + item.tax * item.qty, 0);
   const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
   const maxPoints = Math.min(walletPoints, cart.reduce((s, i) => s + i.maxPoints * i.qty, 0));
-  const total = subtotal + platformFee - discount - pointsUsed;
-  const savings = discount + pointsUsed;
+  const total = subtotal + platformFee + gstOnPlatformFee - discount - pointsUsed;
+  const savings = (mrpTotal - subtotal) + discount + pointsUsed;
 
   const applyCoupon = () => {
     if (coupon === "WELCOME") { setCouponApplied(true); toast.success("Coupon applied! 10% discount"); }
