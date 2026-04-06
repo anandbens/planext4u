@@ -33,6 +33,7 @@ const mainItems: NavItem[] = [
   { title: "Services", url: "/admin/services", icon: Wrench, roles: ['admin', 'sales'] },
   { title: "Categories", url: "/categories", icon: Grid3X3, roles: ['admin'] },
   { title: "Product Attributes", url: "/admin/product-attributes", icon: SlidersHorizontal, roles: ['admin'] },
+];
 
 const financeItems: NavItem[] = [
   { title: "Settlements", url: "/settlements", icon: Banknote, roles: ['admin', 'finance'] },
