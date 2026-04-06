@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard, Package, ShoppingCart, DollarSign, User, Wrench,
   Bell, Menu, X, LogOut, CreditCard, History, ChevronRight, Store,
-  ArrowLeft, Settings, HelpCircle, Shield, MapPin, TrendingUp, BarChart3
+  ArrowLeft, Settings, HelpCircle, Shield, MapPin, TrendingUp, BarChart3,
+  ImageIcon
 } from "lucide-react";
 import p4uLogo from "@/assets/p4u-logo.png";
 
@@ -25,6 +26,7 @@ const sidebarItems = [
   { label: "Payment History", to: "/vendor/payments", icon: History },
   { label: "Bank Account", to: "/vendor/bank", icon: CreditCard },
   { label: "Profile & Settings", to: "/vendor/profile", icon: User },
+  { label: "Media Library", to: "/vendor/media", icon: ImageIcon },
 ];
 
 const bottomNavItems = [

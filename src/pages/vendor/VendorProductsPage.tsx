@@ -21,15 +21,19 @@ const statusStyle: Record<string, string> = {
 };
 
 interface ProductForm {
-  title: string; description: string; price: string; tax: string; discount: string;
+  title: string; description: string; short_description: string; long_description: string;
+  price: string; tax: string; discount: string; discount_type: string;
   stock: string; category_id: string; emoji: string; status: string;
   image: string; sku: string; images: string[]; youtube_video_url: string;
+  inactivation_reason: string; tax_slab_id: string; product_attributes: any[];
 }
 
 const emptyForm: ProductForm = {
-  title: "", description: "", price: "", tax: "", discount: "0",
+  title: "", description: "", short_description: "", long_description: "",
+  price: "", tax: "", discount: "0", discount_type: "fixed",
   stock: "", category_id: "", emoji: "📦", status: "draft",
   image: "", sku: "", images: [], youtube_video_url: "",
+  inactivation_reason: "", tax_slab_id: "", product_attributes: [],
 };
 
 export default function VendorProductsPage() {
@@ -64,14 +68,20 @@ export default function VendorProductsPage() {
     mutationFn: async (formData: ProductForm) => {
       const payload: any = {
         title: formData.title, description: formData.description,
+        short_description: formData.short_description, long_description: formData.long_description,
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
-        discount: parseFloat(formData.discount) || 0, stock: parseInt(formData.stock) || 0,
+        discount: parseFloat(formData.discount) || 0, discount_type: formData.discount_type,
+        stock: parseInt(formData.stock) || 0,
         category_id: formData.category_id || null,
         category_name: categories?.find(c => c.id === formData.category_id)?.name || "",
         emoji: formData.emoji, status: formData.status,
         vendor_id: vendorId, vendor_name: vendorUser?.name || "",
         image: formData.image || formData.images[0] || null,
+        images: formData.images,
         youtube_video_url: formData.youtube_video_url || "",
+        inactivation_reason: formData.inactivation_reason || "",
+        tax_slab_id: formData.tax_slab_id || null,
+        product_attributes: formData.product_attributes || [],
       };
       if (editingId) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingId);
@@ -98,13 +108,22 @@ export default function VendorProductsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["vendorProducts"] }); toast.success("Product deleted"); },
   });
 
+  const isApproved = (p: any) => p.status === "active";
+
   const openEdit = (p: any) => {
     setEditingId(p.id);
     setForm({
-      title: p.title, description: p.description, price: String(p.price), tax: String(p.tax),
-      discount: String(p.discount), stock: String(p.stock || 0), category_id: p.category_id || "",
-      emoji: p.emoji || "📦", status: p.status, image: p.image || "", sku: "", images: p.image ? [p.image] : [],
+      title: p.title, description: p.description,
+      short_description: p.short_description || "", long_description: p.long_description || "",
+      price: String(p.price), tax: String(p.tax),
+      discount: String(p.discount), discount_type: p.discount_type || "fixed",
+      stock: String(p.stock || 0), category_id: p.category_id || "",
+      emoji: p.emoji || "📦", status: p.status, image: p.image || "", sku: "",
+      images: Array.isArray(p.images) ? p.images : p.image ? [p.image] : [],
       youtube_video_url: p.youtube_video_url || "",
+      inactivation_reason: p.inactivation_reason || "",
+      tax_slab_id: p.tax_slab_id || "",
+      product_attributes: p.product_attributes || [],
     });
     setModalOpen(true);
   };

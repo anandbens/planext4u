@@ -106,9 +106,16 @@ export default function CustomerProductPage() {
   if (isLoading) return <CustomerLayout><div className="p-8"><Skeleton className="h-96 rounded-2xl" /></div></CustomerLayout>;
   if (!product) return <CustomerLayout><div className="p-8 text-center">Product not found</div></CustomerLayout>;
 
-  const discountPct = product.discount ? Math.round((product.discount / product.price) * 100) : 0;
-  const originalPrice = product.price + product.discount;
-  const variants = getProductVariants(product.title);
+  const discountType = (product as any).discount_type || "fixed";
+  const discountPct = discountType === "percentage" ? product.discount : (product.price > 0 ? Math.round((product.discount / product.price) * 100) : 0);
+  const discountAmount = discountType === "percentage" ? Math.round(product.price * product.discount / 100) : product.discount;
+  const originalPrice = product.price + discountAmount;
+  
+  // Use real product attributes if available, fallback to title-based
+  const realAttrs = (product as any).product_attributes || [];
+  const variants = realAttrs.length > 0 
+    ? realAttrs.map((a: any) => ({ label: a.attribute_name, options: a.values || [], selected: (a.values || [])[0] || "" }))
+    : getProductVariants(product.title);
 
   return (
     <CustomerLayout>
@@ -188,14 +195,14 @@ export default function CustomerProductPage() {
             </div>
 
             {discountPct > 0 && (
-              <p className="text-sm text-success font-semibold mt-2">Extra ₹{product.discount.toLocaleString()} off</p>
+              <p className="text-sm text-success font-semibold mt-2">Extra ₹{discountAmount.toLocaleString()} off</p>
             )}
 
             <div className="flex items-baseline gap-3 mt-2">
-              <span className="text-2xl md:text-3xl font-bold">₹{product.price.toLocaleString()}</span>
+              <span className="text-2xl md:text-3xl font-bold">₹{(product.price - discountAmount + (product.tax || 0)).toLocaleString()}</span>
               {discountPct > 0 && <>
-                <span className="text-base text-muted-foreground line-through">₹{originalPrice.toLocaleString()}</span>
-                <Badge className="bg-primary/10 text-primary border-0 text-xs">{discountPct}% OFF</Badge>
+                <span className="text-base text-muted-foreground line-through">MRP ₹{originalPrice.toLocaleString()}</span>
+                <Badge className="bg-success/10 text-success border-0 text-xs font-bold">{discountPct}% OFF</Badge>
               </>}
             </div>
 
@@ -265,8 +272,27 @@ export default function CustomerProductPage() {
 
         {/* Description + Reviews Tabs */}
         <Tabs defaultValue="description" className="mt-6">
-          <TabsList><TabsTrigger value="description">Description</TabsTrigger><TabsTrigger value="reviews">Reviews ({product.reviews})</TabsTrigger></TabsList>
-          <TabsContent value="description" className="mt-4"><p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p></TabsContent>
+          <TabsList>
+            <TabsTrigger value="description">Description</TabsTrigger>
+            {realAttrs.length > 0 && <TabsTrigger value="specs">Specifications</TabsTrigger>}
+            <TabsTrigger value="reviews">Reviews ({product.reviews})</TabsTrigger>
+          </TabsList>
+          <TabsContent value="description" className="mt-4">
+            {(product as any).short_description && <p className="text-sm font-medium mb-2">{(product as any).short_description}</p>}
+            <p className="text-sm text-muted-foreground leading-relaxed">{(product as any).long_description || product.description}</p>
+          </TabsContent>
+          {realAttrs.length > 0 && (
+            <TabsContent value="specs" className="mt-4">
+              <div className="space-y-2">
+                {realAttrs.map((attr: any, i: number) => (
+                  <div key={i} className="flex border-b border-border/30 py-2 last:border-0">
+                    <span className="text-sm text-muted-foreground w-1/3">{attr.attribute_name}</span>
+                    <span className="text-sm font-medium">{(attr.values || []).join(", ")}</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          )}
           <TabsContent value="reviews" className="mt-4 space-y-3">
             {reviews.map((r, i) => (
               <Card key={i} className="p-4">

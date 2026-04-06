@@ -1,4 +1,5 @@
 import { Product } from "@/lib/api";
+import { toast } from "sonner";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,10 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MOCK_CATEGORIES, MOCK_VENDORS } from "@/lib/mockData";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface ProductModalProps {
   product: Product | null;
@@ -20,21 +24,55 @@ interface ProductModalProps {
   onSave?: (id: string, data: Partial<Product>) => Promise<void>;
   onCreate?: (data: Partial<Product>) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
+  isVendor?: boolean;
 }
 
 const emptyForm = {
-  title: "", description: "", price: 0, tax: 0, discount: 0,
+  title: "", description: "", short_description: "", long_description: "",
+  price: 0, tax: 0, discount: 0, discount_type: "fixed" as string,
   max_points_redeemable: 0, status: "active" as Product["status"],
   vendor_id: "", vendor_name: "", category_id: "", category_name: "", stock: 0, emoji: "📦",
-  image: "", rejection_reason: "", youtube_video_url: "",
+  image: "", rejection_reason: "", inactivation_reason: "", youtube_video_url: "",
   images: [] as string[], max_redemption_percentage: null as number | null,
+  tax_slab_id: "" as string, product_attributes: [] as any[],
 };
 
-export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete }: ProductModalProps) {
+export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete, isVendor }: ProductModalProps) {
   const isCreate = mode === "create";
   const [editMode, setEditMode] = useState(mode === "edit" || isCreate);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [showInactivateDialog, setShowInactivateDialog] = useState(false);
+
+  // Product is approved? Vendor can only edit limited fields
+  const isApproved = !isCreate && product?.status === "active";
+  const vendorRestricted = isVendor && isApproved;
+
+  // Fetch tax slabs
+  const { data: taxSlabs } = useQuery({
+    queryKey: ["taxSlabs"],
+    queryFn: async () => {
+      const { data } = await supabase.from("tax_slabs" as any).select("*").eq("is_active", true).order("rate");
+      return (data || []) as any[];
+    },
+  });
+
+  // Fetch product attributes
+  const { data: attributes } = useQuery({
+    queryKey: ["productAttributes"],
+    queryFn: async () => {
+      const { data } = await supabase.from("product_attributes" as any).select("*").eq("is_active", true).order("sort_order");
+      return (data || []) as any[];
+    },
+  });
+
+  const { data: attributeValues } = useQuery({
+    queryKey: ["productAttributeValues"],
+    queryFn: async () => {
+      const { data } = await supabase.from("product_attribute_values" as any).select("*").order("sort_order");
+      return (data || []) as any[];
+    },
+  });
 
   useEffect(() => {
     if (isCreate) {
@@ -43,38 +81,60 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     } else if (product) {
       setForm({
         title: product.title, description: product.description,
+        short_description: (product as any).short_description || "",
+        long_description: (product as any).long_description || "",
         price: product.price, tax: product.tax, discount: product.discount,
+        discount_type: (product as any).discount_type || "fixed",
         max_points_redeemable: product.max_points_redeemable, status: product.status,
         vendor_id: product.vendor_id, vendor_name: product.vendor_name,
         category_id: product.category_id, category_name: product.category_name,
         stock: product.stock || 0, emoji: product.emoji || "📦",
         image: product.image || "", rejection_reason: product.rejection_reason || "",
+        inactivation_reason: (product as any).inactivation_reason || "",
         youtube_video_url: (product as any).youtube_video_url || "",
         images: (product as any).images || [],
         max_redemption_percentage: (product as any).max_redemption_percentage ?? null,
+        tax_slab_id: (product as any).tax_slab_id || "",
+        product_attributes: (product as any).product_attributes || [],
       });
       setEditMode(mode === "edit");
     }
   }, [product, mode]);
 
-  const finalPrice = form.price + form.tax - form.discount;
+  // Calculate prices
+  const taxRate = taxSlabs?.find((t: any) => t.id === form.tax_slab_id)?.rate || 0;
+  const taxAmount = form.tax_slab_id ? Math.round(form.price * taxRate / 100) : form.tax;
+  const discountAmount = form.discount_type === "percentage" ? Math.round(form.price * form.discount / 100) : form.discount;
+  const sellingPrice = form.price + taxAmount - discountAmount;
+  const discountPct = form.discount_type === "percentage" ? form.discount : (form.price > 0 ? Math.round((form.discount / form.price) * 100) : 0);
 
   const handleSave = async () => {
     if (!form.title) return;
-    if (form.status === 'rejected' && !form.rejection_reason?.trim()) {
-      return; // rejection reason required
-    }
+    if (form.status === 'rejected' && !form.rejection_reason?.trim()) return;
     setSaving(true);
     try {
+      const payload = { ...form, tax: taxAmount };
       if (isCreate) {
-        await onCreate?.(form);
+        await onCreate?.(payload);
       } else if (product) {
-        await onSave?.(product.id, form);
+        await onSave?.(product.id, payload);
       }
       onOpenChange(false);
-    } finally {
-      setSaving(false);
+    } finally { setSaving(false); }
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    if (newStatus === "inactive" && form.status !== "inactive") {
+      setShowInactivateDialog(true);
+      return;
     }
+    setForm({ ...form, status: newStatus as Product["status"] });
+  };
+
+  const confirmInactivate = () => {
+    if (!form.inactivation_reason.trim()) { toast("Please enter reason for inactivation"); return; }
+    setForm({ ...form, status: "inactive" as Product["status"] });
+    setShowInactivateDialog(false);
   };
 
   const handleDelete = async () => {
@@ -91,6 +151,28 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
   const handleCategoryChange = (catId: string) => {
     const cat = MOCK_CATEGORIES.find(c => c.id === catId);
     setForm({ ...form, category_id: catId, category_name: cat?.name || "" });
+  };
+
+  const toggleAttribute = (attrId: string, attrName: string, value: string) => {
+    const existing = [...(form.product_attributes || [])];
+    const idx = existing.findIndex((a: any) => a.attribute_id === attrId);
+    if (idx >= 0) {
+      const vals = existing[idx].values as string[];
+      if (vals.includes(value)) {
+        existing[idx] = { ...existing[idx], values: vals.filter((v: string) => v !== value) };
+        if (existing[idx].values.length === 0) existing.splice(idx, 1);
+      } else {
+        existing[idx] = { ...existing[idx], values: [...vals, value] };
+      }
+    } else {
+      existing.push({ attribute_id: attrId, attribute_name: attrName, values: [value] });
+    }
+    setForm({ ...form, product_attributes: existing });
+  };
+
+  const getSelectedValues = (attrId: string): string[] => {
+    const attr = (form.product_attributes || []).find((a: any) => a.attribute_id === attrId);
+    return attr?.values || [];
   };
 
   return (
@@ -116,11 +198,34 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         </DialogHeader>
 
         <div className="space-y-5 mt-2">
-          {/* Product Images */}
+          {/* Product Images - always editable */}
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Product Image (Primary)</Label>
+            <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Product Images</Label>
             {editMode ? (
-              <MediaLibraryPicker value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="product-images" label="Upload Product Image" />
+              <div className="flex flex-wrap gap-2">
+                {(form.images || []).map((img: string, i: number) => (
+                  <div key={i} className="relative h-20 w-20 rounded-lg overflow-hidden border border-border/30">
+                    <img src={img} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
+                    <button className="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-bl text-[10px] px-1" onClick={() => {
+                      const imgs = form.images.filter((_: string, j: number) => j !== i);
+                      setForm({ ...form, images: imgs, image: imgs[0] || "" });
+                    }}>×</button>
+                    {i === 0 && <span className="absolute bottom-0 left-0 bg-primary text-primary-foreground text-[8px] px-1">Primary</span>}
+                  </div>
+                ))}
+                <MediaLibraryPicker value="" onChange={(url) => {
+                  const imgs = [...(form.images || []), url];
+                  setForm({ ...form, images: imgs, image: imgs[0] || url });
+                }} folder="product-images" label="+ Add" />
+              </div>
+            ) : form.images?.length > 0 ? (
+              <div className="flex gap-2 overflow-x-auto">
+                {form.images.map((img: string, i: number) => (
+                  <div key={i} className="h-20 w-20 rounded-lg overflow-hidden bg-secondary/20 border border-border/30 shrink-0">
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
             ) : form.image ? (
               <div className="h-32 w-full rounded-lg overflow-hidden bg-secondary/20 border border-border/30">
                 <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
@@ -128,51 +233,33 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
             ) : null}
           </div>
 
-          {/* Additional Images for Carousel */}
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Additional Images (Carousel)</Label>
-            <div className="flex flex-wrap gap-2">
-              {(form.images || []).map((img: string, i: number) => (
-                <div key={i} className="relative h-16 w-16 rounded-lg overflow-hidden border border-border/30">
-                  <img src={img} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
-                  {editMode && (
-                    <button className="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-bl text-[10px] px-1" onClick={() => setForm({ ...form, images: form.images.filter((_: string, j: number) => j !== i) })}>×</button>
-                  )}
-                </div>
-              ))}
-              {editMode && (
-                <MediaLibraryPicker value="" onChange={(url) => setForm({ ...form, images: [...(form.images || []), url] })} folder="product-images" label="+ Add" />
-              )}
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label className="text-xs text-muted-foreground">Title *</Label>
-              {editMode ? <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-1" placeholder="Product name" /> : <p className="text-sm font-medium mt-1">{product?.title}</p>}
+              {editMode && !vendorRestricted ? <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-1" placeholder="Product name" /> : <p className="text-sm font-medium mt-1">{form.title}</p>}
             </div>
             <div className="col-span-2">
-              <Label className="text-xs text-muted-foreground">Description</Label>
-              {editMode ? <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1" rows={3} /> : <p className="text-sm mt-1 text-muted-foreground">{product?.description}</p>}
+              <Label className="text-xs text-muted-foreground">Short Description</Label>
+              {editMode && !vendorRestricted ? <Input value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className="mt-1" placeholder="Brief one-liner" /> : <p className="text-sm mt-1 text-muted-foreground">{form.short_description || "—"}</p>}
             </div>
-            {editMode && (
+            <div className="col-span-2">
+              <Label className="text-xs text-muted-foreground">Long Description</Label>
+              {editMode && !vendorRestricted ? <Textarea value={form.long_description || form.description} onChange={(e) => setForm({ ...form, long_description: e.target.value, description: e.target.value })} className="mt-1" rows={3} /> : <p className="text-sm mt-1 text-muted-foreground">{form.long_description || form.description || "—"}</p>}
+            </div>
+            {editMode && !vendorRestricted && !isVendor && (
               <>
                 <div>
                   <Label className="text-xs text-muted-foreground">Vendor *</Label>
                   <Select value={form.vendor_id} onValueChange={handleVendorChange}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Select vendor" /></SelectTrigger>
-                    <SelectContent>
-                      {MOCK_VENDORS.map(v => <SelectItem key={v.id} value={v.id}>{v.business_name}</SelectItem>)}
-                    </SelectContent>
+                    <SelectContent>{MOCK_VENDORS.map(v => <SelectItem key={v.id} value={v.id}>{v.business_name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Category *</Label>
                   <Select value={form.category_id} onValueChange={handleCategoryChange}>
                     <SelectTrigger className="mt-1"><SelectValue placeholder="Select category" /></SelectTrigger>
-                    <SelectContent>
-                      {MOCK_CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    </SelectContent>
+                    <SelectContent>{MOCK_CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </>
@@ -180,19 +267,19 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
             <div>
               <Label className="text-xs text-muted-foreground">Status</Label>
               {editMode ? (
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Product["status"] })}>
+                <Select value={form.status} onValueChange={handleStatusChange}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active (Approved)</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="inactive">Inactive (Discontinued)</SelectItem>
                     <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="pending_approval">Pending Approval</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
+                    {!isVendor && <SelectItem value="pending_approval">Pending Approval</SelectItem>}
+                    {!isVendor && <SelectItem value="rejected">Rejected</SelectItem>}
                   </SelectContent>
                 </Select>
               ) : <div className="mt-1"><StatusBadge status={product?.status || "active"} /></div>}
             </div>
-            {editMode && form.status === 'rejected' && (
+            {editMode && form.status === 'rejected' && !isVendor && (
               <div className="col-span-2">
                 <Label className="text-xs text-destructive font-semibold">Rejection Reason *</Label>
                 <Textarea value={form.rejection_reason} onChange={(e) => setForm({ ...form, rejection_reason: e.target.value })} className="mt-1 border-destructive/50" rows={2} placeholder="Explain why this product is being rejected..." />
@@ -204,7 +291,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <p className="text-sm mt-1">{product.rejection_reason}</p>
               </div>
             )}
-            {editMode && (
+            {editMode && !vendorRestricted && (
               <div>
                 <Label className="text-xs text-muted-foreground">Stock</Label>
                 <Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} className="mt-1" />
@@ -212,54 +299,150 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
             )}
           </div>
 
+          {/* Pricing Section */}
           <div className="p-4 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
             <h4 className="text-sm font-semibold flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" /> Pricing</h4>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-muted-foreground">Base Price</Label>
+                <Label className="text-xs text-muted-foreground">MRP (₹)</Label>
                 {editMode ? <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-bold mt-1">₹{product?.price.toLocaleString()}</p>}
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Tax</Label>
-                {editMode ? <Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1">₹{product?.tax.toLocaleString()}</p>}
+                <Label className="text-xs text-muted-foreground">Tax Slab</Label>
+                {editMode && !vendorRestricted ? (
+                  <Select value={form.tax_slab_id} onValueChange={(v) => setForm({ ...form, tax_slab_id: v })}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select tax" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Manual</SelectItem>
+                      {(taxSlabs || []).map((t: any) => <SelectItem key={t.id} value={t.id}>{t.name} ({t.rate}%)</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                ) : <p className="text-sm font-medium mt-1">{taxSlabs?.find((t: any) => t.id === form.tax_slab_id)?.name || `₹${form.tax}`}</p>}
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Discount Type</Label>
+                {editMode ? (
+                  <Select value={form.discount_type} onValueChange={(v) => setForm({ ...form, discount_type: v })}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixed">Fixed (₹)</SelectItem>
+                      <SelectItem value="percentage">Percentage (%)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : <p className="text-sm mt-1 capitalize">{form.discount_type}</p>}
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Discount</Label>
-                {editMode ? <Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1 text-success">{(product?.discount || 0) > 0 ? `₹${product?.discount}` : "—"}</p>}
+                <Label className="text-xs text-muted-foreground">Discount {form.discount_type === "percentage" ? "(%)" : "(₹)"}</Label>
+                {editMode ? <Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1 text-success">{form.discount > 0 ? (form.discount_type === "percentage" ? `${form.discount}%` : `₹${form.discount}`) : "—"}</p>}
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Tax Amount</Label>
+                <p className="text-sm font-medium mt-2">₹{taxAmount.toLocaleString()}</p>
               </div>
             </div>
             <Separator />
             <div className="flex justify-between items-center">
-              <span className="text-sm font-semibold">Final Price</span>
-              <span className="text-lg font-bold">₹{finalPrice.toLocaleString()}</span>
+              <div>
+                <span className="text-sm font-semibold">Selling Price</span>
+                {discountPct > 0 && <Badge className="ml-2 bg-success/10 text-success border-0 text-[10px]">{discountPct}% OFF</Badge>}
+              </div>
+              <div className="text-right">
+                <span className="text-lg font-bold">₹{sellingPrice.toLocaleString()}</span>
+                {discountAmount > 0 && <span className="text-xs text-muted-foreground line-through ml-2">₹{(form.price + taxAmount).toLocaleString()}</span>}
+              </div>
             </div>
           </div>
 
-          <div className="p-4 rounded-lg bg-accent/30 border border-primary/10 flex items-center gap-4">
-            <Star className="h-8 w-8 text-warning" />
-            <div className="flex-1">
-              <Label className="text-xs text-muted-foreground">Max Points Redeemable</Label>
-              {editMode ? <Input type="number" value={form.max_points_redeemable} onChange={(e) => setForm({ ...form, max_points_redeemable: Number(e.target.value) })} className="mt-1 max-w-32" /> : <p className="text-xl font-bold">{product?.max_points_redeemable} pts</p>}
+          {/* Product Attributes */}
+          {editMode && !vendorRestricted && (attributes || []).length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold">Product Attributes</h4>
+              {(attributes || []).map((attr: any) => {
+                const vals = (attributeValues || []).filter((v: any) => v.attribute_id === attr.id);
+                const selected = getSelectedValues(attr.id);
+                if (attr.attribute_type === "text") {
+                  const textVal = selected[0] || "";
+                  return (
+                    <div key={attr.id}>
+                      <Label className="text-xs text-muted-foreground">{attr.name}</Label>
+                      <Input value={textVal} onChange={(e) => {
+                        const existing = [...(form.product_attributes || [])];
+                        const idx = existing.findIndex((a: any) => a.attribute_id === attr.id);
+                        if (idx >= 0) existing[idx] = { ...existing[idx], values: [e.target.value] };
+                        else existing.push({ attribute_id: attr.id, attribute_name: attr.name, values: [e.target.value] });
+                        setForm({ ...form, product_attributes: existing });
+                      }} className="mt-1" placeholder={`Enter ${attr.name}`} />
+                    </div>
+                  );
+                }
+                return (
+                  <div key={attr.id}>
+                    <Label className="text-xs text-muted-foreground">{attr.name}</Label>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {vals.map((v: any) => (
+                        <button key={v.id} onClick={() => toggleAttribute(attr.id, attr.name, v.value)}
+                          className={`px-2 py-1 rounded-md border text-xs transition-colors ${selected.includes(v.value) ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-border hover:border-primary/30'}`}>
+                          {v.value}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="flex-1">
-              <Label className="text-xs text-muted-foreground">Max Redemption % (overrides vendor)</Label>
-              {editMode ? <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1 max-w-32" placeholder="Vendor default" /> : <p className="text-xl font-bold">{(product as any)?.max_redemption_percentage != null ? `${(product as any).max_redemption_percentage}%` : "Vendor default"}</p>}
+          )}
+
+          {/* Show selected attributes in view mode */}
+          {!editMode && (form.product_attributes || []).length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Specifications</h4>
+              {(form.product_attributes || []).map((attr: any, i: number) => (
+                <div key={i} className="flex gap-2 text-sm">
+                  <span className="text-muted-foreground min-w-[100px]">{attr.attribute_name}:</span>
+                  <span className="font-medium">{(attr.values || []).join(", ")}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Points */}
+          {!isVendor && (
+            <div className="p-4 rounded-lg bg-accent/30 border border-primary/10 flex items-center gap-4">
+              <Star className="h-8 w-8 text-warning" />
+              <div className="flex-1">
+                <Label className="text-xs text-muted-foreground">Max Points Redeemable</Label>
+                {editMode ? <Input type="number" value={form.max_points_redeemable} onChange={(e) => setForm({ ...form, max_points_redeemable: Number(e.target.value) })} className="mt-1 max-w-32" /> : <p className="text-xl font-bold">{product?.max_points_redeemable} pts</p>}
+              </div>
+              <div className="flex-1">
+                <Label className="text-xs text-muted-foreground">Max Redemption %</Label>
+                {editMode ? <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1 max-w-32" placeholder="Vendor default" /> : <p className="text-xl font-bold">{(product as any)?.max_redemption_percentage != null ? `${(product as any).max_redemption_percentage}%` : "Vendor default"}</p>}
+              </div>
+            </div>
+          )}
+
+          {/* Emoji / Icon */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs text-muted-foreground">Emoji Icon</Label>
+              {editMode && !vendorRestricted ? <Input value={form.emoji} onChange={(e) => setForm({ ...form, emoji: e.target.value })} className="mt-1" placeholder="📦" /> : <p className="text-2xl mt-1">{form.emoji}</p>}
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground flex items-center gap-1"><Youtube className="h-3 w-3 text-destructive" /> YouTube Video URL</Label>
+              {editMode ? <Input value={form.youtube_video_url} onChange={(e) => setForm({ ...form, youtube_video_url: e.target.value })} placeholder="https://youtube.com/watch?v=..." className="mt-1" /> : form.youtube_video_url ? <a href={form.youtube_video_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline mt-1 block">{form.youtube_video_url}</a> : <p className="text-xs text-muted-foreground mt-1">No video</p>}
             </div>
           </div>
 
-          {/* YouTube Video */}
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground flex items-center gap-1"><Youtube className="h-3 w-3 text-destructive" /> YouTube Video URL</Label>
-            {editMode ? (
-              <Input value={form.youtube_video_url} onChange={(e) => setForm({ ...form, youtube_video_url: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." className="mt-1" />
-            ) : form.youtube_video_url ? (
-              <a href={form.youtube_video_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">{form.youtube_video_url}</a>
-            ) : <p className="text-xs text-muted-foreground">No video added</p>}
-          </div>
+          {vendorRestricted && (
+            <p className="text-xs text-muted-foreground bg-warning/10 p-3 rounded-lg">
+              ⚠️ This product is approved. You can only edit images, price, discount, and status.
+            </p>
+          )}
         </div>
 
         <DialogFooter className="mt-4">
-          {!isCreate && onDelete && editMode && (
+          {!isCreate && onDelete && editMode && !isVendor && (
             <Button variant="destructive" onClick={handleDelete} disabled={saving} className="mr-auto gap-1">
               <Trash2 className="h-4 w-4" /> Delete
             </Button>
@@ -280,6 +463,22 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Inactivation Reason Dialog */}
+      <Dialog open={showInactivateDialog} onOpenChange={setShowInactivateDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>Reason for Inactivation</DialogTitle>
+          <div className="space-y-3 pt-2">
+            <p className="text-sm text-muted-foreground">This product will be hidden from customers. Please provide a reason.</p>
+            <Textarea value={form.inactivation_reason} onChange={(e) => setForm({ ...form, inactivation_reason: e.target.value })} placeholder="e.g. Out of stock, Discontinued, Seasonal..." rows={3} />
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setShowInactivateDialog(false)}>Cancel</Button>
+              <Button variant="destructive" className="flex-1" onClick={confirmInactivate}>Confirm Inactivation</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
+
