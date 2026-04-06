@@ -211,6 +211,7 @@ export type Database = {
       categories: {
         Row: {
           banner_image: string | null
+          commission_rate: number | null
           count: number
           created_at: string
           description: string | null
@@ -221,11 +222,15 @@ export type Database = {
           is_trending: boolean | null
           name: string
           parent_id: string | null
+          promotion_active: boolean | null
+          promotion_banner_url: string | null
+          promotion_title: string | null
           status: string
           verification_status: string | null
         }
         Insert: {
           banner_image?: string | null
+          commission_rate?: number | null
           count?: number
           created_at?: string
           description?: string | null
@@ -236,11 +241,15 @@ export type Database = {
           is_trending?: boolean | null
           name: string
           parent_id?: string | null
+          promotion_active?: boolean | null
+          promotion_banner_url?: string | null
+          promotion_title?: string | null
           status?: string
           verification_status?: string | null
         }
         Update: {
           banner_image?: string | null
+          commission_rate?: number | null
           count?: number
           created_at?: string
           description?: string | null
@@ -251,6 +260,9 @@ export type Database = {
           is_trending?: boolean | null
           name?: string
           parent_id?: string | null
+          promotion_active?: boolean | null
+          promotion_banner_url?: string | null
+          promotion_title?: string | null
           status?: string
           verification_status?: string | null
         }
@@ -1690,6 +1702,7 @@ export type Database = {
       service_categories: {
         Row: {
           banner_image: string | null
+          commission_rate: number | null
           count: number
           created_at: string
           description: string | null
@@ -1700,11 +1713,15 @@ export type Database = {
           is_trending: boolean | null
           name: string
           parent_id: string | null
+          promotion_active: boolean | null
+          promotion_banner_url: string | null
+          promotion_title: string | null
           status: string
           verification_status: string | null
         }
         Insert: {
           banner_image?: string | null
+          commission_rate?: number | null
           count?: number
           created_at?: string
           description?: string | null
@@ -1715,11 +1732,15 @@ export type Database = {
           is_trending?: boolean | null
           name: string
           parent_id?: string | null
+          promotion_active?: boolean | null
+          promotion_banner_url?: string | null
+          promotion_title?: string | null
           status?: string
           verification_status?: string | null
         }
         Update: {
           banner_image?: string | null
+          commission_rate?: number | null
           count?: number
           created_at?: string
           description?: string | null
@@ -1730,6 +1751,9 @@ export type Database = {
           is_trending?: boolean | null
           name?: string
           parent_id?: string | null
+          promotion_active?: boolean | null
+          promotion_banner_url?: string | null
+          promotion_title?: string | null
           status?: string
           verification_status?: string | null
         }
@@ -2887,6 +2911,8 @@ export type Database = {
           phone: string
           rejection_reason: string | null
           secondary_phone: string | null
+          selected_categories: Json | null
+          selected_subcategories: Json | null
           shop_address: string | null
           shop_photo_url: string | null
           state: string | null
@@ -2926,6 +2952,8 @@ export type Database = {
           phone?: string
           rejection_reason?: string | null
           secondary_phone?: string | null
+          selected_categories?: Json | null
+          selected_subcategories?: Json | null
           shop_address?: string | null
           shop_photo_url?: string | null
           state?: string | null
@@ -2965,6 +2993,8 @@ export type Database = {
           phone?: string
           rejection_reason?: string | null
           secondary_phone?: string | null
+          selected_categories?: Json | null
+          selected_subcategories?: Json | null
           shop_address?: string | null
           shop_photo_url?: string | null
           state?: string | null
