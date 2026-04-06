@@ -26,6 +26,7 @@ interface ProductForm {
   stock: string; category_id: string; emoji: string; status: string;
   image: string; sku: string; images: string[]; youtube_video_url: string;
   inactivation_reason: string; tax_slab_id: string; product_attributes: any[];
+  product_type: string; slug: string; meta_title: string; meta_description: string;
 }
 
 const emptyForm: ProductForm = {
@@ -34,6 +35,7 @@ const emptyForm: ProductForm = {
   stock: "", category_id: "", emoji: "📦", status: "draft",
   image: "", sku: "", images: [], youtube_video_url: "",
   inactivation_reason: "", tax_slab_id: "", product_attributes: [],
+  product_type: "simple", slug: "", meta_title: "", meta_description: "",
 };
 
 export default function VendorProductsPage() {
@@ -82,6 +84,11 @@ export default function VendorProductsPage() {
         inactivation_reason: formData.inactivation_reason || "",
         tax_slab_id: formData.tax_slab_id || null,
         product_attributes: formData.product_attributes || [],
+        product_type: formData.product_type || "simple",
+        sku: formData.sku || null,
+        slug: formData.slug || null,
+        meta_title: formData.meta_title || "",
+        meta_description: formData.meta_description || "",
       };
       if (editingId) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingId);
@@ -118,12 +125,14 @@ export default function VendorProductsPage() {
       price: String(p.price), tax: String(p.tax),
       discount: String(p.discount), discount_type: p.discount_type || "fixed",
       stock: String(p.stock || 0), category_id: p.category_id || "",
-      emoji: p.emoji || "📦", status: p.status, image: p.image || "", sku: "",
+      emoji: p.emoji || "📦", status: p.status, image: p.image || "", sku: p.sku || "",
       images: Array.isArray(p.images) ? p.images : p.image ? [p.image] : [],
       youtube_video_url: p.youtube_video_url || "",
       inactivation_reason: p.inactivation_reason || "",
       tax_slab_id: p.tax_slab_id || "",
       product_attributes: p.product_attributes || [],
+      product_type: p.product_type || "simple",
+      slug: p.slug || "", meta_title: p.meta_title || "", meta_description: p.meta_description || "",
     });
     setModalOpen(true);
   };
@@ -244,8 +253,16 @@ export default function VendorProductsPage() {
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }} className="space-y-4">
             <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
-            <div><Label>SKU</Label><Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="SKU-001" /></div>
-            <div><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
+            <div><Label>Product Type</Label>
+              <Select value={form.product_type} onValueChange={(v) => setForm({ ...form, product_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="simple">Simple</SelectItem>
+                  <SelectItem value="variable">Variable (has variants)</SelectItem>
+                  <SelectItem value="service">Service</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             
             {/* Image Upload */}
             <div>

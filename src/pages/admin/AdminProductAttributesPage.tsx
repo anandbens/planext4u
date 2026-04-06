@@ -11,16 +11,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Tag, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Tag, X, Palette } from "lucide-react";
 
 export default function AdminProductAttributesPage() {
   const qc = useQueryClient();
   const [attrModal, setAttrModal] = useState(false);
   const [editAttr, setEditAttr] = useState<any>(null);
   const [attrForm, setAttrForm] = useState({ name: "", attribute_type: "select", is_active: true });
-  const [valInput, setValInput] = useState("");
   const [expandedAttr, setExpandedAttr] = useState<string | null>(null);
   const [newValInput, setNewValInput] = useState("");
+  const [newValHex, setNewValHex] = useState("");
 
   const { data: attributes } = useQuery({
     queryKey: ["productAttributes"],
@@ -62,11 +62,16 @@ export default function AdminProductAttributesPage() {
     qc.invalidateQueries({ queryKey: ["productAttributeValues"] });
   };
 
-  const addValue = async (attrId: string) => {
+  const isColorAttr = (attr: any) => attr.name.toLowerCase() === "color" || attr.name.toLowerCase() === "colour";
+
+  const addValue = async (attrId: string, attr: any) => {
     if (!newValInput.trim()) return;
     const vals = (allValues || []).filter((v: any) => v.attribute_id === attrId);
-    await supabase.from("product_attribute_values" as any).insert({ attribute_id: attrId, value: newValInput.trim(), sort_order: vals.length } as any);
+    const payload: any = { attribute_id: attrId, value: newValInput.trim(), sort_order: vals.length };
+    if (isColorAttr(attr) && newValHex) payload.hex_color = newValHex;
+    await supabase.from("product_attribute_values" as any).insert(payload as any);
     setNewValInput("");
+    setNewValHex("");
     toast.success("Value added");
     qc.invalidateQueries({ queryKey: ["productAttributeValues"] });
   };
@@ -74,6 +79,11 @@ export default function AdminProductAttributesPage() {
   const deleteValue = async (id: string) => {
     await supabase.from("product_attribute_values" as any).delete().eq("id", id);
     toast.success("Value removed");
+    qc.invalidateQueries({ queryKey: ["productAttributeValues"] });
+  };
+
+  const updateHexColor = async (valId: string, hex: string) => {
+    await supabase.from("product_attribute_values" as any).update({ hex_color: hex } as any).eq("id", valId);
     qc.invalidateQueries({ queryKey: ["productAttributeValues"] });
   };
 
@@ -93,11 +103,12 @@ export default function AdminProductAttributesPage() {
         {(attributes || []).map((attr: any) => {
           const vals = (allValues || []).filter((v: any) => v.attribute_id === attr.id);
           const isExpanded = expandedAttr === attr.id;
+          const isColor = isColorAttr(attr);
           return (
             <Card key={attr.id} className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => setExpandedAttr(isExpanded ? null : attr.id)}>
-                  <Tag className="h-4 w-4 text-primary" />
+                  {isColor ? <Palette className="h-4 w-4 text-primary" /> : <Tag className="h-4 w-4 text-primary" />}
                   <div>
                     <h3 className="text-sm font-semibold">{attr.name}</h3>
                     <p className="text-xs text-muted-foreground">{attr.attribute_type} • {vals.length} values</p>
@@ -115,19 +126,40 @@ export default function AdminProductAttributesPage() {
               </div>
               {isExpanded && (
                 <div className="mt-3 pt-3 border-t border-border/50">
-                  <div className="flex flex-wrap gap-1.5 mb-3">
+                  <div className="flex flex-wrap gap-2 mb-3">
                     {vals.map((v: any) => (
-                      <Badge key={v.id} variant="outline" className="gap-1 pr-1">
-                        {v.value}
+                      <div key={v.id} className="flex items-center gap-1.5 border border-border/50 rounded-lg px-2 py-1">
+                        {isColor && v.hex_color && (
+                          <span className="h-4 w-4 rounded-full border border-border/50 shrink-0" style={{ backgroundColor: v.hex_color }} />
+                        )}
+                        {isColor && (
+                          <input
+                            type="color"
+                            value={v.hex_color || "#000000"}
+                            onChange={(e) => updateHexColor(v.id, e.target.value)}
+                            className="h-5 w-5 rounded cursor-pointer border-0 p-0"
+                            title="Set color"
+                          />
+                        )}
+                        <span className="text-xs font-medium">{v.value}</span>
+                        {v.hex_color && <span className="text-[10px] text-muted-foreground">{v.hex_color}</span>}
                         <button onClick={() => deleteValue(v.id)} className="ml-0.5 hover:text-destructive"><X className="h-3 w-3" /></button>
-                      </Badge>
+                      </div>
                     ))}
                   </div>
                   {attr.attribute_type === "select" && (
-                    <div className="flex gap-2">
-                      <Input value={newValInput} onChange={(e) => setNewValInput(e.target.value)} placeholder="Add new value..." className="max-w-xs h-8 text-xs"
-                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addValue(attr.id); } }} />
-                      <Button size="sm" className="h-8" onClick={() => addValue(attr.id)}>Add</Button>
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1">
+                        <Input value={newValInput} onChange={(e) => setNewValInput(e.target.value)} placeholder="Add new value..." className="h-8 text-xs"
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addValue(attr.id, attr); } }} />
+                      </div>
+                      {isColor && (
+                        <div className="flex items-center gap-1">
+                          <input type="color" value={newValHex || "#000000"} onChange={(e) => setNewValHex(e.target.value)} className="h-8 w-8 rounded cursor-pointer border border-border/50 p-0" />
+                          <Input value={newValHex} onChange={(e) => setNewValHex(e.target.value)} placeholder="#hex" className="h-8 text-xs w-20" />
+                        </div>
+                      )}
+                      <Button size="sm" className="h-8" onClick={() => addValue(attr.id, attr)}>Add</Button>
                     </div>
                   )}
                 </div>

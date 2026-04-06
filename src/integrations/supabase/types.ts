@@ -666,6 +666,57 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_log: {
+        Row: {
+          change_qty: number
+          created_at: string | null
+          id: string
+          new_qty: number | null
+          performed_by: string | null
+          previous_qty: number | null
+          product_id: string
+          reason: string | null
+          variant_id: string | null
+        }
+        Insert: {
+          change_qty?: number
+          created_at?: string | null
+          id?: string
+          new_qty?: number | null
+          performed_by?: string | null
+          previous_qty?: number | null
+          product_id: string
+          reason?: string | null
+          variant_id?: string | null
+        }
+        Update: {
+          change_qty?: number
+          created_at?: string | null
+          id?: string
+          new_qty?: number | null
+          performed_by?: string | null
+          previous_qty?: number | null
+          product_id?: string
+          reason?: string | null
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_log_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kyc_documents: {
         Row: {
           admin_notes: string | null
@@ -965,10 +1016,48 @@ export type Database = {
         }
         Relationships: []
       }
+      product_attribute_map: {
+        Row: {
+          attribute_id: string
+          created_at: string | null
+          id: string
+          product_id: string
+        }
+        Insert: {
+          attribute_id: string
+          created_at?: string | null
+          id?: string
+          product_id: string
+        }
+        Update: {
+          attribute_id?: string
+          created_at?: string | null
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_attribute_map_attribute_id_fkey"
+            columns: ["attribute_id"]
+            isOneToOne: false
+            referencedRelation: "product_attributes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_attribute_map_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_attribute_values: {
         Row: {
           attribute_id: string
           created_at: string | null
+          display_label: string | null
+          hex_color: string | null
           id: string
           sort_order: number | null
           value: string
@@ -976,6 +1065,8 @@ export type Database = {
         Insert: {
           attribute_id: string
           created_at?: string | null
+          display_label?: string | null
+          hex_color?: string | null
           id?: string
           sort_order?: number | null
           value: string
@@ -983,6 +1074,8 @@ export type Database = {
         Update: {
           attribute_id?: string
           created_at?: string | null
+          display_label?: string | null
+          hex_color?: string | null
           id?: string
           sort_order?: number | null
           value?: string
@@ -1027,6 +1120,103 @@ export type Database = {
         }
         Relationships: []
       }
+      product_variant_images: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string
+          is_primary: boolean | null
+          sort_order: number | null
+          variant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          is_primary?: boolean | null
+          sort_order?: number | null
+          variant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          is_primary?: boolean | null
+          sort_order?: number | null
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variant_images_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          compare_at_price: number | null
+          created_at: string | null
+          dimensions: Json | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          price: number
+          product_id: string
+          sku: string | null
+          sort_order: number | null
+          stock_quantity: number
+          stock_status: string
+          updated_at: string | null
+          variant_attributes: Json
+          weight: number | null
+        }
+        Insert: {
+          compare_at_price?: number | null
+          created_at?: string | null
+          dimensions?: Json | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          price?: number
+          product_id: string
+          sku?: string | null
+          sort_order?: number | null
+          stock_quantity?: number
+          stock_status?: string
+          updated_at?: string | null
+          variant_attributes?: Json
+          weight?: number | null
+        }
+        Update: {
+          compare_at_price?: number | null
+          created_at?: string | null
+          dimensions?: Json | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          price?: number
+          product_id?: string
+          sku?: string | null
+          sort_order?: number | null
+          stock_quantity?: number
+          stock_status?: string
+          updated_at?: string | null
+          variant_attributes?: Json
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           banner_image: string | null
@@ -1034,6 +1224,7 @@ export type Database = {
           category_name: string | null
           created_at: string
           description: string
+          dimensions: Json | null
           discount: number
           discount_type: string | null
           duration_hours: number | null
@@ -1046,18 +1237,25 @@ export type Database = {
           inactivation_reason: string | null
           is_available: boolean | null
           long_description: string | null
+          manage_stock: boolean | null
           max_points_redeemable: number
           max_redemption_percentage: number | null
+          meta_description: string | null
+          meta_title: string | null
           price: number
           product_attributes: Json | null
+          product_type: string
           promise_p4u: string | null
           rating: number | null
           rejection_reason: string | null
           reviews: number | null
           sales: number | null
           short_description: string | null
+          sku: string | null
+          slug: string | null
           status: string
           stock: number | null
+          stock_status: string | null
           subcategory_id: string | null
           subcategory_name: string | null
           tax: number
@@ -1067,6 +1265,7 @@ export type Database = {
           updated_at: string
           vendor_id: string
           vendor_name: string | null
+          weight: number | null
           youtube_video_url: string | null
         }
         Insert: {
@@ -1075,6 +1274,7 @@ export type Database = {
           category_name?: string | null
           created_at?: string
           description?: string
+          dimensions?: Json | null
           discount?: number
           discount_type?: string | null
           duration_hours?: number | null
@@ -1087,18 +1287,25 @@ export type Database = {
           inactivation_reason?: string | null
           is_available?: boolean | null
           long_description?: string | null
+          manage_stock?: boolean | null
           max_points_redeemable?: number
           max_redemption_percentage?: number | null
+          meta_description?: string | null
+          meta_title?: string | null
           price?: number
           product_attributes?: Json | null
+          product_type?: string
           promise_p4u?: string | null
           rating?: number | null
           rejection_reason?: string | null
           reviews?: number | null
           sales?: number | null
           short_description?: string | null
+          sku?: string | null
+          slug?: string | null
           status?: string
           stock?: number | null
+          stock_status?: string | null
           subcategory_id?: string | null
           subcategory_name?: string | null
           tax?: number
@@ -1108,6 +1315,7 @@ export type Database = {
           updated_at?: string
           vendor_id: string
           vendor_name?: string | null
+          weight?: number | null
           youtube_video_url?: string | null
         }
         Update: {
@@ -1116,6 +1324,7 @@ export type Database = {
           category_name?: string | null
           created_at?: string
           description?: string
+          dimensions?: Json | null
           discount?: number
           discount_type?: string | null
           duration_hours?: number | null
@@ -1128,18 +1337,25 @@ export type Database = {
           inactivation_reason?: string | null
           is_available?: boolean | null
           long_description?: string | null
+          manage_stock?: boolean | null
           max_points_redeemable?: number
           max_redemption_percentage?: number | null
+          meta_description?: string | null
+          meta_title?: string | null
           price?: number
           product_attributes?: Json | null
+          product_type?: string
           promise_p4u?: string | null
           rating?: number | null
           rejection_reason?: string | null
           reviews?: number | null
           sales?: number | null
           short_description?: string | null
+          sku?: string | null
+          slug?: string | null
           status?: string
           stock?: number | null
+          stock_status?: string | null
           subcategory_id?: string | null
           subcategory_name?: string | null
           tax?: number
@@ -1149,6 +1365,7 @@ export type Database = {
           updated_at?: string
           vendor_id?: string
           vendor_name?: string | null
+          weight?: number | null
           youtube_video_url?: string | null
         }
         Relationships: [

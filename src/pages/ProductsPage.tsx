@@ -108,7 +108,7 @@ export default function ProductsPage() {
   const columns = [
     { key: "id", label: "ID" },
     { key: "title", label: "Product", render: (p: Product) => (
-      <div><p className="font-medium">{p.title}</p><p className="text-xs text-muted-foreground">{p.category_name}{(p as any).subcategory_name ? ` › ${(p as any).subcategory_name}` : ''}</p></div>
+      <div><p className="font-medium">{p.title}</p><p className="text-xs text-muted-foreground">{p.category_name}{(p as any).subcategory_name ? ` › ${(p as any).subcategory_name}` : ''} • <span className="capitalize">{(p as any).product_type || 'simple'}</span></p></div>
     )},
     { key: "vendor_name", label: "Vendor" },
     { key: "price", label: "Price", render: (p: Product) => <span className="font-semibold">₹{p.price.toLocaleString()}</span> },
