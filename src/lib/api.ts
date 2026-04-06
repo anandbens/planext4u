@@ -44,7 +44,8 @@ export interface Order {
   subtotal: number; tax: number; discount: number; points_used: number; total: number;
   status: 'placed' | 'paid' | 'accepted' | 'in_progress' | 'delivered' | 'completed' | 'cancelled';
   created_at: string; updated_at?: string; customer_name?: string; vendor_name?: string;
-  items?: { title: string; qty: number; emoji: string; price: number }[];
+  items?: { title: string; qty: number; emoji: string; price: number; image?: string }[];
+  delivery_rating?: number | null; rating_comment?: string | null; rated_at?: string | null;
 }
 
 export interface Settlement {
