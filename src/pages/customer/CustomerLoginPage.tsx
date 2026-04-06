@@ -7,6 +7,7 @@ import { Eye, EyeOff, Mail, Phone, ArrowRight, ShieldCheck, Loader2 } from "luci
 import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { isNativePlatform } from "@/lib/capacitor-auth";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
