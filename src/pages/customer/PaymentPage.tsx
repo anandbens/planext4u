@@ -20,7 +20,7 @@ export default function PaymentPage() {
   const { customerUser } = useAuth();
   const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
 
-  const { cart, subtotal, platformFee, discount, pointsUsed, total, selectedAddress } = location.state || {};
+  const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress } = location.state || {};
 
   const [paymentState, setPaymentState] = useState<PaymentState>('select');
   const [orderId, setOrderId] = useState('');
