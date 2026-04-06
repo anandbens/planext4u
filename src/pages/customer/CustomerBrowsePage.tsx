@@ -130,7 +130,7 @@ export default function CustomerBrowsePage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold">{categoryFilter || searchFilter || "All Products"}</h1>
-            <p className="text-sm text-muted-foreground">{products?.length || 0} products</p>
+            <p className="text-sm text-muted-foreground">{products?.length || 0} products{radiusInfo && ` · ${radiusInfo}`}</p>
           </div>
           <div className="flex items-center gap-2">
             <Select value={sortBy} onValueChange={setSortBy}>
