@@ -373,7 +373,7 @@ function PostCard({ post }: { post: any }) {
             </AnimatePresence>
             <span className="text-sm font-semibold">{formatCount(likes)}</span>
           </button>
-          <button className="flex items-center gap-1.5" onClick={() => { setShowCommentInput(v => !v); }}>
+          <button className="flex items-center gap-1.5" onClick={() => { if (!userId) { toast.error("Please login to comment"); navigate("/app/login"); return; } setShowCommentInput(v => !v); }}>
             <MessageCircle className="h-6 w-6" />
             <span className="text-sm">{formatCount(comments)}</span>
           </button>
