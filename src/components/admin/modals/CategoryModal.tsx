@@ -20,19 +20,33 @@ interface CategoryModalProps {
   onCreate?: (data: Partial<Category>) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
   parentCategories?: Category[];
+  defaultAsSubcategory?: boolean;
 }
 
-const emptyForm = { name: "", image: "📦", status: "active" as Category["status"], banner_image: "", icon: "", is_trending: false, description: "", parent_id: "" as string | null, commission_rate: "" as string, promotion_banner_url: "", promotion_title: "", promotion_active: false };
+const emptyForm = {
+  name: "", image: "📦", status: "active" as Category["status"],
+  banner_image: "", icon: "", is_trending: false, description: "",
+  parent_id: "" as string | null, commission_rate: "" as string,
+  promotion_banner_url: "", promotion_title: "", promotion_active: false,
+  is_emergency: false,
+};
 
-export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories }: CategoryModalProps) {
+export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories, defaultAsSubcategory }: CategoryModalProps) {
   const isCreate = mode === "create";
   const [editMode, setEditMode] = useState(mode === "edit" || isCreate);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
-    if (isCreate) { setForm(emptyForm); setEditMode(true); }
-    else if (category) {
+    if (isCreate) {
+      const initialForm = { ...emptyForm };
+      // If creating as subcategory and category has parent_id preset
+      if (defaultAsSubcategory && category?.parent_id) {
+        initialForm.parent_id = category.parent_id;
+      }
+      setForm(initialForm);
+      setEditMode(true);
+    } else if (category) {
       setForm({
         name: category.name, image: category.image || "📦", status: category.status,
         banner_image: category.banner_image || "", icon: category.icon || "",
@@ -42,21 +56,25 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         promotion_banner_url: (category as any).promotion_banner_url || "",
         promotion_title: (category as any).promotion_title || "",
         promotion_active: (category as any).promotion_active || false,
+        is_emergency: (category as any).is_emergency || false,
       });
       setEditMode(mode === "edit");
     }
-  }, [category, mode]);
+  }, [category, mode, defaultAsSubcategory]);
 
   const handleSave = async () => {
     if (!form.name) return;
     setSaving(true);
     try {
-      const payload: any = { ...form, parent_id: form.parent_id || null, commission_rate: form.commission_rate ? parseFloat(form.commission_rate) : null };
-      delete payload.promotion_banner_url; delete payload.promotion_title; delete payload.promotion_active;
-      // Include promotion fields only if they exist in DB
-      payload.promotion_banner_url = form.promotion_banner_url || null;
-      payload.promotion_title = form.promotion_title || null;
-      payload.promotion_active = form.promotion_active;
+      const payload: any = {
+        ...form,
+        parent_id: form.parent_id || null,
+        commission_rate: form.commission_rate ? parseFloat(form.commission_rate) : null,
+        promotion_banner_url: form.promotion_banner_url || null,
+        promotion_title: form.promotion_title || null,
+        promotion_active: form.promotion_active,
+        is_emergency: form.is_emergency,
+      };
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
       onOpenChange(false);
@@ -69,21 +87,31 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
     try { await onDelete?.(category.id); onOpenChange(false); } finally { setSaving(false); }
   };
 
-  // Filter out the current category from parent options to prevent self-reference
   const parentOptions = (parentCategories || []).filter(c => c.id !== category?.id && !c.parent_id);
+  const isSubcategory = !!form.parent_id;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isCreate ? "New Category" : `Edit: ${category?.name}`}</DialogTitle>
+          <DialogTitle>
+            {isCreate
+              ? (defaultAsSubcategory ? "New Subcategory" : "New Category")
+              : `Edit: ${category?.name}`}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
+          {/* Name */}
           <div>
-            <Label className="text-xs text-muted-foreground">Category Name *</Label>
-            {editMode ? <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" placeholder="Category name" /> : <p className="text-sm font-medium mt-1">{category?.name}</p>}
+            <Label className="text-xs text-muted-foreground">
+              {isSubcategory ? "Subcategory Name *" : "Category Name *"}
+            </Label>
+            {editMode
+              ? <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" placeholder="Category name" />
+              : <p className="text-sm font-medium mt-1">{category?.name}</p>}
           </div>
 
+          {/* Parent Category */}
           {editMode && parentOptions.length > 0 && (
             <div>
               <Label className="text-xs text-muted-foreground">Parent Category (leave empty for top-level)</Label>
@@ -97,17 +125,31 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
             </div>
           )}
 
+          {/* Image & Icon from Media Library */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs text-muted-foreground">Icon/Emoji</Label>
-              {editMode ? <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} className="mt-1" placeholder="📦" /> : <span className="text-2xl">{category?.image}</span>}
+              <Label className="text-xs text-muted-foreground">Image</Label>
+              {editMode ? (
+                <MediaLibraryPicker value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="categories" label="Choose Image" className="mt-1" />
+              ) : (
+                form.image?.startsWith('http') || form.image?.startsWith('/')
+                  ? <img src={form.image} alt="cat" className="mt-1 h-12 w-12 rounded object-cover" />
+                  : <span className="text-2xl mt-1 block">{form.image}</span>
+              )}
             </div>
             <div>
-              <Label className="text-xs text-muted-foreground">Icon Class/URL</Label>
-              {editMode ? <Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} className="mt-1" placeholder="icon-name or URL" /> : <p className="text-sm mt-1">{category?.icon || '—'}</p>}
+              <Label className="text-xs text-muted-foreground">Icon (from Media Library)</Label>
+              {editMode ? (
+                <MediaLibraryPicker value={form.icon} onChange={(url) => setForm({ ...form, icon: url })} folder="icons" label="Choose Icon" className="mt-1" />
+              ) : (
+                form.icon?.startsWith('http') || form.icon?.startsWith('/')
+                  ? <img src={form.icon} alt="icon" className="mt-1 h-10 w-10 rounded object-contain" />
+                  : <p className="text-sm mt-1">{form.icon || '—'}</p>
+              )}
             </div>
           </div>
 
+          {/* Banner Image */}
           <div>
             <Label className="text-xs text-muted-foreground">Banner Image</Label>
             {editMode ? (
@@ -117,23 +159,32 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
             ) : <p className="text-sm mt-1 text-muted-foreground">—</p>}
           </div>
 
+          {/* Description */}
           <div>
             <Label className="text-xs text-muted-foreground">Description</Label>
-            {editMode ? <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1 min-h-[80px]" placeholder="Category description..." /> : <p className="text-sm mt-1">{category?.description || '—'}</p>}
+            {editMode
+              ? <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1 min-h-[80px]" placeholder="Category description..." />
+              : <p className="text-sm mt-1">{category?.description || '—'}</p>}
+          </div>
+
+          {/* Trending & Emergency */}
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Trending</Label>
+            {editMode
+              ? <Switch checked={form.is_trending} onCheckedChange={(v) => setForm({ ...form, is_trending: v })} />
+              : <span className={`text-xs font-semibold ${category?.is_trending ? 'text-success' : 'text-muted-foreground'}`}>{category?.is_trending ? 'Yes' : 'No'}</span>}
           </div>
 
           <div className="flex items-center justify-between">
-            <Label className="text-xs text-muted-foreground">Trending</Label>
-            {editMode ? (
-              <Switch checked={form.is_trending} onCheckedChange={(v) => setForm({ ...form, is_trending: v })} />
-            ) : (
-              <span className={`text-xs font-semibold ${category?.is_trending ? 'text-success' : 'text-muted-foreground'}`}>{category?.is_trending ? 'Yes' : 'No'}</span>
-            )}
+            <Label className="text-xs text-muted-foreground">Emergency</Label>
+            {editMode
+              ? <Switch checked={form.is_emergency} onCheckedChange={(v) => setForm({ ...form, is_emergency: v })} />
+              : <span className={`text-xs font-semibold ${(category as any)?.is_emergency ? 'text-success' : 'text-muted-foreground'}`}>{(category as any)?.is_emergency ? 'Active' : 'Deactive'}</span>}
           </div>
 
           {/* Commission Rate */}
           <div>
-            <Label className="text-xs text-muted-foreground">Category Commission Rate (%)</Label>
+            <Label className="text-xs text-muted-foreground">P4U Commission Rate (%)</Label>
             {editMode ? (
               <Input type="number" min="0" max="100" step="0.5" value={form.commission_rate} onChange={(e) => setForm({ ...form, commission_rate: e.target.value })} className="mt-1" placeholder="e.g., 10" />
             ) : <p className="text-sm mt-1">{(category as any)?.commission_rate ? `${(category as any).commission_rate}%` : '—'}</p>}
@@ -144,11 +195,9 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
             <Label className="text-xs font-semibold">Category Promotion</Label>
             <div className="flex items-center justify-between">
               <Label className="text-xs text-muted-foreground">Active</Label>
-              {editMode ? (
-                <Switch checked={form.promotion_active} onCheckedChange={(v) => setForm({ ...form, promotion_active: v })} />
-              ) : (
-                <span className={`text-xs font-semibold ${(category as any)?.promotion_active ? 'text-success' : 'text-muted-foreground'}`}>{(category as any)?.promotion_active ? 'Yes' : 'No'}</span>
-              )}
+              {editMode
+                ? <Switch checked={form.promotion_active} onCheckedChange={(v) => setForm({ ...form, promotion_active: v })} />
+                : <span className={`text-xs font-semibold ${(category as any)?.promotion_active ? 'text-success' : 'text-muted-foreground'}`}>{(category as any)?.promotion_active ? 'Yes' : 'No'}</span>}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Promotion Title</Label>
@@ -164,6 +213,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
             </div>
           </div>
 
+          {/* Status */}
           <div>
             <Label className="text-xs text-muted-foreground">Status</Label>
             {editMode ? (
