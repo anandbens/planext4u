@@ -219,6 +219,15 @@ function ReelCard({ reel }: { reel: any }) {
           <button className="border border-white/60 text-white text-xs font-semibold px-3 py-0.5 rounded-lg ml-1">Follow</button>
         </div>
         <p className="text-white text-sm leading-snug line-clamp-2">{reel.caption}</p>
+        {/* Product deeplink overlay */}
+        {reel.linkedProductId && (
+          <Link to={`/app/product/${reel.linkedProductId}`}
+            className="mt-2 flex items-center gap-2 bg-card/90 backdrop-blur-sm rounded-lg px-3 py-2 w-fit hover:bg-card transition-colors">
+            <ShoppingBag className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold text-foreground truncate max-w-[180px]">{reel.linkedProductTitle || 'View Product'}</span>
+            <span className="text-[10px] text-primary font-bold">Shop →</span>
+          </Link>
+        )}
         <div className="flex items-center gap-1.5 mt-2">
           <Music2 className="h-3.5 w-3.5 text-white/80" />
           <p className="text-white/80 text-xs truncate">{reel.audio}</p>
