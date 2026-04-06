@@ -428,8 +428,8 @@ export default function VendorRegisterPage() {
                     <SelectItem value="pvt_ltd">Pvt Ltd</SelectItem>
                   </SelectContent>
                 </Select></div>
-              <div><label className="text-xs font-medium text-muted-foreground">Category</label>
-                <Select value={form.category} onValueChange={v => updateField('category', v)}>
+              <div><label className="text-xs font-medium text-muted-foreground">Vendor Type *</label>
+                <Select value={form.category} onValueChange={v => { updateField('category', v); setSelectedCategories([]); setSelectedSubcategories([]); }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="product">Product Seller</SelectItem>
@@ -442,6 +442,116 @@ export default function VendorRegisterPage() {
               <div className="sm:col-span-2"><label className="text-xs font-medium text-muted-foreground">Business Description</label>
                 <Textarea value={form.business_description} onChange={e => updateField('business_description', e.target.value)} maxLength={2000} rows={3} />
                 <p className="text-[10px] text-muted-foreground text-right mt-0.5">{form.business_description.length}/2000</p></div>
+            </div>
+
+            {/* Category & Subcategory Selection */}
+            <div className="space-y-3">
+              <label className="text-xs font-medium text-muted-foreground">Select Categories *</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search categories..." value={catSearchQuery} onChange={e => setCatSearchQuery(e.target.value)} className="pl-9" />
+              </div>
+
+              {/* Product categories */}
+              {(form.category === 'product' || form.category === 'both') && (
+                <div>
+                  <p className="text-xs font-semibold mb-2 text-primary">Product Categories</p>
+                  <div className="flex flex-wrap gap-2">
+                    {productCategories
+                      .filter(c => !c.parent_id && c.status === 'active')
+                      .filter(c => !catSearchQuery || c.name.toLowerCase().includes(catSearchQuery.toLowerCase()))
+                      .map(cat => {
+                        const isSelected = selectedCategories.includes(cat.id);
+                        return (
+                          <button key={cat.id} type="button"
+                            onClick={() => setSelectedCategories(prev => isSelected ? prev.filter(id => id !== cat.id) : [...prev, cat.id])}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                              isSelected ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border hover:border-primary/50'
+                            }`}>
+                            {cat.image && !cat.image.startsWith('/') && !cat.image.startsWith('http') && <span className="mr-1">{cat.image}</span>}
+                            {cat.name}
+                          </button>
+                        );
+                      })}
+                  </div>
+
+                  {/* Subcategories for selected product categories */}
+                  {selectedCategories.length > 0 && (() => {
+                    const subs = productCategories.filter(c => c.parent_id && selectedCategories.includes(c.parent_id) && c.status === 'active');
+                    return subs.length > 0 ? (
+                      <div className="mt-3">
+                        <p className="text-[11px] font-medium text-muted-foreground mb-1.5">Subcategories (optional)</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {subs.map(sub => {
+                            const isSelected = selectedSubcategories.includes(sub.id);
+                            return (
+                              <button key={sub.id} type="button"
+                                onClick={() => setSelectedSubcategories(prev => isSelected ? prev.filter(id => id !== sub.id) : [...prev, sub.id])}
+                                className={`px-2.5 py-1 rounded-full text-[11px] border transition-colors ${
+                                  isSelected ? 'bg-accent text-accent-foreground border-primary/50' : 'bg-muted/50 border-border/50 hover:border-primary/30'
+                                }`}>
+                                {sub.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+
+              {/* Service categories */}
+              {(form.category === 'service' || form.category === 'both') && (
+                <div>
+                  <p className="text-xs font-semibold mb-2 text-primary">Service Categories</p>
+                  <div className="flex flex-wrap gap-2">
+                    {serviceCategories
+                      .filter(c => !c.parent_id && c.status === 'active')
+                      .filter(c => !catSearchQuery || c.name.toLowerCase().includes(catSearchQuery.toLowerCase()))
+                      .map(cat => {
+                        const isSelected = selectedCategories.includes(cat.id);
+                        return (
+                          <button key={cat.id} type="button"
+                            onClick={() => setSelectedCategories(prev => isSelected ? prev.filter(id => id !== cat.id) : [...prev, cat.id])}
+                            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                              isSelected ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border hover:border-primary/50'
+                            }`}>
+                            {cat.name}
+                          </button>
+                        );
+                      })}
+                  </div>
+
+                  {/* Subcategories for selected service categories */}
+                  {selectedCategories.length > 0 && (() => {
+                    const subs = serviceCategories.filter(c => c.parent_id && selectedCategories.includes(c.parent_id) && c.status === 'active');
+                    return subs.length > 0 ? (
+                      <div className="mt-3">
+                        <p className="text-[11px] font-medium text-muted-foreground mb-1.5">Subcategories (optional)</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {subs.map(sub => {
+                            const isSelected = selectedSubcategories.includes(sub.id);
+                            return (
+                              <button key={sub.id} type="button"
+                                onClick={() => setSelectedSubcategories(prev => isSelected ? prev.filter(id => id !== sub.id) : [...prev, sub.id])}
+                                className={`px-2.5 py-1 rounded-full text-[11px] border transition-colors ${
+                                  isSelected ? 'bg-accent text-accent-foreground border-primary/50' : 'bg-muted/50 border-border/50 hover:border-primary/30'
+                                }`}>
+                                {sub.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+
+              {selectedCategories.length > 0 && (
+                <p className="text-[10px] text-muted-foreground">{selectedCategories.length} categories, {selectedSubcategories.length} subcategories selected</p>
+              )}
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground">Store Logo / Shop Photo</label>
