@@ -164,7 +164,18 @@ function VendorPage({ children }: { children: React.ReactNode }) {
 
 const AppRoutes = () => {
   const { customerUser } = useAuth();
+  const [isVendorNativeApp, setIsVendorNativeApp] = useState(false);
+  const [appIdReady, setAppIdReady] = useState(!isNativePlatform());
   usePushNotifications();
+
+  // Detect native app identity on mount
+  useEffect(() => {
+    if (!isNativePlatform()) return;
+    getNativeAppId().then(() => {
+      setIsVendorNativeApp(isVendorAppSync());
+      setAppIdReady(true);
+    });
+  }, []);
 
   useEffect(() => {
     if (!isNativePlatform()) {
@@ -183,8 +194,9 @@ const AppRoutes = () => {
         await closeOAuthBrowser();
 
         if (!accessToken || !refreshToken) {
+          const fallbackLogin = isVendorNativeApp ? "/vendor/login" : "/app/login";
           toast.error(errorDescription || "Google sign-in failed. Please try again.");
-          window.location.replace("/app/login");
+          window.location.replace(fallbackLogin);
           return;
         }
 
@@ -194,8 +206,9 @@ const AppRoutes = () => {
         });
 
         if (error) {
+          const fallbackLogin = isVendorNativeApp ? "/vendor/login" : "/app/login";
           toast.error(error.message || "Google sign-in failed. Please try again.");
-          window.location.replace("/app/login");
+          window.location.replace(fallbackLogin);
           return;
         }
 
@@ -208,13 +221,25 @@ const AppRoutes = () => {
     return () => {
       void listener?.remove();
     };
-  }, []);
+  }, [isVendorNativeApp]);
+
+  // Wait for app identity detection on native
+  if (!appIdReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // Determine root redirect target based on native app identity
+  const rootRedirect = isVendorNativeApp ? "/vendor" : "/app";
 
   return (
     <FTUXFlow userId={customerUser?.supabase_uid}>
       <Routes>
-        {/* Redirect root to customer app, admin login available */}
-        <Route path="/" element={<Navigate to="/app" replace />} />
+        {/* Redirect root based on app identity */}
+        <Route path="/" element={<Navigate to={rootRedirect} replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<ProtectedPage><DashboardPage /></ProtectedPage>} />
