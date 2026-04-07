@@ -21,6 +21,23 @@ function isAllowedHostname(host: string): boolean {
 }
 const PRODUCTION_URL = "https://planext4u.lovable.app";
 
+function getAuthorizedFirebaseUrl(): string {
+  return `${PRODUCTION_URL}${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
+function redirectToAuthorizedHost(target: string) {
+  if (window.self !== window.top) {
+    try {
+      window.open(target, "_top");
+      return;
+    } catch {
+      // fall through to same-frame navigation
+    }
+  }
+
+  window.location.replace(target);
+}
+
 /**
  * Check if Firebase Phone Auth is supported on the current hostname.
  * If not, redirect the user to the production domain preserving the path.
@@ -30,9 +47,9 @@ export function ensureFirebaseHostname(): boolean {
   const host = window.location.hostname;
   if (isAllowedHostname(host)) return true;
 
-  const target = `${PRODUCTION_URL}${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const target = getAuthorizedFirebaseUrl();
   console.warn(`Firebase Phone Auth blocked on host: ${host}. Redirecting to ${PRODUCTION_URL}.`);
-  window.location.replace(target);
+  redirectToAuthorizedHost(target);
   return false;
 }
 
@@ -50,6 +67,12 @@ function getOrCreateRecaptchaContainer(): HTMLElement {
 let recaptchaReady: Promise<void> | null = null;
 
 export function setupRecaptcha(): RecaptchaVerifier {
+  if (!isAllowedHostname(window.location.hostname)) {
+    throw Object.assign(new Error("Phone OTP is only available on the published app."), {
+      code: "auth/unauthorized-hostname",
+    });
+  }
+
   if ((window as any).recaptchaVerifier) {
     try {
       (window as any).recaptchaVerifier.clear();
@@ -78,6 +101,7 @@ export function setupRecaptcha(): RecaptchaVerifier {
  * Call this on page mount.
  */
 export function preRenderRecaptcha() {
+  if (!isAllowedHostname(window.location.hostname)) return;
   if ((window as any).recaptchaVerifier) return;
   getOrCreateRecaptchaContainer();
   const verifier = new RecaptchaVerifier(firebaseAuth, "recaptcha-container", {
@@ -89,6 +113,12 @@ export function preRenderRecaptcha() {
 }
 
 export async function sendOTP(phoneNumber: string) {
+  if (!ensureFirebaseHostname()) {
+    throw Object.assign(new Error("Phone OTP is only available on the published app."), {
+      code: "auth/unauthorized-hostname",
+    });
+  }
+
   const currentPhone = firebaseAuth.currentUser?.phoneNumber?.replace(/\s/g, "");
   if (firebaseAuth.currentUser && currentPhone !== phoneNumber.replace(/\s/g, "")) {
     await signOut(firebaseAuth).catch(() => undefined);
