@@ -1,11 +1,11 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.planext4u.customer",
-  appName: "Planext4u",
+  appId: "com.planext4u.vendor",
+  appName: "Planext4u Vendor",
   webDir: "dist",
   server: {
-    url: "https://planext4u.lovable.app",
+    url: "https://planext4u.lovable.app/vendor",
     androidScheme: "https",
   },
   plugins: {
