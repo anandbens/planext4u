@@ -37,10 +37,18 @@ cp capacitor.config.vendor.ts capacitor.config.ts
 # 2. Build web assets
 npm run build
 
-# 3. Sync to android-vendor
-npx cap sync android-vendor
+# 3. Sync Capacitor to the standard android project
+npx cap sync android
 
-# 4. Build APK
+# 4. Mirror generated Capacitor assets/plugin files into android-vendor
+rm -rf android-vendor/app/src/main/assets android-vendor/capacitor-cordova-android-plugins
+cp -R android/app/src/main/assets android-vendor/app/src/main/
+cp -R android/capacitor-cordova-android-plugins android-vendor/
+cp android/capacitor.settings.gradle android-vendor/capacitor.settings.gradle
+cp android/app/capacitor.build.gradle android-vendor/app/capacitor.build.gradle
+cp android/variables.gradle android-vendor/variables.gradle
+
+# 5. Build APK
 cd android-vendor && ./gradlew assembleDebug
 ```
 
