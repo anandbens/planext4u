@@ -221,8 +221,9 @@ export default function SocialCreatePostPage() {
           const basePath = `${authUserId}/social/${postId}/${i}`;
 
           const uploadBlob = async (blob: Blob, sizeName: string) => {
-            const path = `${basePath}/${sizeName}.webp`;
-            const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: 'image/webp', upsert: true });
+            const ext = blob.type === 'image/jpeg' ? 'jpg' : 'webp';
+            const path = `${basePath}/${sizeName}.${ext}`;
+            const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: blob.type || 'image/webp', upsert: true });
             if (error) throw error;
             const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 365);
             return data?.signedUrl || '';
