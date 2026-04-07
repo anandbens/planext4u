@@ -5,6 +5,7 @@ const config: CapacitorConfig = {
   appName: "Planext4u Vendor",
   webDir: "dist",
   server: {
+    url: "https://planext4u.lovable.app",
     androidScheme: "https",
   },
   plugins: {
