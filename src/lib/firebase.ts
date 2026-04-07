@@ -17,10 +17,7 @@ export const firebaseAuth = getAuth(app);
 const ALLOWED_HOSTNAMES = ["localhost", "127.0.0.1", "planext4u.lovable.app", "www.planext4u.net", "planext4u.net"];
 
 function isAllowedHostname(host: string): boolean {
-  if (ALLOWED_HOSTNAMES.includes(host)) return true;
-  // Allow all *.lovable.app preview/published domains
-  if (host.endsWith(".lovable.app")) return true;
-  return false;
+  return ALLOWED_HOSTNAMES.includes(host);
 }
 const PRODUCTION_URL = "https://planext4u.lovable.app";
 
@@ -32,9 +29,10 @@ const PRODUCTION_URL = "https://planext4u.lovable.app";
 export function ensureFirebaseHostname(): boolean {
   const host = window.location.hostname;
   if (isAllowedHostname(host)) return true;
-  // Redirect to production with same path
-  const target = `${PRODUCTION_URL}${window.location.pathname}${window.location.search}`;
-  window.location.href = target;
+
+  const target = `${PRODUCTION_URL}${window.location.pathname}${window.location.search}${window.location.hash}`;
+  console.warn(`Firebase Phone Auth blocked on host: ${host}. Redirecting to ${PRODUCTION_URL}.`);
+  window.location.replace(target);
   return false;
 }
 
