@@ -232,8 +232,11 @@ const AppRoutes = () => {
     );
   }
 
-  // Determine root redirect target based on native app identity
+  // Determine portal redirects based on native app identity
   const rootRedirect = isVendorNativeApp ? "/vendor" : "/app";
+  const customerLoginRoute = isVendorNativeApp ? "/vendor/login" : "/app/login";
+  const customerRegisterRoute = isVendorNativeApp ? "/vendor/register" : "/app/register";
+  const customerHomeRoute = isVendorNativeApp ? "/vendor" : "/app";
 
   return (
     <FTUXFlow userId={customerUser?.supabase_uid}>
@@ -296,13 +299,13 @@ const AppRoutes = () => {
         <Route path="/admin/product-attributes" element={<ProtectedPage><AdminProductAttributesPage /></ProtectedPage>} />
 
         {/* Customer-facing routes */}
-        <Route path="/app" element={<CustomerPage><CustomerHomePage /></CustomerPage>} />
-        <Route path="/app/login" element={<CustomerLoginPage />} />
-        <Route path="/app/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/app/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/app" element={isVendorNativeApp ? <Navigate to={customerHomeRoute} replace /> : <CustomerPage><CustomerHomePage /></CustomerPage>} />
+        <Route path="/app/login" element={isVendorNativeApp ? <Navigate to={customerLoginRoute} replace /> : <CustomerLoginPage />} />
+        <Route path="/app/forgot-password" element={isVendorNativeApp ? <Navigate to={customerLoginRoute} replace /> : <ForgotPasswordPage />} />
+        <Route path="/app/reset-password" element={isVendorNativeApp ? <Navigate to={customerLoginRoute} replace /> : <ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route path="/app/register" element={<CustomerRegisterPage />} />
-        <Route path="/app/phone-login" element={<CustomerPhoneLoginPage />} />
+        <Route path="/app/register" element={isVendorNativeApp ? <Navigate to={customerRegisterRoute} replace /> : <CustomerRegisterPage />} />
+        <Route path="/app/phone-login" element={isVendorNativeApp ? <Navigate to={customerLoginRoute} replace /> : <CustomerPhoneLoginPage />} />
         <Route path="/app/set-location" element={<SetLocationPage />} />
         <Route path="/app/terms" element={<TermsPage />} />
         <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
