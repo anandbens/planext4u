@@ -20,5 +20,6 @@ cp android/app/capacitor.build.gradle android-vendor/app/capacitor.build.gradle
 cp android/variables.gradle android-vendor/variables.gradle
 
 cd android-vendor
+chmod +x gradlew
 ./gradlew assembleDebug
 echo "✅ Vendor APK: android-vendor/app/build/outputs/apk/debug/app-debug.apk"
