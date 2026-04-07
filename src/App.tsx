@@ -149,6 +149,19 @@ import VendorMediaLibraryPage from "./pages/vendor/VendorMediaLibraryPage";
 import AccountControlPage from "./pages/customer/AccountControlPage";
 
 const queryClient = new QueryClient();
+const NATIVE_PORTAL_STORAGE_KEY = "p4u_native_portal";
+
+function detectForcedVendorPortal() {
+  if (typeof window === "undefined") return false;
+
+  const portal = new URLSearchParams(window.location.search).get("portal");
+  if (portal === "vendor") {
+    sessionStorage.setItem(NATIVE_PORTAL_STORAGE_KEY, "vendor");
+    return true;
+  }
+
+  return sessionStorage.getItem(NATIVE_PORTAL_STORAGE_KEY) === "vendor";
+}
 
 function ProtectedPage({ children }: { children: React.ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
@@ -163,19 +176,24 @@ function VendorPage({ children }: { children: React.ReactNode }) {
 }
 
 const AppRoutes = () => {
-  const { customerUser } = useAuth();
-  const [isVendorNativeApp, setIsVendorNativeApp] = useState(false);
-  const [appIdReady, setAppIdReady] = useState(!isNativePlatform());
+  const { customerUser, vendorUser } = useAuth();
+  const forcedVendorPortal = detectForcedVendorPortal();
+  const [isVendorNativeApp, setIsVendorNativeApp] = useState(forcedVendorPortal);
+  const [appIdReady, setAppIdReady] = useState(!isNativePlatform() || forcedVendorPortal);
   usePushNotifications();
 
   // Detect native app identity on mount
   useEffect(() => {
-    if (!isNativePlatform()) return;
-    getNativeAppId().then(() => {
-      setIsVendorNativeApp(isVendorAppSync());
+    if (!isNativePlatform() || forcedVendorPortal) return;
+    getNativeAppId().then((appId) => {
+      const isVendor = appId === "com.planext4u.vendor" || isVendorAppSync();
+      setIsVendorNativeApp(isVendor);
+      if (isVendor) {
+        sessionStorage.setItem(NATIVE_PORTAL_STORAGE_KEY, "vendor");
+      }
       setAppIdReady(true);
     });
-  }, []);
+  }, [forcedVendorPortal]);
 
   useEffect(() => {
     if (!isNativePlatform()) {
@@ -233,10 +251,11 @@ const AppRoutes = () => {
   }
 
   // Determine portal redirects based on native app identity
-  const rootRedirect = isVendorNativeApp ? "/vendor" : "/app";
-  const customerLoginRoute = isVendorNativeApp ? "/vendor/login" : "/app/login";
-  const customerRegisterRoute = isVendorNativeApp ? "/vendor/register" : "/app/register";
-  const customerHomeRoute = isVendorNativeApp ? "/vendor" : "/app";
+  const vendorPortalMode = isVendorNativeApp || forcedVendorPortal;
+  const rootRedirect = vendorPortalMode ? "/vendor" : "/app";
+  const customerLoginRoute = vendorPortalMode ? "/vendor/login" : "/app/login";
+  const customerRegisterRoute = vendorPortalMode ? "/vendor/register" : "/app/register";
+  const customerHomeRoute = vendorPortalMode ? "/vendor" : "/app";
 
   return (
     <FTUXFlow userId={customerUser?.supabase_uid}>
@@ -299,13 +318,13 @@ const AppRoutes = () => {
         <Route path="/admin/product-attributes" element={<ProtectedPage><AdminProductAttributesPage /></ProtectedPage>} />
 
         {/* Customer-facing routes */}
-        <Route path="/app" element={isVendorNativeApp ? <Navigate to={customerHomeRoute} replace /> : <CustomerPage><CustomerHomePage /></CustomerPage>} />
-        <Route path="/app/login" element={isVendorNativeApp ? <Navigate to={customerLoginRoute} replace /> : <CustomerLoginPage />} />
-        <Route path="/app/forgot-password" element={isVendorNativeApp ? <Navigate to={customerLoginRoute} replace /> : <ForgotPasswordPage />} />
-        <Route path="/app/reset-password" element={isVendorNativeApp ? <Navigate to={customerLoginRoute} replace /> : <ResetPasswordPage />} />
+        <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <CustomerPage><CustomerHomePage /></CustomerPage>} />
+        <Route path="/app/login" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <CustomerLoginPage />} />
+        <Route path="/app/forgot-password" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <ForgotPasswordPage />} />
+        <Route path="/app/reset-password" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <ResetPasswordPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        <Route path="/app/register" element={isVendorNativeApp ? <Navigate to={customerRegisterRoute} replace /> : <CustomerRegisterPage />} />
-        <Route path="/app/phone-login" element={isVendorNativeApp ? <Navigate to={customerLoginRoute} replace /> : <CustomerPhoneLoginPage />} />
+        <Route path="/app/register" element={vendorPortalMode ? <Navigate to={customerRegisterRoute} replace /> : <CustomerRegisterPage />} />
+        <Route path="/app/phone-login" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <CustomerPhoneLoginPage />} />
         <Route path="/app/set-location" element={<SetLocationPage />} />
         <Route path="/app/terms" element={<TermsPage />} />
         <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
@@ -366,8 +385,8 @@ const AppRoutes = () => {
         <Route path="/app/find-home/:id" element={<CustomerPage><PropertyDetailPage /></CustomerPage>} />
 
         {/* Vendor-facing routes */}
-        <Route path="/vendor/login" element={<VendorLoginPage />} />
-        <Route path="/vendor/register" element={<VendorRegisterStandalonePage />} />
+        <Route path="/vendor/login" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorLoginPage />} />
+        <Route path="/vendor/register" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorRegisterStandalonePage />} />
         <Route path="/vendor" element={<VendorPage><VendorDashboardPage /></VendorPage>} />
         <Route path="/vendor/products" element={<VendorPage><VendorProductsPage /></VendorPage>} />
         <Route path="/vendor/services" element={<VendorPage><VendorServicesPage /></VendorPage>} />
