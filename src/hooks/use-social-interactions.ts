@@ -8,25 +8,45 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+/**
+ * Get the auth UUID (not CUS-xxx) for social table operations.
+ * Social tables use UUID references, not customer IDs.
+ */
+async function getAuthUserId(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.user?.id || null;
+}
+
+function useAuthUserId() {
+  const { data: authId } = useQuery({
+    queryKey: ['auth-user-id'],
+    queryFn: async () => {
+      const id = await getAuthUserId();
+      return id;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  return authId || null;
+}
+
 // ─── LIKES ───────────────────────────────────
 export function usePostLike(postId: string) {
-  const { customerUser } = useAuth();
+  const authUserId = useAuthUserId();
   const qc = useQueryClient();
-  const userId = customerUser?.id;
 
   const { data: isLiked = false } = useQuery({
-    queryKey: ['social-like', postId, userId],
+    queryKey: ['social-like', postId, authUserId],
     queryFn: async () => {
-      if (!userId) return false;
+      if (!authUserId) return false;
       const { data } = await supabase
         .from('social_likes')
         .select('id')
         .eq('post_id', postId)
-        .eq('user_id', userId)
+        .eq('user_id', authUserId)
         .maybeSingle();
       return !!data;
     },
-    enabled: !!userId && !!postId,
+    enabled: !!authUserId && !!postId,
   });
 
   const { data: likeCount = 0 } = useQuery({
@@ -43,11 +63,12 @@ export function usePostLike(postId: string) {
 
   const toggleLike = useMutation({
     mutationFn: async () => {
-      if (!userId) { toast.error("Please login"); return; }
+      const uid = await getAuthUserId();
+      if (!uid) { toast.error("Please login"); return; }
       if (isLiked) {
-        await supabase.from('social_likes').delete().eq('post_id', postId).eq('user_id', userId);
+        await supabase.from('social_likes').delete().eq('post_id', postId).eq('user_id', uid);
       } else {
-        await supabase.from('social_likes').insert({ post_id: postId, user_id: userId });
+        await supabase.from('social_likes').insert({ post_id: postId, user_id: uid });
       }
     },
     onSuccess: () => {
@@ -61,33 +82,33 @@ export function usePostLike(postId: string) {
 
 // ─── BOOKMARKS ───────────────────────────────
 export function usePostBookmark(postId: string) {
-  const { customerUser } = useAuth();
+  const authUserId = useAuthUserId();
   const qc = useQueryClient();
-  const userId = customerUser?.id;
 
   const { data: isSaved = false } = useQuery({
-    queryKey: ['social-bookmark', postId, userId],
+    queryKey: ['social-bookmark', postId, authUserId],
     queryFn: async () => {
-      if (!userId) return false;
+      if (!authUserId) return false;
       const { data } = await supabase
         .from('social_bookmarks')
         .select('id')
         .eq('post_id', postId)
-        .eq('user_id', userId)
+        .eq('user_id', authUserId)
         .maybeSingle();
       return !!data;
     },
-    enabled: !!userId && !!postId,
+    enabled: !!authUserId && !!postId,
   });
 
   const toggleBookmark = useMutation({
     mutationFn: async () => {
-      if (!userId) { toast.error("Please login"); return; }
+      const uid = await getAuthUserId();
+      if (!uid) { toast.error("Please login"); return; }
       if (isSaved) {
-        await supabase.from('social_bookmarks').delete().eq('post_id', postId).eq('user_id', userId);
+        await supabase.from('social_bookmarks').delete().eq('post_id', postId).eq('user_id', uid);
         toast.success("Removed from saved");
       } else {
-        await supabase.from('social_bookmarks').insert({ post_id: postId, user_id: userId });
+        await supabase.from('social_bookmarks').insert({ post_id: postId, user_id: uid });
         toast.success("Post saved");
       }
     },
@@ -101,9 +122,8 @@ export function usePostBookmark(postId: string) {
 
 // ─── COMMENTS ────────────────────────────────
 export function usePostComments(postId: string) {
-  const { customerUser } = useAuth();
+  const authUserId = useAuthUserId();
   const qc = useQueryClient();
-  const userId = customerUser?.id;
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['social-comments', postId],
@@ -132,12 +152,13 @@ export function usePostComments(postId: string) {
 
       // Get like status for current user
       let userLikes: string[] = [];
-      if (userId) {
+      const uid = await getAuthUserId();
+      if (uid) {
         const allIds = [...commentIds, ...(replies?.map(r => r.id) || [])];
         const { data: likes } = await supabase
           .from('social_comment_likes')
           .select('comment_id')
-          .eq('user_id', userId)
+          .eq('user_id', uid)
           .in('comment_id', allIds);
         userLikes = likes?.map(l => l.comment_id) || [];
       }
@@ -168,35 +189,44 @@ export function usePostComments(postId: string) {
 
   const addComment = useMutation({
     mutationFn: async ({ text, parentId }: { text: string; parentId?: string }) => {
-      if (!userId) { toast.error("Please login"); return; }
-      await supabase.from('social_comments').insert({
+      const uid = await getAuthUserId();
+      if (!uid) { toast.error("Please login"); return; }
+      const { error } = await supabase.from('social_comments').insert({
         post_id: postId,
-        user_id: userId,
+        user_id: uid,
         content: text,
         parent_id: parentId || null,
       });
+      if (error) {
+        console.error('Comment insert error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['social-comments', postId] });
       qc.invalidateQueries({ queryKey: ['social-comment-count', postId] });
       toast.success("Comment posted");
     },
+    onError: (err: any) => {
+      toast.error("Failed to post comment");
+    },
   });
 
   const toggleCommentLike = useMutation({
     mutationFn: async (commentId: string) => {
-      if (!userId) return;
+      const uid = await getAuthUserId();
+      if (!uid) return;
       const { data: existing } = await supabase
         .from('social_comment_likes')
         .select('id')
         .eq('comment_id', commentId)
-        .eq('user_id', userId)
+        .eq('user_id', uid)
         .maybeSingle();
 
       if (existing) {
         await supabase.from('social_comment_likes').delete().eq('id', existing.id);
       } else {
-        await supabase.from('social_comment_likes').insert({ comment_id: commentId, user_id: userId });
+        await supabase.from('social_comment_likes').insert({ comment_id: commentId, user_id: uid });
       }
     },
     onSuccess: () => {
@@ -209,34 +239,34 @@ export function usePostComments(postId: string) {
 
 // ─── FOLLOWS ─────────────────────────────────
 export function useFollow(targetUserId: string) {
-  const { customerUser } = useAuth();
+  const authUserId = useAuthUserId();
   const qc = useQueryClient();
-  const userId = customerUser?.id;
 
   const { data: isFollowing = false } = useQuery({
-    queryKey: ['social-follow', targetUserId, userId],
+    queryKey: ['social-follow', targetUserId, authUserId],
     queryFn: async () => {
-      if (!userId || !targetUserId || userId === targetUserId) return false;
+      if (!authUserId || !targetUserId || authUserId === targetUserId) return false;
       const { data } = await supabase
         .from('social_follows')
         .select('id')
-        .eq('follower_id', userId)
+        .eq('follower_id', authUserId)
         .eq('following_id', targetUserId)
         .eq('status', 'active')
         .maybeSingle();
       return !!data;
     },
-    enabled: !!userId && !!targetUserId,
+    enabled: !!authUserId && !!targetUserId,
   });
 
   const toggleFollow = useMutation({
     mutationFn: async () => {
-      if (!userId) { toast.error("Please login"); return; }
+      const uid = await getAuthUserId();
+      if (!uid) { toast.error("Please login"); return; }
       if (isFollowing) {
-        await supabase.from('social_follows').delete().eq('follower_id', userId).eq('following_id', targetUserId);
+        await supabase.from('social_follows').delete().eq('follower_id', uid).eq('following_id', targetUserId);
         toast.success("Unfollowed");
       } else {
-        await supabase.from('social_follows').insert({ follower_id: userId, following_id: targetUserId, status: 'active' });
+        await supabase.from('social_follows').insert({ follower_id: uid, following_id: targetUserId, status: 'active' });
         toast.success("Following");
       }
     },
@@ -251,7 +281,7 @@ export function useFollow(targetUserId: string) {
 
 // ─── POSTS (feed) ────────────────────────────
 export function useSocialFeed(mode: 'following' | 'for_you' = 'for_you') {
-  const { customerUser } = useAuth();
+  const authUserId = useAuthUserId();
 
   return useQuery({
     queryKey: ['social-feed', mode],
@@ -263,11 +293,11 @@ export function useSocialFeed(mode: 'following' | 'for_you' = 'for_you') {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (mode === 'following' && customerUser?.id) {
+      if (mode === 'following' && authUserId) {
         const { data: followings } = await supabase
           .from('social_follows')
           .select('following_id')
-          .eq('follower_id', customerUser.id)
+          .eq('follower_id', authUserId)
           .eq('status', 'active');
 
         const ids = followings?.map(f => f.following_id) || [];
@@ -300,13 +330,12 @@ export function useSharePost() {
 
 // ─── REPOST ──────────────────────────────────
 export function useRepost() {
-  const { customerUser } = useAuth();
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: async (postId: string) => {
-      if (!customerUser?.id) { toast.error("Please login"); return; }
-      // Create a repost entry in social_posts
+      const uid = await getAuthUserId();
+      if (!uid) { toast.error("Please login"); return; }
       const { data: original } = await supabase
         .from('social_posts')
         .select('*')
@@ -316,7 +345,7 @@ export function useRepost() {
       if (!original) throw new Error('Post not found');
 
       await supabase.from('social_posts').insert({
-        user_id: customerUser.id,
+        user_id: uid,
         caption: original.caption,
         media: original.media,
         post_type: 'repost',

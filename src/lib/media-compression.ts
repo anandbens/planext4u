@@ -55,8 +55,21 @@ function loadImage(file: File | Blob): Promise<HTMLImageElement> {
 
 function canvasToWebP(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
+    // Try WebP first, fall back to JPEG if unsupported
     canvas.toBlob(
-      (blob) => blob ? resolve(blob) : reject(new Error('Canvas to blob failed')),
+      (blob) => {
+        if (blob && blob.size > 0) {
+          resolve(blob);
+        } else {
+          // WebP not supported, fallback to JPEG
+          console.warn('WebP encoding not supported, falling back to JPEG');
+          canvas.toBlob(
+            (jpegBlob) => jpegBlob ? resolve(jpegBlob) : reject(new Error('Canvas to blob failed')),
+            'image/jpeg',
+            quality
+          );
+        }
+      },
       'image/webp',
       quality
     );
