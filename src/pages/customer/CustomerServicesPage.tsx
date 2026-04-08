@@ -1,18 +1,34 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Clock, MapPin } from "lucide-react";
+import { Star, Clock, MapPin, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
+
+function useServiceWishlist() {
+  const getList = () => { try { return JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]'); } catch { return []; } };
+  const [list, setList] = useState<string[]>(getList);
+  const toggle = (id: string) => {
+    const current = getList();
+    const isIn = current.includes(id);
+    const updated = isIn ? current.filter((s: string) => s !== id) : [...current, id];
+    localStorage.setItem('app_db_service_wishlist', JSON.stringify(updated));
+    setList(updated);
+    toast.success(isIn ? "Removed from wishlist" : "Service saved to wishlist");
+  };
+  return { list, toggle };
+}
 
 export default function CustomerServicesPage() {
   const [searchParams] = useSearchParams();
   const [sortBy, setSortBy] = useState("popular");
   const categoryFilter = searchParams.get("category") || undefined;
+  const { list: wishlist, toggle: toggleWishlist } = useServiceWishlist();
 
   const { data: services, isLoading } = useQuery({
     queryKey: ["browseServices", categoryFilter, sortBy],
@@ -43,7 +59,6 @@ export default function CustomerServicesPage() {
           </Select>
         </div>
 
-        {/* Category chips - scrollable, no overflow */}
         <div className="flex gap-2.5 overflow-x-auto pb-4 mb-4 scrollbar-hide">
           <Link to="/app/services" className="shrink-0">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
@@ -74,9 +89,10 @@ export default function CustomerServicesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             {services?.map((s) => {
               const discountPct = s.discount ? Math.round((s.discount / s.price) * 100) : 0;
+              const isWished = wishlist.includes(s.id);
               return (
-                <Link to={`/app/service/${s.id}`} key={s.id}>
-                  <Card className="overflow-hidden hover:shadow-md transition-all">
+                <Card key={s.id} className="overflow-hidden hover:shadow-md transition-all">
+                  <Link to={`/app/service/${s.id}`}>
                     <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 h-32 flex items-center justify-center relative overflow-hidden">
                       {s.image ? (
                         <img src={s.image} alt={s.title} className="w-full h-full object-cover" />
@@ -84,8 +100,20 @@ export default function CustomerServicesPage() {
                         <span className="text-5xl">{s.emoji}</span>
                       )}
                       {discountPct > 0 && <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-[10px]">{discountPct}% OFF</Badge>}
+                      <div className="absolute top-2 left-2 flex items-center gap-0.5 bg-card/90 px-1.5 py-0.5 rounded ml-auto" style={discountPct > 0 ? { left: 'auto', right: '40px' } : { left: '8px' }}>
+                        <Star className="h-2.5 w-2.5 fill-warning text-warning" />
+                        <span className="text-[10px] font-medium">{s.rating}</span>
+                      </div>
                     </div>
-                    <div className="p-4">
+                  </Link>
+                  <div className="p-4 relative">
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(s.id); }}
+                      className="absolute -top-5 right-3 h-8 w-8 rounded-full bg-card shadow-md flex items-center justify-center hover:shadow-lg transition-shadow z-10 border border-border/50"
+                    >
+                      <Heart className={`h-4 w-4 ${isWished ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`} />
+                    </button>
+                    <Link to={`/app/service/${s.id}`}>
                       <p className="text-xs text-primary font-medium">{s.vendor_name}</p>
                       <h3 className="text-base font-semibold mt-0.5">{s.title}</h3>
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{s.description}</p>
@@ -98,9 +126,9 @@ export default function CustomerServicesPage() {
                         <span className="text-lg font-bold">₹{s.price.toLocaleString()}</span>
                         {discountPct > 0 && <span className="text-sm text-muted-foreground line-through">₹{(s.price + s.discount).toLocaleString()}</span>}
                       </div>
-                    </div>
-                  </Card>
-                </Link>
+                    </Link>
+                  </div>
+                </Card>
               );
             })}
           </div>

@@ -135,6 +135,8 @@ import AdminProductAttributesPage from "./pages/admin/AdminProductAttributesPage
 import AdminNotificationsPage from "./pages/admin/AdminNotificationsPage";
 import FileUploadsPage from "./pages/admin/FileUploadsPage";
 import ParentItemsPage from "./pages/admin/ParentItemsPage";
+import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
+import AdminVendorOnboardingPage from "./pages/admin/AdminVendorOnboardingPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
