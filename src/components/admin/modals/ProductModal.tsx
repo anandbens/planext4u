@@ -206,6 +206,8 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         meta_description: (product as any).meta_description || "",
         manage_stock: (product as any).manage_stock || false,
         stock_status: (product as any).stock_status || "in_stock",
+        parent_item_id: (product as any).parent_item_id || "",
+        parent_item_name: (product as any).parent_item_name || "",
       });
       setEditMode(mode === "edit");
       setActiveTab("general");
