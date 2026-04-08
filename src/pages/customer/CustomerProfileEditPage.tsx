@@ -23,8 +23,19 @@ interface Occupation {
   id: string; name: string;
 }
 
-// Google Maps key will be loaded from platform_variables
+// Google Maps key loaded from platform_variables with fallback
+const FALLBACK_MAPS_KEY = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
 let CACHED_MAPS_KEY: string | null = null;
+
+const getGoogleMapsKey = async (): Promise<string> => {
+  if (CACHED_MAPS_KEY) return CACHED_MAPS_KEY;
+  try {
+    const { data } = await supabase.from('platform_variables').select('value').eq('key', 'google_maps_api_key').single();
+    if (data?.value) { CACHED_MAPS_KEY = data.value; return data.value; }
+  } catch {}
+  CACHED_MAPS_KEY = FALLBACK_MAPS_KEY;
+  return FALLBACK_MAPS_KEY;
+};
 
 export default function CustomerProfileEditPage() {
   const navigate = useNavigate();
