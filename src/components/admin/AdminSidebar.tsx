@@ -3,7 +3,7 @@ import {
   Megaphone, Star, Gift, BarChart3, Settings, Image, FileText, LogOut,
   Grid3X3, Wrench, Receipt, MapPin, Map, Tag, Briefcase, SlidersHorizontal,
   MessageSquare, MonitorPlay, ExternalLink, ClipboardList, Headphones, Key,
-  Home, Crown, Shield, Filter, Palette, Flag, Heart,
+  Home, Crown, Shield, Filter, Palette, Flag, Heart, Upload, Layers,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -32,6 +32,7 @@ const mainItems: NavItem[] = [
   { title: "Products", url: "/products", icon: Package, roles: ['admin', 'sales'] },
   { title: "Services", url: "/admin/services", icon: Wrench, roles: ['admin', 'sales'] },
   { title: "Categories", url: "/categories", icon: Grid3X3, roles: ['admin'] },
+  { title: "Parent Items", url: "/admin/parent-items", icon: Layers, roles: ['admin'] },
   { title: "Product Attributes", url: "/admin/product-attributes", icon: SlidersHorizontal, roles: ['admin'] },
 ];
 
@@ -75,6 +76,7 @@ const socialItems: NavItem[] = [
 const systemItems: NavItem[] = [
   { title: "Push Notifications", url: "/admin/notifications", icon: Megaphone, roles: ['admin'] },
   { title: "Media Library", url: "/admin/media-library", icon: Image, roles: ['admin'] },
+  { title: "File Uploads", url: "/admin/file-uploads", icon: Upload, roles: ['admin'] },
   { title: "Onboarding Screens", url: "/admin/onboarding", icon: MonitorPlay, roles: ['admin'] },
   { title: "Occupations", url: "/occupations", icon: Briefcase, roles: ['admin'] },
   { title: "Platform Variables", url: "/platform-variables", icon: SlidersHorizontal, roles: ['admin'] },
