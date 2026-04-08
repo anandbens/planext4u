@@ -624,6 +624,51 @@ export type Database = {
         }
         Relationships: []
       }
+      file_uploads: {
+        Row: {
+          created_at: string
+          error_count: number
+          error_log: Json | null
+          file_name: string
+          file_url: string | null
+          id: string
+          status: string
+          success_count: number
+          total_records: number
+          updated_at: string
+          upload_type: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_count?: number
+          error_log?: Json | null
+          file_name: string
+          file_url?: string | null
+          id?: string
+          status?: string
+          success_count?: number
+          total_records?: number
+          updated_at?: string
+          upload_type?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_count?: number
+          error_log?: Json | null
+          file_name?: string
+          file_url?: string | null
+          id?: string
+          status?: string
+          success_count?: number
+          total_records?: number
+          updated_at?: string
+          upload_type?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       homes_cms: {
         Row: {
           content: string | null
@@ -937,6 +982,44 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parent_items: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
             referencedColumns: ["id"]
           },
         ]
@@ -1260,6 +1343,8 @@ export type Database = {
           max_redemption_percentage: number | null
           meta_description: string | null
           meta_title: string | null
+          parent_item_id: string | null
+          parent_item_name: string | null
           price: number
           product_attributes: Json | null
           product_type: string
@@ -1310,6 +1395,8 @@ export type Database = {
           max_redemption_percentage?: number | null
           meta_description?: string | null
           meta_title?: string | null
+          parent_item_id?: string | null
+          parent_item_name?: string | null
           price?: number
           product_attributes?: Json | null
           product_type?: string
@@ -1360,6 +1447,8 @@ export type Database = {
           max_redemption_percentage?: number | null
           meta_description?: string | null
           meta_title?: string | null
+          parent_item_id?: string | null
+          parent_item_name?: string | null
           price?: number
           product_attributes?: Json | null
           product_type?: string
@@ -1392,6 +1481,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_parent_item_id_fkey"
+            columns: ["parent_item_id"]
+            isOneToOne: false
+            referencedRelation: "parent_items"
             referencedColumns: ["id"]
           },
           {

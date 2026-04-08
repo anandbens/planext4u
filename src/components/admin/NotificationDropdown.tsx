@@ -71,7 +71,7 @@ export function NotificationDropdown() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="w-[min(380px,calc(100vw-2rem))] p-0">
+      <DropdownMenuContent align="end" sideOffset={8} className="w-[min(340px,calc(100vw-4rem))] max-w-[calc(100vw-4rem)] p-0" style={{ maxWidth: 'calc(100vw - 4rem)' }}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
           <h4 className="text-sm font-semibold">Notifications</h4>
           {unreadCount > 0 && (

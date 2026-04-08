@@ -132,6 +132,8 @@ import AdminMediaLibraryPage from "./pages/admin/AdminMediaLibraryPage";
 import AdminOnboardingPage from "./pages/admin/AdminOnboardingPage";
 import AdminProductAttributesPage from "./pages/admin/AdminProductAttributesPage";
 import AdminNotificationsPage from "./pages/admin/AdminNotificationsPage";
+import FileUploadsPage from "./pages/admin/FileUploadsPage";
+import ParentItemsPage from "./pages/admin/ParentItemsPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
@@ -316,6 +318,8 @@ const AppRoutes = () => {
         <Route path="/admin/onboarding" element={<ProtectedPage><AdminOnboardingPage /></ProtectedPage>} />
         <Route path="/admin/notifications" element={<ProtectedPage><AdminNotificationsPage /></ProtectedPage>} />
         <Route path="/admin/product-attributes" element={<ProtectedPage><AdminProductAttributesPage /></ProtectedPage>} />
+        <Route path="/admin/file-uploads" element={<ProtectedPage><FileUploadsPage /></ProtectedPage>} />
+        <Route path="/admin/parent-items" element={<ProtectedPage><ParentItemsPage /></ProtectedPage>} />
 
         {/* Customer-facing routes */}
         <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <CustomerPage><CustomerHomePage /></CustomerPage>} />
