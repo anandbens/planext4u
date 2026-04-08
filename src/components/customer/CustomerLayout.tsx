@@ -360,7 +360,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         )}
       </AnimatePresence>
 
-      <main>{children}</main>
+      <main className="pb-20 md:pb-0">{children}</main>
 
       {/* Footer */}
       <footer className="bg-[hsl(var(--brand-dark))] text-white py-8 lg:py-12 mt-8 lg:mt-12 hidden md:block">
