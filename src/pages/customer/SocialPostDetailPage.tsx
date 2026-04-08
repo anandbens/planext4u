@@ -85,7 +85,7 @@ export default function SocialPostDetailPage() {
     );
   }
 
-  const mediaItems = Array.isArray(post.media) ? post.media : [];
+  const mediaItems = (Array.isArray(post.media) ? post.media : []) as any[];
   const username = profile?.display_name || profile?.username || 'user';
   const avatarUrl = profile?.avatar_url || '';
   const isVerified = profile?.is_verified || false;
@@ -145,7 +145,7 @@ export default function SocialPostDetailPage() {
       {/* Actions */}
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-5">
-          <button className="flex items-center gap-1.5" onClick={toggleLike}>
+          <button className="flex items-center gap-1.5" onClick={() => toggleLike()}>
             <Heart className={`h-6 w-6 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
             <span className="text-sm font-semibold">{likeCount}</span>
           </button>
@@ -156,7 +156,7 @@ export default function SocialPostDetailPage() {
           <button onClick={() => repost.mutate(postId!)}><Repeat2 className="h-6 w-6" /></button>
           <button onClick={() => sharePost(postId!, post.caption)}><Send className="h-6 w-6" /></button>
         </div>
-        <button onClick={toggleBookmark}><Bookmark className={`h-6 w-6 ${isSaved ? 'fill-foreground' : ''}`} /></button>
+        <button onClick={() => toggleBookmark()}><Bookmark className={`h-6 w-6 ${isSaved ? 'fill-foreground' : ''}`} /></button>
       </div>
 
       {/* Caption */}
