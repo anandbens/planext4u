@@ -118,8 +118,9 @@ export default function VendorRegisterPage() {
       if (!form.aadhaar_number && !form.pan_number) return "Either Aadhaar or PAN is required";
     }
     if (step === 4) {
+      if (form.bank_account_number && (form.bank_account_number.length < 9 || form.bank_account_number.length > 18)) return "Bank account number must be 9-18 digits";
       if (form.bank_account_number && form.bank_account_number !== form.bank_confirm_account) return "Account numbers don't match";
-      if (form.bank_ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(form.bank_ifsc)) return "Invalid IFSC code format";
+      if (form.bank_ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(form.bank_ifsc)) return "IFSC code must be exactly 11 characters (e.g. SBIN0001234)";
     }
     return null;
   };
