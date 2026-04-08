@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Star, Clock, MapPin, Shield, Calendar, CheckCircle, ChevronLeft, Heart } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Star, Clock, MapPin, Shield, Calendar, CheckCircle, ChevronLeft, Heart, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 
 const serviceImages: Record<string, string> = {
   "cleaning": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600",
@@ -22,8 +24,6 @@ const serviceImages: Record<string, string> = {
   "carpentry": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600",
   "ac": "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600",
   "beauty": "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=600",
-  "repair": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600",
-  "appliance": "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600",
   "default": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600",
 };
 
@@ -39,6 +39,7 @@ function getServiceImage(title: string, image?: string | null) {
 export default function CustomerServiceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
   const [showReview, setShowReview] = useState(false);
@@ -46,6 +47,10 @@ export default function CustomerServiceDetailPage() {
   const [reviewComment, setReviewComment] = useState("");
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [showComplaint, setShowComplaint] = useState(false);
+  const [complaintSubject, setComplaintSubject] = useState("");
+  const [complaintDescription, setComplaintDescription] = useState("");
+  const [complaintCategory, setComplaintCategory] = useState("general");
 
   useEffect(() => {
     if (!id) return;
@@ -55,11 +60,9 @@ export default function CustomerServiceDetailPage() {
     } catch {}
   }, [id]);
 
-  // Fetch booked slots for selected date to prevent double-booking
   useEffect(() => {
     if (!selectedDate || !id) { setBookedSlots([]); return; }
     const fetchBooked = async () => {
-      const { supabase } = await import("@/integrations/supabase/client");
       const { data } = await supabase
         .from("service_bookings")
         .select("start_time")
@@ -94,18 +97,33 @@ export default function CustomerServiceDetailPage() {
     enabled: !!id,
   });
 
+  // Fetch real reviews from DB
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["reviews", "service", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("reviews" as any)
+        .select("*")
+        .eq("entity_type", "service")
+        .eq("entity_id", id)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      return (data || []) as any[];
+    },
+    enabled: !!id,
+  });
+
   if (isLoading) return <CustomerLayout><div className="p-8"><Skeleton className="h-96 rounded-2xl" /></div></CustomerLayout>;
   if (!service) return <CustomerLayout><div className="p-8 text-center">Service not found</div></CustomerLayout>;
 
   const discountPct = service.discount ? Math.round((service.discount / service.price) * 100) : 0;
   const allSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
-  const slots = allSlots;
   const imgUrl = getServiceImage(service.title, service.image);
   const finalPrice = service.price - (service.discount || 0) + (service.tax || 0);
 
   const handleBookNow = () => {
     if (!selectedDate || !selectedSlot) { toast.error("Select date and time"); return; }
-    // Navigate to payment page with service booking details
     navigate('/app/payment', {
       state: {
         cart: [{
@@ -127,16 +145,50 @@ export default function CustomerServiceDetailPage() {
     });
   };
 
-  const submitReview = () => {
+  const submitReview = async () => {
+    if (!reviewComment.trim()) { toast.error("Please write a comment"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Please login to review"); return; }
+    const { data: customer } = await supabase.from("customers").select("name").eq("id", user.id).maybeSingle();
+    const { error } = await supabase.from("reviews" as any).insert({
+      user_id: user.id,
+      user_name: customer?.name || "Customer",
+      entity_type: "service",
+      entity_id: id,
+      rating: reviewRating,
+      comment: reviewComment,
+    } as any);
+    if (error) { toast.error("Failed to submit review"); return; }
     toast.success("Thank you for your review!");
     setShowReview(false);
+    setReviewComment("");
+    setReviewRating(5);
+    queryClient.invalidateQueries({ queryKey: ["reviews", "service", id] });
   };
 
-  const reviews = [
-    { user: "Priya M.", rating: 5, comment: "Excellent service! Very professional and thorough.", date: "2 days ago" },
-    { user: "Rahul K.", rating: 4, comment: "Good work, arrived on time. Will book again.", date: "1 week ago" },
-    { user: "Anita S.", rating: 5, comment: "Best service in Mumbai. Highly recommended!", date: "2 weeks ago" },
-  ];
+  const submitComplaint = async () => {
+    if (!complaintSubject.trim() || !complaintDescription.trim()) { toast.error("Fill all fields"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Please login"); return; }
+    const { data: customer } = await supabase.from("customers").select("name").eq("id", user.id).maybeSingle();
+    const { error } = await supabase.from("complaints" as any).insert({
+      user_id: user.id,
+      user_name: customer?.name || "Customer",
+      entity_type: "service",
+      entity_id: id,
+      category: complaintCategory,
+      subject: complaintSubject,
+      description: complaintDescription,
+    } as any);
+    if (error) { toast.error("Failed to submit complaint"); return; }
+    toast.success("Complaint submitted successfully. We'll get back to you shortly.");
+    setShowComplaint(false);
+    setComplaintSubject("");
+    setComplaintDescription("");
+  };
+
+  const avgRating = reviews.length > 0 ? (reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1) : service.rating;
+  const totalReviews = reviews.length || service.reviews || 0;
 
   return (
     <CustomerLayout>
@@ -158,7 +210,7 @@ export default function CustomerServiceDetailPage() {
             <p className="text-sm text-primary font-medium mt-1">{service.vendor_name}</p>
 
             <div className="flex items-center gap-3 mt-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-warning text-warning" /><strong className="text-foreground">{service.rating}</strong> ({service.reviews} reviews)</span>
+              <span className="flex items-center gap-1"><Star className="h-4 w-4 fill-warning text-warning" /><strong className="text-foreground">{avgRating}</strong> ({totalReviews} reviews)</span>
               <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{service.duration}</span>
               <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{service.service_area}</span>
             </div>
@@ -193,7 +245,7 @@ export default function CustomerServiceDetailPage() {
             <div className="mt-4">
               <h3 className="text-sm font-semibold mb-2 flex items-center gap-1"><Clock className="h-4 w-4" /> Select Time</h3>
               <div className="flex flex-wrap gap-2">
-                {slots.map((slot) => {
+                {allSlots.map((slot) => {
                   const isBooked = bookedSlots.includes(slot);
                   return (
                     <button key={slot} onClick={() => !isBooked && setSelectedSlot(slot)} disabled={isBooked}
@@ -233,21 +285,51 @@ export default function CustomerServiceDetailPage() {
               <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-success" /> Eco-friendly products used</div>
               <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-success" /> 100% satisfaction guaranteed</div>
             </div>
+            <Button variant="outline" size="sm" className="mt-4 text-destructive border-destructive/30" onClick={() => setShowComplaint(true)}>
+              <AlertTriangle className="h-3.5 w-3.5 mr-1" /> Raise Complaint
+            </Button>
           </Card>
+
           <Card className="p-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">Customer Reviews</h3>
+              <h3 className="font-semibold">Customer Reviews ({totalReviews})</h3>
               <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => setShowReview(true)}>Write Review</Button>
             </div>
-            <div className="space-y-3 mb-4">
-              {reviews.map((r, i) => (
-                <div key={i} className="border-b border-border/30 last:border-0 pb-3 last:pb-0">
+            {/* Rating summary */}
+            {totalReviews > 0 && (
+              <div className="flex items-center gap-3 mb-4 p-3 bg-secondary/30 rounded-lg">
+                <div className="text-center">
+                  <p className="text-2xl font-bold">{avgRating}</p>
+                  <div className="flex">{Array.from({ length: 5 }).map((_, j) => <Star key={j} className={`h-3 w-3 ${j < Math.round(Number(avgRating)) ? 'fill-warning text-warning' : 'text-muted-foreground/30'}`} />)}</div>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{totalReviews} reviews</p>
+                </div>
+                <div className="flex-1 space-y-1">
+                  {[5, 4, 3, 2, 1].map(n => {
+                    const count = reviews.filter((r: any) => r.rating === n).length;
+                    const pct = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
+                    return (
+                      <div key={n} className="flex items-center gap-2 text-xs">
+                        <span className="w-3">{n}</span>
+                        <Star className="h-2.5 w-2.5 fill-warning text-warning" />
+                        <div className="flex-1 bg-border/50 rounded-full h-1.5"><div className="bg-warning h-1.5 rounded-full" style={{ width: `${pct}%` }} /></div>
+                        <span className="w-5 text-right text-muted-foreground">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <div className="space-y-3 max-h-60 overflow-y-auto">
+              {reviews.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No reviews yet. Be the first to review!</p>
+              ) : reviews.map((r: any) => (
+                <div key={r.id} className="border-b border-border/30 last:border-0 pb-3 last:pb-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{r.user}</span>
+                      <span className="font-medium text-sm">{r.user_name}</span>
                       <div className="flex">{Array.from({ length: r.rating }).map((_, j) => <Star key={j} className="h-3 w-3 fill-warning text-warning" />)}</div>
                     </div>
-                    <span className="text-xs text-muted-foreground">{r.date}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">{r.comment}</p>
                 </div>
@@ -271,6 +353,26 @@ export default function CustomerServiceDetailPage() {
             </div>
             <Textarea placeholder="Share your experience..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} rows={3} />
             <Button className="w-full" onClick={submitReview}>Submit Review</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Complaint Dialog */}
+      <Dialog open={showComplaint} onOpenChange={setShowComplaint}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>Raise a Complaint</DialogTitle>
+          <div className="space-y-4 pt-2">
+            <Select value={complaintCategory} onValueChange={setComplaintCategory}>
+              <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectContent>
+                {["quality", "delay", "damage", "behavior", "safety", "billing", "general"].map(c => (
+                  <SelectItem key={c} value={c}>{c.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input placeholder="Subject" value={complaintSubject} onChange={e => setComplaintSubject(e.target.value)} />
+            <Textarea placeholder="Describe your issue in detail..." value={complaintDescription} onChange={e => setComplaintDescription(e.target.value)} rows={4} />
+            <Button className="w-full" onClick={submitComplaint}>Submit Complaint</Button>
           </div>
         </DialogContent>
       </Dialog>

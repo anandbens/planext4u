@@ -355,6 +355,69 @@ export type Database = {
         }
         Relationships: []
       }
+      complaints: {
+        Row: {
+          assigned_to: string | null
+          booking_id: string | null
+          category: string
+          created_at: string
+          description: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          images: Json | null
+          order_id: string | null
+          priority: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          booking_id?: string | null
+          category?: string
+          created_at?: string
+          description: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          images?: Json | null
+          order_id?: string | null
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          booking_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          images?: Json | null
+          order_id?: string | null
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       customer_addresses: {
         Row: {
           address_line: string
@@ -2129,6 +2192,51 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          booking_id: string | null
+          comment: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          order_id: string | null
+          rating: number
+          status: string
+          updated_at: string
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          order_id?: string | null
+          rating: number
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          order_id?: string | null
+          rating?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       saved_searches: {
         Row: {
           created_at: string
@@ -2158,44 +2266,74 @@ export type Database = {
       }
       service_bookings: {
         Row: {
+          assigned_vendor_name: string | null
           booking_date: string
+          completion_notes: string | null
+          completion_photo_url: string | null
           created_at: string | null
           customer_id: string
+          customer_rating: number | null
+          customer_rating_comment: string | null
           end_time: string
           id: string
           notes: string | null
+          otp_code: string | null
+          otp_verified_at: string | null
           payment_status: string | null
+          rated_at: string | null
+          razorpay_payment_id: string | null
           service_id: string
           start_time: string
           status: string
+          total_amount: number | null
           updated_at: string | null
           vendor_id: string
         }
         Insert: {
+          assigned_vendor_name?: string | null
           booking_date: string
+          completion_notes?: string | null
+          completion_photo_url?: string | null
           created_at?: string | null
           customer_id: string
+          customer_rating?: number | null
+          customer_rating_comment?: string | null
           end_time: string
           id?: string
           notes?: string | null
+          otp_code?: string | null
+          otp_verified_at?: string | null
           payment_status?: string | null
+          rated_at?: string | null
+          razorpay_payment_id?: string | null
           service_id: string
           start_time: string
           status?: string
+          total_amount?: number | null
           updated_at?: string | null
           vendor_id: string
         }
         Update: {
+          assigned_vendor_name?: string | null
           booking_date?: string
+          completion_notes?: string | null
+          completion_photo_url?: string | null
           created_at?: string | null
           customer_id?: string
+          customer_rating?: number | null
+          customer_rating_comment?: string | null
           end_time?: string
           id?: string
           notes?: string | null
+          otp_code?: string | null
+          otp_verified_at?: string | null
           payment_status?: string | null
+          rated_at?: string | null
+          razorpay_payment_id?: string | null
           service_id?: string
           start_time?: string
           status?: string
+          total_amount?: number | null
           updated_at?: string | null
           vendor_id?: string
         }
@@ -3607,6 +3745,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_onboarding_screens: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number
+          id: string
+          image_url: string
+          is_active: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vendor_plans: {
         Row: {
           banner_ads: boolean
@@ -3820,6 +3991,10 @@ export type Database = {
       are_mutual_followers: {
         Args: { _user_a: string; _user_b: string }
         Returns: boolean
+      }
+      calculate_entity_avg_rating: {
+        Args: { _entity_id: string; _entity_type: string }
+        Returns: number
       }
       create_social_notification: {
         Args: {

@@ -604,8 +604,17 @@ export default function CustomerHomePage() {
                           <Star className="h-2.5 w-2.5 fill-warning text-warning" />
                           <span className="text-[10px] font-medium">{s.rating}</span>
                         </div>
-                        <button className="absolute top-2 right-2 h-6 w-6 rounded-full bg-card/80 flex items-center justify-center hover:bg-card transition-colors">
-                          <Heart className="h-3 w-3 text-muted-foreground" />
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const saved = JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]');
+                            const isIn = saved.includes(s.id);
+                            const updated = isIn ? saved.filter((x: string) => x !== s.id) : [...saved, s.id];
+                            localStorage.setItem('app_db_service_wishlist', JSON.stringify(updated));
+                            import("sonner").then(m => m.toast.success(isIn ? "Removed from wishlist" : "Saved to wishlist"));
+                          }}
+                          className="absolute top-2 right-2 h-6 w-6 rounded-full bg-card/80 flex items-center justify-center hover:bg-card transition-colors z-10">
+                          <Heart className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                         </button>
                       </div>
                       <div className="p-3">
