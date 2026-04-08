@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Clock, MapPin, Shield, Calendar, CheckCircle, ChevronLeft } from "lucide-react";
+import { Star, Clock, MapPin, Shield, Calendar, CheckCircle, ChevronLeft, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,24 @@ export default function CustomerServiceDetailPage() {
   const [showReview, setShowReview] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]');
+      setIsWishlisted(saved.includes(id));
+    } catch {}
+  }, [id]);
+
+  const toggleServiceWishlist = () => {
+    if (!id) return;
+    const saved = JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]');
+    const updated = isWishlisted ? saved.filter((s: string) => s !== id) : [...saved, id];
+    localStorage.setItem('app_db_service_wishlist', JSON.stringify(updated));
+    setIsWishlisted(!isWishlisted);
+    toast.success(isWishlisted ? "Removed from wishlist" : "Service saved to wishlist");
+  };
 
   const { data: service, isLoading } = useQuery({
     queryKey: ["service", id],
@@ -102,6 +120,9 @@ export default function CustomerServiceDetailPage() {
             <img src={imgUrl} alt={service.title} className="w-full h-full object-cover" />
             <button onClick={() => navigate(-1)} className="absolute top-4 left-4 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center md:hidden">
               <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button onClick={toggleServiceWishlist} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center">
+              <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-destructive text-destructive' : ''}`} />
             </button>
           </div>
 

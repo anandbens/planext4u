@@ -458,8 +458,8 @@ export default function CustomerHomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               { title: "Pick up where you left off", items: data?.featuredProducts?.slice(0, 4) || [] },
-              { title: "Pick up where you left off", items: data?.featuredProducts?.slice(4, 8) || [] },
-              { title: "Hair & Skin Care for Monsoon", items: data?.featuredProducts?.slice(0, 4) || [] },
+              { title: "Trending Now", items: data?.featuredProducts?.slice(4, 8) || [] },
+              { title: "Hair & Skin Care for Monsoon", items: data?.featuredProducts?.slice(8, 12) || data?.featuredProducts?.slice(0, 4) || [] },
             ].map((section, sIdx) => (
               <Card key={sIdx} className="p-4 hover:shadow-lg transition-shadow duration-300">
                 <h3 className="text-sm font-bold mb-3">{section.title}</h3>
