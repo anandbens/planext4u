@@ -49,7 +49,8 @@ export default function CustomerWishlistPage() {
   };
 
   const addToCart = async (product: any) => {
-    await api.addToCart(product, 1);
+    const result = await api.addToCart(product, 1);
+    if (result.blocked) { toast.error(result.message, { duration: 5000 }); return; }
     toast.success("Added to cart!");
   };
 

@@ -139,13 +139,21 @@ export default function CustomerProductPage() {
 
   const addToCart = async () => {
     if (!product) return;
-    await api.addToCart(product, qty);
+    const result = await api.addToCart(product, qty);
+    if (result.blocked) {
+      toast.error(result.message || "This product is already added from another vendor. Please remove it before adding this.", { duration: 5000 });
+      return;
+    }
     toast.success(`${product.title} (×${qty}) added to cart`);
   };
 
   const buyNow = async () => {
     if (!product) return;
-    await api.addToCart(product, qty);
+    const result = await api.addToCart(product, qty);
+    if (result.blocked) {
+      toast.error(result.message || "This product is already added from another vendor. Please remove it before adding this.", { duration: 5000 });
+      return;
+    }
     navigate('/app/cart');
   };
 

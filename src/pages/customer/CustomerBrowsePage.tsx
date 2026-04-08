@@ -97,7 +97,8 @@ export default function CustomerBrowsePage() {
   };
 
   const quickAdd = async (p: any) => {
-    await api.addToCart(p, 1);
+    const result = await api.addToCart(p, 1);
+    if (result.blocked) { toast.error(result.message, { duration: 5000 }); return; }
     setCartCount(prev => prev + 1);
     toast.success(`${p.title} added to cart`);
   };
@@ -120,7 +121,8 @@ export default function CustomerBrowsePage() {
   const buyNow = async (p: any, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    await api.addToCart(p, 1);
+    const result = await api.addToCart(p, 1);
+    if (result.blocked) { toast.error(result.message, { duration: 5000 }); return; }
     navigate('/app/cart');
   };
 
