@@ -44,6 +44,7 @@ const emptyForm = {
   product_type: "simple" as 'simple' | 'variable' | 'service',
   sku: "", slug: "", meta_title: "", meta_description: "",
   manage_stock: false, stock_status: "in_stock",
+  parent_item_id: "" as string, parent_item_name: "" as string,
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete, isVendor, preselectedVendorId }: ProductModalProps) {
