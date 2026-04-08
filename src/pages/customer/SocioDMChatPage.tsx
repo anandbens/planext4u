@@ -279,8 +279,26 @@ export default function SocioDMChatPage() {
         {messages.map((msg, i) => {
           const mine = isMine(msg);
           const showAvatar = !mine && (i === 0 || messages[i - 1]?.sender_id !== msg.sender_id);
+          const handleDeleteMsg = async () => {
+            if (!confirm("Delete this message? A backup will be kept for safety.")) return;
+            // Backup to message_backups table
+            await supabase.from('message_backups' as any).insert({
+              original_message_id: msg.id,
+              conversation_id: msg.conversation_id,
+              sender_id: msg.sender_id,
+              content: msg.content,
+              message_type: msg.message_type,
+              media_url: msg.media_url || null,
+              original_created_at: msg.created_at,
+              deleted_by: currentUserId,
+            });
+            const { error } = await supabase.from('social_messages' as any).delete().eq('id', msg.id);
+            if (error) { toast.error("Failed to delete message"); return; }
+            setMessages(prev => prev.filter(m => m.id !== msg.id));
+            toast.success("Message deleted");
+          };
           return (
-            <div key={msg.id} className={`flex ${mine ? 'justify-end' : 'justify-start'} gap-2`}>
+            <div key={msg.id} className={`group flex ${mine ? 'justify-end' : 'justify-start'} gap-2`}>
               {!mine && showAvatar && (
                 <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0 mt-1">
                   {recipientProfile?.avatar_url ? (
@@ -292,8 +310,15 @@ export default function SocioDMChatPage() {
               )}
               {!mine && !showAvatar && <div className="w-7 shrink-0" />}
               <div className={`max-w-[75%] ${mine ? 'order-first' : ''}`}>
-                <div className={`px-3.5 py-2.5 rounded-2xl text-sm ${mine ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-muted rounded-bl-md'}`}>
+                <div className={`relative px-3.5 py-2.5 rounded-2xl text-sm ${mine ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-muted rounded-bl-md'}`}>
                   {msg.content}
+                  {mine && (
+                    <button onClick={handleDeleteMsg}
+                      className="absolute -left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5 rounded-full bg-destructive/80 flex items-center justify-center"
+                      title="Delete message">
+                      <X className="h-3 w-3 text-white" />
+                    </button>
+                  )}
                 </div>
                 <div className={`flex items-center gap-1 mt-0.5 ${mine ? 'justify-end' : 'justify-start'}`}>
                   <span className="text-[9px] text-muted-foreground">{format(new Date(msg.created_at), 'h:mm a')}</span>
