@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { VendorFTUXFlow } from "./VendorFTUXFlow";
 
 export function VendorProtectedRoute({ children }: { children: React.ReactNode }) {
   const { vendorUser, isLoading } = useAuth();
@@ -16,5 +17,5 @@ export function VendorProtectedRoute({ children }: { children: React.ReactNode }
     return <Navigate to="/vendor/login" replace />;
   }
 
-  return <>{children}</>;
+  return <VendorFTUXFlow>{children}</VendorFTUXFlow>;
 }

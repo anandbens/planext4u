@@ -64,25 +64,25 @@ export function VendorOnboardingCarousel({ onComplete }: VendorOnboardingCarouse
   };
 
   return (
-    <div className="fixed inset-0 z-[9998] flex flex-col bg-background" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div className="fixed inset-0 z-[9998] flex flex-col bg-background safe-area-inset" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {!isLast && (
-        <div className="absolute top-4 right-4 z-10">
-          <Button variant="ghost" size="sm" onClick={onComplete} className="text-muted-foreground">Skip</Button>
+        <div className="absolute top-4 right-4 z-10 safe-area-top">
+          <Button variant="ghost" size="sm" onClick={onComplete} className="text-muted-foreground text-base px-4 py-2">Skip</Button>
         </div>
       )}
 
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-8 pt-16">
+      <div className="flex-1 flex items-center justify-center overflow-hidden px-6 sm:px-8 pt-12 sm:pt-16">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div key={slide.id} custom={direction} variants={variants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.3 }}
-            className="flex flex-col items-center text-center gap-6 max-w-sm">
-            <img src={slide.image_url} alt={slide.title} className="w-64 h-64 md:w-80 md:h-80 object-contain rounded-2xl" loading="eager" />
-            <h2 className="text-2xl font-bold text-foreground">{slide.title}</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed px-4">{slide.description}</p>
+            className="flex flex-col items-center text-center gap-4 sm:gap-6 w-full max-w-sm">
+            <img src={slide.image_url} alt={slide.title} className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 object-contain rounded-2xl" loading="eager" />
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground px-2">{slide.title}</h2>
+            <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed px-4">{slide.description}</p>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      <div className="pb-10 px-6 flex flex-col items-center gap-6">
+      <div className="pb-8 sm:pb-10 px-6 flex flex-col items-center gap-4 sm:gap-6 safe-area-bottom">
         <div className="flex gap-2">
           {slides.map((_, i) => (
             <div key={i} className={`h-2 rounded-full transition-all duration-300 ${i === current ? 'w-8 bg-primary' : 'w-2 bg-muted-foreground/30'}`} />
