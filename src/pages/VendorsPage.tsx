@@ -30,25 +30,45 @@ export default function VendorsPage() {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [totalStats, setTotalStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0 });
 
-  const tabStatusFilter = activeTab === "pending" ? "pending" : statusFilter || undefined;
+  const [pendingApps, setPendingApps] = useState<any[]>([]);
+
+  const tabStatusFilter = activeTab === "pending" ? undefined : statusFilter || undefined;
 
   const fetchData = useCallback(() => {
-    api.getVendors({ page, per_page: 10, search: search || undefined, status: tabStatusFilter, date_from: dateFrom, date_to: dateTo, payment_status: paymentFilter || undefined }).then(setData);
-  }, [page, search, tabStatusFilter, paymentFilter, dateFrom, dateTo]);
+    if (activeTab === "pending") {
+      // Fetch from vendor_applications for pending tab
+      let q = supabase.from('vendor_applications').select('*', { count: 'exact' })
+        .in('status', ['submitted', 'under_review']);
+      if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
+      if (dateFrom) q = q.gte('created_at', dateFrom);
+      if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
+      q = q.order('created_at', { ascending: false }).range((page - 1) * 10, page * 10 - 1);
+      q.then(({ data: apps, count }) => {
+        const mapped = (apps || []).map((a: any) => ({
+          id: a.id, name: a.name, business_name: a.business_name,
+          mobile: a.phone, email: a.email, status: a.status === 'submitted' ? 'pending' : a.status,
+          commission_rate: 0, membership: '', category_id: '', city_id: '', area_id: '',
+          created_at: a.created_at, _isApplication: true,
+        }));
+        setData({ data: mapped as any, total: count || 0, page, per_page: 10, total_pages: Math.ceil((count || 0) / 10) });
+      });
+    } else {
+      api.getVendors({ page, per_page: 10, search: search || undefined, status: tabStatusFilter, date_from: dateFrom, date_to: dateTo, payment_status: paymentFilter || undefined }).then(setData);
+    }
+  }, [page, search, tabStatusFilter, paymentFilter, dateFrom, dateTo, activeTab]);
 
   const fetchStats = useCallback(async () => {
     const [
       { count: total },
       { count: verified },
-      { count: pending },
       { count: rejected },
     ] = await Promise.all([
       supabase.from('vendors').select('*', { count: 'exact', head: true }),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'verified'),
-      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
     ]);
-    setTotalStats({ total: total || 0, verified: verified || 0, pending: pending || 0, rejected: rejected || 0 });
+    const { count: pendingCount } = await supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).in('status', ['submitted', 'under_review']);
+    setTotalStats({ total: (total || 0), verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0 });
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -84,20 +104,50 @@ export default function VendorsPage() {
     setConfirmLoading(true);
     const { vendor, action } = confirmAction;
     try {
-      if (action === "delete") { await handleDelete(vendor.id); }
-      else if (action === "reject") {
-        await api.updateVendorStatus(vendor.id, "rejected");
-        const { supabase: _sb } = await import("@/integrations/supabase/client");
-        await _sb.from("vendor_applications").update({ status: "rejected", rejection_reason: reason || "" }).eq("phone", vendor.mobile);
+      const isApp = (vendor as any)._isApplication;
+      if (action === "delete") {
+        if (isApp) {
+          await supabase.from('vendor_applications').delete().eq('id', vendor.id);
+          toast.success("Application deleted");
+        } else {
+          await handleDelete(vendor.id);
+        }
+      } else if (action === "reject") {
+        if (isApp) {
+          await supabase.from('vendor_applications').update({ status: "rejected", rejection_reason: reason || "" }).eq('id', vendor.id);
+        } else {
+          await api.updateVendorStatus(vendor.id, "rejected");
+          await supabase.from("vendor_applications").update({ status: "rejected", rejection_reason: reason || "" }).eq("phone", vendor.mobile);
+        }
         toast.success("Vendor rejected");
-        fetchData(); fetchStats();
       } else {
-        const nextStatus: Vendor["status"] = vendor.status === "pending" ? "level1_approved"
-          : vendor.status === "level1_approved" ? "level2_approved" : "verified";
-        await api.updateVendorStatus(vendor.id, nextStatus);
-        toast.success(`Vendor → ${nextStatus.replace(/_/g, " ")}`);
-        fetchData(); fetchStats();
+        if (isApp) {
+          // Approve application → create vendor in vendors table
+          const appData = await supabase.from('vendor_applications').select('*').eq('id', vendor.id).single();
+          if (appData.data) {
+            const a = appData.data;
+            const newVendor = {
+              id: `VND-${Date.now()}`,
+              name: a.name, business_name: a.business_name, mobile: a.phone, email: a.email,
+              commission_rate: 10, membership: 'basic', status: 'verified',
+              category_id: '', city_id: '', area_id: '',
+              store_logo: a.store_logo_url || '', latitude: a.latitude || 0, longitude: a.longitude || 0,
+              shop_address: a.shop_address || '', gst_number: a.gst_number || '',
+              pan_number: a.pan_number || '', bank_account_number: a.bank_account_number || '',
+              bank_ifsc: a.bank_ifsc || '', bank_holder_name: a.bank_holder_name || '',
+            };
+            await supabase.from('vendors').insert(newVendor as any);
+            await supabase.from('vendor_applications').update({ status: 'approved' }).eq('id', vendor.id);
+            toast.success("Vendor approved and added to active vendors");
+          }
+        } else {
+          const nextStatus: Vendor["status"] = vendor.status === "pending" ? "level1_approved"
+            : vendor.status === "level1_approved" ? "level2_approved" : "verified";
+          await api.updateVendorStatus(vendor.id, nextStatus);
+          toast.success(`Vendor → ${nextStatus.replace(/_/g, " ")}`);
+        }
       }
+      fetchData(); fetchStats();
     } finally { setConfirmLoading(false); setConfirmOpen(false); setConfirmAction(null); }
   };
 

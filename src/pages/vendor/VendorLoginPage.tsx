@@ -50,21 +50,31 @@ export default function VendorLoginPage() {
     setLoading(true);
     try {
       // Check vendor verification status before sending OTP
-      const { data: vendorApp } = await supabase.from("vendor_applications").select("status").eq("phone", cleaned).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      const { data: vendorApp } = await supabase.from("vendor_applications").select("status, rejection_reason").eq("phone", cleaned).order("created_at", { ascending: false }).limit(1).maybeSingle();
       const { data: vendor } = await supabase.from("vendors").select("status, mobile").eq("mobile", cleaned).maybeSingle();
       
       if (vendorApp && !vendor) {
-        // Vendor application exists but not yet approved
+        if (vendorApp.status === 'rejected') {
+          setLoading(false);
+          toast.error(`Your vendor application was rejected. ${vendorApp.rejection_reason ? 'Reason: ' + vendorApp.rejection_reason : 'Please contact support for details.'}`, { duration: 7000 });
+          return;
+        }
         if (vendorApp.status !== 'approved' && vendorApp.status !== 'verified') {
           setLoading(false);
-          toast.error("Your vendor profile is awaiting approval. You will be notified once verified.", { duration: 5000 });
+          toast.info("Your profile is submitted for approval. You will be notified once your profile is approved.", { duration: 6000 });
           return;
         }
       }
       
+      if (vendor && vendor.status === 'rejected') {
+        setLoading(false);
+        toast.error("Your vendor profile has been rejected. Please contact support.", { duration: 6000 });
+        return;
+      }
+
       if (vendor && vendor.status !== 'active' && vendor.status !== 'verified') {
         setLoading(false);
-        toast.error("Your vendor profile is awaiting approval. Please wait for admin verification.", { duration: 5000 });
+        toast.info("Your profile is submitted for approval. You will be notified once your profile is approved.", { duration: 6000 });
         return;
       }
       
