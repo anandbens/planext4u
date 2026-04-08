@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, X, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { MOCK_PRODUCTS, MOCK_SERVICES, MOCK_CATEGORIES } from "@/lib/mockData";
+import { supabase } from "@/integrations/supabase/client";
 
 const RECENT_SEARCH_KEY = "app_db_recent_searches";
 
@@ -27,6 +27,7 @@ export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electr
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState(loadRecentSearches);
+  const [searchItems, setSearchItems] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,12 +40,26 @@ export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electr
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Load search items from DB on mount
+  useEffect(() => {
+    async function loadItems() {
+      const [{ data: cats }, { data: prods }, { data: srvs }] = await Promise.all([
+        supabase.from("categories").select("name").limit(50),
+        supabase.from("products").select("title").eq("status", "active").limit(100),
+        supabase.from("services").select("title").eq("status", "active").limit(50),
+      ]);
+      const items = [
+        ...(cats || []).map((c: any) => c.name),
+        ...(prods || []).map((p: any) => p.title),
+        ...(srvs || []).map((s: any) => s.title),
+      ];
+      setSearchItems(items);
+    }
+    loadItems();
+  }, []);
+
   const suggestions = query.length >= 2
-    ? [
-        ...MOCK_CATEGORIES.map(c => c.name),
-        ...MOCK_PRODUCTS.map(p => p.title),
-        ...MOCK_SERVICES.map(s => s.title),
-      ].filter(s => s.toLowerCase().includes(query.toLowerCase())).slice(0, 6)
+    ? searchItems.filter(s => s.toLowerCase().includes(query.toLowerCase())).slice(0, 6)
     : [];
 
   const handleSubmit = (q: string) => {
