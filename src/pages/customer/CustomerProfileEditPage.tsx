@@ -23,7 +23,8 @@ interface Occupation {
   id: string; name: string;
 }
 
-const GOOGLE_MAPS_KEY = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
+// Google Maps key will be loaded from platform_variables
+let CACHED_MAPS_KEY: string | null = null;
 
 export default function CustomerProfileEditPage() {
   const navigate = useNavigate();
