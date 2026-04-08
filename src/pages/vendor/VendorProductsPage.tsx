@@ -144,7 +144,7 @@ export default function VendorProductsPage() {
         category_name: categories?.find(c => c.id === formData.category_id)?.name || "",
         subcategory_id: formData.subcategory_id || null,
         subcategory_name: subcategories?.find(c => c.id === formData.subcategory_id)?.name || "",
-        emoji: formData.emoji, status: formData.status,
+        emoji: formData.emoji, status: editingId ? formData.status : 'pending_approval',
         vendor_id: vendorId, vendor_name: vendorUser?.name || "",
         image: formData.image || formData.images[0] || null,
         images: formData.images,

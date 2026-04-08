@@ -148,7 +148,7 @@ function PostCard({ post }: { post: any }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
 
-  const userId = customerUser?.id;
+  const userId = customerUser?.supabase_uid || customerUser?.id;
   const postId = post.id;
   const mediaItems = Array.isArray(post.media) ? post.media : [];
   const isCarousel = mediaItems.length > 1;
@@ -325,8 +325,17 @@ function PostCard({ post }: { post: any }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild><button className="p-1"><MoreHorizontal className="h-5 w-5" /></button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>Not Interested</DropdownMenuItem>
-            <DropdownMenuItem>Report</DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => {
+              if (!userId) { toast.error("Please login"); return; }
+              await supabase.from('social_reports').insert({ post_id: postId, user_id: userId, reason: 'not_interested', type: 'not_interested' } as any).then(() => {});
+              toast.success("Post hidden from your feed");
+              qc.invalidateQueries({ queryKey: ['social-feed'] });
+            }}>Not Interested</DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => {
+              if (!userId) { toast.error("Please login"); return; }
+              await supabase.from('social_reports').insert({ post_id: postId, user_id: userId, reason: 'inappropriate', type: 'report' } as any);
+              toast.success("Post reported. We'll review it shortly.");
+            }}>Report</DropdownMenuItem>
             <DropdownMenuItem onClick={() => sharePost(postId, post.caption)}>Copy Link</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

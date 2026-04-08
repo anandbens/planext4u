@@ -216,7 +216,7 @@ function ReelCard({ reel }: { reel: any }) {
           </Link>
           <Link to={`/app/social/@${username}`} className="text-white text-sm font-semibold">{username}</Link>
           {isVerified && <svg className="h-3.5 w-3.5 text-primary fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>}
-          <button className="border border-white/60 text-white text-xs font-semibold px-3 py-0.5 rounded-lg ml-1">Follow</button>
+          <FollowBtn targetUserId={reel.user_id} isMock={isMock} />
         </div>
         <p className="text-white text-sm leading-snug line-clamp-2">{reel.caption}</p>
         {/* Product deeplink overlay */}
