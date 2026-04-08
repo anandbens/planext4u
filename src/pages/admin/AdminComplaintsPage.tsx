@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StatCard } from "@/components/admin/StatCard";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Search, Filter, AlertTriangle, Clock, CheckCircle, XCircle, MessageSquare } from "lucide-react";
@@ -115,10 +115,22 @@ export default function AdminComplaintsPage() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard title="Total Complaints" value={stats.total} icon={MessageSquare} />
-          <StatCard title="Open" value={stats.open} icon={AlertTriangle} trend={stats.open > 0 ? "up" : undefined} />
-          <StatCard title="In Progress" value={stats.inProgress} icon={Clock} />
-          <StatCard title="Resolved" value={stats.resolved} icon={CheckCircle} />
+          {[
+            { label: "Total", value: stats.total, icon: MessageSquare, color: "text-primary" },
+            { label: "Open", value: stats.open, icon: AlertTriangle, color: "text-destructive" },
+            { label: "In Progress", value: stats.inProgress, icon: Clock, color: "text-warning" },
+            { label: "Resolved", value: stats.resolved, icon: CheckCircle, color: "text-success" },
+          ].map(s => (
+            <Card key={s.label} className="p-4">
+              <div className="flex items-center gap-3">
+                <s.icon className={`h-5 w-5 ${s.color}`} />
+                <div>
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                  <p className="text-xl font-bold">{s.value}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
 
         <div className="flex flex-wrap gap-3 items-center">
