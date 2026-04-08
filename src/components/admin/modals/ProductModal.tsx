@@ -205,7 +205,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         image: product.image || "", rejection_reason: product.rejection_reason || "",
         inactivation_reason: (product as any).inactivation_reason || "",
         youtube_video_url: (product as any).youtube_video_url || "",
-        images: (product as any).images || [],
+        images: ((product as any).images?.length > 0) ? (product as any).images : (product.image ? [product.image] : []),
         max_redemption_percentage: (product as any).max_redemption_percentage ?? null,
         tax_slab_id: (product as any).tax_slab_id || "",
         product_attributes: (product as any).product_attributes || [],
