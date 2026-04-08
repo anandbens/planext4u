@@ -54,7 +54,7 @@ export default function CustomerPhoneLoginPage() {
         .maybeSingle();
       if (!customer) {
         setLoading(false);
-        toast.error("No account found with this phone number. Please register first.", { duration: 5000 });
+        toast.error("No user account found with this phone number. Please register first.", { duration: 5000 });
         return;
       }
 
