@@ -2156,6 +2156,59 @@ export type Database = {
         }
         Relationships: []
       }
+      service_bookings: {
+        Row: {
+          booking_date: string
+          created_at: string | null
+          customer_id: string
+          end_time: string
+          id: string
+          notes: string | null
+          payment_status: string | null
+          service_id: string
+          start_time: string
+          status: string
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          booking_date: string
+          created_at?: string | null
+          customer_id: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          payment_status?: string | null
+          service_id: string
+          start_time: string
+          status?: string
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          booking_date?: string
+          created_at?: string | null
+          customer_id?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          payment_status?: string | null
+          service_id?: string
+          start_time?: string
+          status?: string
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_categories: {
         Row: {
           banner_image: string | null
@@ -2290,6 +2343,7 @@ export type Database = {
       }
       services: {
         Row: {
+          booking_duration_minutes: number | null
           category_id: string | null
           category_name: string | null
           created_at: string
@@ -2300,18 +2354,27 @@ export type Database = {
           id: string
           image: string | null
           images: Json | null
+          long_description: string | null
+          max_bookings_per_slot: number | null
           max_points_redeemable: number
+          meta_description: string | null
+          meta_title: string | null
           price: number
+          pricing_slots: Json | null
           rating: number | null
           reviews: number | null
           service_area: string | null
+          short_description: string | null
+          slug: string | null
           status: string
           tax: number
           title: string
+          updated_at: string | null
           vendor_id: string
           vendor_name: string | null
         }
         Insert: {
+          booking_duration_minutes?: number | null
           category_id?: string | null
           category_name?: string | null
           created_at?: string
@@ -2322,18 +2385,27 @@ export type Database = {
           id: string
           image?: string | null
           images?: Json | null
+          long_description?: string | null
+          max_bookings_per_slot?: number | null
           max_points_redeemable?: number
+          meta_description?: string | null
+          meta_title?: string | null
           price?: number
+          pricing_slots?: Json | null
           rating?: number | null
           reviews?: number | null
           service_area?: string | null
+          short_description?: string | null
+          slug?: string | null
           status?: string
           tax?: number
           title: string
+          updated_at?: string | null
           vendor_id: string
           vendor_name?: string | null
         }
         Update: {
+          booking_duration_minutes?: number | null
           category_id?: string | null
           category_name?: string | null
           created_at?: string
@@ -2344,14 +2416,22 @@ export type Database = {
           id?: string
           image?: string | null
           images?: Json | null
+          long_description?: string | null
+          max_bookings_per_slot?: number | null
           max_points_redeemable?: number
+          meta_description?: string | null
+          meta_title?: string | null
           price?: number
+          pricing_slots?: Json | null
           rating?: number | null
           reviews?: number | null
           service_area?: string | null
+          short_description?: string | null
+          slug?: string | null
           status?: string
           tax?: number
           title?: string
+          updated_at?: string | null
           vendor_id?: string
           vendor_name?: string | null
         }
