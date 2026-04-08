@@ -105,6 +105,9 @@ export default function CustomerVendorPage() {
                     {vendor.status === "verified" && (
                       <Shield className="h-5 w-5 text-primary fill-primary/20" />
                     )}
+                    <button onClick={toggleSellerWishlist} className="ml-auto">
+                      <Heart className={`h-5 w-5 ${isSellerSaved ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`} />
+                    </button>
                   </div>
                   <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                     <Clock className="h-3.5 w-3.5" /> Seller Since {new Date(vendor.created_at).getFullYear()}
