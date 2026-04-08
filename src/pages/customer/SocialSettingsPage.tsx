@@ -84,11 +84,11 @@ export default function SocialSettingsPage() {
   const handleAction = (action: string) => {
     switch (action) {
       case "edit_profile": navigate("/app/social/edit-profile"); break;
-      case "change_password": navigate("/app/forgot-password"); break;
-      case "notifications": navigate("/app/social/notifications"); break;
-      case "privacy": toast.info("Privacy settings available below"); break;
-      case "security": toast.info("Security settings coming soon"); break;
-      case "help": toast.info("Help Center coming soon"); break;
+      case "change_password": navigate("/app/social/change-password"); break;
+      case "notifications": navigate("/app/social/notification-settings"); break;
+      case "privacy": navigate("/app/social/privacy"); break;
+      case "security": navigate("/app/social/security"); break;
+      case "help": navigate("/app/social/help"); break;
       case "about": setShowAbout(v => !v); break;
       case "dark_mode":
         setDarkMode(!darkMode);
