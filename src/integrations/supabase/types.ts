@@ -912,6 +912,45 @@ export type Database = {
         }
         Relationships: []
       }
+      message_backups: {
+        Row: {
+          content: string | null
+          conversation_id: string
+          deleted_at: string
+          deleted_by: string
+          id: string
+          media_url: string | null
+          message_type: string | null
+          original_created_at: string
+          original_message_id: string
+          sender_id: string
+        }
+        Insert: {
+          content?: string | null
+          conversation_id: string
+          deleted_at?: string
+          deleted_by: string
+          id?: string
+          media_url?: string | null
+          message_type?: string | null
+          original_created_at: string
+          original_message_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string
+          deleted_at?: string
+          deleted_by?: string
+          id?: string
+          media_url?: string | null
+          message_type?: string | null
+          original_created_at?: string
+          original_message_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       occupations: {
         Row: {
           created_at: string
