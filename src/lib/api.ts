@@ -1230,6 +1230,24 @@ export const api = {
   addToCart: async (product: Product, qty: number = 1) => {
     const { loadCart, saveCart } = await import('./persist');
     const cart = loadCart();
+
+    // Cart restriction: check parent_item_id vendor conflict
+    if (product.parent_item_id) {
+      const conflicting = cart.find((i: CartItem) =>
+        i.parent_item_id === product.parent_item_id &&
+        i.vendor_id !== product.vendor_id &&
+        i.id !== product.id
+      );
+      if (conflicting) {
+        return {
+          success: false,
+          blocked: true,
+          message: "This product is already added from another vendor. Please remove it before adding this.",
+          cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
+        };
+      }
+    }
+
     const existing = cart.find((i: CartItem) => i.id === product.id);
     if (existing) {
       existing.qty += qty;
@@ -1240,10 +1258,11 @@ export const api = {
         emoji: product.emoji || '📦', image: product.image || '',
         maxPoints: product.max_points_redeemable,
         tax: product.tax, discount: product.discount,
+        parent_item_id: product.parent_item_id || null,
       });
     }
     saveCart(cart);
-    return { success: true, cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0) };
+    return { success: true, blocked: false, cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0) };
   },
 
   updateCartItem: async (itemId: string, qty: number) => {
