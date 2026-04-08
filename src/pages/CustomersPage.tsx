@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Eye, Pencil, Trash2, Users, UserCheck, UserX, Star } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
-import { MOCK_OCCUPATIONS } from "@/lib/mockData";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CustomersPage() {
   const [data, setData] = useState<PaginatedResponse<User> | null>(null);
