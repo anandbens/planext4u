@@ -73,9 +73,36 @@ export default function CustomerServiceDetailPage() {
   if (!service) return <CustomerLayout><div className="p-8 text-center">Service not found</div></CustomerLayout>;
 
   const discountPct = service.discount ? Math.round((service.discount / service.price) * 100) : 0;
-  const slots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+  const allSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
   const imgUrl = getServiceImage(service.title, service.image);
   const finalPrice = service.price - (service.discount || 0) + (service.tax || 0);
+
+  // Fetch booked slots for selected date to prevent double-booking
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  useEffect(() => {
+    if (!selectedDate || !id) { setBookedSlots([]); return; }
+    const fetchBooked = async () => {
+      const { data } = await (await import("@/integrations/supabase/client")).supabase
+        .from("service_bookings")
+        .select("start_time")
+        .eq("service_id", id)
+        .eq("booking_date", selectedDate)
+        .in("status", ["confirmed", "pending", "in_progress"]);
+      const booked = (data || []).map((b: any) => {
+        // Convert 24h time (HH:MM:SS) to display format (HH:MM AM/PM)
+        const [h, m] = (b.start_time || "").split(":");
+        const hour = parseInt(h);
+        if (isNaN(hour)) return b.start_time;
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        return `${String(h12).padStart(2, "0")}:${m} ${ampm}`;
+      });
+      setBookedSlots(booked);
+    };
+    fetchBooked();
+  }, [selectedDate, id]);
+
+  const slots = allSlots; // keep reference name
 
   const handleBookNow = () => {
     if (!selectedDate || !selectedSlot) { toast.error("Select date and time"); return; }
@@ -167,12 +194,15 @@ export default function CustomerServiceDetailPage() {
             <div className="mt-4">
               <h3 className="text-sm font-semibold mb-2 flex items-center gap-1"><Clock className="h-4 w-4" /> Select Time</h3>
               <div className="flex flex-wrap gap-2">
-                {slots.map((slot) => (
-                  <button key={slot} onClick={() => setSelectedSlot(slot)}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${selectedSlot === slot ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
-                    {slot}
-                  </button>
-                ))}
+                {slots.map((slot) => {
+                  const isBooked = bookedSlots.includes(slot);
+                  return (
+                    <button key={slot} onClick={() => !isBooked && setSelectedSlot(slot)} disabled={isBooked}
+                      className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${isBooked ? 'border-border bg-muted text-muted-foreground line-through cursor-not-allowed opacity-50' : selectedSlot === slot ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
+                      {slot}{isBooked ? ' (Booked)' : ''}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

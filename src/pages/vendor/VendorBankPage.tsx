@@ -95,10 +95,13 @@ export default function VendorBankPage() {
 
   return (
     <VendorLayout title="Bank Accounts">
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">Manage your bank accounts for settlement payouts.</p>
-          <Button onClick={() => { setForm(emptyForm); setModalOpen(true); }}><Plus className="h-4 w-4 mr-1" /> Add Account</Button>
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold">Bank Accounts</h2>
+            <p className="text-sm text-muted-foreground mt-1">Manage your bank accounts for settlement payouts.</p>
+          </div>
+          <Button onClick={() => { setForm(emptyForm); setModalOpen(true); }} className="shrink-0"><Plus className="h-4 w-4 mr-1" /> Add Account</Button>
         </div>
 
         {isLoading ? Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) :
@@ -147,11 +150,15 @@ export default function VendorBankPage() {
             <DialogTitle>Add Bank Account</DialogTitle>
             <DialogDescription>Add your bank details for settlement payouts.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); addMutation.mutate(form); }} className="space-y-4">
-            <div><Label>Bank Name</Label><Input value={form.bank_name} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} required placeholder="e.g. State Bank of India" /></div>
-            <div><Label>Account Holder Name</Label><Input value={form.account_holder} onChange={(e) => setForm({ ...form, account_holder: e.target.value })} required /></div>
-            <div><Label>Account Number</Label><Input value={form.account_number} onChange={(e) => setForm({ ...form, account_number: e.target.value })} required /></div>
-            <div><Label>IFSC Code</Label><Input value={form.ifsc_code} onChange={(e) => setForm({ ...form, ifsc_code: e.target.value.toUpperCase() })} required placeholder="e.g. SBIN0001234" /></div>
+          <form onSubmit={(e) => { e.preventDefault(); addMutation.mutate(form); }} className="space-y-5">
+            <div className="space-y-1.5"><Label>Bank Name</Label><Input value={form.bank_name} onChange={(e) => setForm({ ...form, bank_name: e.target.value })} required placeholder="e.g. State Bank of India" /></div>
+            <div className="space-y-1.5"><Label>Account Holder Name</Label><Input value={form.account_holder} onChange={(e) => setForm({ ...form, account_holder: e.target.value })} required /></div>
+            <div className="space-y-1.5"><Label>Account Number</Label><Input value={form.account_number} onChange={(e) => setForm({ ...form, account_number: e.target.value })} required /></div>
+            <div className="space-y-1.5"><Label>Confirm Account Number</Label><Input onChange={(e) => {
+              if (e.target.value && e.target.value !== form.account_number) e.target.setCustomValidity("Account numbers don't match");
+              else e.target.setCustomValidity("");
+            }} required placeholder="Re-enter account number" /></div>
+            <div className="space-y-1.5"><Label>IFSC Code</Label><Input value={form.ifsc_code} onChange={(e) => setForm({ ...form, ifsc_code: e.target.value.toUpperCase() })} required placeholder="e.g. SBIN0001234" /></div>
             <div><Label>Account Type</Label>
               <Select value={form.account_type} onValueChange={(v) => setForm({ ...form, account_type: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>

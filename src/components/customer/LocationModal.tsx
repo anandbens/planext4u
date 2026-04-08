@@ -4,7 +4,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Navigation, Loader2 } from "lucide-react";
 
-const GOOGLE_MAPS_KEY = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
+const GOOGLE_MAPS_KEY_FALLBACK = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
+
+async function getGoogleMapsKey(): Promise<string> {
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase.from("platform_variables").select("value").eq("key", "GOOGLE_MAPS_API_KEY").maybeSingle();
+    return data?.value || GOOGLE_MAPS_KEY_FALLBACK;
+  } catch {
+    return GOOGLE_MAPS_KEY_FALLBACK;
+  }
+}
 
 export function loadSelectedLocation(): string {
   return localStorage.getItem("app_db_selected_location") || "";
@@ -46,7 +56,8 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
         const { latitude, longitude } = pos.coords;
         saveSelectedCoords(latitude, longitude);
         try {
-          const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_KEY}`);
+          const apiKey = await getGoogleMapsKey();
+          const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
           const data = await res.json();
           if (data.status === "OK" && data.results.length > 0) {
             const components = data.results[0].address_components || [];
@@ -77,7 +88,8 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
     if (query.length < 3) { setSuggestions([]); return; }
     setSearching(true);
     try {
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=country:IN&key=${GOOGLE_MAPS_KEY}`);
+      const apiKey = await getGoogleMapsKey();
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=country:IN&key=${apiKey}`);
       const data = await res.json();
       if (data.status === "OK") {
         setSuggestions(data.results.slice(0, 5).map((r: any) => ({

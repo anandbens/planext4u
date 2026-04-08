@@ -44,8 +44,6 @@ const quickActions = [
 ];
 
 const menuListItems = [
-  { label: "Payment History", icon: History, to: "/vendor/payments" },
-  { label: "Bank Account", icon: CreditCard, to: "/vendor/bank" },
   { label: "Account & Control", icon: Shield, to: "/vendor/account-control" },
   { label: "Settings", icon: Settings, to: "/vendor/settings" },
 ];
