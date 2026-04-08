@@ -229,13 +229,14 @@ export default function CustomerProfileEditPage() {
     setMarkerRef(marker);
   }, [reverseGeocode]);
 
-  const loadGoogleMapsScript = useCallback((): Promise<boolean> => {
+  const loadGoogleMapsScript = useCallback(async (): Promise<boolean> => {
+    if ((window as any).google?.maps) return true;
+    const existing = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existing) { return new Promise(r => existing.addEventListener('load', () => r(true))); }
+    const mapsKey = await getGoogleMapsKey();
     return new Promise((resolve) => {
-      if ((window as any).google?.maps) { resolve(true); return; }
-      const existing = document.querySelector('script[src*="maps.googleapis.com"]');
-      if (existing) { existing.addEventListener('load', () => resolve(true)); return; }
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsKey}&libraries=places`;
       script.async = true;
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
