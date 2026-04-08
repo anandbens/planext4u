@@ -117,8 +117,20 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
       .then(({ data, count }) => { setPoints(data || []); setPointsTotal(count || 0); setPointsLoading(false); });
   }, [customer, activeTab, pointsPage, pointsFilter, pointsFromDate, pointsToDate]);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const errs: Record<string, string> = {};
+    if (!form.name.trim()) errs.name = "Name is required";
+    if (!form.email.trim()) errs.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Invalid email format";
+    if (form.mobile && !/^\+?\d{10,15}$/.test(form.mobile.replace(/[\s-]/g, ""))) errs.mobile = "Invalid mobile (10-15 digits)";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSave = async () => {
-    if (!form.name || !form.email) return;
+    if (!validateForm()) return;
     setSaving(true);
     try {
       if (isCreate) { await onCreate?.(form); } else if (customer) { await onSave?.(customer.id, form); }
