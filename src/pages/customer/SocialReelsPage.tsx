@@ -8,6 +8,20 @@ import { useAuth } from "@/lib/auth";
 import SocialLayout from "@/components/social/SocialLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useFollow } from "@/hooks/use-social-interactions";
+
+function FollowBtn({ targetUserId, isMock }: { targetUserId: string; isMock: boolean }) {
+  const { isFollowing, toggleFollow } = useFollow(targetUserId);
+  if (isMock) return <button className="border border-white/60 text-white text-xs font-semibold px-3 py-0.5 rounded-lg ml-1">Follow</button>;
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); toggleFollow(); }}
+      className={`text-xs font-semibold px-3 py-0.5 rounded-lg ml-1 border ${isFollowing ? 'border-white/30 text-white/60' : 'border-white/60 text-white'}`}
+    >
+      {isFollowing ? 'Following' : 'Follow'}
+    </button>
+  );
+}
 
 function formatCount(n: number): string {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
