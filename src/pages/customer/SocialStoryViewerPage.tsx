@@ -117,9 +117,10 @@ export default function SocialStoryViewerPage() {
 
   // Record view in DB
   useEffect(() => {
-    if (!story?.id || !customerUser?.id || story.id.startsWith('s')) return;
-    supabase.from('social_story_views').insert({ story_id: story.id, viewer_id: customerUser.id }).then(() => {});
-  }, [story?.id, customerUser?.id]);
+    const socialUserId = customerUser?.supabase_uid || customerUser?.id;
+    if (!story?.id || !socialUserId || story.id.startsWith('s')) return;
+    supabase.from('social_story_views').insert({ story_id: story.id, viewer_id: socialUserId }).then(() => {});
+  }, [story?.id, customerUser?.supabase_uid, customerUser?.id]);
 
   const handleReply = () => {
     if (replyText.trim()) {

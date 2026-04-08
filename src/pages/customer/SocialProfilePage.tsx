@@ -24,7 +24,7 @@ export default function SocialProfilePage() {
   const { customerUser } = useAuth();
   const [activeTab, setActiveTab] = useState("posts");
 
-  const currentUserId = customerUser?.id;
+  const currentUserId = customerUser?.supabase_uid || customerUser?.id;
   const profileUsername = username?.replace('@', '');
 
   // Fetch social profile from DB

@@ -128,7 +128,6 @@ export function usePostComments(postId: string) {
   const { data: comments = [], isLoading } = useQuery({
     queryKey: ['social-comments', postId],
     queryFn: async () => {
-      // Get top-level comments
       const { data: topLevel } = await supabase
         .from('social_comments')
         .select('*')
@@ -141,7 +140,6 @@ export function usePostComments(postId: string) {
 
       if (!topLevel?.length) return [];
 
-      // Get replies
       const commentIds = topLevel.map(c => c.id);
       const { data: replies } = await supabase
         .from('social_comments')
@@ -150,7 +148,16 @@ export function usePostComments(postId: string) {
         .eq('status', 'active')
         .order('created_at', { ascending: true });
 
-      // Get like status for current user
+      const allComments = [...topLevel, ...(replies || [])];
+      const userIds = Array.from(new Set(allComments.map(c => c.user_id).filter(Boolean)));
+      const { data: profiles } = userIds.length
+        ? await supabase
+            .from('social_profiles')
+            .select('user_id, username, display_name, avatar_url')
+            .in('user_id', userIds)
+        : { data: [] as any[] };
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+
       let userLikes: string[] = [];
       const uid = await getAuthUserId();
       if (uid) {
@@ -163,12 +170,20 @@ export function usePostComments(postId: string) {
         userLikes = likes?.map(l => l.comment_id) || [];
       }
 
+      const enrichComment = (comment: any) => {
+        const profile = profileMap.get(comment.user_id);
+        return {
+          ...comment,
+          username: profile?.username || 'user',
+          display_name: profile?.display_name || profile?.username || 'user',
+          avatar_url: profile?.avatar_url || '',
+          isLiked: userLikes.includes(comment.id),
+        };
+      };
+
       return topLevel.map(c => ({
-        ...c,
-        isLiked: userLikes.includes(c.id),
-        replies: (replies || [])
-          .filter(r => r.parent_id === c.id)
-          .map(r => ({ ...r, isLiked: userLikes.includes(r.id) })),
+        ...enrichComment(c),
+        replies: (replies || []).filter(r => r.parent_id === c.id).map(enrichComment),
       }));
     },
     enabled: !!postId,
