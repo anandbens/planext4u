@@ -612,11 +612,29 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
     e.target.value = '';
   };
 
+  // Fetch profile for non-own stories to get username for profile navigation
+  const { data: storyProfile } = useQuery({
+    queryKey: ['story-profile', story.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('social_profiles').select('username, display_name').eq('user_id', story.id).maybeSingle();
+      return data;
+    },
+    enabled: !story.isOwn && !!story.id,
+  });
+
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (story.isOwn) return;
+    const username = storyProfile?.username || story.id;
+    navigate(`/app/social/@${username}`);
+  };
+
   return (
     <>
       <input ref={fileRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileSelect} />
-      <button className="flex flex-col items-center gap-1 shrink-0 w-[68px]" onClick={handleYourStoryClick}>
-        <div className={`relative p-[2px] rounded-full ${story.isOwn ? (hasOwnStories ? 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600' : '') : story.seen ? 'bg-muted' : 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600'}`}>
+      <div className="flex flex-col items-center gap-1 shrink-0 w-[68px]">
+        <button onClick={handleYourStoryClick}
+          className={`relative p-[2px] rounded-full ${story.isOwn ? (hasOwnStories ? 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600' : '') : story.seen ? 'bg-muted' : 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600'}`}>
           <div className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-card p-[2px]">
             <div className="h-full w-full rounded-full bg-muted flex items-center justify-center overflow-hidden">
               {story.isOwn ? (
@@ -628,11 +646,11 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
               )}
             </div>
           </div>
-        </div>
-        <span className="text-[10px] max-w-[56px] truncate text-center">
+        </button>
+        <button onClick={story.isOwn ? handleYourStoryClick : handleProfileClick} className="text-[10px] max-w-[56px] truncate text-center hover:underline">
           {story.isOwn ? "Your Story" : story.username.split('_')[0]}
-        </span>
-      </button>
+        </button>
+      </div>
     </>
   );
 }

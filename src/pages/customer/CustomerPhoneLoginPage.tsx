@@ -42,8 +42,16 @@ export default function CustomerPhoneLoginPage() {
     if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
-      // #22: Check if user is registered before sending OTP
-      const { data: customer } = await supabase.from('customers').select('id').eq('mobile', cleaned).maybeSingle();
+      // Check if user is registered before sending OTP
+      // Match against multiple phone formats (with/without country code, spaces)
+      const fullPhone = `${countryCode}${cleaned}`;
+      const fullPhoneSpaced = `${countryCode} ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('id')
+        .or(`mobile.eq.${cleaned},mobile.eq.${fullPhone},mobile.eq.${fullPhoneSpaced},mobile.ilike.%${cleaned}%`)
+        .limit(1)
+        .maybeSingle();
       if (!customer) {
         setLoading(false);
         toast.error("No account found with this phone number. Please register first.", { duration: 5000 });
@@ -92,7 +100,10 @@ export default function CustomerPhoneLoginPage() {
       });
 
       if (error || !data?.success) {
-        throw new Error(data?.error || error?.message || "Backend authentication failed");
+        const errMsg = data?.code === "NOT_REGISTERED"
+          ? "No account found with this phone number. Please register first."
+          : (data?.error || error?.message || "Backend authentication failed");
+        throw new Error(errMsg);
       }
 
       // Step 4: Establish Supabase session using the magic link token
