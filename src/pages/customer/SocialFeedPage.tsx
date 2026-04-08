@@ -82,19 +82,7 @@ const FALLBACK_POSTS = [
   },
 ];
 
-const MOCK_STORIES = [
-  { id: "own", username: "Your Story", avatar: "", isOwn: true, seen: false },
-  { id: "s1", username: "vijay_kumar", avatar: "https://i.pravatar.cc/100?u=vijay", seen: false },
-  { id: "s2", username: "priya_designs", avatar: "https://i.pravatar.cc/100?u=priya", seen: false },
-  { id: "s3", username: "rahul_food", avatar: "https://i.pravatar.cc/100?u=rahul", seen: true },
-  { id: "s4", username: "anita_travel", avatar: "https://i.pravatar.cc/100?u=anita", seen: true },
-  { id: "s5", username: "karthik_tech", avatar: "https://i.pravatar.cc/100?u=karthik", seen: false },
-  { id: "s6", username: "sneha_art", avatar: "https://i.pravatar.cc/100?u=sneha", seen: false },
-  { id: "s7", username: "planext4u", avatar: "https://i.pravatar.cc/100?u=planext", seen: true },
-  { id: "s8", username: "foodie_chen", avatar: "https://i.pravatar.cc/100?u=chen", seen: false },
-  { id: "s9", username: "dev_rajan", avatar: "https://i.pravatar.cc/100?u=rajan", seen: true },
-  { id: "s10", username: "dance_queen", avatar: "https://i.pravatar.cc/100?u=dance", seen: false },
-];
+// No mock stories - only real DB stories are shown
 
 function formatCount(n: number): string {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
@@ -545,17 +533,18 @@ function PostCard({ post }: { post: any }) {
 function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: any; customerUser: any }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
+  const authUid = customerUser?.supabase_uid || customerUser?.id;
 
   // Check if current user has active stories
   const { data: hasOwnStories = false } = useQuery({
-    queryKey: ['own-stories-exist', customerUser?.id],
+    queryKey: ['own-stories-exist', authUid],
     queryFn: async () => {
-      if (!customerUser?.id) return false;
+      if (!authUid) return false;
       const { count } = await supabase.from('social_stories').select('*', { count: 'exact', head: true })
-        .eq('user_id', customerUser.id).gt('expires_at', new Date().toISOString());
+        .eq('user_id', authUid).gt('expires_at', new Date().toISOString());
       return (count || 0) > 0;
     },
-    enabled: story.isOwn && !!customerUser?.id,
+    enabled: story.isOwn && !!authUid,
   });
 
   const handleYourStoryClick = () => {
@@ -563,9 +552,9 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
       navigate(`/app/social/stories/${story.id}`);
       return;
     }
-    if (!customerUser?.id) { toast.error("Please login"); navigate("/app/login"); return; }
+    if (!authUid) { toast.error("Please login"); navigate("/app/login"); return; }
     if (hasOwnStories) {
-      navigate(`/app/social/stories/${customerUser.id}`);
+      navigate(`/app/social/stories/${authUid}`);
     } else {
       fileRef.current?.click();
     }
@@ -574,13 +563,13 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
-    if (!customerUser?.id) return;
+    if (!authUid) return;
 
     // Ensure social profile exists
-    const { data: existingProfile } = await supabase.from('social_profiles').select('id').eq('user_id', customerUser.id).maybeSingle();
+    const { data: existingProfile } = await supabase.from('social_profiles').select('id').eq('user_id', authUid).maybeSingle();
     if (!existingProfile) {
       await supabase.from('social_profiles').insert({
-        user_id: customerUser.id,
+        user_id: authUid,
         username: customerUser.name?.toLowerCase().replace(/\s+/g, '_') || 'user',
         display_name: customerUser.name || 'User',
       } as any);
@@ -598,7 +587,7 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
 
       const storyId = crypto.randomUUID();
       const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg');
-      const path = `${customerUser.id}/stories/${storyId}.${ext}`;
+      const path = `${authUid}/stories/${storyId}.${ext}`;
 
       const { error: uploadErr } = await supabase.storage.from('social-media').upload(path, file, { contentType: file.type, upsert: true });
       if (uploadErr) { toast.error(`Upload failed: ${uploadErr.message}`); continue; }
@@ -607,13 +596,14 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
       const url = signedUrl?.signedUrl || '';
 
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      await supabase.from('social_stories').insert({
+      const { error: insertErr } = await supabase.from('social_stories').insert({
         id: storyId,
-        user_id: customerUser.id,
+        user_id: authUid,
         media_url: url,
         media_type: isVideo ? 'video' : 'image',
         expires_at: expiresAt,
       } as any);
+      if (insertErr) { toast.error(`Story save failed: ${insertErr.message}`); continue; }
     }
 
     toast.success("Story posted! 🎉");
@@ -678,9 +668,10 @@ export default function SocialFeedPage() {
     },
   });
 
+  const ownStoryItem = { id: "own", username: "Your Story", avatar: "", isOwn: true, seen: false };
   const stories = [
-    MOCK_STORIES[0],
-    ...(storyUsers.length > 0 ? storyUsers : MOCK_STORIES.slice(1)),
+    ownStoryItem,
+    ...storyUsers,
   ];
 
   const posts = dbPosts.length > 0 ? dbPosts.map((p: any) => ({
