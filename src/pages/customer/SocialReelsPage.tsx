@@ -29,11 +29,7 @@ function formatCount(n: number): string {
   return n.toString();
 }
 
-const FALLBACK_REELS = [
-  { id: "r1", user_id: "mock", username: "vijay_sivakumar", isVerified: true, videoUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=700&fit=crop", caption: "Morning routine check ☀️ #morningroutine", audio: "Original Audio", likes: 12400, comments: 340, shares: 89, isLiked: false, isSaved: false },
-  { id: "r2", user_id: "mock", username: "priya_designs", isVerified: false, videoUrl: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=700&fit=crop", caption: "Watch me create this piece 🎨 #art", audio: "Aesthetic Vibes", likes: 8900, comments: 156, shares: 234, isLiked: true, isSaved: false },
-  { id: "r3", user_id: "mock", username: "rahul_food", isVerified: true, videoUrl: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=700&fit=crop", caption: "This recipe is too good 🍕 #food", audio: "Cooking Music", likes: 45200, comments: 890, shares: 1200, isLiked: false, isSaved: true },
-];
+// No fallback reels - only real DB reels are shown
 
 export default function SocialReelsPage() {
   const navigate = useNavigate();
@@ -57,7 +53,7 @@ export default function SocialReelsPage() {
     },
   });
 
-  const reels = dbReels.length > 0 ? dbReels.map((r: any) => {
+  const reels = dbReels.map((r: any) => {
     const media = Array.isArray(r.media) && r.media.length > 0 ? r.media[0] : null;
     const metadata = r.metadata || {};
     return {
@@ -70,7 +66,7 @@ export default function SocialReelsPage() {
       linkedProductId: metadata.linked_product_id || null,
       linkedProductTitle: metadata.linked_product_title || null,
     };
-  }) : FALLBACK_REELS;
+  });
 
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
@@ -81,7 +77,14 @@ export default function SocialReelsPage() {
   const reelsContent = (
     <div className="md:relative md:h-[calc(100vh-120px)] fixed inset-0 bg-black z-40 md:z-auto md:rounded-xl md:overflow-hidden">
       <div ref={containerRef} className="h-full w-full overflow-y-scroll snap-y snap-mandatory" onScroll={handleScroll} style={{ scrollSnapType: 'y mandatory' }}>
-        {reels.map((reel: any) => (
+        {reels.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-white/70 gap-3">
+            <Film className="h-12 w-12 text-white/30" />
+            <p className="text-lg font-semibold">No reels yet</p>
+            <p className="text-sm text-white/50">Be the first to post a reel!</p>
+            <button onClick={() => navigate("/app/social/create")} className="mt-2 px-4 py-2 bg-primary rounded-full text-sm font-semibold text-primary-foreground">Create Reel</button>
+          </div>
+        ) : reels.map((reel: any) => (
           <ReelCard key={reel.id} reel={reel} />
         ))}
       </div>
@@ -116,7 +119,7 @@ function ReelCard({ reel }: { reel: any }) {
   const { customerUser } = useAuth();
   const qc = useQueryClient();
   const userId = customerUser?.supabase_uid || customerUser?.id;
-  const isMock = reel.id.startsWith('r');
+  const isMock = false;
 
   const { data: isLiked = reel.isLiked } = useQuery({
     queryKey: ['social-like', reel.id, userId],
