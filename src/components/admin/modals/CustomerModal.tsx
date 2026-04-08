@@ -117,8 +117,20 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
       .then(({ data, count }) => { setPoints(data || []); setPointsTotal(count || 0); setPointsLoading(false); });
   }, [customer, activeTab, pointsPage, pointsFilter, pointsFromDate, pointsToDate]);
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const errs: Record<string, string> = {};
+    if (!form.name.trim()) errs.name = "Name is required";
+    if (!form.email.trim()) errs.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Invalid email format";
+    if (form.mobile && !/^\+?\d{10,15}$/.test(form.mobile.replace(/[\s-]/g, ""))) errs.mobile = "Invalid mobile (10-15 digits)";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSave = async () => {
-    if (!form.name || !form.email) return;
+    if (!validateForm()) return;
     setSaving(true);
     try {
       if (isCreate) { await onCreate?.(form); } else if (customer) { await onSave?.(customer.id, form); }
@@ -222,7 +234,8 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-muted-foreground">Full Name *</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" placeholder="Enter name" />
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={`mt-1 ${errors.name ? "border-destructive" : ""}`} placeholder="Enter name" />
+                {errors.name && <p className="text-xs text-destructive mt-0.5">{errors.name}</p>}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Status</Label>
@@ -237,11 +250,13 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> Email *</Label>
-                <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" placeholder="email@example.com" />
+                <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={`mt-1 ${errors.email ? "border-destructive" : ""}`} placeholder="email@example.com" />
+                {errors.email && <p className="text-xs text-destructive mt-0.5">{errors.email}</p>}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Mobile</Label>
-                <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="mt-1" placeholder="+91 98765 43210" />
+                <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className={`mt-1 ${errors.mobile ? "border-destructive" : ""}`} placeholder="+91 98765 43210" />
+                {errors.mobile && <p className="text-xs text-destructive mt-0.5">{errors.mobile}</p>}
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Occupation</Label>
@@ -264,7 +279,10 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground">Full Name *</Label>
-                  {editMode ? <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{customer?.name}</p>}
+                  {editMode ? <>
+                    <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={`mt-1 ${errors.name ? "border-destructive" : ""}`} />
+                    {errors.name && <p className="text-xs text-destructive mt-0.5">{errors.name}</p>}
+                  </> : <p className="text-sm font-medium mt-1">{customer?.name}</p>}
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Status</Label>
@@ -281,11 +299,17 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> Email *</Label>
-                  {editMode ? <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{customer?.email}</p>}
+                  {editMode ? <>
+                    <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={`mt-1 ${errors.email ? "border-destructive" : ""}`} />
+                    {errors.email && <p className="text-xs text-destructive mt-0.5">{errors.email}</p>}
+                  </> : <p className="text-sm font-medium mt-1">{customer?.email}</p>}
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Mobile</Label>
-                  {editMode ? <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{customer?.mobile}</p>}
+                  {editMode ? <>
+                    <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className={`mt-1 ${errors.mobile ? "border-destructive" : ""}`} />
+                    {errors.mobile && <p className="text-xs text-destructive mt-0.5">{errors.mobile}</p>}
+                  </> : <p className="text-sm font-medium mt-1">{customer?.mobile}</p>}
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Occupation</Label>
