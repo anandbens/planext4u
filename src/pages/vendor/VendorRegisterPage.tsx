@@ -60,11 +60,9 @@ export default function VendorRegisterPage() {
     if (file.size > MAX_FILE_SIZE) { toast.error("File must be under 2MB"); return; }
 
     const ext = file.name.split('.').pop() || 'jpg';
-    const fileName = `vendor-reg/${Date.now()}-${field}.${ext}`;
-
-    // Use vendor-assets for store logo, kyc-documents for KYC docs
     const bucket = field === 'store_logo_url' ? 'vendor-assets' : 'kyc-documents';
-    const { error } = await supabase.storage.from(bucket).upload(fileName, file, { contentType: file.type, upsert: true });
+    const filePath = `vendor-reg/${Date.now()}-${field}.${ext}`;
+    const { error } = await supabase.storage.from(bucket).upload(filePath, file, { contentType: file.type, upsert: true });
     if (error) { toast.error("Upload failed: " + error.message); return; }
 
     if (bucket === 'vendor-assets') {
@@ -383,12 +381,12 @@ export default function VendorRegisterPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><label className="text-xs font-medium text-muted-foreground">Account Holder Name</label>
                 <Input value={form.bank_holder_name} onChange={e => updateField('bank_holder_name', e.target.value)} /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">Account Number</label>
-                <Input value={form.bank_account_number} onChange={e => updateField('bank_account_number', e.target.value.replace(/\D/g, ''))} /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">Account Number (9-18 digits)</label>
+                <Input value={form.bank_account_number} onChange={e => updateField('bank_account_number', e.target.value.replace(/\D/g, ''))} maxLength={18} inputMode="numeric" /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Confirm Account Number</label>
-                <Input value={form.bank_confirm_account} onChange={e => updateField('bank_confirm_account', e.target.value.replace(/\D/g, ''))} /></div>
-              <div><label className="text-xs font-medium text-muted-foreground">IFSC Code</label>
-                <Input value={form.bank_ifsc} onChange={e => updateField('bank_ifsc', e.target.value.toUpperCase())} maxLength={11} /></div>
+                <Input value={form.bank_confirm_account} onChange={e => updateField('bank_confirm_account', e.target.value.replace(/\D/g, ''))} maxLength={18} inputMode="numeric" /></div>
+              <div><label className="text-xs font-medium text-muted-foreground">IFSC Code (11 characters)</label>
+                <Input value={form.bank_ifsc} onChange={e => updateField('bank_ifsc', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} maxLength={11} placeholder="e.g. SBIN0001234" /></div>
             </div>
             {form.bank_account_number && form.bank_confirm_account && form.bank_account_number !== form.bank_confirm_account && (
               <p className="text-xs text-destructive flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Account numbers don't match</p>
