@@ -181,7 +181,8 @@ export default function CustomerProfileEditPage() {
   // --- Map & Address Logic ---
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_KEY}`);
+      const mapsKey = await getGoogleMapsKey();
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${mapsKey}`);
       const data = await res.json();
       if (data.status === "OK" && data.results.length > 0) {
         const result = data.results[0];
