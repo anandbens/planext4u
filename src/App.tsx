@@ -137,6 +137,7 @@ import FileUploadsPage from "./pages/admin/FileUploadsPage";
 import ParentItemsPage from "./pages/admin/ParentItemsPage";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
 import AdminVendorOnboardingPage from "./pages/admin/AdminVendorOnboardingPage";
+import AdminSplashScreensPage from "./pages/admin/AdminSplashScreensPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
