@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import OtpInput from "@/components/auth/OtpInput";
 import { Eye, EyeOff, LogIn, Store, ShoppingBag, Wrench, Phone, ArrowRight, ShieldCheck, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
@@ -172,16 +173,14 @@ export default function VendorLoginPage() {
                   ) : (
                     <>
                       <p className="text-sm text-muted-foreground text-center">Enter OTP sent to {countryCode} {phone}</p>
-                      <div className="flex justify-center gap-2">
-                        {[0,1,2,3,4,5].map(i => (
-                          <input key={i} type="text" inputMode="numeric" maxLength={1} value={otp[i] || ""} ref={i===0?otpRef:undefined}
-                            className="w-11 h-12 text-center text-lg font-bold rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                            onChange={(e) => { const v=e.target.value.replace(/\D/g,""); if(v){const n=otp.split("");n[i]=v;setOtp(n.join("").slice(0,6));const next=e.target.nextElementSibling as HTMLInputElement;if(next)next.focus();} }}
-                            onKeyDown={(e) => { if(e.key==="Backspace"&&!otp[i]){const prev=(e.target as HTMLElement).previousElementSibling as HTMLInputElement;if(prev){prev.focus();const n=otp.split("");n[i-1]="";setOtp(n.join(""));}} }}
-                            onPaste={(e) => { e.preventDefault(); setOtp(e.clipboardData.getData("text").replace(/\D/g,"").slice(0,6)); }}
-                          />
-                        ))}
-                      </div>
+                      <OtpInput
+                        value={otp}
+                        onChange={setOtp}
+                        firstInputRef={otpRef}
+                        disabled={loading}
+                        className="flex justify-center gap-2"
+                        inputClassName="w-11 h-12 text-center text-lg font-bold rounded-xl border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
                       <Button onClick={handleVerifyOTP} className="w-full h-12 rounded-xl text-base gap-2 bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading || otp.length<6}>
                         {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Verifying...</> : <><ShieldCheck className="h-4 w-4" /> Verify OTP</>}
                       </Button>
