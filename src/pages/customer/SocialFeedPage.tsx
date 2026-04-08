@@ -668,9 +668,10 @@ export default function SocialFeedPage() {
     },
   });
 
+  const ownStoryItem = { id: "own", username: "Your Story", avatar: "", isOwn: true, seen: false };
   const stories = [
-    MOCK_STORIES[0],
-    ...(storyUsers.length > 0 ? storyUsers : MOCK_STORIES.slice(1)),
+    ownStoryItem,
+    ...storyUsers,
   ];
 
   const posts = dbPosts.length > 0 ? dbPosts.map((p: any) => ({
