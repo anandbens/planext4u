@@ -501,6 +501,46 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <Label className="text-xs text-muted-foreground">Short Description</Label>
                 {editMode && !vendorRestricted ? <Input value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className="mt-1" placeholder="Brief one-liner" /> : <p className="text-sm mt-1 text-muted-foreground">{form.short_description || "—"}</p>}
               </div>
+
+              {/* Parent Item Autocomplete */}
+              {editMode && !vendorRestricted && (
+                <div className="col-span-2 p-3 rounded-lg bg-secondary/10 border border-border/30 space-y-2">
+                  <Label className="text-xs text-muted-foreground font-semibold">Parent Item (for grouping across vendors)</Label>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      value={parentSearch}
+                      onChange={(e) => setParentSearch(e.target.value)}
+                      className="pl-8 text-xs"
+                      placeholder="Search by Parent ID or Name..."
+                    />
+                  </div>
+                  {parentSearch && filteredParentItems.length > 0 && (
+                    <div className="max-h-[120px] overflow-y-auto border rounded-lg bg-background">
+                      {filteredParentItems.map((p: any) => (
+                        <button key={p.id} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted/50 border-b last:border-0"
+                          onClick={() => { setForm({ ...form, parent_item_id: p.id, parent_item_name: p.name }); setParentSearch(""); }}>
+                          <span className="font-mono text-muted-foreground">{p.id}</span> — <span className="font-medium">{p.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {form.parent_item_id && (
+                    <div className="flex items-center gap-2 text-xs bg-primary/5 px-3 py-1.5 rounded-lg">
+                      <span className="font-mono">{form.parent_item_id}</span> — <span className="font-medium">{form.parent_item_name}</span>
+                      <button className="ml-auto text-destructive" onClick={() => setForm({ ...form, parent_item_id: "", parent_item_name: "" })}>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!editMode && form.parent_item_id && (
+                <div className="col-span-2">
+                  <Label className="text-xs text-muted-foreground">Parent Item</Label>
+                  <p className="text-sm mt-1"><span className="font-mono text-muted-foreground">{form.parent_item_id}</span> — {form.parent_item_name}</p>
+                </div>
+              )}
               <div className="col-span-2">
                 <Label className="text-xs text-muted-foreground">Long Description</Label>
                 {editMode && !vendorRestricted ? <Textarea value={form.long_description || form.description} onChange={(e) => setForm({ ...form, long_description: e.target.value, description: e.target.value })} className="mt-1" rows={3} /> : <p className="text-sm mt-1 text-muted-foreground">{form.long_description || form.description || "—"}</p>}
