@@ -137,6 +137,25 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     },
   });
 
+  // Parent Items for autocomplete
+  const [parentSearch, setParentSearch] = useState("");
+  const { data: parentItems } = useQuery({
+    queryKey: ["parentItems"],
+    queryFn: async () => {
+      const { data } = await supabase.from("parent_items" as any).select("*").eq("status", "active").order("name");
+      return (data || []) as any[];
+    },
+  });
+
+  const filteredParentItems = useMemo(() => {
+    if (!parentItems) return [];
+    if (!parentSearch) return parentItems.slice(0, 20);
+    const q = parentSearch.toLowerCase();
+    return parentItems.filter((p: any) =>
+      p.id.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)
+    ).slice(0, 20);
+  }, [parentItems, parentSearch]);
+
   const { data: attributeValues } = useQuery({
     queryKey: ["productAttributeValues"],
     queryFn: async () => {
