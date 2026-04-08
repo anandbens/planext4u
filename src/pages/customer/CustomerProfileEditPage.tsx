@@ -23,7 +23,19 @@ interface Occupation {
   id: string; name: string;
 }
 
-const GOOGLE_MAPS_KEY = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
+// Google Maps key loaded from platform_variables with fallback
+const FALLBACK_MAPS_KEY = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
+let CACHED_MAPS_KEY: string | null = null;
+
+const getGoogleMapsKey = async (): Promise<string> => {
+  if (CACHED_MAPS_KEY) return CACHED_MAPS_KEY;
+  try {
+    const { data } = await supabase.from('platform_variables').select('value').eq('key', 'google_maps_api_key').single();
+    if (data?.value) { CACHED_MAPS_KEY = data.value; return data.value; }
+  } catch {}
+  CACHED_MAPS_KEY = FALLBACK_MAPS_KEY;
+  return FALLBACK_MAPS_KEY;
+};
 
 export default function CustomerProfileEditPage() {
   const navigate = useNavigate();
@@ -169,7 +181,8 @@ export default function CustomerProfileEditPage() {
   // --- Map & Address Logic ---
   const reverseGeocode = useCallback(async (lat: number, lng: number) => {
     try {
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_MAPS_KEY}`);
+      const mapsKey = await getGoogleMapsKey();
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${mapsKey}`);
       const data = await res.json();
       if (data.status === "OK" && data.results.length > 0) {
         const result = data.results[0];
@@ -216,13 +229,14 @@ export default function CustomerProfileEditPage() {
     setMarkerRef(marker);
   }, [reverseGeocode]);
 
-  const loadGoogleMapsScript = useCallback((): Promise<boolean> => {
+  const loadGoogleMapsScript = useCallback(async (): Promise<boolean> => {
+    if ((window as any).google?.maps) return true;
+    const existing = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existing) { return new Promise(r => existing.addEventListener('load', () => r(true))); }
+    const mapsKey = await getGoogleMapsKey();
     return new Promise((resolve) => {
-      if ((window as any).google?.maps) { resolve(true); return; }
-      const existing = document.querySelector('script[src*="maps.googleapis.com"]');
-      if (existing) { existing.addEventListener('load', () => resolve(true)); return; }
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_KEY}&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsKey}&libraries=places`;
       script.async = true;
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
@@ -250,7 +264,8 @@ export default function CustomerProfileEditPage() {
     if (!searchQuery.trim()) return;
     setLocating(true);
     try {
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${GOOGLE_MAPS_KEY}`);
+      const mapsKey = await getGoogleMapsKey();
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${mapsKey}`);
       const data = await res.json();
       if (data.status === "OK" && data.results.length > 0) {
         const r = data.results[0];
@@ -287,7 +302,8 @@ export default function CustomerProfileEditPage() {
     setShowMapModal(true);
     setTimeout(async () => {
       try {
-        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr.address_line + ", " + addr.city)}&key=${GOOGLE_MAPS_KEY}`);
+        const mapsKey = await getGoogleMapsKey();
+        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr.address_line + ", " + addr.city)}&key=${mapsKey}`);
         const data = await res.json();
         if (data.status === "OK" && data.results.length > 0) {
           const r = data.results[0];
