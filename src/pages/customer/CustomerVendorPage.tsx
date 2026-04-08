@@ -48,7 +48,8 @@ export default function CustomerVendorPage() {
   const categories = [...new Set(vendorProducts.map((p: any) => p.category_name).filter(Boolean))];
 
   const addToCart = async (p: any) => {
-    await api.addToCart(p, 1);
+    const result = await api.addToCart(p, 1);
+    if (result.blocked) { toast.error(result.message, { duration: 5000 }); return; }
     toast.success(`${p.title} added to cart`);
   };
 

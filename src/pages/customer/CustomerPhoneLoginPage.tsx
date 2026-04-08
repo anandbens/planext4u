@@ -42,6 +42,14 @@ export default function CustomerPhoneLoginPage() {
     if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
+      // #22: Check if user is registered before sending OTP
+      const { data: customer } = await supabase.from('customers').select('id').eq('mobile', cleaned).maybeSingle();
+      if (!customer) {
+        setLoading(false);
+        toast.error("No account found with this phone number. Please register first.", { duration: 5000 });
+        return;
+      }
+
       await sendOTP(`${countryCode}${cleaned}`);
       setOtpSent(true);
       setTimer(30);
