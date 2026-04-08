@@ -45,6 +45,7 @@ export default function CustomerServiceDetailPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -53,6 +54,30 @@ export default function CustomerServiceDetailPage() {
       setIsWishlisted(saved.includes(id));
     } catch {}
   }, [id]);
+
+  // Fetch booked slots for selected date to prevent double-booking
+  useEffect(() => {
+    if (!selectedDate || !id) { setBookedSlots([]); return; }
+    const fetchBooked = async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase
+        .from("service_bookings")
+        .select("start_time")
+        .eq("service_id", id)
+        .eq("booking_date", selectedDate)
+        .in("status", ["confirmed", "pending", "in_progress"]);
+      const booked = (data || []).map((b: any) => {
+        const [h, m] = (b.start_time || "").split(":");
+        const hour = parseInt(h);
+        if (isNaN(hour)) return b.start_time;
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        return `${String(h12).padStart(2, "0")}:${m} ${ampm}`;
+      });
+      setBookedSlots(booked);
+    };
+    fetchBooked();
+  }, [selectedDate, id]);
 
   const toggleServiceWishlist = () => {
     if (!id) return;
@@ -74,35 +99,9 @@ export default function CustomerServiceDetailPage() {
 
   const discountPct = service.discount ? Math.round((service.discount / service.price) * 100) : 0;
   const allSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+  const slots = allSlots;
   const imgUrl = getServiceImage(service.title, service.image);
   const finalPrice = service.price - (service.discount || 0) + (service.tax || 0);
-
-  // Fetch booked slots for selected date to prevent double-booking
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
-  useEffect(() => {
-    if (!selectedDate || !id) { setBookedSlots([]); return; }
-    const fetchBooked = async () => {
-      const { data } = await (await import("@/integrations/supabase/client")).supabase
-        .from("service_bookings")
-        .select("start_time")
-        .eq("service_id", id)
-        .eq("booking_date", selectedDate)
-        .in("status", ["confirmed", "pending", "in_progress"]);
-      const booked = (data || []).map((b: any) => {
-        // Convert 24h time (HH:MM:SS) to display format (HH:MM AM/PM)
-        const [h, m] = (b.start_time || "").split(":");
-        const hour = parseInt(h);
-        if (isNaN(hour)) return b.start_time;
-        const ampm = hour >= 12 ? "PM" : "AM";
-        const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        return `${String(h12).padStart(2, "0")}:${m} ${ampm}`;
-      });
-      setBookedSlots(booked);
-    };
-    fetchBooked();
-  }, [selectedDate, id]);
-
-  const slots = allSlots; // keep reference name
 
   const handleBookNow = () => {
     if (!selectedDate || !selectedSlot) { toast.error("Select date and time"); return; }
