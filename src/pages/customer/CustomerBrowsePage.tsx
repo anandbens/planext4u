@@ -207,13 +207,28 @@ export default function CustomerBrowsePage() {
           const paginated = products?.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE) || [];
           return (
             <>
+              {paginated.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <ShoppingCart className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                  <h3 className="text-lg font-semibold mb-1">
+                    {searchFilter ? "No results found" : "No products available"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-xs">
+                    {searchFilter
+                      ? `We couldn't find any products matching "${searchFilter}". Try a different search term.`
+                      : categoryFilter
+                        ? "No products are available in this category yet. Check back later!"
+                        : "No products are available in your area. Try changing your location."}
+                  </p>
+                </div>
+              ) : (
               <div className={viewMode === "grid" ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" : "flex flex-col gap-3"}>
                 {paginated.map((p) => {
                   const discountPct = p.discount ? Math.round((p.discount / p.price) * 100) : 0;
                   const isWished = wishlist.includes(p.id);
                   return (
-                    <Card key={p.id} className={`overflow-hidden hover:shadow-md transition-shadow group ${viewMode === "list" ? "flex" : ""}`}>
-                      <Link to={`/app/product/${p.id}`} className={viewMode === "list" ? "flex flex-1" : "block"}>
+                    <Card key={p.id} className={`overflow-hidden hover:shadow-md transition-shadow group flex flex-col ${viewMode === "list" ? "flex-row" : ""}`}>
+                      <Link to={`/app/product/${p.id}`} className={`flex-1 flex ${viewMode === "list" ? "flex-row" : "flex-col"}`}>
                         <div className={`bg-secondary/30 flex items-center justify-center relative overflow-hidden ${viewMode === "list" ? "w-28 h-28 shrink-0" : "h-36"}`}>
                           {discountPct > 0 && <span className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">{discountPct}% Off</span>}
                           {(() => {
@@ -252,7 +267,7 @@ export default function CustomerBrowsePage() {
                           </div>
                         </div>
                       </Link>
-                      <div className="px-2.5 pb-2.5 flex gap-1.5">
+                      <div className="px-2.5 pb-2.5 flex gap-1.5 mt-auto">
                         <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => quickAdd(p)}>
                           <ShoppingCart className="h-3 w-3 mr-1" /> Cart
                         </Button>
@@ -264,6 +279,7 @@ export default function CustomerBrowsePage() {
                   );
                 })}
               </div>
+              )
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-6">
                   <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage <= 1}
