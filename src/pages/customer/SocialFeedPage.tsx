@@ -82,19 +82,7 @@ const FALLBACK_POSTS = [
   },
 ];
 
-const MOCK_STORIES = [
-  { id: "own", username: "Your Story", avatar: "", isOwn: true, seen: false },
-  { id: "s1", username: "vijay_kumar", avatar: "https://i.pravatar.cc/100?u=vijay", seen: false },
-  { id: "s2", username: "priya_designs", avatar: "https://i.pravatar.cc/100?u=priya", seen: false },
-  { id: "s3", username: "rahul_food", avatar: "https://i.pravatar.cc/100?u=rahul", seen: true },
-  { id: "s4", username: "anita_travel", avatar: "https://i.pravatar.cc/100?u=anita", seen: true },
-  { id: "s5", username: "karthik_tech", avatar: "https://i.pravatar.cc/100?u=karthik", seen: false },
-  { id: "s6", username: "sneha_art", avatar: "https://i.pravatar.cc/100?u=sneha", seen: false },
-  { id: "s7", username: "planext4u", avatar: "https://i.pravatar.cc/100?u=planext", seen: true },
-  { id: "s8", username: "foodie_chen", avatar: "https://i.pravatar.cc/100?u=chen", seen: false },
-  { id: "s9", username: "dev_rajan", avatar: "https://i.pravatar.cc/100?u=rajan", seen: true },
-  { id: "s10", username: "dance_queen", avatar: "https://i.pravatar.cc/100?u=dance", seen: false },
-];
+// No mock stories - only real DB stories are shown
 
 function formatCount(n: number): string {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
