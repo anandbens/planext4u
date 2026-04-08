@@ -83,7 +83,7 @@ export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electr
     saveRecentSearches([]);
   };
 
-  const showDropdown = focused && (recentSearches.length > 0 || suggestions.length > 0);
+  const showDropdown = focused && (recentSearches.length > 0 || suggestions.length > 0 || query.length >= 2);
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -127,6 +127,13 @@ export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electr
                   <Search className="h-3.5 w-3.5 text-muted-foreground" /> {item}
                 </button>
               ))}
+            </div>
+          )}
+
+          {query.length >= 2 && suggestions.length === 0 && (
+            <div className="p-4 text-center">
+              <p className="text-sm text-muted-foreground">No results found for "{query}"</p>
+              <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
             </div>
           )}
         </div>
