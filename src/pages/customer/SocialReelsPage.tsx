@@ -101,7 +101,7 @@ function ReelCard({ reel }: { reel: any }) {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
   const qc = useQueryClient();
-  const userId = customerUser?.id;
+  const userId = customerUser?.supabase_uid || customerUser?.id;
   const isMock = reel.id.startsWith('r');
 
   const { data: isLiked = reel.isLiked } = useQuery({

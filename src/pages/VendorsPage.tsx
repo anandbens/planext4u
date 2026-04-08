@@ -34,27 +34,48 @@ export default function VendorsPage() {
 
   const tabStatusFilter = activeTab === "pending" ? undefined : statusFilter || undefined;
 
-  const fetchData = useCallback(() => {
+  const fetchData = useCallback(async () => {
     if (activeTab === "pending") {
-      // Fetch from vendor_applications for pending tab
-      let q = supabase.from('vendor_applications').select('*', { count: 'exact' })
-        .in('status', ['submitted', 'under_review']);
+      let q = supabase
+        .from('vendor_applications')
+        .select('*', { count: 'exact' })
+        .not('status', 'in', '(approved,verified,active,rejected)');
+
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
       if (dateFrom) q = q.gte('created_at', dateFrom);
       if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
-      q = q.order('created_at', { ascending: false }).range((page - 1) * 10, page * 10 - 1);
-      q.then(({ data: apps, count }) => {
-        const mapped = (apps || []).map((a: any) => ({
-          id: a.id, name: a.name, business_name: a.business_name,
-          mobile: a.phone, email: a.email, status: a.status === 'submitted' ? 'pending' : a.status,
-          commission_rate: 0, membership: '', category_id: '', city_id: '', area_id: '',
-          created_at: a.created_at, _isApplication: true,
-        }));
-        setData({ data: mapped as any, total: count || 0, page, per_page: 10, total_pages: Math.ceil((count || 0) / 10) });
-      });
-    } else {
-      api.getVendors({ page, per_page: 10, search: search || undefined, status: tabStatusFilter, date_from: dateFrom, date_to: dateTo, payment_status: paymentFilter || undefined }).then(setData);
+
+      const { data: apps, count, error } = await q
+        .order('created_at', { ascending: false })
+        .range((page - 1) * 10, page * 10 - 1);
+
+      if (error) {
+        toast.error("Failed to load pending vendor approvals");
+        setData({ data: [], total: 0, page, per_page: 10, total_pages: 0 } as any);
+        return;
+      }
+
+      const mapped = (apps || []).map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        business_name: a.business_name,
+        mobile: a.phone,
+        email: a.email,
+        status: a.status === 'submitted' ? 'pending' : a.status,
+        commission_rate: 0,
+        membership: '',
+        category_id: '',
+        city_id: '',
+        area_id: '',
+        created_at: a.created_at,
+        _isApplication: true,
+      }));
+
+      setData({ data: mapped as any, total: count || 0, page, per_page: 10, total_pages: Math.ceil((count || 0) / 10) });
+      return;
     }
+
+    api.getVendors({ page, per_page: 10, search: search || undefined, status: tabStatusFilter, date_from: dateFrom, date_to: dateTo, payment_status: paymentFilter || undefined }).then(setData);
   }, [page, search, tabStatusFilter, paymentFilter, dateFrom, dateTo, activeTab]);
 
   const fetchStats = useCallback(async () => {
@@ -62,13 +83,15 @@ export default function VendorsPage() {
       { count: total },
       { count: verified },
       { count: rejected },
+      { count: pendingCount },
     ] = await Promise.all([
       supabase.from('vendors').select('*', { count: 'exact', head: true }),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'verified'),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
+      supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).not('status', 'in', '(approved,verified,active,rejected)'),
     ]);
-    const { count: pendingCount } = await supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).in('status', ['submitted', 'under_review']);
-    setTotalStats({ total: (total || 0), verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0 });
+
+    setTotalStats({ total: total || 0, verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0 });
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
