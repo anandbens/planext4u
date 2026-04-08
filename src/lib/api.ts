@@ -42,6 +42,7 @@ export interface Product {
   meta_title?: string; meta_description?: string;
   manage_stock?: boolean; stock_status?: string;
   weight?: number; dimensions?: any;
+  parent_item_id?: string | null; parent_item_name?: string | null;
 }
 
 export interface ProductVariant {
@@ -70,6 +71,8 @@ export interface Order {
   created_at: string; updated_at?: string; customer_name?: string; vendor_name?: string;
   items?: { title: string; qty: number; emoji: string; price: number; image?: string }[];
   delivery_rating?: number | null; rating_comment?: string | null; rated_at?: string | null;
+  payment_reference_id?: string | null; razorpay_order_id?: string | null;
+  platform_fee?: number; gst_on_platform_fee?: number;
 }
 
 export interface Settlement {
