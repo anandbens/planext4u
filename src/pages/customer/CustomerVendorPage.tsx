@@ -21,10 +21,10 @@ export default function CustomerVendorPage() {
   const { data: vendor, isLoading: vendorLoading } = useQuery({
     queryKey: ["vendorDetail", id],
     queryFn: async () => {
-      const { data: v } = await supabase.from("vendors").select("*").eq("id", id).single();
-      if (v) return v;
-      const { data: sv } = await supabase.from("service_vendors" as any).select("*").eq("id", id).single();
-      return sv;
+      const { data: v } = await supabase.from("vendors").select("*").eq("id", id!).single();
+      if (v) return v as any;
+      const { data: sv } = await supabase.from("service_vendors" as any).select("*").eq("id", id!).single();
+      return sv as any;
     },
     enabled: !!id,
   });
