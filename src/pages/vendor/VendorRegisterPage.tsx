@@ -67,14 +67,14 @@ export default function VendorRegisterPage() {
 
     if (bucket === 'vendor-assets') {
       // Public bucket - get public URL
-      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
+      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
       if (urlData?.publicUrl) {
         updateField(field, urlData.publicUrl);
         toast.success("Uploaded ✓");
       }
     } else {
       // Private bucket - get signed URL
-      const { data: signedData } = await supabase.storage.from(bucket).createSignedUrl(fileName, 365 * 24 * 3600);
+      const { data: signedData } = await supabase.storage.from(bucket).createSignedUrl(filePath, 365 * 24 * 3600);
       if (signedData?.signedUrl) {
         updateField(field, signedData.signedUrl);
         toast.success("Document uploaded ✓");
