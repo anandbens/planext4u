@@ -509,7 +509,7 @@ export const api = {
     else if (params.sort === 'rating') query = query.order('rating', { ascending: false });
 
     const { data } = await query;
-    return (data || []) as Service[];
+    return (data || []) as unknown as Service[];
   },
 
   getServiceCategories: async () => {
