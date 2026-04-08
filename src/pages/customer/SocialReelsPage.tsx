@@ -77,7 +77,14 @@ export default function SocialReelsPage() {
   const reelsContent = (
     <div className="md:relative md:h-[calc(100vh-120px)] fixed inset-0 bg-black z-40 md:z-auto md:rounded-xl md:overflow-hidden">
       <div ref={containerRef} className="h-full w-full overflow-y-scroll snap-y snap-mandatory" onScroll={handleScroll} style={{ scrollSnapType: 'y mandatory' }}>
-        {reels.map((reel: any) => (
+        {reels.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-white/70 gap-3">
+            <Film className="h-12 w-12 text-white/30" />
+            <p className="text-lg font-semibold">No reels yet</p>
+            <p className="text-sm text-white/50">Be the first to post a reel!</p>
+            <button onClick={() => navigate("/app/social/create")} className="mt-2 px-4 py-2 bg-primary rounded-full text-sm font-semibold text-primary-foreground">Create Reel</button>
+          </div>
+        ) : reels.map((reel: any) => (
           <ReelCard key={reel.id} reel={reel} />
         ))}
       </div>
