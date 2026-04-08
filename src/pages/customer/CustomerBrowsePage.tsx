@@ -279,7 +279,7 @@ export default function CustomerBrowsePage() {
                   );
                 })}
               </div>
-              )
+              )}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-6">
                   <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage <= 1}
