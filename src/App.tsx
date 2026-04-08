@@ -105,6 +105,11 @@ import SocialCreatorDashboardPage from "./pages/customer/SocialCreatorDashboardP
 import SocialLivePage from "./pages/customer/SocialLivePage";
 import SocialBroadcastPage from "./pages/customer/SocialBroadcastPage";
 import SocialShopPage from "./pages/customer/SocialShopPage";
+import SocialChangePasswordPage from "./pages/customer/SocialChangePasswordPage";
+import SocialPrivacyPage from "./pages/customer/SocialPrivacyPage";
+import SocialSecurityPage from "./pages/customer/SocialSecurityPage";
+import SocialNotificationSettingsPage from "./pages/customer/SocialNotificationSettingsPage";
+import SocialHelpCenterPage from "./pages/customer/SocialHelpCenterPage";
 import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
 import PaymentPage from "./pages/customer/PaymentPage";
 import SocioDMChatPage from "./pages/customer/SocioDMChatPage";
