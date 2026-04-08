@@ -176,7 +176,8 @@ export default function SocialExplorePage() {
 
   const content = (
     <div className="pb-20 md:pb-8">
-      <header className="sticky top-0 z-40 bg-card border-b border-border/30">
+      {/* Search bar - NOT sticky, scrolls with content on mobile */}
+      <div className="bg-card border-b border-border/30">
         <div className="px-4 py-3">
           <div className="relative" onClick={() => setIsSearchFocused(true)}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -191,7 +192,7 @@ export default function SocialExplorePage() {
             </button>
           ))}
         </div>
-      </header>
+      </div>
       <div className="grid grid-cols-3 gap-[2px]">
         {gridItems.map((item: any) => (
           <button key={item.id} className={`relative overflow-hidden aspect-square group ${!item.imageUrl ? (item.color || 'bg-muted') : 'bg-muted'}`}

@@ -14,7 +14,6 @@ async function verifyFirebaseToken(idToken: string) {
   const parts = idToken.split(".");
   if (parts.length !== 3) throw new Error("Invalid token format");
 
-  // Decode payload
   let payload: any;
   try {
     const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
@@ -30,7 +29,6 @@ async function verifyFirebaseToken(idToken: string) {
   if (payload.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) throw new Error("Invalid issuer");
   if (!payload.sub) throw new Error("No sub in token");
 
-  // Verify via Google Identity Toolkit
   const verifyRes = await fetch(
     `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=${FIREBASE_API_KEY}`,
     {
@@ -95,16 +93,44 @@ Deno.serve(async (req) => {
     const normalizedPhone = phoneNumber.replace(/\s/g, "");
     const phoneEmail = `${normalizedPhone.replace("+", "")}@phone.planext4u.local`;
 
-    // Find existing user
+    // Extract just the digits (without country code) for flexible matching
+    const rawDigits = normalizedPhone.replace(/^\+\d{1,3}/, "");
+
+    // SECURITY: Check if a registered customer exists with this phone number
+    // Match against multiple formats: full number, raw digits, with spaces
+    const { data: existingCustomer } = await supabase
+      .from("customers")
+      .select("id, name, email, mobile")
+      .or(`mobile.eq.${normalizedPhone},mobile.eq.${rawDigits},mobile.ilike.%${rawDigits}%`)
+      .limit(1)
+      .maybeSingle();
+
+    if (!existingCustomer) {
+      console.log("No registered customer found for phone:", normalizedPhone);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "No account found with this phone number. Please register first.",
+          code: "NOT_REGISTERED",
+        }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    console.log("Found registered customer:", existingCustomer.id);
+
+    // Find existing Supabase auth user
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
     let supabaseUser = existingUsers?.users?.find(
       (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
     );
 
-    let isNewUser = false;
-
+    // If no Supabase auth user exists but customer is registered, create the auth user
+    // and link to existing customer
     if (!supabaseUser) {
-      isNewUser = true;
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: phoneEmail,
         phone: normalizedPhone,
@@ -116,34 +142,21 @@ Deno.serve(async (req) => {
       if (createError) throw createError;
       supabaseUser = newUser.user;
 
-      // Create customer record with welcome bonus
-      const customerId = `CUS-${Date.now()}`;
-      await supabase.from("customers").insert({
-        id: customerId,
-        name: normalizedPhone,
-        email: phoneEmail,
-        mobile: normalizedPhone,
-        referral_code: `REF-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-        status: "active",
-        wallet_points: 200,
-      });
+      // Link existing customer to this auth user via user_roles
+      const { data: existingRole } = await supabase
+        .from("user_roles")
+        .select("id")
+        .eq("customer_id", existingCustomer.id)
+        .eq("role", "customer")
+        .maybeSingle();
 
-      // Add welcome bonus points transaction
-      await supabase.from("points_transactions").insert({
-        id: `PT-${Date.now()}`,
-        user_id: customerId,
-        type: "welcome",
-        points: 200,
-        description: "Welcome bonus on registration",
-        user_name: normalizedPhone,
-      });
-
-      // Assign customer role
-      await supabase.from("user_roles").insert({
-        user_id: supabaseUser.id,
-        role: "customer",
-        customer_id: customerId,
-      });
+      if (!existingRole) {
+        await supabase.from("user_roles").insert({
+          user_id: supabaseUser.id,
+          role: "customer",
+          customer_id: existingCustomer.id,
+        });
+      }
     }
 
     // Generate magic link token
@@ -174,7 +187,7 @@ Deno.serve(async (req) => {
       customerInfo = cust;
     }
 
-    // Check if customer has saved addresses (to determine first-time login)
+    // Check if customer has saved addresses
     let hasAddress = false;
     if (customerData?.customer_id) {
       const { count } = await supabase
@@ -184,7 +197,7 @@ Deno.serve(async (req) => {
       hasAddress = (count || 0) > 0;
     }
 
-    console.log("Auth success for", phoneNumber, "isNew:", isNewUser, "hasAddress:", hasAddress);
+    console.log("Auth success for", phoneNumber, "hasAddress:", hasAddress);
 
     return new Response(
       JSON.stringify({
@@ -193,7 +206,7 @@ Deno.serve(async (req) => {
         email: phoneEmail,
         user_id: supabaseUser!.id,
         customer: customerInfo,
-        is_new_user: isNewUser,
+        is_new_user: false,
         has_address: hasAddress,
       }),
       {
