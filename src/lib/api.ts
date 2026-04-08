@@ -370,7 +370,7 @@ export const api = {
 
     // Fetch product vendors
     let vQuery = supabase.from('vendors').select('*', { count: 'exact' });
-    if (params.search) vQuery = vQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%`);
+    if (params.search) vQuery = vQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%,mobile.ilike.%${params.search}%`);
     if (params.status && params.status !== 'all') vQuery = vQuery.eq('status', params.status);
     if (params.payment_status && params.payment_status !== 'all') vQuery = vQuery.eq('plan_payment_status', params.payment_status);
     if (params.date_from) vQuery = vQuery.gte('created_at', params.date_from);
@@ -378,7 +378,7 @@ export const api = {
     vQuery = vQuery.order('created_at', { ascending: false });
 
     let svQuery = supabase.from('service_vendors').select('*', { count: 'exact' });
-    if (params.search) svQuery = svQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%`);
+    if (params.search) svQuery = svQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%,mobile.ilike.%${params.search}%`);
     if (params.status && params.status !== 'all') svQuery = svQuery.eq('status', params.status);
     if (params.date_from) svQuery = svQuery.gte('created_at', params.date_from);
     if (params.date_to) svQuery = svQuery.lte('created_at', params.date_to + 'T23:59:59Z');
