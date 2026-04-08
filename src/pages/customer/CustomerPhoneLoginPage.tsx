@@ -54,7 +54,7 @@ export default function CustomerPhoneLoginPage() {
         .maybeSingle();
       if (!customer) {
         setLoading(false);
-        toast.error("No user account found with this phone number. Please register first.", { duration: 5000 });
+        toast.error("Only registered users must be able to trigger OTP and login.", { duration: 5000 });
         return;
       }
 
@@ -101,7 +101,7 @@ export default function CustomerPhoneLoginPage() {
 
       if (error || !data?.success) {
         const errMsg = data?.code === "NOT_REGISTERED"
-          ? "No account found with this phone number. Please register first."
+          ? "Only registered users must be able to trigger OTP and login."
           : (data?.error || error?.message || "Backend authentication failed");
         throw new Error(errMsg);
       }

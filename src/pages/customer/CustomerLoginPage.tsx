@@ -63,6 +63,20 @@ export default function CustomerLoginPage() {
     if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
+      const fullPhone = `${countryCode}${cleaned}`;
+      const fullPhoneSpaced = `${countryCode} ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('id')
+        .or(`mobile.eq.${cleaned},mobile.eq.${fullPhone},mobile.eq.${fullPhoneSpaced},mobile.ilike.%${cleaned}%`)
+        .limit(1)
+        .maybeSingle();
+
+      if (!customer) {
+        toast.error("Only registered users must be able to trigger OTP and login.", { duration: 5000 });
+        return;
+      }
+
       await sendOTP(`${countryCode}${cleaned}`);
       setOtpSent(true);
       setTimer(30);
@@ -85,7 +99,7 @@ export default function CustomerLoginPage() {
       await verifyOTP(otp);
       const idToken = await getFirebaseIdToken();
       const { data, error } = await supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken } });
-      if (error || !data?.success) throw new Error(data?.error || error?.message || "Authentication failed");
+      if (error || !data?.success) throw new Error(data?.code === "NOT_REGISTERED" ? "Only registered users must be able to trigger OTP and login." : (data?.error || error?.message || "Authentication failed"));
       
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
       if (verifyError) throw new Error(verifyError.message);

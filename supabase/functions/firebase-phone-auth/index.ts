@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          error: "No account found with this phone number. Please register first.",
+          error: "Only registered users must be able to trigger OTP and login.",
           code: "NOT_REGISTERED",
         }),
         {
