@@ -384,6 +384,11 @@ const AppRoutes = () => {
         <Route path="/app/social/dashboard" element={<CustomerPage><SocialCreatorDashboardPage /></CustomerPage>} />
         <Route path="/app/social/live" element={<CustomerPage><SocialLivePage /></CustomerPage>} />
         <Route path="/app/social/channels" element={<CustomerPage><SocialBroadcastPage /></CustomerPage>} />
+        <Route path="/app/social/change-password" element={<CustomerPage><SocialChangePasswordPage /></CustomerPage>} />
+        <Route path="/app/social/privacy" element={<CustomerPage><SocialPrivacyPage /></CustomerPage>} />
+        <Route path="/app/social/security" element={<CustomerPage><SocialSecurityPage /></CustomerPage>} />
+        <Route path="/app/social/notification-settings" element={<CustomerPage><SocialNotificationSettingsPage /></CustomerPage>} />
+        <Route path="/app/social/help" element={<CustomerPage><SocialHelpCenterPage /></CustomerPage>} />
         <Route path="/app/social/shop" element={<CustomerPage><SocialShopPage /></CustomerPage>} />
 
         {/* Admin Social */}
