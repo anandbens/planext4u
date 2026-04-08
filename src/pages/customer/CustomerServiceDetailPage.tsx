@@ -121,6 +121,9 @@ export default function CustomerServiceDetailPage() {
             <button onClick={() => navigate(-1)} className="absolute top-4 left-4 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center md:hidden">
               <ChevronLeft className="h-4 w-4" />
             </button>
+            <button onClick={toggleServiceWishlist} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center">
+              <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-destructive text-destructive' : ''}`} />
+            </button>
           </div>
 
           <div>
