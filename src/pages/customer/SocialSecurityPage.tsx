@@ -93,7 +93,7 @@ export default function SocialSecurityPage() {
                     </p>
                   )}
                 </div>
-                <div className="h-2 w-2 rounded-full bg-green-500 shrink-0" />
+                <div className="h-2 w-2 rounded-full bg-success shrink-0" />
               </div>
             </div>
           </div>
