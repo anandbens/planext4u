@@ -214,9 +214,22 @@ function ReelCard({ reel }: { reel: any }) {
         <button onClick={() => toggleSave.mutate()} className="flex flex-col items-center gap-1">
           <Bookmark className={`h-7 w-7 text-white ${isSaved ? 'fill-white' : ''}`} />
         </button>
-        <button onClick={() => toast.info("More options")} className="flex flex-col items-center gap-1">
-          <MoreHorizontal className="h-7 w-7 text-white" />
-        </button>
+        {userId === reel.user_id && !isMock && (
+          <button onClick={async () => {
+            if (!confirm("Delete this reel?")) return;
+            const { error } = await supabase.from('social_posts').delete().eq('id', reel.id).eq('user_id', userId);
+            if (error) { toast.error("Failed to delete"); return; }
+            toast.success("Reel deleted");
+            qc.invalidateQueries({ queryKey: ['social-reels'] });
+          }} className="flex flex-col items-center gap-1">
+            <MoreHorizontal className="h-7 w-7 text-white" />
+          </button>
+        )}
+        {(userId !== reel.user_id || isMock) && (
+          <button onClick={() => toast.info("More options")} className="flex flex-col items-center gap-1">
+            <MoreHorizontal className="h-7 w-7 text-white" />
+          </button>
+        )}
         <div className="h-9 w-9 rounded-lg border-2 border-white/40 overflow-hidden animate-spin" style={{ animationDuration: '3s' }}>
           <div className="w-full h-full bg-muted flex items-center justify-center"><Music2 className="h-4 w-4 text-white" /></div>
         </div>

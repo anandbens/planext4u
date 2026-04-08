@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { X, Heart, Send, MoreHorizontal, Eye } from "lucide-react";
+import { X, Heart, Send, MoreHorizontal, Eye, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 
 export default function SocialStoryViewerPage() {
@@ -174,7 +174,15 @@ export default function SocialStoryViewerPage() {
             <span className="text-white/60 text-xs">{timeAgo(story.created_at)}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => toast.info("More options")} className="p-1"><MoreHorizontal className="h-5 w-5 text-white" /></button>
+            {(customerUser?.supabase_uid || customerUser?.id) === group.user.id && (
+              <button onClick={async () => {
+                if (!confirm("Delete this story?")) return;
+                const { error } = await supabase.from('social_stories').delete().eq('id', story.id);
+                if (error) { toast.error("Failed to delete story"); return; }
+                toast.success("Story deleted");
+                goNext();
+              }} className="p-1"><Trash2 className="h-5 w-5 text-white" /></button>
+            )}
             <button onClick={() => navigate(-1)} className="p-1"><X className="h-6 w-6 text-white" /></button>
           </div>
         </div>

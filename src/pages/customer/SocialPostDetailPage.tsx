@@ -1,8 +1,9 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Repeat2, ChevronDown } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Repeat2, ChevronDown, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -118,6 +119,24 @@ export default function SocialPostDetailPage() {
             {post.location_name ? `${post.location_name} · ` : ''}{timeAgo(post.created_at)}
           </p>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><button className="p-1"><MoreHorizontal className="h-5 w-5" /></button></DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {(customerUser?.supabase_uid || customerUser?.id) === post.user_id && (
+              <DropdownMenuItem className="text-destructive" onClick={async () => {
+                if (!confirm("Are you sure you want to delete this post?")) return;
+                const userId = customerUser?.supabase_uid || customerUser?.id;
+                const { error } = await supabase.from('social_posts').delete().eq('id', postId!).eq('user_id', userId);
+                if (error) { toast.error("Failed to delete post"); return; }
+                toast.success("Post deleted");
+                navigate("/app/social");
+              }}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete Post
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={() => sharePost(postId!, post.caption)}>Copy Link</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Media */}
