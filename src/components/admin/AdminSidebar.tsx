@@ -4,6 +4,7 @@ import {
   Grid3X3, Wrench, Receipt, MapPin, Map, Tag, Briefcase, SlidersHorizontal,
   MessageSquare, MonitorPlay, ExternalLink, ClipboardList, Headphones, Key,
   Home, Crown, Shield, Filter, Palette, Flag, Heart, Upload, Layers,
+  Smartphone,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -90,6 +91,7 @@ const systemItems: NavItem[] = [
   { title: "Classified Ads", url: "/classifieds", icon: FileText, roles: ['admin', 'sales'] },
   { title: "Integrations", url: "/integrations", icon: Key, roles: ['admin'] },
   { title: "Vendor Onboarding", url: "/admin/vendor-onboarding", icon: MonitorPlay, roles: ['admin'] },
+  { title: "Splash Screens", url: "/admin/splash-screens", icon: Smartphone, roles: ['admin'] },
   { title: "Settings", url: "/settings", icon: Settings, roles: ['admin'] },
 ];
 

@@ -1,21 +1,47 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import p4uLogo from "@/assets/p4u-logo-dark.png";
 
 interface VendorSplashScreenProps {
   onComplete: () => void;
 }
 
+interface SplashData {
+  title: string;
+  tagline: string;
+  image_url: string;
+  background_color: string;
+}
+
 export function VendorSplashScreen({ onComplete }: VendorSplashScreenProps) {
   const [visible, setVisible] = useState(true);
+  const [splash, setSplash] = useState<SplashData | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("splash_screens" as any)
+      .select("title, tagline, image_url, background_color")
+      .in("app_type", ["vendor", "both"])
+      .eq("is_active", true)
+      .order("display_order")
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const random = data[Math.floor(Math.random() * data.length)] as any;
+          setSplash(random);
+        }
+      });
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setVisible(false);
       setTimeout(onComplete, 600);
-    }, 2200);
+    }, 2800);
     return () => clearTimeout(timer);
   }, [onComplete]);
+
+  const bgColor = splash?.background_color || "linear-gradient(135deg, hsl(198, 100%, 10%), hsl(180, 100%, 25%))";
 
   return (
     <AnimatePresence>
@@ -24,15 +50,26 @@ export function VendorSplashScreen({ onComplete }: VendorSplashScreenProps) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center"
-          style={{ background: "linear-gradient(135deg, hsl(198, 100%, 10%), hsl(180, 100%, 25%))" }}
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
+          style={{ background: bgColor }}
         >
+          {splash?.image_url && (
+            <motion.img
+              src={splash.image_url}
+              alt=""
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 0.25, scale: 1 }}
+              transition={{ duration: 1 }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+
           <motion.div
             initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 1.1, opacity: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="flex flex-col items-center gap-4"
+            className="flex flex-col items-center gap-4 relative z-10"
           >
             <motion.img
               src={p4uLogo}
@@ -61,6 +98,16 @@ export function VendorSplashScreen({ onComplete }: VendorSplashScreenProps) {
                 Vendor Portal
               </motion.span>
             </div>
+            {splash?.tagline && (
+              <motion.p
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 0.8, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.4 }}
+                className="text-sm text-white/80 text-center px-8 max-w-xs"
+              >
+                {splash.tagline}
+              </motion.p>
+            )}
             <motion.div className="flex gap-1.5 mt-4">
               {[0, 1, 2].map((i) => (
                 <motion.div

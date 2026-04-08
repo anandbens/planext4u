@@ -3373,6 +3373,45 @@ export type Database = {
           },
         ]
       }
+      splash_screens: {
+        Row: {
+          app_type: string
+          background_color: string
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string
+          is_active: boolean
+          tagline: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          app_type?: string
+          background_color?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          tagline?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          app_type?: string
+          background_color?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          tagline?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       states: {
         Row: {
           code: string
