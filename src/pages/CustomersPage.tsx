@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Eye, Pencil, Trash2, Users, UserCheck, UserX, Star } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
-import { MOCK_OCCUPATIONS } from "@/lib/mockData";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CustomersPage() {
   const [data, setData] = useState<PaginatedResponse<User> | null>(null);
@@ -26,6 +26,14 @@ export default function CustomersPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<User | null>(null);
   const [totalStats, setTotalStats] = useState({ total: 0, active: 0, inactive: 0, points: 0 });
+
+  const { data: occupations = [] } = useQuery({
+    queryKey: ["occupationsForFilter"],
+    queryFn: async () => {
+      const { data } = await supabase.from("occupations").select("id, name, status").eq("status", "active").order("name");
+      return (data || []) as { id: string; name: string; status: string }[];
+    },
+  });
 
   const fetchData = useCallback(() => {
     api.getCustomers({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined, occupation: occupationFilter || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
@@ -131,7 +139,7 @@ export default function CustomersPage() {
         searchPlaceholder="Search by name, email, mobile, occupation..."
         filters={[
           { key: "status", label: "Status", options: [{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }, { value: "suspended", label: "Suspended" }] },
-          { key: "occupation", label: "Occupation", options: MOCK_OCCUPATIONS.filter(o => o.status === 'active').map(o => ({ value: o.name, label: o.name })) },
+          { key: "occupation", label: "Occupation", options: occupations.map(o => ({ value: o.name, label: o.name })) },
         ]}
         summaryWidgets={summaryWidgets}
         enableBulkSelect
