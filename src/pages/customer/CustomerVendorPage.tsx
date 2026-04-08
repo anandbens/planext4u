@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Star, MapPin, Phone, Mail, Clock, Shield, MessageCircle, Navigation, Search, ChevronRight } from "lucide-react";
+import { Star, MapPin, Phone, Mail, Clock, Shield, MessageCircle, Navigation, Search, ChevronRight, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,24 @@ export default function CustomerVendorPage() {
   const { id } = useParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [isSellerSaved, setIsSellerSaved] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem('app_db_seller_wishlist') || '[]');
+      setIsSellerSaved(saved.includes(id));
+    } catch {}
+  }, [id]);
+
+  const toggleSellerWishlist = () => {
+    if (!id) return;
+    const saved = JSON.parse(localStorage.getItem('app_db_seller_wishlist') || '[]');
+    const updated = isSellerSaved ? saved.filter((s: string) => s !== id) : [...saved, id];
+    localStorage.setItem('app_db_seller_wishlist', JSON.stringify(updated));
+    setIsSellerSaved(!isSellerSaved);
+    toast.success(isSellerSaved ? "Removed from favorites" : "Seller saved to favorites");
+  };
 
   // Fetch vendor from DB (try both vendors and service_vendors)
   const { data: vendor, isLoading: vendorLoading } = useQuery({
