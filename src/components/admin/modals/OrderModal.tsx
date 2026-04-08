@@ -153,16 +153,16 @@ export function OrderModal({ order, open, onOpenChange, mode, onSave }: OrderMod
             <span>Grand Total</span>
             <span>₹{order.total.toLocaleString()}</span>
           </div>
-          {(order as any).payment_reference_id && (
+          {order.payment_reference_id && (
             <div className="flex justify-between text-sm pt-2 border-t border-border/30">
               <span className="text-muted-foreground">Payment Ref ID</span>
-              <span className="font-mono text-xs">{(order as any).payment_reference_id}</span>
+              <span className="font-mono text-xs">{order.payment_reference_id}</span>
             </div>
           )}
-          {(order as any).razorpay_order_id && (
+          {order.razorpay_order_id && (
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Gateway Order ID</span>
-              <span className="font-mono text-xs">{(order as any).razorpay_order_id}</span>
+              <span className="font-mono text-xs">{order.razorpay_order_id}</span>
             </div>
           )}
         </div>
