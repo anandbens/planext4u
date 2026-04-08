@@ -4,6 +4,24 @@ import { ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import SocialLayout from "@/components/social/SocialLayout";
+import { useFollow } from "@/hooks/use-social-interactions";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
+import { useQuery } from "@tanstack/react-query";
+
+function FollowButton({ targetUserId }: { targetUserId: string }) {
+  const { isFollowing, toggleFollow } = useFollow(targetUserId);
+  return (
+    <Button
+      size="sm"
+      variant={isFollowing ? "outline" : "default"}
+      className="h-8 px-4 text-xs font-semibold rounded-lg"
+      onClick={(e) => { e.stopPropagation(); toggleFollow(); }}
+    >
+      {isFollowing ? "Following" : "Follow"}
+    </Button>
+  );
+}
 
 const NOTIFICATIONS = {
   yesterday: [
@@ -11,7 +29,7 @@ const NOTIFICATIONS = {
   ],
   thisWeek: [
     { id: "n2", type: "follow_suggest", user: "imkirtzxzxa", text: ", arus_xsoyal and others you know to see their photos and videos.", time: "1d", avatar: "I", showFollow: true },
-    { id: "n3", type: "unfollow", user: "lorem_ipsum", text: " is on Instagram. One_more_acc and 1 other follow them.", time: "3d", avatar: "L", showUnfollow: true },
+    { id: "n3", type: "unfollow", user: "lorem_ipsum", text: " is on Instagram. One_more_acc and 1 other follow them.", time: "3d", avatar: "L", showFollow: true },
   ],
   earlier: [
     { id: "n4", type: "reel_like", user: "brainmemind, sarakbrl", text: " and yashwant_chandel_ liked your reel.", time: "7w", avatar: "B", hasThumb: true },
@@ -22,6 +40,24 @@ const NOTIFICATIONS = {
 
 export default function SocialNotificationsPage() {
   const navigate = useNavigate();
+  const { customerUser } = useAuth();
+  const currentUserId = customerUser?.supabase_uid || customerUser?.id;
+
+  // Fetch real notifications from DB
+  const { data: dbNotifications = [] } = useQuery({
+    queryKey: ['social-notifications', currentUserId],
+    queryFn: async () => {
+      if (!currentUserId) return [];
+      const { data } = await supabase
+        .from('social_notifications')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false })
+        .limit(30);
+      return data || [];
+    },
+    enabled: !!currentUserId,
+  });
 
   const renderNotification = (n: any) => (
     <div key={n.id} className="flex items-center gap-3 py-2.5 px-4">
@@ -37,16 +73,13 @@ export default function SocialNotificationsPage() {
           <span className="text-muted-foreground text-xs">{n.time}</span>
         </p>
       </div>
-      {n.showFollow && (
+      {n.showFollow && n.actor_id ? (
+        <FollowButton targetUserId={n.actor_id} />
+      ) : n.showFollow ? (
         <Button size="sm" className="h-8 px-4 text-xs font-semibold rounded-lg bg-primary text-primary-foreground">
           Follow
         </Button>
-      )}
-      {n.showUnfollow && (
-        <Button size="sm" variant="outline" className="h-8 px-4 text-xs font-semibold rounded-lg border-primary text-primary">
-          UnFollow
-        </Button>
-      )}
+      ) : null}
       {n.hasThumb && (
         <div className="h-10 w-10 rounded bg-muted shrink-0" />
       )}
@@ -62,7 +95,28 @@ export default function SocialNotificationsPage() {
         </div>
       </header>
 
-      <div className="md:pt-4">
+      <div className="md:pt-4 pb-4">
+        {/* DB notifications */}
+        {dbNotifications.length > 0 && (
+          <>
+            <h2 className="px-4 py-2 text-sm font-bold">Recent</h2>
+            {dbNotifications.map((n: any) => (
+              <div key={n.id} className="flex items-center gap-3 py-2.5 px-4">
+                <Avatar className="h-11 w-11 shrink-0">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/60 text-primary-foreground text-sm font-bold">
+                    {n.type === 'like' ? '❤️' : n.type === 'comment' ? '💬' : n.type === 'follow' ? '👤' : '🔔'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm">{n.message || 'New notification'}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{new Date(n.created_at).toLocaleDateString()}</p>
+                </div>
+                {n.type === 'follow' && n.actor_id && <FollowButton targetUserId={n.actor_id} />}
+              </div>
+            ))}
+          </>
+        )}
+
         <h2 className="px-4 py-2 text-sm font-bold">Yesterday</h2>
         {NOTIFICATIONS.yesterday.map(renderNotification)}
 

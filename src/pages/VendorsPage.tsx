@@ -56,19 +56,43 @@ export default function VendorsPage() {
       }
 
       const mapped = (apps || []).map((a: any) => ({
-        id: a.id,
-        name: a.name,
-        business_name: a.business_name,
-        mobile: a.phone,
-        email: a.email,
+        id: a.id, name: a.name, business_name: a.business_name,
+        mobile: a.phone, email: a.email,
         status: a.status === 'submitted' ? 'pending' : a.status,
-        commission_rate: 0,
-        membership: '',
-        category_id: '',
-        city_id: '',
-        area_id: '',
-        created_at: a.created_at,
-        _isApplication: true,
+        commission_rate: 0, membership: '', category_id: '', city_id: '', area_id: '',
+        created_at: a.created_at, _isApplication: true,
+      }));
+
+      setData({ data: mapped as any, total: count || 0, page, per_page: 10, total_pages: Math.ceil((count || 0) / 10) });
+      return;
+    }
+
+    if (activeTab === "rejected") {
+      let q = supabase
+        .from('vendor_applications')
+        .select('*', { count: 'exact' })
+        .eq('status', 'rejected');
+
+      if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
+      if (dateFrom) q = q.gte('created_at', dateFrom);
+      if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
+
+      const { data: apps, count, error } = await q
+        .order('created_at', { ascending: false })
+        .range((page - 1) * 10, page * 10 - 1);
+
+      if (error) {
+        toast.error("Failed to load rejected vendors");
+        setData({ data: [], total: 0, page, per_page: 10, total_pages: 0 } as any);
+        return;
+      }
+
+      const mapped = (apps || []).map((a: any) => ({
+        id: a.id, name: a.name, business_name: a.business_name,
+        mobile: a.phone, email: a.email, status: 'rejected',
+        commission_rate: 0, membership: '', category_id: '', city_id: '', area_id: '',
+        created_at: a.created_at, _isApplication: true,
+        rejection_reason: a.rejection_reason || '',
       }));
 
       setData({ data: mapped as any, total: count || 0, page, per_page: 10, total_pages: Math.ceil((count || 0) / 10) });
@@ -206,6 +230,7 @@ export default function VendorsPage() {
         <TabsList>
           <TabsTrigger value="pending">Pending Approval</TabsTrigger>
           <TabsTrigger value="all">All Vendors</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected</TabsTrigger>
         </TabsList>
       </Tabs>
 
