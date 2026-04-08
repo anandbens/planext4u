@@ -185,7 +185,7 @@ export default function VendorProductsPage() {
 
   const filtered = products?.filter((p) => {
     if (search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
-    if (statusFilter && p.status !== statusFilter) return false;
+    if (statusFilter && statusFilter !== "all" && p.status !== statusFilter) return false;
     return true;
   }) || [];
 

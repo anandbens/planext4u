@@ -134,16 +134,19 @@ export default function CustomerOrderDetailPage() {
           </Card>
         )}
 
-        {/* Vendor */}
-        <Card className="p-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <Store className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold">{order.vendor_name || 'Vendor'}</p>
-            <p className="text-xs text-muted-foreground">Seller</p>
-          </div>
-        </Card>
+        {/* Vendor - clickable link to vendor page */}
+        <Link to={`/app/vendor/${order.vendor_id}`}>
+          <Card className="p-4 flex items-center gap-3 hover:bg-accent/30 transition-colors cursor-pointer">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Store className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-primary">{order.vendor_name || 'Vendor'}</p>
+              <p className="text-xs text-muted-foreground">Tap to view seller products</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Card>
+        </Link>
 
         {/* Items - with images and product links */}
         <Card className="p-4">

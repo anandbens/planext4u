@@ -62,13 +62,25 @@ export default function VendorRegisterPage() {
     const ext = file.name.split('.').pop() || 'jpg';
     const fileName = `vendor-reg/${Date.now()}-${field}.${ext}`;
 
-    const { error } = await supabase.storage.from('kyc-documents').upload(fileName, file, { contentType: file.type });
-    if (error) { toast.error("Upload failed"); return; }
+    // Use vendor-assets for store logo, kyc-documents for KYC docs
+    const bucket = field === 'store_logo_url' ? 'vendor-assets' : 'kyc-documents';
+    const { error } = await supabase.storage.from(bucket).upload(fileName, file, { contentType: file.type, upsert: true });
+    if (error) { toast.error("Upload failed: " + error.message); return; }
 
-    const { data: signedData } = await supabase.storage.from('kyc-documents').createSignedUrl(fileName, 365 * 24 * 3600);
-    if (signedData?.signedUrl) {
-      updateField(field, signedData.signedUrl);
-      toast.success("Document uploaded ✓");
+    if (bucket === 'vendor-assets') {
+      // Public bucket - get public URL
+      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
+      if (urlData?.publicUrl) {
+        updateField(field, urlData.publicUrl);
+        toast.success("Uploaded ✓");
+      }
+    } else {
+      // Private bucket - get signed URL
+      const { data: signedData } = await supabase.storage.from(bucket).createSignedUrl(fileName, 365 * 24 * 3600);
+      if (signedData?.signedUrl) {
+        updateField(field, signedData.signedUrl);
+        toast.success("Document uploaded ✓");
+      }
     }
   };
 
@@ -80,7 +92,10 @@ export default function VendorRegisterPage() {
 
   const triggerUpload = (field: string) => {
     setUploadTarget(field);
-    setTimeout(() => fileRef.current?.click(), 100);
+    // Use requestAnimationFrame for more reliable click trigger on mobile
+    requestAnimationFrame(() => {
+      fileRef.current?.click();
+    });
   };
 
   const validate = (): string | null => {
@@ -178,7 +193,7 @@ export default function VendorRegisterPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-teal-50">
-      <input type="file" ref={fileRef} className="hidden" accept=".jpg,.jpeg,.png,.pdf" onChange={handleFileChange} capture="environment" />
+      <input type="file" ref={fileRef} className="hidden" accept="image/jpeg,image/jpg,image/png,application/pdf" onChange={handleFileChange} />
 
       {/* Simple header */}
       <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
