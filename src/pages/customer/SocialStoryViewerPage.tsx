@@ -19,12 +19,12 @@ export default function SocialStoryViewerPage() {
   const [replyText, setReplyText] = useState("");
 
   // Fetch active stories from DB grouped by user
-  const { data: storyGroups = [] } = useQuery({
+  const { data: storyGroups = [], isLoading } = useQuery({
     queryKey: ['social-stories-viewer'],
     queryFn: async () => {
       const { data } = await supabase
         .from('social_stories')
-        .select('*, social_profiles!inner(username, display_name, avatar_url)')
+        .select('*')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: true });
 
@@ -32,39 +32,30 @@ export default function SocialStoryViewerPage() {
 
       // Group by user
       const grouped: Record<string, { user: any; stories: any[] }> = {};
+      const userIds = new Set<string>();
       for (const s of data) {
-        const uid = s.user_id;
-        if (!grouped[uid]) {
-          const profile = (s as any).social_profiles;
-          grouped[uid] = {
-            user: { id: uid, username: profile?.username || 'user', displayName: profile?.display_name || '', avatarUrl: profile?.avatar_url || '' },
-            stories: [],
-          };
+        userIds.add(s.user_id);
+        if (!grouped[s.user_id]) {
+          grouped[s.user_id] = { user: { id: s.user_id, username: 'user', displayName: '', avatarUrl: '' }, stories: [] };
         }
-        grouped[uid].stories.push(s);
+        grouped[s.user_id].stories.push(s);
       }
+
+      // Fetch profiles
+      const { data: profiles } = await supabase.from('social_profiles').select('user_id, username, display_name, avatar_url').in('user_id', [...userIds]);
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      for (const uid of Object.keys(grouped)) {
+        const prof = profileMap.get(uid);
+        if (prof) {
+          grouped[uid].user = { id: uid, username: prof.username, displayName: prof.display_name || prof.username, avatarUrl: prof.avatar_url || '' };
+        }
+      }
+
       return Object.values(grouped);
     },
   });
 
-  // Fallback mock if no DB stories
-  const FALLBACK = [
-    {
-      user: { id: "u1", username: "vijay_kumar", displayName: "Vijay Kumar", avatarUrl: "" },
-      stories: [
-        { id: "s1", media_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&h=1000&fit=crop", text_content: "Beautiful morning 🌅", created_at: new Date(Date.now() - 7200000).toISOString(), view_count: 120 },
-        { id: "s2", media_url: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=1000&fit=crop", text_content: "Nature vibes", created_at: new Date(Date.now() - 3600000).toISOString(), view_count: 85 },
-      ],
-    },
-    {
-      user: { id: "u2", username: "priya_designs", displayName: "Priya Designs", avatarUrl: "" },
-      stories: [
-        { id: "s3", media_url: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600&h=1000&fit=crop", text_content: "New artwork 🎨", created_at: new Date(Date.now() - 10800000).toISOString(), view_count: 200 },
-      ],
-    },
-  ];
-
-  const groups = storyGroups.length > 0 ? storyGroups : FALLBACK;
+  const groups = storyGroups;
 
   // Find starting index based on userId param
   useEffect(() => {
@@ -118,7 +109,7 @@ export default function SocialStoryViewerPage() {
   // Record view in DB
   useEffect(() => {
     const socialUserId = customerUser?.supabase_uid || customerUser?.id;
-    if (!story?.id || !socialUserId || story.id.startsWith('s')) return;
+    if (!story?.id || !socialUserId) return;
     supabase.from('social_story_views').insert({ story_id: story.id, viewer_id: socialUserId }).then(() => {});
   }, [story?.id, customerUser?.supabase_uid, customerUser?.id]);
 
@@ -135,11 +126,28 @@ export default function SocialStoryViewerPage() {
     return `${Math.floor(mins / 60)}h`;
   };
 
-  if (!story || !group) return null;
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-white border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!story || !group) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
+        <div className="text-center text-white">
+          <p className="text-lg font-semibold mb-2">No stories available</p>
+          <button onClick={() => navigate(-1)} className="text-sm text-white/70 underline">Go back</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
-      <div className="relative w-full max-w-md h-full">
+      <div className="relative w-full max-w-md h-full max-h-screen">
         {/* Progress bars */}
         <div className="absolute top-2 left-2 right-2 z-20 flex gap-1">
           {group.stories.map((s: any, i: number) => (
@@ -154,11 +162,15 @@ export default function SocialStoryViewerPage() {
         <div className="absolute top-6 left-3 right-3 z-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8 border-2 border-white">
-              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                {group.user.username?.charAt(0).toUpperCase()}
-              </AvatarFallback>
+              {group.user.avatarUrl ? (
+                <img src={group.user.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+              ) : (
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                  {group.user.username?.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              )}
             </Avatar>
-            <span className="text-white text-sm font-semibold">{group.user.username}</span>
+            <span className="text-white text-sm font-semibold">{group.user.displayName || group.user.username}</span>
             <span className="text-white/60 text-xs">{timeAgo(story.created_at)}</span>
           </div>
           <div className="flex items-center gap-2">
