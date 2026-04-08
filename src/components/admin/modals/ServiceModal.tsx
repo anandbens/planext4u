@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Wrench, DollarSign, Trash2, ImageIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Wrench, DollarSign, Trash2, ImageIcon, Search, MapPin, Plus, X, Clock, Globe } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -23,12 +24,23 @@ interface ServiceModalProps {
   onDelete?: (id: string) => Promise<void>;
 }
 
+interface PricingSlot {
+  label: string;
+  duration_minutes: number;
+  price: number;
+}
+
 const emptyForm = {
-  title: "", description: "", price: 0, tax: 0, discount: 0,
+  title: "", description: "", short_description: "", long_description: "",
+  price: 0, tax: 0, discount: 0,
   max_points_redeemable: 0, status: "active" as Service["status"],
   vendor_id: "", vendor_name: "", category_id: "", category_name: "",
-  emoji: "🔧", service_area: "Coimbatore", duration: "1-2 hours",
+  emoji: "🔧", service_area: "", duration: "1-2 hours",
   image: "",
+  meta_title: "", meta_description: "", slug: "",
+  pricing_slots: [] as PricingSlot[],
+  booking_duration_minutes: 60,
+  max_bookings_per_slot: 1,
 };
 
 export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCreate, onDelete }: ServiceModalProps) {
@@ -36,14 +48,84 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
   const [editMode, setEditMode] = useState(mode === "edit" || isCreate);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [activeTab, setActiveTab] = useState("general");
 
-  const { data: dbVendors } = useQuery({
-    queryKey: ["serviceVendorsForModal"],
+  // Vendor filtering state
+  const [vendorState, setVendorState] = useState("");
+  const [vendorDistrict, setVendorDistrict] = useState("");
+  const [vendorSearch, setVendorSearch] = useState("");
+
+  // Fetch states
+  const { data: states } = useQuery({
+    queryKey: ["statesForServiceVendor"],
     queryFn: async () => {
-      const { data } = await supabase.from("service_vendors" as any).select("id, business_name").eq("status", "active").order("business_name");
+      const { data } = await supabase.from("states" as any).select("id, name").eq("status", "active").order("name");
       return (data || []) as any[];
     },
   });
+
+  // Fetch districts based on state
+  const { data: districts } = useQuery({
+    queryKey: ["districtsForServiceVendor", vendorState],
+    queryFn: async () => {
+      if (!vendorState) return [];
+      const { data } = await supabase.from("districts").select("id, name").eq("state_id", vendorState).eq("status", "active").order("name");
+      return (data || []) as any[];
+    },
+    enabled: !!vendorState,
+  });
+
+  // Fetch vendors — use both product vendors and service vendors
+  const { data: allVendors } = useQuery({
+    queryKey: ["allVendorsForService"],
+    queryFn: async () => {
+      // Fetch product vendors
+      const { data: pv } = await supabase.from("vendors").select("id, business_name, mobile, city_id, status").in("status", ["active", "verified"]).order("business_name");
+      // Fetch service vendors
+      const { data: sv } = await supabase.from("service_vendors" as any).select("id, business_name, mobile, city_id, status").eq("status", "active").order("business_name");
+
+      const combined = [...(pv || []), ...(sv || [])];
+      // Deduplicate by id
+      const seen = new Set();
+      const unique = combined.filter((v: any) => { if (seen.has(v.id)) return false; seen.add(v.id); return true; });
+
+      // Get city info
+      const cityIds = [...new Set(unique.map((v: any) => v.city_id).filter(Boolean))];
+      let cityMap: Record<string, { name: string; state: string; state_id?: string }> = {};
+      if (cityIds.length > 0) {
+        const { data: cities } = await supabase.from("cities").select("id, name, state").in("id", cityIds);
+        (cities || []).forEach((c: any) => { cityMap[c.id] = { name: c.name, state: c.state }; });
+      }
+      return unique.map((v: any) => ({
+        ...v,
+        city_name: cityMap[v.city_id]?.name || "",
+        state_name: cityMap[v.city_id]?.state || "",
+      }));
+    },
+  });
+
+  // Filter vendors
+  const filteredVendors = useMemo(() => {
+    if (!allVendors) return [];
+    let list = allVendors;
+    if (vendorState) {
+      const stateObj = (states || []).find((s: any) => s.id === vendorState);
+      if (stateObj) list = list.filter((v: any) => v.state_name === stateObj.name);
+    }
+    if (vendorDistrict) {
+      const distObj = (districts || []).find((d: any) => d.id === vendorDistrict);
+      if (distObj) list = list.filter((v: any) => v.city_name === distObj.name);
+    }
+    if (vendorSearch) {
+      const q = vendorSearch.toLowerCase();
+      list = list.filter((v: any) =>
+        v.business_name?.toLowerCase().includes(q) ||
+        v.mobile?.includes(q) ||
+        v.id?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [allVendors, vendorState, vendorDistrict, vendorSearch, states, districts]);
 
   const { data: dbCategories } = useQuery({
     queryKey: ["serviceCategoriesForModal"],
@@ -54,19 +136,28 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
   });
 
   useEffect(() => {
-    if (isCreate) { setForm(emptyForm); setEditMode(true); }
+    if (isCreate) { setForm(emptyForm); setEditMode(true); setActiveTab("general"); setVendorState(""); setVendorDistrict(""); setVendorSearch(""); }
     else if (service) {
       setForm({
         title: service.title, description: service.description,
+        short_description: service.short_description || "",
+        long_description: service.long_description || "",
         price: service.price, tax: service.tax, discount: service.discount,
         max_points_redeemable: service.max_points_redeemable, status: service.status,
-        vendor_id: service.vendor_id, vendor_name: service.vendor_name,
-        category_id: service.category_id, category_name: service.category_name,
-        emoji: service.emoji || "🔧", service_area: service.service_area || "Coimbatore",
+        vendor_id: service.vendor_id, vendor_name: service.vendor_name || "",
+        category_id: service.category_id, category_name: service.category_name || "",
+        emoji: service.emoji || "🔧", service_area: service.service_area || "",
         duration: service.duration || "1-2 hours",
         image: (service as any).image || "",
+        meta_title: service.meta_title || "",
+        meta_description: service.meta_description || "",
+        slug: service.slug || "",
+        pricing_slots: (service.pricing_slots || []) as PricingSlot[],
+        booking_duration_minutes: service.booking_duration_minutes || 60,
+        max_bookings_per_slot: service.max_bookings_per_slot || 1,
       });
       setEditMode(mode === "edit");
+      setActiveTab("general");
     }
   }, [service, mode]);
 
@@ -87,7 +178,7 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
   };
 
   const handleVendorChange = (id: string) => {
-    const v = (dbVendors || []).find((sv: any) => sv.id === id);
+    const v = (allVendors || []).find((sv: any) => sv.id === id);
     setForm({ ...form, vendor_id: id, vendor_name: v?.business_name || "" });
   };
 
@@ -96,9 +187,23 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
     setForm({ ...form, category_id: id, category_name: c?.name || "" });
   };
 
+  const addPricingSlot = () => {
+    setForm({ ...form, pricing_slots: [...form.pricing_slots, { label: "", duration_minutes: 60, price: 0 }] });
+  };
+
+  const updateSlot = (idx: number, field: string, value: any) => {
+    const updated = [...form.pricing_slots];
+    (updated[idx] as any)[field] = value;
+    setForm({ ...form, pricing_slots: updated });
+  };
+
+  const removeSlot = (idx: number) => {
+    setForm({ ...form, pricing_slots: form.pricing_slots.filter((_, i) => i !== idx) });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl gradient-success flex items-center justify-center shrink-0">
@@ -117,95 +222,243 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
           )}
         </DialogHeader>
 
-        <div className="space-y-5 mt-2">
-          {/* Image Upload */}
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Service Image</Label>
-            {editMode ? (
-              <MediaLibraryPicker value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="services" label="Upload Service Image" />
-            ) : form.image ? (
-              <div className="h-32 w-full rounded-lg overflow-hidden bg-secondary/20 border border-border/30">
-                <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
-              </div>
-            ) : null}
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
+          <TabsList className="grid grid-cols-4 w-full">
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="pricing">Pricing & Slots</TabsTrigger>
+            <TabsTrigger value="description">Descriptions</TabsTrigger>
+            <TabsTrigger value="seo">SEO</TabsTrigger>
+          </TabsList>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <Label className="text-xs text-muted-foreground">Title *</Label>
-              {editMode ? <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-1" placeholder="Service name" /> : <p className="text-sm font-medium mt-1">{service?.title}</p>}
-            </div>
-            <div className="col-span-2">
-              <Label className="text-xs text-muted-foreground">Description</Label>
-              {editMode ? <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1" rows={3} /> : <p className="text-sm mt-1 text-muted-foreground">{service?.description}</p>}
-            </div>
-            {editMode && (
-              <>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Vendor *</Label>
-                  <Select value={form.vendor_id || undefined} onValueChange={handleVendorChange}>
-                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select vendor" /></SelectTrigger>
-                    <SelectContent>
-                      {(dbVendors || []).map((v: any) => <SelectItem key={v.id} value={v.id}>{v.business_name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Category *</Label>
-                  <Select value={form.category_id || undefined} onValueChange={handleCategoryChange}>
-                    <SelectTrigger className="mt-1"><SelectValue placeholder="Select category" /></SelectTrigger>
-                    <SelectContent>
-                      {(dbCategories || []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Duration</Label>
-                  <Input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} className="mt-1" placeholder="1-2 hours" />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Service Area</Label>
-                  <Input value={form.service_area} onChange={(e) => setForm({ ...form, service_area: e.target.value })} className="mt-1" placeholder="Coimbatore" />
-                </div>
-              </>
-            )}
-            <div>
-              <Label className="text-xs text-muted-foreground">Status</Label>
+          {/* General Tab */}
+          <TabsContent value="general" className="space-y-4 mt-4">
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1"><ImageIcon className="h-3 w-3" /> Service Image</Label>
               {editMode ? (
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Service["status"] })}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : <div className="mt-1"><StatusBadge status={service?.status || "active"} /></div>}
+                <MediaLibraryPicker value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="services" label="Upload Service Image" />
+              ) : form.image ? (
+                <div className="h-32 w-full rounded-lg overflow-hidden bg-secondary/20 border border-border/30">
+                  <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              ) : null}
             </div>
-          </div>
 
-          <div className="p-4 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
-            <h4 className="text-sm font-semibold flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" /> Pricing</h4>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-xs text-muted-foreground">Base Price</Label>
-                {editMode ? <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-bold mt-1">₹{service?.price.toLocaleString()}</p>}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label className="text-xs text-muted-foreground">Title *</Label>
+                {editMode ? <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-1" placeholder="Service name" /> : <p className="text-sm font-medium mt-1">{service?.title}</p>}
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Tax</Label>
-                {editMode ? <Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1">₹{service?.tax.toLocaleString()}</p>}
+              <div className="col-span-2">
+                <Label className="text-xs text-muted-foreground">Description</Label>
+                {editMode ? <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1" rows={3} /> : <p className="text-sm mt-1 text-muted-foreground">{service?.description}</p>}
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Discount</Label>
-                {editMode ? <Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1 text-success">{(service?.discount || 0) > 0 ? `₹${service?.discount}` : "—"}</p>}
+
+              {/* Vendor Selection with State/District Filtering */}
+              {editMode && (
+                <>
+                  <div className="col-span-2 p-3 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
+                    <h4 className="text-sm font-semibold flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /> Vendor Selection</h4>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">State</Label>
+                        <Select value={vendorState || undefined} onValueChange={(v) => { setVendorState(v); setVendorDistrict(""); }}>
+                          <SelectTrigger className="mt-1"><SelectValue placeholder="All states" /></SelectTrigger>
+                          <SelectContent>
+                            {(states || []).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">District</Label>
+                        <Select value={vendorDistrict || undefined} onValueChange={setVendorDistrict} disabled={!vendorState}>
+                          <SelectTrigger className="mt-1"><SelectValue placeholder="All districts" /></SelectTrigger>
+                          <SelectContent>
+                            {(districts || []).map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Search Vendor</Label>
+                        <div className="relative mt-1">
+                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Input value={vendorSearch} onChange={(e) => setVendorSearch(e.target.value)} className="pl-8" placeholder="Name, mobile, ID..." />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Vendor *</Label>
+                      <Select value={form.vendor_id || undefined} onValueChange={handleVendorChange}>
+                        <SelectTrigger className="mt-1"><SelectValue placeholder="Select vendor" /></SelectTrigger>
+                        <SelectContent className="max-h-48">
+                          {filteredVendors.map((v: any) => (
+                            <SelectItem key={v.id} value={v.id}>
+                              {v.business_name} {v.city_name ? `(${v.city_name})` : ""} — {v.mobile || v.id}
+                            </SelectItem>
+                          ))}
+                          {filteredVendors.length === 0 && <div className="px-3 py-2 text-sm text-muted-foreground">No vendors found</div>}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Category *</Label>
+                    <Select value={form.category_id || undefined} onValueChange={handleCategoryChange}>
+                      <SelectTrigger className="mt-1"><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectContent>
+                        {(dbCategories || []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Duration</Label>
+                    <Input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} className="mt-1" placeholder="1-2 hours" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Service Area</Label>
+                    <Input value={form.service_area} onChange={(e) => setForm({ ...form, service_area: e.target.value })} className="mt-1" placeholder="Coimbatore" />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Status</Label>
+                    <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Service["status"] })}>
+                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="draft">Draft</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+              {!editMode && (
+                <>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Vendor</Label>
+                    <p className="text-sm mt-1">{service?.vendor_name || "—"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Category</Label>
+                    <p className="text-sm mt-1">{service?.category_name || "—"}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Status</Label>
+                    <div className="mt-1"><StatusBadge status={service?.status || "active"} /></div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Duration</Label>
+                    <p className="text-sm mt-1">{service?.duration || "—"}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Pricing & Slots Tab */}
+          <TabsContent value="pricing" className="space-y-4 mt-4">
+            <div className="p-4 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2"><DollarSign className="h-4 w-4 text-primary" /> Base Pricing</h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Base Price</Label>
+                  {editMode ? <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-bold mt-1">₹{service?.price.toLocaleString()}</p>}
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Tax</Label>
+                  {editMode ? <Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1">₹{service?.tax.toLocaleString()}</p>}
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Discount</Label>
+                  {editMode ? <Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1 text-success">{(service?.discount || 0) > 0 ? `₹${service?.discount}` : "—"}</p>}
+                </div>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-semibold">Final Price</span>
+                <span className="text-lg font-bold">₹{(form.price + form.tax - form.discount).toLocaleString()}</span>
               </div>
             </div>
-            <Separator />
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-semibold">Final Price</span>
-              <span className="text-lg font-bold">₹{(form.price + form.tax - form.discount).toLocaleString()}</span>
+
+            {/* Booking Settings */}
+            <div className="p-4 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> Booking Settings</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Default Slot Duration (minutes)</Label>
+                  {editMode ? <Input type="number" value={form.booking_duration_minutes} onChange={(e) => setForm({ ...form, booking_duration_minutes: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm mt-1">{form.booking_duration_minutes} min</p>}
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Max Bookings Per Slot</Label>
+                  {editMode ? <Input type="number" value={form.max_bookings_per_slot} onChange={(e) => setForm({ ...form, max_bookings_per_slot: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm mt-1">{form.max_bookings_per_slot}</p>}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+
+            {/* Pricing Slots */}
+            <div className="p-4 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> Pricing Time Slots</h4>
+                {editMode && (
+                  <Button variant="outline" size="sm" onClick={addPricingSlot} className="gap-1"><Plus className="h-3 w-3" /> Add Slot</Button>
+                )}
+              </div>
+              {form.pricing_slots.length === 0 && <p className="text-sm text-muted-foreground">No time-based pricing defined. Base price will be used.</p>}
+              {form.pricing_slots.map((slot, idx) => (
+                <div key={idx} className="grid grid-cols-4 gap-2 items-end">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Label</Label>
+                    {editMode ? <Input value={slot.label} onChange={(e) => updateSlot(idx, "label", e.target.value)} className="mt-1" placeholder="e.g. Morning Slot" /> : <p className="text-sm mt-1">{slot.label}</p>}
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Duration (min)</Label>
+                    {editMode ? <Input type="number" value={slot.duration_minutes} onChange={(e) => updateSlot(idx, "duration_minutes", Number(e.target.value))} className="mt-1" /> : <p className="text-sm mt-1">{slot.duration_minutes} min</p>}
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Price (₹)</Label>
+                    {editMode ? <Input type="number" value={slot.price} onChange={(e) => updateSlot(idx, "price", Number(e.target.value))} className="mt-1" /> : <p className="text-sm mt-1">₹{slot.price}</p>}
+                  </div>
+                  {editMode && (
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-destructive" onClick={() => removeSlot(idx)}><X className="h-4 w-4" /></Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Descriptions Tab */}
+          <TabsContent value="description" className="space-y-4 mt-4">
+            <div>
+              <Label className="text-xs text-muted-foreground">Short Description</Label>
+              {editMode ? <Textarea value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className="mt-1" rows={2} placeholder="Brief description for listings..." /> : <p className="text-sm mt-1 text-muted-foreground">{form.short_description || "—"}</p>}
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Long Description</Label>
+              {editMode ? <Textarea value={form.long_description} onChange={(e) => setForm({ ...form, long_description: e.target.value })} className="mt-1" rows={6} placeholder="Detailed service description..." /> : <p className="text-sm mt-1 text-muted-foreground whitespace-pre-wrap">{form.long_description || "—"}</p>}
+            </div>
+          </TabsContent>
+
+          {/* SEO Tab */}
+          <TabsContent value="seo" className="space-y-4 mt-4">
+            <div className="p-4 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2"><Globe className="h-4 w-4 text-primary" /> SEO Settings</h4>
+              <div>
+                <Label className="text-xs text-muted-foreground">URL Slug</Label>
+                {editMode ? <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="mt-1" placeholder="service-url-slug" /> : <p className="text-sm mt-1 font-mono">{form.slug || "—"}</p>}
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Meta Title</Label>
+                {editMode ? <Input value={form.meta_title} onChange={(e) => setForm({ ...form, meta_title: e.target.value })} className="mt-1" placeholder="Page title for search engines" /> : <p className="text-sm mt-1">{form.meta_title || "—"}</p>}
+                {editMode && <p className="text-xs text-muted-foreground mt-0.5">{form.meta_title.length}/60 chars</p>}
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Meta Description</Label>
+                {editMode ? <Textarea value={form.meta_description} onChange={(e) => setForm({ ...form, meta_description: e.target.value })} className="mt-1" rows={2} placeholder="Description for search results" /> : <p className="text-sm mt-1">{form.meta_description || "—"}</p>}
+                {editMode && <p className="text-xs text-muted-foreground mt-0.5">{form.meta_description.length}/160 chars</p>}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter className="mt-4">
           {!isCreate && onDelete && editMode && (

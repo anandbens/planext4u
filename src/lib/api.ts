@@ -61,7 +61,11 @@ export interface Service {
   status: 'active' | 'inactive' | 'draft';
   vendor_name?: string; category_name?: string; emoji?: string; image?: string;
   rating?: number; reviews?: number; service_area?: string; duration?: string;
-  created_at?: string;
+  created_at?: string; updated_at?: string;
+  short_description?: string; long_description?: string;
+  meta_title?: string; meta_description?: string; slug?: string;
+  pricing_slots?: { label: string; duration_minutes: number; price: number }[];
+  booking_duration_minutes?: number; max_bookings_per_slot?: number;
 }
 
 export interface Order {
