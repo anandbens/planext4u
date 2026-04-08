@@ -1,35 +1,30 @@
-## WooCommerce-Like Product Management System — IMPLEMENTED
+## Admin Panel Fixes Plan
 
-### Database Schema
-- ✅ `products` table: Added `product_type` (simple/variable/service), `sku`, `slug`, `meta_title`, `meta_description`, `manage_stock`, `stock_status`, `weight`, `dimensions`
-- ✅ `product_variants` table: Per-variant SKU, price, compare_at_price, stock, variant_attributes JSONB, image, active toggle
-- ✅ `product_variant_images` table: Multiple images per variant
-- ✅ `product_attribute_map` table: Links attributes to products
-- ✅ `inventory_log` table: Stock change audit trail
-- ✅ `product_attribute_values`: Added `hex_color` for color swatches, `display_label`
-- ✅ Color hex values seeded for all standard colors
+### Phase 1: Quick UI & Data Fixes
+1. **Notification dropdown overflow fix** - Fix popup extending outside screen on 1366x768 and lower resolutions
+2. **Razorpay payment reference ID** - Save actual Razorpay payment_id in orders table and display it correctly
+3. **Customer search by mobile** - Fix mobile search in Customers page
+4. **Product edit data binding** - Fix product attributes not loading in edit screen, show existing images
 
-### Admin
-- ✅ Product Attributes page: Color swatch with hex picker, inline color editing
-- ✅ Product Modal: Tabbed UI (General, Pricing, Attributes, Variants, SEO)
-- ✅ Product type selector (Simple / Variable / Service)
-- ✅ Variant generation from attribute combinations (cartesian product)
-- ✅ Per-variant inline editing: SKU, price, compare price, stock, active toggle
-- ✅ SEO fields: slug, meta title, meta description
-- ✅ Product grid shows product type badge
+### Phase 2: Parent Product System
+5. **Add parent_item_id and parent_item_name to products table** - Migration to add columns
+6. **Parent Item autocomplete in Product Modal** - Search by ID/Name with autocomplete
+7. **Update product creation/edit flows** for admin and vendor
 
-### Vendor
-- ✅ Product type selector in vendor form
-- ✅ Vendor save includes product_type, sku, slug, meta fields
+### Phase 3: Bulk CSV Upload System
+8. **Create file_uploads table** - Track upload status, errors
+9. **Build File Uploads admin page** - Upload CSV, view status, download error logs
+10. **Product CSV upload** with sample format download, background processing, validation
+11. **Customer & Vendor CSV upload** with sample formats
 
-### Customer Frontend
-- ✅ Color swatches: circular buttons with actual hex colors
-- ✅ Size/other attributes: pill buttons
-- ✅ Only available combinations shown (cascade filtering)
-- ✅ Price updates dynamically based on selected variant
-- ✅ Image changes based on variant selection
-- ✅ Out of stock indicator
-- ✅ Variant stock display
+### Phase 4: Service Module Enhancements
+12. **Service create/edit vendor selection** with State/District filtering
+13. **Service detail fields** - long/short description, pricing slots, SEO
+14. **Service slot booking conflict prevention**
 
-### RLS Security
-- ✅ All new tables have proper RLS: admin full access, vendor scoped access, public read
+### Phase 5: Form Validation & Data Integrity
+15. **Form field validation** across all admin/vendor/customer forms
+16. **Database column type/length audit**
+17. **Foreign key constraint fixes**
+
+Shall I proceed with Phase 1 first?
