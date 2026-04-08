@@ -264,7 +264,8 @@ export default function CustomerProfileEditPage() {
     if (!searchQuery.trim()) return;
     setLocating(true);
     try {
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${GOOGLE_MAPS_KEY}`);
+      const mapsKey = await getGoogleMapsKey();
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${mapsKey}`);
       const data = await res.json();
       if (data.status === "OK" && data.results.length > 0) {
         const r = data.results[0];
@@ -301,7 +302,8 @@ export default function CustomerProfileEditPage() {
     setShowMapModal(true);
     setTimeout(async () => {
       try {
-        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr.address_line + ", " + addr.city)}&key=${GOOGLE_MAPS_KEY}`);
+        const mapsKey = await getGoogleMapsKey();
+        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr.address_line + ", " + addr.city)}&key=${mapsKey}`);
         const data = await res.json();
         if (data.status === "OK" && data.results.length > 0) {
           const r = data.results[0];
