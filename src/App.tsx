@@ -323,6 +323,8 @@ const AppRoutes = () => {
         <Route path="/admin/product-attributes" element={<ProtectedPage><AdminProductAttributesPage /></ProtectedPage>} />
         <Route path="/admin/file-uploads" element={<ProtectedPage><FileUploadsPage /></ProtectedPage>} />
         <Route path="/admin/parent-items" element={<ProtectedPage><ParentItemsPage /></ProtectedPage>} />
+        <Route path="/admin/complaints" element={<ProtectedPage><AdminComplaintsPage /></ProtectedPage>} />
+        <Route path="/admin/vendor-onboarding" element={<ProtectedPage><AdminVendorOnboardingPage /></ProtectedPage>} />
 
         {/* Customer-facing routes */}
         <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <CustomerPage><CustomerHomePage /></CustomerPage>} />
