@@ -4093,6 +4093,7 @@ export type Database = {
         Returns: number
       }
       check_otp_rate_limit: { Args: { _phone: string }; Returns: Json }
+      check_phone_registered: { Args: { _phone: string }; Returns: boolean }
       create_social_notification: {
         Args: {
           _actor_id: string
