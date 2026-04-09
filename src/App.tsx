@@ -151,6 +151,7 @@ import VendorRegisterStandalonePage from "./pages/vendor/VendorRegisterPage";
 import VendorDashboardPage from "./pages/vendor/VendorDashboardPage";
 import VendorProductsPage from "./pages/vendor/VendorProductsPage";
 import VendorServicesPage from "./pages/vendor/VendorServicesPage";
+import VendorAvailabilityPage from "./pages/vendor/VendorAvailabilityPage";
 import VendorOrdersPage from "./pages/vendor/VendorOrdersPage";
 import VendorSettlementsPage from "./pages/vendor/VendorSettlementsPage";
 import VendorProfilePage from "./pages/vendor/VendorProfilePage";
@@ -416,6 +417,7 @@ const AppRoutes = () => {
         <Route path="/vendor" element={<VendorPage><VendorDashboardPage /></VendorPage>} />
         <Route path="/vendor/products" element={<VendorPage><VendorProductsPage /></VendorPage>} />
         <Route path="/vendor/services" element={<VendorPage><VendorServicesPage /></VendorPage>} />
+        <Route path="/vendor/availability" element={<VendorPage><VendorAvailabilityPage /></VendorPage>} />
         <Route path="/vendor/orders" element={<VendorPage><VendorOrdersPage /></VendorPage>} />
         <Route path="/vendor/settlements" element={<VendorPage><VendorSettlementsPage /></VendorPage>} />
         <Route path="/vendor/payments" element={<VendorPage><VendorPaymentHistoryPage /></VendorPage>} />
