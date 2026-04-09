@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
 import { useSocialFeed, useSharePost, useRepost } from "@/hooks/use-social-interactions";
 import { supabase } from "@/integrations/supabase/client";
+import PeopleYouMayKnow from "@/components/social/PeopleYouMayKnow";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const FALLBACK_POSTS = [
@@ -753,6 +754,9 @@ export default function SocialFeedPage() {
           <ChevronDown className="h-4 w-4 rotate-90" />
         </button>
       </div>
+
+      {/* People You May Know */}
+      <PeopleYouMayKnow />
 
       {/* Feed */}
       <div className="pb-20 md:pb-8">

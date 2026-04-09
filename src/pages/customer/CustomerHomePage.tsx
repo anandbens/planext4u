@@ -16,6 +16,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { NotificationConsentModal } from "@/components/customer/NotificationConsentModal";
+import { getLocation, DeviceLocation } from "@/lib/device-service";
+import { useAuth } from "@/lib/auth";
 
 function DiscountSubscriptionSection() {
   const [email, setEmail] = useState("");
@@ -185,12 +188,51 @@ function SellerListSection({ data, isLoading, parentCategories, containerAnim, i
 export default function CustomerHomePage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { customerUser } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ["customerHome"], queryFn: api.getCustomerHome });
   const [bannerIdx, setBannerIdx] = useState(0);
   const [showSplash, setShowSplash] = useState(() => {
     const shown = sessionStorage.getItem("p4u_splash_shown");
     return !shown;
   });
+
+  // Notification consent modal - show once after login
+  const [showNotifConsent, setShowNotifConsent] = useState(false);
+  useEffect(() => {
+    if (customerUser && !localStorage.getItem("p4u_notif_consent_shown")) {
+      const timer = setTimeout(() => setShowNotifConsent(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [customerUser]);
+
+  // Auto-detect location
+  const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
+  useEffect(() => {
+    const savedLoc = loadSelectedLocation();
+    if (savedLoc) {
+      setDetectedLocation(savedLoc);
+      return;
+    }
+    getLocation().then(async (loc) => {
+      if (!loc) return;
+      try {
+        // Try reverse geocoding with a simple fetch
+        const { supabase: sb } = await import("@/integrations/supabase/client");
+        const { data: keyRow } = await sb.from("platform_variables").select("value").eq("key", "GOOGLE_MAPS_API_KEY").maybeSingle();
+        const apiKey = keyRow?.value || "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
+        const resp = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${loc.lat},${loc.lng}&key=${apiKey}`
+        );
+        const json = await resp.json();
+        if (json.results?.[0]) {
+          const components = json.results[0].address_components || [];
+          const city = components.find((c: any) => c.types.includes("locality"))?.long_name;
+          const state = components.find((c: any) => c.types.includes("administrative_area_level_1"))?.short_name;
+          if (city) setDetectedLocation(`${city}${state ? `, ${state}` : ""}`);
+        }
+      } catch { /* silent */ }
+    });
+  }, []);
 
   useEffect(() => {
     if (!data?.banners.length) return;
@@ -226,6 +268,13 @@ export default function CustomerHomePage() {
   return (
     <CustomerLayout>
       <div className="max-w-7xl mx-auto space-y-0 pb-24 md:pb-6">
+        {/* Auto-detected location */}
+        {detectedLocation && (
+          <div className="px-4 pt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4 text-primary" />
+            <span className="font-medium text-foreground">{detectedLocation}</span>
+          </div>
+        )}
         {/* Mobile Category Icons Row - improved with circular avatars */}
         <div className="px-4 pt-5 md:hidden">
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-3 pt-1 pl-1">
@@ -705,6 +754,15 @@ export default function CustomerHomePage() {
           </div>
         </motion.section>
       </div>
+
+      {/* Notification consent modal */}
+      {customerUser && (
+        <NotificationConsentModal
+          open={showNotifConsent}
+          onClose={() => setShowNotifConsent(false)}
+          userId={customerUser.supabase_uid || customerUser.id}
+        />
+      )}
     </CustomerLayout>
   );
 }
