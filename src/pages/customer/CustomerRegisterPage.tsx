@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { logActivity } from "@/lib/auth";
-import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, resetPhoneAuth, ensureFirebaseHostname } from "@/lib/firebase";
+import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, resetPhoneAuth, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
@@ -140,6 +140,7 @@ export default function CustomerRegisterPage() {
   }, [timer]);
 
   useEffect(() => {
+    preRenderRecaptcha();
     return () => {
       resetPhoneAuth();
     };
@@ -189,26 +190,29 @@ export default function CustomerRegisterPage() {
     setOtpLoading(true);
     try {
       const isUnique = await checkMobileUnique();
-      if (!isUnique) return;
-      await resetPhoneAuth();
-      await new Promise((r) => setTimeout(r, 400));
+      if (!isUnique) { setOtpLoading(false); return; }
+      // Don't reset recaptcha before sending - reuse the pre-rendered one
       await sendOTP(`+91${form.mobile}`);
       setOtpStep("otp");
       setTimer(45);
       toast.success("OTP sent to +91 " + form.mobile);
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
+      console.error("Registration OTP error:", err?.code, err?.message);
       if (err.code === "auth/too-many-requests") {
-        toast.error("OTP is temporarily rate limited by Firebase for this number/device. Please wait a few minutes or try a different test number.", { duration: 7000 });
+        toast.error("Too many OTP attempts. Please wait 2-3 minutes before trying again.", { duration: 7000 });
         setTimer(180);
       } else if (err.code === "auth/invalid-phone-number") {
         toast.error("Invalid phone number.");
-      } else if (err.message?.includes("reCAPTCHA")) {
-        toast.error("Phone verification could not start. Please try again.");
+      } else if (err.message?.includes("reCAPTCHA") || err.code === "auth/argument-error") {
+        // Recaptcha got stale - reset and ask user to retry
+        await resetPhoneAuth();
+        await new Promise((r) => setTimeout(r, 300));
+        preRenderRecaptcha();
+        toast.error("Verification expired. Please tap Send OTP again.");
       } else {
         toast.error(err.message || "Failed to send OTP");
       }
-      await resetPhoneAuth();
     } finally {
       setOtpLoading(false);
     }
