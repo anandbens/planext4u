@@ -50,6 +50,24 @@ export default function SocialProfilePage() {
   // Follow hook
   const { isFollowing, toggleFollow } = useFollow(targetUserId);
 
+  // Check if the other user follows us back (mutual follow for messaging)
+  const { data: isFollowedBy = false } = useQuery({
+    queryKey: ['social-followed-by', targetUserId, currentUserId],
+    queryFn: async () => {
+      if (!targetUserId || !currentUserId || targetUserId === currentUserId) return false;
+      const { count } = await supabase
+        .from('social_follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', targetUserId)
+        .eq('following_id', currentUserId)
+        .eq('status', 'active');
+      return (count || 0) > 0;
+    },
+    enabled: !!targetUserId && !!currentUserId && !isOwnProfile,
+  });
+
+  const isMutualFollow = isFollowing && isFollowedBy;
+
   // Fetch user's posts from DB
   const { data: userPosts = [] } = useQuery({
     queryKey: ['social-user-posts', targetUserId, activeTab],
@@ -199,7 +217,13 @@ export default function SocialProfilePage() {
                 >
                   {isFollowing ? <span className="flex items-center gap-1">Following <ChevronDown className="h-3 w-3" /></span> : "Follow"}
                 </Button>
-                <Button variant="secondary" className="flex-1 h-9 text-sm font-semibold" onClick={() => navigate("/app/social/messages")}>
+                <Button variant="secondary" className="flex-1 h-9 text-sm font-semibold" onClick={() => {
+                  if (isMutualFollow) {
+                    navigate(`/app/social/messages/${targetUserId}`);
+                  } else {
+                    toast.info("You can only message users who follow you back");
+                  }
+                }}>
                   Message
                 </Button>
                 <Button variant="secondary" className="h-9 w-9 p-0">
