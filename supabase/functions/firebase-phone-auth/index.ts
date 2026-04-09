@@ -140,7 +140,8 @@ Deno.serve(async (req) => {
         });
       }
 
-      // 1. Create Supabase auth user
+      // 1. Create or reuse Supabase auth user
+      let authUser: any;
       const { data: newAuthUser, error: createErr } = await supabase.auth.admin.createUser({
         email: phoneEmail,
         phone: normalizedPhone,
@@ -149,8 +150,25 @@ Deno.serve(async (req) => {
         password: crypto.randomUUID(),
         user_metadata: { phone: normalizedPhone, login_method: "firebase_phone" },
       });
-      if (createErr) throw createErr;
-      const authUser = newAuthUser.user;
+
+      if (createErr) {
+        // If auth user already exists (orphan from previous failed attempt), reuse it
+        if (createErr.message?.includes("already been registered") || (createErr as any).code === "email_exists") {
+          console.log("Auth user already exists, reusing for registration");
+          const { data: existingUsers } = await supabase.auth.admin.listUsers();
+          const found = existingUsers?.users?.find(
+            (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
+          );
+          if (!found) {
+            return respond(false, { error: "Unable to create your account. Please try again later." });
+          }
+          authUser = found;
+        } else {
+          throw createErr;
+        }
+      } else {
+        authUser = newAuthUser.user;
+      }
 
       // 2. Generate referral code
       const referralCode = "P4U" + Math.random().toString(36).substring(2, 8).toUpperCase();
