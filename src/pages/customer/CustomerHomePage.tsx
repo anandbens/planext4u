@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { NotificationConsentModal } from "@/components/customer/NotificationConsentModal";
 import { getLocation, DeviceLocation } from "@/lib/device-service";
 import { useAuth } from "@/lib/auth";
+import { RatingPopup } from "@/components/customer/RatingPopup";
 
 function DiscountSubscriptionSection() {
   const [email, setEmail] = useState("");
