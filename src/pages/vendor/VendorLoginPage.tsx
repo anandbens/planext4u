@@ -8,6 +8,7 @@ import { Eye, EyeOff, LogIn, Store, ShoppingBag, Wrench, Phone, ArrowRight, Shie
 import { toast } from "sonner";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
+import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogo from "@/assets/p4u-logo.png";
 
 export default function VendorLoginPage() {
@@ -82,6 +83,15 @@ export default function VendorLoginPage() {
       if (!vendorApp && !vendor) {
         setLoading(false);
         toast.error("No vendor account found with this phone number. Please register first.");
+        return;
+      }
+
+      // Rate limit check before Firebase OTP
+      const rateCheck = await checkOtpRateLimit(`${countryCode}${cleaned}`);
+      if (!rateCheck.allowed) {
+        setLoading(false);
+        toast.error("Too many OTP requests. Please try again after 5 minutes.", { duration: 6000 });
+        setTimer(rateCheck.retry_after);
         return;
       }
       
