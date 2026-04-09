@@ -268,6 +268,13 @@ export default function CustomerHomePage() {
   return (
     <CustomerLayout>
       <div className="max-w-7xl mx-auto space-y-0 pb-24 md:pb-6">
+        {/* Auto-detected location */}
+        {detectedLocation && (
+          <div className="px-4 pt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4 text-primary" />
+            <span className="font-medium text-foreground">{detectedLocation}</span>
+          </div>
+        )}
         {/* Mobile Category Icons Row - improved with circular avatars */}
         <div className="px-4 pt-5 md:hidden">
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-3 pt-1 pl-1">
