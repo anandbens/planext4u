@@ -285,17 +285,25 @@ export default function CustomerServiceDetailPage() {
 
             <div className="mt-4">
               <h3 className="text-sm font-semibold mb-2 flex items-center gap-1"><Clock className="h-4 w-4" /> Select Time</h3>
-              <div className="flex flex-wrap gap-2">
-                {allSlots.map((slot) => {
-                  const isBooked = bookedSlots.includes(slot);
-                  return (
-                    <button key={slot} onClick={() => !isBooked && setSelectedSlot(slot)} disabled={isBooked}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${isBooked ? 'border-border bg-muted text-muted-foreground line-through cursor-not-allowed opacity-50' : selectedSlot === slot ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
-                      {slot}{isBooked ? ' (Booked)' : ''}
-                    </button>
-                  );
-                })}
-              </div>
+              {!selectedDate ? (
+                <p className="text-xs text-muted-foreground">Select a date first</p>
+              ) : !isVendorAvailable ? (
+                <p className="text-xs text-destructive">Vendor is not available on this day</p>
+              ) : allSlots.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No time slots available</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {allSlots.map((slot) => {
+                    const isBooked = bookedSlots.includes(slot);
+                    return (
+                      <button key={slot} onClick={() => !isBooked && setSelectedSlot(slot)} disabled={isBooked}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${isBooked ? 'border-border bg-muted text-muted-foreground line-through cursor-not-allowed opacity-50' : selectedSlot === slot ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
+                        {slot}{isBooked ? ' (Booked)' : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <Button className="w-full mt-6" disabled={!selectedDate || !selectedSlot} onClick={handleBookNow}>
