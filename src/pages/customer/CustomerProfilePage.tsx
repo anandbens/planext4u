@@ -56,7 +56,7 @@ export default function CustomerProfilePage() {
     { icon: MapPin, label: "Saved Addresses", to: "/app/profile/edit", count: String(counts?.addresses || 0) },
     { icon: Gift, label: "Referrals", to: "/app/referrals", info: profile?.referral_code || "" },
     { icon: Megaphone, label: "My Classifieds", to: "/app/classifieds", count: String(counts?.classifieds || 0) },
-    { icon: FileText, label: "Support Tickets", to: "/app/profile" },
+    { icon: FileText, label: "Support Tickets", to: "/app/support" },
     { icon: Settings, label: "Settings", to: "/app/profile/edit" },
   ];
 
