@@ -3802,6 +3802,36 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_availability: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          id: string
+          is_available: boolean
+          time_slots: Json
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          id?: string
+          is_available?: boolean
+          time_slots?: Json
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          is_available?: boolean
+          time_slots?: Json
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       vendor_bank_accounts: {
         Row: {
           account_holder: string

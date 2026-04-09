@@ -97,6 +97,23 @@ export default function CustomerServiceDetailPage() {
     enabled: !!id,
   });
 
+  // Fetch vendor availability for selected date
+  const vendorId = service?.vendor_id;
+  const selectedDayOfWeek = selectedDate ? new Date(selectedDate).getDay() : null;
+  const { data: vendorAvailability } = useQuery({
+    queryKey: ["vendorAvailability", vendorId, selectedDayOfWeek],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("vendor_availability" as any)
+        .select("*")
+        .eq("vendor_id", vendorId)
+        .eq("day_of_week", selectedDayOfWeek)
+        .maybeSingle();
+      return data as any as { is_available: boolean; time_slots: { start: string; end: string }[] } | null;
+    },
+    enabled: !!vendorId && selectedDayOfWeek !== null,
+  });
+
   // Fetch real reviews from DB
   const { data: reviews = [] } = useQuery({
     queryKey: ["reviews", "service", id],
@@ -118,9 +135,33 @@ export default function CustomerServiceDetailPage() {
   if (!service) return <CustomerLayout><div className="p-8 text-center">Service not found</div></CustomerLayout>;
 
   const discountPct = service.discount ? Math.round((service.discount / service.price) * 100) : 0;
-  const allSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
   const imgUrl = getServiceImage(service.title, service.image);
   const finalPrice = service.price - (service.discount || 0) + (service.tax || 0);
+
+  // Build available time slots from vendor availability
+  const isVendorAvailable = vendorAvailability ? vendorAvailability.is_available : true;
+  const vendorSlots = vendorAvailability?.time_slots || [];
+  const generateSlots = (slots: { start: string; end: string }[]) => {
+    if (slots.length === 0) return ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+    const allHours: string[] = [];
+    const parseTime = (t: string) => {
+      const [time, ampm] = t.split(" ");
+      const [h, m] = time.split(":").map(Number);
+      return ampm === "PM" && h !== 12 ? h + 12 : ampm === "AM" && h === 12 ? 0 : h;
+    };
+    const formatHour = (h: number) => {
+      const ampm = h >= 12 ? "PM" : "AM";
+      const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+      return `${String(h12).padStart(2, "0")}:00 ${ampm}`;
+    };
+    slots.forEach((s) => {
+      const startH = parseTime(s.start);
+      const endH = parseTime(s.end);
+      for (let h = startH; h < endH; h++) allHours.push(formatHour(h));
+    });
+    return allHours;
+  };
+  const allSlots = isVendorAvailable ? generateSlots(vendorSlots) : [];
 
   const handleBookNow = () => {
     if (!selectedDate || !selectedSlot) { toast.error("Select date and time"); return; }
@@ -233,7 +274,7 @@ export default function CustomerServiceDetailPage() {
                   const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' });
                   const val = d.toISOString().split('T')[0];
                   return (
-                    <button key={i} onClick={() => setSelectedDate(val)}
+                    <button key={i} onClick={() => { setSelectedDate(val); setSelectedSlot(""); }}
                       className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${selectedDate === val ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
                       {label}
                     </button>
@@ -244,20 +285,28 @@ export default function CustomerServiceDetailPage() {
 
             <div className="mt-4">
               <h3 className="text-sm font-semibold mb-2 flex items-center gap-1"><Clock className="h-4 w-4" /> Select Time</h3>
-              <div className="flex flex-wrap gap-2">
-                {allSlots.map((slot) => {
-                  const isBooked = bookedSlots.includes(slot);
-                  return (
-                    <button key={slot} onClick={() => !isBooked && setSelectedSlot(slot)} disabled={isBooked}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${isBooked ? 'border-border bg-muted text-muted-foreground line-through cursor-not-allowed opacity-50' : selectedSlot === slot ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
-                      {slot}{isBooked ? ' (Booked)' : ''}
-                    </button>
-                  );
-                })}
-              </div>
+              {!selectedDate ? (
+                <p className="text-xs text-muted-foreground">Select a date first</p>
+              ) : !isVendorAvailable ? (
+                <p className="text-xs text-destructive">Vendor is not available on this day</p>
+              ) : allSlots.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No time slots available</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {allSlots.map((slot) => {
+                    const isBooked = bookedSlots.includes(slot);
+                    return (
+                      <button key={slot} onClick={() => !isBooked && setSelectedSlot(slot)} disabled={isBooked}
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${isBooked ? 'border-border bg-muted text-muted-foreground line-through cursor-not-allowed opacity-50' : selectedSlot === slot ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
+                        {slot}{isBooked ? ' (Booked)' : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            <Button className="w-full mt-6" disabled={!selectedDate || !selectedSlot} onClick={handleBookNow}>
+            <Button className="w-full mt-6" disabled={!selectedDate || !selectedSlot || !isVendorAvailable} onClick={handleBookNow}>
               Book Now — ₹{finalPrice.toLocaleString()}
             </Button>
 

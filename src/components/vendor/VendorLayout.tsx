@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, DollarSign, User, Wrench,
   Bell, Menu, X, LogOut, CreditCard, History, ChevronRight, Store,
   ArrowLeft, Settings, HelpCircle, Shield, MapPin, TrendingUp, BarChart3,
-  ImageIcon
+  ImageIcon, CalendarClock
 } from "lucide-react";
 import p4uLogo from "@/assets/p4u-logo.png";
 
@@ -21,6 +21,7 @@ const sidebarItems = [
   { label: "Dashboard", to: "/vendor", icon: LayoutDashboard },
   { label: "Products", to: "/vendor/products", icon: Package },
   { label: "Services", to: "/vendor/services", icon: Wrench },
+  { label: "Availability", to: "/vendor/availability", icon: CalendarClock },
   { label: "Orders", to: "/vendor/orders", icon: ShoppingCart },
   { label: "Settlements", to: "/vendor/settlements", icon: DollarSign },
   { label: "Payment History", to: "/vendor/payments", icon: History },
