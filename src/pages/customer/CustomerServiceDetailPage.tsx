@@ -306,7 +306,7 @@ export default function CustomerServiceDetailPage() {
               )}
             </div>
 
-            <Button className="w-full mt-6" disabled={!selectedDate || !selectedSlot} onClick={handleBookNow}>
+            <Button className="w-full mt-6" disabled={!selectedDate || !selectedSlot || !isVendorAvailable} onClick={handleBookNow}>
               Book Now — ₹{finalPrice.toLocaleString()}
             </Button>
 
