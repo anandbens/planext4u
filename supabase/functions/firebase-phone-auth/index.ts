@@ -223,7 +223,60 @@ Deno.serve(async (req) => {
         is_private: false,
       });
 
-      // 6. Generate session token
+      // 6. Credit welcome bonus (200 points)
+      const welcomePoints = 200;
+      const { error: welcomeInsertErr } = await supabase.from("points_transactions").insert({
+        id: "PT-W-" + crypto.randomUUID().substring(0, 8).toUpperCase(),
+        user_id: customerId,
+        user_name: registerData.name,
+        type: "welcome",
+        points: welcomePoints,
+        description: "Welcome bonus for joining P4U!",
+        is_expired: false,
+      });
+      if (welcomeInsertErr) {
+        console.error("Welcome bonus insert error:", welcomeInsertErr.message);
+      } else {
+        // Update customer wallet
+        await supabase.from("customers").update({ wallet_points: welcomePoints }).eq("id", customerId);
+        console.log("Welcome bonus credited:", welcomePoints, "pts to", customerId);
+      }
+
+      // 7. Handle referral bonus
+      if (registerData.referral_code) {
+        const { data: referrer } = await supabase
+          .from("customers")
+          .select("id, name, wallet_points")
+          .eq("referral_code", registerData.referral_code)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (referrer) {
+          const referralPoints = 50;
+          // Credit referral bonus to the referrer
+          const { error: refInsertErr } = await supabase.from("points_transactions").insert({
+            id: "PT-R-" + crypto.randomUUID().substring(0, 8).toUpperCase(),
+            user_id: referrer.id,
+            user_name: referrer.name,
+            type: "referral",
+            points: referralPoints,
+            description: `Referral bonus: ${registerData.name} joined using your code`,
+            is_expired: false,
+          });
+          if (refInsertErr) {
+            console.error("Referral bonus insert error:", refInsertErr.message);
+          } else {
+            await supabase.from("customers").update({
+              wallet_points: (referrer.wallet_points || 0) + referralPoints,
+            }).eq("id", referrer.id);
+            console.log("Referral bonus credited:", referralPoints, "pts to referrer", referrer.id);
+          }
+        } else {
+          console.log("Referral code not found or inactive:", registerData.referral_code);
+        }
+      }
+
+      // 8. Generate session token
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: "magiclink",
         email: phoneEmail,
