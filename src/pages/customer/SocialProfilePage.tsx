@@ -140,6 +140,20 @@ export default function SocialProfilePage() {
 
   const displayPosts = activeTab === 'saved' ? savedPosts : userPosts.filter((p: any) => activeTab === 'reels' ? p.post_type === 'reel' : true);
 
+  // Profile not found state
+  if (!profileLoading && !profile && (profileUsername || routeUserId)) {
+    return (
+      <SocialLayout hideRightSidebar>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Users className="h-16 w-16 text-muted-foreground mb-4" />
+          <h2 className="text-lg font-bold">User Not Found</h2>
+          <p className="text-sm text-muted-foreground mt-1">This account doesn't exist or has been removed.</p>
+          <Button variant="secondary" className="mt-4" onClick={() => navigate(-1)}>Go Back</Button>
+        </div>
+      </SocialLayout>
+    );
+  }
+
   const content = (
     <div className="pb-20 md:pb-8">
       {/* Header */}
