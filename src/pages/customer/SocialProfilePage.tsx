@@ -217,7 +217,13 @@ export default function SocialProfilePage() {
                 >
                   {isFollowing ? <span className="flex items-center gap-1">Following <ChevronDown className="h-3 w-3" /></span> : "Follow"}
                 </Button>
-                <Button variant="secondary" className="flex-1 h-9 text-sm font-semibold" onClick={() => navigate("/app/social/messages")}>
+                <Button variant="secondary" className="flex-1 h-9 text-sm font-semibold" onClick={() => {
+                  if (isMutualFollow) {
+                    navigate(`/app/social/messages/${targetUserId}`);
+                  } else {
+                    toast.info("You can only message users who follow you back");
+                  }
+                }}>
                   Message
                 </Button>
                 <Button variant="secondary" className="h-9 w-9 p-0">
