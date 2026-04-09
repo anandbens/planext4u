@@ -206,7 +206,7 @@ export default function SocialFollowersPage() {
         <div className="divide-y divide-border/10">
           {filtered.map(user => (
             <div key={user.user_id} className="flex items-center gap-3 px-4 py-2.5">
-              <Avatar className="h-12 w-12 cursor-pointer" onClick={() => navigate(`/app/social/@${user.username}`)}>
+              <Avatar className="h-12 w-12 cursor-pointer" onClick={() => navigate(`/app/social/profile/${user.user_id}`)}>
                 {user.avatar_url && <AvatarImage src={user.avatar_url} alt={user.username} />}
                 <AvatarFallback className="bg-muted text-sm font-bold">{user.username.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>

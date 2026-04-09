@@ -304,7 +304,7 @@ function PostCard({ post }: { post: any }) {
         </Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1 flex-wrap">
-            <Link to={`/app/social/@${username}`} className="text-sm font-semibold">{username}</Link>
+            <Link to={`/app/social/profile/${post.user_id}`} className="text-sm font-semibold">{username}</Link>
             {isVerified && <svg className="h-3.5 w-3.5 text-primary fill-current shrink-0" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>}
             {post.collabUser && <span className="text-sm text-muted-foreground"> and <span className="font-semibold text-foreground">{post.collabUser}</span></span>}
           </div>
@@ -438,7 +438,7 @@ function PostCard({ post }: { post: any }) {
       {/* Caption */}
       <div className="px-4 py-1">
         <p className="text-sm">
-          <Link to={`/app/social/@${username}`} className="font-semibold mr-1">{username}</Link>
+          <Link to={`/app/social/profile/${post.user_id}`} className="font-semibold mr-1">{username}</Link>
           {post.caption}
           <span className="text-primary ml-1 cursor-pointer">more</span>
         </p>
@@ -636,8 +636,8 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (story.isOwn) return;
-    const username = storyProfile?.username || story.id;
-    navigate(`/app/social/@${username}`);
+    const storyUserId = story.id;
+    navigate(`/app/social/profile/${storyUserId}`);
   };
 
   return (

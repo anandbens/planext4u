@@ -102,7 +102,7 @@ export default function SocialPostDetailPage() {
 
       {/* Author */}
       <div className="flex items-center gap-3 px-4 py-3">
-        <Link to={`/app/social/@${profile?.username || username}`}>
+        <Link to={`/app/social/profile/${post.user_id}`}>
           <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 p-[1.5px]">
             <div className="h-full w-full rounded-full bg-card flex items-center justify-center overflow-hidden">
               {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> :
@@ -112,7 +112,7 @@ export default function SocialPostDetailPage() {
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-1">
-            <Link to={`/app/social/@${profile?.username || username}`} className="text-sm font-semibold">{username}</Link>
+            <Link to={`/app/social/profile/${post.user_id}`} className="text-sm font-semibold">{username}</Link>
             {isVerified && <svg className="h-3.5 w-3.5 text-primary fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>}
           </div>
           <p className="text-[11px] text-muted-foreground">
@@ -181,7 +181,7 @@ export default function SocialPostDetailPage() {
       {/* Caption */}
       <div className="px-4 py-2">
         <p className="text-sm">
-          <Link to={`/app/social/@${profile?.username || username}`} className="font-semibold mr-1">{username}</Link>
+          <Link to={`/app/social/profile/${post.user_id}`} className="font-semibold mr-1">{username}</Link>
           {post.caption}
         </p>
       </div>

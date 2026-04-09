@@ -159,7 +159,7 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
                   </button>
                 ))}
                 {sidebarSearchResults.users.map((u: any) => (
-                  <button key={u.id} className="flex items-center gap-2.5 py-1.5 w-full" onClick={() => logAndNavigate(u.username, `/app/social/@${u.username}`)}>
+                  <button key={u.id} className="flex items-center gap-2.5 py-1.5 w-full" onClick={() => logAndNavigate(u.username, `/app/social/profile/${u.user_id}`)}>
                     <Avatar className="h-9 w-9"><AvatarFallback className="bg-muted text-xs font-bold">{u.username?.charAt(0).toUpperCase()}</AvatarFallback></Avatar>
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex items-center gap-1">

@@ -101,7 +101,7 @@ export default function SocialNotificationsPage() {
   const handleNotificationClick = (n: any) => {
     if (n.type === 'follow' && n.actor_id) {
       const prof = profileMap.get(n.actor_id);
-      navigate(`/app/social/@${prof?.username || n.actor_id}`);
+      navigate(`/app/social/profile/${n.actor_id}`);
     } else if ((n.type === 'like' || n.type === 'comment' || n.type === 'reply' || n.type === 'repost') && n.reference_id) {
       navigate(`/app/social/post/${n.reference_id}`);
     } else {

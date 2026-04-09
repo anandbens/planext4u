@@ -125,7 +125,7 @@ export default function SocialCommentsPage() {
           return (
             <div key={comment.id}>
               <div className="flex gap-3 px-4 py-3">
-                <Link to={`/app/social/@${username}`}>
+                <Link to={`/app/social/profile/${comment.user_id}`}>
                   <Avatar className="h-9 w-9 shrink-0"><AvatarFallback className="bg-muted text-xs font-bold">{username.charAt(0).toUpperCase()}</AvatarFallback></Avatar>
                 </Link>
                 <div className="flex-1 min-w-0">
@@ -133,7 +133,7 @@ export default function SocialCommentsPage() {
                     <div>
                       {comment.is_pinned && <span className="text-[10px] text-muted-foreground flex items-center gap-1 mb-1">📌 Pinned</span>}
                       <p className="text-sm">
-                        <Link to={`/app/social/@${username}`} className="font-semibold mr-1">{username}</Link>
+                        <Link to={`/app/social/profile/${comment.user_id}`} className="font-semibold mr-1">{username}</Link>
                         {comment.content}
                       </p>
                       <div className="flex items-center gap-4 mt-1">

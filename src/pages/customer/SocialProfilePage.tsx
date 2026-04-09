@@ -201,11 +201,11 @@ export default function SocialProfilePage() {
                 <p className="text-lg font-bold">{postCount}</p>
                 <p className="text-xs text-muted-foreground">Posts</p>
               </div>
-              <button className="text-center" onClick={() => navigate(`/app/social/@${displayUsername}/followers`)}>
+              <button className="text-center" onClick={() => navigate(`/app/social/profile/${targetUserId}/followers`)}>
                 <p className="text-lg font-bold">{followerCount}</p>
                 <p className="text-xs text-muted-foreground">Followers</p>
               </button>
-              <button className="text-center" onClick={() => navigate(`/app/social/@${displayUsername}/followers?tab=following`)}>
+              <button className="text-center" onClick={() => navigate(`/app/social/profile/${targetUserId}/followers?tab=following`)}>
                 <p className="text-lg font-bold">{followingCount}</p>
                 <p className="text-xs text-muted-foreground">Following</p>
               </button>
@@ -225,7 +225,7 @@ export default function SocialProfilePage() {
                   Edit Profile
                 </Button>
                 <Button variant="secondary" className="flex-1 h-9 text-sm font-semibold" onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/app/social/@${displayUsername}`);
+                  navigator.clipboard.writeText(`${window.location.origin}/app/social/profile/${targetUserId}`);
                   toast.success("Profile link copied!");
                 }}>
                   Share Profile
