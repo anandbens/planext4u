@@ -294,7 +294,7 @@ function PostCard({ post }: { post: any }) {
     <article className="border-b border-border/20">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3">
-        <Link to={`/app/social/@${username}`}>
+        <Link to={`/app/social/profile/${post.user_id}`}>
           <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 p-[1.5px]">
             <div className="h-full w-full rounded-full bg-card flex items-center justify-center overflow-hidden">
               {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> :
