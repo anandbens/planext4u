@@ -754,6 +754,15 @@ export default function CustomerHomePage() {
           </div>
         </motion.section>
       </div>
+
+      {/* Notification consent modal */}
+      {customerUser && (
+        <NotificationConsentModal
+          open={showNotifConsent}
+          onClose={() => setShowNotifConsent(false)}
+          userId={customerUser.supabase_uid || customerUser.id}
+        />
+      )}
     </CustomerLayout>
   );
 }
