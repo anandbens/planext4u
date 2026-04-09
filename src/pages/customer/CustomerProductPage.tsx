@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import ProductReviews from "@/components/customer/ProductReviews";
 import { useQuery } from "@tanstack/react-query";
 import { Star, Heart, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw, ChevronLeft, Search, Clock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
