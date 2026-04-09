@@ -50,8 +50,17 @@ export default function SocialProfilePage() {
   const isOwnProfile = (!profileUsername && !routeUserId) || profile?.user_id === currentUserId;
   const targetUserId = profile?.user_id || '';
 
-  // Follow hook
-  const { isFollowing, toggleFollow } = useFollow(targetUserId);
+  // Follow hook — with count invalidation on toggle
+  const { isFollowing, toggleFollow: rawToggleFollow } = useFollow(targetUserId);
+  const handleToggleFollow = () => {
+    rawToggleFollow();
+    // Invalidate counts after a short delay to let the mutation settle
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['social-follower-count', targetUserId] });
+      queryClient.invalidateQueries({ queryKey: ['social-following-count', targetUserId] });
+      queryClient.invalidateQueries({ queryKey: ['social-followed-by', targetUserId, currentUserId] });
+    }, 500);
+  };
 
   // Check if the other user follows us back (mutual follow for messaging)
   const { data: isFollowedBy = false } = useQuery({
