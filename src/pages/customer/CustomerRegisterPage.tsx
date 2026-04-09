@@ -229,7 +229,7 @@ export default function CustomerRegisterPage() {
             email: form.email,
             mobile: `+91${form.mobile}`,
             occupation: form.occupation || null,
-            referral_code: form.referral || null,
+            referral_code: form.referral_code || null,
           },
         },
       });
