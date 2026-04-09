@@ -10,6 +10,7 @@ import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseH
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { isNativePlatform } from "@/lib/capacitor-auth";
+import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 export default function CustomerLoginPage() {
@@ -75,6 +76,14 @@ export default function CustomerLoginPage() {
 
       if (!customer) {
         toast.error("Only registered users must be able to trigger OTP and login.", { duration: 5000 });
+        return;
+      }
+
+      // Rate limit check before Firebase OTP
+      const rateCheck = await checkOtpRateLimit(`${countryCode}${cleaned}`);
+      if (!rateCheck.allowed) {
+        toast.error("Too many OTP requests. Please try again after 5 minutes.", { duration: 6000 });
+        setTimer(rateCheck.retry_after);
         return;
       }
 

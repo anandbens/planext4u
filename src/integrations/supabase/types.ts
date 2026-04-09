@@ -1088,6 +1088,24 @@ export type Database = {
           },
         ]
       }
+      otp_requests: {
+        Row: {
+          last_requested_at: string
+          phone_number: string
+          request_count: number
+        }
+        Insert: {
+          last_requested_at?: string
+          phone_number: string
+          request_count?: number
+        }
+        Update: {
+          last_requested_at?: string
+          phone_number?: string
+          request_count?: number
+        }
+        Relationships: []
+      }
       parent_items: {
         Row: {
           category_id: string | null
@@ -4074,6 +4092,7 @@ export type Database = {
         Args: { _entity_id: string; _entity_type: string }
         Returns: number
       }
+      check_otp_rate_limit: { Args: { _phone: string }; Returns: Json }
       create_social_notification: {
         Args: {
           _actor_id: string
