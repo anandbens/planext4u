@@ -109,7 +109,7 @@ export default function CustomerServiceDetailPage() {
         .eq("vendor_id", vendorId)
         .eq("day_of_week", selectedDayOfWeek)
         .maybeSingle();
-      return data as { is_available: boolean; time_slots: { start: string; end: string }[] } | null;
+      return data as any as { is_available: boolean; time_slots: { start: string; end: string }[] } | null;
     },
     enabled: !!vendorId && selectedDayOfWeek !== null,
   });
