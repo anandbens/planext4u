@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Star, Clock, MapPin, Heart } from "lucide-react";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 function useServiceWishlist() {
@@ -38,6 +39,32 @@ export default function CustomerServicesPage() {
   const { data: categories } = useQuery({
     queryKey: ["serviceCategories"],
     queryFn: api.getServiceCategories,
+  });
+
+  // Fetch vendor availability for today's day of week
+  const todayDow = new Date().getDay();
+  const vendorIds = useMemo(() => {
+    const ids = new Set<string>();
+    services?.forEach((s) => { if (s.vendor_id) ids.add(s.vendor_id); });
+    return Array.from(ids);
+  }, [services]);
+
+  const { data: availabilityMap } = useQuery({
+    queryKey: ["vendorAvailabilityToday", vendorIds, todayDow],
+    queryFn: async () => {
+      if (vendorIds.length === 0) return {};
+      const { data } = await supabase
+        .from("vendor_availability" as any)
+        .select("vendor_id, is_available, time_slots")
+        .in("vendor_id", vendorIds)
+        .eq("day_of_week", todayDow);
+      const map: Record<string, { is_available: boolean; time_slots: any[] }> = {};
+      (data || []).forEach((row: any) => {
+        map[row.vendor_id] = { is_available: row.is_available, time_slots: row.time_slots || [] };
+      });
+      return map;
+    },
+    enabled: vendorIds.length > 0,
   });
 
   return (
@@ -90,8 +117,10 @@ export default function CustomerServicesPage() {
             {services?.map((s) => {
               const discountPct = s.discount ? Math.round((s.discount / s.price) * 100) : 0;
               const isWished = wishlist.includes(s.id);
+              const vendorAvail = availabilityMap?.[s.vendor_id];
+              const isAvailableToday = vendorAvail ? vendorAvail.is_available : true; // default available if no data
               return (
-                <Card key={s.id} className="overflow-hidden hover:shadow-md transition-all">
+                <Card key={s.id} className={`overflow-hidden hover:shadow-md transition-all ${!isAvailableToday ? 'opacity-60' : ''}`}>
                   <Link to={`/app/service/${s.id}`}>
                     <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 h-32 flex items-center justify-center relative overflow-hidden">
                       {s.image ? (
@@ -104,6 +133,9 @@ export default function CustomerServicesPage() {
                         <Star className="h-2.5 w-2.5 fill-warning text-warning" />
                         <span className="text-[10px] font-medium">{s.rating}</span>
                       </div>
+                      {!isAvailableToday && (
+                        <Badge className="absolute bottom-2 left-2 bg-muted text-muted-foreground border-0 text-[10px]">Unavailable Today</Badge>
+                      )}
                     </div>
                   </Link>
                   <div className="p-4 relative">
@@ -114,7 +146,14 @@ export default function CustomerServicesPage() {
                       <Heart className={`h-4 w-4 ${isWished ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`} />
                     </button>
                     <Link to={`/app/service/${s.id}`}>
-                      <p className="text-xs text-primary font-medium">{s.vendor_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-primary font-medium">{s.vendor_name}</p>
+                        {isAvailableToday ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 border-green-500/50 text-green-600">Available</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 border-destructive/50 text-destructive">Unavailable</Badge>
+                        )}
+                      </div>
                       <h3 className="text-base font-semibold mt-0.5">{s.title}</h3>
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{s.description}</p>
                       <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
