@@ -1,65 +1,87 @@
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { downloadCSV } from "@/lib/csv";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Gift, Users, CheckCircle, Clock } from "lucide-react";
+import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import ReportDataGrid, { Column } from "@/components/admin/ReportDataGrid";
 
-const data = [
-  { month: "Oct", referrals: 120, conversions: 85, rewards: 8500 },
-  { month: "Nov", referrals: 145, conversions: 102, rewards: 10200 },
-  { month: "Dec", referrals: 180, conversions: 128, rewards: 12800 },
-  { month: "Jan", referrals: 210, conversions: 152, rewards: 15200 },
-  { month: "Feb", referrals: 250, conversions: 180, rewards: 18000 },
-  { month: "Mar", referrals: 295, conversions: 215, rewards: 21500 },
-];
+interface ReferralRow {
+  id: string; name: string; email: string; mobile: string;
+  referral_code: string; referred_by: string; created_at: string;
+  wallet_points: number; status: string;
+}
 
 export default function ReferralReportPage() {
+  const [dateFrom, setDateFrom] = useState<Date>(subDays(new Date(), 180));
+  const [dateTo, setDateTo] = useState<Date>(new Date());
+  const [rows, setRows] = useState<ReferralRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const { data } = await supabase.from("customers")
+        .select("id, name, email, mobile, referral_code, referred_by, created_at, wallet_points, status")
+        .not("referred_by", "is", null)
+        .gte("created_at", startOfDay(dateFrom).toISOString())
+        .lte("created_at", endOfDay(dateTo).toISOString())
+        .order("created_at", { ascending: false });
+      setRows(data || []);
+      setLoading(false);
+    };
+    fetchData();
+  }, [dateFrom, dateTo]);
+
+  const totalReferrals = rows.length;
+  const activeReferrals = rows.filter(r => r.status === "active").length;
+  const uniqueReferrers = new Set(rows.map(r => r.referred_by)).size;
+
+  const columns: Column<ReferralRow>[] = [
+    { key: "id", label: "Customer ID", sortable: true, render: r => <span className="font-mono text-xs">{r.id}</span> },
+    { key: "name", label: "Referred User", sortable: true, render: r => <span className="font-medium">{r.name}</span> },
+    { key: "email", label: "Email", sortable: true },
+    { key: "mobile", label: "Mobile", sortable: true },
+    { key: "referred_by", label: "Referral Code Used", sortable: true, render: r => <span className="font-mono text-xs font-semibold">{r.referred_by}</span> },
+    { key: "referral_code", label: "Own Code", render: r => <span className="font-mono text-xs">{r.referral_code}</span> },
+    { key: "wallet_points", label: "Wallet Points", sortable: true, align: "right" },
+    { key: "created_at", label: "Joined On", sortable: true, render: r => format(parseISO(r.created_at), "dd MMM yyyy") },
+    { key: "status", label: "Status", sortable: true, align: "center", render: r => <Badge className={`border-0 text-[10px] ${r.status === "active" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{r.status}</Badge> },
+  ];
+
   return (
     <AdminLayout>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Referral Report</h1>
-          <p className="page-description">Referral conversions and reward distribution</p>
-        </div>
-        <Button onClick={() => downloadCSV(data, ["month", "referrals", "conversions", "rewards"], "referral_report")} variant="outline" size="sm">
-          <Download className="h-4 w-4 mr-1" /> Export CSV
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <Card className="p-4"><span className="text-xs text-muted-foreground">Total Referrals</span><p className="text-xl font-bold mt-1">1,200</p></Card>
-        <Card className="p-4"><span className="text-xs text-muted-foreground">Conversions</span><p className="text-xl font-bold mt-1">862 (71.8%)</p></Card>
-        <Card className="p-4"><span className="text-xs text-muted-foreground">Rewards Paid</span><p className="text-xl font-bold mt-1">₹86,200</p></Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold mb-4">Referral Trend</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-              <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-              <Tooltip />
-              <Line type="monotone" dataKey="referrals" stroke="hsl(var(--primary))" strokeWidth={2} name="Referrals" />
-              <Line type="monotone" dataKey="conversions" stroke="hsl(var(--success))" strokeWidth={2} name="Conversions" />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold mb-4">Rewards Distributed</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-              <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v: number) => [`₹${v.toLocaleString()}`]} />
-              <Bar dataKey="rewards" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
+      <ReportDataGrid
+        title="Referral Report"
+        subtitle="Referral conversions and reward tracking"
+        data={rows} columns={columns} loading={loading}
+        searchPlaceholder="Search by name, email, referral code..."
+        searchKeys={["name", "email", "mobile", "referred_by", "referral_code"]}
+        dateFrom={dateFrom} dateTo={dateTo}
+        onDateFromChange={setDateFrom} onDateToChange={setDateTo}
+        exportFilename="referral_report"
+        summaryCards={
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) : (<>
+              <MiniStat icon={Gift} label="Total Referrals" value={totalReferrals.toLocaleString()} />
+              <MiniStat icon={CheckCircle} label="Active Referred" value={activeReferrals.toLocaleString()} />
+              <MiniStat icon={Users} label="Unique Referrers" value={uniqueReferrers.toLocaleString()} />
+              <MiniStat icon={Clock} label="Avg per Referrer" value={uniqueReferrers > 0 ? (totalReferrals / uniqueReferrers).toFixed(1) : "0"} />
+            </>)}
+          </div>
+        }
+      />
     </AdminLayout>
+  );
+}
+
+function MiniStat({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-1"><span className="text-xs text-muted-foreground">{label}</span><Icon className="h-4 w-4 text-muted-foreground" /></div>
+      <p className="text-xl font-bold">{value}</p>
+    </Card>
   );
 }

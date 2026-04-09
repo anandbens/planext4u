@@ -1,227 +1,100 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Download, CalendarIcon, Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { exportToCSV } from "@/lib/csv";
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format, subDays, startOfDay, endOfDay, eachMonthOfInterval, parseISO, startOfMonth } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { Star, Gift, ArrowUp, ArrowDown } from "lucide-react";
+import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import ReportDataGrid, { Column } from "@/components/admin/ReportDataGrid";
 
-const typeStyle: Record<string, string> = {
-  welcome: "bg-primary/10 text-primary",
-  referral: "bg-info/10 text-info",
-  order_reward: "bg-success/10 text-success",
-  redemption: "bg-destructive/10 text-destructive",
+interface PointsRow {
+  id: string; created_at: string; user_id: string; user_name: string;
+  type: string; points: number; description: string; is_expired: boolean;
+  expires_at: string;
+}
+
+const typeColors: Record<string, string> = {
+  welcome: "bg-primary/10 text-primary", referral: "bg-info/10 text-info",
+  order_reward: "bg-success/10 text-success", redemption: "bg-destructive/10 text-destructive",
+  expired: "bg-muted text-muted-foreground",
 };
 
 export default function PointsReportPage() {
   const [dateFrom, setDateFrom] = useState<Date>(subDays(new Date(), 180));
   const [dateTo, setDateTo] = useState<Date>(new Date());
-  const [stats, setStats] = useState({ issued: 0, redeemed: 0, outstanding: 0 });
-  const [monthlyData, setMonthlyData] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const perPage = 10;
+  const [rows, setRows] = useState<PointsRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Stats + chart
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      const from = startOfDay(dateFrom).toISOString();
-      const to = endOfDay(dateTo).toISOString();
-
-      const { data: pts } = await supabase.from("points_transactions").select("points, type, created_at")
-        .gte("created_at", from).lte("created_at", to);
-
-      const all = pts || [];
-      const issued = all.filter(p => p.points > 0).reduce((s, p) => s + p.points, 0);
-      const redeemed = Math.abs(all.filter(p => p.points < 0).reduce((s, p) => s + p.points, 0));
-
-      // Outstanding = total wallet balance across all customers
-      const { data: customers } = await supabase.from("customers").select("wallet_points");
-      const outstanding = (customers || []).reduce((s, c) => s + (c.wallet_points || 0), 0);
-      setStats({ issued, redeemed, outstanding });
-
-      // Monthly chart
-      const months = eachMonthOfInterval({ start: dateFrom, end: dateTo });
-      const monthMap = new Map<string, { issued: number; redeemed: number }>();
-      months.forEach(m => monthMap.set(format(m, "yyyy-MM"), { issued: 0, redeemed: 0 }));
-      all.forEach(p => {
-        const key = format(startOfMonth(parseISO(p.created_at)), "yyyy-MM");
-        const entry = monthMap.get(key);
-        if (entry) {
-          if (p.points > 0) entry.issued += p.points;
-          else entry.redeemed += Math.abs(p.points);
-        }
-      });
-
-      const md: any[] = [];
-      monthMap.forEach((v, k) => md.push({ month: format(parseISO(k + "-01"), "MMM yy"), issued: v.issued, redeemed: v.redeemed }));
-      setMonthlyData(md);
+      let q = supabase.from("points_transactions")
+        .select("id, created_at, user_id, user_name, type, points, description, is_expired, expires_at")
+        .gte("created_at", startOfDay(dateFrom).toISOString())
+        .lte("created_at", endOfDay(dateTo).toISOString())
+        .order("created_at", { ascending: false });
+      if (typeFilter !== "all") q = q.eq("type", typeFilter);
+      const { data } = await q;
+      setRows(data || []);
       setLoading(false);
     };
-    fetch();
-  }, [dateFrom, dateTo]);
+    fetchData();
+  }, [dateFrom, dateTo, typeFilter]);
 
-  // Paginated transactions list
-  useEffect(() => {
-    const fetch = async () => {
-      const from = startOfDay(dateFrom).toISOString();
-      const to = endOfDay(dateTo).toISOString();
-      const offset = (page - 1) * perPage;
+  const totalIssued = rows.filter(r => r.points > 0).reduce((s, r) => s + r.points, 0);
+  const totalRedeemed = rows.filter(r => r.points < 0).reduce((s, r) => s + Math.abs(r.points), 0);
+  const welcomeCount = rows.filter(r => r.type === "welcome").length;
+  const referralCount = rows.filter(r => r.type === "referral").length;
 
-      let query = supabase.from("points_transactions").select("*", { count: "exact" })
-        .gte("created_at", from).lte("created_at", to);
-      if (typeFilter !== "all") query = query.eq("type", typeFilter);
-      if (search) query = query.or(`user_name.ilike.%${search}%,description.ilike.%${search}%`);
-      query = query.order("created_at", { ascending: false }).range(offset, offset + perPage - 1);
-
-      const { data, count } = await query;
-      setTransactions(data || []);
-      setTotal(count || 0);
-    };
-    fetch();
-  }, [dateFrom, dateTo, typeFilter, search, page]);
-
-  const handleExportAll = async () => {
-    const from = startOfDay(dateFrom).toISOString();
-    const to = endOfDay(dateTo).toISOString();
-    let query = supabase.from("points_transactions").select("*")
-      .gte("created_at", from).lte("created_at", to).order("created_at", { ascending: false });
-    if (typeFilter !== "all") query = query.eq("type", typeFilter);
-    if (search) query = query.or(`user_name.ilike.%${search}%,description.ilike.%${search}%`);
-    const { data } = await query;
-    if (!data?.length) return;
-    exportToCSV(data, [
-      { key: "id", label: "ID" }, { key: "user_name", label: "Customer" },
-      { key: "type", label: "Type" }, { key: "points", label: "Points" },
-      { key: "description", label: "Description" }, { key: "created_at", label: "Date" },
-    ], "points_statement");
-  };
-
-  const totalPages = Math.ceil(total / perPage);
+  const columns: Column<PointsRow>[] = [
+    { key: "id", label: "Transaction ID", sortable: true, render: r => <span className="font-mono text-xs">{r.id}</span> },
+    { key: "created_at", label: "Date", sortable: true, render: r => format(parseISO(r.created_at), "dd MMM yyyy, HH:mm") },
+    { key: "user_name", label: "Customer", sortable: true, render: r => r.user_name || "—" },
+    { key: "user_id", label: "Customer ID", render: r => <span className="font-mono text-xs">{r.user_id}</span> },
+    { key: "type", label: "Type", sortable: true, align: "center", render: r => <Badge className={(typeColors[r.type] || "bg-muted") + " border-0 text-[10px]"}>{r.type.replace("_", " ")}</Badge> },
+    { key: "points", label: "Points", sortable: true, align: "right", render: r => <span className={`font-semibold ${r.points > 0 ? "text-success" : "text-destructive"}`}>{r.points > 0 ? "+" : ""}{r.points}</span> },
+    { key: "description", label: "Description", render: r => <span className="text-xs">{r.description}</span> },
+    { key: "expires_at", label: "Expires At", sortable: true, render: r => r.expires_at ? format(parseISO(r.expires_at), "dd MMM yyyy") : "—" },
+    { key: "is_expired", label: "Expired", align: "center", render: r => r.is_expired ? <Badge variant="destructive" className="text-[10px]">Yes</Badge> : "—" },
+  ];
 
   return (
     <AdminLayout>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Points Report</h1>
-          <p className="page-description">Points issued, redeemed, and balance overview</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <DatePicker label="From" date={dateFrom} setDate={setDateFrom} />
-          <DatePicker label="To" date={dateTo} setDate={setDateTo} />
-          <Button onClick={handleExportAll} variant="outline" size="sm"><Download className="h-4 w-4 mr-1" /> Export All</Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {loading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) : (
-          <>
-            <Card className="p-4"><span className="text-xs text-muted-foreground">Total Issued</span><p className="text-xl font-bold mt-1 text-success">{stats.issued.toLocaleString('en-IN')}</p></Card>
-            <Card className="p-4"><span className="text-xs text-muted-foreground">Total Redeemed</span><p className="text-xl font-bold mt-1 text-destructive">{stats.redeemed.toLocaleString('en-IN')}</p></Card>
-            <Card className="p-4"><span className="text-xs text-muted-foreground">Outstanding Balance</span><p className="text-xl font-bold mt-1">{stats.outstanding.toLocaleString('en-IN')}</p></Card>
-          </>
-        )}
-      </div>
-
-      {!loading && (
-        <Card className="p-5 mb-6">
-          <h3 className="text-sm font-semibold mb-4">Points Issued vs Redeemed</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-              <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-              <Tooltip />
-              <Bar dataKey="issued" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} name="Issued" />
-              <Bar dataKey="redeemed" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="Redeemed" />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      )}
-
-      {/* Transaction log */}
-      <Card className="p-5">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="text-sm font-semibold">Points Statement</h3>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input placeholder="Search customer..." className="pl-8 h-8 w-48 text-xs" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-            </div>
-            <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
-              <SelectTrigger className="h-8 w-36 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="welcome">Welcome</SelectItem>
-                <SelectItem value="referral">Referral</SelectItem>
-                <SelectItem value="order_reward">Order Reward</SelectItem>
-                <SelectItem value="redemption">Redemption</SelectItem>
-              </SelectContent>
-            </Select>
+      <ReportDataGrid
+        title="Points Report"
+        subtitle="Points issued, redeemed, and balance overview"
+        data={rows} columns={columns} loading={loading}
+        searchPlaceholder="Search by customer, description, transaction ID..."
+        searchKeys={["user_name", "user_id", "description", "id"]}
+        dateFrom={dateFrom} dateTo={dateTo}
+        onDateFromChange={setDateFrom} onDateToChange={setDateTo}
+        statusFilter={{ value: typeFilter, onChange: setTypeFilter, label: "Type", options: [
+          { label: "Welcome", value: "welcome" }, { label: "Referral", value: "referral" },
+          { label: "Order Reward", value: "order_reward" }, { label: "Redemption", value: "redemption" },
+        ] }}
+        exportFilename="points_report"
+        summaryCards={
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) : (<>
+              <MiniStat icon={ArrowUp} label="Total Issued" value={totalIssued.toLocaleString()} />
+              <MiniStat icon={ArrowDown} label="Total Redeemed" value={totalRedeemed.toLocaleString()} />
+              <MiniStat icon={Star} label="Welcome Bonuses" value={welcomeCount.toLocaleString()} />
+              <MiniStat icon={Gift} label="Referral Bonuses" value={referralCount.toLocaleString()} />
+            </>)}
           </div>
-        </div>
-
-        <div className="space-y-2">
-          {transactions.map((t) => (
-            <div key={t.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20">
-              <div className="flex items-center gap-3">
-                <Badge className={`${typeStyle[t.type] || ''} border-0 text-[10px]`}>{t.type?.replace(/_/g, ' ')}</Badge>
-                <div>
-                  <p className="text-sm font-medium">{t.user_name || 'Unknown'}</p>
-                  <p className="text-xs text-muted-foreground">{t.description}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className={`text-sm font-bold ${t.points >= 0 ? 'text-success' : 'text-destructive'}`}>
-                  {t.points >= 0 ? '+' : ''}{t.points}
-                </p>
-                <p className="text-[10px] text-muted-foreground">{format(parseISO(t.created_at), "dd MMM yy, HH:mm")}</p>
-              </div>
-            </div>
-          ))}
-          {transactions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No transactions found</p>}
-        </div>
-
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between pt-3 mt-3 border-t border-border/50">
-            <span className="text-xs text-muted-foreground">Page {page} of {totalPages} · {total} total</span>
-            <div className="flex gap-1">
-              <Button variant="outline" size="icon" className="h-7 w-7" disabled={page <= 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-3 w-3" /></Button>
-              <Button variant="outline" size="icon" className="h-7 w-7" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-3 w-3" /></Button>
-            </div>
-          </div>
-        )}
-      </Card>
+        }
+      />
     </AdminLayout>
   );
 }
 
-function DatePicker({ label, date, setDate }: { label: string; date: Date; setDate: (d: Date) => void }) {
+function MiniStat({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("justify-start text-left font-normal", !date && "text-muted-foreground")}>
-          <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-          {date ? format(date, "MMM dd, yyyy") : label}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} initialFocus className="p-3 pointer-events-auto" />
-      </PopoverContent>
-    </Popover>
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-1"><span className="text-xs text-muted-foreground">{label}</span><Icon className="h-4 w-4 text-muted-foreground" /></div>
+      <p className="text-xl font-bold">{value}</p>
+    </Card>
   );
 }
