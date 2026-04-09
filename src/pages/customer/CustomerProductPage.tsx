@@ -384,19 +384,8 @@ export default function CustomerProductPage() {
               </div>
             </TabsContent>
           )}
-          <TabsContent value="reviews" className="mt-4 space-y-3">
-            {reviews.map((r, i) => (
-              <Card key={i} className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{r.user}</span>
-                    <div className="flex">{Array.from({ length: r.rating }).map((_, j) => <Star key={j} className="h-3 w-3 fill-warning text-warning" />)}</div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{r.date}</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">{r.comment}</p>
-              </Card>
-            ))}
+          <TabsContent value="reviews" className="mt-4">
+            <ProductReviews productId={id!} />
           </TabsContent>
         </Tabs>
       </div>
