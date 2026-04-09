@@ -87,6 +87,7 @@ import PrivacyPolicyPage from "./pages/customer/PrivacyPolicyPage";
 import AuthCallbackPage from "./pages/customer/AuthCallbackPage";
 import ForgotPasswordPage from "./pages/customer/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/customer/ResetPasswordPage";
+import CustomerSupportPage from "./pages/customer/CustomerSupportPage";
 
 // Social pages
 import SocialFeedPage from "./pages/customer/SocialFeedPage";
@@ -363,6 +364,7 @@ const AppRoutes = () => {
         <Route path="/app/classifieds/post" element={<CustomerPage><CustomerPostAdPage /></CustomerPage>} />
         <Route path="/app/classifieds/:id" element={<CustomerPage><CustomerClassifiedDetailPage /></CustomerPage>} />
         <Route path="/app/vendor-register" element={<CustomerPage><VendorRegisterPage /></CustomerPage>} />
+        <Route path="/app/support" element={<CustomerPage><CustomerSupportPage /></CustomerPage>} />
 
         {/* Social routes */}
         <Route path="/app/social" element={<CustomerPage><SocialFeedPage /></CustomerPage>} />
