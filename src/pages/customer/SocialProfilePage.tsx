@@ -20,20 +20,23 @@ function Bell(props: any) {
 
 export default function SocialProfilePage() {
   const navigate = useNavigate();
-  const { username } = useParams();
+  const { username, userId: routeUserId } = useParams();
   const { customerUser } = useAuth();
   const [activeTab, setActiveTab] = useState("posts");
+  const queryClient = useQueryClient();
 
   const currentUserId = customerUser?.supabase_uid || customerUser?.id;
   const profileUsername = username?.replace('@', '');
 
-  // Fetch social profile from DB
-  const { data: profile } = useQuery({
-    queryKey: ['social-profile', profileUsername, currentUserId],
+  // Fetch social profile from DB — supports both username and userId routes
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['social-profile', profileUsername, routeUserId, currentUserId],
     queryFn: async () => {
       let query = supabase.from('social_profiles').select('*');
       if (profileUsername) {
         query = query.eq('username', profileUsername);
+      } else if (routeUserId) {
+        query = query.eq('user_id', routeUserId);
       } else if (currentUserId) {
         query = query.eq('user_id', currentUserId);
       } else {
@@ -44,11 +47,20 @@ export default function SocialProfilePage() {
     },
   });
 
-  const isOwnProfile = !profileUsername || profile?.user_id === currentUserId;
+  const isOwnProfile = (!profileUsername && !routeUserId) || profile?.user_id === currentUserId;
   const targetUserId = profile?.user_id || '';
 
-  // Follow hook
-  const { isFollowing, toggleFollow } = useFollow(targetUserId);
+  // Follow hook — with count invalidation on toggle
+  const { isFollowing, toggleFollow: rawToggleFollow } = useFollow(targetUserId);
+  const handleToggleFollow = () => {
+    rawToggleFollow();
+    // Invalidate counts after a short delay to let the mutation settle
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['social-follower-count', targetUserId] });
+      queryClient.invalidateQueries({ queryKey: ['social-following-count', targetUserId] });
+      queryClient.invalidateQueries({ queryKey: ['social-followed-by', targetUserId, currentUserId] });
+    }, 500);
+  };
 
   // Check if the other user follows us back (mutual follow for messaging)
   const { data: isFollowedBy = false } = useQuery({
@@ -127,6 +139,20 @@ export default function SocialProfilePage() {
   const avatarUrl = profile?.avatar_url || '';
 
   const displayPosts = activeTab === 'saved' ? savedPosts : userPosts.filter((p: any) => activeTab === 'reels' ? p.post_type === 'reel' : true);
+
+  // Profile not found state
+  if (!profileLoading && !profile && (profileUsername || routeUserId)) {
+    return (
+      <SocialLayout hideRightSidebar>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Users className="h-16 w-16 text-muted-foreground mb-4" />
+          <h2 className="text-lg font-bold">User Not Found</h2>
+          <p className="text-sm text-muted-foreground mt-1">This account doesn't exist or has been removed.</p>
+          <Button variant="secondary" className="mt-4" onClick={() => navigate(-1)}>Go Back</Button>
+        </div>
+      </SocialLayout>
+    );
+  }
 
   const content = (
     <div className="pb-20 md:pb-8">
@@ -213,19 +239,15 @@ export default function SocialProfilePage() {
                 <Button
                   className={`flex-1 h-9 text-sm font-semibold`}
                   variant={isFollowing ? "secondary" : "default"}
-                  onClick={() => toggleFollow()}
+                  onClick={() => handleToggleFollow()}
                 >
                   {isFollowing ? <span className="flex items-center gap-1">Following <ChevronDown className="h-3 w-3" /></span> : "Follow"}
                 </Button>
-                <Button variant="secondary" className="flex-1 h-9 text-sm font-semibold" onClick={() => {
-                  if (isMutualFollow) {
-                    navigate(`/app/social/messages/${targetUserId}`);
-                  } else {
-                    toast.info("You can only message users who follow you back");
-                  }
-                }}>
-                  Message
-                </Button>
+                {isMutualFollow && (
+                  <Button variant="secondary" className="flex-1 h-9 text-sm font-semibold" onClick={() => navigate(`/app/social/messages/${targetUserId}`)}>
+                    Message
+                  </Button>
+                )}
                 <Button variant="secondary" className="h-9 w-9 p-0">
                   <UserPlus className="h-4 w-4" />
                 </Button>
