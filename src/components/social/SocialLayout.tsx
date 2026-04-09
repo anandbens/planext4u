@@ -205,12 +205,12 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
             <div className="space-y-1">
               {suggestions.map((item: any) => (
                 <div key={item.id} className="flex items-center gap-2.5 py-1.5">
-                  <Avatar className="h-9 w-9 cursor-pointer" onClick={() => navigate(`/app/social/@${item.username}`)}>
+                  <Avatar className="h-9 w-9 cursor-pointer" onClick={() => navigate(`/app/social/profile/${item.user_id}`)}>
                     {item.avatar_url ? <img src={item.avatar_url} alt="" className="w-full h-full object-cover rounded-full" /> :
                       <AvatarFallback className="bg-muted text-xs font-bold">{item.username?.charAt(0).toUpperCase()}</AvatarFallback>}
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs font-semibold truncate block cursor-pointer" onClick={() => navigate(`/app/social/@${item.username}`)}>{item.username}</span>
+                    <span className="text-xs font-semibold truncate block cursor-pointer" onClick={() => navigate(`/app/social/profile/${item.user_id}`)}>{item.username}</span>
                     <span className="text-[10px] text-muted-foreground">{item.display_name || 'Suggested for you'}</span>
                   </div>
                   <button className="text-xs font-semibold text-primary" onClick={() => followUser.mutate(item.user_id)}>Follow</button>
