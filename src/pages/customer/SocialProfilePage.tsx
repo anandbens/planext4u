@@ -20,20 +20,23 @@ function Bell(props: any) {
 
 export default function SocialProfilePage() {
   const navigate = useNavigate();
-  const { username } = useParams();
+  const { username, userId: routeUserId } = useParams();
   const { customerUser } = useAuth();
   const [activeTab, setActiveTab] = useState("posts");
+  const queryClient = useQueryClient();
 
   const currentUserId = customerUser?.supabase_uid || customerUser?.id;
   const profileUsername = username?.replace('@', '');
 
-  // Fetch social profile from DB
-  const { data: profile } = useQuery({
-    queryKey: ['social-profile', profileUsername, currentUserId],
+  // Fetch social profile from DB — supports both username and userId routes
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['social-profile', profileUsername, routeUserId, currentUserId],
     queryFn: async () => {
       let query = supabase.from('social_profiles').select('*');
       if (profileUsername) {
         query = query.eq('username', profileUsername);
+      } else if (routeUserId) {
+        query = query.eq('user_id', routeUserId);
       } else if (currentUserId) {
         query = query.eq('user_id', currentUserId);
       } else {
@@ -44,7 +47,7 @@ export default function SocialProfilePage() {
     },
   });
 
-  const isOwnProfile = !profileUsername || profile?.user_id === currentUserId;
+  const isOwnProfile = (!profileUsername && !routeUserId) || profile?.user_id === currentUserId;
   const targetUserId = profile?.user_id || '';
 
   // Follow hook
