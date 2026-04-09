@@ -140,6 +140,7 @@ export default function CustomerRegisterPage() {
   }, [timer]);
 
   useEffect(() => {
+    preRenderRecaptcha();
     return () => {
       resetPhoneAuth();
     };
