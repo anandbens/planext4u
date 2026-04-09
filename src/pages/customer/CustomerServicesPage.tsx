@@ -117,8 +117,10 @@ export default function CustomerServicesPage() {
             {services?.map((s) => {
               const discountPct = s.discount ? Math.round((s.discount / s.price) * 100) : 0;
               const isWished = wishlist.includes(s.id);
+              const vendorAvail = availabilityMap?.[s.vendor_id];
+              const isAvailableToday = vendorAvail ? vendorAvail.is_available : true; // default available if no data
               return (
-                <Card key={s.id} className="overflow-hidden hover:shadow-md transition-all">
+                <Card key={s.id} className={`overflow-hidden hover:shadow-md transition-all ${!isAvailableToday ? 'opacity-60' : ''}`}>
                   <Link to={`/app/service/${s.id}`}>
                     <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 h-32 flex items-center justify-center relative overflow-hidden">
                       {s.image ? (
@@ -131,6 +133,9 @@ export default function CustomerServicesPage() {
                         <Star className="h-2.5 w-2.5 fill-warning text-warning" />
                         <span className="text-[10px] font-medium">{s.rating}</span>
                       </div>
+                      {!isAvailableToday && (
+                        <Badge className="absolute bottom-2 left-2 bg-muted text-muted-foreground border-0 text-[10px]">Unavailable Today</Badge>
+                      )}
                     </div>
                   </Link>
                   <div className="p-4 relative">
@@ -141,7 +146,14 @@ export default function CustomerServicesPage() {
                       <Heart className={`h-4 w-4 ${isWished ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`} />
                     </button>
                     <Link to={`/app/service/${s.id}`}>
-                      <p className="text-xs text-primary font-medium">{s.vendor_name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-primary font-medium">{s.vendor_name}</p>
+                        {isAvailableToday ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 border-green-500/50 text-green-600">Available</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 border-destructive/50 text-destructive">Unavailable</Badge>
+                        )}
+                      </div>
                       <h3 className="text-base font-semibold mt-0.5">{s.title}</h3>
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{s.description}</p>
                       <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
