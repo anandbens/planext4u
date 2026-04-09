@@ -32,7 +32,7 @@ interface ProductReviewsProps {
 }
 
 export default function ProductReviews({ productId, entityType = "product" }: ProductReviewsProps) {
-  const { customerUser, supabaseUser } = useAuth();
+  const { customerUser } = useAuth();
   const qc = useQueryClient();
   const [sort, setSort] = useState<SortOption>("recent");
   const [page, setPage] = useState(0);
@@ -40,7 +40,7 @@ export default function ProductReviews({ productId, entityType = "product" }: Pr
   const [newComment, setNewComment] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState<string>("");
 
-  const userId = supabaseUser?.id;
+  const userId = customerUser?.supabase_uid;
   const customerId = customerUser?.id;
 
   // Check if user has purchased this product (completed/delivered orders)
