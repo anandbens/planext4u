@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import ProductReviews from "@/components/customer/ProductReviews";
 import { useQuery } from "@tanstack/react-query";
 import { Star, Heart, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw, ChevronLeft, Search, Clock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,11 +14,6 @@ import { toast } from "sonner";
 import { api, ProductVariant } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 
-const reviews = [
-  { user: "Rahul S.", rating: 5, comment: "Excellent quality, worth every rupee!", date: "2 days ago" },
-  { user: "Priya P.", rating: 4, comment: "Good product, fast delivery", date: "5 days ago" },
-  { user: "Amit K.", rating: 5, comment: "Best in this price range. Highly recommended!", date: "1 week ago" },
-];
 
 export default function CustomerProductPage() {
   const { id } = useParams();
@@ -388,19 +384,8 @@ export default function CustomerProductPage() {
               </div>
             </TabsContent>
           )}
-          <TabsContent value="reviews" className="mt-4 space-y-3">
-            {reviews.map((r, i) => (
-              <Card key={i} className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{r.user}</span>
-                    <div className="flex">{Array.from({ length: r.rating }).map((_, j) => <Star key={j} className="h-3 w-3 fill-warning text-warning" />)}</div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{r.date}</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">{r.comment}</p>
-              </Card>
-            ))}
+          <TabsContent value="reviews" className="mt-4">
+            <ProductReviews productId={id!} />
           </TabsContent>
         </Tabs>
       </div>
