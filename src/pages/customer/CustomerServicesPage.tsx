@@ -41,6 +41,32 @@ export default function CustomerServicesPage() {
     queryFn: api.getServiceCategories,
   });
 
+  // Fetch vendor availability for today's day of week
+  const todayDow = new Date().getDay();
+  const vendorIds = useMemo(() => {
+    const ids = new Set<string>();
+    services?.forEach((s) => { if (s.vendor_id) ids.add(s.vendor_id); });
+    return Array.from(ids);
+  }, [services]);
+
+  const { data: availabilityMap } = useQuery({
+    queryKey: ["vendorAvailabilityToday", vendorIds, todayDow],
+    queryFn: async () => {
+      if (vendorIds.length === 0) return {};
+      const { data } = await supabase
+        .from("vendor_availability" as any)
+        .select("vendor_id, is_available, time_slots")
+        .in("vendor_id", vendorIds)
+        .eq("day_of_week", todayDow);
+      const map: Record<string, { is_available: boolean; time_slots: any[] }> = {};
+      (data || []).forEach((row: any) => {
+        map[row.vendor_id] = { is_available: row.is_available, time_slots: row.time_slots || [] };
+      });
+      return map;
+    },
+    enabled: vendorIds.length > 0,
+  });
+
   return (
     <CustomerLayout>
       <div className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-6">
