@@ -126,6 +126,20 @@ Deno.serve(async (req) => {
         return respond(false, { error: "Name and email are required for registration." });
       }
 
+      // Check if email is already used by another customer
+      const { data: emailExists } = await supabase
+        .from("customers")
+        .select("id, mobile")
+        .eq("email", registerData.email)
+        .maybeSingle();
+
+      if (emailExists) {
+        return respond(false, {
+          error: "This email address is already registered with another account. Please use a different email.",
+          code: "EMAIL_ALREADY_EXISTS",
+        });
+      }
+
       // 1. Create Supabase auth user
       const { data: newAuthUser, error: createErr } = await supabase.auth.admin.createUser({
         email: phoneEmail,
@@ -158,7 +172,19 @@ Deno.serve(async (req) => {
       });
       if (custInsertErr) {
         console.error("Customer insert error:", custInsertErr.message);
-        throw new Error("Failed to create customer profile: " + custInsertErr.message);
+        if (custInsertErr.message?.includes("customers_email_unique")) {
+          return respond(false, {
+            error: "This email address is already registered with another account. Please use a different email.",
+            code: "EMAIL_ALREADY_EXISTS",
+          });
+        }
+        if (custInsertErr.message?.includes("duplicate key")) {
+          return respond(false, {
+            error: "An account with these details already exists. Please try logging in instead.",
+            code: "ALREADY_REGISTERED",
+          });
+        }
+        throw new Error("Unable to create your account. Please try again later.");
       }
 
       // 4. Create user_roles entry
