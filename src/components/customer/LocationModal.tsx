@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { getLocation } from "@/lib/device-service";
+import { toast } from "sonner";
 import { Search, Navigation, Loader2 } from "lucide-react";
 
 const GOOGLE_MAPS_KEY_FALLBACK = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
@@ -48,39 +50,47 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
   const [suggestions, setSuggestions] = useState<Array<{ description: string; place_id: string }>>([]);
   const [searching, setSearching] = useState(false);
 
-  const handleUseCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) return;
+  const handleUseCurrentLocation = useCallback(async () => {
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        saveSelectedCoords(latitude, longitude);
-        try {
-          const apiKey = await getGoogleMapsKey();
-          const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
-          const data = await res.json();
-          if (data.status === "OK" && data.results.length > 0) {
-            const components = data.results[0].address_components || [];
-            const get = (type: string) => components.find((c: any) => c.types.includes(type))?.long_name || "";
-            const area = get("sublocality_level_1") || get("sublocality") || get("neighborhood") || get("locality");
-            const city = get("locality") || get("administrative_area_level_2") || "";
-            const label = area ? `${area}, ${city}` : city || data.results[0].formatted_address?.slice(0, 30) || "Current Location";
-            onSelect(label);
-            saveSelectedLocation(label);
-          } else {
-            onSelect("Current Location");
-            saveSelectedLocation("Current Location");
-          }
-        } catch {
-          onSelect("Current Location");
-          saveSelectedLocation("Current Location");
+    try {
+      const coords = await getLocation();
+      if (!coords) {
+        toast.error("Enable location permission to use your current location.");
+        return;
+      }
+
+      saveSelectedCoords(coords.lat, coords.lng);
+
+      let label = "Current Location";
+
+      try {
+        const apiKey = await getGoogleMapsKey();
+        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${apiKey}`);
+        const data = await res.json();
+
+        if (data.status === "OK" && data.results.length > 0) {
+          const components = data.results[0].address_components || [];
+          const get = (type: string) => components.find((c: { long_name: string; types: string[] }) => c.types.includes(type))?.long_name || "";
+          const area = get("sublocality_level_1") || get("sublocality") || get("neighborhood") || get("locality");
+          const city = get("locality") || get("administrative_area_level_3") || get("administrative_area_level_2") || "";
+          const state = get("administrative_area_level_1");
+
+          label = [area || city, state].filter(Boolean).join(", ")
+            || data.results[0].formatted_address?.split(",").slice(0, 2).join(", ")
+            || "Current Location";
         }
-        setLocating(false);
-        onOpenChange(false);
-      },
-      () => { setLocating(false); },
-      { enableHighAccuracy: true, timeout: 15000 }
-    );
+      } catch {
+        label = "Current Location";
+      }
+
+      onSelect(label);
+      saveSelectedLocation(label);
+      onOpenChange(false);
+    } catch {
+      toast.error("Could not fetch your current location. Please try again.");
+    } finally {
+      setLocating(false);
+    }
   }, [onSelect, onOpenChange]);
 
   const handleSearch = useCallback(async (query: string) => {
@@ -129,6 +139,7 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
         </div>
 
         <button
+          type="button"
           onClick={handleUseCurrentLocation}
           disabled={locating}
           className="flex items-center gap-3 w-full p-3 rounded-xl border border-border/50 hover:bg-accent/50 transition-colors mt-2"
@@ -140,9 +151,9 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
             <p className="text-sm font-semibold text-primary">Use My Current Location</p>
             <p className="text-xs text-muted-foreground">Enable your current location for better services</p>
           </div>
-          <Button variant="outline" size="sm" className="text-xs border-primary text-primary hover:bg-primary hover:text-primary-foreground" disabled={locating}>
+          <span className="inline-flex min-w-20 items-center justify-center rounded-md border border-primary px-3 py-2 text-xs font-medium text-primary transition-colors">
             {locating ? "Detecting..." : "Enable"}
-          </Button>
+          </span>
         </button>
 
         {suggestions.length > 0 && (
