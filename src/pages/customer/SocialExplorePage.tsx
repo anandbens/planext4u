@@ -118,7 +118,7 @@ export default function SocialExplorePage() {
                 <div>
                   <span className="text-sm font-semibold mb-2 block">Accounts</span>
                   {searchResults.users.map((u: any) => (
-                    <button key={u.id} className="flex items-center gap-3 py-2.5 w-full" onClick={() => handleSearchSelect(u.username, `/app/social/@${u.username}`)}>
+                    <button key={u.id} className="flex items-center gap-3 py-2.5 w-full" onClick={() => handleSearchSelect(u.username, `/app/social/profile/${u.user_id}`)}>
                       <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                         {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-sm font-bold">{u.username?.charAt(0).toUpperCase()}</span>}
                       </div>

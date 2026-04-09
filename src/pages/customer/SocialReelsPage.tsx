@@ -241,10 +241,10 @@ function ReelCard({ reel }: { reel: any }) {
       {/* Bottom info */}
       <div className="absolute bottom-20 left-3 right-16 z-10">
         <div className="flex items-center gap-2 mb-2">
-          <Link to={`/app/social/@${username}`}>
+          <Link to={`/app/social/profile/${reel.user_id}`}>
             <Avatar className="h-8 w-8 border border-white"><AvatarFallback className="bg-primary text-primary-foreground text-xs">{username.charAt(0).toUpperCase()}</AvatarFallback></Avatar>
           </Link>
-          <Link to={`/app/social/@${username}`} className="text-white text-sm font-semibold">{username}</Link>
+          <Link to={`/app/social/profile/${reel.user_id}`} className="text-white text-sm font-semibold">{username}</Link>
           {isVerified && <svg className="h-3.5 w-3.5 text-primary fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>}
           <FollowBtn targetUserId={reel.user_id} isMock={isMock} />
         </div>
