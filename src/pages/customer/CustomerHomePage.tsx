@@ -764,6 +764,14 @@ export default function CustomerHomePage() {
           userId={customerUser.supabase_uid || customerUser.id}
         />
       )}
+
+      {/* Rating popup for unrated purchases */}
+      {customerUser && customerUser.supabase_uid && (
+        <RatingPopup
+          customerId={customerUser.id}
+          userId={customerUser.supabase_uid}
+        />
+      )}
     </CustomerLayout>
   );
 }
