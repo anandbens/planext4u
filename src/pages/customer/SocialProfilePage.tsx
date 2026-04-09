@@ -50,6 +50,24 @@ export default function SocialProfilePage() {
   // Follow hook
   const { isFollowing, toggleFollow } = useFollow(targetUserId);
 
+  // Check if the other user follows us back (mutual follow for messaging)
+  const { data: isFollowedBy = false } = useQuery({
+    queryKey: ['social-followed-by', targetUserId, currentUserId],
+    queryFn: async () => {
+      if (!targetUserId || !currentUserId || targetUserId === currentUserId) return false;
+      const { count } = await supabase
+        .from('social_follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', targetUserId)
+        .eq('following_id', currentUserId)
+        .eq('status', 'active');
+      return (count || 0) > 0;
+    },
+    enabled: !!targetUserId && !!currentUserId && !isOwnProfile,
+  });
+
+  const isMutualFollow = isFollowing && isFollowedBy;
+
   // Fetch user's posts from DB
   const { data: userPosts = [] } = useQuery({
     queryKey: ['social-user-posts', targetUserId, activeTab],
