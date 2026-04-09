@@ -274,7 +274,7 @@ export default function CustomerServiceDetailPage() {
                   const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' });
                   const val = d.toISOString().split('T')[0];
                   return (
-                    <button key={i} onClick={() => setSelectedDate(val)}
+                    <button key={i} onClick={() => { setSelectedDate(val); setSelectedSlot(""); }}
                       className={`px-3 py-2 rounded-lg border text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${selectedDate === val ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
                       {label}
                     </button>
