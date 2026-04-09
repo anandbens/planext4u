@@ -43,17 +43,10 @@ export default function CustomerPhoneLoginPage() {
     if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
-      // Check if user is registered before sending OTP
-      // Match against multiple phone formats (with/without country code, spaces)
+      // Check if user is registered before sending OTP (uses SECURITY DEFINER to bypass RLS)
       const fullPhone = `${countryCode}${cleaned}`;
-      const fullPhoneSpaced = `${countryCode} ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('id')
-        .or(`mobile.eq.${cleaned},mobile.eq.${fullPhone},mobile.eq.${fullPhoneSpaced},mobile.ilike.%${cleaned}%`)
-        .limit(1)
-        .maybeSingle();
-      if (!customer) {
+      const { data: isRegistered } = await supabase.rpc('check_phone_registered', { _phone: cleaned });
+      if (!isRegistered) {
         setLoading(false);
         toast.error("No account found with this mobile number. Please create an account first.", { duration: 5000 });
         return;
