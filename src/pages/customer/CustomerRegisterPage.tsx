@@ -234,10 +234,17 @@ export default function CustomerRegisterPage() {
         },
       });
       if (error) {
-        // supabase.functions.invoke throws on non-2xx but we now always return 200
-        // so this should only happen on network errors
         throw new Error(error.message || "Network error during registration");
       }
+
+      // Check for "already registered" before generic error check
+      if (data?.code === "ALREADY_REGISTERED") {
+        toast.error("This mobile number is already registered. Please login instead.");
+        await resetPhoneAuth();
+        navigate("/app/login", { replace: true });
+        return;
+      }
+
       if (!data?.ok && !data?.success) {
         throw new Error(data?.error || "Registration failed");
       }
@@ -247,13 +254,6 @@ export default function CustomerRegisterPage() {
         type: "magiclink",
       });
       if (verifyError) throw new Error(verifyError.message);
-
-      if (data?.code === "ALREADY_REGISTERED" || (!data?.is_new_user && data?.customer?.id)) {
-        toast.error("This mobile number is already registered. Please login instead.");
-        await resetPhoneAuth();
-        navigate("/app/login", { replace: true });
-        return;
-      }
 
       toast.success("🎉 Account created! Now set up your password.", { duration: 5000 });
       logActivity("registration", `New customer registered: ${form.name} (${form.email})`);
