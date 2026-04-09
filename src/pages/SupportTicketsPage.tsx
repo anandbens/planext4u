@@ -31,16 +31,18 @@ export default function SupportTicketsPage() {
   const [dateFrom, setDateFrom] = useState<string>();
   const [dateTo, setDateTo] = useState<string>();
 
+  const [filterStatus, setFilterStatus] = useState("all");
+
   const load = () => {
     setLoading(true);
-    api.getSupportTickets({ page, search, date_from: dateFrom, date_to: dateTo }).then((res) => {
+    api.getSupportTickets({ page, search, status: filterStatus, date_from: dateFrom, date_to: dateTo }).then((res) => {
       setTickets(res.data);
       setTotal(res.total);
       setLoading(false);
     });
   };
 
-  useEffect(() => { load(); }, [page, search, dateFrom, dateTo]);
+  useEffect(() => { load(); }, [page, search, dateFrom, dateTo, filterStatus]);
 
   const handleResolve = async () => {
     if (!selected || !resolution.trim()) { toast.error("Please enter resolution notes"); return; }
@@ -104,7 +106,7 @@ export default function SupportTicketsPage() {
             { label: "Closed", value: "closed" },
           ]},
         ]}
-        onFilterChange={(_key, _val) => {}}
+        onFilterChange={(_key, val) => { setFilterStatus(val); setPage(1); }}
         onDateRangeChange={(from, to) => { setDateFrom(from); setDateTo(to); }}
         onRowClick={(ticket) => { setSelected(ticket); setNewStatus(ticket.status); setResolution(""); }}
       />
