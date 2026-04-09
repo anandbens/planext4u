@@ -209,15 +209,19 @@ export default function CustomerHomePage() {
   const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
   useEffect(() => {
     const savedLoc = loadSelectedLocation();
-    if (savedLoc?.name) {
-      setDetectedLocation(savedLoc.name);
+    if (savedLoc) {
+      setDetectedLocation(savedLoc);
       return;
     }
     getLocation().then(async (loc) => {
       if (!loc) return;
       try {
+        // Try reverse geocoding with a simple fetch
+        const { supabase: sb } = await import("@/integrations/supabase/client");
+        const { data: keyRow } = await sb.from("platform_variables").select("value").eq("key", "GOOGLE_MAPS_API_KEY").maybeSingle();
+        const apiKey = keyRow?.value || "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
         const resp = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${loc.lat},${loc.lng}&key=${await getGoogleMapsKey()}`
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${loc.lat},${loc.lng}&key=${apiKey}`
         );
         const json = await resp.json();
         if (json.results?.[0]) {
