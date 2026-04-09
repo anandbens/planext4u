@@ -16,6 +16,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { NotificationConsentModal } from "@/components/customer/NotificationConsentModal";
+import { getLocation, DeviceLocation } from "@/lib/device-service";
+import { useAuth } from "@/lib/auth";
 
 function DiscountSubscriptionSection() {
   const [email, setEmail] = useState("");
@@ -185,12 +188,47 @@ function SellerListSection({ data, isLoading, parentCategories, containerAnim, i
 export default function CustomerHomePage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { customerUser } = useAuth();
   const { data, isLoading } = useQuery({ queryKey: ["customerHome"], queryFn: api.getCustomerHome });
   const [bannerIdx, setBannerIdx] = useState(0);
   const [showSplash, setShowSplash] = useState(() => {
     const shown = sessionStorage.getItem("p4u_splash_shown");
     return !shown;
   });
+
+  // Notification consent modal - show once after login
+  const [showNotifConsent, setShowNotifConsent] = useState(false);
+  useEffect(() => {
+    if (customerUser && !localStorage.getItem("p4u_notif_consent_shown")) {
+      const timer = setTimeout(() => setShowNotifConsent(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [customerUser]);
+
+  // Auto-detect location
+  const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
+  useEffect(() => {
+    const savedLoc = loadSelectedLocation();
+    if (savedLoc?.name) {
+      setDetectedLocation(savedLoc.name);
+      return;
+    }
+    getLocation().then(async (loc) => {
+      if (!loc) return;
+      try {
+        const resp = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${loc.lat},${loc.lng}&key=${await getGoogleMapsKey()}`
+        );
+        const json = await resp.json();
+        if (json.results?.[0]) {
+          const components = json.results[0].address_components || [];
+          const city = components.find((c: any) => c.types.includes("locality"))?.long_name;
+          const state = components.find((c: any) => c.types.includes("administrative_area_level_1"))?.short_name;
+          if (city) setDetectedLocation(`${city}${state ? `, ${state}` : ""}`);
+        }
+      } catch { /* silent */ }
+    });
+  }, []);
 
   useEffect(() => {
     if (!data?.banners.length) return;
