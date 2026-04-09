@@ -97,6 +97,23 @@ export default function CustomerServiceDetailPage() {
     enabled: !!id,
   });
 
+  // Fetch vendor availability for selected date
+  const vendorId = service?.vendor_id;
+  const selectedDayOfWeek = selectedDate ? new Date(selectedDate).getDay() : null;
+  const { data: vendorAvailability } = useQuery({
+    queryKey: ["vendorAvailability", vendorId, selectedDayOfWeek],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("vendor_availability" as any)
+        .select("*")
+        .eq("vendor_id", vendorId)
+        .eq("day_of_week", selectedDayOfWeek)
+        .maybeSingle();
+      return data as { is_available: boolean; time_slots: { start: string; end: string }[] } | null;
+    },
+    enabled: !!vendorId && selectedDayOfWeek !== null,
+  });
+
   // Fetch real reviews from DB
   const { data: reviews = [] } = useQuery({
     queryKey: ["reviews", "service", id],
