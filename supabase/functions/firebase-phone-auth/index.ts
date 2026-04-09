@@ -100,8 +100,9 @@ Deno.serve(async (req) => {
     const normalizedPhone = phoneNumber.replace(/\s/g, "");
     const phoneEmail = `${normalizedPhone.replace("+", "")}@phone.planext4u.local`;
 
-    // Extract just the digits (without country code) for flexible matching
-    const rawDigits = normalizedPhone.replace(/^\+\d{1,3}/, "");
+    // Extract the local phone digits for flexible matching (keeps last 10 digits for Indian numbers)
+    const phoneDigits = normalizedPhone.replace(/\D/g, "");
+    const rawDigits = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
 
     // Check if a registered customer exists with this phone number
     const { data: existingCustomer, error: custLookupErr } = await supabase
