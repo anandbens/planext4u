@@ -1,113 +1,88 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Download, CalendarIcon } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { exportToCSV } from "@/lib/csv";
-import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, subDays, startOfDay, endOfDay, eachMonthOfInterval, parseISO, startOfMonth } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { FileText, DollarSign, ShoppingCart, Percent } from "lucide-react";
+import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import ReportDataGrid, { Column } from "@/components/admin/ReportDataGrid";
+
+interface TaxRow {
+  id: string; created_at: string; customer_name: string; vendor_name: string;
+  status: string; subtotal: number; tax: number; platform_fee: number;
+  gst_on_platform_fee: number; total: number;
+}
 
 export default function TaxReportPage() {
   const [dateFrom, setDateFrom] = useState<Date>(subDays(new Date(), 180));
   const [dateTo, setDateTo] = useState<Date>(new Date());
-  const [stats, setStats] = useState({ totalTax: 0, totalOrders: 0, avgTaxPerOrder: 0 });
-  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [rows, setRows] = useState<TaxRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      const from = startOfDay(dateFrom).toISOString();
-      const to = endOfDay(dateTo).toISOString();
-
-      const { data: orders } = await supabase.from("orders").select("tax, total, created_at")
-        .gte("created_at", from).lte("created_at", to);
-
-      const all = orders || [];
-      const totalTax = all.reduce((s, o) => s + Number(o.tax || 0), 0);
-      const totalOrders = all.length;
-      const avgTaxPerOrder = totalOrders > 0 ? Math.round(totalTax / totalOrders) : 0;
-      setStats({ totalTax, totalOrders, avgTaxPerOrder });
-
-      // Monthly grouping
-      const months = eachMonthOfInterval({ start: dateFrom, end: dateTo });
-      const monthMap = new Map<string, { tax: number; revenue: number }>();
-      months.forEach(m => monthMap.set(format(m, "yyyy-MM"), { tax: 0, revenue: 0 }));
-      all.forEach(o => {
-        const key = format(startOfMonth(parseISO(o.created_at)), "yyyy-MM");
-        const entry = monthMap.get(key);
-        if (entry) { entry.tax += Number(o.tax || 0); entry.revenue += Number(o.total || 0); }
-      });
-
-      const md: any[] = [];
-      monthMap.forEach((v, k) => md.push({ month: format(parseISO(k + "-01"), "MMM yy"), tax: v.tax, revenue: v.revenue }));
-      setMonthlyData(md);
+      const { data } = await supabase.from("orders")
+        .select("id, created_at, customer_name, vendor_name, status, subtotal, tax, platform_fee, gst_on_platform_fee, total")
+        .gte("created_at", startOfDay(dateFrom).toISOString())
+        .lte("created_at", endOfDay(dateTo).toISOString())
+        .order("created_at", { ascending: false });
+      setRows((data || []).map((o: any) => ({ ...o, platform_fee: o.platform_fee || 0, gst_on_platform_fee: o.gst_on_platform_fee || 0 })));
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [dateFrom, dateTo]);
+
+  const totalProductTax = rows.reduce((s, r) => s + Number(r.tax || 0), 0);
+  const totalGstOnPF = rows.reduce((s, r) => s + r.gst_on_platform_fee, 0);
+  const totalPlatformFee = rows.reduce((s, r) => s + r.platform_fee, 0);
+  const totalTaxCollected = totalProductTax + totalGstOnPF;
+
+  const columns: Column<TaxRow>[] = [
+    { key: "id", label: "Order ID", sortable: true, render: r => <span className="font-mono text-xs">{r.id}</span> },
+    { key: "created_at", label: "Date", sortable: true, render: r => format(parseISO(r.created_at), "dd MMM yyyy") },
+    { key: "customer_name", label: "Customer", sortable: true, render: r => r.customer_name || "—" },
+    { key: "vendor_name", label: "Vendor", sortable: true, render: r => r.vendor_name || "—" },
+    { key: "subtotal", label: "Subtotal (₹)", sortable: true, align: "right", render: r => `₹${Number(r.subtotal || 0).toLocaleString("en-IN")}` },
+    { key: "tax", label: "Product Tax (₹)", sortable: true, align: "right", render: r => <span className="font-semibold">₹{Number(r.tax || 0).toLocaleString("en-IN")}</span> },
+    { key: "platform_fee", label: "Platform Fee (₹)", sortable: true, align: "right", render: r => `₹${r.platform_fee.toLocaleString("en-IN")}` },
+    { key: "gst_on_platform_fee", label: "GST on PF (₹)", sortable: true, align: "right", render: r => <span className="font-semibold">₹${r.gst_on_platform_fee.toLocaleString("en-IN")}</span> },
+    { key: "total", label: "Order Total (₹)", sortable: true, align: "right", render: r => `₹${Number(r.total || 0).toLocaleString("en-IN")}` },
+    { key: "status", label: "Status", sortable: true, align: "center", render: r => <Badge className={`border-0 text-[10px] ${["completed", "delivered"].includes(r.status) ? "bg-success/10 text-success" : r.status === "cancelled" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>{r.status.replace("_", " ")}</Badge> },
+  ];
 
   return (
     <AdminLayout>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Tax Report</h1>
-          <p className="page-description">Tax collected across orders by period</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <DatePicker label="From" date={dateFrom} setDate={setDateFrom} />
-          <DatePicker label="To" date={dateTo} setDate={setDateTo} />
-          <Button onClick={() => exportToCSV(monthlyData, [{ key: "month", label: "Month" }, { key: "tax", label: "Tax (₹)" }, { key: "revenue", label: "Revenue (₹)" }], "tax_report")} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-1" /> Export CSV
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {loading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) : (
-          <>
-            <Card className="p-4"><span className="text-xs text-muted-foreground">Total Tax Collected</span><p className="text-xl font-bold mt-1">₹{stats.totalTax.toLocaleString('en-IN')}</p></Card>
-            <Card className="p-4"><span className="text-xs text-muted-foreground">Taxable Orders</span><p className="text-xl font-bold mt-1">{stats.totalOrders.toLocaleString()}</p></Card>
-            <Card className="p-4"><span className="text-xs text-muted-foreground">Avg Tax / Order</span><p className="text-xl font-bold mt-1">₹{stats.avgTaxPerOrder.toLocaleString('en-IN')}</p></Card>
-          </>
-        )}
-      </div>
-
-      {!loading && (
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold mb-4">Monthly Tax Collection</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-              <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
-              <Tooltip formatter={(v: number) => [`₹${v.toLocaleString('en-IN')}`]} />
-              <Bar dataKey="tax" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Tax" />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      )}
+      <ReportDataGrid
+        title="Tax Report"
+        subtitle="Product tax, GST on platform fee, and tax collection summary"
+        data={rows} columns={columns} loading={loading}
+        searchPlaceholder="Search by order ID, customer, vendor..."
+        searchKeys={["id", "customer_name", "vendor_name"]}
+        dateFrom={dateFrom} dateTo={dateTo}
+        onDateFromChange={setDateFrom} onDateToChange={setDateTo}
+        exportFilename="tax_report"
+        summaryCards={
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) : (<>
+              <MiniStat icon={FileText} label="Total Tax Collected" value={`₹${totalTaxCollected.toLocaleString("en-IN")}`} />
+              <MiniStat icon={DollarSign} label="Product Tax" value={`₹${totalProductTax.toLocaleString("en-IN")}`} />
+              <MiniStat icon={Percent} label="GST on Platform Fee" value={`₹${totalGstOnPF.toLocaleString("en-IN")}`} />
+              <MiniStat icon={ShoppingCart} label="Total Orders" value={rows.length.toLocaleString()} />
+            </>)}
+          </div>
+        }
+      />
     </AdminLayout>
   );
 }
 
-function DatePicker({ label, date, setDate }: { label: string; date: Date; setDate: (d: Date) => void }) {
+function MiniStat({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("justify-start text-left font-normal", !date && "text-muted-foreground")}>
-          <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-          {date ? format(date, "MMM dd, yyyy") : label}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={date} onSelect={(d) => d && setDate(d)} initialFocus className="p-3 pointer-events-auto" />
-      </PopoverContent>
-    </Popover>
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-1"><span className="text-xs text-muted-foreground">{label}</span><Icon className="h-4 w-4 text-muted-foreground" /></div>
+      <p className="text-xl font-bold">{value}</p>
+    </Card>
   );
 }

@@ -1,76 +1,95 @@
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { downloadCSV } from "@/lib/csv";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Users, UserPlus, Wallet, Activity } from "lucide-react";
+import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import ReportDataGrid, { Column } from "@/components/admin/ReportDataGrid";
 
-const growthData = [
-  { month: "Oct", newUsers: 1200, activeUsers: 8500 },
-  { month: "Nov", newUsers: 1450, activeUsers: 9200 },
-  { month: "Dec", newUsers: 1800, activeUsers: 10500 },
-  { month: "Jan", newUsers: 2100, activeUsers: 12000 },
-  { month: "Feb", newUsers: 2400, activeUsers: 14200 },
-  { month: "Mar", newUsers: 2850, activeUsers: 16800 },
-];
-
-const demographics = [
-  { name: "18-25", value: 28, color: "hsl(var(--primary))" },
-  { name: "26-35", value: 38, color: "hsl(var(--success))" },
-  { name: "36-45", value: 22, color: "hsl(var(--warning))" },
-  { name: "46+", value: 12, color: "hsl(var(--info))" },
-];
+interface CustomerRow {
+  id: string; name: string; email: string; mobile: string; status: string;
+  wallet_points: number; referral_code: string; occupation: string;
+  created_at: string; kyc_status: string; profile_completeness: number;
+}
 
 export default function CustomerReportPage() {
+  const [dateFrom, setDateFrom] = useState<Date>(subDays(new Date(), 90));
+  const [dateTo, setDateTo] = useState<Date>(new Date());
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [rows, setRows] = useState<CustomerRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      let q = supabase.from("customers")
+        .select("id, name, email, mobile, status, wallet_points, referral_code, occupation, created_at, kyc_status, profile_completeness")
+        .gte("created_at", startOfDay(dateFrom).toISOString())
+        .lte("created_at", endOfDay(dateTo).toISOString())
+        .order("created_at", { ascending: false });
+      if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      const { data } = await q;
+      setRows((data || []).map((c: any) => ({ ...c, wallet_points: c.wallet_points || 0, profile_completeness: c.profile_completeness || 0 })));
+      setLoading(false);
+    };
+    fetchData();
+  }, [dateFrom, dateTo, statusFilter]);
+
+  const totalCustomers = rows.length;
+  const activeCount = rows.filter(c => c.status === "active").length;
+  const totalWallet = rows.reduce((s, c) => s + c.wallet_points, 0);
+  const kycVerified = rows.filter(c => c.kyc_status === "verified").length;
+
+  const columns: Column<CustomerRow>[] = [
+    { key: "id", label: "Customer ID", sortable: true, render: r => <span className="font-mono text-xs">{r.id}</span> },
+    { key: "name", label: "Name", sortable: true, render: r => <span className="font-medium">{r.name}</span> },
+    { key: "email", label: "Email", sortable: true },
+    { key: "mobile", label: "Mobile", sortable: true },
+    { key: "occupation", label: "Occupation", sortable: true, render: r => r.occupation || "—" },
+    { key: "wallet_points", label: "Wallet Points", sortable: true, align: "right" },
+    { key: "referral_code", label: "Referral Code", render: r => <span className="font-mono text-xs">{r.referral_code}</span> },
+    { key: "profile_completeness", label: "Profile %", sortable: true, align: "right", render: r => `${r.profile_completeness}%` },
+    { key: "kyc_status", label: "KYC", sortable: true, align: "center", render: r => <Badge variant={r.kyc_status === "verified" ? "default" : "outline"} className="text-[10px]">{r.kyc_status || "pending"}</Badge> },
+    { key: "created_at", label: "Registered On", sortable: true, render: r => format(parseISO(r.created_at), "dd MMM yyyy") },
+    { key: "status", label: "Status", sortable: true, align: "center", render: r => <Badge className={`border-0 text-[10px] ${r.status === "active" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>{r.status}</Badge> },
+  ];
+
   return (
     <AdminLayout>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Customer Report</h1>
-          <p className="page-description">User growth, retention, and demographics</p>
-        </div>
-        <Button onClick={() => downloadCSV(growthData, ["month", "newUsers", "activeUsers"], "customer_report")} variant="outline" size="sm">
-          <Download className="h-4 w-4 mr-1" /> Export CSV
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2 p-5">
-          <h3 className="text-sm font-semibold mb-4">User Growth</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={growthData}>
-              <defs>
-                <linearGradient id="newG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} /><stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} /></linearGradient>
-                <linearGradient id="actG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--success))" stopOpacity={0.3} /><stop offset="100%" stopColor="hsl(var(--success))" stopOpacity={0} /></linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-              <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-              <Tooltip />
-              <Area type="monotone" dataKey="activeUsers" stroke="hsl(var(--success))" fill="url(#actG)" strokeWidth={2} name="Active Users" />
-              <Area type="monotone" dataKey="newUsers" stroke="hsl(var(--primary))" fill="url(#newG)" strokeWidth={2} name="New Users" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card className="p-5">
-          <h3 className="text-sm font-semibold mb-4">Age Demographics</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie data={demographics} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={4}>
-                {demographics.map((e, i) => <Cell key={i} fill={e.color} />)}
-              </Pie>
-              <Tooltip formatter={(v: number) => [`${v}%`]} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex flex-wrap gap-3 mt-2 justify-center">
-            {demographics.map((d) => (
-              <span key={d.name} className="text-xs flex items-center gap-1">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: d.color }} /> {d.name} ({d.value}%)
-              </span>
-            ))}
+      <ReportDataGrid
+        title="Customer Report"
+        subtitle={`${totalCustomers} customers in selected period`}
+        data={rows}
+        columns={columns}
+        loading={loading}
+        searchPlaceholder="Search by name, email, mobile, referral code..."
+        searchKeys={["name", "email", "mobile", "referral_code", "id"]}
+        dateFrom={dateFrom} dateTo={dateTo}
+        onDateFromChange={setDateFrom} onDateToChange={setDateTo}
+        statusFilter={{ value: statusFilter, onChange: setStatusFilter, options: [{ label: "Active", value: "active" }, { label: "Inactive", value: "inactive" }] }}
+        exportFilename="customer_report"
+        summaryCards={
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) : (<>
+              <MiniStat icon={Users} label="Total Customers" value={totalCustomers.toLocaleString()} />
+              <MiniStat icon={UserPlus} label="Active" value={activeCount.toLocaleString()} />
+              <MiniStat icon={Wallet} label="Total Wallet Points" value={totalWallet.toLocaleString()} />
+              <MiniStat icon={Activity} label="KYC Verified" value={kycVerified.toLocaleString()} />
+            </>)}
           </div>
-        </Card>
-      </div>
+        }
+      />
     </AdminLayout>
+  );
+}
+
+function MiniStat({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between mb-1"><span className="text-xs text-muted-foreground">{label}</span><Icon className="h-4 w-4 text-muted-foreground" /></div>
+      <p className="text-xl font-bold">{value}</p>
+    </Card>
   );
 }
