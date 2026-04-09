@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { ArrowLeft, Heart, Send, MoreHorizontal, Smile } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
 import { usePostComments } from "@/hooks/use-social-interactions";
