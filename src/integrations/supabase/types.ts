@@ -4134,6 +4134,15 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      match_contacts_by_phone: {
+        Args: { _phones: string[] }
+        Returns: {
+          id: string
+          mobile: string
+          name: string
+          profile_photo: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -4157,6 +4166,10 @@ export type Database = {
       }
       refresh_social_profile_counts: {
         Args: { _user_id: string }
+        Returns: undefined
+      }
+      save_device_token: {
+        Args: { _platform?: string; _token: string; _user_id: string }
         Returns: undefined
       }
     }
