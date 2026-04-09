@@ -55,7 +55,7 @@ export default function CustomerPhoneLoginPage() {
         .maybeSingle();
       if (!customer) {
         setLoading(false);
-        toast.error("Only registered users must be able to trigger OTP and login.", { duration: 5000 });
+        toast.error("No account found with this mobile number. Please create an account first.", { duration: 5000 });
         return;
       }
 
@@ -111,8 +111,10 @@ export default function CustomerPhoneLoginPage() {
 
       if (error || !data?.success) {
         const errMsg = data?.code === "NOT_REGISTERED"
-          ? "Only registered users must be able to trigger OTP and login."
-          : (data?.error || error?.message || "Backend authentication failed");
+          ? "No account found with this mobile number. Please create an account first."
+          : data?.code === "EMAIL_ALREADY_EXISTS"
+          ? "This email is already registered with another account. Please use a different email."
+          : (data?.error || "Something went wrong. Please try again.");
         throw new Error(errMsg);
       }
 
@@ -123,7 +125,7 @@ export default function CustomerPhoneLoginPage() {
       });
 
       if (verifyError) {
-        throw new Error(verifyError.message);
+        throw new Error("Session verification failed. Please try logging in again.");
       }
 
       toast.success("Login successful! 🎉");
@@ -136,7 +138,7 @@ export default function CustomerPhoneLoginPage() {
       } else if (err.code === "auth/code-expired") {
         toast.error("OTP expired. Please resend.");
       } else {
-        toast.error(err.message || "Verification failed");
+        toast.error(err.message || "Verification failed. Please try again.");
       }
     } finally {
       setLoading(false);

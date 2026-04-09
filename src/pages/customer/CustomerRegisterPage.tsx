@@ -238,34 +238,40 @@ export default function CustomerRegisterPage() {
         },
       });
       if (error) {
-        throw new Error(error.message || "Network error during registration");
+        throw new Error("Unable to connect. Please check your internet and try again.");
       }
 
-      // Check for "already registered" before generic error check
+      // Handle specific error codes with user-friendly messages
       if (data?.code === "ALREADY_REGISTERED") {
-        toast.error("This mobile number is already registered. Please login instead.");
+        toast.error("This mobile number is already registered. Please login instead.", { duration: 5000 });
         await resetPhoneAuth();
         navigate("/app/login", { replace: true });
         return;
       }
 
+      if (data?.code === "EMAIL_ALREADY_EXISTS") {
+        toast.error("This email is already registered with another account. Please use a different email.", { duration: 5000 });
+        setLoading(false);
+        return;
+      }
+
       if (!data?.ok && !data?.success) {
-        throw new Error(data?.error || "Registration failed");
+        throw new Error(data?.error || "Registration could not be completed. Please try again.");
       }
 
       const { error: verifyError } = await supabase.auth.verifyOtp({
         token_hash: data.token_hash,
         type: "magiclink",
       });
-      if (verifyError) throw new Error(verifyError.message);
+      if (verifyError) throw new Error("Session setup failed. Please try registering again.");
 
       toast.success("🎉 Account created! Now set up your password.", { duration: 5000 });
       logActivity("registration", `New customer registered: ${form.name} (${form.email})`);
       setOtpStep("password");
     } catch (err: any) {
-      if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
-      else if (err.code === "auth/code-expired") toast.error("OTP expired.");
-      else toast.error(err.message || "Registration failed");
+      if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP. Please check and try again.");
+      else if (err.code === "auth/code-expired") toast.error("OTP has expired. Please request a new one.");
+      else toast.error(err.message || "Registration could not be completed. Please try again.");
     } finally {
       setLoading(false);
     }
