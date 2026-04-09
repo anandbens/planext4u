@@ -66,15 +66,15 @@ export default function CustomerLoginPage() {
     setLoading(true);
     try {
       const fullPhone = `${countryCode}${cleaned}`;
-      const fullPhoneSpaced = `${countryCode} ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('id')
-        .or(`mobile.eq.${cleaned},mobile.eq.${fullPhone},mobile.eq.${fullPhoneSpaced},mobile.ilike.%${cleaned}%`)
-        .limit(1)
-        .maybeSingle();
+      const { data: isRegistered, error: registrationCheckError } = await supabase.rpc("check_phone_registered", {
+        _phone: fullPhone,
+      });
 
-      if (!customer) {
+      if (registrationCheckError) {
+        throw new Error("Unable to verify mobile number right now. Please try again.");
+      }
+
+      if (!isRegistered) {
         toast.error("Only registered users must be able to trigger OTP and login.", { duration: 5000 });
         return;
       }
