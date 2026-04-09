@@ -14,11 +14,6 @@ import { toast } from "sonner";
 import { api, ProductVariant } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 
-const reviews = [
-  { user: "Rahul S.", rating: 5, comment: "Excellent quality, worth every rupee!", date: "2 days ago" },
-  { user: "Priya P.", rating: 4, comment: "Good product, fast delivery", date: "5 days ago" },
-  { user: "Amit K.", rating: 5, comment: "Best in this price range. Highly recommended!", date: "1 week ago" },
-];
 
 export default function CustomerProductPage() {
   const { id } = useParams();
