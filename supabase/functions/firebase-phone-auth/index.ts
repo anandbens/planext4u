@@ -126,6 +126,20 @@ Deno.serve(async (req) => {
         return respond(false, { error: "Name and email are required for registration." });
       }
 
+      // Check if email is already used by another customer
+      const { data: emailExists } = await supabase
+        .from("customers")
+        .select("id, mobile")
+        .eq("email", registerData.email)
+        .maybeSingle();
+
+      if (emailExists) {
+        return respond(false, {
+          error: "This email address is already registered with another account. Please use a different email.",
+          code: "EMAIL_ALREADY_EXISTS",
+        });
+      }
+
       // 1. Create Supabase auth user
       const { data: newAuthUser, error: createErr } = await supabase.auth.admin.createUser({
         email: phoneEmail,
