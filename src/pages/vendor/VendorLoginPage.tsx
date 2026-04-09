@@ -41,7 +41,7 @@ export default function VendorLoginPage() {
       await vendorLogin(email, password);
       toast.success("Welcome to Vendor Portal!");
       setTimeout(() => navigate("/vendor", { replace: true }), 500);
-    } catch (err: any) { toast.error(err.message || "Invalid vendor credentials"); }
+    } catch (err: any) { toast.error(err.message || "Invalid email or password. Please try again."); }
     finally { setLoading(false); }
   };
 
@@ -103,7 +103,7 @@ export default function VendorLoginPage() {
       if (err.code === "auth/too-many-requests") {
         toast.error("OTP limit reached. Please wait 2-3 minutes before retrying.", { duration: 6000 });
         setTimer(120);
-      } else toast.error(err.message || "Failed to send OTP");
+      } else toast.error("Failed to send OTP. Please try again.");
       clearRecaptcha();
     } finally { setLoading(false); }
   };
@@ -115,14 +115,14 @@ export default function VendorLoginPage() {
       await verifyOTP(otp);
       const idToken = await getFirebaseIdToken();
       const { data, error } = await supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken, role: "vendor" } });
-      if (error || !data?.success) throw new Error(data?.error || error?.message || "Authentication failed");
+      if (error || !data?.success) throw new Error(data?.error || "Something went wrong. Please try again.");
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
-      if (verifyError) throw new Error(verifyError.message);
+      if (verifyError) throw new Error("Session verification failed. Please try logging in again.");
       toast.success("Welcome to Vendor Portal! 🎉");
       setTimeout(() => navigate("/vendor", { replace: true }), 500);
     } catch (err: any) {
-      if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
-      else toast.error(err.message || "Verification failed");
+      if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP. Please check and try again.");
+      else toast.error(err.message || "Verification failed. Please try again.");
     } finally { setLoading(false); }
   };
 

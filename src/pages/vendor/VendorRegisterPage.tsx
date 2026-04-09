@@ -63,7 +63,7 @@ export default function VendorRegisterPage() {
     const bucket = field === 'store_logo_url' ? 'vendor-assets' : 'kyc-documents';
     const filePath = `vendor-reg/${Date.now()}-${field}.${ext}`;
     const { error } = await supabase.storage.from(bucket).upload(filePath, file, { contentType: file.type, upsert: true });
-    if (error) { toast.error("Upload failed: " + error.message); return; }
+    if (error) { toast.error("File upload failed. Please try again."); return; }
 
     if (bucket === 'vendor-assets') {
       // Public bucket - get public URL
@@ -155,7 +155,7 @@ export default function VendorRegisterPage() {
       toast.success("Application submitted! Our team will review within 48 hours.");
       navigate("/vendor/login");
     } catch (err: any) {
-      toast.error(err.message || "Failed to submit");
+      toast.error(err.message || "Registration could not be completed. Please try again.");
     }
     setLoading(false);
   };

@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
     if (!existingCustomer) {
       console.log("No registered customer found for phone:", normalizedPhone);
       return respond(false, {
-        error: "Only registered users must be able to trigger OTP and login.",
+        error: "No account found with this mobile number. Please create an account first.",
         code: "NOT_REGISTERED",
       });
     }
@@ -322,6 +322,11 @@ Deno.serve(async (req) => {
     });
   } catch (err: any) {
     console.error("Firebase phone auth error:", err);
-    return respond(false, { error: err.message || "Authentication failed" });
+    const rawMsg = err.message || "";
+    let userMsg = "Something went wrong. Please try again later.";
+    if (rawMsg.includes("Token expired")) userMsg = "Your session has expired. Please request a new OTP.";
+    else if (rawMsg.includes("duplicate key") || rawMsg.includes("unique")) userMsg = "An account with these details already exists. Please try logging in.";
+    else if (rawMsg.includes("rate") || rawMsg.includes("limit")) userMsg = "Too many attempts. Please wait a few minutes and try again.";
+    return respond(false, { error: userMsg });
   }
 });
