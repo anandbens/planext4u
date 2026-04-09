@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { ArrowLeft, Heart, Send, MoreHorizontal, Smile } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
 import { usePostComments } from "@/hooks/use-social-interactions";
@@ -189,7 +190,7 @@ export default function SocialCommentsPage() {
         {replyingTo && (
           <div className="px-4 py-1.5 bg-muted/50 flex items-center justify-between">
             <span className="text-xs text-muted-foreground">Replying to <span className="font-semibold text-foreground">{getUsername(comments.find((c: any) => c.id === replyingTo)?.user_id || '')}</span></span>
-            <button onClick={() => setReplyingTo(null)} className="text-xs text-primary font-semibold">Cancel</button>
+            <Button variant="outline" size="sm" className="h-6 px-2.5 text-[10px] font-semibold rounded-full" onClick={() => setReplyingTo(null)}>Cancel</Button>
           </div>
         )}
         <div className="flex items-center gap-2 px-4 py-2">
@@ -207,7 +208,7 @@ export default function SocialCommentsPage() {
             onKeyDown={(e) => e.key === 'Enter' && postComment()}
           />
           <button className="p-1"><Smile className="h-5 w-5 text-muted-foreground" /></button>
-          {newComment.trim() && <button onClick={postComment} className="text-sm font-semibold text-primary">Post</button>}
+          {newComment.trim() && <Button size="sm" className="h-8 px-4 text-xs font-semibold rounded-full" onClick={postComment}>Post</Button>}
         </div>
       </div>
     </div>

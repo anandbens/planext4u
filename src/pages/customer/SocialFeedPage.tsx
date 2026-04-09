@@ -4,6 +4,7 @@ import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Plus, ChevronDown
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -522,8 +523,8 @@ function PostCard({ post }: { post: any }) {
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] text-muted-foreground">**bold** _italic_ ~strike~</p>
                   <div className="flex gap-2 items-center">
-                    <button onClick={() => setShowCommentInput(false)} className="text-xs text-muted-foreground">Cancel</button>
-                    <button onClick={() => submitComment.mutate()} disabled={!commentText.trim()} className="text-sm font-semibold text-primary disabled:opacity-40">Post</button>
+                    <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-semibold rounded-full" onClick={() => setShowCommentInput(false)}>Cancel</Button>
+                    <Button size="sm" className="h-7 px-4 text-xs font-semibold rounded-full" onClick={() => submitComment.mutate()} disabled={!commentText.trim()}>Post</Button>
                   </div>
                 </div>
               </div>
