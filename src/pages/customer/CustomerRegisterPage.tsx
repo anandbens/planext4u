@@ -221,10 +221,25 @@ export default function CustomerRegisterPage() {
       await verifyOTP(otp);
       const idToken = await getFirebaseIdToken();
       const { data, error } = await supabase.functions.invoke("firebase-phone-auth", {
-        body: { firebase_id_token: idToken },
+        body: {
+          firebase_id_token: idToken,
+          mode: "register",
+          register_data: {
+            name: form.name,
+            email: form.email,
+            mobile: `+91${form.mobile}`,
+            occupation: form.occupation || null,
+            referral_code: form.referral_code || null,
+          },
+        },
       });
-      if (error || !data?.success) {
-        throw new Error(data?.error || error?.message || "Authentication failed");
+      if (error) {
+        // supabase.functions.invoke throws on non-2xx but we now always return 200
+        // so this should only happen on network errors
+        throw new Error(error.message || "Network error during registration");
+      }
+      if (!data?.ok && !data?.success) {
+        throw new Error(data?.error || "Registration failed");
       }
 
       const { error: verifyError } = await supabase.auth.verifyOtp({
@@ -233,28 +248,14 @@ export default function CustomerRegisterPage() {
       });
       if (verifyError) throw new Error(verifyError.message);
 
-      if (!data?.is_new_user) {
+      if (data?.code === "ALREADY_REGISTERED" || (!data?.is_new_user && data?.customer?.id)) {
         toast.error("This mobile number is already registered. Please login instead.");
         await resetPhoneAuth();
         navigate("/app/login", { replace: true });
         return;
       }
 
-      const updateData: any = {
-          name: form.name,
-          email: form.email,
-          occupation: form.occupation || null,
-        };
-      if (location) {
-        updateData.latitude = location.lat;
-        updateData.longitude = location.lng;
-      }
-      await supabase
-        .from("customers")
-        .update(updateData)
-        .eq("id", data.customer?.id);
-
-      toast.success("🎉 Phone verified! Now set up your password.", { duration: 5000 });
+      toast.success("🎉 Account created! Now set up your password.", { duration: 5000 });
       logActivity("registration", `New customer registered: ${form.name} (${form.email})`);
       setOtpStep("password");
     } catch (err: any) {

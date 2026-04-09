@@ -109,7 +109,8 @@ export default function CustomerLoginPage() {
       await verifyOTP(otp);
       const idToken = await getFirebaseIdToken();
       const { data, error } = await supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken } });
-      if (error || !data?.success) throw new Error(data?.code === "NOT_REGISTERED" ? "Only registered users must be able to trigger OTP and login." : (data?.error || error?.message || "Authentication failed"));
+      if (error) throw new Error(error.message || "Network error");
+      if (!data?.ok && !data?.success) throw new Error(data?.code === "NOT_REGISTERED" ? "Only registered users must be able to trigger OTP and login." : (data?.error || "Authentication failed"));
       
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
       if (verifyError) throw new Error(verifyError.message);
