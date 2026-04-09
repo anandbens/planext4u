@@ -154,7 +154,7 @@ export default function CustomerOrderDetailPage() {
           <div className="divide-y divide-border/30">
             {items.map((item: any, i: number) => (
               <Link
-                to={`/app/products/${item.id}`}
+                to={`/app/product/${item.id}`}
                 key={i}
                 className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 hover:bg-accent/30 rounded-lg transition-colors -mx-1 px-1"
               >
