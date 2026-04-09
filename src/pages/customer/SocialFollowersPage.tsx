@@ -21,19 +21,25 @@ interface FollowUser {
 
 export default function SocialFollowersPage() {
   const navigate = useNavigate();
-  const { username, tab } = useParams();
+  const { username, userId: routeUserId, tab } = useParams();
+  const searchParams = new URLSearchParams(window.location.search);
   const { customerUser } = useAuth();
   const currentUserId = customerUser?.supabase_uid || customerUser?.id;
-  const [activeTab, setActiveTab] = useState<'followers' | 'following'>(tab === 'following' ? 'following' : 'followers');
+  const [activeTab, setActiveTab] = useState<'followers' | 'following'>(
+    searchParams.get('tab') === 'following' || tab === 'following' ? 'following' : 'followers'
+  );
   const [search, setSearch] = useState("");
   const qc = useQueryClient();
 
   const profileUsername = username?.replace('@', '');
 
-  // Get the profile user_id from username
+  // Get the profile user_id from username or use routeUserId directly
   const { data: profileUser } = useQuery({
-    queryKey: ['social-profile-by-username', profileUsername],
+    queryKey: ['social-profile-by-username', profileUsername, routeUserId],
     queryFn: async () => {
+      if (routeUserId) {
+        return { user_id: routeUserId };
+      }
       if (!profileUsername && currentUserId) {
         const { data } = await supabase.from('social_profiles').select('user_id').eq('user_id', currentUserId).maybeSingle();
         return data;
@@ -41,7 +47,7 @@ export default function SocialFollowersPage() {
       const { data } = await supabase.from('social_profiles').select('user_id').eq('username', profileUsername).maybeSingle();
       return data;
     },
-    enabled: !!profileUsername || !!currentUserId,
+    enabled: !!profileUsername || !!currentUserId || !!routeUserId,
   });
 
   const targetUserId = profileUser?.user_id || '';

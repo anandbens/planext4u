@@ -383,6 +383,7 @@ const AppRoutes = () => {
         <Route path="/app/social/comments/:postId" element={<CustomerPage><SocialCommentsPage /></CustomerPage>} />
         <Route path="/app/social/:username/followers" element={<CustomerPage><SocialFollowersPage /></CustomerPage>} />
         <Route path="/app/social/:username/following" element={<CustomerPage><SocialFollowersPage /></CustomerPage>} />
+        <Route path="/app/social/profile/:userId/followers" element={<CustomerPage><SocialFollowersPage /></CustomerPage>} />
         <Route path="/app/social/edit-profile" element={<CustomerPage><SocialEditProfilePage /></CustomerPage>} />
         <Route path="/app/social/dashboard" element={<CustomerPage><SocialCreatorDashboardPage /></CustomerPage>} />
         <Route path="/app/social/live" element={<CustomerPage><SocialLivePage /></CustomerPage>} />
