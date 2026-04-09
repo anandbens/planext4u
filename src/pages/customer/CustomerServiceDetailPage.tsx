@@ -135,9 +135,33 @@ export default function CustomerServiceDetailPage() {
   if (!service) return <CustomerLayout><div className="p-8 text-center">Service not found</div></CustomerLayout>;
 
   const discountPct = service.discount ? Math.round((service.discount / service.price) * 100) : 0;
-  const allSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
   const imgUrl = getServiceImage(service.title, service.image);
   const finalPrice = service.price - (service.discount || 0) + (service.tax || 0);
+
+  // Build available time slots from vendor availability
+  const isVendorAvailable = vendorAvailability ? vendorAvailability.is_available : true;
+  const vendorSlots = vendorAvailability?.time_slots || [];
+  const generateSlots = (slots: { start: string; end: string }[]) => {
+    if (slots.length === 0) return ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
+    const allHours: string[] = [];
+    const parseTime = (t: string) => {
+      const [time, ampm] = t.split(" ");
+      const [h, m] = time.split(":").map(Number);
+      return ampm === "PM" && h !== 12 ? h + 12 : ampm === "AM" && h === 12 ? 0 : h;
+    };
+    const formatHour = (h: number) => {
+      const ampm = h >= 12 ? "PM" : "AM";
+      const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+      return `${String(h12).padStart(2, "0")}:00 ${ampm}`;
+    };
+    slots.forEach((s) => {
+      const startH = parseTime(s.start);
+      const endH = parseTime(s.end);
+      for (let h = startH; h < endH; h++) allHours.push(formatHour(h));
+    });
+    return allHours;
+  };
+  const allSlots = isVendorAvailable ? generateSlots(vendorSlots) : [];
 
   const handleBookNow = () => {
     if (!selectedDate || !selectedSlot) { toast.error("Select date and time"); return; }
