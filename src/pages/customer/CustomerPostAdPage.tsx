@@ -11,6 +11,7 @@ import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+import { compressToWebP } from "@/lib/webp-compress";
 import { useAuth } from "@/lib/use-auth";
 import { Camera, X, Loader2 } from "lucide-react";
 

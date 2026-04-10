@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { compressToWebP } from "@/lib/webp-compress";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 
