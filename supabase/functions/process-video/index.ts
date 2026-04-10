@@ -7,19 +7,16 @@ const corsHeaders = {
 
 /**
  * process-video Edge Function
- * 
- * Accepts a video processing job request, validates it, creates a DB record,
- * and is ready to dispatch to an external FFmpeg server when available.
- * 
- * Current flow:
- *   1. Client uploads raw video to social-videos bucket
- *   2. Client calls this function with the storage path
- *   3. Function creates a job record with status 'queued'
- *   4. (Future) Function dispatches to FFmpeg server for H.265 480p compression
- *   5. (Future) FFmpeg server calls back to update job status + processed URL
- * 
- * Expected body:
- *   { storage_path: string, post_id: string }
+ *
+ * 1. Client uploads raw video to social-videos bucket
+ * 2. Client calls this function with the storage path
+ * 3. Function creates a job record with status 'queued'
+ * 4. Function dispatches to external FFmpeg server for H.265 480p compression
+ * 5. FFmpeg server calls process-video-webhook with results
+ *
+ * Required secrets:
+ *   VIDEO_PROCESSOR_URL  – base URL of your FFmpeg server
+ *   VIDEO_PROCESSOR_SECRET – shared secret for auth
  */
 
 Deno.serve(async (req: Request) => {
@@ -28,7 +25,6 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Validate auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
@@ -40,7 +36,6 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // User client to get auth user
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -52,7 +47,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Parse body
     const body = await req.json();
     const { storage_path, post_id } = body;
 
@@ -63,10 +57,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Build original URL
     const originalUrl = `${supabaseUrl}/storage/v1/object/public/social-videos/${storage_path}`;
-
-    // Service client for DB operations
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // Create job record
@@ -95,45 +86,59 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // FUTURE: Dispatch to external FFmpeg processing server
-    // 
-    // When you have a processing server (e.g., on Railway/Fly.io),
-    // uncomment and configure the following:
-    //
-    // const PROCESSOR_URL = Deno.env.get("VIDEO_PROCESSOR_URL");
-    // if (PROCESSOR_URL) {
-    //   await adminClient.from("video_processing_jobs")
-    //     .update({ status: "processing" })
-    //     .eq("id", job.id);
-    //
-    //   // Fire-and-forget to processor
-    //   fetch(`${PROCESSOR_URL}/process`, {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       "Authorization": `Bearer ${Deno.env.get("VIDEO_PROCESSOR_SECRET")}`,
-    //     },
-    //     body: JSON.stringify({
-    //       job_id: job.id,
-    //       source_url: originalUrl,
-    //       callback_url: `${supabaseUrl}/functions/v1/process-video-callback`,
-    //       options: {
-    //         resolution: "854x480",
-    //         codec: "libx265",
-    //         bitrate: "1000k",
-    //         faststart: true,
-    //         thumbnail_at: 2.5,
-    //       },
-    //     }),
-    //   }).catch(err => console.error("Dispatch error:", err));
-    // }
-    // ═══════════════════════════════════════════════════════════
+    // Dispatch to external FFmpeg processor
+    const PROCESSOR_URL = Deno.env.get("VIDEO_PROCESSOR_URL");
+    const PROCESSOR_SECRET = Deno.env.get("VIDEO_PROCESSOR_SECRET");
 
+    if (PROCESSOR_URL) {
+      await adminClient.from("video_processing_jobs")
+        .update({ status: "processing" })
+        .eq("id", job.id);
+
+      const callbackUrl = `${supabaseUrl}/functions/v1/process-video-webhook`;
+
+      // Fire-and-forget dispatch — don't block the response
+      fetch(`${PROCESSOR_URL}/process`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(PROCESSOR_SECRET ? { "Authorization": `Bearer ${PROCESSOR_SECRET}` } : {}),
+        },
+        body: JSON.stringify({
+          job_id: job.id,
+          source_url: originalUrl,
+          storage_path,
+          callback_url: callbackUrl,
+          callback_secret: PROCESSOR_SECRET || "",
+          options: {
+            resolution: "854x480",
+            codec: "libx265",
+            bitrate: "1000k",
+            crf: 28,
+            preset: "medium",
+            faststart: true,
+            thumbnail_at_sec: 2.5,
+            output_format: "mp4",
+          },
+        }),
+      }).catch(err => console.error("Dispatch to processor failed:", err));
+
+      return new Response(JSON.stringify({
+        job_id: job.id,
+        status: "processing",
+        message: "Video dispatched for H.265 compression",
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // No processor configured — job stays queued
+    console.warn("VIDEO_PROCESSOR_URL not set — job queued but not dispatched");
     return new Response(JSON.stringify({
       job_id: job.id,
       status: job.status,
-      message: "Video queued for processing",
+      message: "Video queued (no processor configured yet)",
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
