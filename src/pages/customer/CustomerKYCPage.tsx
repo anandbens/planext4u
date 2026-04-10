@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { logActivity } from "@/lib/activity-log";
 import { supabase } from "@/integrations/supabase/client";
+import { compressToWebP } from "@/lib/webp-compress";
 import { useAuth } from "@/lib/auth";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
@@ -98,10 +99,12 @@ export default function CustomerKYCPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { toast.error("Please log in"); return null; }
 
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const isImage = file.type.startsWith('image/');
+    const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
+    const ext = isImage ? 'webp' : (file.name.split('.').pop()?.toLowerCase() || 'pdf');
     const fileName = `${user.id}/kyc-${Date.now()}-${side}.${ext}`;
 
-    const { error } = await supabase.storage.from('kyc-documents').upload(fileName, file, { contentType: file.type });
+    const { error } = await supabase.storage.from('kyc-documents').upload(fileName, blob, { contentType });
     if (error) { toast.error("Upload failed: " + error.message); return null; }
 
     const { data: signedData } = await supabase.storage.from('kyc-documents').createSignedUrl(fileName, 365 * 24 * 3600);

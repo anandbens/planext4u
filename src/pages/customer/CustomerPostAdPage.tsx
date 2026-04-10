@@ -11,6 +11,7 @@ import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+import { compressToWebP } from "@/lib/webp-compress";
 import { useAuth } from "@/lib/use-auth";
 import { Camera, X, Loader2 } from "lucide-react";
 
@@ -62,12 +63,12 @@ export default function CustomerPostAdPage() {
           continue;
         }
 
-        const ext = file.name.split('.').pop();
-        const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { blob, contentType } = await compressToWebP(file);
+        const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
 
         const { error } = await supabase.storage
           .from('classified-images')
-          .upload(fileName, file, { contentType: file.type });
+          .upload(fileName, blob, { contentType });
 
         if (error) {
           toast.error(`Failed to upload ${file.name}`);

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { logActivity } from "@/lib/activity-log";
 import { supabase } from "@/integrations/supabase/client";
+import { compressToWebP } from "@/lib/webp-compress";
 import { useAuth } from "@/lib/auth";
 
 interface SavedAddress {
@@ -132,9 +133,9 @@ export default function CustomerProfileEditPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error("Please log in"); return; }
-      const ext = file.name.split('.').pop() || 'jpg';
-      const fileName = `${user.id}/profile-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from('classified-images').upload(fileName, file, { contentType: file.type, upsert: true });
+      const { blob, contentType } = await compressToWebP(file);
+      const fileName = `${user.id}/profile-${Date.now()}.webp`;
+      const { error } = await supabase.storage.from('classified-images').upload(fileName, blob, { contentType, upsert: true });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from('classified-images').getPublicUrl(fileName);
       setProfilePhoto(urlData.publicUrl);
