@@ -251,6 +251,17 @@ nav.fixed {
   }
 }
 
+/* Progressive font-size scale for large desktops */
+@media (min-width: 1300px) {
+  html { font-size: 122%; }
+}
+@media (min-width: 1536px) {
+  html { font-size: 130%; }
+}
+@media (min-width: 1920px) {
+  html { font-size: 140%; }
+}
+
 /* Hide Google reCAPTCHA badge */
 .grecaptcha-badge {
   visibility: hidden !important;
