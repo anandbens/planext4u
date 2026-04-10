@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { compressImage, validateImageFile, validateVideoFile, validateVideoDuration, formatFileSize, type CompressionProgress } from "@/lib/media-compression";
+import { uploadVideoWithProcessing } from "@/lib/video-upload";
 
 const MAX_VIDEO_SIZE_MB = 100;
 
@@ -140,49 +141,31 @@ export default function SocialCreatePostPage() {
           }
 
           hasVideo = true;
-          setUploadProgress({ stage: 'uploading', percent: 20, originalSize: file.size });
 
-          // Upload video - use auth user ID for storage path
-          const videoPath = `${authUserId}/${postId}/video_${i}.mp4`;
-          const { error: vErr } = await supabase.storage.from('social-videos').upload(videoPath, file, {
-            contentType: 'video/mp4',
-            upsert: true,
-          });
-          if (vErr) {
-            console.error('Video upload error:', vErr);
-            if (vErr.message?.includes('Payload too large') || vErr.message?.includes('413')) {
-              toast.error(`Video is too large. Please record a shorter video (under ${MAX_VIDEO_SIZE_MB}MB).`, { duration: 5000 });
-            } else {
-              toast.error(`Video upload failed: ${vErr.message}`);
-            }
-            continue;
-          }
-
-          const { data: vUrl } = supabase.storage.from('social-videos').getPublicUrl(videoPath);
-
-          // Generate thumbnail
-          let thumbUrl = '';
-          try {
-            const { extractVideoThumbnail } = await import('@/lib/media-compression');
-            const thumbBlob = await extractVideoThumbnail(file);
-            const thumbPath = `${authUserId}/${postId}/video_${i}_thumb.webp`;
-            await supabase.storage.from('social-media').upload(thumbPath, thumbBlob, { contentType: 'image/webp', upsert: true });
-            const { data: tData } = await supabase.storage.from('social-media').createSignedUrl(thumbPath, 60 * 60 * 24 * 365);
-            thumbUrl = tData?.signedUrl || '';
-          } catch (thumbErr) {
-            console.warn('Thumbnail extraction failed:', thumbErr);
-          }
+          // Use the video upload pipeline with processing queue
+          const result = await uploadVideoWithProcessing(
+            file,
+            authUserId,
+            postId,
+            (p) => setUploadProgress({
+              stage: p.stage === 'completed' ? 'complete' : p.stage === 'error' ? 'error' : p.stage === 'processing' ? 'uploading' : 'uploading',
+              percent: p.percent,
+              originalSize: file.size,
+              savedText: p.message,
+            })
+          );
 
           mediaItems.push({
             type: 'video',
-            url: vUrl?.publicUrl || '',
-            thumbnailUrl: thumbUrl,
+            url: result.originalUrl,
+            thumbnailUrl: result.thumbnailUrl,
+            processingJobId: result.jobId,
             order: i,
           });
 
           setUploadProgress({
             stage: 'complete', percent: 100, originalSize: file.size,
-            savedText: `Video uploaded: ${formatFileSize(file.size)} ✓`,
+            savedText: `Video uploaded & queued for compression ✓`,
           });
         } else {
           // Image compression & upload
