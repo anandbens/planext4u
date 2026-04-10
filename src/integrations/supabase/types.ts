@@ -4084,8 +4084,10 @@ export type Database = {
           metadata: Json | null
           original_storage_path: string | null
           original_url: string
+          processed_storage_path: string | null
           processed_url: string | null
           status: string
+          thumbnail_storage_path: string | null
           thumbnail_url: string | null
           updated_at: string
           user_id: string
@@ -4097,8 +4099,10 @@ export type Database = {
           metadata?: Json | null
           original_storage_path?: string | null
           original_url: string
+          processed_storage_path?: string | null
           processed_url?: string | null
           status?: string
+          thumbnail_storage_path?: string | null
           thumbnail_url?: string | null
           updated_at?: string
           user_id: string
@@ -4110,8 +4114,10 @@ export type Database = {
           metadata?: Json | null
           original_storage_path?: string | null
           original_url?: string
+          processed_storage_path?: string | null
           processed_url?: string | null
           status?: string
+          thumbnail_storage_path?: string | null
           thumbnail_url?: string | null
           updated_at?: string
           user_id?: string
