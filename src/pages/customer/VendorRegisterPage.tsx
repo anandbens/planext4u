@@ -134,10 +134,12 @@ export default function VendorRegisterPage() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const ext = file.name.split('.').pop() || 'jpg';
+    const isImage = file.type.startsWith('image/');
+    const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
+    const ext = isImage ? 'webp' : (file.name.split('.').pop() || 'pdf');
     const fileName = `${user.id}/vendor-${field}-${Date.now()}.${ext}`;
 
-    const { error } = await supabase.storage.from('kyc-documents').upload(fileName, file, { contentType: file.type });
+    const { error } = await supabase.storage.from('kyc-documents').upload(fileName, blob, { contentType });
     if (error) { toast.error("Upload failed"); return; }
 
     const { data: signedData } = await supabase.storage.from('kyc-documents').createSignedUrl(fileName, 365 * 24 * 3600);
@@ -156,9 +158,9 @@ export default function VendorRegisterPage() {
     setLogoUploading(true);
     try {
       const uid = customerId || Date.now().toString();
-      const ext = file.name.split('.').pop() || 'jpg';
-      const fileName = `store-logos/${uid}-${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from('vendor-assets').upload(fileName, file, { contentType: file.type, upsert: true });
+      const { blob, contentType } = await compressToWebP(file);
+      const fileName = `store-logos/${uid}-${Date.now()}.webp`;
+      const { error } = await supabase.storage.from('vendor-assets').upload(fileName, blob, { contentType, upsert: true });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from('vendor-assets').getPublicUrl(fileName);
       updateField('store_logo_url', urlData.publicUrl);

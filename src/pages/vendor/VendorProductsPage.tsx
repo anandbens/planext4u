@@ -100,9 +100,9 @@ export default function VendorProductsPage() {
   const uploadImage = async (file: File, target: "images" | "thumbnail" | "banner") => {
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'jpg';
-      const path = `${vendorId}/products/${Date.now()}-${target}.${ext}`;
-      const { error } = await supabase.storage.from("vendor-assets").upload(path, file, { contentType: file.type, upsert: true });
+      const { blob, contentType } = await compressToWebP(file);
+      const path = `${vendorId}/products/${Date.now()}-${target}.webp`;
+      const { error } = await supabase.storage.from("vendor-assets").upload(path, blob, { contentType, upsert: true });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(path);
       const url = urlData?.publicUrl || "";

@@ -59,10 +59,12 @@ export default function VendorRegisterPage() {
     if (!ALLOWED_TYPES.includes(file.type)) { toast.error("Only JPG, PNG, PDF allowed"); return; }
     if (file.size > MAX_FILE_SIZE) { toast.error("File must be under 2MB"); return; }
 
-    const ext = file.name.split('.').pop() || 'jpg';
+    const isImage = file.type.startsWith('image/');
+    const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
+    const ext = isImage ? 'webp' : (file.name.split('.').pop() || 'pdf');
     const bucket = field === 'store_logo_url' ? 'vendor-assets' : 'kyc-documents';
     const filePath = `vendor-reg/${Date.now()}-${field}.${ext}`;
-    const { error } = await supabase.storage.from(bucket).upload(filePath, file, { contentType: file.type, upsert: true });
+    const { error } = await supabase.storage.from(bucket).upload(filePath, blob, { contentType, upsert: true });
     if (error) { toast.error("File upload failed. Please try again."); return; }
 
     if (bucket === 'vendor-assets') {
