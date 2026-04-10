@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { compressImage, validateImageFile, validateVideoFile, validateVideoDuration, formatFileSize, type CompressionProgress } from "@/lib/media-compression";
+import { uploadVideoWithProcessing } from "@/lib/video-upload";
 
 const MAX_VIDEO_SIZE_MB = 100;
 
