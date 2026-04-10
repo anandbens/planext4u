@@ -4076,6 +4076,48 @@ export type Database = {
           },
         ]
       }
+      video_processing_jobs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          original_storage_path: string | null
+          original_url: string
+          processed_url: string | null
+          status: string
+          thumbnail_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          original_storage_path?: string | null
+          original_url: string
+          processed_url?: string | null
+          status?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          original_storage_path?: string | null
+          original_url?: string
+          processed_url?: string | null
+          status?: string
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       website_queries: {
         Row: {
           created_at: string
