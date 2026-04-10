@@ -597,10 +597,23 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
       }
 
       const storyId = crypto.randomUUID();
-      const ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg');
+      let uploadBlob: Blob = file;
+      let uploadContentType = file.type;
+      let ext = file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg');
+
+      if (!isVideo && file.type.startsWith('image/')) {
+        try {
+          const { compressToWebP } = await import('@/lib/webp-compress');
+          const compressed = await compressToWebP(file);
+          uploadBlob = compressed.blob;
+          uploadContentType = compressed.contentType;
+          ext = 'webp';
+        } catch { /* fallback to original */ }
+      }
+
       const path = `${authUid}/stories/${storyId}.${ext}`;
 
-      const { error: uploadErr } = await supabase.storage.from('social-media').upload(path, file, { contentType: file.type, upsert: true });
+      const { error: uploadErr } = await supabase.storage.from('social-media').upload(path, uploadBlob, { contentType: uploadContentType, upsert: true });
       if (uploadErr) { toast.error(`Upload failed: ${uploadErr.message}`); continue; }
 
       const { data: signedUrl } = await supabase.storage.from('social-media').createSignedUrl(path, 60 * 60 * 24);

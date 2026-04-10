@@ -61,14 +61,18 @@ export default function VendorMediaLibraryPage() {
     setUploading(true);
     const targetFolder = folder === "all" ? "general" : folder;
     try {
+      const { compressToWebP } = await import("@/lib/webp-compress");
       for (const file of Array.from(files)) {
-        const path = `vendor-${vendorId}/${targetFolder}/${Date.now()}-${file.name}`;
-        const { error: uploadErr } = await supabase.storage.from("vendor-assets").upload(path, file);
+        const isImage = file.type.startsWith("image/");
+        const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
+        const ext = isImage ? "webp" : file.name.split(".").pop() || "mp4";
+        const path = `vendor-${vendorId}/${targetFolder}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from("vendor-assets").upload(path, blob, { contentType });
         if (uploadErr) { toast.error(uploadErr.message); continue; }
         const { data: { publicUrl } } = supabase.storage.from("vendor-assets").getPublicUrl(path);
         await supabase.from("media_library" as any).insert({
-          file_name: file.name, file_url: publicUrl, file_type: file.type.startsWith("video") ? "video" : "image",
-          file_size: file.size, folder: `vendor-${vendorId}/${targetFolder}`, vendor_id: vendorId,
+          file_name: file.name, file_url: publicUrl, file_type: isImage ? "image" : "video",
+          file_size: blob.size, folder: `vendor-${vendorId}/${targetFolder}`, vendor_id: vendorId,
         } as any);
       }
       toast.success("Uploaded successfully");
