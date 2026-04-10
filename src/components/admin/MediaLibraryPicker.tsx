@@ -161,13 +161,14 @@ export function MediaLibraryDialog({ open, onOpenChange, onSelect, defaultFolder
     setUploading(true);
     try {
       const { file } = previewFile;
-      const ext = file.name.split(".").pop() || "jpg";
-      const fileName = `${uploadFolder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { compressToWebP } = await import("@/lib/webp-compress");
+      const { blob, contentType } = await compressToWebP(file);
+      const fileName = `${uploadFolder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
       
-      const { error } = await supabase.storage.from("media-library").upload(fileName, file, { contentType: file.type, upsert: false });
+      const { error } = await supabase.storage.from("media-library").upload(fileName, blob, { contentType, upsert: false });
       if (error) {
         // Try vendor-assets as fallback
-        const { error: err2 } = await supabase.storage.from("vendor-assets").upload(fileName, file, { contentType: file.type, upsert: false });
+        const { error: err2 } = await supabase.storage.from("vendor-assets").upload(fileName, blob, { contentType, upsert: false });
         if (err2) throw err2;
         const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(fileName);
         
@@ -175,7 +176,7 @@ export function MediaLibraryDialog({ open, onOpenChange, onSelect, defaultFolder
           file_name: file.name,
           file_url: urlData.publicUrl,
           file_type: file.type.startsWith("image") ? "image" : "file",
-          file_size: file.size,
+          file_size: blob.size,
           folder: uploadFolder,
           alt_text: altText,
           tags: [uploadFolder],
@@ -196,7 +197,7 @@ export function MediaLibraryDialog({ open, onOpenChange, onSelect, defaultFolder
         file_name: file.name,
         file_url: urlData.publicUrl,
         file_type: file.type.startsWith("image") ? "image" : "file",
-        file_size: file.size,
+        file_size: blob.size,
         folder: uploadFolder,
         alt_text: altText,
         tags: [uploadFolder],

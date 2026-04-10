@@ -3,6 +3,7 @@ import { Upload, X, Loader2, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { compressToWebP } from "@/lib/webp-compress";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -33,9 +34,9 @@ export function ImageUploader({
 
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const { error } = await supabase.storage.from(bucket).upload(fileName, file, { contentType: file.type, upsert: false });
+      const { blob, contentType } = await compressToWebP(file);
+      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
+      const { error } = await supabase.storage.from(bucket).upload(fileName, blob, { contentType, upsert: false });
       if (error) throw error;
 
       const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);

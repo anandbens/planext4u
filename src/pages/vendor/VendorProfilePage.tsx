@@ -96,9 +96,10 @@ export default function VendorProfilePage() {
     if (!file) return;
     setBgUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `vendor-backgrounds/${vendorId}-${Date.now()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from("vendor-assets").upload(path, file, { contentType: file.type, upsert: true });
+      const { compressToWebP } = await import("@/lib/webp-compress");
+      const { blob, contentType } = await compressToWebP(file);
+      const path = `vendor-backgrounds/${vendorId}-${Date.now()}.webp`;
+      const { error: uploadErr } = await supabase.storage.from("vendor-assets").upload(path, blob, { contentType, upsert: true });
       if (uploadErr) throw uploadErr;
       const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(path);
       await supabase.from("vendors").update({ background_image: urlData.publicUrl }).eq("id", vendorId);

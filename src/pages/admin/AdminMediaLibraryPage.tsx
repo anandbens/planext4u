@@ -146,18 +146,21 @@ export default function AdminMediaLibraryPage() {
     let successCount = 0;
     const MAX_VIDEO_SIZE = 5 * 1024 * 1024;
     try {
+      const { compressToWebP } = await import("@/lib/webp-compress");
       for (const file of files) {
         if (file.type.startsWith("video/") && file.size > MAX_VIDEO_SIZE) {
           toast.error(`${file.name} exceeds 5MB video limit`); continue;
         }
-        const ext = file.name.split(".").pop() || "jpg";
+        const isImage = file.type.startsWith("image/");
+        const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
+        const ext = isImage ? "webp" : (file.name.split(".").pop() || "mp4");
         const path = `${targetFolder}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("vendor-assets").upload(path, file, { contentType: file.type, upsert: false });
+        const { error: uploadErr } = await supabase.storage.from("vendor-assets").upload(path, blob, { contentType, upsert: false });
         if (uploadErr) { toast.error(`Failed: ${file.name}`); continue; }
         const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(path);
         await supabase.from("media_library").insert({
-          file_name: file.name, file_url: urlData.publicUrl, file_type: file.type,
-          file_size: file.size, folder: targetFolder,
+          file_name: file.name, file_url: urlData.publicUrl, file_type: contentType,
+          file_size: blob.size, folder: targetFolder,
           alt_text: file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
         });
         successCount++;
