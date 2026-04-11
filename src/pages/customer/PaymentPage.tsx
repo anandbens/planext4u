@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ArrowLeft, CheckCircle, XCircle, Copy, Share2, ShoppingBag, CreditCard } from "lucide-react";
 import { api } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveCommissionCascade } from "@/lib/commission-cascade";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 import { format, addDays } from "date-fns";
@@ -20,7 +21,7 @@ export default function PaymentPage() {
   const { customerUser } = useAuth();
   const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
 
-  const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress } = location.state || {};
+  const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress, itemRedemptionMap } = location.state || {};
 
   const [paymentState, setPaymentState] = useState<PaymentState>('select');
   const [orderId, setOrderId] = useState('');

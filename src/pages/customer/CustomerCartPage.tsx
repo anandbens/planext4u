@@ -252,6 +252,7 @@ export default function CustomerCartPage() {
         deliveryMode,
         deliveryDate: deliveryMode === "scheduled" ? selectedDate?.toISOString() : null,
         deliverySlot: deliveryMode === "scheduled" ? selectedTimeSlot : 'anytime',
+        itemRedemptionMap,
       }
     });
   };
