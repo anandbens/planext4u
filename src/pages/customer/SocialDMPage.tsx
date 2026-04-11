@@ -207,7 +207,7 @@ export default function SocialDMPage() {
           >Requests</button>
         </div>
 
-        <div className="pb-20">
+        <div className="pb-28">
           {isLoading ? (
             <div className="flex justify-center py-16">
               <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />

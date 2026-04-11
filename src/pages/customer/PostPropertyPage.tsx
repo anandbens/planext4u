@@ -117,7 +117,7 @@ export default function PostPropertyPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-2xl mx-auto pb-24 md:pb-6">
+      <div className="max-w-2xl mx-auto pb-32 md:pb-6">
         {/* Header */}
         <div className="sticky top-0 z-30 bg-background px-4 py-3 flex items-center gap-3 border-b border-border/30">
           <button onClick={() => step > 0 ? setStep(step - 1) : navigate(-1)} className="h-9 w-9 rounded-full border border-border/50 flex items-center justify-center">

@@ -306,7 +306,7 @@ export default function PropertyDetailPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-4xl mx-auto pb-24 md:pb-6">
+      <div className="max-w-4xl mx-auto pb-32 md:pb-6">
         {/* Back + Actions - NoBroker red header style */}
         <div className="sticky top-0 z-30 bg-destructive px-4 py-3 flex items-center justify-between text-white">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2">
