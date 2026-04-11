@@ -483,6 +483,10 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                 <Input type="number" value={form.commission_rate} onChange={(e) => setForm({ ...form, commission_rate: Number(e.target.value) })} className="mt-1" />
               </div>
               <div className="p-4 rounded-lg bg-secondary/30">
+                <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-warning" /><Label className="text-xs text-muted-foreground">Max User Redemption %</Label></div>
+                <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1" placeholder="Plan default" />
+              </div>
+              <div className="p-4 rounded-lg bg-secondary/30">
                 <div className="flex items-center gap-2 mb-1"><Crown className="h-4 w-4 text-warning" /><Label className="text-xs text-muted-foreground">Membership</Label></div>
                 <Select value={form.membership} onValueChange={(v) => setForm({ ...form, membership: v })}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
