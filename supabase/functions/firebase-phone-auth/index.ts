@@ -48,7 +48,11 @@ async function verifyFirebaseToken(idToken: string) {
   if (!VALID_AUDIENCES.includes(payload.aud)) {
     throw new Error(`Invalid audience: ${payload.aud}`);
   }
-  if (payload.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) throw new Error(`Invalid issuer: ${payload.iss}`);
+  const validIssuers = [
+    `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
+    `https://securetoken.google.com/${FIREBASE_ALT_PROJECT_ID}`,
+  ];
+  if (!validIssuers.includes(payload.iss)) throw new Error(`Invalid issuer: ${payload.iss}`);
   if (!payload.sub) throw new Error("No sub in token");
 
   const verifyRes = await fetch(
