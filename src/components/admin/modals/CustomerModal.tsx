@@ -281,7 +281,6 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
                   </SelectContent>
                 </Select>
               </div>
-              </div>
             </div>
           </div>
         ) : (
