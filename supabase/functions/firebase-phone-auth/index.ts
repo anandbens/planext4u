@@ -417,12 +417,16 @@ Deno.serve(async (req) => {
       has_address: hasAddress,
     });
   } catch (err: any) {
-    console.error("Firebase phone auth error:", err);
+    console.error("Firebase phone auth error:", err.message, err.stack);
     const rawMsg = err.message || "";
     let userMsg = "Something went wrong. Please try again later.";
-    if (rawMsg.includes("Token expired")) userMsg = "Your session has expired. Please request a new OTP.";
-    else if (rawMsg.includes("duplicate key") || rawMsg.includes("unique")) userMsg = "An account with these details already exists. Please try logging in.";
-    else if (rawMsg.includes("rate") || rawMsg.includes("limit")) userMsg = "Too many attempts. Please wait a few minutes and try again.";
-    return respond(false, { error: userMsg });
+    let code = "UNKNOWN_ERROR";
+    if (rawMsg.includes("Token expired")) { userMsg = "Your session has expired. Please request a new OTP."; code = "TOKEN_EXPIRED"; }
+    else if (rawMsg.includes("Invalid audience")) { userMsg = "Authentication configuration error. Please try again."; code = "INVALID_AUDIENCE"; }
+    else if (rawMsg.includes("Invalid issuer")) { userMsg = "Authentication configuration error. Please try again."; code = "INVALID_ISSUER"; }
+    else if (rawMsg.includes("duplicate key") || rawMsg.includes("unique")) { userMsg = "An account with these details already exists. Please try logging in."; code = "DUPLICATE"; }
+    else if (rawMsg.includes("rate") || rawMsg.includes("limit")) { userMsg = "Too many attempts. Please wait a few minutes and try again."; code = "RATE_LIMIT"; }
+    else if (rawMsg.includes("Firebase token verification failed")) { userMsg = "Phone verification failed. Please try again."; code = "FIREBASE_VERIFY_FAILED"; }
+    return respond(false, { error: userMsg, code, debug_message: rawMsg });
   }
 });
