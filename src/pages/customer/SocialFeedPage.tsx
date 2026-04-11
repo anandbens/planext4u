@@ -708,33 +708,28 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
     e.target.value = '';
   };
 
-  // Fetch profile for non-own stories to get username for profile navigation
-  const { data: storyProfile } = useQuery({
-    queryKey: ['story-profile', story.id],
-    queryFn: async () => {
-      const { data } = await supabase.from('social_profiles').select('username, display_name').eq('user_id', story.id).maybeSingle();
-      return data;
-    },
-    enabled: !story.isOwn && !!story.id,
-  });
-
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (story.isOwn) return;
-    const storyUserId = story.id;
-    navigate(`/app/social/profile/${storyUserId}`);
+    navigate(`/app/social/profile/${story.id}`);
   };
+
+  const isViewed = story.viewed;
 
   return (
     <>
       <input ref={fileRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileSelect} />
-      <div className="flex flex-col items-center gap-1 shrink-0 w-[68px]">
+      <div className="flex flex-col items-center gap-1 shrink-0 w-[72px]">
         <button onClick={handleYourStoryClick}
-          className={`relative p-[2px] rounded-full ${story.isOwn ? (hasOwnStories ? 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600' : '') : story.seen ? 'bg-muted' : 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600'}`}>
-          <div className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-card p-[2px]">
-            <div className="h-full w-full rounded-full bg-muted flex items-center justify-center overflow-hidden">
+          className={`relative p-[2.5px] rounded-full ${story.isOwn ? (hasOwnStories ? 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600' : 'bg-border') : isViewed ? 'bg-muted-foreground/30' : 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600'}`}>
+          <div className="h-[58px] w-[58px] md:h-[64px] md:w-[64px] rounded-full bg-card p-[2px]">
+            <div className={`h-full w-full rounded-full bg-muted flex items-center justify-center overflow-hidden ${isViewed ? 'opacity-50 blur-[0.5px]' : ''}`}>
               {story.isOwn ? (
-                <div className="relative h-full w-full bg-accent flex items-center justify-center"><Plus className="h-5 w-5 text-muted-foreground" /></div>
+                <div className="relative h-full w-full bg-accent flex items-center justify-center">
+                  <Plus className="h-5 w-5 text-muted-foreground" />
+                </div>
+              ) : story.storyMediaUrl ? (
+                <img src={story.storyMediaUrl} alt="" className="w-full h-full object-cover" />
               ) : story.avatar ? (
                 <img src={story.avatar} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -743,7 +738,7 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
             </div>
           </div>
         </button>
-        <button onClick={story.isOwn ? handleYourStoryClick : handleProfileClick} className="text-[10px] max-w-[56px] truncate text-center hover:underline">
+        <button onClick={story.isOwn ? handleYourStoryClick : handleProfileClick} className="text-[10px] max-w-[64px] truncate text-center hover:underline">
           {story.isOwn ? "Your Story" : story.username.split('_')[0]}
         </button>
       </div>
