@@ -85,23 +85,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [processRole]);
 
   useEffect(() => {
+    // Restore from localStorage immediately to prevent flash redirects
+    try {
+      const savedUser = localStorage.getItem("admin_user");
+      const savedCustomer = localStorage.getItem("customer_user");
+      const savedVendor = localStorage.getItem("vendor_user");
+      if (savedUser) setUser(JSON.parse(savedUser));
+      if (savedCustomer) setCustomerUser(JSON.parse(savedCustomer));
+      if (savedVendor) setVendorUser(JSON.parse(savedVendor));
+    } catch { /* ignore */ }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user) {
         const { id, email, user_metadata } = session.user;
         const name = user_metadata?.name || email?.split('@')[0] || '';
         setTimeout(async () => {
           const result = await loadUserRole(id, email || '', name);
           setIsLoading(false);
-          // Init push notifications & link token to user
           initPushNotifications(id);
           linkPushTokenToUser(id);
-          // Resolve any pending login promise
           if (loginResolveRef.current) {
             loginResolveRef.current();
             loginResolveRef.current = null;
-          }
-          if (result === 'vendor_not_verified') {
-            // Will be handled by the caller
           }
         }, 0);
       } else if (event === 'SIGNED_OUT') {
@@ -111,23 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem("admin_user");
         localStorage.removeItem("customer_user");
         localStorage.removeItem("vendor_user");
-      }
-    });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const { id, email, user_metadata } = session.user;
-        const name = user_metadata?.name || email?.split('@')[0] || '';
-        loadUserRole(id, email || '', name).finally(() => setIsLoading(false));
-      } else {
-        try {
-          const savedUser = localStorage.getItem("admin_user");
-          const savedCustomer = localStorage.getItem("customer_user");
-          const savedVendor = localStorage.getItem("vendor_user");
-          if (savedUser) setUser(JSON.parse(savedUser));
-          if (savedCustomer) setCustomerUser(JSON.parse(savedCustomer));
-          if (savedVendor) setVendorUser(JSON.parse(savedVendor));
-        } catch { /* ignore */ }
+        setIsLoading(false);
+      } else if (event === 'INITIAL_SESSION' && !session) {
+        // No session at all - keep localStorage state, just stop loading
         setIsLoading(false);
       }
     });
