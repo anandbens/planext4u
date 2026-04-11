@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Plus, ChevronDown, Repeat2, X } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Plus, ChevronDown, Repeat2, X, ShoppingBag } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -138,6 +138,7 @@ function PostCard({ post }: { post: any }) {
   const [showAllComments, setShowAllComments] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
+  const [showProductTags, setShowProductTags] = useState(false);
 
   const userId = customerUser?.supabase_uid || customerUser?.id;
   const postId = post.id;
@@ -382,6 +383,56 @@ function PostCard({ post }: { post: any }) {
             </div>
           </>
         )}
+        {/* Product Tags Shopping Icon */}
+        {(() => {
+          const tags = Array.isArray(post.product_tags) ? post.product_tags : [];
+          if (tags.length === 0) return null;
+          return (
+            <button
+              className="absolute top-3 right-3 z-10 bg-card/90 backdrop-blur-sm rounded-full p-2 shadow-lg border border-border/50 hover:bg-card transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (tags.length === 1) {
+                  navigate(`/app/product/${tags[0].id}`);
+                } else {
+                  setShowProductTags(prev => !prev);
+                }
+              }}
+            >
+              {tags[0]?.socio_shopping_icon || tags[0]?.image ? (
+                <img src={tags[0].socio_shopping_icon || tags[0].image} alt="" className="h-5 w-5 rounded-full object-cover" />
+              ) : (
+                <ShoppingBag className="h-5 w-5 text-primary" />
+              )}
+            </button>
+          );
+        })()}
+        {/* Product Tags Popup */}
+        {showProductTags && (() => {
+          const tags = Array.isArray(post.product_tags) ? post.product_tags : [];
+          if (tags.length === 0) return null;
+          return (
+            <div className="absolute top-14 right-3 z-20 bg-card rounded-xl shadow-xl border border-border p-2 max-w-[200px] animate-in fade-in slide-in-from-top-2 duration-200">
+              {tags.map((tag: any) => (
+                <button
+                  key={tag.id}
+                  className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg hover:bg-accent transition-colors"
+                  onClick={(e) => { e.stopPropagation(); navigate(`/app/product/${tag.id}`); }}
+                >
+                  {tag.socio_shopping_icon || tag.image ? (
+                    <img src={tag.socio_shopping_icon || tag.image} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
+                  ) : (
+                    <ShoppingBag className="h-5 w-5 text-primary shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium truncate">{tag.title}</p>
+                    {tag.price && <p className="text-[10px] text-muted-foreground">₹{Number(tag.price).toLocaleString()}</p>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Fullscreen Image Viewer */}
