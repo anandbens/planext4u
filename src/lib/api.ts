@@ -965,10 +965,15 @@ export const api = {
       'slug', 'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot', 'updated_at'];
     const filtered: Record<string, any> = { updated_at: new Date().toISOString() };
     for (const key of validFields) {
-      if (key in data) filtered[key] = (data as any)[key];
+      if (key in data) {
+        let val = (data as any)[key];
+        if (key === 'category_id' && val === '') val = null;
+        filtered[key] = val;
+      }
     }
-    const { error } = await supabase.from('services').update(filtered).eq('id', id);
-    if (error) throw error;
+    const { data: updated, error } = await supabase.from('services').update(filtered).eq('id', id).select();
+    if (error) { console.error("Service update error:", error); throw error; }
+    if (!updated || updated.length === 0) throw new Error("Service update failed — no rows affected.");
     return { success: true };
   },
 
