@@ -311,7 +311,8 @@ export default function CustomerBrowsePage() {
       <AnimatePresence>
         {cartCount > 0 && (
           <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
-            className="fixed bottom-20 md:bottom-4 left-4 right-4 z-30 max-w-lg mx-auto">
+            className="fixed md:bottom-4 left-4 right-4 z-30 max-w-lg mx-auto"
+            style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5rem)' }}>
             <Button className="w-full h-12 rounded-2xl shadow-lg text-base gap-2 justify-between px-5" onClick={() => navigate('/app/cart')}>
               <div className="flex items-center gap-2">
                 <ShoppingCart className="h-4 w-4" />
