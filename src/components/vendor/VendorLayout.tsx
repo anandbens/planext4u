@@ -119,7 +119,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
       <div className="flex-1 flex flex-col min-h-screen">
         {/* ====== MOBILE HEADER (Branded, matching customer style) ====== */}
         <header className="sticky top-0 z-30 lg:hidden bg-primary">
-          <div className="px-4 py-3">
+          <div className="px-4 pb-3" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Link to="/vendor" className="shrink-0">
