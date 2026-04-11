@@ -717,6 +717,8 @@ export default function SocialFeedPage() {
     ...storyUsers,
   ];
 
+  const socioAds = usePlacementAds("socio");
+
   const posts = dbPosts.length > 0 ? dbPosts.map((p: any) => ({
     ...p,
     media: Array.isArray(p.media) ? p.media : [],
