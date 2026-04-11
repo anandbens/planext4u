@@ -266,9 +266,9 @@ export default function VendorProfilePage() {
         <Card className="p-5">
           <h3 className="text-sm font-semibold mb-3">Performance</h3>
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div><p className="text-lg font-bold">{vendor?.total_products || 0}</p><p className="text-xs text-muted-foreground">Products</p></div>
-            <div><p className="text-lg font-bold">{vendor?.total_orders || 0}</p><p className="text-xs text-muted-foreground">Orders</p></div>
-            <div><p className="text-lg font-bold">₹{((vendor?.total_revenue || 0) / 1000).toFixed(0)}k</p><p className="text-xs text-muted-foreground">Revenue</p></div>
+            <div><p className="text-lg font-bold">{perfStats.products}</p><p className="text-xs text-muted-foreground">Products</p></div>
+            <div><p className="text-lg font-bold">{perfStats.orders}</p><p className="text-xs text-muted-foreground">Orders</p></div>
+            <div><p className="text-lg font-bold">₹{perfStats.revenue > 1000 ? `${(perfStats.revenue / 1000).toFixed(0)}k` : perfStats.revenue}</p><p className="text-xs text-muted-foreground">Revenue</p></div>
           </div>
         </Card>
       </div>
