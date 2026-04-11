@@ -116,19 +116,19 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
     <div className="hidden md:flex max-w-[1400px] mx-auto gap-4">
       {/* Left Sidebar */}
       {!hideSidebar && (
-        <aside className="w-[240px] shrink-0 sticky top-[110px] self-start py-4 pl-4 pr-2 h-[calc(100vh-110px)] overflow-y-auto">
-          <nav className="bg-card rounded-xl border border-border/30 py-3 px-2">
+        <aside className="w-[260px] shrink-0 sticky top-[110px] self-start py-4 pl-4 pr-2 h-[calc(100vh-110px)] overflow-y-auto">
+          <nav className="bg-card rounded-xl border border-border/30 py-3 px-3">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.path);
               return (
                 <Link key={item.label} to={item.path}
-                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors rounded-lg mx-1 mb-0.5 ${active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"}`}>
+                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors rounded-lg mb-0.5 ${active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"}`}>
                   {item.label === "Profile" ? (
                     <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${active ? 'bg-primary-foreground text-primary' : 'bg-muted border border-border'}`}>
                       {customerUser?.name?.charAt(0) || 'U'}
                     </div>
                   ) : (<item.icon className="h-5 w-5 shrink-0" />)}
-                  <span className="truncate">{item.label}</span>
+                  <span className="whitespace-nowrap">{item.label}</span>
                 </Link>
               );
             })}

@@ -719,7 +719,7 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
   return (
     <>
       <input ref={fileRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={handleFileSelect} />
-      <div className="flex flex-col items-center gap-1 shrink-0 w-[72px]">
+      <div className="flex flex-col items-center gap-1 shrink-0 w-[80px]">
         <button onClick={handleYourStoryClick}
           className={`relative p-[2.5px] rounded-full ${story.isOwn ? (hasOwnStories ? 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600' : 'bg-border') : isViewed ? 'bg-muted-foreground/30' : 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600'}`}>
           <div className="h-[58px] w-[58px] md:h-[64px] md:w-[64px] rounded-full bg-card p-[2px]">
@@ -738,7 +738,7 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
             </div>
           </div>
         </button>
-        <button onClick={story.isOwn ? handleYourStoryClick : handleProfileClick} className="text-[10px] max-w-[64px] truncate text-center hover:underline">
+        <button onClick={story.isOwn ? handleYourStoryClick : handleProfileClick} className="text-[10px] max-w-[72px] truncate text-center hover:underline">
           {story.isOwn ? "Your Story" : story.username.split('_')[0]}
         </button>
       </div>
@@ -860,7 +860,7 @@ export default function SocialFeedPage() {
       <div className="relative border-b border-border/20">
         <div
           ref={storiesRef}
-          className="flex gap-3 px-4 py-3 overflow-x-auto overflow-y-hidden scrollbar-hide"
+          className="flex gap-4 px-4 py-3 overflow-x-auto overflow-y-hidden scrollbar-hide"
           style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}
         >
           {stories.map((story: any) => (
