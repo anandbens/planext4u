@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned, Building, Film, Plus, Compass } from "lucide-react";
+import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned, Building, Film, Plus, Compass, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -453,7 +453,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             { icon: Home, label: "Home", to: "/app/social", active: path === '/app/social' },
             { icon: Search, label: "Explore", to: "/app/social/explore", active: path.startsWith('/app/social/explore') },
             { icon: Plus, label: "Create", to: "/app/social/create", active: path.startsWith('/app/social/create'), isCenter: true },
-            { icon: Film, label: "Reels", to: "/app/social/reels", active: path.startsWith('/app/social/reels') },
+            { icon: Users, label: "Friends", to: "/app/social/friends", active: path.startsWith('/app/social/friends') },
             { icon: User, label: "Profile", to: "/app/social/profile", active: path.startsWith('/app/social/profile') },
           ];
           return (
