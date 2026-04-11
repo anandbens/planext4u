@@ -24,6 +24,7 @@ export default function VendorMediaLibraryPage() {
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [renamingFolder, setRenamingFolder] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [localFolders, setLocalFolders] = useState<string[]>([]);
 
   const defaultFolders = ["products", "logos", "backgrounds", "icons", "general"];
 
@@ -42,7 +43,7 @@ export default function VendorMediaLibraryPage() {
     enabled: !!vendorId,
   });
 
-  const allFolders = Array.from(new Set([...defaultFolders, ...dbFolders, ...(typeof localFolders !== 'undefined' ? localFolders : [])]));
+  const allFolders = Array.from(new Set([...defaultFolders, ...dbFolders, ...localFolders]));
 
   const { data: media } = useQuery({
     queryKey: ["vendorMedia", vendorId, folder, search],
