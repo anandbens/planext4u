@@ -39,7 +39,7 @@ const emptyForm = {
   tax_slab_id: "" as string, product_attributes: [] as any[],
   is_available: true, duration_hours: 0, duration_minutes: 0,
   promise_p4u: "", helpline_number: "",
-  thumbnail_image: "", banner_image: "",
+  thumbnail_image: "", banner_image: "", socio_shopping_icon: "",
   subcategory_id: "", subcategory_name: "",
   product_type: "simple" as 'simple' | 'variable' | 'service',
   sku: "", slug: "", meta_title: "", meta_description: "",
