@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { api, CartItem } from "@/lib/api";
 import { format, addDays, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, isSameMonth, isBefore, startOfDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveCommissionCascade } from "@/lib/commission-cascade";
 
 const TIME_SLOTS = [
   { id: "morning", label: "Morning 9 - 11 AM" },
@@ -50,15 +51,38 @@ export default function CustomerCartPage() {
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
   const [addressForm, setAddressForm] = useState({ label: "Home", type: "home", address_line: "", city: "", pincode: "" });
   const [referralCountThisMonth, setReferralCountThisMonth] = useState(0);
+  const [itemRedemptionMap, setItemRedemptionMap] = useState<Record<string, { maxRedemption: number; redemptionSource: string }>>({});
 
   useEffect(() => {
-    Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses(), loadPlatformFees()]).then(([cartItems, profile]) => {
+    Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses(), loadPlatformFees()]).then(async ([cartItems, profile]) => {
       setCart(cartItems);
       setWalletPoints(profile?.wallet_points || 0);
       try {
         const saved = JSON.parse(localStorage.getItem('app_db_saved_for_later') || '[]');
         setSavedForLater(saved);
       } catch {}
+
+      // Resolve cascade max redemption for each cart item
+      if (cartItems.length > 0) {
+        const map: Record<string, { maxRedemption: number; redemptionSource: string }> = {};
+        // Fetch product-level overrides
+        const productIds = cartItems.map((i: any) => i.id);
+        const { data: products } = await supabase.from('products').select('id, vendor_id, max_redemption_percentage, commission_override').in('id', productIds);
+        for (const item of cartItems) {
+          const product = (products || []).find((p: any) => p.id === item.id);
+          if (product) {
+            const cascade = await resolveCommissionCascade(
+              item.vendor_id,
+              product.commission_override,
+              product.max_redemption_percentage,
+            );
+            map[item.id] = { maxRedemption: cascade.maxRedemption, redemptionSource: cascade.redemptionSource };
+          } else {
+            map[item.id] = { maxRedemption: 3, redemptionSource: 'plan' };
+          }
+        }
+        setItemRedemptionMap(map);
+      }
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [customerId]);
@@ -155,12 +179,19 @@ export default function CustomerCartPage() {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const totalDiscount = mrpTotal - subtotal;
 
-  // Calculate per-product max redeemable points
-  const perItemMaxPoints = cart.map(item => ({
-    id: item.id,
-    title: item.title,
-    maxRedeemable: item.maxPoints * item.qty,
-  }));
+  // Calculate per-product max redeemable points using cascade logic (% of selling price)
+  const perItemMaxPoints = cart.map(item => {
+    const sellingPrice = item.price * item.qty;
+    const redemptionPct = itemRedemptionMap[item.id]?.maxRedemption ?? 3;
+    const maxFromProduct = Math.floor(sellingPrice * redemptionPct / 100);
+    return {
+      id: item.id,
+      title: item.title,
+      maxRedeemable: maxFromProduct,
+      redemptionPct,
+      source: itemRedemptionMap[item.id]?.redemptionSource || 'plan',
+    };
+  });
 
   // Check if 4+ referrals completed this month → zero platform fee
   useEffect(() => {
@@ -180,7 +211,7 @@ export default function CustomerCartPage() {
   const gstOnPlatformFee = Math.round(platformFee * platformFeeGst / 100 * 100) / 100;
   const tax = cart.reduce((sum, item) => sum + item.tax * item.qty, 0);
   const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
-  const maxPoints = Math.min(walletPoints, cart.reduce((s, i) => s + i.maxPoints * i.qty, 0));
+  const maxPoints = Math.min(walletPoints, perItemMaxPoints.reduce((s, i) => s + i.maxRedeemable, 0));
   const total = subtotal + platformFee + gstOnPlatformFee - discount - pointsUsed;
   const savings = totalDiscount + discount + pointsUsed;
 
@@ -221,6 +252,7 @@ export default function CustomerCartPage() {
         deliveryMode,
         deliveryDate: deliveryMode === "scheduled" ? selectedDate?.toISOString() : null,
         deliverySlot: deliveryMode === "scheduled" ? selectedTimeSlot : 'anytime',
+        itemRedemptionMap,
       }
     });
   };
@@ -393,9 +425,12 @@ export default function CustomerCartPage() {
                                 {discountPct > 0 && <span className="text-[10px] text-success font-medium">{discountPct}% Off</span>}
                               </div>
                               <p className="text-[10px] text-success mt-0.5">Eligible for FREE Shipping</p>
-                              {item.maxPoints > 0 && (
-                                <p className="text-[10px] text-primary mt-0.5">🎁 Up to {item.maxPoints * item.qty} points redeemable</p>
-                              )}
+                              {(() => {
+                                const pim = perItemMaxPoints.find(p => p.id === item.id);
+                                return pim && pim.maxRedeemable > 0 ? (
+                                  <p className="text-[10px] text-primary mt-0.5">🎁 Up to ₹{pim.maxRedeemable} redeemable via points ({pim.redemptionPct}%)</p>
+                                ) : null;
+                              })()}
                               <div className="flex items-center gap-3 mt-2 flex-wrap">
                                 <div className="flex items-center gap-1 border border-border rounded-lg">
                                   <button onClick={() => updateQty(item.id, -1)} className="h-7 w-7 flex items-center justify-center hover:bg-accent rounded-l-lg"><Minus className="h-3 w-3" /></button>

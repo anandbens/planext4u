@@ -57,6 +57,7 @@ import ReferralReportPage from "./pages/reports/ReferralReportPage";
 import ClassifiedReportPage from "./pages/reports/ClassifiedReportPage";
 import TaxReportPage from "./pages/reports/TaxReportPage";
 import PaymentReportPage from "./pages/reports/PaymentReportPage";
+import P4URevenueReportPage from "./pages/reports/P4URevenueReportPage";
 
 // Customer pages
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
@@ -298,6 +299,7 @@ const AppRoutes = () => {
         <Route path="/reports/classifieds" element={<ProtectedPage><ClassifiedReportPage /></ProtectedPage>} />
         <Route path="/reports/tax" element={<ProtectedPage><TaxReportPage /></ProtectedPage>} />
         <Route path="/reports/payments" element={<ProtectedPage><PaymentReportPage /></ProtectedPage>} />
+        <Route path="/reports/revenue" element={<ProtectedPage><P4URevenueReportPage /></ProtectedPage>} />
         <Route path="/cms" element={<ProtectedPage><CMSPage /></ProtectedPage>} />
         <Route path="/settings" element={<ProtectedPage><SettingsPage /></ProtectedPage>} />
         <Route path="/categories" element={<ProtectedPage><CategoriesPage /></ProtectedPage>} />

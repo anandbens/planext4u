@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ArrowLeft, CheckCircle, XCircle, Copy, Share2, ShoppingBag, CreditCard } from "lucide-react";
 import { api } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveCommissionCascade } from "@/lib/commission-cascade";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 import { format, addDays } from "date-fns";
@@ -20,7 +21,7 @@ export default function PaymentPage() {
   const { customerUser } = useAuth();
   const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
 
-  const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress } = location.state || {};
+  const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress, itemRedemptionMap } = location.state || {};
 
   const [paymentState, setPaymentState] = useState<PaymentState>('select');
   const [orderId, setOrderId] = useState('');
@@ -129,6 +130,22 @@ export default function PaymentPage() {
 
       const orderPromises = Object.entries(vendorGroups).map(async ([vendorId, items]) => {
         const itemTotal = items.reduce((s: number, i: any) => s + i.price * i.qty, 0);
+
+        // Resolve cascade for this vendor's items (use first product as representative)
+        let effectiveCommission = 0;
+        let effectiveMaxRedemption = 3;
+        let commissionSource = 'plan';
+        let redemptionSource = 'plan';
+        try {
+          const firstProduct = items[0];
+          const { data: prod } = await supabase.from('products').select('commission_override, max_redemption_percentage').eq('id', firstProduct.id).maybeSingle();
+          const cascade = await resolveCommissionCascade(vendorId, prod?.commission_override, prod?.max_redemption_percentage);
+          effectiveCommission = cascade.commission;
+          effectiveMaxRedemption = cascade.maxRedemption;
+          commissionSource = cascade.commissionSource;
+          redemptionSource = cascade.redemptionSource;
+        } catch (e) { console.error('Cascade error:', e); }
+
         const orderData = {
           id: newOrderId + '-' + vendorId.slice(-3),
           customer_id: customerId,
@@ -146,6 +163,10 @@ export default function PaymentPage() {
           status: 'placed',
           payment_reference_id: paymentId || null,
           razorpay_order_id: rzpOrderId || null,
+          effective_commission: effectiveCommission,
+          effective_max_redemption: effectiveMaxRedemption,
+          commission_source: commissionSource,
+          redemption_source: redemptionSource,
         };
         const { error: insertErr } = await supabase.from('orders').insert(orderData as any);
         if (insertErr) {
