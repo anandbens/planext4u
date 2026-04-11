@@ -36,6 +36,7 @@ const emptyForm = {
   vendor_id: "", vendor_name: "", category_id: "", category_name: "", stock: 0, emoji: "📦",
   image: "", rejection_reason: "", inactivation_reason: "", youtube_video_url: "",
   images: [] as string[], max_redemption_percentage: null as number | null,
+  commission_override: null as number | null,
   tax_slab_id: "" as string, product_attributes: [] as any[],
   is_available: true, duration_hours: 0, duration_minutes: 0,
   promise_p4u: "", helpline_number: "",
@@ -207,6 +208,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         youtube_video_url: (product as any).youtube_video_url || "",
         images: ((product as any).images?.length > 0) ? (product as any).images : (product.image ? [product.image] : []),
         max_redemption_percentage: (product as any).max_redemption_percentage ?? null,
+        commission_override: (product as any).commission_override ?? null,
         tax_slab_id: (product as any).tax_slab_id || "",
         product_attributes: (product as any).product_attributes || [],
         is_available: (product as any).is_available !== false,
@@ -758,16 +760,23 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
 
             {/* Points */}
             {!isVendor && (
-              <div className="p-4 rounded-lg bg-accent/30 border border-primary/10 flex items-center gap-4">
-                <Star className="h-8 w-8 text-warning" />
-                <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground">Max Points Redeemable</Label>
-                  {editMode ? <Input type="number" value={form.max_points_redeemable} onChange={(e) => setForm({ ...form, max_points_redeemable: Number(e.target.value) })} className="mt-1 max-w-32" /> : <p className="text-xl font-bold">{product?.max_points_redeemable} pts</p>}
+              <div className="p-4 rounded-lg bg-accent/30 border border-primary/10">
+                <div className="flex items-center gap-4">
+                  <Star className="h-8 w-8 text-warning shrink-0" />
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground">Max Points Redeemable</Label>
+                    {editMode ? <Input type="number" value={form.max_points_redeemable} onChange={(e) => setForm({ ...form, max_points_redeemable: Number(e.target.value) })} className="mt-1 max-w-32" /> : <p className="text-xl font-bold">{product?.max_points_redeemable} pts</p>}
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground">Max User Redemption %</Label>
+                    {editMode ? <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1 max-w-32" placeholder="Vendor default" /> : <p className="text-xl font-bold">{(product as any)?.max_redemption_percentage != null ? `${(product as any).max_redemption_percentage}%` : "Vendor default"}</p>}
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground">Vendor to P4U Commission</Label>
+                    {editMode ? <Input type="number" value={form.commission_override ?? ""} onChange={(e) => setForm({ ...form, commission_override: e.target.value ? Number(e.target.value) : null })} className="mt-1 max-w-32" placeholder="Vendor default" /> : <p className="text-xl font-bold">{(product as any)?.commission_override != null ? `${(product as any).commission_override}%` : "Vendor default"}</p>}
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground">Max Redemption %</Label>
-                  {editMode ? <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1 max-w-32" placeholder="Vendor default" /> : <p className="text-xl font-bold">{(product as any)?.max_redemption_percentage != null ? `${(product as any).max_redemption_percentage}%` : "Vendor default"}</p>}
-                </div>
+                <p className="text-[9px] text-muted-foreground mt-2">Product-level values override vendor-level, which overrides plan-level.</p>
               </div>
             )}
           </TabsContent>
