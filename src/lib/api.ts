@@ -1270,7 +1270,7 @@ export const api = {
     return loadCart();
   },
 
-  addToCart: async (product: Product, qty: number = 1) => {
+  addToCart: async (product: Product, qty: number = 1, selectedAttributes?: Record<string, string>, variantId?: string) => {
     const { loadCart, saveCart } = await import('./persist');
     const cart = loadCart();
 
@@ -1291,17 +1291,21 @@ export const api = {
       }
     }
 
-    const existing = cart.find((i: CartItem) => i.id === product.id);
+    // For variant products, use a composite key (productId + variantId) to allow different variants in cart
+    const cartKey = variantId ? `${product.id}__${variantId}` : product.id;
+    const existing = cart.find((i: CartItem) => i.id === cartKey);
     if (existing) {
       existing.qty += qty;
     } else {
       cart.push({
-        id: product.id, title: product.title, price: product.price, qty,
+        id: cartKey, title: product.title, price: product.price, qty,
         vendor: product.vendor_name || '', vendor_id: product.vendor_id,
         emoji: product.emoji || '📦', image: product.image || '',
         maxPoints: product.max_points_redeemable,
         tax: product.tax, discount: product.discount,
         parent_item_id: product.parent_item_id || null,
+        selected_attributes: selectedAttributes || undefined,
+        variant_id: variantId || undefined,
       });
     }
     saveCart(cart);
