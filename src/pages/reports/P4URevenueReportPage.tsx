@@ -140,7 +140,8 @@ export default function P4URevenueReportPage() {
   ];
 
   const handleExport = (data: any[], filename: string) => {
-    exportCSV(data, filename);
+    const keys = Object.keys(data[0] || {});
+    exportToCSV(data, keys.map(k => ({ key: k, label: k })), filename);
   };
 
   return (
