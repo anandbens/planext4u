@@ -92,17 +92,30 @@ export default function CustomerPhoneLoginPage() {
     setLoading(true);
     try {
       // Step 1: Verify OTP with Firebase
+      console.log("[PhoneLogin] Step 1: Verifying OTP with Firebase...");
       await verifyOTP(otp);
+      console.log("[PhoneLogin] Step 1 done: Firebase OTP verified");
 
       // Step 2: Get Firebase ID token
+      console.log("[PhoneLogin] Step 2: Getting Firebase ID token...");
       const idToken = await getFirebaseIdToken();
+      console.log("[PhoneLogin] Step 2 done: Got Firebase ID token");
 
       // Step 3: Call edge function to create/verify Supabase session
+      console.log("[PhoneLogin] Step 3: Invoking firebase-phone-auth edge function...");
       const { data, error } = await supabase.functions.invoke("firebase-phone-auth", {
         body: { firebase_id_token: idToken },
       });
 
-      if (error || !data?.success) {
+      console.log("[PhoneLogin] Step 3 response:", JSON.stringify({ data: data ? { success: data.success, code: data.code, error: data.error } : null, error: error?.message }));
+
+      if (error) {
+        // supabase.functions.invoke error (network, CORS, etc.)
+        console.error("[PhoneLogin] Edge function invoke error:", error);
+        throw new Error(error.message || "Network error. Please check your connection and try again.");
+      }
+
+      if (!data?.success) {
         const errMsg = data?.code === "NOT_REGISTERED"
           ? "No account found with this mobile number. Please create an account first."
           : data?.code === "EMAIL_ALREADY_EXISTS"
@@ -112,20 +125,23 @@ export default function CustomerPhoneLoginPage() {
       }
 
       // Step 4: Establish Supabase session using the magic link token
+      console.log("[PhoneLogin] Step 4: Verifying Supabase OTP with token_hash...");
       const { error: verifyError } = await supabase.auth.verifyOtp({
         token_hash: data.token_hash,
         type: "magiclink",
       });
 
       if (verifyError) {
+        console.error("[PhoneLogin] Step 4 verifyOtp error:", verifyError);
         throw new Error("Session verification failed. Please try logging in again.");
       }
 
+      console.log("[PhoneLogin] Login successful!");
       toast.success("Login successful! 🎉");
       // The auth state change listener in AuthProvider will handle setting customerUser
       setTimeout(() => navigate("/app", { replace: true }), 500);
     } catch (err: any) {
-      console.error("OTP verify error:", err);
+      console.error("[PhoneLogin] OTP verify error:", err, "code:", err.code, "message:", err.message);
       if (err.code === "auth/invalid-verification-code") {
         toast.error("Invalid OTP. Please check and try again.");
       } else if (err.code === "auth/code-expired") {
