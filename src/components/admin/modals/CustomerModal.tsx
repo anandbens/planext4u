@@ -1,4 +1,5 @@
 import { User } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,15 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("profile");
+
+  // Occupation master data
+  const { data: occupations = [] } = useQuery({
+    queryKey: ["occupationsMaster"],
+    queryFn: async () => {
+      const { data } = await supabase.from("occupations").select("id, name").eq("status", "active").order("name");
+      return (data || []) as { id: string; name: string }[];
+    },
+  });
 
   // KYC data
   const [kycDocs, setKycDocs] = useState<any[]>([]);
