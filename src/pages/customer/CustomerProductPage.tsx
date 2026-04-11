@@ -200,7 +200,7 @@ export default function CustomerProductPage() {
         <Search className="h-4 w-4 text-muted-foreground" />
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-4 pb-36 md:pb-6">
+      <div className="max-w-5xl mx-auto px-4 py-4 pb-44 md:pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Product Image */}
           <div className="relative">
@@ -408,8 +408,8 @@ export default function CustomerProductPage() {
         </Tabs>
       </div>
 
-      {/* Sticky Bottom Bar - mobile */}
-      <div className="fixed bottom-20 left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden">
+      {/* Sticky Bottom Bar - mobile — sits above the bottom nav (~70px + safe area) */}
+      <div className="fixed left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden" style={{ bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}>
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <div className="flex items-center gap-2">
@@ -432,7 +432,7 @@ export default function CustomerProductPage() {
           </Button>
         </div>
       </div>
-      <div className="px-4 py-3 pb-36 md:pb-6">
+      <div className="px-4 py-3 pb-44 md:pb-6">
         <BannerAd placement="product_detail" />
       </div>
     </CustomerLayout>

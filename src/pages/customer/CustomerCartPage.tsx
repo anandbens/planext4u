@@ -284,7 +284,7 @@ export default function CustomerCartPage() {
         <div className="w-8" />
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-4 pb-36 md:pb-6">
+      <div className="max-w-5xl mx-auto px-4 py-4 pb-44 md:pb-6">
         {cart.length === 0 && savedForLater.length === 0 ? (
           <div className="text-center py-16">
             <ShoppingBag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

@@ -123,7 +123,7 @@ export default function CustomerClassifiedsPage() {
           </div>
         )}
       </div>
-      <div className="px-4 py-3 pb-36 md:pb-6">
+      <div className="px-4 py-3 pb-44 md:pb-6">
         <BannerAd placement="classifieds" />
       </div>
     </CustomerLayout>
