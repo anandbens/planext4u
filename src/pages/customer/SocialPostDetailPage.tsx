@@ -160,49 +160,68 @@ export default function SocialPostDetailPage() {
             </div>
           </>
         )}
-        {/* Product Tags Shopping Icon */}
+        {/* Product Tags - YouTube Shorts style */}
         {(() => {
           const tags = Array.isArray((post as any).product_tags) ? (post as any).product_tags as any[] : [];
           if (tags.length === 0) return null;
           return (
-            <button
-              className="absolute top-3 right-3 z-10 bg-card/90 backdrop-blur-sm rounded-full p-2 shadow-lg border border-border/50 hover:bg-card transition-colors"
-              onClick={() => {
-                if (tags.length === 1) {
-                  navigate(`/app/product/${tags[0].id}`);
-                } else {
-                  setShowProductTags(prev => !prev);
-                }
-              }}
-            >
-              {tags[0]?.socio_shopping_icon || tags[0]?.image ? (
-                <img src={tags[0].socio_shopping_icon || tags[0].image} alt="" className="h-5 w-5 rounded-full object-cover" />
-              ) : (
-                <ShoppingBag className="h-5 w-5 text-primary" />
-              )}
-            </button>
+            <>
+              <style>{`
+                @keyframes detail-product-pulse { 0%,100%{box-shadow:0 0 0 0 hsl(var(--primary)/0.4)} 50%{box-shadow:0 0 0 8px hsl(var(--primary)/0)} }
+                @keyframes detail-product-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+              `}</style>
+              <button
+                className="absolute top-3 right-3 z-10 flex items-end gap-0.5 cursor-pointer"
+                onClick={() => {
+                  if (tags.length === 1) {
+                    navigate(`/app/product/${tags[0].id}`);
+                  } else {
+                    setShowProductTags(prev => !prev);
+                  }
+                }}
+                style={{ animation: "detail-product-bounce 2s ease-in-out infinite" }}
+              >
+                <div className="relative flex items-end">
+                  {tags.slice(0, 2).map((tag: any, i: number) => (
+                    <div key={tag.id} className={`rounded-lg overflow-hidden border-2 border-card shadow-xl bg-card ${i > 0 ? '-ml-5 relative z-0' : 'relative z-[1]'}`}
+                      style={{ animation: "detail-product-pulse 2.5s ease-in-out infinite", width: i === 0 ? 56 : 48, height: i === 0 ? 56 : 48 }}>
+                      {tag.socio_shopping_icon || tag.image ? (
+                        <img src={tag.socio_shopping_icon || tag.image} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-accent flex items-center justify-center"><ShoppingBag className="h-5 w-5 text-primary" /></div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-0.5 bg-card/95 backdrop-blur-sm rounded-full px-2 py-1 shadow-lg border border-border/50 mb-1 ml-1">
+                  <span className="text-[11px] font-bold text-foreground">{tags.length} product{tags.length > 1 ? 's' : ''}</span>
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                </div>
+              </button>
+            </>
           );
         })()}
         {showProductTags && (() => {
           const tags = Array.isArray((post as any).product_tags) ? (post as any).product_tags as any[] : [];
           if (tags.length === 0) return null;
           return (
-            <div className="absolute top-14 right-3 z-20 bg-card rounded-xl shadow-xl border border-border p-2 max-w-[200px] animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute top-[76px] right-3 z-20 bg-card rounded-xl shadow-xl border border-border p-2 max-w-[220px] animate-in fade-in slide-in-from-top-2 duration-200">
               {tags.map((tag: any) => (
                 <button
                   key={tag.id}
-                  className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg hover:bg-accent transition-colors"
+                  className="flex items-center gap-2.5 w-full text-left px-2 py-2 rounded-lg hover:bg-accent transition-colors"
                   onClick={() => navigate(`/app/product/${tag.id}`)}
                 >
                   {tag.socio_shopping_icon || tag.image ? (
-                    <img src={tag.socio_shopping_icon || tag.image} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
+                    <img src={tag.socio_shopping_icon || tag.image} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0 border border-border/50" />
                   ) : (
-                    <ShoppingBag className="h-5 w-5 text-primary shrink-0" />
+                    <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center shrink-0"><ShoppingBag className="h-5 w-5 text-primary" /></div>
                   )}
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium truncate">{tag.title}</p>
-                    {tag.price && <p className="text-[10px] text-muted-foreground">₹{Number(tag.price).toLocaleString()}</p>}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold truncate">{tag.title}</p>
+                    {tag.price && <p className="text-[11px] font-bold text-primary">₹{Number(tag.price).toLocaleString()}</p>}
                   </div>
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground -rotate-90 shrink-0" />
                 </button>
               ))}
             </div>

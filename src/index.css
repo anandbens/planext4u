@@ -238,6 +238,15 @@ nav.fixed {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* Capacitor native app safe-area compensation */
+  .capacitor-safe-top {
+    padding-top: max(env(safe-area-inset-top, 0px), 24px);
+  }
+
+  .capacitor-safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

@@ -152,9 +152,9 @@ export default function SocialStoryViewerPage() {
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
-      <div className="relative w-full max-w-md h-full max-h-screen">
+        <div className="relative w-full max-w-md h-full max-h-screen" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         {/* Progress bars */}
-        <div className="absolute top-2 left-2 right-2 z-20 flex gap-1">
+        <div className="absolute left-2 right-2 z-20 flex gap-1" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}>
           {group.stories.map((s: any, i: number) => (
             <div key={s.id} className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden">
               <div className="h-full bg-white rounded-full transition-all duration-75"
@@ -164,7 +164,7 @@ export default function SocialStoryViewerPage() {
         </div>
 
         {/* Header */}
-        <div className="absolute top-6 left-3 right-3 z-20 flex items-center justify-between">
+        <div className="absolute left-3 right-3 z-20 flex items-center justify-between" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 20px)' }}>
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8 border-2 border-white">
               {group.user.avatarUrl ? (
