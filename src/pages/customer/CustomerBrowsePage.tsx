@@ -11,6 +11,7 @@ import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api, CartItem } from "@/lib/api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { BannerAd } from "@/components/customer/BannerAd";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
@@ -324,6 +325,9 @@ export default function CustomerBrowsePage() {
           </motion.div>
         )}
       </AnimatePresence>
+      <div className="px-4 py-3">
+        <BannerAd placement="products" />
+      </div>
     </CustomerLayout>
   );
 }

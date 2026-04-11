@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api, ClassifiedAd } from "@/lib/api";
+import { BannerAd } from "@/components/customer/BannerAd";
 
 function AdImageCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
@@ -121,6 +122,9 @@ export default function CustomerClassifiedsPage() {
             })}
           </div>
         )}
+      </div>
+      <div className="px-4 py-3">
+        <BannerAd placement="classifieds" />
       </div>
     </CustomerLayout>
   );

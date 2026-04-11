@@ -20,6 +20,7 @@ import { NotificationConsentModal } from "@/components/customer/NotificationCons
 import { getLocation, DeviceLocation } from "@/lib/device-service";
 import { useAuth } from "@/lib/auth";
 import { RatingPopup } from "@/components/customer/RatingPopup";
+import { BannerAd } from "@/components/customer/BannerAd";
 
 function DiscountSubscriptionSection() {
   const [email, setEmail] = useState("");
@@ -737,6 +738,11 @@ export default function CustomerHomePage() {
             </Card>
           ))}
         </motion.div>
+
+        {/* Sponsored Ad */}
+        <div className="px-4 py-2">
+          <BannerAd placement="home" />
+        </div>
 
         {/* Classifieds CTA */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">

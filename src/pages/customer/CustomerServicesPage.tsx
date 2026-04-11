@@ -10,6 +10,7 @@ import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { BannerAd } from "@/components/customer/BannerAd";
 
 function useServiceWishlist() {
   const getList = () => { try { return JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]'); } catch { return []; } };
@@ -172,6 +173,9 @@ export default function CustomerServicesPage() {
             })}
           </div>
         )}
+      </div>
+      <div className="px-4 py-3">
+        <BannerAd placement="services" />
       </div>
     </CustomerLayout>
   );
