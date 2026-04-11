@@ -646,14 +646,17 @@ export const api = {
           status: 'pending', vendor_name: order.vendor_name,
         });
 
-        // Award loyalty points (2% of order total)
-        const rewardPoints = Math.round(Number(order.total) * 0.02);
+        // Award loyalty points using order_reward_rate from platform variables
+        let rewardRate = 2;
+        const { data: rewardRateVar } = await supabase.from('platform_variables').select('value').eq('key', 'order_reward_rate').maybeSingle();
+        if (rewardRateVar) rewardRate = Number(rewardRateVar.value) || 2;
+        const rewardPoints = Math.round(Number(order.total) * rewardRate / 100);
         const { data: customer } = await supabase.from('customers').select('*').eq('id', order.customer_id).single();
-        if (customer) {
+        if (customer && rewardPoints > 0) {
           await supabase.from('customers').update({ wallet_points: customer.wallet_points + rewardPoints }).eq('id', customer.id);
           await supabase.from('points_transactions').insert({
             id: genId('PT'), user_id: customer.id, type: 'order_reward', points: rewardPoints,
-            description: `2% reward on order ${order.id} (₹${Number(order.total).toLocaleString('en-IN')})`, user_name: customer.name,
+            description: `${rewardRate}% reward on order ${order.id} (₹${Number(order.total).toLocaleString('en-IN')})`, user_name: customer.name,
           });
         }
 

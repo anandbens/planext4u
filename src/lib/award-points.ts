@@ -24,11 +24,47 @@ async function getStringValue(key: string): Promise<string> {
 }
 
 /**
+ * Resolve the customer record from either auth UUID or customer ID.
+ * Social interactions pass auth.uid(), registration uses customer ID.
+ */
+async function resolveCustomer(userId: string) {
+  // First try direct customer ID match
+  const { data: directMatch } = await supabase
+    .from('customers')
+    .select('id, name, wallet_points')
+    .eq('id', userId)
+    .maybeSingle();
+  if (directMatch) return directMatch;
+
+  // Try via user_roles (auth UUID → customer_id)
+  const { data: role } = await supabase
+    .from('user_roles')
+    .select('customer_id')
+    .eq('user_id', userId)
+    .eq('role', 'customer')
+    .maybeSingle();
+
+  if (role?.customer_id) {
+    const { data: cust } = await supabase
+      .from('customers')
+      .select('id, name, wallet_points')
+      .eq('id', role.customer_id)
+      .maybeSingle();
+    return cust;
+  }
+
+  return null;
+}
+
+/**
  * Award loyalty points to a customer.
  * Supports cooling period for referral points.
+ * @param userId - Either auth UUID or customer ID
+ * @param variableKey - Platform variable key for the points amount
+ * @param description - Human-readable description for the transaction
  */
 export async function awardPoints(
-  authUserId: string,
+  userId: string,
   variableKey: string,
   description: string,
   options?: { type?: string; isCooling?: boolean }
@@ -40,18 +76,14 @@ export async function awardPoints(
     const expiryDays = Number(await getStringValue('points_expiry_days')) || 60;
     const coolingEnabled = (await getStringValue('referral_cooling_enabled')) === '1';
 
-    // Check if this is a referral type and cooling is enabled
     const isReferralType = variableKey === 'referral_points' || variableKey === 'vendor_referral_points';
     const shouldCool = isReferralType && coolingEnabled && options?.isCooling !== false;
 
-    // Find customer linked to this auth user
-    const { data: customer } = await supabase
-      .from('customers')
-      .select('id, wallet_points')
-      .eq('id', authUserId)
-      .maybeSingle();
-
-    if (!customer) return;
+    const customer = await resolveCustomer(userId);
+    if (!customer) {
+      console.warn('Award points: no customer found for userId', userId);
+      return;
+    }
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expiryDays);
@@ -63,6 +95,7 @@ export async function awardPoints(
     await supabase.from('points_transactions').insert({
       id: `PT-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       user_id: customer.id,
+      user_name: customer.name,
       points,
       type: txType,
       description,
@@ -87,7 +120,6 @@ export async function awardPoints(
  */
 export async function creditCoolingPoints(referredCustomerId: string) {
   try {
-    // Find who referred this customer
     const { data: customer } = await supabase
       .from('customers')
       .select('referred_by')
@@ -96,7 +128,6 @@ export async function creditCoolingPoints(referredCustomerId: string) {
 
     if (!customer?.referred_by) return;
 
-    // Find the referrer by referral code
     const { data: referrer } = await supabase
       .from('customers')
       .select('id, wallet_points')
@@ -105,7 +136,6 @@ export async function creditCoolingPoints(referredCustomerId: string) {
 
     if (!referrer) return;
 
-    // Find pending cooling points for this referrer related to this referral
     const { data: pendingTx } = await supabase
       .from('points_transactions')
       .select('*')
@@ -115,7 +145,6 @@ export async function creditCoolingPoints(referredCustomerId: string) {
 
     if (!pendingTx || pendingTx.length === 0) return;
 
-    // Credit each pending transaction
     let totalToCredit = 0;
     for (const tx of pendingTx) {
       await supabase
