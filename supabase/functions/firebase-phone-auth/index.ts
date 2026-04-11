@@ -3,6 +3,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 const FIREBASE_PROJECT_ID = "p4u-console";
 const FIREBASE_API_KEY = "AIzaSyBcV0QJNWV95S2u5mBnOHxA1gXg96hcYfA";
 
+// Accept multiple valid audience values (project ID and numeric app ID)
+const VALID_AUDIENCES = [
+  FIREBASE_PROJECT_ID,
+  "784503032650",  // Firebase messaging sender ID / numeric project
+];
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
