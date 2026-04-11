@@ -1476,6 +1476,7 @@ export type Database = {
           short_description: string | null
           sku: string | null
           slug: string | null
+          socio_shopping_icon: string | null
           status: string
           stock: number | null
           stock_status: string | null
@@ -1528,6 +1529,7 @@ export type Database = {
           short_description?: string | null
           sku?: string | null
           slug?: string | null
+          socio_shopping_icon?: string | null
           status?: string
           stock?: number | null
           stock_status?: string | null
@@ -1580,6 +1582,7 @@ export type Database = {
           short_description?: string | null
           sku?: string | null
           slug?: string | null
+          socio_shopping_icon?: string | null
           status?: string
           stock?: number | null
           stock_status?: string | null

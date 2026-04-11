@@ -39,7 +39,7 @@ const emptyForm = {
   tax_slab_id: "" as string, product_attributes: [] as any[],
   is_available: true, duration_hours: 0, duration_minutes: 0,
   promise_p4u: "", helpline_number: "",
-  thumbnail_image: "", banner_image: "",
+  thumbnail_image: "", banner_image: "", socio_shopping_icon: "",
   subcategory_id: "", subcategory_name: "",
   product_type: "simple" as 'simple' | 'variable' | 'service',
   sku: "", slug: "", meta_title: "", meta_description: "",
@@ -227,6 +227,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         stock_status: (product as any).stock_status || "in_stock",
         parent_item_id: (product as any).parent_item_id || "",
         parent_item_name: (product as any).parent_item_name || "",
+        socio_shopping_icon: (product as any).socio_shopping_icon || "",
       });
       setEditMode(mode === "edit");
       setActiveTab("general");
@@ -688,6 +689,11 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <div>
                   <Label className="text-xs text-muted-foreground">Banner</Label>
                   <MediaLibraryPicker value={form.banner_image} onChange={(url) => setForm({ ...form, banner_image: url })} folder="product-images" label="Set Banner" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Socio Shopping Icon</Label>
+                  <MediaLibraryPicker value={form.socio_shopping_icon} onChange={(url) => setForm({ ...form, socio_shopping_icon: url })} folder="product-images" label="Set Shopping Icon" />
+                  <p className="text-[10px] text-muted-foreground mt-1">Small square image shown as product sticker on social posts. Auto-generated from product image if empty.</p>
                 </div>
               </div>
             )}

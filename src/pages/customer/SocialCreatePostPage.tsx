@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Image, MapPin, Users, Tag, ChevronRight, X, Plus, Eye, Heart, Video, ShoppingBag, Search } from "lucide-react";
+import { ArrowLeft, Camera, Image, MapPin, Users, Tag, ChevronRight, X, Plus, Eye, Heart, Video, ShoppingBag, Search, Pencil } from "lucide-react";
+import ImageEditor from "@/components/social/ImageEditor";
+import ProductTagOverlay from "@/components/social/ProductTagOverlay";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -63,6 +65,10 @@ export default function SocialCreatePostPage() {
   const [taggedPeople, setTaggedPeople] = useState<{ id: string; username: string }[]>([]);
   const [showTagPicker, setShowTagPicker] = useState(false);
   const [tagSearch, setTagSearch] = useState("");
+  const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
+  const [productTagPositions, setProductTagPositions] = useState<{ id: string; title: string; price?: number; image?: string; x: number; y: number }[]>([]);
+  const [showPositionTagPicker, setShowPositionTagPicker] = useState(false);
+  const [positionTagSearch, setPositionTagSearch] = useState("");
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -254,8 +260,10 @@ export default function SocialCreatePostPage() {
         } as any);
       }
 
-      // Build product_tags and tagged_users for dedicated columns
-      const productTagsData = linkedProduct ? [{ id: linkedProduct.id, title: linkedProduct.title }] : null;
+      // Build product_tags (with position data) and tagged_users for dedicated columns
+      const productTagsData = productTagPositions.length > 0
+        ? productTagPositions.map(t => ({ id: t.id, title: t.title, price: t.price, image: t.image, x: t.x, y: t.y }))
+        : linkedProduct ? [{ id: linkedProduct.id, title: linkedProduct.title }] : null;
       const taggedUsersData = taggedPeople.length > 0 ? taggedPeople.map(t => ({ id: t.id, username: t.username })) : null;
 
       const { error } = await supabase.from('social_posts' as any).insert({
@@ -344,6 +352,23 @@ export default function SocialCreatePostPage() {
     );
   }
 
+  // Image editor overlay
+  if (editingImageIndex !== null && fileTypes[editingImageIndex] === 'image') {
+    return (
+      <ImageEditor
+        imageUrl={previewUrls[editingImageIndex]}
+        onSave={(blob) => {
+          const newUrl = URL.createObjectURL(blob);
+          const newFile = new File([blob], `edited-${editingImageIndex}.webp`, { type: "image/webp" });
+          setPreviewUrls(prev => prev.map((u, i) => i === editingImageIndex ? newUrl : u));
+          setSelectedFiles(prev => prev.map((f, i) => i === editingImageIndex ? newFile : f));
+          setEditingImageIndex(null);
+        }}
+        onCancel={() => setEditingImageIndex(null)}
+      />
+    );
+  }
+
   // Step 2: Edit & Filter
   if (step === 'edit') {
     return (
@@ -355,7 +380,10 @@ export default function SocialCreatePostPage() {
             <Button size="sm" onClick={() => setStep('details')}>Next</Button>
           </div>
         </header>
-        <div className="aspect-square bg-black relative">
+        <div className="aspect-square bg-black relative" onClick={(e) => {
+          if (showPositionTagPicker) return;
+          // Allow clicking on image to position product tag
+        }}>
           {previewUrls.length > 0 && (
             fileTypes[0] === 'video' ? (
               <video src={previewUrls[0]} className="w-full h-full object-contain" controls muted />
@@ -366,7 +394,53 @@ export default function SocialCreatePostPage() {
           {previewUrls.length > 1 && (
             <div className="absolute top-3 right-3 bg-foreground/60 text-background text-xs font-bold px-2 py-0.5 rounded-full">{previewUrls.length} items</div>
           )}
+          {/* Edit button for images */}
+          {previewUrls.length > 0 && fileTypes[0] === 'image' && (
+            <button
+              className="absolute top-3 left-3 h-8 w-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition"
+              onClick={() => setEditingImageIndex(0)}
+              title="Edit image (crop, text, emoji)"
+            >
+              <Pencil className="h-4 w-4 text-white" />
+            </button>
+          )}
+          {/* Product tag positions on image */}
+          <ProductTagOverlay
+            tags={productTagPositions}
+            editable
+            onRemove={(id) => setProductTagPositions(prev => prev.filter(t => t.id !== id))}
+          />
+          {/* Tag product button */}
+          {previewUrls.length > 0 && (
+            <button
+              className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white text-xs font-medium hover:bg-black/80 transition"
+              onClick={() => setShowPositionTagPicker(true)}
+            >
+              <ShoppingBag className="h-3.5 w-3.5" />
+              Tag Product
+            </button>
+          )}
         </div>
+        {/* Product tag picker modal */}
+        {showPositionTagPicker && (
+          <div className="p-3 bg-card border-b border-border/30">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold">Tag a product on this content</span>
+              <button onClick={() => { setShowPositionTagPicker(false); setPositionTagSearch(""); }}><X className="h-4 w-4" /></button>
+            </div>
+            <PositionProductPicker
+              search={positionTagSearch}
+              onSearchChange={setPositionTagSearch}
+              onSelect={(p) => {
+                setProductTagPositions(prev => [...prev, { ...p, x: 50, y: 50 }]);
+                setLinkedProduct(p);
+                setShowPositionTagPicker(false);
+                setPositionTagSearch("");
+              }}
+            />
+            <p className="text-[10px] text-muted-foreground mt-2">Tap a product to place a shopping sticker. Drag it to reposition.</p>
+          </div>
+        )}
         {previewUrls.length > 1 && (
           <div className="flex gap-2 p-3 overflow-x-auto bg-card border-b border-border/30">
             {previewUrls.map((url, i) => (
@@ -381,6 +455,11 @@ export default function SocialCreatePostPage() {
                 <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
                   <X className="h-3 w-3 text-destructive-foreground" />
                 </button>
+                {fileTypes[i] === 'image' && (
+                  <button onClick={() => setEditingImageIndex(i)} className="absolute bottom-0 right-0 h-5 w-5 bg-black/60 rounded-full flex items-center justify-center">
+                    <Pencil className="h-2.5 w-2.5 text-white" />
+                  </button>
+                )}
               </div>
             ))}
             <button onClick={() => fileInputRef.current?.click()} className="h-16 w-16 rounded border-2 border-dashed border-border flex items-center justify-center shrink-0">
@@ -614,6 +693,43 @@ function PeopleTagPicker({ search, onSearchChange, selectedIds, onToggle, curren
         );
       })}
       {search.length >= 2 && !loading && results.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">No people found</p>}
+    </div>
+  );
+}
+
+function PositionProductPicker({ search, onSearchChange, onSelect }: { search: string; onSearchChange: (v: string) => void; onSelect: (p: { id: string; title: string; price?: number; image?: string }) => void }) {
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const doSearch = async (q: string) => {
+    onSearchChange(q);
+    if (q.length < 2) { setResults([]); return; }
+    setLoading(true);
+    const { data } = await supabase.from('products').select('id, title, image, price, socio_shopping_icon').eq('status', 'active').ilike('title', `%${q}%`).limit(10);
+    setResults(data || []);
+    setLoading(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search products to tag..." value={search} onChange={(e) => doSearch(e.target.value)} className="pl-8 h-9 text-sm" />
+      </div>
+      {loading && <p className="text-xs text-muted-foreground">Searching...</p>}
+      {results.map((p: any) => (
+        <button key={p.id} onClick={() => onSelect({ id: p.id, title: p.title, price: p.price, image: p.socio_shopping_icon || p.image })} className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent text-left">
+          <div className="h-10 w-10 rounded bg-secondary/30 overflow-hidden shrink-0">
+            {(p.socio_shopping_icon || p.image) ? <img src={p.socio_shopping_icon || p.image} alt="" className="h-full w-full object-cover" /> : <ShoppingBag className="h-5 w-5 m-auto mt-2.5 text-muted-foreground" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{p.title}</p>
+            <p className="text-xs text-muted-foreground">₹{p.price?.toLocaleString()}</p>
+          </div>
+          <Tag className="h-4 w-4 text-primary" />
+        </button>
+      ))}
+      {search.length >= 2 && !loading && results.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">No products found</p>}
     </div>
   );
 }
