@@ -366,6 +366,7 @@ function PostCard({ post }: { post: any }) {
         {mediaItems.length > 0 ? (
           mediaItems[carouselIdx]?.type === 'video' ? (
             <video 
+              ref={videoRef}
               src={mediaItems[carouselIdx]?.url || ''} 
               className="w-full h-full object-cover cursor-pointer"
               controls muted playsInline
