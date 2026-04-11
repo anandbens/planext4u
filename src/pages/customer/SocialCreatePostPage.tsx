@@ -65,6 +65,10 @@ export default function SocialCreatePostPage() {
   const [taggedPeople, setTaggedPeople] = useState<{ id: string; username: string }[]>([]);
   const [showTagPicker, setShowTagPicker] = useState(false);
   const [tagSearch, setTagSearch] = useState("");
+  const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null);
+  const [productTagPositions, setProductTagPositions] = useState<{ id: string; title: string; price?: number; image?: string; x: number; y: number }[]>([]);
+  const [showPositionTagPicker, setShowPositionTagPicker] = useState(false);
+  const [positionTagSearch, setPositionTagSearch] = useState("");
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
