@@ -3,14 +3,16 @@
 This project has **two separate Android apps**:
 
 ## Customer App (`android/`)
-- **Package:** `com.planext4u.customer`
+- **Package:** `com.p4u_customer`
 - **App Name:** Planext4u
 - **Config:** `capacitor.config.customer.ts`
+- **Version:** 5.35 (versionCode 79)
 
 ## Vendor App (`android-vendor/`)
-- **Package:** `com.planext4u.vendor`
+- **Package:** `com.p4u.p4u_vendor`
 - **App Name:** Planext4u Vendor
 - **Config:** `capacitor.config.vendor.ts`
+- **Version:** 2.25 (versionCode 53)
 
 ## Building
 
@@ -59,11 +61,16 @@ bash build-vendor.sh
 ```
 
 ## Firebase Configuration
-Each app has its own `google-services.json`:
-- `android/app/google-services.json` — contains `com.planext4u.customer`
-- `android-vendor/app/google-services.json` — contains `com.planext4u.vendor`
+- **Firebase Project:** `p4u-console` (project number: 784503032650)
+- Both apps share the same `google-services.json` content
+- `android/app/google-services.json` — contains `com.p4u_customer`
+- `android-vendor/app/google-services.json` — contains `com.p4u.p4u_vendor`
+
+## Release Signing
+- Customer keystore: `android/app/p4u_customer.keystore` (alias: `p4u_customer`)
+- Vendor keystore: `android-vendor/app/p4u_vendor.keystore` (alias: `p4u`)
 
 ## Important Notes
 - Always copy the correct `capacitor.config.*.ts` → `capacitor.config.ts` before building
-- Each app has its own deep link scheme (`com.planext4u.customer://` vs `com.planext4u.vendor://`)
+- Each app has its own deep link scheme (`com.p4u_customer://` vs `com.p4u.p4u_vendor://`)
 - Make sure SHA-1 and SHA-256 fingerprints are added in Firebase Console for both apps
