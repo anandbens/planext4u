@@ -331,7 +331,14 @@ export const api = {
   },
 
   updateCustomer: async (id: string, data: Partial<User>) => {
-    const { error } = await supabase.from('customers').update(data as any).eq('id', id);
+    const validFields = ['name', 'email', 'mobile', 'city_id', 'area_id', 'latitude', 'longitude',
+      'wallet_points', 'referral_code', 'referred_by', 'status', 'occupation', 'dob', 'gender',
+      'about', 'profile_photo', 'kyc_status', 'profile_completeness'];
+    const filtered: Record<string, any> = {};
+    for (const key of validFields) {
+      if (key in data) filtered[key] = (data as any)[key];
+    }
+    const { error } = await supabase.from('customers').update(filtered).eq('id', id);
     if (error) throw error;
     return { success: true };
   },
@@ -403,18 +410,26 @@ export const api = {
   },
 
   updateVendor: async (id: string, data: Partial<Vendor>) => {
-    // Filter to only valid vendor table columns to avoid Postgres errors
+    // Valid columns for the `vendors` table
     const validVendorFields = ['name', 'business_name', 'mobile', 'email', 'category_id', 'city_id', 'area_id',
       'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue',
       'shop_latitude', 'shop_longitude', 'shop_address', 'plan_id', 'plan_start_date', 'plan_end_date',
       'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'background_image', 'max_redemption_percentage'];
+    // Valid columns for the `service_vendors` table (subset — no plan/shop/geo columns)
+    const validSvcVendorFields = ['name', 'business_name', 'mobile', 'email', 'category_id', 'city_id', 'area_id',
+      'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue'];
     const filtered: Record<string, any> = {};
     for (const key of validVendorFields) {
       if (key in data) filtered[key] = (data as any)[key];
     }
     const { error: e1 } = await supabase.from('vendors').update(filtered).eq('id', id);
     if (e1) {
-      const { error: e2 } = await supabase.from('service_vendors').update(filtered).eq('id', id);
+      // For service_vendors, filter to only columns that exist on that table
+      const svcFiltered: Record<string, any> = {};
+      for (const key of validSvcVendorFields) {
+        if (key in data) svcFiltered[key] = (data as any)[key];
+      }
+      const { error: e2 } = await supabase.from('service_vendors').update(svcFiltered).eq('id', id);
       if (e2) throw e2;
     }
     return { success: true };
@@ -895,7 +910,14 @@ export const api = {
   },
 
   updateCategory: async (id: string, data: Partial<Category>) => {
-    const { error } = await supabase.from('categories').update(data as any).eq('id', id);
+    const validFields = ['name', 'parent_id', 'image', 'status', 'count', 'banner_image', 'icon',
+      'is_trending', 'description', 'is_emergency', 'commission_rate', 'verification_status',
+      'promotion_banner_url', 'promotion_title', 'promotion_active'];
+    const filtered: Record<string, any> = {};
+    for (const key of validFields) {
+      if (key in data) filtered[key] = (data as any)[key];
+    }
+    const { error } = await supabase.from('categories').update(filtered).eq('id', id);
     if (error) throw error;
     return { success: true };
   },
@@ -915,7 +937,15 @@ export const api = {
 
   // Services CRUD
   updateService: async (id: string, data: Partial<Service>) => {
-    const { error } = await supabase.from('services').update(data as any).eq('id', id);
+    const validFields = ['vendor_id', 'category_id', 'title', 'description', 'price', 'tax', 'discount',
+      'max_points_redeemable', 'status', 'vendor_name', 'category_name', 'emoji', 'image', 'service_area',
+      'duration', 'images', 'short_description', 'long_description', 'meta_title', 'meta_description',
+      'slug', 'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot', 'updated_at'];
+    const filtered: Record<string, any> = { updated_at: new Date().toISOString() };
+    for (const key of validFields) {
+      if (key in data) filtered[key] = (data as any)[key];
+    }
+    const { error } = await supabase.from('services').update(filtered).eq('id', id);
     if (error) throw error;
     return { success: true };
   },
@@ -940,7 +970,13 @@ export const api = {
   },
 
   updateBanner: async (id: string, data: Partial<Banner>) => {
-    const { error } = await supabase.from('banners').update(data as any).eq('id', id);
+    const validFields = ['title', 'subtitle', 'desktop_image', 'mobile_image', 'link', 'priority',
+      'start_date', 'end_date', 'status', 'gradient'];
+    const filtered: Record<string, any> = {};
+    for (const key of validFields) {
+      if (key in data) filtered[key] = (data as any)[key];
+    }
+    const { error } = await supabase.from('banners').update(filtered).eq('id', id);
     if (error) throw error;
     return { success: true };
   },
