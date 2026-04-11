@@ -1,12 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const FIREBASE_PROJECT_ID = "p4u-console";
+const FIREBASE_ALT_PROJECT_ID = "planext4u-ba50f";
 const FIREBASE_API_KEY = "AIzaSyBcV0QJNWV95S2u5mBnOHxA1gXg96hcYfA";
 
-// Accept multiple valid audience values (project ID and numeric app ID)
+// Accept multiple valid audience values (both Firebase projects)
 const VALID_AUDIENCES = [
   FIREBASE_PROJECT_ID,
-  "784503032650",  // Firebase messaging sender ID / numeric project
+  FIREBASE_ALT_PROJECT_ID,
+  "784503032650",
 ];
 
 const corsHeaders = {
@@ -46,7 +48,11 @@ async function verifyFirebaseToken(idToken: string) {
   if (!VALID_AUDIENCES.includes(payload.aud)) {
     throw new Error(`Invalid audience: ${payload.aud}`);
   }
-  if (payload.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) throw new Error(`Invalid issuer: ${payload.iss}`);
+  const validIssuers = [
+    `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`,
+    `https://securetoken.google.com/${FIREBASE_ALT_PROJECT_ID}`,
+  ];
+  if (!validIssuers.includes(payload.iss)) throw new Error(`Invalid issuer: ${payload.iss}`);
   if (!payload.sub) throw new Error("No sub in token");
 
   const verifyRes = await fetch(
