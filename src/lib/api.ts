@@ -445,7 +445,7 @@ export const api = {
       email: data.email || '',
       commission_rate: data.commission_rate || 0,
       membership: data.membership || 'basic',
-      status: 'pending',
+      status: data.status || 'verified',
       total_products: 0, total_orders: 0, total_revenue: 0,
     };
     if ((data as any).category_id) newVendor.category_id = (data as any).category_id;

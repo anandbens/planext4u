@@ -60,8 +60,8 @@ export default function CustomersPage() {
     setSelected(user); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<User>) => { await api.updateCustomer(id, updates); toast.success("Customer updated"); fetchData(); fetchStats(); };
-  const handleCreate = async (data: Partial<User>) => { await api.createCustomer(data); toast.success("Customer created"); fetchData(); fetchStats(); };
+  const handleSave = async (id: string, updates: Partial<User>) => { try { await api.updateCustomer(id, updates); toast.success("Customer updated"); fetchData(); fetchStats(); } catch (err: any) { toast.error("Failed to update customer: " + (err.message || "Unknown error")); } };
+  const handleCreate = async (data: Partial<User>) => { try { await api.createCustomer(data); toast.success("Customer created"); fetchData(); fetchStats(); } catch (err: any) { toast.error("Failed to create customer: " + (err.message || "Unknown error")); } };
   const handleDelete = async (id: string) => { await api.deleteCustomer(id); toast.success("Customer deleted"); fetchData(); fetchStats(); };
 
   const handleBulkDelete = async (ids: string[]) => {
