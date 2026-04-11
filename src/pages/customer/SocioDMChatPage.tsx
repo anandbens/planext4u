@@ -8,6 +8,9 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
+import { useInitiateCall } from "@/components/social/IncomingCallProvider";
+import CallScreen from "@/components/social/CallScreen";
+import { useQuery } from "@tanstack/react-query";
 
 interface Message {
   id: string;
