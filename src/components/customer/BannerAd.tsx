@@ -30,15 +30,15 @@ export function usePlacementAds(placement: string) {
     const today = new Date().toISOString().split("T")[0];
     supabase
       .from("advertisements")
-      .select("id, title, description, image_url, mobile_image_url, link_type, link_target_id, link_url, advertiser, type")
+      .select("id, title, description, image_url, mobile_image_url, link_type, link_target_id, link_url, advertiser, type, placements")
       .eq("status", "active")
       .lte("start_date", today)
       .gte("end_date", today)
       .then(({ data }) => {
         if (!data) return;
-        const filtered = data.filter((ad: any) => {
-          const placements: string[] = ad.placements || ["all"];
-          return placements.includes("all") || placements.includes(placement);
+        const filtered = (data as any[]).filter((ad) => {
+          const p: string[] = ad.placements || ["all"];
+          return p.includes("all") || p.includes(placement);
         });
         setAds(filtered as Ad[]);
       });
