@@ -139,12 +139,31 @@ function PostCard({ post }: { post: any }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
   const [showProductTags, setShowProductTags] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const userId = customerUser?.supabase_uid || customerUser?.id;
   const postId = post.id;
   const mediaItems = Array.isArray(post.media) ? post.media : [];
   const isCarousel = mediaItems.length > 1;
   const isMock = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].includes(postId);
+
+  // Autoplay video on scroll into view
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [carouselIdx]);
 
   const EMOJI_PALETTE = ["😀","😂","😍","🥰","😎","🤩","😢","😡","👍","👏","🔥","❤️","💯","🎉","🙌","💪","🤔","😅","🥺","✨","💕","🎊","👀","🤗","😤","💀","🫡","🤝"];
   const GIF_STICKERS = ["😊","🎉","🔥","💯","👏","❤️‍🔥","🥳","🫶","💐","🌟"];

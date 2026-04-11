@@ -96,7 +96,7 @@ export default function SocialEditProfilePage() {
   const content = (
     <div className="pb-20 md:pb-8">
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-      <header className="sticky top-0 z-40 bg-card border-b border-border/30">
+      <header className="sticky top-0 z-20 bg-card border-b border-border/30">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>
