@@ -350,6 +350,23 @@ export default function SocialCreatePostPage() {
     );
   }
 
+  // Image editor overlay
+  if (editingImageIndex !== null && fileTypes[editingImageIndex] === 'image') {
+    return (
+      <ImageEditor
+        imageUrl={previewUrls[editingImageIndex]}
+        onSave={(blob) => {
+          const newUrl = URL.createObjectURL(blob);
+          const newFile = new File([blob], `edited-${editingImageIndex}.webp`, { type: "image/webp" });
+          setPreviewUrls(prev => prev.map((u, i) => i === editingImageIndex ? newUrl : u));
+          setSelectedFiles(prev => prev.map((f, i) => i === editingImageIndex ? newFile : f));
+          setEditingImageIndex(null);
+        }}
+        onCancel={() => setEditingImageIndex(null)}
+      />
+    );
+  }
+
   // Step 2: Edit & Filter
   if (step === 'edit') {
     return (
@@ -361,7 +378,10 @@ export default function SocialCreatePostPage() {
             <Button size="sm" onClick={() => setStep('details')}>Next</Button>
           </div>
         </header>
-        <div className="aspect-square bg-black relative">
+        <div className="aspect-square bg-black relative" onClick={(e) => {
+          if (showPositionTagPicker) return;
+          // Allow clicking on image to position product tag
+        }}>
           {previewUrls.length > 0 && (
             fileTypes[0] === 'video' ? (
               <video src={previewUrls[0]} className="w-full h-full object-contain" controls muted />
@@ -372,7 +392,53 @@ export default function SocialCreatePostPage() {
           {previewUrls.length > 1 && (
             <div className="absolute top-3 right-3 bg-foreground/60 text-background text-xs font-bold px-2 py-0.5 rounded-full">{previewUrls.length} items</div>
           )}
+          {/* Edit button for images */}
+          {previewUrls.length > 0 && fileTypes[0] === 'image' && (
+            <button
+              className="absolute top-3 left-3 h-8 w-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition"
+              onClick={() => setEditingImageIndex(0)}
+              title="Edit image (crop, text, emoji)"
+            >
+              <Pencil className="h-4 w-4 text-white" />
+            </button>
+          )}
+          {/* Product tag positions on image */}
+          <ProductTagOverlay
+            tags={productTagPositions}
+            editable
+            onRemove={(id) => setProductTagPositions(prev => prev.filter(t => t.id !== id))}
+          />
+          {/* Tag product button */}
+          {previewUrls.length > 0 && (
+            <button
+              className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white text-xs font-medium hover:bg-black/80 transition"
+              onClick={() => setShowPositionTagPicker(true)}
+            >
+              <ShoppingBag className="h-3.5 w-3.5" />
+              Tag Product
+            </button>
+          )}
         </div>
+        {/* Product tag picker modal */}
+        {showPositionTagPicker && (
+          <div className="p-3 bg-card border-b border-border/30">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold">Tag a product on this content</span>
+              <button onClick={() => { setShowPositionTagPicker(false); setPositionTagSearch(""); }}><X className="h-4 w-4" /></button>
+            </div>
+            <PositionProductPicker
+              search={positionTagSearch}
+              onSearchChange={setPositionTagSearch}
+              onSelect={(p) => {
+                setProductTagPositions(prev => [...prev, { ...p, x: 50, y: 50 }]);
+                setLinkedProduct(p);
+                setShowPositionTagPicker(false);
+                setPositionTagSearch("");
+              }}
+            />
+            <p className="text-[10px] text-muted-foreground mt-2">Tap a product to place a shopping sticker. Drag it to reposition.</p>
+          </div>
+        )}
         {previewUrls.length > 1 && (
           <div className="flex gap-2 p-3 overflow-x-auto bg-card border-b border-border/30">
             {previewUrls.map((url, i) => (
@@ -387,6 +453,11 @@ export default function SocialCreatePostPage() {
                 <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
                   <X className="h-3 w-3 text-destructive-foreground" />
                 </button>
+                {fileTypes[i] === 'image' && (
+                  <button onClick={() => setEditingImageIndex(i)} className="absolute bottom-0 right-0 h-5 w-5 bg-black/60 rounded-full flex items-center justify-center">
+                    <Pencil className="h-2.5 w-2.5 text-white" />
+                  </button>
+                )}
               </div>
             ))}
             <button onClick={() => fileInputRef.current?.click()} className="h-16 w-16 rounded border-2 border-dashed border-border flex items-center justify-center shrink-0">
