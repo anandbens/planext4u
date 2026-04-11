@@ -754,30 +754,74 @@ export default function SocialFeedPage() {
 
   const { data: dbPosts = [] } = useSocialFeed(feedMode);
 
-  // Fetch stories from DB
+  const authUid = customerUser?.supabase_uid || customerUser?.id;
+
+  // Fetch stories from DB - include media URL for thumbnail, track viewed state
   const { data: storyUsers = [] } = useQuery({
-    queryKey: ['social-feed-stories'],
+    queryKey: ['social-feed-stories', authUid],
     queryFn: async () => {
       const { data } = await supabase
         .from('social_stories')
-        .select('user_id')
+        .select('id, user_id, media_url, created_at')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
       if (!data?.length) return [];
-      const seen = new Set<string>();
-      const uniqueUsers = data.filter((s: any) => { if (seen.has(s.user_id)) return false; seen.add(s.user_id); return true; });
-      // Fetch profiles for story users
-      const uids = uniqueUsers.map((s: any) => s.user_id);
+
+      // Group by user, keep first (newest) story media for thumbnail
+      const userMap = new Map<string, { user_id: string; storyMediaUrl: string; newestAt: string; storyIds: string[] }>();
+      for (const s of data) {
+        if (!userMap.has(s.user_id)) {
+          userMap.set(s.user_id, { user_id: s.user_id, storyMediaUrl: s.media_url || '', newestAt: s.created_at, storyIds: [s.id] });
+        } else {
+          userMap.get(s.user_id)!.storyIds.push(s.id);
+        }
+      }
+
+      const uids = [...userMap.keys()];
+
+      // Fetch profiles
       const { data: profiles } = await supabase.from('social_profiles').select('user_id, username, display_name, avatar_url').in('user_id', uids);
       const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
-      return uniqueUsers.map((s: any) => {
-        const prof = profileMap.get(s.user_id);
-        return { id: s.user_id, username: prof?.display_name || prof?.username || 'user', avatar: prof?.avatar_url || '', seen: false };
+
+      // Check which stories the current user has viewed
+      let viewedUserIds = new Set<string>();
+      if (authUid) {
+        const allStoryIds = data.map((s: any) => s.id);
+        const { data: views } = await supabase.from('social_story_views')
+          .select('story_id').eq('viewer_id', authUid).in('story_id', allStoryIds);
+        const viewedStoryIds = new Set((views || []).map((v: any) => v.story_id));
+        // A user's stories are "viewed" if ALL their stories have been seen
+        for (const [uid, info] of userMap.entries()) {
+          if (info.storyIds.every(sid => viewedStoryIds.has(sid))) {
+            viewedUserIds.add(uid);
+          }
+        }
+      }
+
+      const result = uids.map(uid => {
+        const prof = profileMap.get(uid);
+        const info = userMap.get(uid)!;
+        return {
+          id: uid,
+          username: prof?.display_name || prof?.username || 'user',
+          avatar: prof?.avatar_url || '',
+          storyMediaUrl: info.storyMediaUrl,
+          viewed: viewedUserIds.has(uid),
+          newestAt: info.newestAt,
+        };
       });
+
+      // Sort: unviewed first (newest first), then viewed (newest first)
+      result.sort((a, b) => {
+        if (a.viewed !== b.viewed) return a.viewed ? 1 : -1;
+        return new Date(b.newestAt).getTime() - new Date(a.newestAt).getTime();
+      });
+
+      return result;
     },
   });
 
-  const ownStoryItem = { id: "own", username: "Your Story", avatar: "", isOwn: true, seen: false };
+  const ownStoryItem = { id: "own", username: "Your Story", avatar: "", isOwn: true, viewed: false, storyMediaUrl: "" };
   const stories = [
     ownStoryItem,
     ...storyUsers,
