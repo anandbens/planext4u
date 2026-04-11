@@ -206,8 +206,8 @@ export default function CustomerWalletPage() {
               <p className="text-[10px] text-muted-foreground">Learn how points work, earning & redemption rules</p>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </Link>
-        </Card>
+          </Card>
+        </Link>
 
         {/* Transaction History */}
         <div>
