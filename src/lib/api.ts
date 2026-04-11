@@ -401,9 +401,18 @@ export const api = {
   },
 
   updateVendor: async (id: string, data: Partial<Vendor>) => {
-    const { error: e1 } = await supabase.from('vendors').update(data as any).eq('id', id);
+    // Filter to only valid vendor table columns to avoid Postgres errors
+    const validVendorFields = ['name', 'business_name', 'mobile', 'email', 'category_id', 'city_id', 'area_id',
+      'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue',
+      'shop_latitude', 'shop_longitude', 'shop_address', 'plan_id', 'plan_start_date', 'plan_end_date',
+      'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'background_image', 'max_redemption_percentage'];
+    const filtered: Record<string, any> = {};
+    for (const key of validVendorFields) {
+      if (key in data) filtered[key] = (data as any)[key];
+    }
+    const { error: e1 } = await supabase.from('vendors').update(filtered).eq('id', id);
     if (e1) {
-      const { error: e2 } = await supabase.from('service_vendors').update(data as any).eq('id', id);
+      const { error: e2 } = await supabase.from('service_vendors').update(filtered).eq('id', id);
       if (e2) throw e2;
     }
     return { success: true };
@@ -411,12 +420,23 @@ export const api = {
 
   createVendor: async (data: Partial<Vendor>, type: 'product' | 'service' = 'product') => {
     const table = type === 'service' ? 'service_vendors' : 'vendors';
-    const newVendor = {
+    const newVendor: Record<string, any> = {
       id: genId('VND'),
-      ...data,
+      name: data.name || '',
+      business_name: data.business_name || '',
+      mobile: data.mobile || '',
+      email: data.email || '',
+      commission_rate: data.commission_rate || 0,
+      membership: data.membership || 'basic',
       status: 'pending',
       total_products: 0, total_orders: 0, total_revenue: 0,
     };
+    if ((data as any).category_id) newVendor.category_id = (data as any).category_id;
+    if ((data as any).city_id) newVendor.city_id = (data as any).city_id;
+    if ((data as any).area_id) newVendor.area_id = (data as any).area_id;
+    if ((data as any).plan_id) newVendor.plan_id = (data as any).plan_id;
+    if ((data as any).max_redemption_percentage != null) newVendor.max_redemption_percentage = (data as any).max_redemption_percentage;
+    if ((data as any).shop_photo_url) newVendor.shop_photo_url = (data as any).shop_photo_url;
     const { error } = await supabase.from(table).insert(newVendor as any);
     if (error) throw error;
     return { success: true, vendor: newVendor };
@@ -451,19 +471,40 @@ export const api = {
   },
 
   updateProduct: async (id: string, data: Partial<Product>) => {
-    const { error } = await supabase.from('products').update({ ...data, updated_at: new Date().toISOString() } as any).eq('id', id);
-    if (error) throw error;
+    // Filter to only valid product table columns
+    const validProductFields = ['title', 'description', 'short_description', 'long_description', 'price', 'tax', 'discount',
+      'discount_type', 'max_points_redeemable', 'status', 'vendor_id', 'vendor_name', 'category_id', 'category_name',
+      'subcategory_id', 'subcategory_name', 'stock', 'emoji', 'image', 'images', 'rejection_reason', 'inactivation_reason',
+      'youtube_video_url', 'max_redemption_percentage', 'commission_override', 'tax_slab_id', 'product_attributes',
+      'is_available', 'duration_hours', 'duration_minutes', 'promise_p4u', 'helpline_number', 'thumbnail_image',
+      'banner_image', 'socio_shopping_icon', 'product_type', 'sku', 'slug', 'meta_title', 'meta_description',
+      'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name'];
+    const filtered: Record<string, any> = { updated_at: new Date().toISOString() };
+    for (const key of validProductFields) {
+      if (key in data) filtered[key] = (data as any)[key];
+    }
+    const { error } = await supabase.from('products').update(filtered).eq('id', id);
+    if (error) { console.error("Product update error:", error); throw error; }
     return { success: true };
   },
 
   createProduct: async (data: Partial<Product>) => {
-    const newProduct = {
+    const validProductFields = ['title', 'description', 'short_description', 'long_description', 'price', 'tax', 'discount',
+      'discount_type', 'max_points_redeemable', 'status', 'vendor_id', 'vendor_name', 'category_id', 'category_name',
+      'subcategory_id', 'subcategory_name', 'stock', 'emoji', 'image', 'images', 'rejection_reason',
+      'youtube_video_url', 'max_redemption_percentage', 'commission_override', 'tax_slab_id', 'product_attributes',
+      'is_available', 'duration_hours', 'duration_minutes', 'promise_p4u', 'helpline_number', 'thumbnail_image',
+      'banner_image', 'socio_shopping_icon', 'product_type', 'sku', 'slug', 'meta_title', 'meta_description',
+      'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name'];
+    const newProduct: Record<string, any> = {
       id: genId('PRD'),
-      ...data,
       rating: 0, reviews: 0, stock: data.stock || 0, sales: 0,
     };
+    for (const key of validProductFields) {
+      if (key in data && (data as any)[key] !== undefined) newProduct[key] = (data as any)[key];
+    }
     const { error } = await supabase.from('products').insert(newProduct as any);
-    if (error) throw error;
+    if (error) { console.error("Product create error:", error); throw error; }
     return { success: true, product: newProduct };
   },
 
