@@ -411,6 +411,21 @@ export default function SocioDMChatPage() {
           </button>
         )}
       </div>
+
+      {/* Active Call Screen */}
+      <AnimatePresence>
+        {activeCall && (
+          <CallScreen
+            callId={activeCall.callId}
+            localUserId={currentUserId}
+            remoteUserId={activeCall.remoteUserId}
+            callType={activeCall.callType}
+            isCaller={true}
+            remoteProfile={callRemoteProfile}
+            onClose={closeCall}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
