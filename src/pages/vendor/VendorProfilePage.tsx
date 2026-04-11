@@ -54,6 +54,19 @@ export default function VendorProfilePage() {
     },
   });
 
+  const { data: perfStats = { products: 0, orders: 0, revenue: 0 } } = useQuery({
+    queryKey: ["vendorPerfStats", vendorId],
+    queryFn: async () => {
+      const [{ count: products }, { data: ordersData }] = await Promise.all([
+        supabase.from("products").select("*", { count: "exact", head: true }).eq("vendor_id", vendorId),
+        supabase.from("orders").select("total, status").eq("vendor_id", vendorId),
+      ]);
+      const orders = ordersData || [];
+      const revenue = orders.filter(o => !['cancelled'].includes(o.status)).reduce((s, o) => s + (o.total || 0), 0);
+      return { products: products || 0, orders: orders.length, revenue };
+    },
+  });
+
   const { data: platformVars = [] } = useQuery({
     queryKey: ["companyBankDetails"],
     queryFn: async () => {
