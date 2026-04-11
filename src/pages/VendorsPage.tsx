@@ -276,7 +276,7 @@ export default function VendorsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
         <TabsList>
           <TabsTrigger value="pending">Pending Approval</TabsTrigger>
-          <TabsTrigger value="all">All Vendors</TabsTrigger>
+          <TabsTrigger value="all">All Verified Vendors</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
         </TabsList>
       </Tabs>
