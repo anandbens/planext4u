@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Settings, Plus, Grid3X3, Film, Bookmark, Users, MoreHorizontal, ChevronDown, UserPlus, Bookmark as BookmarkIcon } from "lucide-react";
+import { ArrowLeft, Settings, Plus, Grid3X3, Film, Bookmark, Users, MoreHorizontal, ChevronDown, UserPlus, Bookmark as BookmarkIcon, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -281,10 +281,24 @@ export default function SocialProfilePage() {
           <div className="grid grid-cols-3 gap-[2px]">
             {displayPosts.map((post: any) => {
               const media = Array.isArray(post.media) && post.media.length > 0 ? post.media[0] : null;
+              const isVideo = media?.type === 'video';
+              const thumbSrc = isVideo ? (media?.thumbnailUrl || media?.url) : (media?.url || '');
               return (
                 <button key={post.id} className="aspect-square bg-muted relative overflow-hidden group" onClick={() => navigate(`/app/social/post/${post.id}`)}>
-                  {media?.url ? (
-                    <img src={media.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  {thumbSrc ? (
+                    isVideo ? (
+                      <>
+                        <img src={media?.thumbnailUrl || ''} alt="" className="w-full h-full object-cover" loading="lazy"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="h-10 w-10 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
+                            <Play className="h-5 w-5 text-white fill-white ml-0.5" />
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <img src={thumbSrc} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    )
                   ) : (
                     <div className="w-full h-full bg-accent/30" />
                   )}
