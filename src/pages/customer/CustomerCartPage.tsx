@@ -487,9 +487,46 @@ export default function CustomerCartPage() {
                     }} className="h-10 flex-1" min={0} max={maxPoints} />
                     <Button className="h-10 px-6" onClick={applyPoints}>Apply</Button>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1.5">Balance: {walletPoints.toLocaleString()} pts · Max redeemable: {maxPoints} pts</p>
+                  <div className="mt-2 space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">💰 Wallet Balance</span>
+                      <span className="font-semibold">{walletPoints.toLocaleString()} pts</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">🔓 Max Redeemable (this order)</span>
+                      <span className="font-semibold text-primary">{maxPoints.toLocaleString()} pts</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">📉 Min Points to Redeem</span>
+                      <span className="font-semibold">{maxPoints > 0 ? '1' : '0'} pt</span>
+                    </div>
+                  </div>
+                  {maxPoints > 0 && (
+                    <p className="text-[10px] text-muted-foreground mt-2 bg-secondary/30 rounded-lg p-2">
+                      💡 You can redeem between <strong>1</strong> and <strong>{maxPoints.toLocaleString()}</strong> points (₹1 = 1 point). Max is calculated based on each product's redemption % limit.
+                    </p>
+                  )}
+                  {pointsUsed > 0 && pointsUsed <= maxPoints && (
+                    <div className="mt-2 p-2 bg-success/5 rounded-lg border border-success/20">
+                      <p className="text-[10px] text-success font-semibold">✅ {pointsUsed} points applied = ₹{pointsUsed} discount</p>
+                    </div>
+                  )}
                   {pointsUsed > maxPoints && (
                     <p className="text-[10px] text-destructive mt-1 font-medium">⚠ Enter between 1 and {maxPoints} points</p>
+                  )}
+                  {/* Per-item redemption breakdown */}
+                  {perItemMaxPoints.length > 0 && (
+                    <details className="mt-2">
+                      <summary className="text-[10px] text-primary cursor-pointer font-medium">View per-item redemption limits</summary>
+                      <div className="mt-1 space-y-1 pl-2 border-l-2 border-primary/20">
+                        {perItemMaxPoints.map(p => (
+                          <div key={p.id} className="flex justify-between text-[10px]">
+                            <span className="text-muted-foreground truncate max-w-[60%]">{p.title}</span>
+                            <span>₹{p.maxRedeemable} ({p.redemptionPct}%)</span>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
                   )}
                 </Card>
                 <Card className="p-4">
@@ -525,7 +562,15 @@ export default function CustomerCartPage() {
                         <span>+ ₹{gstOnPlatformFee.toFixed(2)}</span>
                       </div>
                     )}
-                    {pointsUsed > 0 && <div className="flex justify-between text-success"><span>Points Redeemed</span><span>- ₹{pointsUsed.toLocaleString()}</span></div>}
+                    {pointsUsed > 0 && (
+                      <div className="flex justify-between pl-3 border-l-2 border-success/30 text-success">
+                        <div>
+                          <span>Wallet Points Redeemed</span>
+                          <p className="text-[10px] text-success/70">{pointsUsed} pts × ₹1 = ₹{pointsUsed}</p>
+                        </div>
+                        <span>- ₹{pointsUsed.toLocaleString()}</span>
+                      </div>
+                    )}
                     {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>- ₹{discount.toLocaleString()}</span></div>}
                     <div className="border-t-2 border-dashed border-border/50 my-1" />
                     <div className="flex justify-between font-bold bg-success/5 rounded-lg px-3 py-2 -mx-1"><span>Total Amount</span><span className="text-success">₹{total.toLocaleString()}</span></div>
