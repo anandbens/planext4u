@@ -229,6 +229,80 @@ export type Database = {
         }
         Relationships: []
       }
+      call_ice_candidates: {
+        Row: {
+          call_id: string
+          candidate: Json
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          call_id: string
+          candidate: Json
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          call_id?: string
+          candidate?: Json
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_ice_candidates_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calls: {
+        Row: {
+          answer: Json | null
+          call_type: string
+          callee_id: string
+          caller_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          offer: Json | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          answer?: Json | null
+          call_type?: string
+          callee_id: string
+          caller_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          offer?: Json | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: Json | null
+          call_type?: string
+          callee_id?: string
+          caller_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          offer?: Json | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           banner_image: string | null

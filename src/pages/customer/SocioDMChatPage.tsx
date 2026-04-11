@@ -8,6 +8,9 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
+import { useInitiateCall } from "@/components/social/IncomingCallProvider";
+import CallScreen from "@/components/social/CallScreen";
+import { useQuery } from "@tanstack/react-query";
 
 interface Message {
   id: string;
@@ -36,6 +39,24 @@ export default function SocioDMChatPage() {
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { activeCall, initiateCall, closeCall } = useInitiateCall();
+
+  // Fetch recipient profile for call screen
+  const { data: callRemoteProfile } = useQuery({
+    queryKey: ["call-remote-profile", recipientId],
+    queryFn: async () => {
+      if (!recipientId) return null;
+      const { data } = await supabase.from("social_profiles").select("display_name, username, avatar_url").eq("user_id", recipientId).maybeSingle();
+      return data;
+    },
+    enabled: !!recipientId,
+  });
+
+  const handleCall = useCallback(async (type: "audio" | "video") => {
+    if (!recipientId || !currentUserId) { toast.error("Please login to make calls"); return; }
+    const callId = await initiateCall(recipientId, type);
+    if (!callId) toast.error("Failed to start call");
+  }, [recipientId, currentUserId, initiateCall]);
 
   // Get auth user ID
   useEffect(() => {
@@ -252,10 +273,10 @@ export default function SocioDMChatPage() {
           </div>
         </button>
         <div className="flex items-center gap-2">
-          <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => toast.info("Voice call coming soon")}>
+          <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => handleCall("audio")}>
             <Phone className="h-5 w-5" />
           </button>
-          <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => toast.info("Video call coming soon")}>
+          <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => handleCall("video")}>
             <Video className="h-5 w-5" />
           </button>
         </div>
@@ -390,6 +411,21 @@ export default function SocioDMChatPage() {
           </button>
         )}
       </div>
+
+      {/* Active Call Screen */}
+      <AnimatePresence>
+        {activeCall && (
+          <CallScreen
+            callId={activeCall.callId}
+            localUserId={currentUserId}
+            remoteUserId={activeCall.remoteUserId}
+            callType={activeCall.callType}
+            isCaller={true}
+            remoteProfile={callRemoteProfile}
+            onClose={closeCall}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

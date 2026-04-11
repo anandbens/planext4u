@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import p4uLogoDark from "@/assets/p4u-logo-dark.png";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 import p4uLogo from "@/assets/p4u-logo.png";
+import IncomingCallProvider from "@/components/social/IncomingCallProvider";
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
@@ -604,6 +605,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
       })()}
 
       <LocationModal open={locationModalOpen} onOpenChange={setLocationModalOpen} onSelect={setSelectedLocation} />
+      <IncomingCallProvider />
     </div>
   );
 }
