@@ -174,7 +174,12 @@ Deno.serve(async (req) => {
       // 2. Generate referral code
       const referralCode = "P4U" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-      // 3. Create customer record
+      // 2.5 Fetch welcome points before creating customer
+      let welcomePoints = 300;
+      const { data: welcomeVar } = await supabase.from("platform_variables").select("value").eq("key", "welcome_points").maybeSingle();
+      if (welcomeVar) welcomePoints = Number(welcomeVar.value) || 300;
+
+      // 3. Create customer record with welcome points already set
       const customerId = "CUST-" + crypto.randomUUID().substring(0, 8).toUpperCase();
       const { error: custInsertErr } = await supabase.from("customers").insert({
         id: customerId,
@@ -187,7 +192,7 @@ Deno.serve(async (req) => {
         status: "active",
         latitude: 0,
         longitude: 0,
-        wallet_points: 0,
+        wallet_points: welcomePoints,
       });
       if (custInsertErr) {
         console.error("Customer insert error:", custInsertErr.message);
@@ -224,11 +229,7 @@ Deno.serve(async (req) => {
         is_private: false,
       });
 
-      // 6. Credit welcome bonus from platform_variables
-      let welcomePoints = 300;
-      const { data: welcomeVar } = await supabase.from("platform_variables").select("value").eq("key", "welcome_points").maybeSingle();
-      if (welcomeVar) welcomePoints = Number(welcomeVar.value) || 300;
-
+      // 6. Credit welcome bonus transaction record
       const { error: welcomeInsertErr } = await supabase.from("points_transactions").insert({
         id: "PT-W-" + crypto.randomUUID().substring(0, 8).toUpperCase(),
         user_id: customerId,
@@ -237,11 +238,12 @@ Deno.serve(async (req) => {
         points: welcomePoints,
         description: "Welcome bonus for joining P4U!",
         is_expired: false,
+        cooling_status: "credited",
+        expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
       });
       if (welcomeInsertErr) {
         console.error("Welcome bonus insert error:", welcomeInsertErr.message);
       } else {
-        await supabase.from("customers").update({ wallet_points: welcomePoints }).eq("id", customerId);
         console.log("Welcome bonus credited:", welcomePoints, "pts to", customerId);
       }
 
