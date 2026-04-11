@@ -178,7 +178,16 @@ export default function VendorsPage() {
     }
     fetchData(); fetchStats();
   };
-  const handleCreate = async (data: Partial<Vendor>) => { await api.createVendor(data); toast.success("Vendor created"); fetchData(); fetchStats(); };
+  const handleCreate = async (data: Partial<Vendor>) => {
+    try {
+      await api.createVendor(data);
+      toast.success("Vendor created");
+    } catch (err: any) {
+      toast.error("Failed to create vendor: " + (err.message || "Unknown error"));
+      return;
+    }
+    fetchData(); fetchStats();
+  };
   const handleDelete = async (id: string) => { await api.deleteVendor(id); toast.success("Vendor deleted"); fetchData(); fetchStats(); };
 
   const handleBulkDelete = async (ids: string[]) => {
@@ -322,11 +331,7 @@ export default function VendorsPage() {
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } if (key === "payment") { setPaymentFilter(val); setPage(1); } }}
         onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
         searchPlaceholder="Search vendors..."
-        filters={activeTab === "all" ? [{ key: "status", label: "Status", options: [
-          { value: "pending", label: "Pending" }, { value: "level1_approved", label: "Level 1" },
-          { value: "level2_approved", label: "Level 2" }, { value: "verified", label: "Verified" },
-          { value: "rejected", label: "Rejected" },
-        ]}, { key: "payment", label: "Payment", options: [
+        filters={activeTab === "all" ? [{ key: "payment", label: "Payment", options: [
           { value: "paid", label: "Paid" }, { value: "unpaid", label: "Unpaid" },
           { value: "offline_pending", label: "Pending" },
         ]}] : undefined}
