@@ -231,9 +231,8 @@ export default function SocialStoryViewerPage() {
             toast.success("❤️");
             const { data: { session } } = await supabase.auth.getSession();
             const uid = session?.user?.id;
-            if (uid && currentStory) {
-              // Award story owner
-              awardPoints(currentStory.user_id, 'story_liked_points', 'Points for your story being liked');
+            if (uid && story) {
+              awardPoints(story.user_id, 'story_liked_points', 'Points for your story being liked');
             }
           }}><Heart className="h-6 w-6 text-white" /></button>
           <button onClick={handleReply}><Send className="h-6 w-6 text-white" /></button>
