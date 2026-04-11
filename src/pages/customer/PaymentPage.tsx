@@ -178,6 +178,14 @@ export default function PaymentPage() {
 
       await Promise.all(orderPromises);
       await api.clearCart();
+
+      // Credit any cooling period referral points for this customer's first order
+      if (customerId) {
+        import('@/lib/award-points').then(({ creditCoolingPoints }) => {
+          creditCoolingPoints(customerId);
+        });
+      }
+
       setOrderId(newOrderId);
       setOrderItems(cart || []);
       setPaymentState('success');

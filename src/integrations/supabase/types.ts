@@ -450,6 +450,39 @@ export type Database = {
         }
         Relationships: []
       }
+      cms_pages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          meta_description: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       complaints: {
         Row: {
           assigned_to: string | null
@@ -1274,6 +1307,7 @@ export type Database = {
       }
       points_transactions: {
         Row: {
+          cooling_status: string
           created_at: string
           description: string
           expires_at: string | null
@@ -1285,6 +1319,7 @@ export type Database = {
           user_name: string | null
         }
         Insert: {
+          cooling_status?: string
           created_at?: string
           description?: string
           expires_at?: string | null
@@ -1296,6 +1331,7 @@ export type Database = {
           user_name?: string | null
         }
         Update: {
+          cooling_status?: string
           created_at?: string
           description?: string
           expires_at?: string | null

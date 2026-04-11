@@ -28,6 +28,7 @@ import PointsPage from "./pages/PointsPage";
 import ReferralsPage from "./pages/ReferralsPage";
 import ReportsPage from "./pages/ReportsPage";
 import CMSPage from "./pages/CMSPage";
+import AdminCMSPagesPage from "./pages/admin/AdminCMSPagesPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 import CategoriesPage from "./pages/CategoriesPage";
@@ -86,6 +87,7 @@ import SetLocationPage from "./pages/customer/SetLocationPage";
 import TermsPage from "./pages/customer/TermsPage";
 import PrivacyPolicyPage from "./pages/customer/PrivacyPolicyPage";
 import AuthCallbackPage from "./pages/customer/AuthCallbackPage";
+import CustomerCMSPage from "./pages/customer/CustomerCMSPage";
 import ForgotPasswordPage from "./pages/customer/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/customer/ResetPasswordPage";
 import CustomerSupportPage from "./pages/customer/CustomerSupportPage";
@@ -301,6 +303,7 @@ const AppRoutes = () => {
         <Route path="/reports/payments" element={<ProtectedPage><PaymentReportPage /></ProtectedPage>} />
         <Route path="/reports/revenue" element={<ProtectedPage><P4URevenueReportPage /></ProtectedPage>} />
         <Route path="/cms" element={<ProtectedPage><CMSPage /></ProtectedPage>} />
+        <Route path="/admin/cms-pages" element={<ProtectedPage><AdminCMSPagesPage /></ProtectedPage>} />
         <Route path="/settings" element={<ProtectedPage><SettingsPage /></ProtectedPage>} />
         <Route path="/categories" element={<ProtectedPage><CategoriesPage /></ProtectedPage>} />
         <Route path="/admin/services" element={<ProtectedPage><AdminServicesPage /></ProtectedPage>} />
@@ -350,6 +353,7 @@ const AppRoutes = () => {
         <Route path="/app/set-location" element={<SetLocationPage />} />
         <Route path="/app/terms" element={<TermsPage />} />
         <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/app/cms/:slug" element={<CustomerCMSPage />} />
         <Route path="/app/browse" element={<CustomerPage><CustomerBrowsePage /></CustomerPage>} />
         <Route path="/app/product/:id" element={<CustomerPage><CustomerProductPage /></CustomerPage>} />
         <Route path="/app/vendor/:id" element={<CustomerPage><CustomerVendorPage /></CustomerPage>} />
