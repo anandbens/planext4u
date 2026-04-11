@@ -136,7 +136,16 @@ export default function CustomerProductPage() {
 
   const addToCart = async () => {
     if (!product) return;
-    const result = await api.addToCart(product, qty);
+    // For variable products, use variant price and pass attributes
+    const cartProduct = selectedVariant ? {
+      ...product,
+      price: selectedVariant.price,
+      image: selectedVariant.image_url || product.image,
+    } : product;
+    const result = await api.addToCart(cartProduct, qty, 
+      isVariable && Object.keys(selectedAttrs).length > 0 ? selectedAttrs : undefined,
+      selectedVariant?.id
+    );
     if (result.blocked) {
       toast.error(result.message || "This product is already added from another vendor. Please remove it before adding this.", { duration: 5000 });
       return;
@@ -146,7 +155,15 @@ export default function CustomerProductPage() {
 
   const buyNow = async () => {
     if (!product) return;
-    const result = await api.addToCart(product, qty);
+    const cartProduct = selectedVariant ? {
+      ...product,
+      price: selectedVariant.price,
+      image: selectedVariant.image_url || product.image,
+    } : product;
+    const result = await api.addToCart(cartProduct, qty,
+      isVariable && Object.keys(selectedAttrs).length > 0 ? selectedAttrs : undefined,
+      selectedVariant?.id
+    );
     if (result.blocked) {
       toast.error(result.message || "This product is already added from another vendor. Please remove it before adding this.", { duration: 5000 });
       return;
