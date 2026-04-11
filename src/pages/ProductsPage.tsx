@@ -39,9 +39,18 @@ export default function ProductsPage() {
     setSelected(product); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<Product>) => { await api.updateProduct(id, updates); toast.success("Product updated"); fetchData(); };
-  const handleCreate = async (data: Partial<Product>) => { await api.createProduct(data); toast.success("Product created"); fetchData(); };
-  const handleDelete = async (id: string) => { await api.deleteProduct(id); toast.success("Product deleted"); fetchData(); };
+  const handleSave = async (id: string, updates: Partial<Product>) => {
+    try { await api.updateProduct(id, updates); toast.success("Product updated"); fetchData(); }
+    catch (err: any) { toast.error("Failed to update product: " + (err.message || "Unknown error")); }
+  };
+  const handleCreate = async (data: Partial<Product>) => {
+    try { await api.createProduct(data); toast.success("Product created"); fetchData(); }
+    catch (err: any) { toast.error("Failed to create product: " + (err.message || "Unknown error")); }
+  };
+  const handleDelete = async (id: string) => {
+    try { await api.deleteProduct(id); toast.success("Product deleted"); fetchData(); }
+    catch (err: any) { toast.error("Failed to delete product: " + (err.message || "Unknown error")); }
+  };
 
   const handleBulkDelete = async (ids: string[]) => {
     await api.bulkDeleteProducts(ids);
