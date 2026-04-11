@@ -32,9 +32,18 @@ export default function AdminServicesPage() {
     setSelected(service); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<Service>) => { await api.updateService(id, updates); toast.success("Service updated"); fetchData(); };
-  const handleCreate = async (data: Partial<Service>) => { await api.createService(data); toast.success("Service created"); fetchData(); };
-  const handleDelete = async (id: string) => { await api.deleteService(id); toast.success("Service deleted"); fetchData(); };
+  const handleSave = async (id: string, updates: Partial<Service>) => {
+    try { await api.updateService(id, updates); toast.success("Service updated"); fetchData(); }
+    catch (err: any) { toast.error("Failed to update service: " + (err.message || "Unknown error")); }
+  };
+  const handleCreate = async (data: Partial<Service>) => {
+    try { await api.createService(data); toast.success("Service created"); fetchData(); }
+    catch (err: any) { toast.error("Failed to create service: " + (err.message || "Unknown error")); }
+  };
+  const handleDelete = async (id: string) => {
+    try { await api.deleteService(id); toast.success("Service deleted"); fetchData(); }
+    catch (err: any) { toast.error("Failed to delete service: " + (err.message || "Unknown error")); }
+  };
 
   const handleBulkDelete = async (ids: string[]) => {
     await api.bulkDeleteServices(ids);

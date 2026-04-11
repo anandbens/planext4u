@@ -965,17 +965,49 @@ export const api = {
       'slug', 'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot', 'updated_at'];
     const filtered: Record<string, any> = { updated_at: new Date().toISOString() };
     for (const key of validFields) {
-      if (key in data) filtered[key] = (data as any)[key];
+      if (key in data) {
+        let val = (data as any)[key];
+        if (key === 'category_id' && val === '') val = null;
+        filtered[key] = val;
+      }
     }
-    const { error } = await supabase.from('services').update(filtered).eq('id', id);
-    if (error) throw error;
+    const { data: updated, error } = await supabase.from('services').update(filtered).eq('id', id).select();
+    if (error) { console.error("Service update error:", error); throw error; }
+    if (!updated || updated.length === 0) throw new Error("Service update failed — no rows affected.");
     return { success: true };
   },
 
   createService: async (data: Partial<Service>) => {
-    const newSrv = { id: genId('SRV'), ...data, rating: 0, reviews: 0 };
+    // Ensure vendor exists in service_vendors (services FK references service_vendors, not vendors)
+    if (data.vendor_id) {
+      const { data: existing } = await supabase.from('service_vendors').select('id').eq('id', data.vendor_id).maybeSingle();
+      if (!existing) {
+        // Copy from product vendors table
+        const { data: pv } = await supabase.from('vendors').select('id, name, business_name, mobile, email, category_id, city_id, area_id, commission_rate, status').eq('id', data.vendor_id).maybeSingle();
+        if (pv) {
+          const { error: svErr } = await supabase.from('service_vendors').insert({
+            id: pv.id, name: pv.name, business_name: pv.business_name,
+            mobile: pv.mobile, email: pv.email, category_id: pv.category_id || null,
+            city_id: pv.city_id || null, area_id: pv.area_id || null,
+            commission_rate: pv.commission_rate, membership: 'basic',
+            status: pv.status === 'verified' ? 'active' : pv.status,
+          } as any);
+          if (svErr) console.error("ensureServiceVendor:", svErr.message);
+        }
+      }
+    }
+    const validFields = ['title', 'description', 'short_description', 'long_description', 'price', 'tax', 'discount',
+      'max_points_redeemable', 'status', 'vendor_id', 'vendor_name', 'category_id', 'category_name',
+      'emoji', 'image', 'images', 'service_area', 'duration', 'meta_title', 'meta_description', 'slug',
+      'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot'];
+    const newSrv: Record<string, any> = { id: genId('SRV'), rating: 0, reviews: 0 };
+    for (const key of validFields) {
+      if (key in data && (data as any)[key] !== undefined) newSrv[key] = (data as any)[key];
+    }
+    // Convert empty category_id to null (FK to service_categories)
+    if (newSrv.category_id === '') newSrv.category_id = null;
     const { error } = await supabase.from('services').insert(newSrv as any);
-    if (error) throw error;
+    if (error) { console.error("Service create error:", error); throw error; }
     return { success: true, service: newSrv };
   },
 
