@@ -8,7 +8,7 @@ import { DollarSign, TrendingUp, Percent, Download, Store, Package } from "lucid
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import ReportDataGrid, { Column } from "@/components/admin/ReportDataGrid";
-import { exportCSV } from "@/lib/csv";
+import { exportToCSV } from "@/lib/csv";
 
 interface OrderRow {
   id: string; created_at: string; customer_name: string; vendor_name: string; vendor_id: string;
@@ -104,7 +104,7 @@ export default function P4URevenueReportPage() {
   });
   const productRows = Array.from(productMap.entries()).map(([id, p]) => ({ id, ...p }));
 
-  const orderColumns: Column[] = [
+  const orderColumns: Column<OrderRow>[] = [
     { key: "id", label: "Order ID", sortable: true, render: r => <span className="font-mono text-[10px]">{r.id}</span> },
     { key: "created_at", label: "Date", sortable: true, render: r => format(parseISO(r.created_at), "dd MMM yyyy") },
     { key: "vendor_name", label: "Vendor", sortable: true },
@@ -121,7 +121,7 @@ export default function P4URevenueReportPage() {
     { key: "status", label: "Status", render: r => <Badge variant="outline" className="text-[9px] capitalize">{r.status}</Badge> },
   ];
 
-  const vendorColumns: Column[] = [
+  const vendorColumns: Column<any>[] = [
     { key: "vendor", label: "Vendor", sortable: true },
     { key: "orders", label: "Orders", sortable: true, align: "right" },
     { key: "revenue", label: "Total Revenue", sortable: true, align: "right", render: r => `₹${r.revenue.toLocaleString("en-IN")}` },
@@ -130,7 +130,7 @@ export default function P4URevenueReportPage() {
     { key: "netProfit", label: "Net Profit", sortable: true, align: "right", render: r => <span className="font-bold text-success">₹{r.netProfit.toLocaleString("en-IN")}</span> },
   ];
 
-  const productColumns: Column[] = [
+  const productColumns: Column<any>[] = [
     { key: "title", label: "Product", sortable: true },
     { key: "vendor", label: "Vendor", sortable: true },
     { key: "qty", label: "Qty Sold", sortable: true, align: "right" },
