@@ -361,7 +361,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         )}
       </AnimatePresence>
 
-      <main className="pb-20 md:pb-0">{children}</main>
+      <main className="pb-28 md:pb-0">{children}</main>
 
       {/* Footer */}
       <footer className="bg-[hsl(var(--brand-dark))] text-white py-8 lg:py-12 mt-8 lg:mt-12 hidden md:block">
@@ -432,8 +432,8 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
       {/* Floating Cart FAB - show on non-cart pages when cart has items */}
       {!hideNav && cartCount > 0 && !location.pathname.startsWith('/app/cart') && !location.pathname.startsWith('/app/payment') && (
         <Link to="/app/cart"
-          className="fixed bottom-20 right-4 z-40 md:hidden h-14 w-14 rounded-full bg-primary shadow-lg flex items-center justify-center animate-in fade-in slide-in-from-bottom-4"
-          style={{ boxShadow: '0 4px 20px -2px hsl(180 100% 30% / 0.45)' }}>
+          className="fixed right-4 z-40 md:hidden h-14 w-14 rounded-full bg-primary shadow-lg flex items-center justify-center animate-in fade-in slide-in-from-bottom-4"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)', boxShadow: '0 4px 20px -2px hsl(180 100% 30% / 0.45)' }}>
           <ShoppingCart className="h-5 w-5 text-primary-foreground" />
           <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-warning text-warning-foreground text-[10px] flex items-center justify-center font-bold">{cartCount}</span>
         </Link>
