@@ -551,7 +551,7 @@ export default function CustomerCartPage() {
 
       {/* Single sticky bottom CTA for mobile - no duplicate */}
       {cart.length > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
+        <div className="fixed left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 3.5rem)' }}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs text-muted-foreground">{cart.reduce((s, i) => s + i.qty, 0)} item(s)</span>
             <span className="text-sm font-bold">₹{total.toLocaleString()}</span>
