@@ -233,10 +233,16 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="p-4 rounded-lg bg-secondary/30">
-                    <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">P4U Commission Rate</Label></div>
+                    <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Vendor to P4U Commission</Label></div>
                     {editMode ? <Input type="number" value={form.commission_rate} onChange={(e) => setForm({ ...form, commission_rate: Number(e.target.value) })} className="mt-1" /> : <p className="text-xl font-bold">{vendor?.commission_rate}%</p>}
+                    <p className="text-[9px] text-muted-foreground mt-1">Overrides plan commission</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-secondary/30">
+                    <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-warning" /><Label className="text-xs text-muted-foreground">Max User Redemption %</Label></div>
+                    {editMode ? <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1" placeholder="Plan default" /> : <p className="text-xl font-bold">{(vendor as any)?.max_redemption_percentage != null ? `${(vendor as any).max_redemption_percentage}%` : "Plan default"}</p>}
+                    <p className="text-[9px] text-muted-foreground mt-1">Overrides plan redemption</p>
                   </div>
                   <div className="p-4 rounded-lg bg-secondary/30">
                     <div className="flex items-center gap-2 mb-1"><Crown className="h-4 w-4 text-warning" /><Label className="text-xs text-muted-foreground">Vendor Plan</Label></div>
@@ -473,7 +479,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                 <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="mt-1" />
               </div>
               <div className="p-4 rounded-lg bg-secondary/30">
-                <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Commission Rate</Label></div>
+                <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Vendor to P4U Commission</Label></div>
                 <Input type="number" value={form.commission_rate} onChange={(e) => setForm({ ...form, commission_rate: Number(e.target.value) })} className="mt-1" />
               </div>
               <div className="p-4 rounded-lg bg-secondary/30">
