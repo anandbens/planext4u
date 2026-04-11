@@ -7,7 +7,7 @@ interface ProductTag {
   price?: number;
   image?: string;
   socio_shopping_icon?: string;
-  x: number; // percentage position
+  x: number;
   y: number;
 }
 
@@ -25,6 +25,24 @@ export default function ProductTagOverlay({ tags, editable, onRemove, onClick }:
 
   return (
     <>
+      {/* Inline keyframes for the ripple animation */}
+      <style>{`
+        @keyframes socio-ripple {
+          0% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.6); opacity: 0; }
+          100% { transform: scale(1); opacity: 0; }
+        }
+        @keyframes socio-ripple-delay {
+          0% { transform: scale(1); opacity: 0; }
+          25% { transform: scale(1); opacity: 0.5; }
+          75% { transform: scale(1.5); opacity: 0; }
+          100% { transform: scale(1); opacity: 0; }
+        }
+        @keyframes socio-glow {
+          0%, 100% { box-shadow: 0 0 6px 2px hsl(var(--primary) / 0.4); }
+          50% { box-shadow: 0 0 14px 6px hsl(var(--primary) / 0.6); }
+        }
+      `}</style>
       {tags.map(tag => (
         <div
           key={tag.id}
@@ -36,30 +54,58 @@ export default function ProductTagOverlay({ tags, editable, onRemove, onClick }:
             else navigate(`/app/product/${tag.id}`);
           }}
         >
-          <div className="flex items-center gap-2 bg-black/80 backdrop-blur-sm text-white px-3 py-2 rounded-full text-sm font-medium shadow-lg animate-in fade-in duration-300 max-w-[200px]">
-            <div className="relative shrink-0 flex items-center justify-center">
-              {/* Pulsing ring animation */}
-              <span className="absolute inset-0 rounded-full animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite] bg-primary/40" />
-              <span className="absolute -inset-1 rounded-full animate-[pulse_1.5s_ease-in-out_infinite] border-2 border-primary/50" />
+          <div className="flex items-center gap-2.5 bg-black/80 backdrop-blur-sm text-white rounded-full font-medium shadow-lg max-w-[260px] px-2 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5">
+            {/* Icon with animated ripple rings */}
+            <div className="relative shrink-0 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14">
+              {/* Ripple ring 1 */}
+              <span
+                className="absolute inset-0 rounded-full border-2 border-primary/60"
+                style={{ animation: "socio-ripple 2s ease-out infinite" }}
+              />
+              {/* Ripple ring 2 (delayed) */}
+              <span
+                className="absolute inset-0 rounded-full border-2 border-primary/40"
+                style={{ animation: "socio-ripple-delay 2s ease-out 0.6s infinite" }}
+              />
               {tag.socio_shopping_icon ? (
-                <img src={tag.socio_shopping_icon} alt="" className="relative h-8 w-8 rounded-full object-cover ring-2 ring-primary shadow-md" />
+                <img
+                  src={tag.socio_shopping_icon}
+                  alt=""
+                  className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full object-cover ring-2 ring-primary"
+                  style={{ animation: "socio-glow 2s ease-in-out infinite" }}
+                />
               ) : tag.image ? (
-                <img src={tag.image} alt="" className="relative h-8 w-8 rounded-full object-cover ring-2 ring-primary shadow-md" />
+                <img
+                  src={tag.image}
+                  alt=""
+                  className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full object-cover ring-2 ring-primary"
+                  style={{ animation: "socio-glow 2s ease-in-out infinite" }}
+                />
               ) : (
-                <ShoppingBag className="relative h-5 w-5 shrink-0" />
+                <div
+                  className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary"
+                  style={{ animation: "socio-glow 2s ease-in-out infinite" }}
+                >
+                  <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+                </div>
               )}
             </div>
-            <span className="truncate">{tag.title}</span>
-            {tag.price && <span className="text-xs text-white/70">₹{tag.price.toLocaleString()}</span>}
+            {/* Text */}
+            <div className="flex flex-col min-w-0">
+              <span className="truncate text-xs sm:text-sm md:text-base leading-tight">{tag.title}</span>
+              {tag.price != null && (
+                <span className="text-[10px] sm:text-xs text-white/70 leading-tight">₹{tag.price.toLocaleString()}</span>
+              )}
+            </div>
           </div>
           {/* Arrow pointer */}
           <div className="w-0 h-0 mx-auto border-l-[7px] border-r-[7px] border-t-[7px] border-l-transparent border-r-transparent border-t-black/80" />
           {editable && onRemove && (
             <button
-              className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-destructive rounded-full flex items-center justify-center"
+              className="absolute -top-2 -right-2 h-5 w-5 bg-destructive rounded-full flex items-center justify-center shadow"
               onClick={(e) => { e.stopPropagation(); onRemove(tag.id); }}
             >
-              <X className="h-2.5 w-2.5 text-white" />
+              <X className="h-3 w-3 text-white" />
             </button>
           )}
         </div>
