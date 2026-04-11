@@ -12,6 +12,7 @@ const reports = [
   { title: "Classified Ads Report", desc: "Ad listings, approvals, and engagement", icon: Megaphone, color: "gradient-success", to: "/reports/classifieds" },
   { title: "Tax Report", desc: "Tax collection summary by category and period", icon: FileText, color: "gradient-warning", to: "/reports/tax" },
   { title: "Payment Report", desc: "Payment gateway transactions and reconciliation", icon: CreditCard, color: "gradient-danger", to: "/reports/payments" },
+  { title: "P4U Revenue & Profit", desc: "Commission revenue, vendor/product-wise profit with cascade source tracking", icon: TrendingUp, color: "gradient-primary", to: "/reports/revenue" },
 ];
 
 export default function ReportsPage() {
