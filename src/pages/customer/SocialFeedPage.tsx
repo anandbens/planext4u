@@ -138,6 +138,7 @@ function PostCard({ post }: { post: any }) {
   const [showAllComments, setShowAllComments] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
+  const [showProductTags, setShowProductTags] = useState(false);
 
   const userId = customerUser?.supabase_uid || customerUser?.id;
   const postId = post.id;
