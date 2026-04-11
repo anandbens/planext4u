@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { awardPoints } from "@/lib/award-points";
 
 /**
  * Get the auth UUID (not CUS-xxx) for social table operations.
@@ -69,6 +70,7 @@ export function usePostLike(postId: string) {
         await supabase.from('social_likes').delete().eq('post_id', postId).eq('user_id', uid);
       } else {
         await supabase.from('social_likes').insert({ post_id: postId, user_id: uid });
+        awardPoints(uid, 'post_like_points', 'Points for liking a post');
       }
     },
     onSuccess: () => {
@@ -332,13 +334,20 @@ export function useSocialFeed(mode: 'following' | 'for_you' = 'for_you') {
 export function useSharePost() {
   return useCallback(async (postId: string, text?: string) => {
     const url = `${window.location.origin}/app/social/post/${postId}`;
+    let shared = false;
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Check this out on P4U Social', text: text || '', url });
+        shared = true;
       } catch { /* user cancelled */ }
     } else {
       await navigator.clipboard.writeText(url);
       toast.success("Link copied to clipboard");
+      shared = true;
+    }
+    if (shared) {
+      const uid = await getAuthUserId();
+      if (uid) awardPoints(uid, 'post_share_points', 'Points for sharing a post');
     }
   }, []);
 }
