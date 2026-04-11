@@ -7,6 +7,7 @@ const config: CapacitorConfig = {
   server: {
     url: "https://planext4u.net/vendor/login?portal=vendor",
     androidScheme: "https",
+    allowNavigation: ["planext4u.net", "*.planext4u.net", "*.supabase.co", "*.firebaseapp.com", "*.googleapis.com"],
   },
   plugins: {
     SplashScreen: {
