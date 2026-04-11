@@ -303,6 +303,7 @@ const AppRoutes = () => {
         <Route path="/reports/payments" element={<ProtectedPage><PaymentReportPage /></ProtectedPage>} />
         <Route path="/reports/revenue" element={<ProtectedPage><P4URevenueReportPage /></ProtectedPage>} />
         <Route path="/cms" element={<ProtectedPage><CMSPage /></ProtectedPage>} />
+        <Route path="/admin/cms-pages" element={<ProtectedPage><AdminCMSPagesPage /></ProtectedPage>} />
         <Route path="/settings" element={<ProtectedPage><SettingsPage /></ProtectedPage>} />
         <Route path="/categories" element={<ProtectedPage><CategoriesPage /></ProtectedPage>} />
         <Route path="/admin/services" element={<ProtectedPage><AdminServicesPage /></ProtectedPage>} />
@@ -352,6 +353,7 @@ const AppRoutes = () => {
         <Route path="/app/set-location" element={<SetLocationPage />} />
         <Route path="/app/terms" element={<TermsPage />} />
         <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/app/cms/:slug" element={<CustomerCMSPage />} />
         <Route path="/app/browse" element={<CustomerPage><CustomerBrowsePage /></CustomerPage>} />
         <Route path="/app/product/:id" element={<CustomerPage><CustomerProductPage /></CustomerPage>} />
         <Route path="/app/vendor/:id" element={<CustomerPage><CustomerVendorPage /></CustomerPage>} />
