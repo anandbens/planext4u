@@ -738,7 +738,7 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
             </div>
           </div>
         </button>
-        <button onClick={story.isOwn ? handleYourStoryClick : handleProfileClick} className="text-[10px] max-w-[64px] truncate text-center hover:underline">
+        <button onClick={story.isOwn ? handleYourStoryClick : handleProfileClick} className="text-[10px] max-w-[72px] truncate text-center hover:underline">
           {story.isOwn ? "Your Story" : story.username.split('_')[0]}
         </button>
       </div>
