@@ -108,6 +108,9 @@ export function OrderModal({ order, open, onOpenChange, mode, onSave }: OrderMod
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.title}</p>
+                    {item.selected_attributes && Object.keys(item.selected_attributes).length > 0 && (
+                      <p className="text-[10px] text-primary/70">{Object.entries(item.selected_attributes).map(([k, v]: [string, any]) => `${k}: ${v}`).join(' · ')}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">Qty: {item.qty}</p>
                   </div>
                   <p className="text-sm font-semibold">₹{((item.price || 0) * (item.qty || 1)).toLocaleString()}</p>
