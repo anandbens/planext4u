@@ -175,7 +175,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 pb-20 lg:pb-6">
+        <main className="flex-1 pb-28 lg:pb-6">
           {children}
         </main>
 
