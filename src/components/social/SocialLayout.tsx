@@ -211,7 +211,7 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
           <div className="bg-card rounded-xl border border-border/30 p-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-semibold text-muted-foreground">Suggestions for you</span>
-              <button className="text-xs font-semibold text-primary" onClick={() => navigate("/app/social/explore")}>See All</button>
+              <button className="text-xs font-semibold text-primary" onClick={() => navigate("/app/social/suggestions")}>See All</button>
             </div>
             <div className="space-y-1">
               {suggestions.map((item: any) => (
