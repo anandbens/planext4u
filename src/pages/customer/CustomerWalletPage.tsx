@@ -198,8 +198,8 @@ export default function CustomerWalletPage() {
         </div>
 
         {/* Wallet Points Structure Link */}
-        <Card className="p-3 flex items-center gap-3 cursor-pointer hover:bg-secondary/30 transition" asChild>
-          <Link to="/app/cms/wallet-points-structure">
+        <Link to="/app/cms/wallet-points-structure">
+          <Card className="p-3 flex items-center gap-3 cursor-pointer hover:bg-secondary/30 transition">
             <BookOpen className="h-5 w-5 text-primary" />
             <div className="flex-1">
               <p className="text-sm font-medium">Wallet Points Structure</p>
