@@ -325,7 +325,7 @@ export default function CustomerBrowsePage() {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="px-4 py-3">
+      <div className="px-4 py-3 pb-36 md:pb-6">
         <BannerAd placement="products" />
       </div>
     </CustomerLayout>
