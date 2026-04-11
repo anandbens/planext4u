@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const FIREBASE_PROJECT_ID = "p4u-console";
 const FIREBASE_ALT_PROJECT_ID = "planext4u-ba50f";
-const FIREBASE_API_KEY = "AIzaSyBcV0QJNWV95S2u5mBnOHxA1gXg96hcYfA";
+const GOOGLE_SECURETOKEN_JWKS_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
 
 // Accept multiple valid audience values (both Firebase projects)
 const VALID_AUDIENCES = [
@@ -17,6 +17,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const encoder = new TextEncoder();
+let cachedGoogleKeys: { expiresAt: number; keys: JsonWebKey[] } | null = null;
+
 function respond(ok: boolean, payload: Record<string, unknown>): Response {
   return new Response(
     JSON.stringify({ ok, success: ok, ...payload }),
@@ -24,20 +27,89 @@ function respond(ok: boolean, payload: Record<string, unknown>): Response {
   );
 }
 
-async function verifyFirebaseToken(idToken: string) {
-  if (!idToken || typeof idToken !== "string") throw new Error("Missing ID token");
+function normalizeBase64Url(value: string): string {
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/");
+  return padded + "=".repeat((4 - (padded.length % 4)) % 4);
+}
 
+function decodeJwtPart<T>(value: string): T {
+  return JSON.parse(atob(normalizeBase64Url(value)));
+}
+
+function base64UrlToUint8Array(value: string): Uint8Array {
+  const binary = atob(normalizeBase64Url(value));
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+async function getGoogleSigningKeys(): Promise<JsonWebKey[]> {
+  if (cachedGoogleKeys && cachedGoogleKeys.expiresAt > Date.now()) {
+    return cachedGoogleKeys.keys;
+  }
+
+  const response = await fetch(GOOGLE_SECURETOKEN_JWKS_URL);
+  if (!response.ok) {
+    throw new Error("Unable to fetch Firebase signing keys");
+  }
+
+  const cacheControl = response.headers.get("cache-control") ?? "";
+  const maxAgeMatch = cacheControl.match(/max-age=(\d+)/i);
+  const maxAgeSeconds = maxAgeMatch ? Number(maxAgeMatch[1]) : 3600;
+  const data = await response.json();
+  const keys = Array.isArray(data?.keys) ? data.keys : [];
+
+  cachedGoogleKeys = {
+    expiresAt: Date.now() + maxAgeSeconds * 1000,
+    keys,
+  };
+
+  return keys;
+}
+
+async function verifyTokenSignature(idToken: string): Promise<any> {
   const parts = idToken.split(".");
   if (parts.length !== 3) throw new Error("Invalid token format");
 
-  let payload: any;
-  try {
-    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
-    payload = JSON.parse(atob(padded));
-  } catch {
-    throw new Error("Failed to decode token payload");
+  const [headerPart, payloadPart, signaturePart] = parts;
+  const header = decodeJwtPart<{ alg?: string; kid?: string }>(headerPart);
+  if (header.alg !== "RS256" || !header.kid) {
+    throw new Error("Invalid token header");
   }
+
+  const keys = await getGoogleSigningKeys();
+  const signingKey = keys.find((key) => key.kid === header.kid);
+  if (!signingKey) {
+    throw new Error("Unknown token signing key");
+  }
+
+  const cryptoKey = await crypto.subtle.importKey(
+    "jwk",
+    signingKey,
+    {
+      name: "RSASSA-PKCS1-v1_5",
+      hash: "SHA-256",
+    },
+    false,
+    ["verify"],
+  );
+
+  const isValid = await crypto.subtle.verify(
+    "RSASSA-PKCS1-v1_5",
+    cryptoKey,
+    base64UrlToUint8Array(signaturePart),
+    encoder.encode(`${headerPart}.${payloadPart}`),
+  );
+
+  if (!isValid) {
+    throw new Error("Invalid token signature");
+  }
+
+  return decodeJwtPart<any>(payloadPart);
+}
+
+async function verifyFirebaseToken(idToken: string) {
+  if (!idToken || typeof idToken !== "string") throw new Error("Missing ID token");
+
+  const payload = await verifyTokenSignature(idToken);
 
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp < now) throw new Error("Token expired");
@@ -45,7 +117,7 @@ async function verifyFirebaseToken(idToken: string) {
   console.log("Token aud:", payload.aud, "iss:", payload.iss);
   
   // Accept any known valid audience (project ID or numeric sender ID)
-  if (!VALID_AUDIENCES.includes(payload.aud)) {
+  if (!VALID_AUDIENCES.includes(String(payload.aud))) {
     throw new Error(`Invalid audience: ${payload.aud}`);
   }
   const validIssuers = [
@@ -54,28 +126,11 @@ async function verifyFirebaseToken(idToken: string) {
   ];
   if (!validIssuers.includes(payload.iss)) throw new Error(`Invalid issuer: ${payload.iss}`);
   if (!payload.sub) throw new Error("No sub in token");
-
-  const verifyRes = await fetch(
-    `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=${FIREBASE_API_KEY}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Referer": "https://planext4u.net",
-      },
-      body: JSON.stringify({ idToken }),
-    }
-  );
-
-  if (!verifyRes.ok) {
-    const errBody = await verifyRes.text();
-    console.error("Google verify failed:", errBody);
-    throw new Error("Firebase token verification failed");
+  if (payload.firebase?.sign_in_provider !== "phone") {
+    throw new Error("Unsupported Firebase sign-in provider");
   }
-
-  const verifyData = await verifyRes.json();
-  if (!verifyData.users || verifyData.users.length === 0) {
-    throw new Error("No user found for this token");
+  if (!payload.phone_number) {
+    throw new Error("No phone number in Firebase token");
   }
 
   return payload;
