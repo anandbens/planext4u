@@ -273,10 +273,10 @@ export default function SocioDMChatPage() {
           </div>
         </button>
         <div className="flex items-center gap-2">
-          <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => toast.info("Voice call coming soon")}>
+          <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => handleCall("audio")}>
             <Phone className="h-5 w-5" />
           </button>
-          <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => toast.info("Video call coming soon")}>
+          <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => handleCall("video")}>
             <Video className="h-5 w-5" />
           </button>
         </div>
