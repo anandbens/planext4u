@@ -30,6 +30,7 @@ export default function SocialPostDetailPage() {
   const repost = useRepost();
   const [commentText, setCommentText] = useState("");
   const [carouselIdx, setCarouselIdx] = useState(0);
+  const [showProductTags, setShowProductTags] = useState(false);
 
   const { data: post, isLoading } = useQuery({
     queryKey: ['social-post-detail', postId],
@@ -161,7 +162,7 @@ export default function SocialPostDetailPage() {
         )}
         {/* Product Tags Shopping Icon */}
         {(() => {
-          const tags = Array.isArray(post.product_tags) ? post.product_tags : [];
+          const tags = Array.isArray((post as any).product_tags) ? (post as any).product_tags as any[] : [];
           if (tags.length === 0) return null;
           return (
             <button
