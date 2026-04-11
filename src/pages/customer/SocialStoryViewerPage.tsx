@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import { awardPoints } from "@/lib/award-points";
 
 export default function SocialStoryViewerPage() {
   const navigate = useNavigate();
@@ -226,7 +227,15 @@ export default function SocialStoryViewerPage() {
           <Input value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder="Reply to story..."
             className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50 text-sm h-9 rounded-full"
             onKeyDown={(e) => e.key === 'Enter' && handleReply()} onFocus={() => setIsPaused(true)} onBlur={() => setIsPaused(false)} />
-          <button onClick={() => toast.success("❤️")}><Heart className="h-6 w-6 text-white" /></button>
+          <button onClick={async () => {
+            toast.success("❤️");
+            const { data: { session } } = await supabase.auth.getSession();
+            const uid = session?.user?.id;
+            if (uid && currentStory) {
+              // Award story owner
+              awardPoints(currentStory.user_id, 'story_liked_points', 'Points for your story being liked');
+            }
+          }}><Heart className="h-6 w-6 text-white" /></button>
           <button onClick={handleReply}><Send className="h-6 w-6 text-white" /></button>
         </div>
 
