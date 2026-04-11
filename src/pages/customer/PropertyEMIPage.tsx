@@ -27,7 +27,7 @@ export default function PropertyEMIPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-lg mx-auto pb-24 md:pb-6">
+      <div className="max-w-lg mx-auto pb-32 md:pb-6">
         <div className="px-4 py-3 flex items-center gap-3 border-b border-border/30">
           <button onClick={() => navigate(-1)} className="h-9 w-9 rounded-full border border-border/50 flex items-center justify-center">
             <ArrowLeft className="h-4 w-4" />

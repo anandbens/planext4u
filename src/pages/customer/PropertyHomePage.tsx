@@ -269,7 +269,7 @@ export default function PropertyHomePage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto pb-24 md:pb-6">
+      <div className="max-w-7xl mx-auto pb-32 md:pb-6">
         {/* Hero */}
         <div className="bg-gradient-to-b from-warning/10 to-background">
           <div className="px-4 pt-4">

@@ -176,7 +176,7 @@ export default function SocialExplorePage() {
       }));
 
   const content = (
-    <div className="pb-20 md:pb-8">
+    <div className="pb-28 md:pb-8">
       {/* Search bar - NOT sticky, scrolls with content on mobile */}
       <div className="bg-card border-b border-border/30">
         <div className="px-4 py-3">

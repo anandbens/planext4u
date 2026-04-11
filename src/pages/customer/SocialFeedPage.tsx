@@ -907,7 +907,7 @@ export default function SocialFeedPage() {
       <PeopleYouMayKnow />
 
       {/* Feed */}
-      <div className="pb-20 md:pb-8">
+      <div className="pb-28 md:pb-8">
         {posts.map((post: any, idx: number) => (
           <div key={post.id}>
             <PostCard post={post} />

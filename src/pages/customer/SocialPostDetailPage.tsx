@@ -93,7 +93,7 @@ export default function SocialPostDetailPage() {
   const isVerified = profile?.is_verified || false;
 
   const content = (
-    <div className="pb-20 md:pb-8">
+    <div className="pb-28 md:pb-8">
       <header className="sticky top-0 z-40 bg-card border-b border-border/30 md:hidden">
         <div className="flex items-center gap-3 px-4 py-3">
           <button onClick={() => navigate(-1)}><ArrowLeft className="h-6 w-6" /></button>

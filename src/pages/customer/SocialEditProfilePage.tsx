@@ -94,7 +94,7 @@ export default function SocialEditProfilePage() {
   };
 
   const content = (
-    <div className="pb-20 md:pb-8">
+    <div className="pb-28 md:pb-8">
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
       <header className="sticky top-0 z-20 bg-card border-b border-border/30">
         <div className="flex items-center justify-between px-4 py-3">

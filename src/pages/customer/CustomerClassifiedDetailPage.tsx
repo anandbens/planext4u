@@ -35,7 +35,7 @@ export default function CustomerClassifiedDetailPage() {
   if (isLoading) {
     return (
       <CustomerLayout>
-        <div className="max-w-3xl mx-auto px-4 py-6 pb-20 space-y-4">
+        <div className="max-w-3xl mx-auto px-4 py-6 pb-32 space-y-4">
           <Skeleton className="h-72 w-full rounded-xl" />
           <Skeleton className="h-8 w-3/4" />
           <Skeleton className="h-6 w-1/4" />
@@ -87,7 +87,7 @@ export default function CustomerClassifiedDetailPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-3xl mx-auto pb-28 md:pb-6">
+      <div className="max-w-3xl mx-auto pb-36 md:pb-6">
         {/* Back button */}
         <div className="px-4 py-3 flex items-center gap-2">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>

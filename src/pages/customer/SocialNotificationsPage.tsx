@@ -150,7 +150,7 @@ export default function SocialNotificationsPage() {
   };
 
   const content = (
-    <div className="pb-20">
+    <div className="pb-28">
       <header className="sticky top-0 z-40 bg-card border-b border-border/30 md:hidden">
         <div className="flex items-center gap-3 px-4 py-3">
           <button onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></button>

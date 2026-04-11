@@ -269,7 +269,7 @@ export default function CustomerHomePage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto space-y-0 pb-24 md:pb-6">
+      <div className="max-w-7xl mx-auto space-y-0 pb-32 md:pb-6">
         {/* Auto-detected location */}
         {detectedLocation && (
           <div className="px-4 pt-3 flex items-center gap-1.5 text-sm text-muted-foreground">

@@ -129,7 +129,7 @@ export default function CustomerBrowsePage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-36 md:pb-6">
+      <div className="max-w-7xl mx-auto px-4 py-4 pb-44 md:pb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold">{categoryFilter || searchFilter || "All Products"}</h1>
@@ -326,7 +326,7 @@ export default function CustomerBrowsePage() {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="px-4 py-3 pb-36 md:pb-6">
+      <div className="px-4 py-3 pb-44 md:pb-6">
         <BannerAd placement="products" />
       </div>
     </CustomerLayout>

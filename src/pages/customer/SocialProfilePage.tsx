@@ -178,7 +178,7 @@ export default function SocialProfilePage() {
   }
 
   const content = (
-    <div className="pb-20 md:pb-8">
+    <div className="pb-28 md:pb-8">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card border-b border-border/30 md:hidden">
         <div className="flex items-center justify-between px-4 py-3 max-w-xl mx-auto">
