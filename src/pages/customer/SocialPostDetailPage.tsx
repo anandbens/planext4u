@@ -184,7 +184,7 @@ export default function SocialPostDetailPage() {
           );
         })()}
         {showProductTags && (() => {
-          const tags = Array.isArray(post.product_tags) ? post.product_tags : [];
+          const tags = Array.isArray((post as any).product_tags) ? (post as any).product_tags as any[] : [];
           if (tags.length === 0) return null;
           return (
             <div className="absolute top-14 right-3 z-20 bg-card rounded-xl shadow-xl border border-border p-2 max-w-[200px] animate-in fade-in slide-in-from-top-2 duration-200">
