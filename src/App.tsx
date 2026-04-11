@@ -299,6 +299,7 @@ const AppRoutes = () => {
         <Route path="/reports/classifieds" element={<ProtectedPage><ClassifiedReportPage /></ProtectedPage>} />
         <Route path="/reports/tax" element={<ProtectedPage><TaxReportPage /></ProtectedPage>} />
         <Route path="/reports/payments" element={<ProtectedPage><PaymentReportPage /></ProtectedPage>} />
+        <Route path="/reports/revenue" element={<ProtectedPage><P4URevenueReportPage /></ProtectedPage>} />
         <Route path="/cms" element={<ProtectedPage><CMSPage /></ProtectedPage>} />
         <Route path="/settings" element={<ProtectedPage><SettingsPage /></ProtectedPage>} />
         <Route path="/categories" element={<ProtectedPage><CategoriesPage /></ProtectedPage>} />
