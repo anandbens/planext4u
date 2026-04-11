@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, Film, MessageCircle, Bell, Plus, Settings, User, Compass, X } from "lucide-react";
+import { Home, Search, Film, MessageCircle, Bell, Plus, Settings, User, Compass, X, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { label: "Explore", icon: Compass, path: "/app/social/explore" },
   { label: "Reels", icon: Film, path: "/app/social/reels" },
   { label: "Messages", icon: MessageCircle, path: "/app/social/messages" },
+  { label: "Friends", icon: Users, path: "/app/social/friends" },
   { label: "Notification", icon: Bell, path: "/app/social/notifications" },
   { label: "Create", icon: Plus, path: "/app/social/create" },
   { label: "Settings", icon: Settings, path: "/app/social/settings" },
