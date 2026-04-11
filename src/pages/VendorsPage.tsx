@@ -156,8 +156,8 @@ export default function VendorsPage() {
           await supabase.from('vendors').insert(newVendor);
           await supabase.from('vendor_applications').update({ status: 'approved', ...appUpdates }).eq('id', id);
           // Create user_roles entry for vendor
-          if (a.auth_user_id) {
-            await supabase.from('user_roles').insert({ user_id: a.auth_user_id, role: 'vendor', vendor_id: newVendor.id } as any);
+          if (a.user_id) {
+            await supabase.from('user_roles').insert({ user_id: a.user_id, role: 'vendor', vendor_id: newVendor.id } as any);
           }
           toast.success("Vendor approved and created");
         }
