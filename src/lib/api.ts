@@ -512,12 +512,18 @@ export const api = {
       'is_available', 'duration_hours', 'duration_minutes', 'promise_p4u', 'helpline_number', 'thumbnail_image',
       'banner_image', 'socio_shopping_icon', 'product_type', 'sku', 'slug', 'meta_title', 'meta_description',
       'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name'];
+    const uuidFields = ['category_id', 'subcategory_id', 'vendor_id', 'tax_slab_id', 'parent_item_id'];
     const filtered: Record<string, any> = { updated_at: new Date().toISOString() };
     for (const key of validProductFields) {
-      if (key in data) filtered[key] = (data as any)[key];
+      if (key in data) {
+        let val = (data as any)[key];
+        if (uuidFields.includes(key) && val === '') val = null;
+        filtered[key] = val;
+      }
     }
-    const { error } = await supabase.from('products').update(filtered).eq('id', id);
+    const { data: updated, error } = await supabase.from('products').update(filtered).eq('id', id).select();
     if (error) { console.error("Product update error:", error); throw error; }
+    if (!updated || updated.length === 0) throw new Error("Product update failed — no rows were affected. Check your permissions.");
     return { success: true };
   },
 
