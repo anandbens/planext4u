@@ -26,6 +26,8 @@ interface CustomerModalProps {
 
 const emptyForm = { name: "", email: "", mobile: "", status: "active" as User["status"], occupation: "", city_id: "1", area_id: "1" };
 
+// Occupation options from master data
+
 export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCreate, onDelete }: CustomerModalProps) {
   const isCreate = mode === "create";
   const [editMode, setEditMode] = useState(mode === "edit" || isCreate);
