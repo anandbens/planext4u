@@ -39,8 +39,14 @@ async function verifyFirebaseToken(idToken: string) {
 
   const now = Math.floor(Date.now() / 1000);
   if (payload.exp < now) throw new Error("Token expired");
-  if (payload.aud !== FIREBASE_PROJECT_ID) throw new Error("Invalid audience");
-  if (payload.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) throw new Error("Invalid issuer");
+  
+  console.log("Token aud:", payload.aud, "iss:", payload.iss);
+  
+  // Accept any known valid audience (project ID or numeric sender ID)
+  if (!VALID_AUDIENCES.includes(payload.aud)) {
+    throw new Error(`Invalid audience: ${payload.aud}`);
+  }
+  if (payload.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) throw new Error(`Invalid issuer: ${payload.iss}`);
   if (!payload.sub) throw new Error("No sub in token");
 
   const verifyRes = await fetch(
