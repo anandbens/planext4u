@@ -345,7 +345,15 @@ export default function PaymentPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>{platformFee === 0 ? <span className="text-success">FREE</span> : `₹${platformFee}`}</span></div>
                 {(gstOnPlatformFee || 0) > 0 && <div className="flex justify-between"><span className="text-muted-foreground">GST on Platform Fee</span><span>₹{gstOnPlatformFee?.toFixed(2)}</span></div>}
                 {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>-₹{discount}</span></div>}
-                {pointsUsed > 0 && <div className="flex justify-between text-success"><span>Points Redeemed</span><span>-₹{pointsUsed}</span></div>}
+                {pointsUsed > 0 && (
+                  <div className="flex justify-between pl-3 border-l-2 border-success/30 text-success">
+                    <div>
+                      <span>Wallet Points Redeemed</span>
+                      <p className="text-[10px] text-success/70">{pointsUsed} pts × ₹1 = ₹{pointsUsed}</p>
+                    </div>
+                    <span>-₹{pointsUsed}</span>
+                  </div>
+                )}
                 <Separator />
                 <div className="flex justify-between font-bold text-base">
                   <span>Total Payable</span>
