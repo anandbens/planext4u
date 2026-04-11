@@ -415,22 +415,38 @@ export const api = {
       'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue',
       'shop_latitude', 'shop_longitude', 'shop_address', 'plan_id', 'plan_start_date', 'plan_end_date',
       'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'background_image', 'max_redemption_percentage'];
+    // UUID columns that must be null instead of empty string
+    const uuidFields = ['plan_id', 'category_id', 'city_id', 'area_id'];
     // Valid columns for the `service_vendors` table (subset — no plan/shop/geo columns)
     const validSvcVendorFields = ['name', 'business_name', 'mobile', 'email', 'category_id', 'city_id', 'area_id',
       'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue'];
     const filtered: Record<string, any> = {};
     for (const key of validVendorFields) {
-      if (key in data) filtered[key] = (data as any)[key];
+      if (key in data) {
+        let val = (data as any)[key];
+        // Convert empty strings to null for UUID/FK columns
+        if (uuidFields.includes(key) && val === '') val = null;
+        filtered[key] = val;
+      }
     }
-    const { error: e1 } = await supabase.from('vendors').update(filtered).eq('id', id);
+    // Try vendors table first, use .select() to detect 0-row silent failures
+    const { data: updated, error: e1 } = await supabase.from('vendors').update(filtered).eq('id', id).select();
     if (e1) {
+      console.error("Vendor update error:", e1);
       // For service_vendors, filter to only columns that exist on that table
       const svcFiltered: Record<string, any> = {};
       for (const key of validSvcVendorFields) {
-        if (key in data) svcFiltered[key] = (data as any)[key];
+        if (key in data) {
+          let val = (data as any)[key];
+          if (uuidFields.includes(key) && val === '') val = null;
+          svcFiltered[key] = val;
+        }
       }
-      const { error: e2 } = await supabase.from('service_vendors').update(svcFiltered).eq('id', id);
+      const { data: svcUpdated, error: e2 } = await supabase.from('service_vendors').update(svcFiltered).eq('id', id).select();
       if (e2) throw e2;
+      if (!svcUpdated || svcUpdated.length === 0) throw new Error("Update failed — no rows were affected. Check your permissions.");
+    } else if (!updated || updated.length === 0) {
+      throw new Error("Update failed — no rows were affected. Check your permissions.");
     }
     return { success: true };
   },
