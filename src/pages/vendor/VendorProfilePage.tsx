@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Store, Mail, Phone, MapPin, Shield, Star, CreditCard, Building2, Crown, ImagePlus, Camera } from "lucide-react";
+import { Store, Mail, Phone, MapPin, Shield, Star, CreditCard, Building2, Crown, ImagePlus, Camera, Pencil, Save, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,25 @@ export default function VendorProfilePage() {
   const [txnId, setTxnId] = useState("");
   const bgInputRef = useRef<HTMLInputElement>(null);
   const [bgUploading, setBgUploading] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ email: "", mobile: "", area_id: "", city_id: "", shop_address: "" });
+
+  const saveProfileMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("vendors").update({
+        email: profileForm.email,
+        mobile: profileForm.mobile,
+        shop_address: profileForm.shop_address,
+      } as any).eq("id", vendorId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Profile updated");
+      setEditingProfile(false);
+      queryClient.invalidateQueries({ queryKey: ["vendorProfile"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const { data: vendor, isLoading } = useQuery({
     queryKey: ["vendorProfile", vendorId],
@@ -148,18 +167,40 @@ export default function VendorProfilePage() {
         </Card>
 
         <Card className="p-5 space-y-4">
-          <h3 className="text-sm font-semibold">Business Details</h3>
-          {[
-            { icon: Mail, label: "Email", value: vendor?.email },
-            { icon: Phone, label: "Phone", value: vendor?.mobile },
-            { icon: MapPin, label: "Location", value: `Area ${vendor?.area_id}, City ${vendor?.city_id}` },
-            { icon: Shield, label: "Commission Rate", value: `${vendor?.commission_rate}%` },
-          ].map((d) => (
-            <div key={d.label} className="flex items-center gap-3">
-              <d.icon className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div><p className="text-xs text-muted-foreground">{d.label}</p><p className="text-sm font-medium">{d.value}</p></div>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Business Details</h3>
+            {!editingProfile ? (
+              <Button variant="ghost" size="sm" onClick={() => { setEditingProfile(true); setProfileForm({ email: vendor?.email || "", mobile: vendor?.mobile || "", area_id: vendor?.area_id || "", city_id: vendor?.city_id || "", shop_address: (vendor as any)?.shop_address || "" }); }}>
+                <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+              </Button>
+            ) : (
+              <div className="flex gap-1">
+                <Button variant="ghost" size="sm" onClick={() => setEditingProfile(false)}><X className="h-3.5 w-3.5" /></Button>
+                <Button size="sm" onClick={() => saveProfileMutation.mutate()} disabled={saveProfileMutation.isPending}>
+                  <Save className="h-3.5 w-3.5 mr-1" /> Save
+                </Button>
+              </div>
+            )}
+          </div>
+          {editingProfile ? (
+            <div className="space-y-3">
+              <div><Label className="text-xs">Email</Label><Input value={profileForm.email} onChange={e => setProfileForm(f => ({...f, email: e.target.value}))} className="h-9" /></div>
+              <div><Label className="text-xs">Phone</Label><Input value={profileForm.mobile} onChange={e => setProfileForm(f => ({...f, mobile: e.target.value}))} className="h-9" /></div>
+              <div><Label className="text-xs">Shop Address</Label><Input value={profileForm.shop_address} onChange={e => setProfileForm(f => ({...f, shop_address: e.target.value}))} className="h-9" /></div>
             </div>
-          ))}
+          ) : (
+            [
+              { icon: Mail, label: "Email", value: vendor?.email },
+              { icon: Phone, label: "Phone", value: vendor?.mobile },
+              { icon: MapPin, label: "Location", value: (vendor as any)?.shop_address || `Area ${vendor?.area_id}, City ${vendor?.city_id}` },
+              { icon: Shield, label: "Commission Rate", value: `${vendor?.commission_rate}%` },
+            ].map((d) => (
+              <div key={d.label} className="flex items-center gap-3">
+                <d.icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div><p className="text-xs text-muted-foreground">{d.label}</p><p className="text-sm font-medium">{d.value}</p></div>
+              </div>
+            ))
+          )}
         </Card>
 
         {/* Plan & Payment Section */}
