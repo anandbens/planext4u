@@ -106,12 +106,16 @@ export default function SocialStoryViewerPage() {
     return () => clearInterval(interval);
   }, [isPaused, currentStoryIdx, currentUserIdx, goNext, story]);
 
-  // Record view in DB
+  const qc = useQueryClient();
+
+  // Record view in DB and invalidate feed stories to update viewed state
   useEffect(() => {
     const socialUserId = customerUser?.supabase_uid || customerUser?.id;
     if (!story?.id || !socialUserId) return;
-    supabase.from('social_story_views').insert({ story_id: story.id, viewer_id: socialUserId }).then(() => {});
-  }, [story?.id, customerUser?.supabase_uid, customerUser?.id]);
+    supabase.from('social_story_views').insert({ story_id: story.id, viewer_id: socialUserId }).then(() => {
+      qc.invalidateQueries({ queryKey: ['social-feed-stories'] });
+    });
+  }, [story?.id, customerUser?.supabase_uid, customerUser?.id, qc]);
 
   const handleReply = () => {
     if (replyText.trim()) {
