@@ -81,13 +81,23 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
     navigate(path);
   };
 
-  // Suggestions from DB
+  // Suggestions from DB – exclude users the current user already follows
   const { data: suggestions = [] } = useQuery({
     queryKey: ['social-suggestions', userId],
     queryFn: async () => {
-      const { data } = await supabase.from('social_profiles').select('id, user_id, username, display_name, avatar_url, is_verified').limit(5);
+      // Get list of users the current user follows
+      const followingIds: string[] = [userId || ''];
+      if (userId) {
+        const { data: follows } = await supabase.from('social_follows').select('following_id').eq('follower_id', userId).eq('status', 'active');
+        if (follows) followingIds.push(...follows.map((f: any) => f.following_id));
+      }
+      const { data } = await supabase.from('social_profiles')
+        .select('id, user_id, username, display_name, avatar_url, is_verified')
+        .not('user_id', 'in', `(${followingIds.join(',')})`)
+        .limit(5);
       return data || [];
     },
+    enabled: !!userId,
   });
 
   const followUser = useMutation({
