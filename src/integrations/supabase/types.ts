@@ -1105,11 +1105,14 @@ export type Database = {
       }
       orders: {
         Row: {
+          commission_source: string | null
           created_at: string
           customer_id: string
           customer_name: string | null
           delivery_rating: number | null
           discount: number
+          effective_commission: number | null
+          effective_max_redemption: number | null
           gst_on_platform_fee: number | null
           id: string
           items: Json | null
@@ -1119,6 +1122,7 @@ export type Database = {
           rated_at: string | null
           rating_comment: string | null
           razorpay_order_id: string | null
+          redemption_source: string | null
           status: string
           subtotal: number
           tax: number
@@ -1128,11 +1132,14 @@ export type Database = {
           vendor_name: string | null
         }
         Insert: {
+          commission_source?: string | null
           created_at?: string
           customer_id: string
           customer_name?: string | null
           delivery_rating?: number | null
           discount?: number
+          effective_commission?: number | null
+          effective_max_redemption?: number | null
           gst_on_platform_fee?: number | null
           id: string
           items?: Json | null
@@ -1142,6 +1149,7 @@ export type Database = {
           rated_at?: string | null
           rating_comment?: string | null
           razorpay_order_id?: string | null
+          redemption_source?: string | null
           status?: string
           subtotal?: number
           tax?: number
@@ -1151,11 +1159,14 @@ export type Database = {
           vendor_name?: string | null
         }
         Update: {
+          commission_source?: string | null
           created_at?: string
           customer_id?: string
           customer_name?: string | null
           delivery_rating?: number | null
           discount?: number
+          effective_commission?: number | null
+          effective_max_redemption?: number | null
           gst_on_platform_fee?: number | null
           id?: string
           items?: Json | null
@@ -1165,6 +1176,7 @@ export type Database = {
           rated_at?: string | null
           rating_comment?: string | null
           razorpay_order_id?: string | null
+          redemption_source?: string | null
           status?: string
           subtotal?: number
           tax?: number
@@ -1538,6 +1550,7 @@ export type Database = {
           banner_image: string | null
           category_id: string | null
           category_name: string | null
+          commission_override: number | null
           created_at: string
           description: string
           dimensions: Json | null
@@ -1591,6 +1604,7 @@ export type Database = {
           banner_image?: string | null
           category_id?: string | null
           category_name?: string | null
+          commission_override?: number | null
           created_at?: string
           description?: string
           dimensions?: Json | null
@@ -1644,6 +1658,7 @@ export type Database = {
           banner_image?: string | null
           category_id?: string | null
           category_name?: string | null
+          commission_override?: number | null
           created_at?: string
           description?: string
           dimensions?: Json | null
@@ -4076,6 +4091,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          max_redemption_percentage: number | null
           membership: string
           mobile: string
           name: string
@@ -4104,6 +4120,7 @@ export type Database = {
           created_at?: string
           email?: string
           id: string
+          max_redemption_percentage?: number | null
           membership?: string
           mobile?: string
           name: string
@@ -4132,6 +4149,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          max_redemption_percentage?: number | null
           membership?: string
           mobile?: string
           name?: string
