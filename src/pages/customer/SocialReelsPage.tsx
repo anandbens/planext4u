@@ -37,28 +37,69 @@ export default function SocialReelsPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
   const qc = useQueryClient();
+  const userId = customerUser?.supabase_uid || customerUser?.id;
 
-  // Fetch reels from DB
+  // Fetch mutual-follower video posts + trending public videos for reels
   const { data: dbReels = [] } = useQuery({
-    queryKey: ['social-reels'],
+    queryKey: ['social-reels', userId],
     queryFn: async () => {
-      const { data } = await supabase
+      // 1. Get mutual follower IDs (I follow them AND they follow me)
+      let mutualIds: string[] = [];
+      if (userId) {
+        const { data: iFollow } = await supabase
+          .from('social_follows').select('following_id')
+          .eq('follower_id', userId).eq('status', 'active');
+        const followingIds = (iFollow || []).map((f: any) => f.following_id);
+
+        if (followingIds.length > 0) {
+          const { data: followMeBack } = await supabase
+            .from('social_follows').select('follower_id')
+            .eq('following_id', userId).eq('status', 'active')
+            .in('follower_id', followingIds);
+          mutualIds = (followMeBack || []).map((f: any) => f.follower_id);
+        }
+      }
+
+      // 2. Fetch reels + video posts from mutual followers
+      let mutualPosts: any[] = [];
+      const allMutualIds = userId ? [...mutualIds, userId] : [];
+      if (allMutualIds.length > 0) {
+        const { data } = await supabase
+          .from('social_posts')
+          .select('id, user_id, media, caption, like_count, comment_count, share_count, hashtags, metadata, post_type, created_at')
+          .in('user_id', allMutualIds)
+          .eq('status', 'published')
+          .or('post_type.eq.reel,post_type.eq.video')
+          .order('created_at', { ascending: false })
+          .limit(30);
+        mutualPosts = data || [];
+      }
+
+      // 3. Fetch trending / public videos (high engagement) - exclude already fetched
+      const mutualPostIds = mutualPosts.map(p => p.id);
+      const { data: trendingPosts } = await supabase
         .from('social_posts')
-        .select('id, user_id, media, caption, like_count, comment_count, share_count, hashtags, metadata')
-        .eq('post_type', 'reel')
+        .select('id, user_id, media, caption, like_count, comment_count, share_count, hashtags, metadata, post_type, created_at')
         .eq('status', 'published')
-        .order('created_at', { ascending: false })
-        .limit(20);
-      return data || [];
+        .or('post_type.eq.reel,post_type.eq.video')
+        .order('like_count', { ascending: false })
+        .limit(30);
+
+      // Merge: mutual first, then trending (deduplicated)
+      const seen = new Set(mutualPostIds);
+      const trending = (trendingPosts || []).filter((p: any) => !seen.has(p.id));
+      return [...mutualPosts, ...trending];
     },
   });
 
   const reels = dbReels.map((r: any) => {
-    const media = Array.isArray(r.media) && r.media.length > 0 ? r.media[0] : null;
+    // For video posts, find the first video media item
+    const mediaArr = Array.isArray(r.media) ? r.media : [];
+    const videoMedia = mediaArr.find((m: any) => m.type === 'video') || mediaArr[0] || null;
     const metadata = r.metadata || {};
     return {
       id: r.id, user_id: r.user_id,
-      videoUrl: media?.url || media?.thumbnailUrl || '',
+      videoUrl: videoMedia?.url || videoMedia?.thumbnailUrl || '',
       caption: r.caption || '',
       likes: r.like_count || 0, comments: r.comment_count || 0, shares: r.share_count || 0,
       audio: "Original Audio",
@@ -66,7 +107,7 @@ export default function SocialReelsPage() {
       linkedProductId: metadata.linked_product_id || null,
       linkedProductTitle: metadata.linked_product_title || null,
     };
-  });
+  }).filter((r: any) => !!r.videoUrl);
 
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
