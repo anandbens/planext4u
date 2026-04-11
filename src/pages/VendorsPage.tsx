@@ -32,7 +32,7 @@ export default function VendorsPage() {
 
   const [pendingApps, setPendingApps] = useState<any[]>([]);
 
-  const tabStatusFilter = activeTab === "pending" ? undefined : statusFilter || undefined;
+  const tabStatusFilter = activeTab === "pending" ? undefined : activeTab === "all" ? (statusFilter || "verified") : statusFilter || undefined;
 
   const fetchData = useCallback(async () => {
     if (activeTab === "pending") {

@@ -119,7 +119,19 @@ export default function VendorLoginPage() {
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
       if (verifyError) throw new Error("Session verification failed. Please try logging in again.");
       toast.success("Welcome to Vendor Portal! 🎉");
-      setTimeout(() => navigate("/vendor", { replace: true }), 500);
+      // Wait for auth state to propagate before navigating
+      const waitForVendor = () => new Promise<void>((resolve) => {
+        let attempts = 0;
+        const check = () => {
+          const saved = localStorage.getItem("vendor_user");
+          if (saved || attempts >= 20) { resolve(); return; }
+          attempts++;
+          setTimeout(check, 250);
+        };
+        check();
+      });
+      await waitForVendor();
+      navigate("/vendor", { replace: true });
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP. Please check and try again.");
       else toast.error(err.message || "Verification failed. Please try again.");
