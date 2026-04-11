@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Image, MapPin, Users, Tag, ChevronRight, X, Plus, Eye, Heart, Video, ShoppingBag, Search } from "lucide-react";
+import { ArrowLeft, Camera, Image, MapPin, Users, Tag, ChevronRight, X, Plus, Eye, Heart, Video, ShoppingBag, Search, Pencil } from "lucide-react";
+import ImageEditor from "@/components/social/ImageEditor";
+import ProductTagOverlay from "@/components/social/ProductTagOverlay";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
