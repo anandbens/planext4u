@@ -129,14 +129,8 @@ export default function VendorsPage() {
   const handleSave = async (id: string, updates: Partial<Vendor>) => {
     const isApp = (selected as any)?._isApplication;
     if (isApp) {
-      // Update application data
-      const appUpdates: any = {};
-      if (updates.name) appUpdates.name = updates.name;
-      if (updates.business_name) appUpdates.business_name = updates.business_name;
-      if (updates.email) appUpdates.email = updates.email;
-      if (updates.mobile) appUpdates.phone = updates.mobile;
       if ((updates as any).status === 'verified' || (updates as any).status === 'approved') {
-        // Approve: create vendor in vendors table
+        // Approve application → create vendor in vendors table
         const { data: appData } = await supabase.from('vendor_applications').select('*').eq('id', id).single();
         if (appData) {
           const a = appData;
@@ -145,32 +139,42 @@ export default function VendorsPage() {
             name: updates.name || a.name, business_name: updates.business_name || a.business_name,
             mobile: updates.mobile || a.phone, email: updates.email || a.email,
             commission_rate: (updates as any).commission_rate || 10, membership: (updates as any).membership || 'basic',
-            status: 'verified', category_id: '', city_id: '', area_id: '',
-            store_logo: a.store_logo_url || '', latitude: a.latitude || 0, longitude: a.longitude || 0,
-            shop_address: a.shop_address || '', gst_number: a.gst_number || '',
-            pan_number: a.pan_number || '', bank_account_number: a.bank_account_number || '',
-            bank_ifsc: a.bank_ifsc || '', bank_holder_name: a.bank_holder_name || '',
+            status: 'verified',
+            shop_photo_url: a.shop_photo_url || '', shop_latitude: a.latitude || 0, shop_longitude: a.longitude || 0,
+            shop_address: a.shop_address || '',
             plan_id: (updates as any).plan_id || null,
             max_redemption_percentage: (updates as any).max_redemption_percentage || null,
           };
-          await supabase.from('vendors').insert(newVendor);
-          await supabase.from('vendor_applications').update({ status: 'approved', ...appUpdates }).eq('id', id);
-          // Create user_roles entry for vendor
+          const { error: insertErr } = await supabase.from('vendors').insert(newVendor);
+          if (insertErr) { toast.error("Failed to create vendor: " + insertErr.message); return; }
+          await supabase.from('vendor_applications').update({ status: 'approved' }).eq('id', id);
           if (a.user_id) {
             await supabase.from('user_roles').insert({ user_id: a.user_id, role: 'vendor', vendor_id: newVendor.id } as any);
           }
           toast.success("Vendor approved and created");
         }
       } else {
-        if (Object.keys(appUpdates).length > 0 || (updates as any).status) {
-          if ((updates as any).status) appUpdates.status = (updates as any).status;
+        // Update application fields
+        const appUpdates: any = {};
+        if (updates.name) appUpdates.name = updates.name;
+        if (updates.business_name) appUpdates.business_name = updates.business_name;
+        if (updates.email) appUpdates.email = updates.email;
+        if (updates.mobile) appUpdates.phone = updates.mobile;
+        if ((updates as any).status) appUpdates.status = (updates as any).status;
+        if ((updates as any).rejection_reason) appUpdates.rejection_reason = (updates as any).rejection_reason;
+        if (Object.keys(appUpdates).length > 0) {
           await supabase.from('vendor_applications').update(appUpdates).eq('id', id);
         }
         toast.success("Application updated");
       }
     } else {
-      await api.updateVendor(id, updates);
-      toast.success("Vendor updated");
+      try {
+        await api.updateVendor(id, updates);
+        toast.success("Vendor updated");
+      } catch (err: any) {
+        toast.error("Failed to update vendor: " + (err.message || "Unknown error"));
+        return;
+      }
     }
     fetchData(); fetchStats();
   };
