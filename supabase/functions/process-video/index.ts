@@ -86,59 +86,28 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Dispatch to external FFmpeg processor
-    const PROCESSOR_URL = Deno.env.get("VIDEO_PROCESSOR_URL");
-    const PROCESSOR_SECRET = Deno.env.get("VIDEO_PROCESSOR_SECRET");
-
-    if (PROCESSOR_URL) {
-      await adminClient.from("video_processing_jobs")
-        .update({ status: "processing" })
-        .eq("id", job.id);
-
-      const callbackUrl = `${supabaseUrl}/functions/v1/process-video-webhook`;
-
-      // Fire-and-forget dispatch — don't block the response
-      fetch(`${PROCESSOR_URL}/process`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(PROCESSOR_SECRET ? { "Authorization": `Bearer ${PROCESSOR_SECRET}` } : {}),
+    // Browser-side H.264 compression is already done by the client.
+    // Mark job as completed immediately — H.265 FFmpeg processing is bypassed for now.
+    await adminClient.from("video_processing_jobs")
+      .update({
+        status: "completed",
+        processed_url: originalUrl,
+        metadata: {
+          post_id,
+          codec: "h264",
+          resolution: "480p",
+          browser_compressed: true,
+          note: "H.265 FFmpeg processing bypassed — browser H.264 compression applied",
         },
-        body: JSON.stringify({
-          job_id: job.id,
-          source_url: originalUrl,
-          storage_path,
-          callback_url: callbackUrl,
-          callback_secret: PROCESSOR_SECRET || "",
-          options: {
-            resolution: "854x480",
-            codec: "libx265",
-            bitrate: "1000k",
-            crf: 28,
-            preset: "medium",
-            faststart: true,
-            thumbnail_at_sec: 2.5,
-            output_format: "mp4",
-          },
-        }),
-      }).catch(err => console.error("Dispatch to processor failed:", err));
+      })
+      .eq("id", job.id);
 
-      return new Response(JSON.stringify({
-        job_id: job.id,
-        status: "processing",
-        message: "Video dispatched for H.265 compression",
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    console.log(`Job ${job.id} — browser H.264 compressed, FFmpeg bypass active`);
 
-    // No processor configured — job stays queued
-    console.warn("VIDEO_PROCESSOR_URL not set — job queued but not dispatched");
     return new Response(JSON.stringify({
       job_id: job.id,
-      status: job.status,
-      message: "Video queued (no processor configured yet)",
+      status: "completed",
+      message: "Video saved with browser H.264 compression (H.265 bypass active)",
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

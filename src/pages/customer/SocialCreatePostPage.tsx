@@ -142,13 +142,13 @@ export default function SocialCreatePostPage() {
 
           hasVideo = true;
 
-          // Use the video upload pipeline with processing queue
+          // Use the video upload pipeline with browser H.264 compression
           const result = await uploadVideoWithProcessing(
             file,
             authUserId,
             postId,
             (p) => setUploadProgress({
-              stage: p.stage === 'completed' ? 'complete' : p.stage === 'error' ? 'error' : p.stage === 'processing' ? 'uploading' : 'uploading',
+              stage: p.stage === 'completed' ? 'complete' : p.stage === 'error' ? 'error' : 'uploading',
               percent: p.percent,
               originalSize: file.size,
               savedText: p.message,
@@ -165,7 +165,7 @@ export default function SocialCreatePostPage() {
 
           setUploadProgress({
             stage: 'complete', percent: 100, originalSize: file.size,
-            savedText: `Video uploaded & queued for compression ✓`,
+            savedText: `Video compressed & uploaded ✓`,
           });
         } else {
           // Image compression & upload
@@ -313,7 +313,7 @@ export default function SocialCreatePostPage() {
             </div>
             <h2 className="text-xl font-bold mb-2">Create a new post</h2>
             <p className="text-sm text-muted-foreground mb-6">Share photos & videos with your followers</p>
-            <p className="text-xs text-muted-foreground mb-4">Videos up to {MAX_VIDEO_SIZE_MB}MB • Images up to 10MB</p>
+            <p className="text-xs text-muted-foreground mb-4">Videos up to 45 sec / {MAX_VIDEO_SIZE_MB}MB • Images up to 10MB</p>
             <div className="flex gap-3 justify-center">
               <Button onClick={() => fileInputRef.current?.click()} className="gap-2">
                 <Image className="h-4 w-4" /> Gallery
