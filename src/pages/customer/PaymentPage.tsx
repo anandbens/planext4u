@@ -152,7 +152,7 @@ export default function PaymentPage() {
           customer_name: customerUser?.name || 'Customer',
           vendor_id: vendorId,
           vendor_name: items[0]?.vendor_name || items[0]?.vendor || 'Vendor',
-          items: items.map((i: any) => ({ id: i.id, title: i.title, qty: i.qty, price: i.price, image: i.image })),
+          items: items.map((i: any) => ({ id: i.id, title: i.title, qty: i.qty, price: i.price, image: i.image, selected_attributes: i.selected_attributes || null, variant_id: i.variant_id || null })),
           subtotal: itemTotal,
           tax: items.reduce((s: number, i: any) => s + (i.tax || 0) * i.qty, 0),
           discount: discount || 0,

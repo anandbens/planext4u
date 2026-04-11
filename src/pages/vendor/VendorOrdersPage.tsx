@@ -100,7 +100,12 @@ export default function VendorOrdersPage() {
         {o.items?.map((item: any, i: number) => (
           <div key={i} className="flex items-center gap-2 mb-1">
             {item.image && <img src={item.image} className="h-8 w-8 rounded object-cover" />}
-            <p className="text-xs text-muted-foreground">{item.title} × {item.qty}</p>
+            <div>
+              <p className="text-xs text-muted-foreground">{item.title} × {item.qty}</p>
+              {item.selected_attributes && Object.keys(item.selected_attributes).length > 0 && (
+                <p className="text-[10px] text-primary/70">{Object.entries(item.selected_attributes).map(([k, v]: [string, any]) => `${k}: ${v}`).join(' · ')}</p>
+              )}
+            </div>
           </div>
         ))}
         {flow && (

@@ -167,6 +167,9 @@ export default function CustomerOrderDetailPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate text-primary">{item.title}</p>
+                  {item.selected_attributes && Object.keys(item.selected_attributes).length > 0 && (
+                    <p className="text-[10px] text-primary/70">{Object.entries(item.selected_attributes).map(([k, v]: [string, any]) => `${k}: ${v}`).join(' · ')}</p>
+                  )}
                   <p className="text-xs text-muted-foreground">Qty: {item.qty} × ₹{(item.price || 0).toLocaleString()}</p>
                 </div>
                 <p className="text-sm font-semibold whitespace-nowrap">₹{((item.price || 0) * (item.qty || 1)).toLocaleString()}</p>
