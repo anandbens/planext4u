@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { api, CartItem } from "@/lib/api";
 import { format, addDays, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, isSameMonth, isBefore, startOfDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveCommissionCascade } from "@/lib/commission-cascade";
 
 const TIME_SLOTS = [
   { id: "morning", label: "Morning 9 - 11 AM" },
@@ -50,15 +51,38 @@ export default function CustomerCartPage() {
   const [editingAddress, setEditingAddress] = useState<SavedAddress | null>(null);
   const [addressForm, setAddressForm] = useState({ label: "Home", type: "home", address_line: "", city: "", pincode: "" });
   const [referralCountThisMonth, setReferralCountThisMonth] = useState(0);
+  const [itemRedemptionMap, setItemRedemptionMap] = useState<Record<string, { maxRedemption: number; redemptionSource: string }>>({});
 
   useEffect(() => {
-    Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses(), loadPlatformFees()]).then(([cartItems, profile]) => {
+    Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses(), loadPlatformFees()]).then(async ([cartItems, profile]) => {
       setCart(cartItems);
       setWalletPoints(profile?.wallet_points || 0);
       try {
         const saved = JSON.parse(localStorage.getItem('app_db_saved_for_later') || '[]');
         setSavedForLater(saved);
       } catch {}
+
+      // Resolve cascade max redemption for each cart item
+      if (cartItems.length > 0) {
+        const map: Record<string, { maxRedemption: number; redemptionSource: string }> = {};
+        // Fetch product-level overrides
+        const productIds = cartItems.map((i: any) => i.id);
+        const { data: products } = await supabase.from('products').select('id, vendor_id, max_redemption_percentage, commission_override').in('id', productIds);
+        for (const item of cartItems) {
+          const product = (products || []).find((p: any) => p.id === item.id);
+          if (product) {
+            const cascade = await resolveCommissionCascade(
+              item.vendor_id,
+              product.commission_override,
+              product.max_redemption_percentage,
+            );
+            map[item.id] = { maxRedemption: cascade.maxRedemption, redemptionSource: cascade.redemptionSource };
+          } else {
+            map[item.id] = { maxRedemption: 3, redemptionSource: 'plan' };
+          }
+        }
+        setItemRedemptionMap(map);
+      }
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [customerId]);
