@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "924127717306",
-    "project_id": "planext4u-ba50f",
-    "storage_bucket": "planext4u-ba50f.firebasestorage.app"
+    "project_number": "784503032650",
+    "project_id": "p4u-console",
+    "storage_bucket": "p4u-console.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:924127717306:android:752905aad6f82f88dd1f83",
+        "mobilesdk_app_id": "1:784503032650:android:9f04cccd93da071b028fb3",
         "android_client_info": {
-          "package_name": "com.planext4u.p4u"
+          "package_name": "com.p4u_customer"
         }
       },
       "oauth_client": [
         {
-          "client_id": "924127717306-mmo7nhe1g3h2huv74eluqsb1b7tsqunc.apps.googleusercontent.com",
+          "client_id": "784503032650-placeholder.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyB2hcZFvz5fTzaH0qZ7GXtCIx1Yg-rv0NE"
+          "current_key": "AIzaSyBcV0QJNWV95S2u5mBnOHxA1gXg96hcYfA"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "924127717306-mmo7nhe1g3h2huv74eluqsb1b7tsqunc.apps.googleusercontent.com",
+              "client_id": "784503032650-placeholder.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

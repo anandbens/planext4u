@@ -2,13 +2,13 @@ import { initializeApp } from "firebase/app";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, signOut } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBs9GdBSEK8BGjeGypEOjiHF_jkToy-Qlk",
-  authDomain: "planext4u-ba50f.firebaseapp.com",
-  projectId: "planext4u-ba50f",
-  storageBucket: "planext4u-ba50f.firebasestorage.app",
-  messagingSenderId: "924127717306",
-  appId: "1:924127717306:web:43541de9fce52be5dd1f83",
-  measurementId: "G-BVQFEKX1ZL",
+  apiKey: "AIzaSyDfQ-0baPOXaa31xnQXranIIwvHC2zbmiE",
+  authDomain: "p4u-console.firebaseapp.com",
+  projectId: "p4u-console",
+  storageBucket: "p4u-console.appspot.com",
+  messagingSenderId: "784503032650",
+  appId: "1:784503032650:web:8c3d03418db7d594028fb3",
+  measurementId: "G-RX9CW0VKL0",
 };
 
 const app = initializeApp(firebaseConfig);

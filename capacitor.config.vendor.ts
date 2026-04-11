@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.planext4u.vendor",
+  appId: "com.p4u.p4u_vendor",
   appName: "Planext4u Vendor",
   webDir: "dist",
   server: {
