@@ -46,10 +46,17 @@ export type Database = {
           advertiser: string
           clicks: number
           created_at: string
+          description: string | null
           end_date: string
           id: string
+          image_url: string | null
           impressions: number
+          link_target_id: string | null
+          link_type: string | null
+          link_url: string | null
+          mobile_image_url: string | null
           placement: string
+          placements: string[] | null
           revenue: number
           start_date: string
           status: string
@@ -60,10 +67,17 @@ export type Database = {
           advertiser?: string
           clicks?: number
           created_at?: string
+          description?: string | null
           end_date?: string
           id: string
+          image_url?: string | null
           impressions?: number
+          link_target_id?: string | null
+          link_type?: string | null
+          link_url?: string | null
+          mobile_image_url?: string | null
           placement?: string
+          placements?: string[] | null
           revenue?: number
           start_date?: string
           status?: string
@@ -74,10 +88,17 @@ export type Database = {
           advertiser?: string
           clicks?: number
           created_at?: string
+          description?: string | null
           end_date?: string
           id?: string
+          image_url?: string | null
           impressions?: number
+          link_target_id?: string | null
+          link_type?: string | null
+          link_url?: string | null
+          mobile_image_url?: string | null
           placement?: string
+          placements?: string[] | null
           revenue?: number
           start_date?: string
           status?: string

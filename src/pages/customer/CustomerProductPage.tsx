@@ -13,6 +13,7 @@ import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api, ProductVariant } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+import { BannerAd } from "@/components/customer/BannerAd";
 
 
 export default function CustomerProductPage() {
@@ -413,6 +414,9 @@ export default function CustomerProductPage() {
             <Zap className="h-4 w-4" /> Buy
           </Button>
         </div>
+      </div>
+      <div className="px-4 py-3">
+        <BannerAd placement="product_detail" />
       </div>
     </CustomerLayout>
   );
