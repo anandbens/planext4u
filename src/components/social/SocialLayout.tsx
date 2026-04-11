@@ -113,22 +113,22 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
   const hasSearchResults = searchQuery.trim().length > 1 && (sidebarSearchResults.users.length > 0 || sidebarSearchResults.hashtags.length > 0);
 
   const desktopBody = (
-    <div className="hidden md:flex max-w-[1200px] mx-auto">
+    <div className="hidden md:flex max-w-[1400px] mx-auto gap-4">
       {/* Left Sidebar */}
       {!hideSidebar && (
-        <aside className="w-[220px] shrink-0 sticky top-[110px] self-start py-4 pl-4 pr-2 h-[calc(100vh-110px)] overflow-y-auto">
-          <nav className="bg-card rounded-xl border border-border/30 py-2">
+        <aside className="w-[240px] shrink-0 sticky top-[110px] self-start py-4 pl-4 pr-2 h-[calc(100vh-110px)] overflow-y-auto">
+          <nav className="bg-card rounded-xl border border-border/30 py-3 px-2">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.path);
               return (
                 <Link key={item.label} to={item.path}
-                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors rounded-lg mx-2 ${active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"}`}>
+                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors rounded-lg mx-1 mb-0.5 ${active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"}`}>
                   {item.label === "Profile" ? (
                     <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold ${active ? 'bg-primary-foreground text-primary' : 'bg-muted border border-border'}`}>
                       {customerUser?.name?.charAt(0) || 'U'}
                     </div>
-                  ) : (<item.icon className="h-5 w-5" />)}
-                  {item.label}
+                  ) : (<item.icon className="h-5 w-5 shrink-0" />)}
+                  <span className="truncate">{item.label}</span>
                 </Link>
               );
             })}
@@ -144,11 +144,11 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
       )}
 
       {/* Main Content */}
-      <main className={`flex-1 min-w-0 ${!hideSidebar ? 'max-w-[620px]' : ''}`}>{children}</main>
+      <main className={`flex-1 min-w-0 ${!hideSidebar ? 'max-w-[680px]' : ''}`}>{children}</main>
 
       {/* Right Sidebar */}
       {!hideRightSidebar && !hideSidebar && (
-        <aside className="w-[280px] shrink-0 sticky top-[110px] self-start py-4 pr-4 pl-2 space-y-4 h-[calc(100vh-110px)] overflow-y-auto">
+        <aside className="w-[300px] shrink-0 sticky top-[110px] self-start py-4 pr-4 pl-2 space-y-4 h-[calc(100vh-110px)] overflow-y-auto">
           {/* Search */}
           <div className="bg-card rounded-xl border border-border/30 p-4">
             <div className="flex items-center justify-between mb-3">
