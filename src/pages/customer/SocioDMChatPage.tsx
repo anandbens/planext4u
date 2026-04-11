@@ -39,6 +39,24 @@ export default function SocioDMChatPage() {
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { activeCall, initiateCall, closeCall } = useInitiateCall();
+
+  // Fetch recipient profile for call screen
+  const { data: callRemoteProfile } = useQuery({
+    queryKey: ["call-remote-profile", recipientId],
+    queryFn: async () => {
+      if (!recipientId) return null;
+      const { data } = await supabase.from("social_profiles").select("display_name, username, avatar_url").eq("user_id", recipientId).maybeSingle();
+      return data;
+    },
+    enabled: !!recipientId,
+  });
+
+  const handleCall = useCallback(async (type: "audio" | "video") => {
+    if (!recipientId || !currentUserId) { toast.error("Please login to make calls"); return; }
+    const callId = await initiateCall(recipientId, type);
+    if (!callId) toast.error("Failed to start call");
+  }, [recipientId, currentUserId, initiateCall]);
 
   // Get auth user ID
   useEffect(() => {
