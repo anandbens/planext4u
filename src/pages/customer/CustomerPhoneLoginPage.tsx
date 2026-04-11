@@ -138,8 +138,33 @@ export default function CustomerPhoneLoginPage() {
 
       console.log("[PhoneLogin] Login successful!");
       toast.success("Login successful! 🎉");
-      // The auth state change listener in AuthProvider will handle setting customerUser
-      setTimeout(() => navigate("/app", { replace: true }), 500);
+
+      const waitForCustomer = () => new Promise<void>((resolve) => {
+        let attempts = 0;
+        const check = async () => {
+          const saved = localStorage.getItem("customer_user");
+          if (saved) {
+            resolve();
+            return;
+          }
+
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session?.user || attempts >= 20) {
+            resolve();
+            return;
+          }
+
+          attempts += 1;
+          setTimeout(() => {
+            void check();
+          }, 250);
+        };
+
+        void check();
+      });
+
+      await waitForCustomer();
+      navigate("/app", { replace: true });
     } catch (err: any) {
       console.error("[PhoneLogin] OTP verify error:", err, "code:", err.code, "message:", err.message);
       if (err.code === "auth/invalid-verification-code") {

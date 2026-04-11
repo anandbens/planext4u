@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { Capacitor } from "@capacitor/core";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, signOut } from "firebase/auth";
 
 const firebaseConfig = {
@@ -14,12 +15,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const firebaseAuth = getAuth(app);
 
-const ALLOWED_HOSTNAMES = ["localhost", "127.0.0.1", "planext4u.lovable.app", "www.planext4u.net", "planext4u.net"];
+const PLANEXT_HOSTNAMES = ["www.planext4u.net", "planext4u.net"];
+const WEB_ALLOWED_HOSTNAMES = ["localhost", "127.0.0.1", "planext4u.lovable.app", ...PLANEXT_HOSTNAMES];
 
 function isAllowedHostname(host: string): boolean {
-  return ALLOWED_HOSTNAMES.includes(host);
+  if (Capacitor.isNativePlatform()) {
+    return PLANEXT_HOSTNAMES.includes(host);
+  }
+
+  return WEB_ALLOWED_HOSTNAMES.includes(host);
 }
-const PRODUCTION_URL = "https://planext4u.lovable.app";
+const PRODUCTION_URL = "https://planext4u.net";
 
 function getAuthorizedFirebaseUrl(): string {
   return `${PRODUCTION_URL}${window.location.pathname}${window.location.search}${window.location.hash}`;
