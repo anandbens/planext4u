@@ -179,12 +179,19 @@ export default function CustomerCartPage() {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const totalDiscount = mrpTotal - subtotal;
 
-  // Calculate per-product max redeemable points
-  const perItemMaxPoints = cart.map(item => ({
-    id: item.id,
-    title: item.title,
-    maxRedeemable: item.maxPoints * item.qty,
-  }));
+  // Calculate per-product max redeemable points using cascade logic (% of selling price)
+  const perItemMaxPoints = cart.map(item => {
+    const sellingPrice = item.price * item.qty;
+    const redemptionPct = itemRedemptionMap[item.id]?.maxRedemption ?? 3;
+    const maxFromProduct = Math.floor(sellingPrice * redemptionPct / 100);
+    return {
+      id: item.id,
+      title: item.title,
+      maxRedeemable: maxFromProduct,
+      redemptionPct,
+      source: itemRedemptionMap[item.id]?.redemptionSource || 'plan',
+    };
+  });
 
   // Check if 4+ referrals completed this month → zero platform fee
   useEffect(() => {
@@ -204,7 +211,7 @@ export default function CustomerCartPage() {
   const gstOnPlatformFee = Math.round(platformFee * platformFeeGst / 100 * 100) / 100;
   const tax = cart.reduce((sum, item) => sum + item.tax * item.qty, 0);
   const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
-  const maxPoints = Math.min(walletPoints, cart.reduce((s, i) => s + i.maxPoints * i.qty, 0));
+  const maxPoints = Math.min(walletPoints, perItemMaxPoints.reduce((s, i) => s + i.maxRedeemable, 0));
   const total = subtotal + platformFee + gstOnPlatformFee - discount - pointsUsed;
   const savings = totalDiscount + discount + pointsUsed;
 
