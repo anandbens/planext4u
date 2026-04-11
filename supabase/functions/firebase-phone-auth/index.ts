@@ -224,8 +224,11 @@ Deno.serve(async (req) => {
         is_private: false,
       });
 
-      // 6. Credit welcome bonus (200 points)
-      const welcomePoints = 200;
+      // 6. Credit welcome bonus from platform_variables
+      let welcomePoints = 300;
+      const { data: welcomeVar } = await supabase.from("platform_variables").select("value").eq("key", "welcome_points").maybeSingle();
+      if (welcomeVar) welcomePoints = Number(welcomeVar.value) || 300;
+
       const { error: welcomeInsertErr } = await supabase.from("points_transactions").insert({
         id: "PT-W-" + crypto.randomUUID().substring(0, 8).toUpperCase(),
         user_id: customerId,
@@ -238,7 +241,6 @@ Deno.serve(async (req) => {
       if (welcomeInsertErr) {
         console.error("Welcome bonus insert error:", welcomeInsertErr.message);
       } else {
-        // Update customer wallet
         await supabase.from("customers").update({ wallet_points: welcomePoints }).eq("id", customerId);
         console.log("Welcome bonus credited:", welcomePoints, "pts to", customerId);
       }
@@ -253,7 +255,9 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (referrer) {
-          const referralPoints = 50;
+          let referralPoints = 100;
+          const { data: refVar } = await supabase.from("platform_variables").select("value").eq("key", "referral_points").maybeSingle();
+          if (refVar) referralPoints = Number(refVar.value) || 100;
           // Credit referral bonus to the referrer
           const { error: refInsertErr } = await supabase.from("points_transactions").insert({
             id: "PT-R-" + crypto.randomUUID().substring(0, 8).toUpperCase(),
