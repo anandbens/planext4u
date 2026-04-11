@@ -415,6 +415,9 @@ export default function CustomerCartPage() {
                               <div className="flex items-start justify-between">
                                 <div className="flex-1 min-w-0">
                                   <h3 className="text-sm font-semibold leading-tight">{item.title}</h3>
+                                  {item.selected_attributes && Object.keys(item.selected_attributes).length > 0 && (
+                                    <p className="text-[10px] text-primary/80">{Object.entries(item.selected_attributes).map(([k, v]) => `${k}: ${v}`).join(' · ')}</p>
+                                  )}
                                   <p className="text-[10px] text-muted-foreground">Vendor: {item.vendor}</p>
                                 </div>
                                 <p className="text-xs text-primary flex items-center gap-0.5 shrink-0 whitespace-nowrap"><Clock className="h-2.5 w-2.5" /> Delivery in 30 Mins</p>
