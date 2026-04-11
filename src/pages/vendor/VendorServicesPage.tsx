@@ -28,7 +28,7 @@ interface ServiceForm {
 
 const emptyForm: ServiceForm = {
   title: "", description: "", price: "", tax: "", discount: "0",
-  duration: "", service_area: "", category_id: "", emoji: "🔧", status: "draft",
+  duration: "", service_area: "", category_id: "", emoji: "🔧", status: "pending_approval",
   image: "", working_days: "Mon-Sat", workers: "1",
 };
 
