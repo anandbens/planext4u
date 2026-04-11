@@ -57,6 +57,7 @@ import ReferralReportPage from "./pages/reports/ReferralReportPage";
 import ClassifiedReportPage from "./pages/reports/ClassifiedReportPage";
 import TaxReportPage from "./pages/reports/TaxReportPage";
 import PaymentReportPage from "./pages/reports/PaymentReportPage";
+import P4URevenueReportPage from "./pages/reports/P4URevenueReportPage";
 
 // Customer pages
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
