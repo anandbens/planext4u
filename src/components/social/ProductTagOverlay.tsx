@@ -54,47 +54,44 @@ export default function ProductTagOverlay({ tags, editable, onRemove, onClick }:
             else navigate(`/app/product/${tag.id}`);
           }}
         >
-          <div className="flex items-center gap-2.5 bg-black/80 backdrop-blur-sm text-white rounded-full font-medium shadow-lg max-w-[260px] px-2 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-2.5">
+          <div className="flex items-center gap-3 bg-black/80 backdrop-blur-sm text-white rounded-full font-medium shadow-lg max-w-[320px] px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3">
             {/* Icon with animated ripple rings */}
-            <div className="relative shrink-0 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14">
-              {/* Ripple ring 1 */}
+            <div className="relative shrink-0 flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32">
               <span
-                className="absolute inset-0 rounded-full border-2 border-primary/60"
+                className="absolute inset-0 rounded-full border-2 sm:border-3 md:border-4 border-primary/60"
                 style={{ animation: "socio-ripple 2s ease-out infinite" }}
               />
-              {/* Ripple ring 2 (delayed) */}
               <span
-                className="absolute inset-0 rounded-full border-2 border-primary/40"
+                className="absolute inset-0 rounded-full border-2 sm:border-3 md:border-4 border-primary/40"
                 style={{ animation: "socio-ripple-delay 2s ease-out 0.6s infinite" }}
               />
               {tag.socio_shopping_icon ? (
                 <img
                   src={tag.socio_shopping_icon}
                   alt=""
-                  className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full object-cover ring-2 ring-primary"
+                  className="relative w-14 h-14 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full object-cover ring-2 sm:ring-3 md:ring-4 ring-primary"
                   style={{ animation: "socio-glow 2s ease-in-out infinite" }}
                 />
               ) : tag.image ? (
                 <img
                   src={tag.image}
                   alt=""
-                  className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full object-cover ring-2 ring-primary"
+                  className="relative w-14 h-14 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full object-cover ring-2 sm:ring-3 md:ring-4 ring-primary"
                   style={{ animation: "socio-glow 2s ease-in-out infinite" }}
                 />
               ) : (
                 <div
-                  className="relative w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary"
+                  className="relative w-14 h-14 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full bg-primary/20 flex items-center justify-center ring-2 sm:ring-3 md:ring-4 ring-primary"
                   style={{ animation: "socio-glow 2s ease-in-out infinite" }}
                 >
-                  <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
+                  <ShoppingBag className="h-7 w-7 sm:h-10 sm:w-10 md:h-14 md:w-14" />
                 </div>
               )}
             </div>
-            {/* Text */}
             <div className="flex flex-col min-w-0">
-              <span className="truncate text-xs sm:text-sm md:text-base leading-tight">{tag.title}</span>
+              <span className="truncate text-sm sm:text-base md:text-lg leading-tight">{tag.title}</span>
               {tag.price != null && (
-                <span className="text-[10px] sm:text-xs text-white/70 leading-tight">₹{tag.price.toLocaleString()}</span>
+                <span className="text-xs sm:text-sm text-white/70 leading-tight">₹{tag.price.toLocaleString()}</span>
               )}
             </div>
           </div>
