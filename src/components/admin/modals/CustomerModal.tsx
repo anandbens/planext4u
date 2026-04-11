@@ -1,4 +1,5 @@
 import { User } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -26,12 +27,23 @@ interface CustomerModalProps {
 
 const emptyForm = { name: "", email: "", mobile: "", status: "active" as User["status"], occupation: "", city_id: "1", area_id: "1" };
 
+// Occupation options from master data
+
 export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCreate, onDelete }: CustomerModalProps) {
   const isCreate = mode === "create";
   const [editMode, setEditMode] = useState(mode === "edit" || isCreate);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [activeTab, setActiveTab] = useState("profile");
+
+  // Occupation master data
+  const { data: occupations = [] } = useQuery({
+    queryKey: ["occupationsMaster"],
+    queryFn: async () => {
+      const { data } = await supabase.from("occupations").select("id, name").eq("status", "active").order("name");
+      return (data || []) as { id: string; name: string }[];
+    },
+  });
 
   // KYC data
   const [kycDocs, setKycDocs] = useState<any[]>([]);
@@ -260,7 +272,14 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Occupation</Label>
-                <Input value={form.occupation} onChange={(e) => setForm({ ...form, occupation: e.target.value })} className="mt-1" placeholder="Software Engineer" />
+                <Select value={form.occupation} onValueChange={(v) => setForm({ ...form, occupation: v })}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select occupation" /></SelectTrigger>
+                  <SelectContent>
+                    {occupations.map((occ) => (
+                      <SelectItem key={occ.id} value={occ.name}>{occ.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -313,7 +332,16 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Occupation</Label>
-                  {editMode ? <Input value={form.occupation} onChange={(e) => setForm({ ...form, occupation: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{customer?.occupation || "—"}</p>}
+                  {editMode ? (
+                    <Select value={form.occupation} onValueChange={(v) => setForm({ ...form, occupation: v })}>
+                      <SelectTrigger className="mt-1"><SelectValue placeholder="Select occupation" /></SelectTrigger>
+                      <SelectContent>
+                        {occupations.map((occ) => (
+                          <SelectItem key={occ.id} value={occ.name}>{occ.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : <p className="text-sm font-medium mt-1">{customer?.occupation || "—"}</p>}
                 </div>
               </div>
 
