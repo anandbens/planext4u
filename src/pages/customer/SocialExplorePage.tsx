@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, ArrowLeft, Film, Heart, MessageCircle } from "lucide-react";
+import { Search, X, ArrowLeft, Film, Heart, MessageCircle, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";

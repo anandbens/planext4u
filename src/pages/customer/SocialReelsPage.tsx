@@ -191,7 +191,7 @@ function ReelCard({ reel }: { reel: any }) {
 
   return (
     <div className="relative h-full w-full snap-start snap-always flex items-center justify-center" style={{ scrollSnapAlign: 'start' }}>
-      <img src={reel.videoUrl} alt="" className="absolute inset-0 w-full h-full object-cover" onDoubleClick={() => toggleLike.mutate()} />
+      <video src={reel.videoUrl} className="absolute inset-0 w-full h-full object-cover" autoPlay loop muted playsInline onDoubleClick={() => toggleLike.mutate()} />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
 
       {/* Right action bar */}
