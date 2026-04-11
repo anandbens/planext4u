@@ -260,8 +260,10 @@ export default function SocialCreatePostPage() {
         } as any);
       }
 
-      // Build product_tags and tagged_users for dedicated columns
-      const productTagsData = linkedProduct ? [{ id: linkedProduct.id, title: linkedProduct.title }] : null;
+      // Build product_tags (with position data) and tagged_users for dedicated columns
+      const productTagsData = productTagPositions.length > 0
+        ? productTagPositions.map(t => ({ id: t.id, title: t.title, price: t.price, image: t.image, x: t.x, y: t.y }))
+        : linkedProduct ? [{ id: linkedProduct.id, title: linkedProduct.title }] : null;
       const taggedUsersData = taggedPeople.length > 0 ? taggedPeople.map(t => ({ id: t.id, username: t.username })) : null;
 
       const { error } = await supabase.from('social_posts' as any).insert({
