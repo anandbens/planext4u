@@ -126,7 +126,54 @@ export default function VendorsPage() {
     setSelected(vendor); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<Vendor>) => { await api.updateVendor(id, updates); toast.success("Vendor updated"); fetchData(); fetchStats(); };
+  const handleSave = async (id: string, updates: Partial<Vendor>) => {
+    const isApp = (selected as any)?._isApplication;
+    if (isApp) {
+      // Update application data
+      const appUpdates: any = {};
+      if (updates.name) appUpdates.name = updates.name;
+      if (updates.business_name) appUpdates.business_name = updates.business_name;
+      if (updates.email) appUpdates.email = updates.email;
+      if (updates.mobile) appUpdates.phone = updates.mobile;
+      if ((updates as any).status === 'verified' || (updates as any).status === 'approved') {
+        // Approve: create vendor in vendors table
+        const { data: appData } = await supabase.from('vendor_applications').select('*').eq('id', id).single();
+        if (appData) {
+          const a = appData;
+          const newVendor: any = {
+            id: `VND-${Date.now()}`,
+            name: updates.name || a.name, business_name: updates.business_name || a.business_name,
+            mobile: updates.mobile || a.phone, email: updates.email || a.email,
+            commission_rate: (updates as any).commission_rate || 10, membership: (updates as any).membership || 'basic',
+            status: 'verified', category_id: '', city_id: '', area_id: '',
+            store_logo: a.store_logo_url || '', latitude: a.latitude || 0, longitude: a.longitude || 0,
+            shop_address: a.shop_address || '', gst_number: a.gst_number || '',
+            pan_number: a.pan_number || '', bank_account_number: a.bank_account_number || '',
+            bank_ifsc: a.bank_ifsc || '', bank_holder_name: a.bank_holder_name || '',
+            plan_id: (updates as any).plan_id || null,
+            max_redemption_percentage: (updates as any).max_redemption_percentage || null,
+          };
+          await supabase.from('vendors').insert(newVendor);
+          await supabase.from('vendor_applications').update({ status: 'approved', ...appUpdates }).eq('id', id);
+          // Create user_roles entry for vendor
+          if (a.auth_user_id) {
+            await supabase.from('user_roles').insert({ user_id: a.auth_user_id, role: 'vendor', vendor_id: newVendor.id } as any);
+          }
+          toast.success("Vendor approved and created");
+        }
+      } else {
+        if (Object.keys(appUpdates).length > 0 || (updates as any).status) {
+          if ((updates as any).status) appUpdates.status = (updates as any).status;
+          await supabase.from('vendor_applications').update(appUpdates).eq('id', id);
+        }
+        toast.success("Application updated");
+      }
+    } else {
+      await api.updateVendor(id, updates);
+      toast.success("Vendor updated");
+    }
+    fetchData(); fetchStats();
+  };
   const handleCreate = async (data: Partial<Vendor>) => { await api.createVendor(data); toast.success("Vendor created"); fetchData(); fetchStats(); };
   const handleDelete = async (id: string) => { await api.deleteVendor(id); toast.success("Vendor deleted"); fetchData(); fetchStats(); };
 
@@ -253,12 +300,6 @@ export default function VendorsPage() {
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(v, "edit"); }}><Pencil className="h-4 w-4" /></Button>
-              {v.status !== 'verified' && v.status !== 'rejected' && (
-                <>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={(e) => { e.stopPropagation(); openConfirm(v, "approve"); }} title="Approve"><CheckCircle className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(v, "reject"); }} title="Reject"><XCircle className="h-4 w-4" /></Button>
-                </>
-              )}
               <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(v, "delete"); }}><Trash2 className="h-4 w-4" /></Button>
             </div>
           )},
