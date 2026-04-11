@@ -3,7 +3,7 @@ package com.p4u.p4u_vendor;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
-    private static final String VENDOR_LAUNCH_URL = "https://planext4u.net/vendor/login?portal=vendor";
+    private static final String VENDOR_LAUNCH_URL = "https://planext4u.lovable.app/vendor/login?portal=vendor";
     private boolean hasForcedInitialUrl = false;
 
     @Override
