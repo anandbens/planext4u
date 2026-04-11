@@ -267,6 +267,14 @@ export default function CustomerRegisterPage() {
 
       toast.success("🎉 Account created! Now set up your password.", { duration: 5000 });
       logActivity("registration", `New customer registered: ${form.name} (${form.email})`);
+
+      // Award welcome bonus points
+      if (data?.customer_id) {
+        import('@/lib/award-points').then(({ awardPoints }) => {
+          awardPoints(data.customer_id, 'welcome_points', 'Welcome bonus on registration', { type: 'welcome' });
+        });
+      }
+
       setOtpStep("password");
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP. Please check and try again.");
