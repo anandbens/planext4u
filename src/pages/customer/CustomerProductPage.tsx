@@ -432,7 +432,7 @@ export default function CustomerProductPage() {
           </Button>
         </div>
       </div>
-      <div className="px-4 py-3">
+      <div className="px-4 py-3 pb-36 md:pb-6">
         <BannerAd placement="product_detail" />
       </div>
     </CustomerLayout>
