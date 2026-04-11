@@ -3,7 +3,7 @@ import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, 
 
 const firebaseConfig = {
   apiKey: "AIzaSyDfQ-0baPOXaa31xnQXranIIwvHC2zbmiE",
-  authDomain: "planext4u.net",
+  authDomain: "p4u-console.firebaseapp.com",
   projectId: "p4u-console",
   storageBucket: "p4u-console.appspot.com",
   messagingSenderId: "784503032650",
