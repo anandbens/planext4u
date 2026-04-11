@@ -149,10 +149,22 @@ export default function VendorOrdersPage() {
               <TabsTrigger value="active">Active ({activeOrders.length})</TabsTrigger>
               <TabsTrigger value="completed">Done ({completedOrders.length})</TabsTrigger>
             </TabsList>
-            <TabsContent value="all" className="space-y-3">{orders?.map((o) => <OrderCard key={o.id} o={o} />)}</TabsContent>
-            <TabsContent value="new" className="space-y-3">{newOrders.map((o) => <OrderCard key={o.id} o={o} />)}</TabsContent>
-            <TabsContent value="active" className="space-y-3">{activeOrders.map((o) => <OrderCard key={o.id} o={o} />)}</TabsContent>
-            <TabsContent value="completed" className="space-y-3">{completedOrders.map((o) => <OrderCard key={o.id} o={o} />)}</TabsContent>
+            {[
+              { key: "all", items: orders || [] },
+              { key: "new", items: newOrders },
+              { key: "active", items: activeOrders },
+              { key: "completed", items: completedOrders },
+            ].map(({ key, items }) => (
+              <TabsContent key={key} value={key} className="space-y-3">
+                {items.length === 0 ? (
+                  <Card className="p-8 text-center">
+                    <Package className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-muted-foreground text-sm">No orders yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">Orders placed by customers will appear here</p>
+                  </Card>
+                ) : items.map((o) => <OrderCard key={o.id} o={o} />)}
+              </TabsContent>
+            ))}
           </Tabs>
         )}
       </div>

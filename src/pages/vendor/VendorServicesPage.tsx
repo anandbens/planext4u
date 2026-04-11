@@ -60,11 +60,10 @@ export default function VendorServicesPage() {
 
   // Check if vendor exists in service_vendors, create if not
   const ensureServiceVendor = async () => {
-    const { data } = await supabase.from("service_vendors").select("id").eq("id", vendorId).single();
+    const { data } = await supabase.from("service_vendors").select("id").eq("id", vendorId).maybeSingle();
     if (!data) {
-      // Try to get vendor info from vendors table
-      const { data: vendor } = await supabase.from("vendors").select("*").eq("id", vendorId).single();
-      await supabase.from("service_vendors").insert({
+      const { data: vendor } = await supabase.from("vendors").select("*").eq("id", vendorId).maybeSingle();
+      const { error } = await supabase.from("service_vendors").insert({
         id: vendorId,
         name: vendor?.name || vendorUser?.name || "Vendor",
         business_name: vendor?.business_name || "",
@@ -72,6 +71,7 @@ export default function VendorServicesPage() {
         email: vendor?.email || "",
         status: "verified",
       });
+      if (error) console.error("ensureServiceVendor error:", error.message);
     }
   };
 

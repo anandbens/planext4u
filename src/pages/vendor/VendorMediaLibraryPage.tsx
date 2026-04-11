@@ -42,7 +42,7 @@ export default function VendorMediaLibraryPage() {
     enabled: !!vendorId,
   });
 
-  const allFolders = Array.from(new Set([...defaultFolders, ...dbFolders]));
+  const allFolders = Array.from(new Set([...defaultFolders, ...dbFolders, ...(typeof localFolders !== 'undefined' ? localFolders : [])]));
 
   const { data: media } = useQuery({
     queryKey: ["vendorMedia", vendorId, folder, search],
@@ -90,12 +90,16 @@ export default function VendorMediaLibraryPage() {
     qc.invalidateQueries({ queryKey: ["vendorMedia"] });
   };
 
+  const [localFolders, setLocalFolders] = useState<string[]>([]);
+
   const createFolder = () => {
     if (!newFolderName.trim()) return;
-    setFolder(newFolderName.trim().toLowerCase().replace(/\s+/g, '-'));
+    const name = newFolderName.trim().toLowerCase().replace(/\s+/g, '-');
+    setLocalFolders(prev => [...prev, name]);
+    setFolder(name);
     setNewFolderName("");
     setShowNewFolder(false);
-    toast.success("Folder created — upload files to save it");
+    toast.success("Folder created");
   };
 
   const deleteFolder = async (folderName: string) => {
