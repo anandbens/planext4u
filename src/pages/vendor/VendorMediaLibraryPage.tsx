@@ -91,8 +91,6 @@ export default function VendorMediaLibraryPage() {
     qc.invalidateQueries({ queryKey: ["vendorMedia"] });
   };
 
-  const [localFolders, setLocalFolders] = useState<string[]>([]);
-
   const createFolder = () => {
     if (!newFolderName.trim()) return;
     const name = newFolderName.trim().toLowerCase().replace(/\s+/g, '-');
