@@ -4,7 +4,8 @@ import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, 
 
 const firebaseConfig = {
   apiKey: "AIzaSyDfQ-0baPOXaa31xnQXranIIwvHC2zbmiE",
-  authDomain: "p4u-console.firebaseapp.com",
+  // Use production domain on native so OTP SMS shows www.planext4u.net
+  authDomain: Capacitor.isNativePlatform() ? "www.planext4u.net" : "p4u-console.firebaseapp.com",
   projectId: "p4u-console",
   storageBucket: "p4u-console.appspot.com",
   messagingSenderId: "784503032650",
