@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, Film, MessageCircle, Bell, Plus, Settings, User, Compass, X } from "lucide-react";
+import { Home, Search, Film, MessageCircle, Bell, Plus, Settings, User, Compass, X, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { label: "Explore", icon: Compass, path: "/app/social/explore" },
   { label: "Reels", icon: Film, path: "/app/social/reels" },
   { label: "Messages", icon: MessageCircle, path: "/app/social/messages" },
+  { label: "Friends", icon: Users, path: "/app/social/friends" },
   { label: "Notification", icon: Bell, path: "/app/social/notifications" },
   { label: "Create", icon: Plus, path: "/app/social/create" },
   { label: "Settings", icon: Settings, path: "/app/social/settings" },
@@ -81,13 +82,23 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
     navigate(path);
   };
 
-  // Suggestions from DB
+  // Suggestions from DB – exclude users the current user already follows
   const { data: suggestions = [] } = useQuery({
     queryKey: ['social-suggestions', userId],
     queryFn: async () => {
-      const { data } = await supabase.from('social_profiles').select('id, user_id, username, display_name, avatar_url, is_verified').limit(5);
+      // Get list of users the current user follows
+      const followingIds: string[] = [userId || ''];
+      if (userId) {
+        const { data: follows } = await supabase.from('social_follows').select('following_id').eq('follower_id', userId).eq('status', 'active');
+        if (follows) followingIds.push(...follows.map((f: any) => f.following_id));
+      }
+      const { data } = await supabase.from('social_profiles')
+        .select('id, user_id, username, display_name, avatar_url, is_verified')
+        .not('user_id', 'in', `(${followingIds.join(',')})`)
+        .limit(5);
       return data || [];
     },
+    enabled: !!userId,
   });
 
   const followUser = useMutation({
@@ -200,7 +211,7 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
           <div className="bg-card rounded-xl border border-border/30 p-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-semibold text-muted-foreground">Suggestions for you</span>
-              <button className="text-xs font-semibold text-primary" onClick={() => navigate("/app/social/explore")}>See All</button>
+              <button className="text-xs font-semibold text-primary" onClick={() => navigate("/app/social/suggestions")}>See All</button>
             </div>
             <div className="space-y-1">
               {suggestions.map((item: any) => (

@@ -111,6 +111,8 @@ import SocialPrivacyPage from "./pages/customer/SocialPrivacyPage";
 import SocialSecurityPage from "./pages/customer/SocialSecurityPage";
 import SocialNotificationSettingsPage from "./pages/customer/SocialNotificationSettingsPage";
 import SocialHelpCenterPage from "./pages/customer/SocialHelpCenterPage";
+import SocialSuggestionsPage from "./pages/customer/SocialSuggestionsPage";
+import SocialFriendsPage from "./pages/customer/SocialFriendsPage";
 import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
 import PaymentPage from "./pages/customer/PaymentPage";
 import SocioDMChatPage from "./pages/customer/SocioDMChatPage";
@@ -395,6 +397,8 @@ const AppRoutes = () => {
         <Route path="/app/social/notification-settings" element={<CustomerPage><SocialNotificationSettingsPage /></CustomerPage>} />
         <Route path="/app/social/help" element={<CustomerPage><SocialHelpCenterPage /></CustomerPage>} />
         <Route path="/app/social/shop" element={<CustomerPage><SocialShopPage /></CustomerPage>} />
+        <Route path="/app/social/suggestions" element={<CustomerPage><SocialSuggestionsPage /></CustomerPage>} />
+        <Route path="/app/social/friends" element={<CustomerPage><SocialFriendsPage /></CustomerPage>} />
 
         {/* Admin Social */}
         <Route path="/admin/social" element={<ProtectedPage><AdminSocialDashboardPage /></ProtectedPage>} />
