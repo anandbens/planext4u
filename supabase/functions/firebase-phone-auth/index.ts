@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
-const FIREBASE_PROJECT_ID = "planext4u-ba50f";
-const FIREBASE_API_KEY = "AIzaSyBs9GdBSEK8BGjeGypEOjiHF_jkToy-Qlk";
+const FIREBASE_PROJECT_ID = "p4u-console";
+const FIREBASE_API_KEY = "AIzaSyBcV0QJNWV95S2u5mBnOHxA1gXg96hcYfA";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
