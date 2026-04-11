@@ -179,6 +179,37 @@ export default function PaymentPage() {
       await Promise.all(orderPromises);
       await api.clearCart();
 
+      // Deduct wallet points and record the redemption transaction
+      if (pointsUsed > 0 && customerId) {
+        try {
+          // 1. Deduct from customer wallet
+          const { data: cust } = await supabase
+            .from('customers')
+            .select('wallet_points')
+            .eq('id', customerId)
+            .maybeSingle();
+          if (cust) {
+            await supabase
+              .from('customers')
+              .update({ wallet_points: Math.max(0, (cust.wallet_points || 0) - pointsUsed) })
+              .eq('id', customerId);
+          }
+          // 2. Record redemption transaction
+          await supabase.from('points_transactions').insert({
+            id: `PT-RD-${newOrderId.slice(-8)}`,
+            user_id: customerId,
+            user_name: customerUser?.name || 'Customer',
+            type: 'redemption',
+            points: -pointsUsed,
+            description: `Redeemed ${pointsUsed} points on order ${newOrderId}`,
+            is_expired: false,
+            cooling_status: 'credited',
+          } as any);
+        } catch (e) {
+          console.error('Points deduction error:', e);
+        }
+      }
+
       // Credit any cooling period referral points for this customer's first order
       if (customerId) {
         import('@/lib/award-points').then(({ creditCoolingPoints }) => {
