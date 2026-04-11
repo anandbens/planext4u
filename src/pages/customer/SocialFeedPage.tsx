@@ -13,6 +13,7 @@ import { useSocialFeed, useSharePost, useRepost } from "@/hooks/use-social-inter
 import { supabase } from "@/integrations/supabase/client";
 import PeopleYouMayKnow from "@/components/social/PeopleYouMayKnow";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePlacementAds, SocialFeedAd } from "@/components/customer/BannerAd";
 
 const FALLBACK_POSTS = [
   {
@@ -774,7 +775,14 @@ export default function SocialFeedPage() {
 
       {/* Feed */}
       <div className="pb-20 md:pb-8">
-        {posts.map((post: any) => <PostCard key={post.id} post={post} />)}
+        {posts.map((post: any, idx: number) => (
+          <div key={post.id}>
+            <PostCard post={post} />
+            {socioAds.length > 0 && (idx + 1) % 4 === 0 && (
+              <SocialFeedAd ad={socioAds[(Math.floor(idx / 4)) % socioAds.length]} />
+            )}
+          </div>
+        ))}
         <div className="py-6 px-4 text-center">
           <p className="text-sm font-semibold mb-1">You're All Caught Up</p>
           <p className="text-xs text-muted-foreground">You've seen all new posts from the last 3 days.</p>
