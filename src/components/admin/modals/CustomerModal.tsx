@@ -332,7 +332,16 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Occupation</Label>
-                  {editMode ? <Input value={form.occupation} onChange={(e) => setForm({ ...form, occupation: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{customer?.occupation || "—"}</p>}
+                  {editMode ? (
+                    <Select value={form.occupation} onValueChange={(v) => setForm({ ...form, occupation: v })}>
+                      <SelectTrigger className="mt-1"><SelectValue placeholder="Select occupation" /></SelectTrigger>
+                      <SelectContent>
+                        {occupations.map((occ) => (
+                          <SelectItem key={occ.id} value={occ.name}>{occ.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : <p className="text-sm font-medium mt-1">{customer?.occupation || "—"}</p>}
                 </div>
               </div>
 
