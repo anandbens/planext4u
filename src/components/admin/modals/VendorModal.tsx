@@ -35,6 +35,7 @@ const emptyForm = {
   commission_rate: 10, membership: "basic", status: "pending" as Vendor["status"],
   category_id: "1", city_id: "1", area_id: "1", plan_id: "",
   plan_payment_status: "unpaid", plan_transaction_id: "", shop_photo_url: "",
+  max_redemption_percentage: null as number | null,
 };
 
 export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate, onDelete, vendorType = "product", onRefresh }: VendorModalProps) {
@@ -90,6 +91,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
         plan_payment_status: (vendor as any).plan_payment_status || "unpaid",
         plan_transaction_id: (vendor as any).plan_transaction_id || "",
         shop_photo_url: (vendor as any).shop_photo_url || "",
+        max_redemption_percentage: (vendor as any).max_redemption_percentage ?? null,
       });
       setEditMode(mode === "edit");
     }

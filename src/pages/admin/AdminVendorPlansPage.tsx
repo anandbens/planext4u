@@ -86,8 +86,8 @@ export default function AdminVendorPlansPage() {
     { key: "visibility_type", label: "Visibility", render: (p: any) => (
       <span className="text-xs capitalize">{p.visibility_type.replace("_", " ")}{p.visibility_type === "radius_based" ? ` (${p.radius_km}km)` : ""}</span>
     )},
-    { key: "commission_percentage", label: "Commission", render: (p: any) => `${p.commission_percentage}%` },
-    { key: "max_redemption_percentage", label: "Max Redeem", render: (p: any) => `${p.max_redemption_percentage}%` },
+    { key: "commission_percentage", label: "Vendor to P4U Commission", render: (p: any) => `${p.commission_percentage}%` },
+    { key: "max_redemption_percentage", label: "Max User Redemption %", render: (p: any) => `${p.max_redemption_percentage}%` },
     { key: "payment_mode", label: "Payment", render: (p: any) => (
       <Badge variant="outline" className="text-[9px] capitalize">{(p.payment_mode || "both").replace("_", " ")}</Badge>
     )},
@@ -193,8 +193,8 @@ export default function AdminVendorPlansPage() {
               )}
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-xs">Commission %</Label><Input type="number" value={form.commission_percentage} onChange={(e) => setForm(f => ({ ...f, commission_percentage: e.target.value }))} /></div>
-              <div><Label className="text-xs">Max Redemption %</Label><Input type="number" value={form.max_redemption_percentage} onChange={(e) => setForm(f => ({ ...f, max_redemption_percentage: e.target.value }))} /></div>
+              <div><Label className="text-xs">Vendor to P4U Commission %</Label><Input type="number" value={form.commission_percentage} onChange={(e) => setForm(f => ({ ...f, commission_percentage: e.target.value }))} /></div>
+              <div><Label className="text-xs">Max User Redemption %</Label><Input type="number" value={form.max_redemption_percentage} onChange={(e) => setForm(f => ({ ...f, max_redemption_percentage: e.target.value }))} /></div>
             </div>
             <div className="border-t pt-3">
               <Label className="text-xs font-medium">Payment Mode</Label>
