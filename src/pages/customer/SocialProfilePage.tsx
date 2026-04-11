@@ -138,7 +138,30 @@ export default function SocialProfilePage() {
   const postCount = profile?.post_count || userPosts.length;
   const avatarUrl = profile?.avatar_url || '';
 
-  const displayPosts = activeTab === 'saved' ? savedPosts : userPosts.filter((p: any) => activeTab === 'reels' ? p.post_type === 'reel' : true);
+  // Fetch tagged posts (posts where this user is tagged)
+  const { data: taggedPosts = [] } = useQuery({
+    queryKey: ['social-tagged-posts', targetUserId],
+    queryFn: async () => {
+      if (!targetUserId) return [];
+      // tagged_users is a jsonb array like [{id: "...", username: "..."}]
+      // Search for posts where tagged_users contains an object with this user's id
+      const { data } = await supabase
+        .from('social_posts')
+        .select('id, media, post_type, like_count, comment_count')
+        .eq('status', 'published')
+        .not('tagged_users', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      // Client-side filter since jsonb containment with nested objects is complex
+      return (data || []).filter((p: any) => {
+        const tags = Array.isArray(p.tagged_users) ? p.tagged_users : [];
+        return tags.some((t: any) => t.id === targetUserId);
+      });
+    },
+    enabled: !!targetUserId && activeTab === 'tagged',
+  });
+
+  const displayPosts = activeTab === 'saved' ? savedPosts : activeTab === 'tagged' ? taggedPosts : userPosts.filter((p: any) => activeTab === 'reels' ? p.post_type === 'reel' : true);
 
   // Profile not found state
   if (!profileLoading && !profile && (profileUsername || routeUserId)) {
@@ -277,7 +300,7 @@ export default function SocialProfilePage() {
         </div>
 
         {/* Posts Grid */}
-        {(activeTab === 'posts' || activeTab === 'reels' || activeTab === 'saved') && displayPosts.length > 0 ? (
+        {displayPosts.length > 0 ? (
           <div className="grid grid-cols-3 gap-[2px]">
             {displayPosts.map((post: any) => {
               const media = Array.isArray(post.media) && post.media.length > 0 ? post.media[0] : null;
