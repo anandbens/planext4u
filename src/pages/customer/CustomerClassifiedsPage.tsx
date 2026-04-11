@@ -58,7 +58,7 @@ export default function CustomerClassifiedsPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-6 pb-20 md:pb-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 pb-32 md:pb-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold">Classifieds</h1>

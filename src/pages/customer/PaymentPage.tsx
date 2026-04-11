@@ -323,7 +323,7 @@ export default function PaymentPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-8">
+      <div className="max-w-3xl mx-auto px-4 py-6 pb-36 md:pb-8">
         <button onClick={() => navigate('/app/cart')} className="flex items-center gap-2 text-sm text-muted-foreground mb-4 hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to Cart
         </button>
