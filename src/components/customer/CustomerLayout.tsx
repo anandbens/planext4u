@@ -28,7 +28,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [locationModalOpen, setLocationModalOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(loadSelectedLocation() || "JJ Nagar, Coimbator...");
+  const [selectedLocation, setSelectedLocation] = useState(loadSelectedLocation() || "Set your location");
 
   useEffect(() => {
     api.getCart().then(items => setCartCount(items.reduce((s, i) => s + i.qty, 0)));
@@ -111,7 +111,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                   <MapPin className="h-3.5 w-3.5 text-primary-foreground shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-primary-foreground leading-tight truncate">{selectedLocation}</p>
-                    <p className="text-[9px] text-primary-foreground/60 truncate">Pattanam, Coimbatore</p>
+                    <p className="text-[9px] text-primary-foreground/60 truncate">Tap to update location</p>
                   </div>
                   <ChevronDown className="h-3 w-3 text-primary-foreground/60 shrink-0" />
                 </div>
