@@ -2,10 +2,12 @@ import { initializeApp } from "firebase/app";
 import { Capacitor } from "@capacitor/core";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, signOut } from "firebase/auth";
 
+// Use production authDomain everywhere except localhost so OTP SMS shows www.planext4u.net
+const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
 const firebaseConfig = {
   apiKey: "AIzaSyDfQ-0baPOXaa31xnQXranIIwvHC2zbmiE",
-  // Use production domain on native so OTP SMS shows www.planext4u.net
-  authDomain: Capacitor.isNativePlatform() ? "www.planext4u.net" : "p4u-console.firebaseapp.com",
+  authDomain: isLocalhost ? "p4u-console.firebaseapp.com" : "www.planext4u.net",
   projectId: "p4u-console",
   storageBucket: "p4u-console.appspot.com",
   messagingSenderId: "784503032650",
