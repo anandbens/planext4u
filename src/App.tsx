@@ -448,17 +448,19 @@ const AppRoutes = () => {
 
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ForceUpdateOverlay>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ForceUpdateOverlay>
   </ErrorBoundary>
 );
 
