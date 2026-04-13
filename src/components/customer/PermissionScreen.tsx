@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Bell, Camera, MessageSquare, Check, X } from "lucide-react";
+import { MapPin, Bell, Camera, MessageSquare, Check, X, Phone, Mic, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isNativePlatform } from "@/lib/capacitor";
 
@@ -39,6 +39,27 @@ const PERMISSIONS: PermissionItem[] = [
     icon: <MessageSquare className="h-6 w-6" />,
     title: "SMS Auto-Read",
     description: "Automatically read OTP from SMS for faster login.",
+    required: false,
+  },
+  {
+    id: "microphone",
+    icon: <Mic className="h-6 w-6" />,
+    title: "Microphone Access",
+    description: "Required for voice/video calls and live streaming.",
+    required: false,
+  },
+  {
+    id: "phone",
+    icon: <Phone className="h-6 w-6" />,
+    title: "Phone Access",
+    description: "Allows direct calling to vendors and support.",
+    required: false,
+  },
+  {
+    id: "contacts",
+    icon: <Users className="h-6 w-6" />,
+    title: "Contacts Access",
+    description: "Find friends who are already on the platform.",
     required: false,
   },
 ];
