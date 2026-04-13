@@ -16,6 +16,7 @@ import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedR
 import { VendorProtectedRoute } from "@/components/vendor/VendorProtectedRoute";
 import { FTUXFlow } from "@/components/customer/FTUXFlow";
 import { isVendorApp, isVendorAppSync, getNativeAppId } from "@/lib/capacitor";
+import { ForceUpdateOverlay } from "@/components/ForceUpdateOverlay";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
