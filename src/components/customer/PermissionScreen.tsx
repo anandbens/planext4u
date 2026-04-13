@@ -90,22 +90,34 @@ export function PermissionScreen({ onComplete }: PermissionScreenProps) {
         const result = await PushNotifications.requestPermissions();
         setStatuses((s) => ({ ...s, [perm.id]: result.receive }));
       } else if (perm.id === "camera") {
+        const { Camera } = await import("@capacitor/camera");
+        const result = await Camera.requestPermissions({ permissions: ["camera"] });
+        setStatuses((s) => ({ ...s, [perm.id]: result.camera }));
+      } else if (perm.id === "microphone") {
+        // Request microphone via browser API which triggers Android runtime permission
         try {
-          const camPkg = "@capacitor/camera";
-          const mod = await import(/* @vite-ignore */ camPkg);
-          if (mod?.Camera) {
-            const result = await mod.Camera.requestPermissions();
-            setStatuses((s) => ({ ...s, [perm.id]: result.camera }));
-          } else {
-            setStatuses((s) => ({ ...s, [perm.id]: "granted" }));
-          }
-        } catch {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach((t) => t.stop());
           setStatuses((s) => ({ ...s, [perm.id]: "granted" }));
+        } catch {
+          setStatuses((s) => ({ ...s, [perm.id]: "denied" }));
         }
+      } else if (perm.id === "contacts") {
+        const { Contacts } = await import("@capacitor-community/contacts");
+        const result = await Contacts.requestPermissions();
+        setStatuses((s) => ({ ...s, [perm.id]: result.contacts }));
+      } else if (perm.id === "phone") {
+        // Phone/call permission cannot be requested via Capacitor API;
+        // it is granted automatically via manifest on older Android or
+        // prompted when the user actually makes a call via intent.
+        setStatuses((s) => ({ ...s, [perm.id]: "prompt" }));
+      } else if (perm.id === "sms") {
+        setStatuses((s) => ({ ...s, [perm.id]: "prompt" }));
       } else {
         setStatuses((s) => ({ ...s, [perm.id]: "skipped" }));
       }
-    } catch {
+    } catch (err) {
+      console.warn(`Permission request failed for ${perm.id}:`, err);
       setStatuses((s) => ({ ...s, [perm.id]: "denied" }));
     }
     advance();
