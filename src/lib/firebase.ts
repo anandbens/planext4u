@@ -28,7 +28,7 @@ function isAllowedHostname(host: string): boolean {
 
   return WEB_ALLOWED_HOSTNAMES.includes(host);
 }
-const PRODUCTION_URL = "https://planext4u.net";
+const PRODUCTION_URL = "https://www.planext4u.net";
 
 function getAuthorizedFirebaseUrl(): string {
   return `${PRODUCTION_URL}${window.location.pathname}${window.location.search}${window.location.hash}`;
