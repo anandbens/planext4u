@@ -71,12 +71,17 @@ export default function CustomerProfileEditPage() {
     }
   }, [customerId]);
 
+  const cleanEmail = (email: string | null | undefined): string => {
+    if (!email || email.includes('@phone.planext4u.local')) return '';
+    return email;
+  };
+
   const loadProfile = async () => {
     setProfileLoading(true);
     const { data } = await supabase.from('customers').select('*').eq('id', customerId).single();
     if (data) {
       setForm({
-        name: data.name || "", email: data.email || "", mobile: data.mobile || "",
+        name: data.name || "", email: cleanEmail(data.email), mobile: data.mobile || "",
         dob: data.dob || "", gender: (data as any).gender || "", occupation: data.occupation || "",
         about: (data as any).about || "",
       });
@@ -113,7 +118,7 @@ export default function CustomerProfileEditPage() {
     if (form.name.length > 100) return "Name must be under 100 characters";
     if (!/^[a-zA-Z\s]+$/.test(form.name)) return "Name can only contain letters and spaces";
     if (!form.mobile || !/^\d{10}$/.test(form.mobile.replace(/\+91/g, ''))) return "Valid 10-digit mobile required";
-    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) return "Valid email is required";
+    if (form.email && !/\S+@\S+\.\S+/.test(form.email)) return "Valid email is required";
     if (!form.dob) return "Date of birth is required";
     if (form.dob) {
       const dob = new Date(form.dob);
