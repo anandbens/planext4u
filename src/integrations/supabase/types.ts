@@ -675,6 +675,42 @@ export type Database = {
           },
         ]
       }
+      delivery_proofs: {
+        Row: {
+          confirmation_type: string
+          created_at: string
+          customer_id: string
+          id: string
+          notes: string | null
+          order_id: string
+          photo_url: string | null
+          recipient_name: string | null
+          submitted_at: string
+        }
+        Insert: {
+          confirmation_type?: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          notes?: string | null
+          order_id: string
+          photo_url?: string | null
+          recipient_name?: string | null
+          submitted_at?: string
+        }
+        Update: {
+          confirmation_type?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          notes?: string | null
+          order_id?: string
+          photo_url?: string | null
+          recipient_name?: string | null
+          submitted_at?: string
+        }
+        Relationships: []
+      }
       districts: {
         Row: {
           created_at: string
