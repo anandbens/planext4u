@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { User, Package, Heart, MapPin, Coins, Gift, Settings, LogOut, ChevronRight, Megaphone, Shield, Wallet, Edit, FileText } from "lucide-react";
+import { User, Package, Heart, MapPin, Coins, Gift, Settings, LogOut, ChevronRight, Megaphone, Shield, Wallet, Edit, FileText, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -57,6 +57,7 @@ export default function CustomerProfilePage() {
     { icon: Gift, label: "Referrals", to: "/app/referrals", info: profile?.referral_code || "" },
     { icon: Megaphone, label: "My Classifieds", to: "/app/classifieds", count: String(counts?.classifieds || 0) },
     { icon: FileText, label: "Support Tickets", to: "/app/support" },
+    { icon: Lock, label: "Change Password", to: "/app/change-password" },
     { icon: Settings, label: "Settings", to: "/app/profile/edit" },
   ];
 
