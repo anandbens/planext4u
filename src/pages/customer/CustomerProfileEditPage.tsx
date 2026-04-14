@@ -71,12 +71,17 @@ export default function CustomerProfileEditPage() {
     }
   }, [customerId]);
 
+  const cleanEmail = (email: string | null | undefined): string => {
+    if (!email || email.includes('@phone.planext4u.local')) return '';
+    return email;
+  };
+
   const loadProfile = async () => {
     setProfileLoading(true);
     const { data } = await supabase.from('customers').select('*').eq('id', customerId).single();
     if (data) {
       setForm({
-        name: data.name || "", email: data.email || "", mobile: data.mobile || "",
+        name: data.name || "", email: cleanEmail(data.email), mobile: data.mobile || "",
         dob: data.dob || "", gender: (data as any).gender || "", occupation: data.occupation || "",
         about: (data as any).about || "",
       });
