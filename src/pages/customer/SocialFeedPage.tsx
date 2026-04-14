@@ -522,10 +522,10 @@ function PostCard({ post }: { post: any }) {
             <MessageCircle className="h-6 w-6" />
             <span className="text-sm">{formatCount(comments)}</span>
           </button>
-          <button className="flex items-center gap-1.5" onClick={() => repost.mutate(postId)}>
+          <button className="flex items-center gap-1.5" onClick={() => repost.mutate(postId)} title="Share to Story">
             <Repeat2 className="h-6 w-6" />
           </button>
-          <button className="flex items-center gap-1.5" onClick={() => sharePost(postId, post.caption)}>
+          <button className="flex items-center gap-1.5" onClick={() => sharePost(postId, post.caption)} title="Share Link">
             <Send className="h-6 w-6" />
             <span className="text-sm">{formatCount(shareCount)}</span>
           </button>
