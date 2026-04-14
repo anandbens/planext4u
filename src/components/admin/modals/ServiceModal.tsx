@@ -14,6 +14,7 @@ import { useState, useEffect, useMemo } from "react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface ServiceModalProps {
   service: Service | null;
