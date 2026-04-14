@@ -144,9 +144,6 @@ export default function SetPasswordPage() {
                 <span className="text-sm font-semibold text-foreground">{userPhone}</span>
               </div>
             )}
-            <p className="text-[11px] text-muted-foreground mt-1">
-              This is your username for email &amp; password login.
-            </p>
           </div>
 
           {/* Password Fields */}
