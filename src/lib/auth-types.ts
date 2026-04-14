@@ -18,6 +18,7 @@ export interface CustomerUser {
   mobile: string;
   customer_id?: string;
   supabase_uid?: string;
+  password_set?: boolean;
 }
 
 export interface VendorUser {
@@ -27,6 +28,7 @@ export interface VendorUser {
   business_name: string;
   vendor_id?: string;
   supabase_uid?: string;
+  password_set?: boolean;
 }
 
 export interface AuthContextType {
