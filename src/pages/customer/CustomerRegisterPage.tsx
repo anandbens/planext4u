@@ -284,6 +284,11 @@ export default function CustomerRegisterPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
+      // Mark password as set in user_roles
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", session.user.id);
+      }
       toast.success("🎉 Account setup complete! Welcome to Planext4U!", { duration: 5000 });
       navigate("/app/set-location", { replace: true });
     } catch (err: any) {
