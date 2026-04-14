@@ -1087,9 +1087,22 @@ export const api = {
     return (data || []) as PlatformVariable[];
   },
 
-  updatePlatformVariable: async (id: string, value: string) => {
+  updatePlatformVariable: async (id: string, value: string, oldValue?: string, key?: string) => {
     const { error } = await supabase.from('platform_variables').update({ value }).eq('id', id);
     if (error) throw error;
+    // Log the change to audit_logs
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('audit_logs').insert({
+        table_name: 'platform_variables',
+        operation: 'update',
+        record_id: id,
+        old_data: { key: key || id, value: oldValue || '' },
+        new_data: { key: key || id, value },
+        performed_by: user?.id || null,
+        performed_by_role: 'admin',
+      } as any);
+    } catch { /* don't break save for audit */ }
     return { success: true };
   },
 
