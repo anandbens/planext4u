@@ -1088,8 +1088,11 @@ export const api = {
   },
 
   updatePlatformVariable: async (id: string, value: string, oldValue?: string, key?: string) => {
-    const { error } = await supabase.from('platform_variables').update({ value }).eq('id', id);
+    const { data, error } = await supabase.from('platform_variables').update({ value }).eq('id', id).select();
     if (error) throw error;
+    if (!data || data.length === 0) throw new Error('Update failed — no rows affected. Check permissions.');
+    // Invalidate the award-points platform variable cache
+    try { (window as any).__platformVarCacheTime = 0; } catch {}
     // Log the change to audit_logs
     try {
       const { data: { user } } = await supabase.auth.getUser();

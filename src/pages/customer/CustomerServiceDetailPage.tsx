@@ -228,8 +228,8 @@ export default function CustomerServiceDetailPage() {
     setComplaintDescription("");
   };
 
-  const avgRating = reviews.length > 0 ? (reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1) : service.rating;
-  const totalReviews = reviews.length || service.reviews || 0;
+  const avgRating = reviews.length > 0 ? (reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1) : '0';
+  const totalReviews = reviews.length;
 
   return (
     <CustomerLayout>
