@@ -307,7 +307,7 @@ export default function SocialProfilePage() {
               const isVideo = media?.type === 'video';
               const thumbSrc = isVideo ? (media?.thumbnailUrl || media?.url) : (media?.url || '');
               return (
-                <button key={post.id} className="aspect-square bg-muted relative overflow-hidden group" onClick={() => navigate(`/app/social/post/${post.id}`)}>
+                <button key={post.id} className="aspect-square bg-muted relative overflow-hidden group" onClick={() => navigate(`/app/social/user/${targetUserId}/posts/${post.id}`)}>
                   {thumbSrc ? (
                     isVideo ? (
                       <>
