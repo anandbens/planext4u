@@ -988,14 +988,30 @@ export const api = {
         // Copy from product vendors table
         const { data: pv } = await supabase.from('vendors').select('id, name, business_name, mobile, email, category_id, city_id, area_id, commission_rate, status').eq('id', data.vendor_id).maybeSingle();
         if (pv) {
+          // Validate FK references exist before inserting
+          let validCityId: string | null = null;
+          let validAreaId: string | null = null;
+          if (pv.city_id) {
+            const { data: cityCheck } = await supabase.from('cities').select('id').eq('id', pv.city_id).maybeSingle();
+            if (cityCheck) validCityId = pv.city_id;
+          }
+          if (pv.area_id) {
+            const { data: areaCheck } = await supabase.from('areas').select('id').eq('id', pv.area_id).maybeSingle();
+            if (areaCheck) validAreaId = pv.area_id;
+          }
           const { error: svErr } = await supabase.from('service_vendors').insert({
             id: pv.id, name: pv.name, business_name: pv.business_name,
             mobile: pv.mobile, email: pv.email, category_id: pv.category_id || null,
-            city_id: pv.city_id || null, area_id: pv.area_id || null,
+            city_id: validCityId, area_id: validAreaId,
             commission_rate: pv.commission_rate, membership: 'basic',
             status: pv.status === 'verified' ? 'active' : pv.status,
           } as any);
-          if (svErr) console.error("ensureServiceVendor:", svErr.message);
+          if (svErr) {
+            console.error("ensureServiceVendor:", svErr.message);
+            throw new Error("Could not sync vendor to service vendors: " + svErr.message);
+          }
+        } else {
+          throw new Error("Vendor not found. Please select a valid vendor.");
         }
       }
     }
