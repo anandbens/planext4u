@@ -28,13 +28,25 @@ export default function VendorsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ vendor: Vendor; action: "approve" | "reject" | "delete" } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const [totalStats, setTotalStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0 });
+  const [totalStats, setTotalStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0, deactivated: 0, deleted: 0 });
 
   const [pendingApps, setPendingApps] = useState<any[]>([]);
 
   const tabStatusFilter = activeTab === "pending" ? undefined : activeTab === "all" ? (statusFilter || "verified") : statusFilter || undefined;
 
   const fetchData = useCallback(async () => {
+    if (activeTab === "deactivated" || activeTab === "deleted") {
+      const targetStatus = activeTab;
+      let q = supabase.from('vendors').select('*', { count: 'exact' }).eq('status', targetStatus);
+      if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,mobile.ilike.%${search}%`);
+      if (dateFrom) q = q.gte('created_at', dateFrom);
+      if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
+      const { data: rows, count } = await q.order('created_at', { ascending: false }).range((page - 1) * 10, page * 10 - 1);
+      const mapped = (rows || []).map((v: any) => ({ ...v, commission_rate: v.commission_rate || 0, membership: v.membership || '' }));
+      setData({ data: mapped as any, total: count || 0, page, per_page: 10, total_pages: Math.ceil((count || 0) / 10) });
+      return;
+    }
+
     if (activeTab === "pending") {
       let q = supabase
         .from('vendor_applications')
@@ -108,14 +120,18 @@ export default function VendorsPage() {
       { count: verified },
       { count: rejected },
       { count: pendingCount },
+      { count: deactivated },
+      { count: deleted },
     ] = await Promise.all([
-      supabase.from('vendors').select('*', { count: 'exact', head: true }),
+      supabase.from('vendors').select('*', { count: 'exact', head: true }).is('deleted_at', null),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'verified'),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
       supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).not('status', 'in', '(approved,verified,active,rejected)'),
+      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'deactivated'),
+      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'deleted'),
     ]);
 
-    setTotalStats({ total: total || 0, verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0 });
+    setTotalStats({ total: total || 0, verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0, deactivated: deactivated || 0, deleted: deleted || 0 });
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
