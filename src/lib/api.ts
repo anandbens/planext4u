@@ -1003,6 +1003,11 @@ export const api = {
   },
 
   createService: async (data: Partial<Service>) => {
+    // Validate required fields
+    const errors: string[] = [];
+    if (!data.title?.trim()) errors.push("Service title is required");
+    if (!data.vendor_id?.trim()) errors.push("Vendor is required");
+    if (errors.length > 0) throw new Error(errors.join(". "));
     // Ensure vendor exists in service_vendors (services FK references service_vendors, not vendors)
     if (data.vendor_id) {
       const { data: existing } = await supabase.from('service_vendors').select('id').eq('id', data.vendor_id).maybeSingle();

@@ -163,12 +163,15 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
   }, [service, mode]);
 
   const handleSave = async () => {
-    if (!form.title) return;
+    if (!form.title.trim()) { toast.error("Title is required"); return; }
+    if (!form.vendor_id) { toast.error("Please select a vendor"); return; }
     setSaving(true);
     try {
       if (isCreate) await onCreate?.(form);
       else if (service) await onSave?.(service.id, form);
       onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save service");
     } finally { setSaving(false); }
   };
 
