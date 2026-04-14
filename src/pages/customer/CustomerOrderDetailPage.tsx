@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Package, Truck, MapPin, Star, CheckCircle2, Clock, Store, Receipt, ChevronRight } from "lucide-react";
+import { ArrowLeft, Package, Truck, MapPin, Star, CheckCircle2, Clock, Store, Receipt, ChevronRight, Camera, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -32,6 +36,8 @@ export default function CustomerOrderDetailPage() {
   const qc = useQueryClient();
   const [rating, setRating] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
+  const [showPodPopup, setShowPodPopup] = useState(false);
+  const [podForm, setPodForm] = useState({ confirmation_type: "received_in_person", recipient_name: "", notes: "" });
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["orderDetail", orderId],
@@ -40,6 +46,43 @@ export default function CustomerOrderDetailPage() {
       return data as any;
     },
     enabled: !!orderId,
+  });
+
+  const { data: existingPod } = useQuery({
+    queryKey: ["deliveryProof", orderId],
+    queryFn: async () => {
+      const { data } = await supabase.from("delivery_proofs" as any).select("*").eq("order_id", orderId!).maybeSingle();
+      return data;
+    },
+    enabled: !!orderId,
+  });
+
+  // Auto-show POD popup when order is delivered and no POD exists
+  useEffect(() => {
+    if (order && (order.status === "delivered") && !existingPod && !isLoading) {
+      const timer = setTimeout(() => setShowPodPopup(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [order, existingPod, isLoading]);
+
+  const submitPod = useMutation({
+    mutationFn: async () => {
+      const customerId = customerUser?.customer_id || customerUser?.id || '';
+      const { error } = await supabase.from("delivery_proofs" as any).insert({
+        order_id: orderId,
+        customer_id: customerId,
+        confirmation_type: podForm.confirmation_type,
+        recipient_name: podForm.recipient_name || null,
+        notes: podForm.notes || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Delivery confirmed! Thank you.");
+      setShowPodPopup(false);
+      qc.invalidateQueries({ queryKey: ["deliveryProof", orderId] });
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to submit"),
   });
 
   const submitRating = useMutation({
@@ -302,6 +345,21 @@ export default function CustomerOrderDetailPage() {
           </Card>
         )}
 
+        {/* POD Confirmation Badge */}
+        {existingPod && (
+          <Card className="p-4 bg-success/5 border-success/20">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-5 w-5 text-success" />
+              <div>
+                <p className="text-sm font-semibold text-success">Delivery Confirmed</p>
+                <p className="text-xs text-muted-foreground">
+                  {(existingPod as any).confirmation_type?.replace(/_/g, " ")} · {new Date((existingPod as any).submitted_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Delivery Estimate */}
         {!["delivered", "completed", "cancelled"].includes(order.status) && (
           <Card className="p-4 bg-primary/5 border-primary/20">
@@ -317,6 +375,59 @@ export default function CustomerOrderDetailPage() {
           </Card>
         )}
       </div>
+
+      {/* Proof of Delivery Popup */}
+      <Dialog open={showPodPopup} onOpenChange={(open) => { if (!open && existingPod) setShowPodPopup(false); }}>
+        <DialogContent className="max-w-sm" onPointerDownOutside={(e) => { if (!existingPod) e.preventDefault(); }}>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" /> Confirm Delivery
+          </DialogTitle>
+          <DialogDescription>Please confirm you received your order to complete the delivery process.</DialogDescription>
+
+          {/* Order Summary */}
+          <div className="bg-secondary/30 rounded-lg p-3 space-y-2">
+            <p className="text-xs font-semibold">{order.id}</p>
+            {(order.items || []).slice(0, 3).map((item: any, i: number) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className="h-8 w-8 bg-secondary rounded flex items-center justify-center text-sm shrink-0 overflow-hidden">
+                  {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji || "📦"}</span>}
+                </div>
+                <p className="text-xs truncate flex-1">{item.title}</p>
+                <p className="text-xs font-medium">×{item.qty}</p>
+              </div>
+            ))}
+            {(order.items || []).length > 3 && <p className="text-xs text-muted-foreground">+{order.items.length - 3} more items</p>}
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">How was it delivered? *</Label>
+              <Select value={podForm.confirmation_type} onValueChange={v => setPodForm(f => ({ ...f, confirmation_type: v }))}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="received_in_person">Received in person</SelectItem>
+                  <SelectItem value="left_at_door">Left at door</SelectItem>
+                  <SelectItem value="received_by_other">Received by someone else</SelectItem>
+                  <SelectItem value="collected_from_store">Collected from store</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {podForm.confirmation_type === "received_by_other" && (
+              <div>
+                <Label className="text-xs">Recipient Name</Label>
+                <Input value={podForm.recipient_name} onChange={e => setPodForm(f => ({ ...f, recipient_name: e.target.value }))} placeholder="Who received it?" className="mt-1" />
+              </div>
+            )}
+            <div>
+              <Label className="text-xs">Notes (optional)</Label>
+              <Textarea value={podForm.notes} onChange={e => setPodForm(f => ({ ...f, notes: e.target.value }))} placeholder="Any comments about the delivery..." className="mt-1" rows={2} />
+            </div>
+            <Button className="w-full" onClick={() => submitPod.mutate()} disabled={submitPod.isPending}>
+              {submitPod.isPending ? "Submitting..." : "Confirm Delivery ✓"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </CustomerLayout>
   );
 }
