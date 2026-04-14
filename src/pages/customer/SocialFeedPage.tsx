@@ -754,6 +754,8 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
                 <div className="relative h-full w-full bg-accent flex items-center justify-center">
                   <Plus className="h-5 w-5 text-muted-foreground" />
                 </div>
+              ) : story.storyMediaType === 'video' && story.storyMediaUrl ? (
+                <VideoThumbnail src={story.storyMediaUrl} />
               ) : story.storyMediaUrl ? (
                 <img src={story.storyMediaUrl} alt="" className="w-full h-full object-cover" />
               ) : story.avatar ? (
