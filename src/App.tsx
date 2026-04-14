@@ -354,6 +354,7 @@ const AppRoutes = () => {
         <Route path="/app/register" element={vendorPortalMode ? <Navigate to={customerRegisterRoute} replace /> : <CustomerRegisterPage />} />
         <Route path="/app/phone-login" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <CustomerPhoneLoginPage />} />
         <Route path="/app/set-location" element={<SetLocationPage />} />
+        <Route path="/app/set-password" element={<SetPasswordPage />} />
         <Route path="/app/terms" element={<TermsPage />} />
         <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/app/cms/:slug" element={<CustomerCMSPage />} />
