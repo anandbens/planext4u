@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Trash2 } from "lucide-react";
@@ -166,7 +167,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
           <div>
             <Label className="text-xs text-muted-foreground">Description</Label>
             {editMode
-              ? <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1 min-h-[80px]" placeholder="Category description..." />
+              ? <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Category description..." minHeight="80px" compact />
               : <p className="text-sm mt-1">{category?.description || '—'}</p>}
           </div>
 

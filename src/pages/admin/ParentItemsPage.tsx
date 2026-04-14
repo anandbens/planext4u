@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,7 +152,7 @@ export default function ParentItemsPage() {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Description</Label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1" rows={2} />
+              <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Item description..." minHeight="80px" compact />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Status</Label>

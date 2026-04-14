@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -454,7 +455,7 @@ export default function CustomerProfileEditPage() {
           </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1 block">About</label>
-            <Textarea value={form.about} onChange={e => setForm({...form, about: e.target.value})} placeholder="Tell us about yourself (max 1000 chars)" maxLength={1000} rows={3} />
+            <RichTextEditor value={form.about} onChange={(v) => setForm({...form, about: v})} placeholder="Tell us about yourself (max 1000 chars)" minHeight="100px" compact />
             <p className="text-[10px] text-muted-foreground mt-0.5 text-right">{form.about.length}/1000</p>
           </div>
         </Card>

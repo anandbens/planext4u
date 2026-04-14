@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
@@ -150,7 +151,7 @@ export default function CustomerPostAdPage() {
             </div>
             <div>
               <Label>Description *</Label>
-              <Textarea placeholder="Describe your item — condition, features, etc." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1.5" rows={4} maxLength={1000} />
+              <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Describe your item — condition, features, etc." minHeight="120px" compact />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

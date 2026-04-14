@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -303,8 +304,8 @@ export default function PostPropertyPage() {
                     <Input value={form.title} onChange={e => update("title", e.target.value)}
                       placeholder={`${form.bhk ? form.bhk + " BHK " : ""}${form.property_type.replace("_", " ")} in ${form.locality || "your locality"}`} className="mt-1" /></div>
                   <div><Label>Description</Label>
-                    <Textarea value={form.description} onChange={e => update("description", e.target.value)}
-                      placeholder="Describe your property..." rows={5} className="mt-1" /></div>
+                    <RichTextEditor value={form.description} onChange={v => update("description", v)}
+                      placeholder="Describe your property..." minHeight="150px" /></div>
                   <div><Label>Image URLs (one per line)</Label>
                     <Textarea value={form.images.join("\n")} onChange={e => update("images", e.target.value.split("\n").filter(Boolean))}
                       placeholder="Paste image URLs" rows={3} className="mt-1" />

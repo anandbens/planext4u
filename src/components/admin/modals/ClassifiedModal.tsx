@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClassifiedAd } from "@/lib/api";
@@ -110,7 +111,7 @@ export function ClassifiedModal({ ad, open, onOpenChange, mode, onSave, onDelete
           </div>
           <div>
             <Label>Description</Label>
-            <Textarea value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} readOnly={!isEdit} rows={3} />
+            {isEdit ? <RichTextEditor value={form.description || ""} onChange={(v) => setForm({ ...form, description: v })} placeholder="Classified description..." minHeight="100px" compact /> : <p className="text-sm mt-1">{form.description}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

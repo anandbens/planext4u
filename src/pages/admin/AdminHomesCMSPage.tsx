@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -139,7 +140,7 @@ export default function AdminHomesCMSPage() {
           <DialogTitle>{editing ? "Edit" : "Add"} Content</DialogTitle>
           <div className="space-y-3 pt-2">
             <div><Label className="text-xs">Title *</Label><Input value={form.title} onChange={(e) => setForm(f => ({ ...f, title: e.target.value }))} /></div>
-            <div><Label className="text-xs">Content</Label><Textarea value={form.content} onChange={(e) => setForm(f => ({ ...f, content: e.target.value }))} rows={4} /></div>
+            <div><Label className="text-xs">Content</Label><RichTextEditor value={form.content} onChange={v => setForm(f => ({ ...f, content: v }))} placeholder="Content..." minHeight="120px" /></div>
             {(tab === "banner" || tab === "announcement") && (
               <>
                 <div><Label className="text-xs">Image URL</Label><Input value={form.image_url} onChange={(e) => setForm(f => ({ ...f, image_url: e.target.value }))} /></div>

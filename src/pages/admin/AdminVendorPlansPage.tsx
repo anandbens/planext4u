@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getPlanBadgeColor } from "@/lib/geo-utils";
@@ -157,7 +158,7 @@ export default function AdminVendorPlansPage() {
           <DialogTitle>{editing ? "Edit" : "Add"} Vendor Plan</DialogTitle>
           <div className="space-y-3 pt-2">
             <div><Label className="text-xs">Plan Name *</Label><Input value={form.plan_name} onChange={(e) => setForm(f => ({ ...f, plan_name: e.target.value }))} placeholder="e.g., Premium" /></div>
-            <div><Label className="text-xs">Description</Label><Textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} rows={2} /></div>
+            <div><Label className="text-xs">Description</Label><RichTextEditor value={form.description} onChange={v => setForm(f => ({ ...f, description: v }))} placeholder="Plan description..." minHeight="80px" compact /></div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Plan Type</Label>

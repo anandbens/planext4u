@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -291,7 +292,7 @@ export default function VendorRegisterPage() {
               <div><label className="text-xs font-medium text-muted-foreground">Store Name</label>
                 <Input value={form.store_name} onChange={e => updateField('store_name', e.target.value)} placeholder="Optional" /></div>
               <div className="sm:col-span-2"><label className="text-xs font-medium text-muted-foreground">Description</label>
-                <Textarea value={form.business_description} onChange={e => updateField('business_description', e.target.value)} maxLength={2000} rows={3} />
+                <RichTextEditor value={form.business_description} onChange={v => updateField('business_description', v)} placeholder="Describe your business..." minHeight="100px" compact />
                 <p className="text-[10px] text-muted-foreground text-right">{form.business_description.length}/2000</p></div>
             </div>
             <DocUploadButton field="store_logo_url" label="Store Logo (optional)" />

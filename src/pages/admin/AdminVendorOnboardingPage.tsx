@@ -3,6 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -135,7 +136,7 @@ export default function AdminVendorOnboardingPage() {
           <DialogHeader><DialogTitle>{editing ? "Edit Screen" : "Add Screen"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div><Label>Title</Label><Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} /></div>
-            <div><Label>Description</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} /></div>
+            <div><Label>Description</Label><RichTextEditor value={form.description} onChange={v => setForm(f => ({ ...f, description: v }))} placeholder="Onboarding description..." minHeight="100px" compact /></div>
             <div>
               <Label>Image</Label>
               <MediaLibraryPicker value={form.image_url} onChange={url => setForm(f => ({ ...f, image_url: url }))} />
