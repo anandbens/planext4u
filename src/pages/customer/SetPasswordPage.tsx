@@ -97,9 +97,9 @@ export default function SetPasswordPage() {
 
       toast.success("Password set successfully! 🎉");
       
-      // Navigate to the appropriate dashboard
+      // Full page reload to pick up updated localStorage state in auth provider
       setTimeout(() => {
-        navigate(isVendor ? "/vendor" : "/app", { replace: true });
+        window.location.replace(isVendor ? "/vendor" : "/app");
       }, 500);
     } catch (err: any) {
       toast.error(err.message || "Failed to set password");
@@ -201,7 +201,7 @@ export default function SetPasswordPage() {
                   d.just_logged_in = false;
                   localStorage.setItem(ck, JSON.stringify(d));
                 } catch {}
-                navigate(isVendor ? "/vendor" : "/app", { replace: true });
+                window.location.replace(isVendor ? "/vendor" : "/app");
               }}
               className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors mt-2"
             >
