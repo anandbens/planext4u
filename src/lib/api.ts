@@ -315,7 +315,7 @@ export const api = {
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
 
-    let query = supabase.from('customers').select('*', { count: 'exact' });
+    let query = supabase.from('customers').select('*', { count: 'exact' }).is('deleted_at', null);
     if (params.search) {
       query = query.or(`name.ilike.%${params.search}%,email.ilike.%${params.search}%,mobile.ilike.%${params.search}%,occupation.ilike.%${params.search}%`);
     }
@@ -365,8 +365,22 @@ export const api = {
   },
 
   deleteCustomer: async (id: string) => {
-    const { error } = await supabase.from('customers').delete().eq('id', id);
+    // Soft delete: append _DEL_<timestamp> to unique fields, set status to deleted
+    const ts = Date.now().toString();
+    const { data: cust } = await supabase.from('customers').select('email, mobile, referral_code').eq('id', id).single();
+    const updates: Record<string, any> = {
+      status: 'deleted',
+      deleted_at: new Date().toISOString(),
+      email: cust?.email ? `${cust.email}_DEL_${ts}` : `deleted_${ts}`,
+      mobile: cust?.mobile ? `${cust.mobile}_DEL_${ts}` : `deleted_${ts}`,
+      referral_code: cust?.referral_code ? `${cust.referral_code}_DEL_${ts}` : `deleted_${ts}`,
+    };
+    const { error } = await supabase.from('customers').update(updates).eq('id', id);
     if (error) throw error;
+    await supabase.from('audit_logs').insert({
+      table_name: 'customers', operation: 'SOFT_DELETE', record_id: id,
+      old_data: cust, new_data: updates,
+    });
     return { success: true };
   },
 
@@ -476,10 +490,36 @@ export const api = {
   },
 
   deleteVendor: async (id: string) => {
-    const { error: e1 } = await supabase.from('vendors').delete().eq('id', id);
-    if (e1) {
-      const { error: e2 } = await supabase.from('service_vendors').delete().eq('id', id);
-      if (e2) throw e2;
+    // Soft delete: append _DEL_<timestamp> to unique fields
+    const ts = Date.now().toString();
+    // Try vendors table first
+    const { data: vend } = await supabase.from('vendors').select('email, mobile').eq('id', id).single();
+    if (vend) {
+      const updates: Record<string, any> = {
+        status: 'deleted',
+        deleted_at: new Date().toISOString(),
+        email: vend.email ? `${vend.email}_DEL_${ts}` : `deleted_${ts}`,
+        mobile: vend.mobile ? `${vend.mobile}_DEL_${ts}` : `deleted_${ts}`,
+      };
+      await supabase.from('vendors').update(updates).eq('id', id);
+      await supabase.from('audit_logs').insert({
+        table_name: 'vendors', operation: 'SOFT_DELETE', record_id: id,
+        old_data: vend, new_data: updates,
+      });
+    } else {
+      // Try service_vendors
+      const { data: sv } = await supabase.from('service_vendors').select('email, mobile').eq('id', id).single();
+      const updates: Record<string, any> = {
+        status: 'deleted',
+        deleted_at: new Date().toISOString(),
+        email: sv?.email ? `${sv.email}_DEL_${ts}` : `deleted_${ts}`,
+        mobile: sv?.mobile ? `${sv.mobile}_DEL_${ts}` : `deleted_${ts}`,
+      };
+      await supabase.from('service_vendors').update(updates).eq('id', id);
+      await supabase.from('audit_logs').insert({
+        table_name: 'service_vendors', operation: 'SOFT_DELETE', record_id: id,
+        old_data: sv, new_data: updates,
+      });
     }
     return { success: true };
   },
@@ -768,8 +808,16 @@ export const api = {
 
   // Bulk operations
   bulkDeleteCustomers: async (ids: string[]) => {
-    const { error } = await supabase.from('customers').delete().in('id', ids);
-    if (error) throw error;
+    const ts = Date.now().toString();
+    for (const id of ids) {
+      const { data: cust } = await supabase.from('customers').select('email, mobile, referral_code').eq('id', id).single();
+      await supabase.from('customers').update({
+        status: 'deleted', deleted_at: new Date().toISOString(),
+        email: cust?.email ? `${cust.email}_DEL_${ts}` : `deleted_${ts}`,
+        mobile: cust?.mobile ? `${cust.mobile}_DEL_${ts}` : `deleted_${ts}`,
+        referral_code: cust?.referral_code ? `${cust.referral_code}_DEL_${ts}` : `deleted_${ts}`,
+      }).eq('id', id);
+    }
     return { success: true };
   },
 
@@ -792,8 +840,21 @@ export const api = {
   },
 
   bulkDeleteVendors: async (ids: string[]) => {
-    await supabase.from('vendors').delete().in('id', ids);
-    await supabase.from('service_vendors').delete().in('id', ids);
+    const ts = Date.now().toString();
+    for (const id of ids) {
+      const { data: vend } = await supabase.from('vendors').select('email, mobile').eq('id', id).single();
+      if (vend) {
+        await supabase.from('vendors').update({
+          status: 'deleted', deleted_at: new Date().toISOString(),
+          email: vend.email ? `${vend.email}_DEL_${ts}` : `deleted_${ts}`,
+          mobile: vend.mobile ? `${vend.mobile}_DEL_${ts}` : `deleted_${ts}`,
+        }).eq('id', id);
+      } else {
+        await supabase.from('service_vendors').update({
+          status: 'deleted', deleted_at: new Date().toISOString(),
+        }).eq('id', id);
+      }
+    }
     return { success: true };
   },
 
