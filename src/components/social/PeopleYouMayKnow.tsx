@@ -146,9 +146,10 @@ export default function PeopleYouMayKnow() {
             variant="ghost"
             size="sm"
             className="text-xs text-primary"
-            onClick={() => setContactsRequested(true)}
+            onClick={handleSyncContacts}
+            disabled={syncing}
           >
-            Sync Contacts
+            {syncing ? "Syncing..." : "Sync Contacts"}
           </Button>
         )}
       </div>
