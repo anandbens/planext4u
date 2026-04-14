@@ -14,6 +14,23 @@ import p4uLogoDark from "@/assets/p4u-logo-dark.png";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 import p4uLogo from "@/assets/p4u-logo.png";
 import IncomingCallProvider from "@/components/social/IncomingCallProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+
+function WalletBalance() {
+  const { customerUser } = useAuth();
+  const { data: balance = 0 } = useQuery({
+    queryKey: ["wallet-balance", customerUser?.id],
+    queryFn: async () => {
+      if (!customerUser?.id) return 0;
+      const { data } = await supabase.from("customers").select("wallet_points").eq("id", customerUser.id).maybeSingle();
+      return data?.wallet_points || 0;
+    },
+    enabled: !!customerUser?.id,
+    staleTime: 30000,
+  });
+  return <span className="text-xs font-bold text-primary-foreground">{balance}</span>;
+}
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
