@@ -79,17 +79,19 @@ export default function SetPasswordPage() {
           .eq("user_id", session.user.id);
       }
 
-      // Update local storage so protected route allows through
+      // Update local storage - mark password_set and clear just_logged_in
       const customerData = localStorage.getItem("customer_user");
       const vendorData = localStorage.getItem("vendor_user");
       if (customerData) {
         const cu = JSON.parse(customerData);
         cu.password_set = true;
+        cu.just_logged_in = false;
         localStorage.setItem("customer_user", JSON.stringify(cu));
       }
       if (vendorData) {
         const vu = JSON.parse(vendorData);
         vu.password_set = true;
+        vu.just_logged_in = false;
         localStorage.setItem("vendor_user", JSON.stringify(vu));
       }
 
