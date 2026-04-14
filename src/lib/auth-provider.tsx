@@ -130,10 +130,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setIsLoading(false);
       throw new Error(error.message);
+    }
+    // Mark password_set since they used email+password
+    if (signInData?.user) {
+      await supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id);
     }
     // Wait for onAuthStateChange to finish loading the role
     await new Promise<void>((resolve) => {
