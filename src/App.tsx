@@ -429,6 +429,7 @@ const AppRoutes = () => {
         {/* Vendor-facing routes */}
         <Route path="/vendor/login" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorLoginPage />} />
         <Route path="/vendor/register" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorRegisterStandalonePage />} />
+        <Route path="/vendor/set-password" element={<SetPasswordPage />} />
         <Route path="/vendor" element={<VendorPage><VendorDashboardPage /></VendorPage>} />
         <Route path="/vendor/products" element={<VendorPage><VendorProductsPage /></VendorPage>} />
         <Route path="/vendor/services" element={<VendorPage><VendorServicesPage /></VendorPage>} />
