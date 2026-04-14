@@ -639,6 +639,59 @@ function PostCard({ post }: { post: any }) {
   );
 }
 
+/** Generates a thumbnail from a video URL by capturing the first frame */
+function VideoThumbnail({ src }: { src: string }) {
+  const [thumb, setThumb] = useState<string | null>(null);
+  const attempted = useRef(false);
+
+  useEffect(() => {
+    if (attempted.current || !src) return;
+    attempted.current = true;
+    const video = document.createElement('video');
+    video.crossOrigin = 'anonymous';
+    video.muted = true;
+    video.preload = 'metadata';
+    video.playsInline = true;
+
+    video.onloadeddata = () => {
+      video.currentTime = 0.5; // Seek to 0.5s for a better frame
+    };
+
+    video.onseeked = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          // Draw center crop
+          const size = Math.min(video.videoWidth, video.videoHeight);
+          const sx = (video.videoWidth - size) / 2;
+          const sy = (video.videoHeight - size) / 2;
+          ctx.drawImage(video, sx, sy, size, size, 0, 0, 128, 128);
+          setThumb(canvas.toDataURL('image/jpeg', 0.7));
+        }
+      } catch { /* CORS or other error */ }
+    };
+
+    video.onerror = () => { /* fallback handled by render */ };
+    video.src = src;
+    video.load();
+
+    return () => { video.pause(); video.src = ''; };
+  }, [src]);
+
+  if (thumb) {
+    return <img src={thumb} alt="" className="w-full h-full object-cover" />;
+  }
+  // Fallback: show a play icon on dark background
+  return (
+    <div className="w-full h-full bg-accent/50 flex items-center justify-center">
+      <svg className="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+  );
+}
+
 function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: any; customerUser: any }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
