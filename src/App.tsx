@@ -380,6 +380,7 @@ const AppRoutes = () => {
         <Route path="/app/classifieds/:id" element={<CustomerPage><CustomerClassifiedDetailPage /></CustomerPage>} />
         <Route path="/app/vendor-register" element={<CustomerPage><VendorRegisterPage /></CustomerPage>} />
         <Route path="/app/support" element={<CustomerPage><CustomerSupportPage /></CustomerPage>} />
+        <Route path="/app/change-password" element={<CustomerPage><CustomerChangePasswordPage /></CustomerPage>} />
 
         {/* Social routes */}
         <Route path="/app/social" element={<CustomerPage><SocialFeedPage /></CustomerPage>} />
