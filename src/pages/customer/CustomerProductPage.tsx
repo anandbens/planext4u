@@ -49,6 +49,19 @@ export default function CustomerProductPage() {
     },
   });
 
+  // Fetch review summary for dynamic count
+  const { data: summary } = useQuery({
+    queryKey: ["review-summary", id, "product"],
+    queryFn: async () => {
+      const { data } = await supabase.from("reviews").select("rating").eq("entity_type", "product").eq("entity_id", id).eq("status", "active");
+      const ratings = (data || []).map((r: any) => r.rating as number);
+      const total = ratings.length;
+      const avg = total > 0 ? Math.round((ratings.reduce((a, b) => a + b, 0) / total) * 10) / 10 : 0;
+      return { avg, total };
+    },
+    enabled: !!id,
+  });
+
   const isVariable = (product as any)?.product_type === "variable" && variants && variants.length > 0;
 
   // Build attribute options from variants (only show available combinations)
