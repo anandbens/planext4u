@@ -118,7 +118,7 @@ export default function PropertyMessagesPage() {
     const conv = conversations?.find(c => c.id === activeChat);
     return (
       <CustomerLayout>
-        <div className="max-w-lg mx-auto flex flex-col h-[calc(100vh-4rem)]">
+        <div className="max-w-lg mx-auto flex flex-col h-[calc(100dvh-4rem)]">
           <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
             <button onClick={() => setActiveChat(null)}><ArrowLeft className="h-5 w-5" /></button>
             <div className="flex-1 min-w-0">

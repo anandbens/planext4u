@@ -147,26 +147,31 @@
 }
 
 /* =========================================================
- * Capacitor Android Safe Area — Global Status Bar Fix
+ * Capacitor / Mobile Safe Area — Global Layout Fix
  *
- * With overlaysWebView: true the status bar overlays the
- * WebView, so env(safe-area-inset-top) reports the real
- * status-bar height. We push page-level sticky/fixed headers
- * down by that amount automatically.
- *
- * NOTE: CustomerLayout's mobile header manages its own
- * top padding via inline style (safe-area + 0.75rem).
- * The .safe-area-top class opt-in is preferred for that
- * header so it keeps its own base padding too.
+ * With overlaysWebView: false the system bars no longer
+ * overlap the WebView on most devices, but we still honour
+ * env(safe-area-inset-*) for gesture-nav / notch / punch-hole
+ * devices and keep the app content clear of system UI.
  * ========================================================= */
+
+/* Root app container safe-area shell — applied by main.tsx */
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sticky headers: respect top safe area */
 header.sticky:not([data-no-safe-area]),
 div.sticky.safe-area-top,
 nav.sticky.safe-area-top {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Fixed bottom navigation bars */
-nav.fixed {
+/* Fixed bottom bars: respect bottom safe area */
+nav.fixed,
+div.fixed[class*="bottom-0"] {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
