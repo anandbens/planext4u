@@ -317,6 +317,8 @@ export default function VendorsPage() {
           <TabsTrigger value="pending">Pending Approval</TabsTrigger>
           <TabsTrigger value="all">All Verified Vendors</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          <TabsTrigger value="deactivated">Deactivated ({totalStats.deactivated})</TabsTrigger>
+          <TabsTrigger value="deleted">Deleted ({totalStats.deleted})</TabsTrigger>
         </TabsList>
       </Tabs>
 
