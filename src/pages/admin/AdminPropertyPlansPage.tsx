@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -144,7 +145,7 @@ export default function AdminPropertyPlansPage() {
           <DialogTitle>{editing ? "Edit" : "Add"} Plan</DialogTitle>
           <div className="space-y-3 pt-2">
             <div><Label className="text-xs">Name *</Label><Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Premium Plan" /></div>
-            <div><Label className="text-xs">Description</Label><Textarea value={form.description} onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))} rows={2} /></div>
+            <div><Label className="text-xs">Description</Label><RichTextEditor value={form.description} onChange={v => setForm(f => ({ ...f, description: v }))} placeholder="Plan description..." minHeight="80px" compact /></div>
             <div>
               <Label className="text-xs">Plan Type</Label>
               <Select value={form.plan_type} onValueChange={(v) => setForm(f => ({ ...f, plan_type: v }))}>
