@@ -145,6 +145,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const firebase_id_token = body?.firebase_id_token;
     const mode = body?.mode || "login"; // "login" | "register"
+    const role = body?.role || "customer"; // "customer" | "vendor"
     const registerData = body?.register_data; // { name, email, mobile, occupation?, referral_code? }
 
     if (!firebase_id_token) {
