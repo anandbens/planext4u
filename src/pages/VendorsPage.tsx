@@ -8,7 +8,7 @@ import { VendorModal } from "@/components/admin/modals/VendorModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, Ban, CreditCard } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, Ban, CreditCard, UserX } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,13 +28,25 @@ export default function VendorsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ vendor: Vendor; action: "approve" | "reject" | "delete" } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
-  const [totalStats, setTotalStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0 });
+  const [totalStats, setTotalStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0, deactivated: 0, deleted: 0 });
 
   const [pendingApps, setPendingApps] = useState<any[]>([]);
 
   const tabStatusFilter = activeTab === "pending" ? undefined : activeTab === "all" ? (statusFilter || "verified") : statusFilter || undefined;
 
   const fetchData = useCallback(async () => {
+    if (activeTab === "deactivated" || activeTab === "deleted") {
+      const targetStatus = activeTab;
+      let q = supabase.from('vendors').select('*', { count: 'exact' }).eq('status', targetStatus);
+      if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,mobile.ilike.%${search}%`);
+      if (dateFrom) q = q.gte('created_at', dateFrom);
+      if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
+      const { data: rows, count } = await q.order('created_at', { ascending: false }).range((page - 1) * 10, page * 10 - 1);
+      const mapped = (rows || []).map((v: any) => ({ ...v, commission_rate: v.commission_rate || 0, membership: v.membership || '' }));
+      setData({ data: mapped as any, total: count || 0, page, per_page: 10, total_pages: Math.ceil((count || 0) / 10) });
+      return;
+    }
+
     if (activeTab === "pending") {
       let q = supabase
         .from('vendor_applications')
@@ -108,14 +120,18 @@ export default function VendorsPage() {
       { count: verified },
       { count: rejected },
       { count: pendingCount },
+      { count: deactivated },
+      { count: deleted },
     ] = await Promise.all([
-      supabase.from('vendors').select('*', { count: 'exact', head: true }),
+      supabase.from('vendors').select('*', { count: 'exact', head: true }).is('deleted_at', null),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'verified'),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
       supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).not('status', 'in', '(approved,verified,active,rejected)'),
+      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'deactivated'),
+      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'deleted'),
     ]);
 
-    setTotalStats({ total: total || 0, verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0 });
+    setTotalStats({ total: total || 0, verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0, deactivated: deactivated || 0, deleted: deleted || 0 });
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -274,8 +290,14 @@ export default function VendorsPage() {
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
 
+  const isSpecialTab = activeTab === "deactivated" || activeTab === "deleted";
+
   const summaryWidgets: SummaryWidget[] = activeTab === "pending" ? [
     { label: "Pending Approval", value: totalStats.pending, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+  ] : activeTab === "deactivated" ? [
+    { label: "Deactivated Vendors", value: totalStats.deactivated, icon: <UserX className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+  ] : activeTab === "deleted" ? [
+    { label: "Deleted Vendors", value: totalStats.deleted, icon: <Trash2 className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
   ] : [
     { label: "Total Vendors", value: totalStats.total, icon: <Store className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
     { label: "Verified", value: totalStats.verified, icon: <ShieldCheck className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
@@ -295,29 +317,43 @@ export default function VendorsPage() {
           <TabsTrigger value="pending">Pending Approval</TabsTrigger>
           <TabsTrigger value="all">All Verified Vendors</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          <TabsTrigger value="deactivated">Deactivated ({totalStats.deactivated})</TabsTrigger>
+          <TabsTrigger value="deleted">Deleted ({totalStats.deleted})</TabsTrigger>
         </TabsList>
       </Tabs>
 
       <DataTable
-        columns={[
+        columns={isSpecialTab ? [
           { key: "id", label: "ID" },
-          { key: "business_name", label: "Business", render: (v) => (
+          { key: "business_name", label: "Business", render: (v: any) => (
+            <div><p className="font-medium">{v.business_name}</p><p className="text-xs text-muted-foreground">{v.name}</p></div>
+          )},
+          { key: "email", label: "Email", render: (v: any) => <span className="text-xs">{v.email?.replace(/_DEL_\d+$/, '') || '—'}</span> },
+          { key: "mobile", label: "Mobile", render: (v: any) => <span className="text-xs">{v.mobile?.replace(/_DEL_\d+$/, '') || '—'}</span> },
+          { key: "deleted_at", label: activeTab === "deleted" ? "Deleted At" : "Deactivated", render: (v: any) => <span className="text-xs text-muted-foreground">{v.deleted_at ? new Date(v.deleted_at).toLocaleDateString() : '—'}</span> },
+          { key: "status", label: "Status", render: (v: any) => <StatusBadge status={v.status} /> },
+          { key: "actions", label: "", render: (v: any) => (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
+          )},
+        ] : [
+          { key: "id", label: "ID" },
+          { key: "business_name", label: "Business", render: (v: any) => (
             <div><p className="font-medium">{v.business_name}</p><p className="text-xs text-muted-foreground">{v.name}</p></div>
           )},
           { key: "email", label: "Email" },
           { key: "mobile", label: "Mobile" },
-          { key: "commission_rate", label: "Commission", render: (v) => <span>{v.commission_rate}%</span> },
+          { key: "commission_rate", label: "Commission", render: (v: any) => <span>{v.commission_rate}%</span> },
           { key: "plan_payment_status", label: "Payment", render: (v: any) => {
             const ps = v.plan_payment_status || "unpaid";
             const color = ps === "paid" ? "bg-success/10 text-success" : ps === "offline_pending" ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive";
             return <Badge className={`border-0 text-[10px] ${color}`}>{ps === "offline_pending" ? "Pending" : ps}</Badge>;
           }},
-          { key: "status", label: "Status", render: (v) => <StatusBadge status={v.status} /> },
-          { key: "actions", label: "Actions", render: (v) => (
+          { key: "status", label: "Status", render: (v: any) => <StatusBadge status={v.status} /> },
+          { key: "actions", label: "Actions", render: (v: any) => (
             <div className="flex gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(v, "edit"); }}><Pencil className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(v, "delete"); }}><Trash2 className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "edit"); }}><Pencil className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e: any) => { e.stopPropagation(); openConfirm(v, "delete"); }}><Trash2 className="h-4 w-4" /></Button>
             </div>
           )},
         ]}
@@ -329,7 +365,7 @@ export default function VendorsPage() {
         onPageChange={setPage}
         onSearch={setSearch}
         onExport={handleExport}
-        onAdd={() => openModal(null, "create")}
+        onAdd={!isSpecialTab ? () => openModal(null, "create") : undefined}
         addLabel="Add Vendor"
         onRowClick={(v) => openModal(v, "view")}
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } if (key === "payment") { setPaymentFilter(val); setPage(1); } }}
@@ -340,14 +376,14 @@ export default function VendorsPage() {
           { value: "offline_pending", label: "Pending" },
         ]}] : undefined}
         summaryWidgets={summaryWidgets}
-        enableBulkSelect
-        onBulkDelete={handleBulkDelete}
-        onBulkStatusUpdate={handleBulkStatus}
-        bulkStatusOptions={[
+        enableBulkSelect={!isSpecialTab}
+        onBulkDelete={!isSpecialTab ? handleBulkDelete : undefined}
+        onBulkStatusUpdate={!isSpecialTab ? handleBulkStatus : undefined}
+        bulkStatusOptions={!isSpecialTab ? [
           { value: "pending", label: "Pending" },
           { value: "verified", label: "Verified" },
           { value: "rejected", label: "Rejected" },
-        ]}
+        ] : undefined}
       />
       <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} onRefresh={fetchData} />
       <ConfirmDialog

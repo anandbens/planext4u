@@ -49,19 +49,31 @@ export default function AccountControlPage() {
         await customerLogout();
         navigate("/app/login", { replace: true });
       } else {
+        // Soft delete: append _DEL_ to unique identifiers to free them up
+        const ts = Date.now().toString();
+        const { data: cust } = await supabase.from("customers").select("email, mobile, referral_code").eq("id", customerId).single();
+        
         await supabase
           .from("customers")
-          .update({ status: "deleted" } as any)
+          .update({
+            status: "deleted",
+            deleted_at: new Date().toISOString(),
+            deletion_reason: reason || null,
+            email: cust?.email ? `${cust.email}_DEL_${ts}` : `deleted_${ts}`,
+            mobile: cust?.mobile ? `${cust.mobile}_DEL_${ts}` : `deleted_${ts}`,
+            referral_code: cust?.referral_code ? `${cust.referral_code}_DEL_${ts}` : `deleted_${ts}`,
+          } as any)
           .eq("id", customerId);
 
         await supabase.from("audit_logs").insert({
           table_name: "customers",
-          operation: "DELETE_REQUEST",
+          operation: "SOFT_DELETE",
           record_id: customerId,
+          old_data: cust,
           new_data: { reason, action: "self_delete_request" },
         });
 
-        toast.success("Your account deletion has been requested. It will be permanently removed within 30 days.");
+        toast.success("Your account deletion has been requested. Data will be retained for 90 days for audit purposes.");
         await customerLogout();
         navigate("/app/login", { replace: true });
       }

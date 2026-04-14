@@ -49,19 +49,30 @@ export default function VendorAccountControlPage() {
         await vendorLogout();
         navigate("/vendor/login", { replace: true });
       } else {
+        // Soft delete: append _DEL_ to unique identifiers
+        const ts = Date.now().toString();
+        const { data: vend } = await supabase.from("vendors").select("email, mobile").eq("id", vendorId).single();
+
         await supabase
           .from("vendors")
-          .update({ status: "deleted" })
+          .update({
+            status: "deleted",
+            deleted_at: new Date().toISOString(),
+            deletion_reason: reason || null,
+            email: vend?.email ? `${vend.email}_DEL_${ts}` : `deleted_${ts}`,
+            mobile: vend?.mobile ? `${vend.mobile}_DEL_${ts}` : `deleted_${ts}`,
+          } as any)
           .eq("id", vendorId);
 
         await supabase.from("audit_logs").insert({
           table_name: "vendors",
-          operation: "DELETE_REQUEST",
+          operation: "SOFT_DELETE",
           record_id: vendorId,
+          old_data: vend,
           new_data: { reason, action: "self_delete_request" },
         });
 
-        toast.success("Your account deletion has been requested. It will be permanently removed within 30 days.");
+        toast.success("Your account deletion has been requested. Data will be retained for 90 days for audit purposes.");
         await vendorLogout();
         navigate("/vendor/login", { replace: true });
       }

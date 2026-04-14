@@ -597,6 +597,8 @@ export type Database = {
           area_id: string | null
           city_id: string | null
           created_at: string
+          deleted_at: string | null
+          deletion_reason: string | null
           dob: string | null
           email: string
           gender: string | null
@@ -619,6 +621,8 @@ export type Database = {
           area_id?: string | null
           city_id?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deletion_reason?: string | null
           dob?: string | null
           email?: string
           gender?: string | null
@@ -641,6 +645,8 @@ export type Database = {
           area_id?: string | null
           city_id?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deletion_reason?: string | null
           dob?: string | null
           email?: string
           gender?: string | null
@@ -2687,6 +2693,8 @@ export type Database = {
           city_id: string | null
           commission_rate: number
           created_at: string
+          deleted_at: string | null
+          deletion_reason: string | null
           email: string
           id: string
           membership: string
@@ -2705,6 +2713,8 @@ export type Database = {
           city_id?: string | null
           commission_rate?: number
           created_at?: string
+          deleted_at?: string | null
+          deletion_reason?: string | null
           email?: string
           id: string
           membership?: string
@@ -2723,6 +2733,8 @@ export type Database = {
           city_id?: string | null
           commission_rate?: number
           created_at?: string
+          deleted_at?: string | null
+          deletion_reason?: string | null
           email?: string
           id?: string
           membership?: string
@@ -4194,6 +4206,8 @@ export type Database = {
           city_id: string | null
           commission_rate: number
           created_at: string
+          deleted_at: string | null
+          deletion_reason: string | null
           email: string
           id: string
           max_redemption_percentage: number | null
@@ -4223,6 +4237,8 @@ export type Database = {
           city_id?: string | null
           commission_rate?: number
           created_at?: string
+          deleted_at?: string | null
+          deletion_reason?: string | null
           email?: string
           id: string
           max_redemption_percentage?: number | null
@@ -4252,6 +4268,8 @@ export type Database = {
           city_id?: string | null
           commission_rate?: number
           created_at?: string
+          deleted_at?: string | null
+          deletion_reason?: string | null
           email?: string
           id?: string
           max_redemption_percentage?: number | null
