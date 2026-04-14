@@ -13,6 +13,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginResolveRef = useRef<(() => void) | null>(null);
   const isFreshLoginRef = useRef(false);
 
+  // Helper: filter out synthetic Firebase phone-auth emails
+  const cleanEmail = (email: string | null | undefined): string => {
+    if (!email || email.includes('@phone.planext4u.local')) return '';
+    return email;
+  };
+
   const processRole = useCallback(async (roleRecord: any, supabaseUid: string, email: string, name: string, isFreshLogin: boolean): Promise<string> => {
     const role = roleRecord.role as AppRole;
 
@@ -33,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       const vu: VendorUser = {
-        id: vendor?.id || vendorId, name: vendor?.name || name, email: vendor?.email || email,
+        id: vendor?.id || vendorId, name: vendor?.name || name, email: cleanEmail(vendor?.email) || cleanEmail(email),
         business_name: vendor?.business_name || '', vendor_id: vendorId, supabase_uid: supabaseUid,
         password_set: !!roleRecord.password_set,
         just_logged_in: isFreshLogin && !roleRecord.password_set,
@@ -44,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const customerId = roleRecord.customer_id || 'USR-001';
       const { data: customer } = await supabase.from("customers").select("id, name, email, mobile").eq("id", customerId).single();
       const cu: CustomerUser = {
-        id: customer?.id || customerId, name: customer?.name || name, email: customer?.email || email,
+        id: customer?.id || customerId, name: customer?.name || name, email: cleanEmail(customer?.email) || cleanEmail(email),
         mobile: customer?.mobile || '', customer_id: customerId, supabase_uid: supabaseUid,
         password_set: !!roleRecord.password_set,
         just_logged_in: isFreshLogin && !roleRecord.password_set,
