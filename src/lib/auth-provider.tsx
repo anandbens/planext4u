@@ -11,8 +11,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [vendorUser, setVendorUser] = useState<VendorUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const loginResolveRef = useRef<(() => void) | null>(null);
+  const isFreshLoginRef = useRef(false);
 
-  const processRole = useCallback(async (roleRecord: any, supabaseUid: string, email: string, name: string): Promise<string> => {
+  const processRole = useCallback(async (roleRecord: any, supabaseUid: string, email: string, name: string, isFreshLogin: boolean): Promise<string> => {
     const role = roleRecord.role as AppRole;
 
     if (role === 'admin' || role === 'finance' || role === 'sales') {
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: vendor?.id || vendorId, name: vendor?.name || name, email: vendor?.email || email,
         business_name: vendor?.business_name || '', vendor_id: vendorId, supabase_uid: supabaseUid,
         password_set: !!roleRecord.password_set,
+        just_logged_in: isFreshLogin && !roleRecord.password_set,
       };
       setVendorUser(vu);
       localStorage.setItem("vendor_user", JSON.stringify(vu));
@@ -45,14 +47,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: customer?.id || customerId, name: customer?.name || name, email: customer?.email || email,
         mobile: customer?.mobile || '', customer_id: customerId, supabase_uid: supabaseUid,
         password_set: !!roleRecord.password_set,
+        just_logged_in: isFreshLogin && !roleRecord.password_set,
       };
       setCustomerUser(cu);
       localStorage.setItem("customer_user", JSON.stringify(cu));
     }
+
+    // Log login event for fresh logins
+    if (isFreshLogin) {
+      try {
+        await supabase.from("login_logs").insert({
+          user_id: supabaseUid,
+          role: role,
+          portal: role === 'admin' || role === 'finance' || role === 'sales' ? 'admin' : role,
+          login_method: 'phone_otp',
+        } as any);
+      } catch {}
+    }
+
     return 'loaded';
   }, []);
 
-  const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string) => {
+  const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string, isFreshLogin: boolean) => {
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role, vendor_id, customer_id, password_set")
@@ -71,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .select("role, vendor_id, customer_id, password_set")
               .eq("user_id", supabaseUid);
             if (newRoles && newRoles.length > 0) {
-              return await processRole(newRoles[0], supabaseUid, email, name);
+              return await processRole(newRoles[0], supabaseUid, email, name, isFreshLogin);
             }
           }
         } catch {}
@@ -83,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return 'unregistered';
     }
 
-    return await processRole(roles[0], supabaseUid, email, name);
+    return await processRole(roles[0], supabaseUid, email, name, isFreshLogin);
   }, [processRole]);
 
   useEffect(() => {
