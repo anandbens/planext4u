@@ -172,7 +172,7 @@ function SellerListSection({ data, isLoading, parentCategories, containerAnim, i
                         <h3 className="text-sm font-semibold truncate">{p.vendor_name}</h3>
                         <div className="flex items-center gap-0.5">
                           <Star className="h-3 w-3 fill-warning text-warning" />
-                          <span className="text-xs font-medium">{p.rating}</span>
+                          <span className="text-xs font-medium">{p.rating || 0}</span>
                         </div>
                       </div>
                       <p className="text-[10px] text-muted-foreground">{p.category_name}</p>
