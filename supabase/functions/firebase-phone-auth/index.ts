@@ -145,6 +145,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const firebase_id_token = body?.firebase_id_token;
     const mode = body?.mode || "login"; // "login" | "register"
+    const role = body?.role || "customer"; // "customer" | "vendor"
     const registerData = body?.register_data; // { name, email, mobile, occupation?, referral_code? }
 
     if (!firebase_id_token) {
@@ -377,7 +378,99 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── LOGIN MODE (default) ──────────────────────────────────────────
+    // ── VENDOR LOGIN MODE ──────────────────────────────────────────────
+    if (role === "vendor") {
+      console.log("Vendor login attempt for phone:", normalizedPhone);
+
+      // Look up vendor by phone
+      const { data: existingVendor, error: vendorLookupErr } = await supabase
+        .from("vendors")
+        .select("id, name, email, mobile, business_name, status")
+        .or(`mobile.eq.${normalizedPhone},mobile.eq.${rawDigits},mobile.ilike.%${rawDigits}%`)
+        .limit(1)
+        .maybeSingle();
+
+      if (vendorLookupErr) console.error("Vendor lookup error:", vendorLookupErr.message);
+
+      if (!existingVendor) {
+        console.log("No registered vendor found for phone:", normalizedPhone);
+        return respond(false, {
+          error: "No vendor account found with this mobile number. Please register first.",
+          code: "NOT_REGISTERED",
+        });
+      }
+
+      if (existingVendor.status !== "active" && existingVendor.status !== "verified") {
+        return respond(false, {
+          error: "Your vendor profile is not yet active. Please wait for admin approval.",
+          code: "VENDOR_NOT_ACTIVE",
+        });
+      }
+
+      console.log("Found registered vendor:", existingVendor.id);
+
+      // Find or create Supabase auth user
+      const { data: allUsers } = await supabase.auth.admin.listUsers();
+      let supabaseUser = allUsers?.users?.find(
+        (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
+      );
+
+      if (!supabaseUser) {
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email: phoneEmail,
+          phone: normalizedPhone,
+          email_confirm: true,
+          phone_confirm: true,
+          password: crypto.randomUUID(),
+          user_metadata: { phone: normalizedPhone, login_method: "firebase_phone" },
+        });
+        if (createError) throw createError;
+        supabaseUser = newUser.user;
+      }
+
+      // Ensure vendor user_roles entry exists
+      const { data: existingVendorRole } = await supabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", supabaseUser.id)
+        .eq("role", "vendor")
+        .maybeSingle();
+
+      if (!existingVendorRole) {
+        await supabase.from("user_roles").insert({
+          user_id: supabaseUser.id,
+          role: "vendor",
+          vendor_id: existingVendor.id,
+        });
+      }
+
+      // Generate magic link token
+      const { data: vendorLinkData, error: vendorLinkError } = await supabase.auth.admin.generateLink({
+        type: "magiclink",
+        email: phoneEmail,
+      });
+      if (vendorLinkError) throw vendorLinkError;
+
+      const vendorTokenHash = vendorLinkData?.properties?.hashed_token;
+      if (!vendorTokenHash) throw new Error("Failed to generate session token");
+
+      console.log("Vendor auth success for", phoneNumber, "vendor:", existingVendor.id);
+
+      return respond(true, {
+        token_hash: vendorTokenHash,
+        email: phoneEmail,
+        user_id: supabaseUser.id,
+        vendor: {
+          id: existingVendor.id,
+          name: existingVendor.name,
+          email: existingVendor.email,
+          business_name: existingVendor.business_name,
+        },
+        is_new_user: false,
+      });
+    }
+
+    // ── CUSTOMER LOGIN MODE (default) ──────────────────────────────────
     if (!existingCustomer) {
       console.log("No registered customer found for phone:", normalizedPhone);
       return respond(false, {
@@ -392,8 +485,6 @@ Deno.serve(async (req) => {
       (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
     );
 
-    // If no Supabase auth user exists but customer is registered, create the auth user
-    // and link to existing customer
     if (!supabaseUser) {
       const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
         email: phoneEmail,
@@ -406,7 +497,6 @@ Deno.serve(async (req) => {
       if (createError) throw createError;
       supabaseUser = newUser.user;
 
-      // Link existing customer to this auth user via user_roles
       const { data: existingRole } = await supabase
         .from("user_roles")
         .select("id")
@@ -423,7 +513,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Generate magic link token
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
       email: phoneEmail,
@@ -433,7 +522,6 @@ Deno.serve(async (req) => {
     const tokenHash = linkData?.properties?.hashed_token;
     if (!tokenHash) throw new Error("Failed to generate session token");
 
-    // Get customer info
     const { data: customerData } = await supabase
       .from("user_roles")
       .select("customer_id")
@@ -451,7 +539,6 @@ Deno.serve(async (req) => {
       customerInfo = cust;
     }
 
-    // Check if customer has saved addresses
     let hasAddress = false;
     if (customerData?.customer_id) {
       const { count } = await supabase
