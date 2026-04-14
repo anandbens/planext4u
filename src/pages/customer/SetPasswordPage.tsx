@@ -196,7 +196,16 @@ export default function SetPasswordPage() {
             </Button>
 
             <button
-              onClick={() => navigate(isVendor ? "/vendor" : "/app", { replace: true })}
+              onClick={() => {
+                // Clear just_logged_in flag so user isn't redirected back
+                const ck = isVendor ? "vendor_user" : "customer_user";
+                try {
+                  const d = JSON.parse(localStorage.getItem(ck) || "{}");
+                  d.just_logged_in = false;
+                  localStorage.setItem(ck, JSON.stringify(d));
+                } catch {}
+                navigate(isVendor ? "/vendor" : "/app", { replace: true });
+              }}
               className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors mt-2"
             >
               Skip for now →
