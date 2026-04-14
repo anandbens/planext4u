@@ -150,7 +150,7 @@ export default function AdminOnboardingPage() {
             </div>
             <div>
               <Label>Description</Label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} />
+              <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Onboarding screen description..." minHeight="100px" compact />
             </div>
             <div>
               <Label>Image</Label>

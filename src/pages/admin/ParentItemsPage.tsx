@@ -152,7 +152,7 @@ export default function ParentItemsPage() {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Description</Label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1" rows={2} />
+              <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Item description..." minHeight="80px" compact />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Status</Label>

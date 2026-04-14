@@ -140,7 +140,7 @@ export default function SocialEditProfilePage() {
           </div>
           <div>
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Bio</label>
-            <Textarea value={form.bio} onChange={(e) => setForm(p => ({ ...p, bio: e.target.value }))} className="mt-1 resize-none" rows={3} maxLength={150} />
+            <RichTextEditor value={form.bio} onChange={(v) => setForm(p => ({ ...p, bio: v }))} placeholder="Tell people about yourself..." minHeight="80px" compact />
             <p className="text-[10px] text-muted-foreground mt-1 text-right">{form.bio.length}/150</p>
           </div>
           <div>
