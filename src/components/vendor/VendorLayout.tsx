@@ -239,7 +239,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
                   <div className="flex-1">
                     <p className="text-xl font-bold">{vendorUser?.name || "Vendor"}</p>
                     <p className="text-sm text-muted-foreground">{vendorUser?.business_name}</p>
-                    <p className="text-xs text-muted-foreground">{vendorUser?.email}</p>
+                    {vendorUser?.email && <p className="text-xs text-muted-foreground">{vendorUser.email}</p>}
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </Link>
