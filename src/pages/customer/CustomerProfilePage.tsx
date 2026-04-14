@@ -61,6 +61,16 @@ export default function CustomerProfilePage() {
     { icon: Settings, label: "Settings", to: "/app/profile/edit" },
   ];
 
+  // Helper to filter out synthetic emails
+  const getRealEmail = (email?: string) => {
+    if (!email || email.includes('@phone.planext4u.local')) return null;
+    return email;
+  };
+
+  const displayEmail = getRealEmail(profile?.email) || getRealEmail(customerUser?.email) || '';
+  const displayPhone = profile?.mobile || customerUser?.mobile || '';
+  const displayName = profile?.name || customerUser?.name || '';
+
   return (
     <CustomerLayout>
       <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-6 space-y-6">
@@ -70,8 +80,8 @@ export default function CustomerProfilePage() {
               <User className="h-8 w-8 text-primary" />
             </div>
             <div className="flex-1">
-              <h2 className="text-lg font-bold">{customerUser?.name || profile?.name}</h2>
-              <p className="text-sm text-muted-foreground">{customerUser?.mobile || profile?.mobile} • {customerUser?.email || profile?.email}</p>
+              <h2 className="text-lg font-bold">{displayName}</h2>
+              <p className="text-sm text-muted-foreground">{displayPhone}{displayEmail ? ` • ${displayEmail}` : ''}</p>
               <p className="text-xs text-muted-foreground mt-0.5">Member since {new Date(profile?.created_at || '').toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}</p>
             </div>
             <Link to="/app/profile/edit"><Button variant="outline" size="sm">Edit</Button></Link>
