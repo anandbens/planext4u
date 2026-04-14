@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Package, Truck, MapPin, Star, CheckCircle2, Clock, Store, Receipt, ChevronRight } from "lucide-react";
+import { ArrowLeft, Package, Truck, MapPin, Star, CheckCircle2, Clock, Store, Receipt, ChevronRight, Camera, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -32,6 +36,8 @@ export default function CustomerOrderDetailPage() {
   const qc = useQueryClient();
   const [rating, setRating] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
+  const [showPodPopup, setShowPodPopup] = useState(false);
+  const [podForm, setPodForm] = useState({ confirmation_type: "received_in_person", recipient_name: "", notes: "" });
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["orderDetail", orderId],
@@ -40,6 +46,43 @@ export default function CustomerOrderDetailPage() {
       return data as any;
     },
     enabled: !!orderId,
+  });
+
+  const { data: existingPod } = useQuery({
+    queryKey: ["deliveryProof", orderId],
+    queryFn: async () => {
+      const { data } = await supabase.from("delivery_proofs" as any).select("*").eq("order_id", orderId!).maybeSingle();
+      return data;
+    },
+    enabled: !!orderId,
+  });
+
+  // Auto-show POD popup when order is delivered and no POD exists
+  useEffect(() => {
+    if (order && (order.status === "delivered") && !existingPod && !isLoading) {
+      const timer = setTimeout(() => setShowPodPopup(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [order, existingPod, isLoading]);
+
+  const submitPod = useMutation({
+    mutationFn: async () => {
+      const customerId = customerUser?.customer_id || customerUser?.id || '';
+      const { error } = await supabase.from("delivery_proofs" as any).insert({
+        order_id: orderId,
+        customer_id: customerId,
+        confirmation_type: podForm.confirmation_type,
+        recipient_name: podForm.recipient_name || null,
+        notes: podForm.notes || null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Delivery confirmed! Thank you.");
+      setShowPodPopup(false);
+      qc.invalidateQueries({ queryKey: ["deliveryProof", orderId] });
+    },
+    onError: (err: any) => toast.error(err.message || "Failed to submit"),
   });
 
   const submitRating = useMutation({
