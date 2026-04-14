@@ -91,6 +91,7 @@ import AuthCallbackPage from "./pages/customer/AuthCallbackPage";
 import CustomerCMSPage from "./pages/customer/CustomerCMSPage";
 import ForgotPasswordPage from "./pages/customer/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/customer/ResetPasswordPage";
+import SetPasswordPage from "./pages/customer/SetPasswordPage";
 import CustomerSupportPage from "./pages/customer/CustomerSupportPage";
 
 // Social pages
