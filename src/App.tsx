@@ -444,6 +444,7 @@ const AppRoutes = () => {
         <Route path="/vendor/profile" element={<VendorPage><VendorProfilePage /></VendorPage>} />
         <Route path="/vendor/settings" element={<VendorPage><VendorProfilePage /></VendorPage>} />
         <Route path="/vendor/account-control" element={<VendorPage><VendorAccountControlPage /></VendorPage>} />
+        <Route path="/vendor/change-password" element={<VendorPage><VendorChangePasswordPage /></VendorPage>} />
         <Route path="/vendor/media" element={<VendorPage><VendorMediaLibraryPage /></VendorPage>} />
 
         {/* Customer Account Control */}
