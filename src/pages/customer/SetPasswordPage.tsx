@@ -23,12 +23,33 @@ export default function SetPasswordPage() {
   const portalLabel = isVendor ? "Vendor" : "Customer";
 
   useEffect(() => {
-    // Get user info from session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Get real user info from customers/vendors table, not the synthetic auth email
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user) {
         navigate(isVendor ? "/vendor/login" : "/app/login", { replace: true });
         return;
       }
+      const uid = session.user.id;
+      // Look up the role to find customer_id or vendor_id
+      const { data: roles } = await supabase.from("user_roles").select("role, customer_id, vendor_id").eq("user_id", uid);
+      const role = roles?.[0];
+      if (role && !isVendor && role.customer_id) {
+        const { data: cust } = await supabase.from("customers").select("email, mobile").eq("id", role.customer_id).single();
+        if (cust) {
+          setUserEmail(cust.email || "");
+          setUserPhone(cust.mobile || "");
+          return;
+        }
+      }
+      if (role && isVendor && role.vendor_id) {
+        const { data: vend } = await supabase.from("vendors").select("email, mobile").eq("id", role.vendor_id).single();
+        if (vend) {
+          setUserEmail((vend as any).email || "");
+          setUserPhone((vend as any).mobile || "");
+          return;
+        }
+      }
+      // Fallback to auth user data
       setUserEmail(session.user.email || "");
       setUserPhone(session.user.phone || session.user.user_metadata?.phone || "");
     });
