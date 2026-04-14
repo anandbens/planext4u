@@ -323,25 +323,37 @@ export default function VendorsPage() {
       </Tabs>
 
       <DataTable
-        columns={[
+        columns={isSpecialTab ? [
           { key: "id", label: "ID" },
-          { key: "business_name", label: "Business", render: (v) => (
+          { key: "business_name", label: "Business", render: (v: any) => (
+            <div><p className="font-medium">{v.business_name}</p><p className="text-xs text-muted-foreground">{v.name}</p></div>
+          )},
+          { key: "email", label: "Email", render: (v: any) => <span className="text-xs">{v.email?.replace(/_DEL_\d+$/, '') || '—'}</span> },
+          { key: "mobile", label: "Mobile", render: (v: any) => <span className="text-xs">{v.mobile?.replace(/_DEL_\d+$/, '') || '—'}</span> },
+          { key: "deleted_at", label: activeTab === "deleted" ? "Deleted At" : "Deactivated", render: (v: any) => <span className="text-xs text-muted-foreground">{v.deleted_at ? new Date(v.deleted_at).toLocaleDateString() : '—'}</span> },
+          { key: "status", label: "Status", render: (v: any) => <StatusBadge status={v.status} /> },
+          { key: "actions", label: "", render: (v: any) => (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
+          )},
+        ] : [
+          { key: "id", label: "ID" },
+          { key: "business_name", label: "Business", render: (v: any) => (
             <div><p className="font-medium">{v.business_name}</p><p className="text-xs text-muted-foreground">{v.name}</p></div>
           )},
           { key: "email", label: "Email" },
           { key: "mobile", label: "Mobile" },
-          { key: "commission_rate", label: "Commission", render: (v) => <span>{v.commission_rate}%</span> },
+          { key: "commission_rate", label: "Commission", render: (v: any) => <span>{v.commission_rate}%</span> },
           { key: "plan_payment_status", label: "Payment", render: (v: any) => {
             const ps = v.plan_payment_status || "unpaid";
             const color = ps === "paid" ? "bg-success/10 text-success" : ps === "offline_pending" ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive";
             return <Badge className={`border-0 text-[10px] ${color}`}>{ps === "offline_pending" ? "Pending" : ps}</Badge>;
           }},
-          { key: "status", label: "Status", render: (v) => <StatusBadge status={v.status} /> },
-          { key: "actions", label: "Actions", render: (v) => (
+          { key: "status", label: "Status", render: (v: any) => <StatusBadge status={v.status} /> },
+          { key: "actions", label: "Actions", render: (v: any) => (
             <div className="flex gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(v, "edit"); }}><Pencil className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); openConfirm(v, "delete"); }}><Trash2 className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "edit"); }}><Pencil className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e: any) => { e.stopPropagation(); openConfirm(v, "delete"); }}><Trash2 className="h-4 w-4" /></Button>
             </div>
           )},
         ]}
@@ -353,7 +365,7 @@ export default function VendorsPage() {
         onPageChange={setPage}
         onSearch={setSearch}
         onExport={handleExport}
-        onAdd={() => openModal(null, "create")}
+        onAdd={!isSpecialTab ? () => openModal(null, "create") : undefined}
         addLabel="Add Vendor"
         onRowClick={(v) => openModal(v, "view")}
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } if (key === "payment") { setPaymentFilter(val); setPage(1); } }}
@@ -364,10 +376,10 @@ export default function VendorsPage() {
           { value: "offline_pending", label: "Pending" },
         ]}] : undefined}
         summaryWidgets={summaryWidgets}
-        enableBulkSelect
-        onBulkDelete={handleBulkDelete}
-        onBulkStatusUpdate={handleBulkStatus}
-        bulkStatusOptions={[
+        enableBulkSelect={!isSpecialTab}
+        onBulkDelete={!isSpecialTab ? handleBulkDelete : undefined}
+        onBulkStatusUpdate={!isSpecialTab ? handleBulkStatus : undefined}
+        bulkStatusOptions={!isSpecialTab ? [
           { value: "pending", label: "Pending" },
           { value: "verified", label: "Verified" },
           { value: "rejected", label: "Rejected" },
