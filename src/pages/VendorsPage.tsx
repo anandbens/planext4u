@@ -8,7 +8,7 @@ import { VendorModal } from "@/components/admin/modals/VendorModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, Ban, CreditCard } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, Ban, CreditCard, UserX } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
