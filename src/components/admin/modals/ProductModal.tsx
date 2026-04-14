@@ -244,8 +244,8 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
   const discountPct = form.discount_type === "percentage" ? form.discount : (form.price > 0 ? Math.round((form.discount / form.price) * 100) : 0);
 
   const handleSave = async () => {
-    if (!form.title) return;
-    if (form.status === 'rejected' && !form.rejection_reason?.trim()) return;
+    if (!form.title.trim()) { toast.error("Title is required"); return; }
+    if (form.status === 'rejected' && !form.rejection_reason?.trim()) { toast.error("Rejection reason is required"); return; }
     setSaving(true);
     try {
       const payload = { ...form, tax: taxAmount };
@@ -272,6 +272,9 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         }
       }
       onOpenChange(false);
+    } catch (err: any) {
+      console.error("Product save error:", err);
+      toast.error(err.message || "Failed to save product");
     } finally { setSaving(false); }
   };
 
