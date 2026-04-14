@@ -383,7 +383,7 @@ export default function VendorsPage() {
           { value: "pending", label: "Pending" },
           { value: "verified", label: "Verified" },
           { value: "rejected", label: "Rejected" },
-        ]}
+        ] : undefined}
       />
       <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} onRefresh={fetchData} />
       <ConfirmDialog
