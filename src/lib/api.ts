@@ -542,6 +542,11 @@ export const api = {
     for (const key of validProductFields) {
       if (key in data && (data as any)[key] !== undefined) newProduct[key] = (data as any)[key];
     }
+    // Nullify empty strings for UUID/FK fields to avoid "invalid input syntax for type uuid" errors
+    const uuidFields = ['category_id', 'subcategory_id', 'tax_slab_id', 'parent_item_id', 'vendor_id'];
+    for (const f of uuidFields) {
+      if (newProduct[f] === '' || newProduct[f] === undefined) newProduct[f] = null;
+    }
     const { error } = await supabase.from('products').insert(newProduct as any);
     if (error) { console.error("Product create error:", error); throw error; }
     return { success: true, product: newProduct };
