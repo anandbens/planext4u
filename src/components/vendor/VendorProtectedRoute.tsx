@@ -1,9 +1,10 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { VendorFTUXFlow } from "./VendorFTUXFlow";
 
 export function VendorProtectedRoute({ children }: { children: React.ReactNode }) {
   const { vendorUser, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -15,6 +16,11 @@ export function VendorProtectedRoute({ children }: { children: React.ReactNode }
 
   if (!vendorUser) {
     return <Navigate to="/vendor/login" replace />;
+  }
+
+  // Redirect to set-password if first-time OTP login and not already on the page
+  if (!vendorUser.password_set && location.pathname !== "/vendor/set-password") {
+    return <Navigate to="/vendor/set-password" replace />;
   }
 
   return <VendorFTUXFlow>{children}</VendorFTUXFlow>;

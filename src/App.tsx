@@ -91,6 +91,7 @@ import AuthCallbackPage from "./pages/customer/AuthCallbackPage";
 import CustomerCMSPage from "./pages/customer/CustomerCMSPage";
 import ForgotPasswordPage from "./pages/customer/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/customer/ResetPasswordPage";
+import SetPasswordPage from "./pages/customer/SetPasswordPage";
 import CustomerSupportPage from "./pages/customer/CustomerSupportPage";
 
 // Social pages
@@ -353,6 +354,7 @@ const AppRoutes = () => {
         <Route path="/app/register" element={vendorPortalMode ? <Navigate to={customerRegisterRoute} replace /> : <CustomerRegisterPage />} />
         <Route path="/app/phone-login" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <CustomerPhoneLoginPage />} />
         <Route path="/app/set-location" element={<SetLocationPage />} />
+        <Route path="/app/set-password" element={<SetPasswordPage />} />
         <Route path="/app/terms" element={<TermsPage />} />
         <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/app/cms/:slug" element={<CustomerCMSPage />} />
@@ -427,6 +429,7 @@ const AppRoutes = () => {
         {/* Vendor-facing routes */}
         <Route path="/vendor/login" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorLoginPage />} />
         <Route path="/vendor/register" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorRegisterStandalonePage />} />
+        <Route path="/vendor/set-password" element={<SetPasswordPage />} />
         <Route path="/vendor" element={<VendorPage><VendorDashboardPage /></VendorPage>} />
         <Route path="/vendor/products" element={<VendorPage><VendorProductsPage /></VendorPage>} />
         <Route path="/vendor/services" element={<VendorPage><VendorServicesPage /></VendorPage>} />

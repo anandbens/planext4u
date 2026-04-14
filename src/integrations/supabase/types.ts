@@ -3841,6 +3841,7 @@ export type Database = {
         Row: {
           customer_id: string | null
           id: string
+          password_set: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
           vendor_id: string | null
@@ -3848,6 +3849,7 @@ export type Database = {
         Insert: {
           customer_id?: string | null
           id?: string
+          password_set?: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
           vendor_id?: string | null
@@ -3855,6 +3857,7 @@ export type Database = {
         Update: {
           customer_id?: string | null
           id?: string
+          password_set?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
           vendor_id?: string | null
