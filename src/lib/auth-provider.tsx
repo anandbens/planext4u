@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user) {
         const { id, email, user_metadata } = session.user;
         const name = user_metadata?.name || email?.split('@')[0] || '';
-        const isFreshLogin = event === 'SIGNED_IN' || isFreshLoginRef.current;
+        const isFreshLogin = isFreshLoginRef.current;
         isFreshLoginRef.current = false;
         setTimeout(async () => {
           const result = await loadUserRole(id, email || '', name, isFreshLogin);
