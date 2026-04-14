@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { awardPoints } from "@/lib/award-points";
+import { isSocialModerator } from "@/lib/social-moderator";
 
 export default function SocialStoryViewerPage() {
   const navigate = useNavigate();
@@ -179,12 +180,13 @@ export default function SocialStoryViewerPage() {
             <span className="text-white/60 text-xs">{timeAgo(story.created_at)}</span>
           </div>
           <div className="flex items-center gap-2">
-            {(customerUser?.supabase_uid || customerUser?.id) === group.user.id && (
+            {((customerUser?.supabase_uid || customerUser?.id) === group.user.id || isSocialModerator(customerUser?.supabase_uid || customerUser?.id)) && (
               <button onClick={async () => {
                 if (!confirm("Delete this story?")) return;
                 const { error } = await supabase.from('social_stories').delete().eq('id', story.id);
                 if (error) { toast.error("Failed to delete story"); return; }
                 toast.success("Story deleted");
+                qc.invalidateQueries({ queryKey: ['social-feed-stories'] });
                 goNext();
               }} className="p-1"><Trash2 className="h-5 w-5 text-white" /></button>
             )}
