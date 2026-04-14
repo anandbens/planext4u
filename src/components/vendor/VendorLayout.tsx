@@ -71,7 +71,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-[100dvh] bg-background flex">
       {/* ====== DESKTOP SIDEBAR ====== */}
       <aside className="hidden lg:flex flex-col w-60 border-r border-border/50 bg-card shrink-0 sticky top-0 h-screen">
         <div className="p-4 border-b border-border/50">
@@ -116,7 +116,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
       </aside>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-[100dvh]">
         {/* ====== MOBILE HEADER (Branded, matching customer style) ====== */}
         <header className="sticky top-0 z-30 lg:hidden bg-primary">
           <div className="px-4 pb-3" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>

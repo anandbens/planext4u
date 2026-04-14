@@ -96,7 +96,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100dvh] bg-background">
       {/* ====== MOBILE HEADER (Zepto-style) ====== */}
       <header className="sticky top-0 z-40 md:hidden bg-primary" data-no-safe-area>
         <div className="px-4 pb-2" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>

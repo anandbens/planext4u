@@ -263,7 +263,7 @@ const AppRoutes = () => {
   // Wait for app identity detection on native
   if (!appIdReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     );
