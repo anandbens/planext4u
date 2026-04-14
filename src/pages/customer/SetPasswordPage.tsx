@@ -1,0 +1,172 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
+
+export default function SetPasswordPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [userPhone, setUserPhone] = useState("");
+
+  // Determine portal from URL
+  const isVendor = location.pathname.startsWith("/vendor");
+  const portalLabel = isVendor ? "Vendor" : "Customer";
+
+  useEffect(() => {
+    // Get user info from session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) {
+        navigate(isVendor ? "/vendor/login" : "/app/login", { replace: true });
+        return;
+      }
+      setUserEmail(session.user.email || "");
+      setUserPhone(session.user.phone || session.user.user_metadata?.phone || "");
+    });
+  }, [navigate, isVendor]);
+
+  const handleSetPassword = async () => {
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    setLoading(true);
+    try {
+      // Update password in Supabase Auth
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw new Error(error.message);
+
+      // Mark password_set = true in user_roles
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await supabase
+          .from("user_roles")
+          .update({ password_set: true } as any)
+          .eq("user_id", session.user.id);
+      }
+
+      toast.success("Password set successfully! 🎉");
+      
+      // Navigate to the appropriate dashboard
+      setTimeout(() => {
+        navigate(isVendor ? "/vendor" : "/app", { replace: true });
+      }, 500);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to set password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <div
+        className="bg-primary pb-16 px-6 flex flex-col items-center relative"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3rem)" }}
+      >
+        <img src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
+        <h2 className="text-primary-foreground text-xl font-bold tracking-wider">Planext 4u</h2>
+      </div>
+
+      <div className="flex-1 bg-card -mt-6 rounded-t-3xl px-6 pt-8 pb-6">
+        <div className="max-w-sm mx-auto">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold mb-2">Set Your Password</h2>
+            <p className="text-sm text-muted-foreground">
+              Welcome! Set a password for your {portalLabel.toLowerCase()} account so you can also log in with email &amp; password.
+            </p>
+          </div>
+
+          {/* User Info */}
+          <div className="bg-muted/50 rounded-xl p-4 mb-6 space-y-2">
+            {userEmail && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground font-medium w-16">Email:</span>
+                <span className="text-sm font-semibold text-foreground break-all">{userEmail}</span>
+              </div>
+            )}
+            {userPhone && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground font-medium w-16">Phone:</span>
+                <span className="text-sm font-semibold text-foreground">{userPhone}</span>
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              This is your username for email &amp; password login.
+            </p>
+          </div>
+
+          {/* Password Fields */}
+          <div className="space-y-4">
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Create password (min. 6 characters)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 pr-10 h-12 rounded-xl"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type={showConfirm ? "text" : "password"}
+                placeholder="Confirm password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pl-10 pr-10 h-12 rounded-xl"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+
+            <Button
+              onClick={handleSetPassword}
+              className="w-full h-12 rounded-xl text-base gap-2"
+              disabled={loading || password.length < 6}
+            >
+              {loading ? "Setting password..." : "Set Password & Continue"}
+            </Button>
+
+            <button
+              onClick={() => navigate(isVendor ? "/vendor" : "/app", { replace: true })}
+              className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors mt-2"
+            >
+              Skip for now →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
