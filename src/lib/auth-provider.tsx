@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string) => {
     const { data: roles } = await supabase
       .from("user_roles")
-      .select("role, vendor_id, customer_id")
+      .select("role, vendor_id, customer_id, password_set")
       .eq("user_id", supabaseUid);
 
     if (!roles || roles.length === 0) {
