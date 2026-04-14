@@ -34,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const vu: VendorUser = {
         id: vendor?.id || vendorId, name: vendor?.name || name, email: vendor?.email || email,
         business_name: vendor?.business_name || '', vendor_id: vendorId, supabase_uid: supabaseUid,
+        password_set: !!roleRecord.password_set,
       };
       setVendorUser(vu);
       localStorage.setItem("vendor_user", JSON.stringify(vu));
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const cu: CustomerUser = {
         id: customer?.id || customerId, name: customer?.name || name, email: customer?.email || email,
         mobile: customer?.mobile || '', customer_id: customerId, supabase_uid: supabaseUid,
+        password_set: !!roleRecord.password_set,
       };
       setCustomerUser(cu);
       localStorage.setItem("customer_user", JSON.stringify(cu));
