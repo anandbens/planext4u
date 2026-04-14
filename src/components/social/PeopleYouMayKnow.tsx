@@ -125,10 +125,11 @@ export default function PeopleYouMayKnow() {
             variant="outline"
             size="sm"
             className="rounded-full"
-            onClick={() => setContactsRequested(true)}
+            onClick={handleSyncContacts}
+            disabled={syncing}
           >
             <UserPlus className="h-4 w-4 mr-1" />
-            Find Friends from Contacts
+            {syncing ? "Syncing..." : "Find Friends from Contacts"}
           </Button>
         </div>
       );
