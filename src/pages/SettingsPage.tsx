@@ -5,45 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Settings as SettingsIcon, CreditCard, Shield, Globe, Save, Loader2 } from "lucide-react";
-import { api, PlatformVariable } from "@/lib/api";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 
 export default function SettingsPage() {
-  const [variables, setVariables] = useState<PlatformVariable[]>([]);
-  const [editValues, setEditValues] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
-
-  const loadVars = () => {
-    api.getPlatformVariables().then((vars) => {
-      setVariables(vars);
-      const vals: Record<string, string> = {};
-      vars.forEach((v) => { vals[v.id] = v.value; });
-      setEditValues(vals);
-    });
-  };
-
-  useEffect(() => { loadVars(); }, []);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      let changed = 0;
-      for (const v of variables) {
-        if (editValues[v.id] !== v.value) {
-          await api.updatePlatformVariable(v.id, editValues[v.id], v.value, v.key);
-          changed++;
-        }
-      }
-      loadVars();
-      toast.success(changed > 0 ? `${changed} variable(s) saved successfully` : "No changes to save");
-    } catch (e) {
-      toast.error("Failed to save. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
     <AdminLayout>
       <div className="page-header">
@@ -61,26 +25,8 @@ export default function SettingsPage() {
 
         <TabsContent value="general">
           <div className="bg-card rounded-xl border border-border/50 p-6 space-y-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
-            <h3 className="text-base font-semibold">Platform Variables</h3>
-            <div className="grid gap-4">
-              {variables.map((v) => (
-                <div key={v.id} className="flex items-center gap-4 p-3 rounded-lg bg-secondary/20">
-                  <div className="flex-1">
-                    <Label className="text-sm font-medium">{v.key}</Label>
-                    <p className="text-xs text-muted-foreground">{v.description}</p>
-                  </div>
-                  <Input
-                    value={editValues[v.id] || ""}
-                    onChange={(e) => setEditValues((prev) => ({ ...prev, [v.id]: e.target.value }))}
-                    className="w-32 h-9 bg-card"
-                  />
-                </div>
-              ))}
-            </div>
-            <Button onClick={handleSave} disabled={saving} className="gap-2">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Save Changes
-            </Button>
+            <h3 className="text-base font-semibold">General Settings</h3>
+            <p className="text-sm text-muted-foreground">General platform settings will appear here. Platform variables can be managed from the <a href="/platform-variables" className="text-primary underline">Platform Variables</a> page.</p>
           </div>
         </TabsContent>
 
