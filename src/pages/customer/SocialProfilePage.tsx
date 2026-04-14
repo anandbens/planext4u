@@ -201,7 +201,7 @@ export default function SocialProfilePage() {
         </div>
       </header>
 
-      <div className="max-w-xl mx-auto">
+      <div className="max-w-xl mx-auto relative z-0">
         {/* Profile Info */}
         <div className="px-4 pt-4">
           <div className="flex items-start gap-5">
