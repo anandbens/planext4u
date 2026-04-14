@@ -93,6 +93,7 @@ import ForgotPasswordPage from "./pages/customer/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/customer/ResetPasswordPage";
 import SetPasswordPage from "./pages/customer/SetPasswordPage";
 import CustomerSupportPage from "./pages/customer/CustomerSupportPage";
+import CustomerChangePasswordPage from "./pages/customer/CustomerChangePasswordPage";
 
 // Social pages
 import SocialFeedPage from "./pages/customer/SocialFeedPage";
@@ -167,6 +168,7 @@ import VendorBankPage from "./pages/vendor/VendorBankPage";
 import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
 import VendorAccountControlPage from "./pages/vendor/VendorAccountControlPage";
 import VendorMediaLibraryPage from "./pages/vendor/VendorMediaLibraryPage";
+import VendorChangePasswordPage from "./pages/vendor/VendorChangePasswordPage";
 import AccountControlPage from "./pages/customer/AccountControlPage";
 
 const queryClient = new QueryClient();
