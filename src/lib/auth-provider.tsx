@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (linkData?.success && linkData?.registered) {
             const { data: newRoles } = await supabase
               .from("user_roles")
-              .select("role, vendor_id, customer_id")
+              .select("role, vendor_id, customer_id, password_set")
               .eq("user_id", supabaseUid);
             if (newRoles && newRoles.length > 0) {
               return await processRole(newRoles[0], supabaseUid, email, name);
