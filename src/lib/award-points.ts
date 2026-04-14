@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 /** Cache platform variable values for 5 minutes */
 let cache: Record<string, string> = {};
 let cacheTime = 0;
+// Allow external invalidation via window property
+Object.defineProperty(window, '__platformVarCacheTime', { get: () => cacheTime, set: (v: number) => { cacheTime = v; }, configurable: true });
 
 async function loadCache() {
   if (Date.now() - cacheTime > 5 * 60 * 1000) {

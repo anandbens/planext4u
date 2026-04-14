@@ -273,12 +273,12 @@ export default function CustomerProductPage() {
             <div className="flex items-center gap-2 mt-2">
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`h-3.5 w-3.5 ${i < Math.round(summary?.avg || product.rating || 0) ? 'fill-warning text-warning' : 'text-muted-foreground/30'}`} />
+                  <Star key={i} className={`h-3.5 w-3.5 ${i < Math.round(summary?.avg || 0) ? 'fill-warning text-warning' : 'text-muted-foreground/30'}`} />
                 ))}
               </div>
-              <span className="text-xs font-medium">{summary?.avg || product.rating || 0}</span>
+              <span className="text-xs font-medium">{summary?.avg || 0}</span>
               <span className="text-xs text-muted-foreground">• {summary?.total ?? 0} reviews</span>
-              <span className="text-xs text-muted-foreground">• {product.sales} sold</span>
+              <span className="text-xs text-muted-foreground">• {product.sales || 0} sold</span>
             </div>
 
             {discountPct > 0 && (
