@@ -33,8 +33,8 @@ export function CustomerProtectedRoute({ children }: { children: React.ReactNode
     return <Navigate to="/app/login" replace />;
   }
 
-  // Redirect to set-password if first-time OTP login and not already on the page
-  if (!customerUser.password_set && location.pathname !== "/app/set-password") {
+  // Redirect to set-password ONLY on fresh first-time login (not on session restore / app reopen)
+  if (customerUser.just_logged_in && !customerUser.password_set && location.pathname !== "/app/set-password") {
     return <Navigate to="/app/set-password" replace />;
   }
 

@@ -19,6 +19,7 @@ export interface CustomerUser {
   customer_id?: string;
   supabase_uid?: string;
   password_set?: boolean;
+  just_logged_in?: boolean;
 }
 
 export interface VendorUser {
@@ -29,6 +30,7 @@ export interface VendorUser {
   vendor_id?: string;
   supabase_uid?: string;
   password_set?: boolean;
+  just_logged_in?: boolean;
 }
 
 export interface AuthContextType {

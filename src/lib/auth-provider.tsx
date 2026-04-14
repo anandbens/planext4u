@@ -11,8 +11,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [vendorUser, setVendorUser] = useState<VendorUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const loginResolveRef = useRef<(() => void) | null>(null);
+  const isFreshLoginRef = useRef(false);
 
-  const processRole = useCallback(async (roleRecord: any, supabaseUid: string, email: string, name: string): Promise<string> => {
+  const processRole = useCallback(async (roleRecord: any, supabaseUid: string, email: string, name: string, isFreshLogin: boolean): Promise<string> => {
     const role = roleRecord.role as AppRole;
 
     if (role === 'admin' || role === 'finance' || role === 'sales') {
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: vendor?.id || vendorId, name: vendor?.name || name, email: vendor?.email || email,
         business_name: vendor?.business_name || '', vendor_id: vendorId, supabase_uid: supabaseUid,
         password_set: !!roleRecord.password_set,
+        just_logged_in: isFreshLogin && !roleRecord.password_set,
       };
       setVendorUser(vu);
       localStorage.setItem("vendor_user", JSON.stringify(vu));
@@ -45,14 +47,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: customer?.id || customerId, name: customer?.name || name, email: customer?.email || email,
         mobile: customer?.mobile || '', customer_id: customerId, supabase_uid: supabaseUid,
         password_set: !!roleRecord.password_set,
+        just_logged_in: isFreshLogin && !roleRecord.password_set,
       };
       setCustomerUser(cu);
       localStorage.setItem("customer_user", JSON.stringify(cu));
     }
+
+    // Log login event for fresh logins
+    if (isFreshLogin) {
+      try {
+        await supabase.from("login_logs").insert({
+          user_id: supabaseUid,
+          role: role,
+          portal: role === 'admin' || role === 'finance' || role === 'sales' ? 'admin' : role,
+          login_method: 'phone_otp',
+        } as any);
+      } catch {}
+    }
+
     return 'loaded';
   }, []);
 
-  const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string) => {
+  const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string, isFreshLogin: boolean) => {
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role, vendor_id, customer_id, password_set")
@@ -71,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .select("role, vendor_id, customer_id, password_set")
               .eq("user_id", supabaseUid);
             if (newRoles && newRoles.length > 0) {
-              return await processRole(newRoles[0], supabaseUid, email, name);
+              return await processRole(newRoles[0], supabaseUid, email, name, isFreshLogin);
             }
           }
         } catch {}
@@ -83,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return 'unregistered';
     }
 
-    return await processRole(roles[0], supabaseUid, email, name);
+    return await processRole(roles[0], supabaseUid, email, name, isFreshLogin);
   }, [processRole]);
 
   useEffect(() => {
@@ -101,8 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user) {
         const { id, email, user_metadata } = session.user;
         const name = user_metadata?.name || email?.split('@')[0] || '';
+        const isFreshLogin = event === 'SIGNED_IN' || isFreshLoginRef.current;
+        isFreshLoginRef.current = false;
         setTimeout(async () => {
-          const result = await loadUserRole(id, email || '', name);
+          const result = await loadUserRole(id, email || '', name, isFreshLogin);
           setIsLoading(false);
           initPushNotifications(id);
           linkPushTokenToUser(id);
@@ -130,31 +148,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
+    isFreshLoginRef.current = true;
     const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setIsLoading(false);
+      isFreshLoginRef.current = false;
       throw new Error(error.message);
     }
-    // Mark password_set since they used email+password
     if (signInData?.user) {
       await supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id);
     }
-    // Wait for onAuthStateChange to finish loading the role
     await new Promise<void>((resolve) => {
       loginResolveRef.current = resolve;
-      // Safety timeout
       setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 5000);
     });
   };
 
   const customerLogin = async (email: string, password: string) => {
     setIsLoading(true);
+    isFreshLoginRef.current = true;
     const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setIsLoading(false);
+      isFreshLoginRef.current = false;
       throw new Error(error.message);
     }
-    // Mark password_set since they used email+password
     if (signInData?.user) {
       await supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id);
     }
@@ -167,12 +185,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const vendorLogin = async (email: string, password: string) => {
     setIsLoading(true);
+    isFreshLoginRef.current = true;
     const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setIsLoading(false);
+      isFreshLoginRef.current = false;
       throw new Error(error.message);
     }
-    // Mark password_set since they used email+password
     if (signInData?.user) {
       await supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id);
     }

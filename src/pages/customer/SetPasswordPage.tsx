@@ -23,12 +23,33 @@ export default function SetPasswordPage() {
   const portalLabel = isVendor ? "Vendor" : "Customer";
 
   useEffect(() => {
-    // Get user info from session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Get real user info from customers/vendors table, not the synthetic auth email
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user) {
         navigate(isVendor ? "/vendor/login" : "/app/login", { replace: true });
         return;
       }
+      const uid = session.user.id;
+      // Look up the role to find customer_id or vendor_id
+      const { data: roles } = await supabase.from("user_roles").select("role, customer_id, vendor_id").eq("user_id", uid);
+      const role = roles?.[0];
+      if (role && !isVendor && role.customer_id) {
+        const { data: cust } = await supabase.from("customers").select("email, mobile").eq("id", role.customer_id).single();
+        if (cust) {
+          setUserEmail(cust.email || "");
+          setUserPhone(cust.mobile || "");
+          return;
+        }
+      }
+      if (role && isVendor && role.vendor_id) {
+        const { data: vend } = await supabase.from("vendors").select("email, mobile").eq("id", role.vendor_id).single();
+        if (vend) {
+          setUserEmail((vend as any).email || "");
+          setUserPhone((vend as any).mobile || "");
+          return;
+        }
+      }
+      // Fallback to auth user data
       setUserEmail(session.user.email || "");
       setUserPhone(session.user.phone || session.user.user_metadata?.phone || "");
     });
@@ -58,17 +79,19 @@ export default function SetPasswordPage() {
           .eq("user_id", session.user.id);
       }
 
-      // Update local storage so protected route allows through
+      // Update local storage - mark password_set and clear just_logged_in
       const customerData = localStorage.getItem("customer_user");
       const vendorData = localStorage.getItem("vendor_user");
       if (customerData) {
         const cu = JSON.parse(customerData);
         cu.password_set = true;
+        cu.just_logged_in = false;
         localStorage.setItem("customer_user", JSON.stringify(cu));
       }
       if (vendorData) {
         const vu = JSON.parse(vendorData);
         vu.password_set = true;
+        vu.just_logged_in = false;
         localStorage.setItem("vendor_user", JSON.stringify(vu));
       }
 
@@ -173,7 +196,16 @@ export default function SetPasswordPage() {
             </Button>
 
             <button
-              onClick={() => navigate(isVendor ? "/vendor" : "/app", { replace: true })}
+              onClick={() => {
+                // Clear just_logged_in flag so user isn't redirected back
+                const ck = isVendor ? "vendor_user" : "customer_user";
+                try {
+                  const d = JSON.parse(localStorage.getItem(ck) || "{}");
+                  d.just_logged_in = false;
+                  localStorage.setItem(ck, JSON.stringify(d));
+                } catch {}
+                navigate(isVendor ? "/vendor" : "/app", { replace: true });
+              }}
               className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors mt-2"
             >
               Skip for now →
