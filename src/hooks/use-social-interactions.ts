@@ -385,7 +385,7 @@ export function useRepost() {
       const authorName = authorProfile?.display_name || authorProfile?.username || 'user';
 
       // Get first media item for story thumbnail
-      const mediaItems = Array.isArray(original.media) ? original.media : [];
+      const mediaItems = Array.isArray(original.media) ? original.media as any[] : [];
       const firstMedia = mediaItems[0];
 
       if (!firstMedia?.url) {
@@ -407,7 +407,7 @@ export function useRepost() {
       } as any);
 
       // Increment share count on original post
-      await supabase.rpc('refresh_social_post_counts' as any, { _post_id: postId }).catch(() => {});
+      try { await (supabase.rpc as any)('refresh_social_post_counts', { _post_id: postId }); } catch {}
 
       toast.success(`Shared to your story!`);
     },
