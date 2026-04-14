@@ -337,10 +337,14 @@ function PostCard({ post }: { post: any }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild><button className="p-1"><MoreHorizontal className="h-5 w-5" /></button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {userId === post.user_id && (
+            {(userId === post.user_id || isSocialModerator(userId)) && (
               <DropdownMenuItem className="text-destructive" onClick={async () => {
                 if (!confirm("Are you sure you want to delete this post?")) return;
-                const { error } = await supabase.from('social_posts').delete().eq('id', postId).eq('user_id', userId);
+                const isMod = isSocialModerator(userId);
+                const deleteQuery = isMod && userId !== post.user_id
+                  ? supabase.from('social_posts').delete().eq('id', postId)
+                  : supabase.from('social_posts').delete().eq('id', postId).eq('user_id', userId);
+                const { error } = await deleteQuery;
                 if (error) { toast.error("Failed to delete post"); return; }
                 toast.success("Post deleted");
                 qc.invalidateQueries({ queryKey: ['social-feed'] });
