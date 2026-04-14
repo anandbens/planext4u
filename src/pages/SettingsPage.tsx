@@ -4,16 +4,45 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Settings as SettingsIcon, CreditCard, Shield, Globe } from "lucide-react";
+import { Settings as SettingsIcon, CreditCard, Shield, Globe, Save, Loader2 } from "lucide-react";
 import { api, PlatformVariable } from "@/lib/api";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const [variables, setVariables] = useState<PlatformVariable[]>([]);
+  const [editValues, setEditValues] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    api.getPlatformVariables().then(setVariables);
-  }, []);
+  const loadVars = () => {
+    api.getPlatformVariables().then((vars) => {
+      setVariables(vars);
+      const vals: Record<string, string> = {};
+      vars.forEach((v) => { vals[v.id] = v.value; });
+      setEditValues(vals);
+    });
+  };
+
+  useEffect(() => { loadVars(); }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      let changed = 0;
+      for (const v of variables) {
+        if (editValues[v.id] !== v.value) {
+          await api.updatePlatformVariable(v.id, editValues[v.id], v.value, v.key);
+          changed++;
+        }
+      }
+      loadVars();
+      toast.success(changed > 0 ? `${changed} variable(s) saved successfully` : "No changes to save");
+    } catch (e) {
+      toast.error("Failed to save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -40,11 +69,18 @@ export default function SettingsPage() {
                     <Label className="text-sm font-medium">{v.key}</Label>
                     <p className="text-xs text-muted-foreground">{v.description}</p>
                   </div>
-                  <Input defaultValue={v.value} className="w-32 h-9 bg-card" />
+                  <Input
+                    value={editValues[v.id] || ""}
+                    onChange={(e) => setEditValues((prev) => ({ ...prev, [v.id]: e.target.value }))}
+                    className="w-32 h-9 bg-card"
+                  />
                 </div>
               ))}
             </div>
-            <Button>Save Changes</Button>
+            <Button onClick={handleSave} disabled={saving} className="gap-2">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Save Changes
+            </Button>
           </div>
         </TabsContent>
 

@@ -37,7 +37,7 @@ export default function PlatformVariablesPage() {
       let changed = 0;
       for (const v of variables) {
         if (editValues[v.id] !== v.value) {
-          await api.updatePlatformVariable(v.id, editValues[v.id]);
+          await api.updatePlatformVariable(v.id, editValues[v.id], v.value, v.key);
           changed++;
         }
       }

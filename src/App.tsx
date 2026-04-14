@@ -93,6 +93,7 @@ import ForgotPasswordPage from "./pages/customer/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/customer/ResetPasswordPage";
 import SetPasswordPage from "./pages/customer/SetPasswordPage";
 import CustomerSupportPage from "./pages/customer/CustomerSupportPage";
+import CustomerChangePasswordPage from "./pages/customer/CustomerChangePasswordPage";
 
 // Social pages
 import SocialFeedPage from "./pages/customer/SocialFeedPage";
@@ -167,6 +168,7 @@ import VendorBankPage from "./pages/vendor/VendorBankPage";
 import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
 import VendorAccountControlPage from "./pages/vendor/VendorAccountControlPage";
 import VendorMediaLibraryPage from "./pages/vendor/VendorMediaLibraryPage";
+import VendorChangePasswordPage from "./pages/vendor/VendorChangePasswordPage";
 import AccountControlPage from "./pages/customer/AccountControlPage";
 
 const queryClient = new QueryClient();
@@ -378,6 +380,7 @@ const AppRoutes = () => {
         <Route path="/app/classifieds/:id" element={<CustomerPage><CustomerClassifiedDetailPage /></CustomerPage>} />
         <Route path="/app/vendor-register" element={<CustomerPage><VendorRegisterPage /></CustomerPage>} />
         <Route path="/app/support" element={<CustomerPage><CustomerSupportPage /></CustomerPage>} />
+        <Route path="/app/change-password" element={<CustomerPage><CustomerChangePasswordPage /></CustomerPage>} />
 
         {/* Social routes */}
         <Route path="/app/social" element={<CustomerPage><SocialFeedPage /></CustomerPage>} />
@@ -441,6 +444,7 @@ const AppRoutes = () => {
         <Route path="/vendor/profile" element={<VendorPage><VendorProfilePage /></VendorPage>} />
         <Route path="/vendor/settings" element={<VendorPage><VendorProfilePage /></VendorPage>} />
         <Route path="/vendor/account-control" element={<VendorPage><VendorAccountControlPage /></VendorPage>} />
+        <Route path="/vendor/change-password" element={<VendorPage><VendorChangePasswordPage /></VendorPage>} />
         <Route path="/vendor/media" element={<VendorPage><VendorMediaLibraryPage /></VendorPage>} />
 
         {/* Customer Account Control */}
