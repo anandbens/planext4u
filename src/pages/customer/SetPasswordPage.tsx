@@ -58,6 +58,20 @@ export default function SetPasswordPage() {
           .eq("user_id", session.user.id);
       }
 
+      // Update local storage so protected route allows through
+      const customerData = localStorage.getItem("customer_user");
+      const vendorData = localStorage.getItem("vendor_user");
+      if (customerData) {
+        const cu = JSON.parse(customerData);
+        cu.password_set = true;
+        localStorage.setItem("customer_user", JSON.stringify(cu));
+      }
+      if (vendorData) {
+        const vu = JSON.parse(vendorData);
+        vu.password_set = true;
+        localStorage.setItem("vendor_user", JSON.stringify(vu));
+      }
+
       toast.success("Password set successfully! 🎉");
       
       // Navigate to the appropriate dashboard
