@@ -121,6 +121,7 @@ import AdminSocialDashboardPage from "./pages/admin/AdminSocialDashboardPage";
 import PaymentPage from "./pages/customer/PaymentPage";
 import SocioDMChatPage from "./pages/customer/SocioDMChatPage";
 import SocialPostDetailPage from "./pages/customer/SocialPostDetailPage";
+import SocialUserPostsPage from "./pages/customer/SocialUserPostsPage";
 
 // Property pages
 import PropertyHomePage from "./pages/customer/PropertyHomePage";
@@ -390,6 +391,7 @@ const AppRoutes = () => {
         <Route path="/app/social/@:username" element={<CustomerPage><SocialProfilePage /></CustomerPage>} />
         <Route path="/app/social/profile/:userId" element={<CustomerPage><SocialProfilePage /></CustomerPage>} />
         <Route path="/app/social/post/:postId" element={<CustomerPage><SocialPostDetailPage /></CustomerPage>} />
+        <Route path="/app/social/user/:userId/posts/:postId" element={<CustomerPage><SocialUserPostsPage /></CustomerPage>} />
         <Route path="/app/social/comments/:postId" element={<CustomerPage><SocialCommentsPage /></CustomerPage>} />
         <Route path="/app/social/:username/followers" element={<CustomerPage><SocialFollowersPage /></CustomerPage>} />
         <Route path="/app/social/:username/following" element={<CustomerPage><SocialFollowersPage /></CustomerPage>} />

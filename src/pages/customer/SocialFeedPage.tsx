@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
 import { useSocialFeed, useSharePost, useRepost } from "@/hooks/use-social-interactions";
+import { isSocialModerator } from "@/lib/social-moderator";
 import { supabase } from "@/integrations/supabase/client";
 import PeopleYouMayKnow from "@/components/social/PeopleYouMayKnow";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -336,10 +337,14 @@ function PostCard({ post }: { post: any }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild><button className="p-1"><MoreHorizontal className="h-5 w-5" /></button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {userId === post.user_id && (
+            {(userId === post.user_id || isSocialModerator(userId)) && (
               <DropdownMenuItem className="text-destructive" onClick={async () => {
                 if (!confirm("Are you sure you want to delete this post?")) return;
-                const { error } = await supabase.from('social_posts').delete().eq('id', postId).eq('user_id', userId);
+                const isMod = isSocialModerator(userId);
+                const deleteQuery = isMod && userId !== post.user_id
+                  ? supabase.from('social_posts').delete().eq('id', postId)
+                  : supabase.from('social_posts').delete().eq('id', postId).eq('user_id', userId);
+                const { error } = await deleteQuery;
                 if (error) { toast.error("Failed to delete post"); return; }
                 toast.success("Post deleted");
                 qc.invalidateQueries({ queryKey: ['social-feed'] });
@@ -517,10 +522,10 @@ function PostCard({ post }: { post: any }) {
             <MessageCircle className="h-6 w-6" />
             <span className="text-sm">{formatCount(comments)}</span>
           </button>
-          <button className="flex items-center gap-1.5" onClick={() => repost.mutate(postId)}>
+          <button className="flex items-center gap-1.5" onClick={() => repost.mutate(postId)} title="Share to Story">
             <Repeat2 className="h-6 w-6" />
           </button>
-          <button className="flex items-center gap-1.5" onClick={() => sharePost(postId, post.caption)}>
+          <button className="flex items-center gap-1.5" onClick={() => sharePost(postId, post.caption)} title="Share Link">
             <Send className="h-6 w-6" />
             <span className="text-sm">{formatCount(shareCount)}</span>
           </button>
@@ -631,6 +636,59 @@ function PostCard({ post }: { post: any }) {
         </AnimatePresence>
       </div>
     </article>
+  );
+}
+
+/** Generates a thumbnail from a video URL by capturing the first frame */
+function VideoThumbnail({ src }: { src: string }) {
+  const [thumb, setThumb] = useState<string | null>(null);
+  const attempted = useRef(false);
+
+  useEffect(() => {
+    if (attempted.current || !src) return;
+    attempted.current = true;
+    const video = document.createElement('video');
+    video.crossOrigin = 'anonymous';
+    video.muted = true;
+    video.preload = 'metadata';
+    video.playsInline = true;
+
+    video.onloadeddata = () => {
+      video.currentTime = 0.5; // Seek to 0.5s for a better frame
+    };
+
+    video.onseeked = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          // Draw center crop
+          const size = Math.min(video.videoWidth, video.videoHeight);
+          const sx = (video.videoWidth - size) / 2;
+          const sy = (video.videoHeight - size) / 2;
+          ctx.drawImage(video, sx, sy, size, size, 0, 0, 128, 128);
+          setThumb(canvas.toDataURL('image/jpeg', 0.7));
+        }
+      } catch { /* CORS or other error */ }
+    };
+
+    video.onerror = () => { /* fallback handled by render */ };
+    video.src = src;
+    video.load();
+
+    return () => { video.pause(); video.src = ''; };
+  }, [src]);
+
+  if (thumb) {
+    return <img src={thumb} alt="" className="w-full h-full object-cover" />;
+  }
+  // Fallback: show a play icon on dark background
+  return (
+    <div className="w-full h-full bg-accent/50 flex items-center justify-center">
+      <svg className="h-5 w-5 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    </div>
   );
 }
 
@@ -749,6 +807,8 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
                 <div className="relative h-full w-full bg-accent flex items-center justify-center">
                   <Plus className="h-5 w-5 text-muted-foreground" />
                 </div>
+              ) : story.storyMediaType === 'video' && story.storyMediaUrl ? (
+                <VideoThumbnail src={story.storyMediaUrl} />
               ) : story.storyMediaUrl ? (
                 <img src={story.storyMediaUrl} alt="" className="w-full h-full object-cover" />
               ) : story.avatar ? (
@@ -783,16 +843,16 @@ export default function SocialFeedPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from('social_stories')
-        .select('id, user_id, media_url, created_at')
+        .select('id, user_id, media_url, media_type, created_at')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
       if (!data?.length) return [];
 
       // Group by user, keep first (newest) story media for thumbnail
-      const userMap = new Map<string, { user_id: string; storyMediaUrl: string; newestAt: string; storyIds: string[] }>();
+      const userMap = new Map<string, { user_id: string; storyMediaUrl: string; storyMediaType: string; newestAt: string; storyIds: string[] }>();
       for (const s of data) {
         if (!userMap.has(s.user_id)) {
-          userMap.set(s.user_id, { user_id: s.user_id, storyMediaUrl: s.media_url || '', newestAt: s.created_at, storyIds: [s.id] });
+          userMap.set(s.user_id, { user_id: s.user_id, storyMediaUrl: s.media_url || '', storyMediaType: (s as any).media_type || 'image', newestAt: s.created_at, storyIds: [s.id] });
         } else {
           userMap.get(s.user_id)!.storyIds.push(s.id);
         }
@@ -811,7 +871,6 @@ export default function SocialFeedPage() {
         const { data: views } = await supabase.from('social_story_views')
           .select('story_id').eq('viewer_id', authUid).in('story_id', allStoryIds);
         const viewedStoryIds = new Set((views || []).map((v: any) => v.story_id));
-        // A user's stories are "viewed" if ALL their stories have been seen
         for (const [uid, info] of userMap.entries()) {
           if (info.storyIds.every(sid => viewedStoryIds.has(sid))) {
             viewedUserIds.add(uid);
@@ -827,6 +886,7 @@ export default function SocialFeedPage() {
           username: prof?.display_name || prof?.username || 'user',
           avatar: prof?.avatar_url || '',
           storyMediaUrl: info.storyMediaUrl,
+          storyMediaType: info.storyMediaType,
           viewed: viewedUserIds.has(uid),
           newestAt: info.newestAt,
         };

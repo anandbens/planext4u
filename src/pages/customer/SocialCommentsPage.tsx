@@ -1,36 +1,17 @@
 import { useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { ArrowLeft, Heart, Send, MoreHorizontal, Smile } from "lucide-react";
+import { ArrowLeft, Heart, Send, MoreHorizontal, Smile, Trash2, Flag } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
-import { usePostComments } from "@/hooks/use-social-interactions";
+import { usePostComments, useDeleteComment } from "@/hooks/use-social-interactions";
 import { useAuth } from "@/lib/auth";
-
-// Fallback mock for when DB has no data
-const MOCK_COMMENTS = [
-  {
-    id: "c1", user_id: "mock", content: "This is absolutely stunning! 🔥", created_at: new Date(Date.now() - 7200000).toISOString(),
-    like_count: 42, isLiked: false, is_pinned: true,
-    replies: [
-      { id: "r1", user_id: "mock2", content: "@vijay_kumar thanks so much! 💕", created_at: new Date(Date.now() - 3600000).toISOString(), like_count: 5, isLiked: false },
-      { id: "r2", user_id: "mock3", content: "Agreed! Amazing work", created_at: new Date(Date.now() - 2700000).toISOString(), like_count: 2, isLiked: true },
-    ],
-  },
-  {
-    id: "c2", user_id: "mock4", content: "Love the colors in this shot 🎨", created_at: new Date(Date.now() - 10800000).toISOString(),
-    like_count: 18, isLiked: true, is_pinned: false, replies: [],
-  },
-  {
-    id: "c3", user_id: "mock5", content: "Where was this taken?", created_at: new Date(Date.now() - 14400000).toISOString(),
-    like_count: 3, isLiked: false, is_pinned: false,
-    replies: [
-      { id: "r3", user_id: "mock6", content: "Pondicherry! You should visit", created_at: new Date(Date.now() - 10800000).toISOString(), like_count: 8, isLiked: false },
-    ],
-  },
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { isSocialModerator } from "@/lib/social-moderator";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -42,14 +23,6 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d`;
 }
 
-function getUsername(userId: string): string {
-  const names: Record<string, string> = {
-    mock: 'vijay_kumar', mock2: 'priya_designs', mock3: 'rahul_food',
-    mock4: 'sneha_art', mock5: 'karthik_tech', mock6: 'vijay_sivakumar',
-  };
-  return names[userId] || userId.substring(0, 10);
-}
-
 export default function SocialCommentsPage() {
   const navigate = useNavigate();
   const { postId } = useParams();
@@ -58,45 +31,40 @@ export default function SocialCommentsPage() {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
 
-  // DB-driven comments
-  const { comments: dbComments, isLoading, addComment, toggleCommentLike } = usePostComments(postId || '');
+  const userId = customerUser?.supabase_uid || customerUser?.id;
+  const isMod = isSocialModerator(userId);
 
-  // Use DB data if available, else fallback
-  const comments = dbComments.length > 0 ? dbComments : MOCK_COMMENTS;
-  const isMock = dbComments.length === 0;
+  // Get the post to determine post owner
+  const { data: post } = useQuery({
+    queryKey: ['social-post-owner', postId],
+    queryFn: async () => {
+      const { data } = await supabase.from('social_posts').select('user_id, caption').eq('id', postId!).maybeSingle();
+      return data;
+    },
+    enabled: !!postId,
+  });
 
-  // Local state for mock comment likes
-  const [mockLikes, setMockLikes] = useState<Set<string>>(new Set(['c2', 'r2']));
+  const isPostOwner = userId && post?.user_id === userId;
 
-  const handleToggleLike = (commentId: string) => {
-    if (isMock) {
-      setMockLikes(prev => {
-        const next = new Set(prev);
-        next.has(commentId) ? next.delete(commentId) : next.add(commentId);
-        return next;
-      });
-    } else {
-      toggleCommentLike(commentId);
-    }
-  };
+  const { comments, isLoading, addComment, toggleCommentLike } = usePostComments(postId || '');
+  const deleteComment = useDeleteComment(postId || '');
 
   const postComment = () => {
-    if (!customerUser?.id) {
+    if (!userId) {
       toast.error("Please login to comment");
       navigate("/app/login");
       return;
     }
     if (!newComment.trim()) return;
-    if (isMock) {
-      toast.success("Comment posted");
-      setNewComment("");
-      setReplyingTo(null);
-      return;
-    }
     addComment({ text: newComment, parentId: replyingTo || undefined });
     setNewComment("");
     setReplyingTo(null);
     if (replyingTo) setExpandedReplies(prev => new Set(prev).add(replyingTo));
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (!confirm("Delete this comment?")) return;
+    deleteComment.mutate(commentId);
   };
 
   const EMOJI_BAR = ["❤️", "🙌", "🔥", "👏", "😢"];
@@ -112,39 +80,76 @@ export default function SocialCommentsPage() {
       </header>
 
       {/* Post preview mini */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/20">
-        <Avatar className="h-8 w-8"><AvatarFallback className="bg-primary/20 text-xs font-bold">V</AvatarFallback></Avatar>
-        <p className="text-sm flex-1"><span className="font-semibold">vijay_sivakumar</span> Just tried the amazing coffee from Brooklyn Coffee Co.! Best...<span className="text-muted-foreground ml-1">more</span></p>
-      </div>
+      {post && (
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border/20">
+          <Avatar className="h-8 w-8"><AvatarFallback className="bg-primary/20 text-xs font-bold">P</AvatarFallback></Avatar>
+          <p className="text-sm flex-1 truncate">
+            <span className="text-muted-foreground">{post.caption?.substring(0, 100) || 'Post'}</span>
+          </p>
+        </div>
+      )}
 
       {/* Comments list */}
-      <div className="divide-y divide-border/10">
-        {comments.map((comment: any) => {
-          const username = getUsername(comment.user_id);
-          const commentLiked = isMock ? mockLikes.has(comment.id) : comment.isLiked;
-          return (
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+      ) : comments.length === 0 ? (
+        <div className="py-12 text-center">
+          <p className="text-sm text-muted-foreground">No comments yet. Be the first to comment!</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-border/10">
+          {comments.map((comment: any) => (
             <div key={comment.id}>
               <div className="flex gap-3 px-4 py-3">
                 <Link to={`/app/social/profile/${comment.user_id}`}>
-                  <Avatar className="h-9 w-9 shrink-0"><AvatarFallback className="bg-muted text-xs font-bold">{username.charAt(0).toUpperCase()}</AvatarFallback></Avatar>
+                  <Avatar className="h-9 w-9 shrink-0">
+                    {comment.avatar_url ? (
+                      <img src={comment.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <AvatarFallback className="bg-muted text-xs font-bold">
+                        {(comment.display_name || comment.username || 'U').charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
                 </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       {comment.is_pinned && <span className="text-[10px] text-muted-foreground flex items-center gap-1 mb-1">📌 Pinned</span>}
                       <p className="text-sm">
-                        <Link to={`/app/social/profile/${comment.user_id}`} className="font-semibold mr-1">{username}</Link>
+                        <Link to={`/app/social/profile/${comment.user_id}`} className="font-semibold mr-1">
+                          {comment.display_name || comment.username || 'user'}
+                        </Link>
                         {comment.content}
                       </p>
                       <div className="flex items-center gap-4 mt-1">
                         <span className="text-xs text-muted-foreground">{timeAgo(comment.created_at)}</span>
-                        <button className="text-xs font-semibold text-muted-foreground">{comment.like_count || 0} likes</button>
-                        <button className="text-xs font-semibold text-muted-foreground" onClick={() => setReplyingTo(comment.id)}>Reply</button>
-                        <button className="text-xs text-muted-foreground"><MoreHorizontal className="h-3.5 w-3.5" /></button>
+                        <button className="text-xs font-semibold text-muted-foreground" onClick={() => toggleCommentLike(comment.id)}>
+                          {comment.like_count || 0} likes
+                        </button>
+                        <button className="text-xs font-semibold text-muted-foreground" onClick={() => {
+                          setReplyingTo(comment.id);
+                          setNewComment(`@${comment.display_name || comment.username || 'user'} `);
+                        }}>Reply</button>
+                        {/* Delete/Report menu for post owner or comment owner or moderator */}
+                        {(isPostOwner || userId === comment.user_id || isMod) && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="text-xs text-muted-foreground"><MoreHorizontal className="h-3.5 w-3.5" /></button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteComment(comment.id)}>
+                                <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete Comment
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     </div>
-                    <button onClick={() => handleToggleLike(comment.id)} className="pt-1 shrink-0">
-                      <Heart className={`h-3.5 w-3.5 ${commentLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
+                    <button onClick={() => toggleCommentLike(comment.id)} className="pt-1 shrink-0">
+                      <Heart className={`h-3.5 w-3.5 ${comment.isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
                     </button>
                   </div>
 
@@ -156,41 +161,67 @@ export default function SocialCommentsPage() {
                           <span className="w-6 h-px bg-muted-foreground/40" /> View {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
                         </button>
                       )}
-                      {expandedReplies.has(comment.id) && comment.replies.map((reply: any) => {
-                        const replyUsername = getUsername(reply.user_id);
-                        const replyLiked = isMock ? mockLikes.has(reply.id) : reply.isLiked;
-                        return (
-                          <div key={reply.id} className="flex gap-2.5 mt-2.5">
-                            <Avatar className="h-7 w-7"><AvatarFallback className="bg-muted text-[10px] font-bold">{replyUsername.charAt(0).toUpperCase()}</AvatarFallback></Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-start justify-between">
-                                <p className="text-sm"><span className="font-semibold mr-1">{replyUsername}</span>{reply.content}</p>
-                                <button onClick={() => handleToggleLike(reply.id)} className="shrink-0"><Heart className={`h-3 w-3 ${replyLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} /></button>
-                              </div>
-                              <div className="flex items-center gap-3 mt-0.5">
-                                <span className="text-[10px] text-muted-foreground">{timeAgo(reply.created_at)}</span>
-                                <button className="text-[10px] font-semibold text-muted-foreground">{reply.like_count || 0} likes</button>
-                                <button className="text-[10px] font-semibold text-muted-foreground" onClick={() => setReplyingTo(comment.id)}>Reply</button>
-                              </div>
+                      {expandedReplies.has(comment.id) && comment.replies.map((reply: any) => (
+                        <div key={reply.id} className="flex gap-2.5 mt-2.5">
+                          <Avatar className="h-7 w-7">
+                            {reply.avatar_url ? (
+                              <img src={reply.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                              <AvatarFallback className="bg-muted text-[10px] font-bold">
+                                {(reply.display_name || reply.username || 'U').charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between">
+                              <p className="text-sm">
+                                <span className="font-semibold mr-1">{reply.display_name || reply.username || 'user'}</span>
+                                {reply.content}
+                              </p>
+                              <button onClick={() => toggleCommentLike(reply.id)} className="shrink-0">
+                                <Heart className={`h-3 w-3 ${reply.isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-3 mt-0.5">
+                              <span className="text-[10px] text-muted-foreground">{timeAgo(reply.created_at)}</span>
+                              <button className="text-[10px] font-semibold text-muted-foreground" onClick={() => toggleCommentLike(reply.id)}>
+                                {reply.like_count || 0} likes
+                              </button>
+                              <button className="text-[10px] font-semibold text-muted-foreground" onClick={() => {
+                                setReplyingTo(comment.id);
+                                setNewComment(`@${reply.display_name || reply.username || 'user'} `);
+                              }}>Reply</button>
+                              {(isPostOwner || userId === reply.user_id || isMod) && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button className="text-[10px] text-muted-foreground"><MoreHorizontal className="h-3 w-3" /></button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start">
+                                    <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteComment(reply.id)}>
+                                      <Trash2 className="h-3 w-3 mr-2" /> Delete Reply
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
                             </div>
                           </div>
-                        );
-                      })}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Comment input */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:sticky md:bottom-auto safe-area-bottom">
         {replyingTo && (
           <div className="px-4 py-1.5 bg-muted/50 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Replying to <span className="font-semibold text-foreground">{getUsername(comments.find((c: any) => c.id === replyingTo)?.user_id || '')}</span></span>
-            <Button variant="outline" size="sm" className="h-6 px-2.5 text-[10px] font-semibold rounded-full" onClick={() => setReplyingTo(null)}>Cancel</Button>
+            <span className="text-xs text-muted-foreground">Replying to comment</span>
+            <Button variant="outline" size="sm" className="h-6 px-2.5 text-[10px] font-semibold rounded-full" onClick={() => { setReplyingTo(null); setNewComment(""); }}>Cancel</Button>
           </div>
         )}
         <div className="flex items-center gap-2 px-4 py-2">
