@@ -528,6 +528,14 @@ export const api = {
   },
 
   createProduct: async (data: Partial<Product>) => {
+    // Validate required fields before attempting insert
+    const errors: string[] = [];
+    if (!data.title?.trim()) errors.push("Product title is required");
+    if (!data.vendor_id?.trim()) errors.push("Vendor is required");
+    if (data.price === undefined || data.price === null || data.price < 0) errors.push("Valid price is required");
+    if (!data.description?.trim()) errors.push("Description is required");
+    if (errors.length > 0) throw new Error(errors.join(". "));
+
     const validProductFields = ['title', 'description', 'short_description', 'long_description', 'price', 'tax', 'discount',
       'discount_type', 'max_points_redeemable', 'status', 'vendor_id', 'vendor_name', 'category_id', 'category_name',
       'subcategory_id', 'subcategory_name', 'stock', 'emoji', 'image', 'images', 'rejection_reason',
@@ -547,8 +555,17 @@ export const api = {
     for (const f of uuidFields) {
       if (newProduct[f] === '' || newProduct[f] === undefined) newProduct[f] = null;
     }
+    // Re-check vendor after nullification
+    if (!newProduct.vendor_id) throw new Error("Vendor is required. Please select a vendor before creating the product.");
     const { error } = await supabase.from('products').insert(newProduct as any);
-    if (error) { console.error("Product create error:", error); throw error; }
+    if (error) {
+      // Map DB errors to user-friendly messages
+      if (error.message?.includes('foreign key') && error.message?.includes('vendor')) throw new Error("Selected vendor is invalid. Please choose a valid vendor.");
+      if (error.message?.includes('foreign key') && error.message?.includes('category')) throw new Error("Selected category is invalid. Please choose a valid category.");
+      if (error.message?.includes('foreign key') && error.message?.includes('tax_slab')) throw new Error("Selected tax slab is invalid. Please choose a valid tax slab.");
+      if (error.message?.includes('uuid')) throw new Error("One of the selected values is invalid. Please check vendor, category, and other dropdown fields.");
+      throw new Error("Failed to create product: " + error.message);
+    }
     return { success: true, product: newProduct };
   },
 
