@@ -290,8 +290,14 @@ export default function VendorsPage() {
 
   if (!data) return <AdminLayout><div className="flex items-center justify-center h-64"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;
 
+  const isSpecialTab = activeTab === "deactivated" || activeTab === "deleted";
+
   const summaryWidgets: SummaryWidget[] = activeTab === "pending" ? [
     { label: "Pending Approval", value: totalStats.pending, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+  ] : activeTab === "deactivated" ? [
+    { label: "Deactivated Vendors", value: totalStats.deactivated, icon: <UserX className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+  ] : activeTab === "deleted" ? [
+    { label: "Deleted Vendors", value: totalStats.deleted, icon: <Trash2 className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
   ] : [
     { label: "Total Vendors", value: totalStats.total, icon: <Store className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
     { label: "Verified", value: totalStats.verified, icon: <ShieldCheck className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
