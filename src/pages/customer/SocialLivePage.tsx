@@ -73,7 +73,7 @@ export default function SocialLivePage() {
   }
 
   const liveContent = (
-    <div className="relative bg-black md:rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 120px)', minHeight: '500px' }}>
+    <div className="relative bg-black md:rounded-xl overflow-hidden" style={{ height: 'calc(100dvh - 120px)', minHeight: '500px' }}>
       {/* Live video area */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
 

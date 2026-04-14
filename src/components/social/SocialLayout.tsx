@@ -116,7 +116,7 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
     <div className="hidden md:flex max-w-[1400px] mx-auto gap-4">
       {/* Left Sidebar */}
       {!hideSidebar && (
-        <aside className="w-[260px] shrink-0 sticky top-[110px] self-start py-4 pl-4 pr-2 h-[calc(100vh-110px)] overflow-y-auto">
+        <aside className="w-[260px] shrink-0 sticky top-[110px] self-start py-4 pl-4 pr-2 h-[calc(100dvh-110px)] overflow-y-auto">
           <nav className="bg-card rounded-xl border border-border/30 py-3 px-3">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.path);
@@ -148,7 +148,7 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
 
       {/* Right Sidebar */}
       {!hideRightSidebar && !hideSidebar && (
-        <aside className="w-[300px] shrink-0 sticky top-[110px] self-start py-4 pr-4 pl-2 space-y-4 h-[calc(100vh-110px)] overflow-y-auto">
+        <aside className="w-[300px] shrink-0 sticky top-[110px] self-start py-4 pr-4 pl-2 space-y-4 h-[calc(100dvh-110px)] overflow-y-auto">
           {/* Search */}
           <div className="bg-card rounded-xl border border-border/30 p-4">
             <div className="flex items-center justify-between mb-3">
