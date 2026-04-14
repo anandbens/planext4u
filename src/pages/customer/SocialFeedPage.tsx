@@ -788,16 +788,16 @@ export default function SocialFeedPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from('social_stories')
-        .select('id, user_id, media_url, created_at')
+        .select('id, user_id, media_url, media_type, created_at')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
       if (!data?.length) return [];
 
       // Group by user, keep first (newest) story media for thumbnail
-      const userMap = new Map<string, { user_id: string; storyMediaUrl: string; newestAt: string; storyIds: string[] }>();
+      const userMap = new Map<string, { user_id: string; storyMediaUrl: string; storyMediaType: string; newestAt: string; storyIds: string[] }>();
       for (const s of data) {
         if (!userMap.has(s.user_id)) {
-          userMap.set(s.user_id, { user_id: s.user_id, storyMediaUrl: s.media_url || '', newestAt: s.created_at, storyIds: [s.id] });
+          userMap.set(s.user_id, { user_id: s.user_id, storyMediaUrl: s.media_url || '', storyMediaType: (s as any).media_type || 'image', newestAt: s.created_at, storyIds: [s.id] });
         } else {
           userMap.get(s.user_id)!.storyIds.push(s.id);
         }
@@ -816,7 +816,6 @@ export default function SocialFeedPage() {
         const { data: views } = await supabase.from('social_story_views')
           .select('story_id').eq('viewer_id', authUid).in('story_id', allStoryIds);
         const viewedStoryIds = new Set((views || []).map((v: any) => v.story_id));
-        // A user's stories are "viewed" if ALL their stories have been seen
         for (const [uid, info] of userMap.entries()) {
           if (info.storyIds.every(sid => viewedStoryIds.has(sid))) {
             viewedUserIds.add(uid);
@@ -832,6 +831,7 @@ export default function SocialFeedPage() {
           username: prof?.display_name || prof?.username || 'user',
           avatar: prof?.avatar_url || '',
           storyMediaUrl: info.storyMediaUrl,
+          storyMediaType: info.storyMediaType,
           viewed: viewedUserIds.has(uid),
           newestAt: info.newestAt,
         };
