@@ -89,7 +89,19 @@ function SellerListSection({ data, isLoading, parentCategories, containerAnim, i
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState("default");
 
+  // Use all products from all vendors, not just featured
   const allProducts = data?.featuredProducts || [];
+  
+  // Fetch all vendors for "all" filter
+  const { data: allVendorsProducts } = useQuery({
+    queryKey: ["allVendorProducts"],
+    queryFn: async () => {
+      const { data: vendors } = await supabase.from("vendors").select("id, name, logo, rating, city").eq("status", "active").limit(20);
+      return vendors || [];
+    },
+    enabled: categoryFilter === "all" && allProducts.length === 0,
+  });
+
   let filtered = categoryFilter === "all" ? allProducts : allProducts.filter((p: any) => p.category_name === categoryFilter);
 
   if (sortBy === "price_low") filtered = [...filtered].sort((a: any, b: any) => a.price - b.price);
@@ -639,12 +651,12 @@ export default function CustomerHomePage() {
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
           <h2 className="text-lg md:text-xl font-bold mb-4">Most Booked Services</h2>
           <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4 auto-rows-fr">
             {isLoading ? Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />) :
               data?.featuredServices?.slice(0, 5).map((s) => (
                 <motion.div key={s.id} variants={itemAnim}>
                   <Link to={`/app/service/${s.id}`}>
-                    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
+                    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group hover:-translate-y-1 h-full flex flex-col">
                       <div className="h-32 md:h-40 bg-secondary/20 relative overflow-hidden">
                         {s.image ? (
                           <img src={s.image} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -668,8 +680,8 @@ export default function CustomerHomePage() {
                           <Heart className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                         </button>
                       </div>
-                      <div className="p-3">
-                        <h3 className="text-xs font-semibold leading-tight line-clamp-2">{s.title}</h3>
+                      <div className="p-3 flex-1 flex flex-col">
+                        <h3 className="text-xs font-semibold leading-tight line-clamp-2 flex-1">{s.title}</h3>
                         <div className="flex items-center gap-1 mt-1.5">
                           <span className="text-sm font-bold">₹{(s.price - (s.discount || 0)).toLocaleString()}</span>
                           {s.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">₹{s.price}</span>}

@@ -233,7 +233,7 @@ export default function CustomerServiceDetailPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-5xl mx-auto px-4 py-6 pb-36 md:pb-6">
+      <div className="max-w-5xl mx-auto px-4 py-6 pb-20 md:pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
             <img src={imgUrl} alt={service.title} className="w-full h-full object-cover" />
