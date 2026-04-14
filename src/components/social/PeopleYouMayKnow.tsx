@@ -14,6 +14,26 @@ export default function PeopleYouMayKnow() {
   const userId = customerUser?.supabase_uid || customerUser?.id;
   const qc = useQueryClient();
   const [contactsRequested, setContactsRequested] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncContacts = async () => {
+    setSyncing(true);
+    setContactsRequested(true);
+    try {
+      const matched = await findFriends();
+      if (matched.length === 0) {
+        toast.info("No matching contacts found. Invite your friends to join!");
+      } else {
+        toast.success(`Found ${matched.length} contact(s) on the platform!`);
+      }
+    } catch (err) {
+      console.error("Sync contacts error:", err);
+      toast.error("Could not sync contacts. Please check permissions and try again.");
+    } finally {
+      setSyncing(false);
+      qc.invalidateQueries({ queryKey: ["people-you-may-know"] });
+    }
+  };
 
   const { data: suggestions = [], isLoading } = useQuery({
     queryKey: ["people-you-may-know", userId, contactsRequested],
@@ -23,7 +43,6 @@ export default function PeopleYouMayKnow() {
       // On native, try contact matching
       if (isNativePlatform() && contactsRequested) {
         const matched = await findFriends();
-        // Filter out self
         return matched.filter((u) => u.id !== userId);
       }
 
