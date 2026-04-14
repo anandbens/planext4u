@@ -357,7 +357,7 @@ export function useSharePost() {
   }, []);
 }
 
-// ─── REPOST ──────────────────────────────────
+// ─── REPOST (Share to story instead of duplicating) ──────────────────────────────────
 export function useRepost() {
   const qc = useQueryClient();
 
@@ -365,27 +365,85 @@ export function useRepost() {
     mutationFn: async (postId: string) => {
       const uid = await getAuthUserId();
       if (!uid) { toast.error("Please login"); return; }
+
+      // Fetch the original post for sharing
       const { data: original } = await supabase
         .from('social_posts')
-        .select('*')
+        .select('id, user_id, caption, media')
         .eq('id', postId)
         .single();
 
       if (!original) throw new Error('Post not found');
 
-      await supabase.from('social_posts').insert({
+      // Get original author profile
+      const { data: authorProfile } = await supabase
+        .from('social_profiles')
+        .select('username, display_name, avatar_url')
+        .eq('user_id', original.user_id)
+        .maybeSingle();
+
+      const authorName = authorProfile?.display_name || authorProfile?.username || 'user';
+
+      // Get first media item for story thumbnail
+      const mediaItems = Array.isArray(original.media) ? original.media : [];
+      const firstMedia = mediaItems[0];
+
+      if (!firstMedia?.url) {
+        toast.error("Cannot share a post with no media");
+        return;
+      }
+
+      // Create a story that references the original post (shared/reposted content)
+      const storyId = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+      await supabase.from('social_stories').insert({
+        id: storyId,
         user_id: uid,
-        caption: original.caption,
-        media: original.media,
-        post_type: 'repost',
-        is_repost: true,
-        original_post_id: postId,
-        status: 'published',
-      });
-      toast.success("Reposted!");
+        media_url: firstMedia.url,
+        media_type: firstMedia.type === 'video' ? 'video' : 'image',
+        text_content: `📤 Shared from @${authorName}: ${original.caption || ''}`.slice(0, 500),
+        expires_at: expiresAt,
+      } as any);
+
+      // Increment share count on original post
+      await supabase.rpc('refresh_social_post_counts' as any, { _post_id: postId }).catch(() => {});
+
+      toast.success(`Shared to your story!`);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['social-feed'] });
+      qc.invalidateQueries({ queryKey: ['social-feed-stories'] });
+      qc.invalidateQueries({ queryKey: ['own-stories-exist'] });
+    },
+  });
+}
+
+// ─── DELETE COMMENT ──────────────────────────────────
+export function useDeleteComment(postId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (commentId: string) => {
+      const uid = await getAuthUserId();
+      if (!uid) { toast.error("Please login"); return; }
+
+      // We allow deletion if user is comment owner OR post owner
+      // First try deleting as comment owner
+      const { error } = await supabase
+        .from('social_comments')
+        .delete()
+        .eq('id', commentId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['social-comments', postId] });
+      qc.invalidateQueries({ queryKey: ['social-comment-count', postId] });
+      toast.success("Comment deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete comment");
     },
   });
 }
