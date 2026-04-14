@@ -443,7 +443,7 @@ export default function VendorProductsPage() {
             </div>
             <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} /></div>
             
-            <div><Label>Description</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} /></div>
+            <div><Label>Description</Label><RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Product description..." minHeight="120px" /></div>
 
             {/* Emoji Picker */}
             <div>

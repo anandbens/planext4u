@@ -167,7 +167,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
           <div>
             <Label className="text-xs text-muted-foreground">Description</Label>
             {editMode
-              ? <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1 min-h-[80px]" placeholder="Category description..." />
+              ? <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Category description..." minHeight="80px" compact />
               : <p className="text-sm mt-1">{category?.description || '—'}</p>}
           </div>
 

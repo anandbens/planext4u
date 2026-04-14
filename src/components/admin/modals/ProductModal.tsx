@@ -547,7 +547,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
               )}
               <div className="col-span-2">
                 <Label className="text-xs text-muted-foreground">Long Description</Label>
-                {editMode && !vendorRestricted ? <Textarea value={form.long_description || form.description} onChange={(e) => setForm({ ...form, long_description: e.target.value, description: e.target.value })} className="mt-1" rows={3} /> : <p className="text-sm mt-1 text-muted-foreground">{form.long_description || form.description || "—"}</p>}
+                {editMode && !vendorRestricted ? <RichTextEditor value={form.long_description || form.description} onChange={(v) => setForm({ ...form, long_description: v, description: v })} placeholder="Detailed product description..." minHeight="120px" /> : <p className="text-sm mt-1 text-muted-foreground">{form.long_description || form.description || "—"}</p>}
               </div>
 
               {/* Vendor Selection with State/District Filtering (Admin only) */}

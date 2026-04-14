@@ -252,7 +252,7 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
               </div>
               <div className="col-span-2">
                 <Label className="text-xs text-muted-foreground">Description</Label>
-                {editMode ? <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-1" rows={3} /> : <p className="text-sm mt-1 text-muted-foreground">{service?.description}</p>}
+                {editMode ? <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Service description..." minHeight="100px" compact /> : <p className="text-sm mt-1 text-muted-foreground">{service?.description}</p>}
               </div>
 
               {/* Vendor Selection with State/District Filtering */}
@@ -431,11 +431,11 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
           <TabsContent value="description" className="space-y-4 mt-4">
             <div>
               <Label className="text-xs text-muted-foreground">Short Description</Label>
-              {editMode ? <Textarea value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} className="mt-1" rows={2} placeholder="Brief description for listings..." /> : <p className="text-sm mt-1 text-muted-foreground">{form.short_description || "—"}</p>}
+              {editMode ? <RichTextEditor value={form.short_description} onChange={(v) => setForm({ ...form, short_description: v })} placeholder="Brief description for listings..." minHeight="80px" compact /> : <p className="text-sm mt-1 text-muted-foreground">{form.short_description || "—"}</p>}
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Long Description</Label>
-              {editMode ? <Textarea value={form.long_description} onChange={(e) => setForm({ ...form, long_description: e.target.value })} className="mt-1" rows={6} placeholder="Detailed service description..." /> : <p className="text-sm mt-1 text-muted-foreground whitespace-pre-wrap">{form.long_description || "—"}</p>}
+              {editMode ? <RichTextEditor value={form.long_description} onChange={(v) => setForm({ ...form, long_description: v })} placeholder="Detailed service description..." minHeight="150px" /> : <p className="text-sm mt-1 text-muted-foreground whitespace-pre-wrap">{form.long_description || "—"}</p>}
             </div>
           </TabsContent>
 

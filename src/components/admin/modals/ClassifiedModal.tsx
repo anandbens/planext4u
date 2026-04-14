@@ -111,7 +111,7 @@ export function ClassifiedModal({ ad, open, onOpenChange, mode, onSave, onDelete
           </div>
           <div>
             <Label>Description</Label>
-            <Textarea value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} readOnly={!isEdit} rows={3} />
+            {isEdit ? <RichTextEditor value={form.description || ""} onChange={(v) => setForm({ ...form, description: v })} placeholder="Classified description..." minHeight="100px" compact /> : <p className="text-sm mt-1">{form.description}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
