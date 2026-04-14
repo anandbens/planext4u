@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
 import { useSocialFeed, useSharePost, useRepost } from "@/hooks/use-social-interactions";
+import { isSocialModerator } from "@/lib/social-moderator";
 import { supabase } from "@/integrations/supabase/client";
 import PeopleYouMayKnow from "@/components/social/PeopleYouMayKnow";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
