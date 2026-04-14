@@ -516,12 +516,14 @@ function PostCard({ post }: { post: any }) {
                 <motion.div key="unliked"><Heart className="h-6 w-6" /></motion.div>
               )}
             </AnimatePresence>
-            <span className="text-sm font-semibold">{formatCount(likes)}</span>
+            {!post.hide_like_count && <span className="text-sm font-semibold">{formatCount(likes)}</span>}
           </button>
-          <button className="flex items-center gap-1.5" onClick={() => { if (!userId) { toast.error("Please login to comment"); navigate("/app/login"); return; } setShowCommentInput(v => !v); }}>
-            <MessageCircle className="h-6 w-6" />
-            <span className="text-sm">{formatCount(comments)}</span>
-          </button>
+          {post.allow_comments !== 'off' && (
+            <button className="flex items-center gap-1.5" onClick={() => { if (!userId) { toast.error("Please login to comment"); navigate("/app/login"); return; } setShowCommentInput(v => !v); }}>
+              <MessageCircle className="h-6 w-6" />
+              <span className="text-sm">{formatCount(comments)}</span>
+            </button>
+          )}
           <button className="flex items-center gap-1.5" onClick={() => repost.mutate(postId)} title="Share to Story">
             <Repeat2 className="h-6 w-6" />
           </button>
@@ -544,35 +546,37 @@ function PostCard({ post }: { post: any }) {
       </div>
 
       {/* View all comments - inline expand */}
-      {comments > 0 && !showAllComments && (
+      {post.allow_comments !== 'off' && comments > 0 && !showAllComments && (
         <button className="px-4 py-1" onClick={() => setShowAllComments(true)}>
           <p className="text-sm text-muted-foreground">View all {formatCount(comments)} comments</p>
         </button>
       )}
 
       {/* Inline comments with accordion */}
-      <AnimatePresence>
-        {(showAllComments || recentComments.length > 0 || (isMock && mockComments.length > 0)) && (
-          <motion.div
-            initial={showAllComments ? { height: 0, opacity: 0 } : false}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 space-y-1 max-h-60 overflow-y-auto">
-              {(!showAllComments && !isMock ? recentComments : displayComments).map((c: any) => (
-                <CommentItem key={c.id} comment={c} isMock={isMock} />
-              ))}
-            </div>
-            {showAllComments && (
-              <button className="px-4 py-1" onClick={() => setShowAllComments(false)}>
-                <p className="text-xs text-primary font-medium">Hide comments</p>
-              </button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {post.allow_comments !== 'off' && (
+        <AnimatePresence>
+          {(showAllComments || recentComments.length > 0 || (isMock && mockComments.length > 0)) && (
+            <motion.div
+              initial={showAllComments ? { height: 0, opacity: 0 } : false}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 space-y-1 max-h-60 overflow-y-auto">
+                {(!showAllComments && !isMock ? recentComments : displayComments).map((c: any) => (
+                  <CommentItem key={c.id} comment={c} isMock={isMock} />
+                ))}
+              </div>
+              {showAllComments && (
+                <button className="px-4 py-1" onClick={() => setShowAllComments(false)}>
+                  <p className="text-xs text-primary font-medium">Hide comments</p>
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* Inline comment input with accordion expand + emoji/GIF */}
       <div className="px-4 pb-3 pt-1">

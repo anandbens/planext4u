@@ -14,6 +14,23 @@ import p4uLogoDark from "@/assets/p4u-logo-dark.png";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 import p4uLogo from "@/assets/p4u-logo.png";
 import IncomingCallProvider from "@/components/social/IncomingCallProvider";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+
+function WalletBalance() {
+  const { customerUser } = useAuth();
+  const { data: balance = 0 } = useQuery({
+    queryKey: ["wallet-balance", customerUser?.id],
+    queryFn: async () => {
+      if (!customerUser?.id) return 0;
+      const { data } = await supabase.from("customers").select("wallet_points").eq("id", customerUser.id).maybeSingle();
+      return data?.wallet_points || 0;
+    },
+    enabled: !!customerUser?.id,
+    staleTime: 30000,
+  });
+  return <span className="text-xs font-bold text-primary-foreground">{balance}</span>;
+}
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
@@ -120,7 +137,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             <div className="flex items-center gap-2 shrink-0">
               <Link to="/app/wallet" className="flex items-center gap-1 bg-primary-foreground/15 px-2.5 py-1.5 rounded-full">
                 <span className="text-[10px] text-primary-foreground/80">₹</span>
-                <span className="text-xs font-bold text-primary-foreground">0</span>
+                <WalletBalance />
               </Link>
               <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center">
                 {customerUser ? (
@@ -542,11 +559,11 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         // Services footer
         if (isServices) {
           const serviceTabs = [
-            { icon: Home, label: "Home", to: "/app/services", active: path === '/app/services' },
-            { icon: Search, label: "Explore", to: "/app/services", active: false },
-            { icon: CalendarDays, label: "Bookings", to: "/app/orders", active: false },
-            { icon: Heart, label: "Saved", to: "/app/wishlist", active: false },
-            { icon: User, label: "Profile", to: "/app/profile", active: false },
+            { icon: Home, label: "Home", to: "/app", active: path === '/app' },
+            { icon: Search, label: "Explore", to: "/app/browse", active: path.startsWith('/app/browse') },
+            { icon: CalendarDays, label: "Bookings", to: "/app/orders", active: path.startsWith('/app/orders') },
+            { icon: Heart, label: "Saved", to: "/app/wishlist", active: path.startsWith('/app/wishlist') },
+            { icon: User, label: "Profile", to: "/app/profile", active: path.startsWith('/app/profile') },
           ];
           return (
             <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">

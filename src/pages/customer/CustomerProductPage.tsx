@@ -49,6 +49,19 @@ export default function CustomerProductPage() {
     },
   });
 
+  // Fetch review summary for dynamic count
+  const { data: summary } = useQuery({
+    queryKey: ["review-summary", id, "product"],
+    queryFn: async () => {
+      const { data } = await supabase.from("reviews").select("rating").eq("entity_type", "product").eq("entity_id", id).eq("status", "active");
+      const ratings = (data || []).map((r: any) => r.rating as number);
+      const total = ratings.length;
+      const avg = total > 0 ? Math.round((ratings.reduce((a, b) => a + b, 0) / total) * 10) / 10 : 0;
+      return { avg, total };
+    },
+    enabled: !!id,
+  });
+
   const isVariable = (product as any)?.product_type === "variable" && variants && variants.length > 0;
 
   // Build attribute options from variants (only show available combinations)
@@ -197,10 +210,12 @@ export default function CustomerProductPage() {
           <ChevronLeft className="h-4 w-4" />
         </button>
         <h1 className="text-sm font-semibold truncate max-w-[200px]">{product.title}</h1>
-        <Search className="h-4 w-4 text-muted-foreground" />
+        <button onClick={() => navigate(`/app/browse?search=${encodeURIComponent(product.title.split(' ')[0])}`)} className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
+          <Search className="h-4 w-4 text-muted-foreground" />
+        </button>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-4 pb-44 md:pb-6">
+      <div className="max-w-5xl mx-auto px-4 py-4 pb-36 md:pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Product Image */}
           <div className="relative">
@@ -258,11 +273,11 @@ export default function CustomerProductPage() {
             <div className="flex items-center gap-2 mt-2">
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`h-3.5 w-3.5 ${i < Math.round(product.rating || 0) ? 'fill-warning text-warning' : 'text-muted-foreground/30'}`} />
+                  <Star key={i} className={`h-3.5 w-3.5 ${i < Math.round(summary?.avg || product.rating || 0) ? 'fill-warning text-warning' : 'text-muted-foreground/30'}`} />
                 ))}
               </div>
-              <span className="text-xs font-medium">{product.rating}</span>
-              <span className="text-xs text-muted-foreground">• {product.reviews} reviews</span>
+              <span className="text-xs font-medium">{summary?.avg || product.rating || 0}</span>
+              <span className="text-xs text-muted-foreground">• {summary?.total ?? 0} reviews</span>
               <span className="text-xs text-muted-foreground">• {product.sales} sold</span>
             </div>
 
@@ -384,7 +399,7 @@ export default function CustomerProductPage() {
           <TabsList>
             <TabsTrigger value="description">Description</TabsTrigger>
             {realAttrs.length > 0 && <TabsTrigger value="specs">Specifications</TabsTrigger>}
-            <TabsTrigger value="reviews">Reviews ({product.reviews})</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews ({summary?.total ?? 0})</TabsTrigger>
           </TabsList>
           <TabsContent value="description" className="mt-4">
             {(product as any).short_description && <p className="text-sm font-medium mb-2">{(product as any).short_description}</p>}
@@ -408,8 +423,8 @@ export default function CustomerProductPage() {
         </Tabs>
       </div>
 
-      {/* Sticky Bottom Bar - mobile — sits above the bottom nav (~70px + safe area) */}
-      <div className="fixed left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden" style={{ bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))' }}>
+      {/* Sticky Bottom Bar - mobile — sits above the bottom nav */}
+      <div className="fixed left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-2 md:hidden" style={{ bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' }}>
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <div className="flex items-center gap-2">

@@ -651,20 +651,35 @@ function PeopleTagPicker({ search, onSearchChange, selectedIds, onToggle, curren
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Search followers the user follows
+  // Search all social profiles (not just followers) so tagging works for everyone
   const doSearch = async (q: string) => {
     onSearchChange(q);
     if (q.length < 2) { setResults([]); return; }
     setLoading(true);
-    // Get people the user follows
-    const { data: follows } = await supabase.from('social_follows').select('following_id').eq('follower_id', currentUserId).eq('status', 'active');
-    const followIds = (follows || []).map((f: any) => f.following_id);
-    if (followIds.length === 0) { setResults([]); setLoading(false); return; }
-    const { data } = await supabase.from('social_profiles').select('user_id, username, display_name, avatar_url')
-      .in('user_id', followIds)
+    // Also search customers table as fallback for users without social profiles
+    const { data: profiles } = await supabase.from('social_profiles').select('user_id, username, display_name, avatar_url')
+      .neq('user_id', currentUserId)
       .or(`username.ilike.%${q}%,display_name.ilike.%${q}%`)
       .limit(10);
-    setResults(data || []);
+    
+    if (profiles && profiles.length > 0) {
+      setResults(profiles);
+      setLoading(false);
+      return;
+    }
+
+    // Fallback: search customers table
+    const { data: customers } = await supabase.from('customers').select('id, name, profile_photo')
+      .neq('id', currentUserId)
+      .ilike('name', `%${q}%`)
+      .limit(10);
+    const mapped = (customers || []).map((c: any) => ({
+      user_id: c.id,
+      username: c.name.toLowerCase().replace(/\s+/g, '_'),
+      display_name: c.name,
+      avatar_url: c.profile_photo,
+    }));
+    setResults(mapped);
     setLoading(false);
   };
 
@@ -672,7 +687,7 @@ function PeopleTagPicker({ search, onSearchChange, selectedIds, onToggle, curren
     <div className="border border-border/50 rounded-lg p-3 space-y-2 bg-muted/30">
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search people you follow..." value={search} onChange={(e) => doSearch(e.target.value)} className="pl-8 h-9 text-sm" />
+        <Input placeholder="Search people..." value={search} onChange={(e) => doSearch(e.target.value)} className="pl-8 h-9 text-sm" />
       </div>
       {loading && <p className="text-xs text-muted-foreground">Searching...</p>}
       {results.map((p: any) => {
