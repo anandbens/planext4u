@@ -392,7 +392,7 @@ export const api = {
     const to = from + perPage - 1;
 
     // Fetch product vendors
-    let vQuery = supabase.from('vendors').select('*', { count: 'exact' });
+    let vQuery = supabase.from('vendors').select('*', { count: 'exact' }).is('deleted_at', null);
     if (params.search) vQuery = vQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%,mobile.ilike.%${params.search}%`);
     if (params.status && params.status !== 'all') vQuery = vQuery.eq('status', params.status);
     if (params.payment_status && params.payment_status !== 'all') vQuery = vQuery.eq('plan_payment_status', params.payment_status);
