@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePostLike, usePostBookmark, usePostComments, useSharePost, useRepost } from "@/hooks/use-social-interactions";
+import { isSocialModerator } from "@/lib/social-moderator";
 import { toast } from "sonner";
 import { useState } from "react";
 import SocialLayout from "@/components/social/SocialLayout";
@@ -123,11 +124,15 @@ export default function SocialPostDetailPage() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild><button className="p-1"><MoreHorizontal className="h-5 w-5" /></button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {(customerUser?.supabase_uid || customerUser?.id) === post.user_id && (
+            {((customerUser?.supabase_uid || customerUser?.id) === post.user_id || isSocialModerator(customerUser?.supabase_uid || customerUser?.id)) && (
               <DropdownMenuItem className="text-destructive" onClick={async () => {
                 if (!confirm("Are you sure you want to delete this post?")) return;
                 const userId = customerUser?.supabase_uid || customerUser?.id;
-                const { error } = await supabase.from('social_posts').delete().eq('id', postId!).eq('user_id', userId);
+                const isMod = isSocialModerator(userId);
+                const deleteQuery = isMod && userId !== post.user_id
+                  ? supabase.from('social_posts').delete().eq('id', postId!)
+                  : supabase.from('social_posts').delete().eq('id', postId!).eq('user_id', userId);
+                const { error } = await deleteQuery;
                 if (error) { toast.error("Failed to delete post"); return; }
                 toast.success("Post deleted");
                 navigate("/app/social");
