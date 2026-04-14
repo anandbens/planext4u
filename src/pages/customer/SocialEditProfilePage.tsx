@@ -39,6 +39,11 @@ export default function SocialEditProfilePage() {
   const [accountType, setAccountType] = useState("personal");
   const [isPrivate, setIsPrivate] = useState(false);
 
+  const cleanEmail = (email: string | null | undefined): string => {
+    if (!email || email.includes('@phone.planext4u.local')) return '';
+    return email;
+  };
+
   useEffect(() => {
     if (profile) {
       setForm({
@@ -48,7 +53,7 @@ export default function SocialEditProfilePage() {
         website: profile.website || "",
         pronouns: (profile as any).pronouns || "",
         location: (profile as any).location || "",
-        email: customerUser?.email || "",
+        email: cleanEmail(customerUser?.email) || "",
         phone: customerUser?.mobile || "",
       });
       setAvatarUrl(profile.avatar_url || "");

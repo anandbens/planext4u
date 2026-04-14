@@ -118,7 +118,7 @@ export default function CustomerProfileEditPage() {
     if (form.name.length > 100) return "Name must be under 100 characters";
     if (!/^[a-zA-Z\s]+$/.test(form.name)) return "Name can only contain letters and spaces";
     if (!form.mobile || !/^\d{10}$/.test(form.mobile.replace(/\+91/g, ''))) return "Valid 10-digit mobile required";
-    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) return "Valid email is required";
+    if (form.email && !/\S+@\S+\.\S+/.test(form.email)) return "Valid email is required";
     if (!form.dob) return "Date of birth is required";
     if (form.dob) {
       const dob = new Date(form.dob);
