@@ -66,11 +66,7 @@ export default function SetPasswordPage() {
     }
     setLoading(true);
     try {
-      // Update password in Supabase Auth
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw new Error(error.message);
-
-      // Mark password_set = true in user_roles
+      // Mark password_set = true in user_roles FIRST (before updateUser triggers auth events)
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await supabase
@@ -79,31 +75,27 @@ export default function SetPasswordPage() {
           .eq("user_id", session.user.id);
       }
 
-      // Update local storage - mark password_set and clear just_logged_in
-      const customerData = localStorage.getItem("customer_user");
-      const vendorData = localStorage.getItem("vendor_user");
-      if (customerData) {
-        const cu = JSON.parse(customerData);
-        cu.password_set = true;
-        cu.just_logged_in = false;
-        localStorage.setItem("customer_user", JSON.stringify(cu));
-      }
-      if (vendorData) {
-        const vu = JSON.parse(vendorData);
-        vu.password_set = true;
-        vu.just_logged_in = false;
-        localStorage.setItem("vendor_user", JSON.stringify(vu));
-      }
+      // Update local storage BEFORE updateUser to prevent race with auth events
+      const storageKey = isVendor ? "vendor_user" : "customer_user";
+      try {
+        const d = JSON.parse(localStorage.getItem(storageKey) || "{}");
+        d.password_set = true;
+        d.just_logged_in = false;
+        localStorage.setItem(storageKey, JSON.stringify(d));
+      } catch {}
+
+      // Now update password in Supabase Auth (this triggers SIGNED_IN event)
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw new Error(error.message);
 
       toast.success("Password set successfully! 🎉");
       
-      // Full page reload to pick up updated localStorage state in auth provider
+      // Full page reload to pick up updated state
       setTimeout(() => {
         window.location.replace(isVendor ? "/vendor" : "/app");
-      }, 500);
+      }, 300);
     } catch (err: any) {
       toast.error(err.message || "Failed to set password");
-    } finally {
       setLoading(false);
     }
   };
