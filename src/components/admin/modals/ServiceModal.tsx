@@ -342,6 +342,8 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
                         <SelectItem value="active">Active</SelectItem>
                         <SelectItem value="inactive">Inactive</SelectItem>
                         <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="pending_approval">Pending Approval</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

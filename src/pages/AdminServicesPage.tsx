@@ -126,6 +126,8 @@ export default function AdminServicesPage() {
           { value: "active", label: "Active" },
           { value: "inactive", label: "Inactive" },
           { value: "draft", label: "Draft" },
+          { value: "pending_approval", label: "Pending Approval" },
+          { value: "rejected", label: "Rejected" },
         ]}
       />
       <ServiceModal service={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
