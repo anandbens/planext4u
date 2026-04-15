@@ -234,12 +234,41 @@ export default function AdminMediaLibraryPage() {
   const handleMoveFile = async () => {
     if (!moveItem || !moveTarget) return;
     setMoving(true);
+    if (moveItem.id === "__bulk__" && multiSelected.size > 0) {
+      const ids = Array.from(multiSelected);
+      const { error } = await supabase.from("media_library").update({ folder: moveTarget }).in("id", ids);
+      setMoving(false);
+      if (error) { toast.error("Bulk move failed"); return; }
+      toast.success(`Moved ${ids.length} file(s) to ${moveTarget}`);
+      setMoveItem(null); setMoveTarget(""); setMultiSelected(new Set()); setSelectMode(false);
+      qc.invalidateQueries({ queryKey: ["adminMediaLibrary"] });
+      return;
+    }
     const { error } = await supabase.from("media_library").update({ folder: moveTarget }).eq("id", moveItem.id);
     setMoving(false);
     if (error) { toast.error("Move failed"); return; }
     toast.success(`Moved to ${moveTarget}`);
     setMoveItem(null); setMoveTarget("");
     qc.invalidateQueries({ queryKey: ["adminMediaLibrary"] });
+  };
+
+  const toggleSelect = (id: string) => {
+    setMultiSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (multiSelected.size === paginatedFiles.length) setMultiSelected(new Set());
+    else setMultiSelected(new Set(paginatedFiles.map(f => f.id)));
+  };
+
+  const openBulkMove = () => {
+    if (multiSelected.size === 0) { toast.error("Select files first"); return; }
+    setMoveItem({ id: "__bulk__", file_name: `${multiSelected.size} files`, file_url: "", file_type: "", file_size: null, folder: activeFolder, alt_text: null, tags: null, created_at: "" });
+    setMoveTarget("");
   };
 
   const handleDeleteFolder = async () => {
