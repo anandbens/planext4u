@@ -10,16 +10,21 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
+import { LoginPromptDialog } from "@/components/customer/LoginPromptDialog";
 import { toast } from "sonner";
 import { api, ProductVariant } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { BannerAd } from "@/components/customer/BannerAd";
 import DOMPurify from "dompurify";
+import { useAuth } from "@/lib/auth";
 
 
 export default function CustomerProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { customerUser } = useAuth();
+  const isGuest = !customerUser;
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [qty, setQty] = useState(1);
   const [wishlisted, setWishlisted] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
