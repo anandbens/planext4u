@@ -634,20 +634,20 @@ export default function VendorRegisterPage() {
         {step === 3 && (
           <Card className="p-5 space-y-4">
             <h3 className="text-sm font-semibold">KYC Documents</h3>
-            <p className="text-xs text-muted-foreground">Either Aadhaar or PAN is mandatory. GST is required for product sellers.</p>
+            <p className="text-xs text-muted-foreground">Either Aadhaar or PAN is mandatory. Document images must be uploaded.</p>
             
             <div className="space-y-4">
               <div className="p-3 rounded-lg border border-border space-y-3">
                 <h4 className="text-xs font-bold">Aadhaar Card</h4>
                 <Input value={form.aadhaar_number} onChange={e => updateField('aadhaar_number', e.target.value.replace(/\D/g, ''))} placeholder="12-digit Aadhaar" maxLength={12} />
-                <DocUploadButton field="aadhaar_front_url" label="Front Image" />
-                <DocUploadButton field="aadhaar_back_url" label="Back Image" />
+                <DocUploadButton field="aadhaar_front_url" label="Front Image *" />
+                <DocUploadButton field="aadhaar_back_url" label="Back Image *" />
               </div>
               
               <div className="p-3 rounded-lg border border-border space-y-3">
                 <h4 className="text-xs font-bold">PAN Card</h4>
                 <Input value={form.pan_number} onChange={e => updateField('pan_number', e.target.value.toUpperCase())} placeholder="10-char PAN" maxLength={10} />
-                <DocUploadButton field="pan_image_url" label="PAN Image" />
+                <DocUploadButton field="pan_image_url" label="PAN Image *" />
               </div>
               
               <div className="p-3 rounded-lg border border-border space-y-3">
