@@ -334,7 +334,7 @@ export function useSocialFeed(mode: 'following' | 'for_you' = 'for_you') {
 export function useSharePost() {
   return useCallback(async (postId: string, text?: string) => {
     // Always use the published URL so links work across devices/platforms
-    const publishedOrigin = 'https://planext4u.lovable.app';
+    const publishedOrigin = 'https://www.planext4u.net';
     const webOrigin = window.location.origin;
     // Use published URL if on native/capacitor, otherwise use current origin
     const origin = webOrigin.includes('localhost') || webOrigin.includes('capacitor://') ? publishedOrigin : webOrigin;

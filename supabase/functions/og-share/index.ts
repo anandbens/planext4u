@@ -6,9 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-const SITE_URL = "https://planext4u.lovable.app";
+const SITE_URL = "https://www.planext4u.net";
 const SITE_NAME = "Planext4U";
-const DEFAULT_IMAGE = "https://planext4u.lovable.app/favicon.png";
+const DEFAULT_IMAGE = "https://www.planext4u.net/favicon.png";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
