@@ -307,7 +307,7 @@ export default function SocialCreatePostPage() {
   if (step === 'select') {
     return (
       <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-40 bg-card border-b border-border/30">
+        <header className="sticky top-0 z-40 bg-card border-b border-border/30 safe-area-top">
           <div className="flex items-center justify-between px-4 py-3">
             <button onClick={() => navigate(-1)}><ArrowLeft className="h-6 w-6" /></button>
             <span className="text-lg font-semibold">New Post</span>
@@ -373,7 +373,7 @@ export default function SocialCreatePostPage() {
   if (step === 'edit') {
     return (
       <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-40 bg-card border-b border-border/30">
+        <header className="sticky top-0 z-40 bg-card border-b border-border/30 safe-area-top">
           <div className="flex items-center justify-between px-4 py-3">
             <button onClick={() => setStep('select')}><ArrowLeft className="h-6 w-6" /></button>
             <span className="text-lg font-semibold">Edit</span>
@@ -490,7 +490,7 @@ export default function SocialCreatePostPage() {
   // Step 3: Details
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 bg-card border-b border-border/30">
+      <header className="sticky top-0 z-40 bg-card border-b border-border/30 safe-area-top">
         <div className="flex items-center justify-between px-4 py-3">
           <button onClick={() => setStep('edit')}><ArrowLeft className="h-6 w-6" /></button>
           <span className="text-lg font-semibold">New Post</span>

@@ -362,7 +362,7 @@ export default function SocioDMChatPage() {
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-card shrink-0">
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-card shrink-0 safe-area-top">
         <button onClick={() => navigate('/app/social/messages')}><ArrowLeft className="h-5 w-5" /></button>
         <button onClick={() => recipientId && navigate(`/app/social/profile/${recipientId}`)} className="flex items-center gap-3 flex-1 min-w-0">
           <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0">
