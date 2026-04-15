@@ -66,7 +66,7 @@ export default function CustomerClassifiedDetailPage() {
   });
 
   const handleWhatsApp = () => {
-    const shareUrl = `https://planext4u.lovable.app/app/classifieds/${id}`;
+    const shareUrl = `https://www.planext4u.net/app/classifieds/${id}`;
     const msg = encodeURIComponent(
       `Hi, I'm interested in your listing "${ad.title}" priced at ₹${ad.price.toLocaleString()} on planext4u.\n${shareUrl}`
     );
@@ -74,7 +74,7 @@ export default function CustomerClassifiedDetailPage() {
   };
 
   const handleShare = async () => {
-    const shareUrl = `https://planext4u.lovable.app/app/classifieds/${id}`;
+    const shareUrl = `https://www.planext4u.net/app/classifieds/${id}`;
     if (navigator.share) {
       await navigator.share({ title: ad.title, text: `Check out: ${ad.title} - ₹${ad.price.toLocaleString()}`, url: shareUrl });
     } else {
