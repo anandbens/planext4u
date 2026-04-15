@@ -57,6 +57,14 @@ export function OnboardingCarousel({ onComplete }: OnboardingCarouselProps) {
     }
   };
 
+  // If no slides loaded, auto-complete onboarding
+  useEffect(() => {
+    if (slides.length === 0) {
+      const timer = setTimeout(() => onComplete(), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [slides, onComplete]);
+
   if (slides.length === 0) return null;
 
   const slide = slides[current];

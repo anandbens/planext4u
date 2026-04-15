@@ -343,8 +343,8 @@ export default function CustomerHomePage() {
     <CustomerLayout>
       <div className="max-w-7xl mx-auto space-y-0 pb-32 md:pb-6">
 
-        {/* ── Top Location Bar (Zepto-style) ── */}
-        <div className="px-4 pt-3 pb-1 flex items-center justify-between">
+        {/* Location bar only on desktop (mobile header already has it) */}
+        <div className="px-4 pt-3 pb-1 hidden md:flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <MapPin className="h-4 w-4 text-primary" />
             <div>
@@ -357,21 +357,7 @@ export default function CustomerHomePage() {
           </Link>
         </div>
 
-        {/* ── Search Bar (Swiggy/Zepto style) ── */}
-        <div className="px-4 py-2">
-          <div className="flex gap-2">
-            <div className="flex-1 relative" onClick={() => navigate("/app/browse")}>
-              <div className="flex items-center gap-2 bg-secondary/60 rounded-xl px-4 py-2.5 border border-border/30 cursor-pointer hover:border-primary/30 transition-colors">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Search for products, services...</span>
-                <ShoppingCart className="h-4 w-4 text-muted-foreground ml-auto" />
-              </div>
-            </div>
-            <Link to="/app/wishlist" className="h-10 w-10 rounded-xl bg-secondary/60 border border-border/30 flex items-center justify-center shrink-0">
-              <Heart className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
+        {/* Search is already in CustomerLayout header — no duplicate here */}
 
         {/* ── Category Pill Row (Zepto-style horizontal scroll) ── */}
         <div className="px-4 pt-1 pb-2">

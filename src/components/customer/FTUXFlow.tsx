@@ -36,7 +36,9 @@ interface FTUXFlowProps {
 }
 
 export function FTUXFlow({ children, userId }: FTUXFlowProps) {
-  const [step, setStep] = useState<FTUXStep>("splash");
+  // On web (non-native), skip splash/onboarding entirely — CustomerHomePage has its own splash
+  const skipFTUX = !isNativePlatform();
+  const [step, setStep] = useState<FTUXStep>(skipFTUX ? "done" : "splash");
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
