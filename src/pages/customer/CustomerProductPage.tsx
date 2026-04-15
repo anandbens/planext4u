@@ -155,6 +155,7 @@ export default function CustomerProductPage() {
 
   const addToCart = async () => {
     if (!product) return;
+    if (isGuest) { setLoginPromptOpen(true); return; }
     // For variable products, use variant price and pass attributes
     const cartProduct = selectedVariant ? {
       ...product,
@@ -174,6 +175,7 @@ export default function CustomerProductPage() {
 
   const buyNow = async () => {
     if (!product) return;
+    if (isGuest) { setLoginPromptOpen(true); return; }
     const cartProduct = selectedVariant ? {
       ...product,
       price: selectedVariant.price,
