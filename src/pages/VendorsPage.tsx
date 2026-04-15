@@ -312,7 +312,14 @@ export default function VendorsPage() {
     <AdminLayout>
       <div className="page-header">
         <h1 className="page-title">Vendors</h1>
-        <p className="page-description">{data.total.toLocaleString()} registered vendors · Multi-level approval</p>
+        <div className="flex items-center gap-2">
+          <p className="page-description">{data.total.toLocaleString()} registered vendors · Multi-level approval</p>
+          {!isSpecialTab && (
+            <Button variant="outline" size="sm" className="ml-auto gap-1" onClick={() => { setCreateVendorType("service"); openModal(null, "create"); }}>
+              + Service Vendor
+            </Button>
+          )}
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
