@@ -15,7 +15,7 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState<string>();
+  const [orderFlow] = useState(["placed", "paid", "accepted", "in_progress", "shipped", "delivered", "completed"]);
   const [dateTo, setDateTo] = useState<string>();
   const [selected, setSelected] = useState<Order | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "edit">("view");
@@ -34,13 +34,13 @@ export default function OrdersPage() {
     setSelected(order); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, status: Order["status"]) => {
+  const handleSave = async (id: string, status: Order["status"], shippingData?: any) => {
     if (status === "cancelled") {
       const order = data?.data.find(o => o.id === id);
       if (order) { setCancelTarget(order); setCancelConfirmOpen(true); setModalOpen(false); }
       return;
     }
-    await api.updateOrderStatus(id, status);
+    await api.updateOrderStatus(id, status, shippingData);
     toast.success("Order status updated");
     fetchData();
   };
