@@ -127,7 +127,7 @@ export default function SocialDMPage() {
   if (showNewChat) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-40 bg-card border-b border-border/30">
+        <header className="sticky top-0 z-40 bg-card border-b border-border/30 safe-area-top">
           <div className="max-w-xl mx-auto flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
               <button onClick={() => setShowNewChat(false)}><ArrowLeft className="h-6 w-6" /></button>
