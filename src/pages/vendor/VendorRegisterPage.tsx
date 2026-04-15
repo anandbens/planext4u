@@ -125,8 +125,12 @@ export default function VendorRegisterPage() {
     if (step === 1) {
       if (!form.name.trim() || form.name.length < 2) return "Name must be at least 2 characters";
       if (!/^[a-zA-Z\s]+$/.test(form.name)) return "Name can only contain letters and spaces";
-      if (!/^\d{10}$/.test(form.phone)) return "Phone must be 10 digits";
-      if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) return "Valid email is required";
+      const phoneErr = validatePhoneFormat(form.phone);
+      if (phoneErr) return phoneErr;
+      const emailErr = validateEmailFormat(form.email);
+      if (emailErr) return emailErr;
+      if (fieldErrors.phone) return fieldErrors.phone;
+      if (fieldErrors.email) return fieldErrors.email;
       if (form.fb_link && !/^https?:\/\/.+/.test(form.fb_link)) return "Facebook link must be a valid URL";
       if (form.instagram_link && !/^https?:\/\/.+/.test(form.instagram_link)) return "Instagram link must be a valid URL";
     }
