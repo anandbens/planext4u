@@ -458,6 +458,14 @@ export default function AdminMediaLibraryPage() {
                   <Badge variant="outline" className="text-xs">{formatSize(mediaItems.reduce((s, m) => s + (m.file_size || 0), 0))}</Badge>
                 </div>
 
+                {selectMode && mediaItems.length > 0 && (
+                  <div className="flex items-center gap-3 mt-2 p-2 bg-secondary/30 rounded-lg">
+                    <Checkbox checked={multiSelected.size === paginatedFiles.length && paginatedFiles.length > 0} onCheckedChange={toggleSelectAll} />
+                    <span className="text-xs text-muted-foreground">Select all on this page ({paginatedFiles.length})</span>
+                    {multiSelected.size > 0 && <Badge variant="secondary" className="text-xs">{multiSelected.size} selected</Badge>}
+                  </div>
+                )}
+
                 {isLoading ? (
                   <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                 ) : mediaItems.length === 0 ? (
@@ -469,20 +477,27 @@ export default function AdminMediaLibraryPage() {
                 ) : viewMode === "grid" ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
                     {paginatedFiles.map(item => (
-                      <Card key={item.id} className={`overflow-hidden cursor-pointer group hover:ring-2 hover:ring-primary/50 transition-all ${selected?.id === item.id ? "ring-2 ring-primary" : ""}`}
-                        onClick={() => { setSelected(item); setPreviewOpen(true); }}>
-                        <div className="aspect-square bg-secondary/30 flex items-center justify-center overflow-hidden">
+                      <Card key={item.id} className={`overflow-hidden cursor-pointer group hover:ring-2 hover:ring-primary/50 transition-all ${multiSelected.has(item.id) ? "ring-2 ring-primary" : selected?.id === item.id ? "ring-2 ring-primary" : ""}`}
+                        onClick={() => { if (selectMode) { toggleSelect(item.id); } else { setSelected(item); setPreviewOpen(true); } }}>
+                        <div className="aspect-square bg-secondary/30 flex items-center justify-center overflow-hidden relative">
                           {renderMediaThumbnail(item)}
+                          {selectMode && (
+                            <div className="absolute top-2 left-2 z-10">
+                              <Checkbox checked={multiSelected.has(item.id)} onCheckedChange={() => toggleSelect(item.id)} onClick={e => e.stopPropagation()} className="bg-background/80 border-foreground/50" />
+                            </div>
+                          )}
                         </div>
                         <div className="p-2 flex items-center justify-between gap-1">
                           <div className="min-w-0">
                             <p className="text-xs font-medium truncate">{item.file_name}</p>
                             <span className="text-[10px] text-muted-foreground">{formatSize(item.file_size)}</span>
                           </div>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
-                            onClick={e => { e.stopPropagation(); setMoveItem(item); setMoveTarget(""); }}>
-                            <MoveRight className="h-3 w-3" />
-                          </Button>
+                          {!selectMode && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
+                              onClick={e => { e.stopPropagation(); setMoveItem(item); setMoveTarget(""); }}>
+                              <MoveRight className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </Card>
                     ))}
@@ -490,8 +505,11 @@ export default function AdminMediaLibraryPage() {
                 ) : (
                   <div className="space-y-1 mt-4">
                     {paginatedFiles.map(item => (
-                      <div key={item.id} className={`flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors ${selected?.id === item.id ? "bg-accent" : ""}`}
-                        onClick={() => { setSelected(item); setPreviewOpen(true); }}>
+                      <div key={item.id} className={`flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors ${multiSelected.has(item.id) ? "bg-accent" : selected?.id === item.id ? "bg-accent" : ""}`}
+                        onClick={() => { if (selectMode) { toggleSelect(item.id); } else { setSelected(item); setPreviewOpen(true); } }}>
+                        {selectMode && (
+                          <Checkbox checked={multiSelected.has(item.id)} onCheckedChange={() => toggleSelect(item.id)} onClick={e => e.stopPropagation()} />
+                        )}
                         <div className="h-12 w-12 rounded bg-secondary/50 flex items-center justify-center overflow-hidden shrink-0">
                           {renderMediaThumbnail(item, "w-full h-full object-cover")}
                         </div>
@@ -499,12 +517,14 @@ export default function AdminMediaLibraryPage() {
                           <p className="text-sm font-medium truncate">{item.file_name}</p>
                           <p className="text-xs text-muted-foreground">{formatSize(item.file_size)} · {new Date(item.created_at).toLocaleDateString()}</p>
                         </div>
-                        <div className="flex gap-1 shrink-0">
-                          <Button size="icon" variant="ghost" className="h-8 w-8" title="Move" onClick={e => { e.stopPropagation(); setMoveItem(item); setMoveTarget(""); }}><MoveRight className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={e => { e.stopPropagation(); copyUrl(item.file_url); }}><Copy className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={e => { e.stopPropagation(); downloadFile(item.file_url, item.file_name); }}><Download className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={e => { e.stopPropagation(); handleDelete(item); }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                        </div>
+                        {!selectMode && (
+                          <div className="flex gap-1 shrink-0">
+                            <Button size="icon" variant="ghost" className="h-8 w-8" title="Move" onClick={e => { e.stopPropagation(); setMoveItem(item); setMoveTarget(""); }}><MoveRight className="h-3.5 w-3.5" /></Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={e => { e.stopPropagation(); copyUrl(item.file_url); }}><Copy className="h-3.5 w-3.5" /></Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={e => { e.stopPropagation(); downloadFile(item.file_url, item.file_name); }}><Download className="h-3.5 w-3.5" /></Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={e => { e.stopPropagation(); handleDelete(item); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
