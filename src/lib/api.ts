@@ -43,6 +43,7 @@ export interface Product {
   manage_stock?: boolean; stock_status?: string;
   weight?: number; dimensions?: any;
   parent_item_id?: string | null; parent_item_name?: string | null;
+  replacement_time?: string;
 }
 
 export interface ProductVariant {
@@ -555,7 +556,7 @@ export const api = {
       'youtube_video_url', 'max_redemption_percentage', 'commission_override', 'tax_slab_id', 'product_attributes',
       'is_available', 'duration_hours', 'duration_minutes', 'promise_p4u', 'helpline_number', 'thumbnail_image',
       'banner_image', 'socio_shopping_icon', 'product_type', 'sku', 'slug', 'meta_title', 'meta_description',
-      'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name'];
+      'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name', 'replacement_time'];
     const uuidFields = ['category_id', 'subcategory_id', 'vendor_id', 'tax_slab_id', 'parent_item_id'];
     const filtered: Record<string, any> = { updated_at: new Date().toISOString() };
     for (const key of validProductFields) {
@@ -586,7 +587,7 @@ export const api = {
       'youtube_video_url', 'max_redemption_percentage', 'commission_override', 'tax_slab_id', 'product_attributes',
       'is_available', 'duration_hours', 'duration_minutes', 'promise_p4u', 'helpline_number', 'thumbnail_image',
       'banner_image', 'socio_shopping_icon', 'product_type', 'sku', 'slug', 'meta_title', 'meta_description',
-      'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name'];
+      'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name', 'replacement_time'];
     const newProduct: Record<string, any> = {
       id: genId('PRD'),
       rating: 0, reviews: 0, stock: data.stock || 0, sales: 0,
