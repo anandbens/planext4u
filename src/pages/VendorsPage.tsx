@@ -194,10 +194,12 @@ export default function VendorsPage() {
     }
     fetchData(); fetchStats();
   };
+  const [createVendorType, setCreateVendorType] = useState<"product" | "service">("product");
+
   const handleCreate = async (data: Partial<Vendor>) => {
     try {
-      await api.createVendor(data);
-      toast.success("Vendor created");
+      await api.createVendor(data, createVendorType);
+      toast.success(`${createVendorType === "service" ? "Service" : "Product"} vendor created`);
     } catch (err: any) {
       toast.error("Failed to create vendor: " + (err.message || "Unknown error"));
       return;
@@ -309,7 +311,14 @@ export default function VendorsPage() {
     <AdminLayout>
       <div className="page-header">
         <h1 className="page-title">Vendors</h1>
-        <p className="page-description">{data.total.toLocaleString()} registered vendors · Multi-level approval</p>
+        <div className="flex items-center gap-2">
+          <p className="page-description">{data.total.toLocaleString()} registered vendors · Multi-level approval</p>
+          {!isSpecialTab && (
+            <Button variant="outline" size="sm" className="ml-auto gap-1" onClick={() => { setCreateVendorType("service"); openModal(null, "create"); }}>
+              + Service Vendor
+            </Button>
+          )}
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
@@ -365,8 +374,8 @@ export default function VendorsPage() {
         onPageChange={setPage}
         onSearch={setSearch}
         onExport={handleExport}
-        onAdd={!isSpecialTab ? () => openModal(null, "create") : undefined}
-        addLabel="Add Vendor"
+        onAdd={!isSpecialTab ? () => { setCreateVendorType("product"); openModal(null, "create"); } : undefined}
+        addLabel="Add Product Vendor"
         onRowClick={(v) => openModal(v, "view")}
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } if (key === "payment") { setPaymentFilter(val); setPage(1); } }}
         onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
@@ -385,7 +394,7 @@ export default function VendorsPage() {
           { value: "rejected", label: "Rejected" },
         ] : undefined}
       />
-      <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} onRefresh={fetchData} />
+      <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} vendorType={createVendorType} onRefresh={fetchData} />
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}

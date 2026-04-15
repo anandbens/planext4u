@@ -76,8 +76,21 @@ export default function VendorServicesPage() {
     }
   };
 
+  const validateServiceForm = (f: ServiceForm): string | null => {
+    if (!f.title.trim()) return "Service title is required";
+    if (!f.description.trim()) return "Description is required";
+    if (!f.category_id) return "Category is required";
+    if (!f.price || parseFloat(f.price) <= 0) return "Price must be greater than 0";
+    if (!f.duration.trim()) return "Duration is required";
+    if (!f.service_area.trim()) return "Service area is required";
+    if (!f.image) return "Service image is required";
+    return null;
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (formData: ServiceForm) => {
+      const err = validateServiceForm(formData);
+      if (err) throw new Error(err);
       // Ensure vendor exists in service_vendors table first
       await ensureServiceVendor();
       

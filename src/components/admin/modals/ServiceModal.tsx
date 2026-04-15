@@ -164,8 +164,18 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
   }, [service, mode]);
 
   const handleSave = async () => {
-    if (!form.title.trim()) { toast.error("Title is required"); return; }
-    if (!form.vendor_id) { toast.error("Please select a vendor"); return; }
+    const errors: string[] = [];
+    if (!form.title.trim()) errors.push("Service title is required");
+    if (!form.vendor_id) errors.push("Vendor is required");
+    if (!form.category_id) errors.push("Service category is required");
+    if (!form.description?.trim()) errors.push("Description is required");
+    if (!form.short_description?.trim()) errors.push("Short Description is required");
+    if (!form.long_description?.trim()) errors.push("Long Description is required");
+    if (form.price <= 0) errors.push("Base price must be greater than 0");
+    if (!form.duration?.trim()) errors.push("Duration is required");
+    if (!form.service_area?.trim()) errors.push("Service area is required");
+    if (!form.image) errors.push("Service image is required");
+    if (errors.length > 0) { toast.error(errors[0]); return; }
     setSaving(true);
     try {
       if (isCreate) await onCreate?.(form);

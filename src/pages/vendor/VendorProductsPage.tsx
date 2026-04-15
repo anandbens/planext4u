@@ -134,8 +134,24 @@ export default function VendorProductsPage() {
     requestAnimationFrame(() => fileRef.current?.click());
   };
 
+  const validateProductForm = (f: ProductForm): string | null => {
+    if (!f.title.trim()) return "Product title is required";
+    if (!f.sku?.trim()) return "SKU is required";
+    if (!f.category_id) return "Category is required";
+    if (!f.short_description?.trim()) return "Short Description is required";
+    if (!f.long_description?.trim()) return "Long Description is required";
+    if (!f.price || parseFloat(f.price) <= 0) return "MRP / Price must be greater than 0";
+    if (!f.stock || parseInt(f.stock) < 0) return "Stock quantity is required";
+    if (!f.thumbnail_image) return "Thumbnail image is required";
+    if (!f.banner_image) return "Banner image is required";
+    if (!f.images || f.images.length === 0) return "At least 1 product image is required";
+    return null;
+  };
+
   const saveMutation = useMutation({
     mutationFn: async (formData: ProductForm) => {
+      const err = validateProductForm(formData);
+      if (err) throw new Error(err);
       const payload: any = {
         title: formData.title, description: formData.description,
         short_description: formData.short_description, long_description: formData.long_description,
