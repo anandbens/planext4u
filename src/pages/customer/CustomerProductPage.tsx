@@ -144,6 +144,7 @@ export default function CustomerProductPage() {
 
   const toggleWishlist = () => {
     if (!id) return;
+    if (isGuest) { setLoginPromptOpen(true); return; }
     try {
       let wl = JSON.parse(localStorage.getItem('app_db_wishlist') || '[]') as string[];
       if (wishlisted) { wl = wl.filter(w => w !== id); toast.success("Removed from wishlist"); }
