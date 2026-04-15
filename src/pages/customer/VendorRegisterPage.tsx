@@ -234,6 +234,13 @@ export default function VendorRegisterPage() {
       if (form.pan_number && !/^[A-Z0-9]{10}$/i.test(form.pan_number)) return "PAN must be 10 alphanumeric chars";
       if (form.gst_number && !/^[0-9A-Z]{15}$/i.test(form.gst_number)) return "GST must be 15 characters";
       if (!form.aadhaar_number && !form.pan_number) return "Either Aadhaar or PAN is required";
+      // Document uploads are mandatory
+      if (form.aadhaar_number) {
+        if (!form.aadhaar_front_url) return "Aadhaar front image is required";
+        if (!form.aadhaar_back_url) return "Aadhaar back image is required";
+      }
+      if (form.pan_number && !form.pan_image_url) return "PAN card image is required";
+      if (form.gst_number && !form.gst_certificate_url) return "GST certificate is required";
     }
     if (step === 4) {
       if (form.bank_account_number && form.bank_account_number !== form.bank_confirm_account) return "Account numbers don't match";
