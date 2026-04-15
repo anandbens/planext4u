@@ -10,16 +10,21 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
+import { LoginPromptDialog } from "@/components/customer/LoginPromptDialog";
 import { toast } from "sonner";
 import { api, ProductVariant } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { BannerAd } from "@/components/customer/BannerAd";
 import DOMPurify from "dompurify";
+import { useAuth } from "@/lib/auth";
 
 
 export default function CustomerProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { customerUser } = useAuth();
+  const isGuest = !customerUser;
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [qty, setQty] = useState(1);
   const [wishlisted, setWishlisted] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
@@ -139,6 +144,7 @@ export default function CustomerProductPage() {
 
   const toggleWishlist = () => {
     if (!id) return;
+    if (isGuest) { setLoginPromptOpen(true); return; }
     try {
       let wl = JSON.parse(localStorage.getItem('app_db_wishlist') || '[]') as string[];
       if (wishlisted) { wl = wl.filter(w => w !== id); toast.success("Removed from wishlist"); }
@@ -150,6 +156,7 @@ export default function CustomerProductPage() {
 
   const addToCart = async () => {
     if (!product) return;
+    if (isGuest) { setLoginPromptOpen(true); return; }
     // For variable products, use variant price and pass attributes
     const cartProduct = selectedVariant ? {
       ...product,
@@ -169,6 +176,7 @@ export default function CustomerProductPage() {
 
   const buyNow = async () => {
     if (!product) return;
+    if (isGuest) { setLoginPromptOpen(true); return; }
     const cartProduct = selectedVariant ? {
       ...product,
       price: selectedVariant.price,
@@ -184,6 +192,29 @@ export default function CustomerProductPage() {
     }
     navigate('/app/cart');
   };
+
+  // Update OG meta tags dynamically for social sharing
+  useEffect(() => {
+    if (!product) return;
+    const ogImage = (product as any).thumbnail_image || product.image || '';
+    const ogDesc = (product as any).short_description || product.description?.slice(0, 160) || '';
+    const ogTitle = `${product.title} - ₹${(product.price + (product.tax || 0)).toLocaleString()} | P4U`;
+    const ogUrl = `${window.location.origin}/app/product/${id}`;
+
+    const setMeta = (property: string, content: string) => {
+      let el = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
+      if (!el) { el = document.createElement('meta'); el.setAttribute('property', property); document.head.appendChild(el); }
+      el.content = content;
+    };
+    setMeta('og:title', ogTitle);
+    setMeta('og:description', ogDesc);
+    setMeta('og:image', ogImage);
+    setMeta('og:url', ogUrl);
+    setMeta('og:type', 'product');
+    document.title = ogTitle;
+
+    return () => { document.title = 'P4U'; };
+  }, [product, id]);
 
   if (isLoading) return <CustomerLayout><div className="p-8"><Skeleton className="h-96 rounded-2xl" /></div></CustomerLayout>;
   if (!product) return <CustomerLayout><div className="p-8 text-center">Product not found</div></CustomerLayout>;
@@ -480,6 +511,7 @@ export default function CustomerProductPage() {
       <div className="px-4 py-3 pb-44 md:pb-6">
         <BannerAd placement="product_detail" />
       </div>
+      <LoginPromptDialog open={loginPromptOpen} onOpenChange={setLoginPromptOpen} message="Please sign in to add items to your cart and place orders." />
     </CustomerLayout>
   );
 }

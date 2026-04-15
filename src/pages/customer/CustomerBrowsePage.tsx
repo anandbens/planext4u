@@ -8,14 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
+import { LoginPromptDialog } from "@/components/customer/LoginPromptDialog";
 import { api, CartItem } from "@/lib/api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { BannerAd } from "@/components/customer/BannerAd";
+import { useAuth } from "@/lib/auth";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { customerUser } = useAuth();
+  const isGuest = !customerUser;
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [sortBy, setSortBy] = useState("popular");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
@@ -98,6 +103,7 @@ export default function CustomerBrowsePage() {
   };
 
   const quickAdd = async (p: any) => {
+    if (isGuest) { setLoginPromptOpen(true); return; }
     const result = await api.addToCart(p, 1);
     if (result.blocked) { toast.error(result.message, { duration: 5000 }); return; }
     setCartCount(prev => prev + 1);
@@ -107,6 +113,7 @@ export default function CustomerBrowsePage() {
   const toggleWishlist = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isGuest) { setLoginPromptOpen(true); return; }
     let wl = [...wishlist];
     if (wl.includes(id)) {
       wl = wl.filter(w => w !== id);
@@ -122,6 +129,7 @@ export default function CustomerBrowsePage() {
   const buyNow = async (p: any, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isGuest) { setLoginPromptOpen(true); return; }
     const result = await api.addToCart(p, 1);
     if (result.blocked) { toast.error(result.message, { duration: 5000 }); return; }
     navigate('/app/cart');
@@ -329,6 +337,7 @@ export default function CustomerBrowsePage() {
       <div className="px-4 py-3 pb-44 md:pb-6">
         <BannerAd placement="products" />
       </div>
+      <LoginPromptDialog open={loginPromptOpen} onOpenChange={setLoginPromptOpen} message="Please sign in to add items to your cart." />
     </CustomerLayout>
   );
 }

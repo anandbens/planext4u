@@ -43,11 +43,10 @@ export default function CFVendorsPage() {
     }
 
     if (activeTab === "pending") {
-      let q = supabase
+      let q = (supabase
         .from('vendor_applications')
-        .select('*', { count: 'exact' })
-        .eq('vendor_type' as any, 'service')
-        .not('status', 'in', '(approved,verified,active,rejected)');
+        .select('*', { count: 'exact' }) as any)
+        .eq('status', 'submitted');
 
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
       if (dateFrom) q = q.gte('created_at', dateFrom);
@@ -74,10 +73,9 @@ export default function CFVendorsPage() {
     }
 
     if (activeTab === "rejected") {
-      let q = supabase
+      let q = (supabase
         .from('vendor_applications')
-        .select('*', { count: 'exact' })
-        .eq('vendor_type' as any, 'service')
+        .select('*', { count: 'exact' }) as any)
         .eq('status', 'rejected');
 
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
@@ -125,8 +123,8 @@ export default function CFVendorsPage() {
     ] = await Promise.all([
       supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }),
       supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }).eq('status', 'verified'),
-      supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).eq('vendor_type' as any, 'service').eq('status', 'rejected'),
-      supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).eq('vendor_type' as any, 'service').not('status', 'in', '(approved,verified,active,rejected)'),
+      supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
+      supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).eq('status', 'submitted'),
       supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }).eq('status', 'deactivated'),
       supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }).eq('status', 'deleted'),
     ]);

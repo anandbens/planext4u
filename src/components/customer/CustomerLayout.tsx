@@ -135,17 +135,22 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               </button>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Link to="/app/wallet" className="flex items-center gap-1 bg-primary-foreground/15 px-2.5 py-1.5 rounded-full">
-                <span className="text-[10px] text-primary-foreground/80">₹</span>
-                <WalletBalance />
-              </Link>
-              <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center">
-                {customerUser ? (
-                  <span className="text-sm font-bold text-primary-foreground">{customerUser.name.charAt(0)}</span>
-                ) : (
+              {customerUser && (
+                <Link to="/app/wallet" className="flex items-center gap-1 bg-primary-foreground/15 px-2.5 py-1.5 rounded-full">
+                  <span className="text-[10px] text-primary-foreground/80">₹</span>
+                  <WalletBalance />
+                </Link>
+              )}
+              {!customerUser ? (
+                <Link to="/app/login" className="h-9 px-3 rounded-full bg-primary-foreground/15 flex items-center justify-center gap-1.5">
                   <User className="h-4 w-4 text-primary-foreground" />
-                )}
-              </button>
+                  <span className="text-xs font-semibold text-primary-foreground">Login</span>
+                </Link>
+              ) : (
+                <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center">
+                  <span className="text-sm font-bold text-primary-foreground">{customerUser.name.charAt(0)}</span>
+                </button>
+              )}
             </div>
           </div>
 

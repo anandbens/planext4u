@@ -13,6 +13,7 @@ import { closeOAuthBrowser, extractOAuthResultFromUrl, isNativePlatform, isOAuth
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
+import { GuestOrCustomerRoute } from "@/components/customer/GuestOrCustomerRoute";
 import { VendorProtectedRoute } from "@/components/vendor/VendorProtectedRoute";
 import { FTUXFlow } from "@/components/customer/FTUXFlow";
 import { isVendorApp, isVendorAppSync, getNativeAppId } from "@/lib/capacitor";
@@ -195,6 +196,10 @@ function CustomerPage({ children }: { children: React.ReactNode }) {
   return <CustomerProtectedRoute>{children}</CustomerProtectedRoute>;
 }
 
+function GuestPage({ children }: { children: React.ReactNode }) {
+  return <GuestOrCustomerRoute>{children}</GuestOrCustomerRoute>;
+}
+
 function VendorPage({ children }: { children: React.ReactNode }) {
   return <VendorProtectedRoute>{children}</VendorProtectedRoute>;
 }
@@ -349,7 +354,7 @@ const AppRoutes = () => {
         <Route path="/admin/splash-screens" element={<ProtectedPage><AdminSplashScreensPage /></ProtectedPage>} />
 
         {/* Customer-facing routes */}
-        <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <CustomerPage><CustomerHomePage /></CustomerPage>} />
+        <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <GuestPage><CustomerHomePage /></GuestPage>} />
         <Route path="/app/login" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <CustomerLoginPage />} />
         <Route path="/app/forgot-password" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <ForgotPasswordPage />} />
         <Route path="/app/reset-password" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <ResetPasswordPage />} />
@@ -361,9 +366,9 @@ const AppRoutes = () => {
         <Route path="/app/terms" element={<TermsPage />} />
         <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/app/cms/:slug" element={<CustomerCMSPage />} />
-        <Route path="/app/browse" element={<CustomerPage><CustomerBrowsePage /></CustomerPage>} />
-        <Route path="/app/product/:id" element={<CustomerPage><CustomerProductPage /></CustomerPage>} />
-        <Route path="/app/vendor/:id" element={<CustomerPage><CustomerVendorPage /></CustomerPage>} />
+        <Route path="/app/browse" element={<GuestPage><CustomerBrowsePage /></GuestPage>} />
+        <Route path="/app/product/:id" element={<GuestPage><CustomerProductPage /></GuestPage>} />
+        <Route path="/app/vendor/:id" element={<GuestPage><CustomerVendorPage /></GuestPage>} />
         <Route path="/app/cart" element={<CustomerPage><CustomerCartPage /></CustomerPage>} />
         <Route path="/app/payment" element={<CustomerPage><PaymentPage /></CustomerPage>} />
         <Route path="/app/orders" element={<CustomerPage><CustomerOrdersPage /></CustomerPage>} />
@@ -374,11 +379,11 @@ const AppRoutes = () => {
         <Route path="/app/wallet" element={<CustomerPage><CustomerWalletPage /></CustomerPage>} />
         <Route path="/app/wishlist" element={<CustomerPage><CustomerWishlistPage /></CustomerPage>} />
         <Route path="/app/referrals" element={<CustomerPage><CustomerReferralPage /></CustomerPage>} />
-        <Route path="/app/services" element={<CustomerPage><CustomerServicesPage /></CustomerPage>} />
-        <Route path="/app/service/:id" element={<CustomerPage><CustomerServiceDetailPage /></CustomerPage>} />
-        <Route path="/app/classifieds" element={<CustomerPage><CustomerClassifiedsPage /></CustomerPage>} />
+        <Route path="/app/services" element={<GuestPage><CustomerServicesPage /></GuestPage>} />
+        <Route path="/app/service/:id" element={<GuestPage><CustomerServiceDetailPage /></GuestPage>} />
+        <Route path="/app/classifieds" element={<GuestPage><CustomerClassifiedsPage /></GuestPage>} />
         <Route path="/app/classifieds/post" element={<CustomerPage><CustomerPostAdPage /></CustomerPage>} />
-        <Route path="/app/classifieds/:id" element={<CustomerPage><CustomerClassifiedDetailPage /></CustomerPage>} />
+        <Route path="/app/classifieds/:id" element={<GuestPage><CustomerClassifiedDetailPage /></GuestPage>} />
         <Route path="/app/vendor-register" element={<CustomerPage><VendorRegisterPage /></CustomerPage>} />
         <Route path="/app/support" element={<CustomerPage><CustomerSupportPage /></CustomerPage>} />
         <Route path="/app/change-password" element={<CustomerPage><CustomerChangePasswordPage /></CustomerPage>} />
@@ -419,16 +424,16 @@ const AppRoutes = () => {
         <Route path="/admin/social" element={<ProtectedPage><AdminSocialDashboardPage /></ProtectedPage>} />
 
         {/* Property / Find Home routes */}
-        <Route path="/app/find-home" element={<CustomerPage><PropertyHomePage /></CustomerPage>} />
+        <Route path="/app/find-home" element={<GuestPage><PropertyHomePage /></GuestPage>} />
         <Route path="/app/find-home/post" element={<CustomerPage><PostPropertyPage /></CustomerPage>} />
-        <Route path="/app/find-home/emi" element={<CustomerPage><PropertyEMIPage /></CustomerPage>} />
+        <Route path="/app/find-home/emi" element={<GuestPage><PropertyEMIPage /></GuestPage>} />
         <Route path="/app/find-home/my-properties" element={<CustomerPage><MyPropertiesPage /></CustomerPage>} />
         <Route path="/app/find-home/saved" element={<CustomerPage><MyPropertiesPage /></CustomerPage>} />
         <Route path="/app/find-home/saved-searches" element={<CustomerPage><SavedSearchesPage /></CustomerPage>} />
         <Route path="/app/find-home/messages" element={<CustomerPage><PropertyMessagesPage /></CustomerPage>} />
         <Route path="/app/find-home/rent-tracker" element={<CustomerPage><RentTrackerPage /></CustomerPage>} />
-        <Route path="/app/find-home/value-estimator" element={<CustomerPage><PropertyValueEstimatorPage /></CustomerPage>} />
-        <Route path="/app/find-home/:id" element={<CustomerPage><PropertyDetailPage /></CustomerPage>} />
+        <Route path="/app/find-home/value-estimator" element={<GuestPage><PropertyValueEstimatorPage /></GuestPage>} />
+        <Route path="/app/find-home/:id" element={<GuestPage><PropertyDetailPage /></GuestPage>} />
 
         {/* Vendor-facing routes */}
         <Route path="/vendor/login" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorLoginPage />} />
