@@ -343,8 +343,8 @@ export default function CustomerHomePage() {
     <CustomerLayout>
       <div className="max-w-7xl mx-auto space-y-0 pb-32 md:pb-6">
 
-        {/* ── Top Location Bar (Zepto-style) ── */}
-        <div className="px-4 pt-3 pb-1 flex items-center justify-between">
+        {/* Location bar only on desktop (mobile header already has it) */}
+        <div className="px-4 pt-3 pb-1 hidden md:flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <MapPin className="h-4 w-4 text-primary" />
             <div>
