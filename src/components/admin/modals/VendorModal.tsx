@@ -53,13 +53,18 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
     },
   });
 
-  // Fetch KYC documents for this vendor
+  // Fetch KYC documents from vendor application
   const { data: kycDocs = [] } = useQuery({
     queryKey: ["vendorKyc", vendor?.id],
     enabled: !!vendor?.id && !isCreate,
     queryFn: async () => {
-      // Find vendor application by phone
-      const { data } = await supabase.from("vendor_applications").select("*").eq("phone", vendor!.mobile).limit(1);
+      // Try matching by phone first, then email
+      const phone = vendor!.mobile;
+      const email = vendor!.email;
+      const { data } = await supabase.from("vendor_applications").select("*")
+        .or(`phone.eq.${phone},email.eq.${email}`)
+        .order("created_at", { ascending: false })
+        .limit(1);
       return data || [];
     },
   });
