@@ -43,10 +43,10 @@ export default function CFVendorsPage() {
     }
 
     if (activeTab === "pending") {
-      let q = supabase
+      let q = (supabase
         .from('vendor_applications')
-        .select('*', { count: 'exact' })
-        .eq('status' as any, 'submitted');
+        .select('*', { count: 'exact' }) as any)
+        .eq('status', 'submitted');
 
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
       if (dateFrom) q = q.gte('created_at', dateFrom);
@@ -73,9 +73,9 @@ export default function CFVendorsPage() {
     }
 
     if (activeTab === "rejected") {
-      let q = supabase
+      let q = (supabase
         .from('vendor_applications')
-        .select('*', { count: 'exact' })
+        .select('*', { count: 'exact' }) as any)
         .eq('status', 'rejected');
 
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
