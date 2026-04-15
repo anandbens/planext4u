@@ -243,6 +243,18 @@ export default function CustomerServiceDetailPage() {
             <button onClick={toggleServiceWishlist} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center">
               <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-destructive text-destructive' : ''}`} />
             </button>
+            <button onClick={() => {
+              const shareUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=service&id=${id}`;
+              const text = `Check out ${service.title} - ₹${service.price.toLocaleString()} on P4U!`;
+              if (navigator.share) {
+                navigator.share({ title: service.title, text, url: shareUrl }).catch(() => {});
+              } else {
+                navigator.clipboard.writeText(`${text}\n${shareUrl}`);
+                toast.success("Link copied to clipboard!");
+              }
+            }} className="absolute top-4 right-14 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center">
+              <Share2 className="h-4 w-4" />
+            </button>
           </div>
 
           <div>
