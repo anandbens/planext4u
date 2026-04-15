@@ -370,11 +370,6 @@ export default function VendorsPage() {
         onExport={handleExport}
         onAdd={!isSpecialTab ? () => { setCreateVendorType("product"); openModal(null, "create"); } : undefined}
         addLabel="Add Product Vendor"
-        extraActions={!isSpecialTab ? (
-          <Button variant="outline" size="sm" className="gap-1" onClick={() => { setCreateVendorType("service"); openModal(null, "create"); }}>
-            + Add Service Vendor
-          </Button>
-        ) : undefined}
         onRowClick={(v) => openModal(v, "view")}
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } if (key === "payment") { setPaymentFilter(val); setPage(1); } }}
         onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
