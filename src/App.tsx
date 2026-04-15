@@ -354,7 +354,7 @@ const AppRoutes = () => {
         <Route path="/admin/splash-screens" element={<ProtectedPage><AdminSplashScreensPage /></ProtectedPage>} />
 
         {/* Customer-facing routes */}
-        <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <CustomerPage><CustomerHomePage /></CustomerPage>} />
+        <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <GuestPage><CustomerHomePage /></GuestPage>} />
         <Route path="/app/login" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <CustomerLoginPage />} />
         <Route path="/app/forgot-password" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <ForgotPasswordPage />} />
         <Route path="/app/reset-password" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <ResetPasswordPage />} />
@@ -366,9 +366,9 @@ const AppRoutes = () => {
         <Route path="/app/terms" element={<TermsPage />} />
         <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/app/cms/:slug" element={<CustomerCMSPage />} />
-        <Route path="/app/browse" element={<CustomerPage><CustomerBrowsePage /></CustomerPage>} />
-        <Route path="/app/product/:id" element={<CustomerPage><CustomerProductPage /></CustomerPage>} />
-        <Route path="/app/vendor/:id" element={<CustomerPage><CustomerVendorPage /></CustomerPage>} />
+        <Route path="/app/browse" element={<GuestPage><CustomerBrowsePage /></GuestPage>} />
+        <Route path="/app/product/:id" element={<GuestPage><CustomerProductPage /></GuestPage>} />
+        <Route path="/app/vendor/:id" element={<GuestPage><CustomerVendorPage /></GuestPage>} />
         <Route path="/app/cart" element={<CustomerPage><CustomerCartPage /></CustomerPage>} />
         <Route path="/app/payment" element={<CustomerPage><PaymentPage /></CustomerPage>} />
         <Route path="/app/orders" element={<CustomerPage><CustomerOrdersPage /></CustomerPage>} />
@@ -379,11 +379,11 @@ const AppRoutes = () => {
         <Route path="/app/wallet" element={<CustomerPage><CustomerWalletPage /></CustomerPage>} />
         <Route path="/app/wishlist" element={<CustomerPage><CustomerWishlistPage /></CustomerPage>} />
         <Route path="/app/referrals" element={<CustomerPage><CustomerReferralPage /></CustomerPage>} />
-        <Route path="/app/services" element={<CustomerPage><CustomerServicesPage /></CustomerPage>} />
-        <Route path="/app/service/:id" element={<CustomerPage><CustomerServiceDetailPage /></CustomerPage>} />
-        <Route path="/app/classifieds" element={<CustomerPage><CustomerClassifiedsPage /></CustomerPage>} />
+        <Route path="/app/services" element={<GuestPage><CustomerServicesPage /></GuestPage>} />
+        <Route path="/app/service/:id" element={<GuestPage><CustomerServiceDetailPage /></GuestPage>} />
+        <Route path="/app/classifieds" element={<GuestPage><CustomerClassifiedsPage /></GuestPage>} />
         <Route path="/app/classifieds/post" element={<CustomerPage><CustomerPostAdPage /></CustomerPage>} />
-        <Route path="/app/classifieds/:id" element={<CustomerPage><CustomerClassifiedDetailPage /></CustomerPage>} />
+        <Route path="/app/classifieds/:id" element={<GuestPage><CustomerClassifiedDetailPage /></GuestPage>} />
         <Route path="/app/vendor-register" element={<CustomerPage><VendorRegisterPage /></CustomerPage>} />
         <Route path="/app/support" element={<CustomerPage><CustomerSupportPage /></CustomerPage>} />
         <Route path="/app/change-password" element={<CustomerPage><CustomerChangePasswordPage /></CustomerPage>} />
