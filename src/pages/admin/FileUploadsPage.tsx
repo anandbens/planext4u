@@ -119,6 +119,14 @@ async function processProductUpload(rows: string[][], headers: string[], uploadI
   const attrIdMap: Record<string, string> = {};
   (dbAttributes || []).forEach((a: any) => { attrIdMap[a.name.toLowerCase()] = a.id; });
 
+  // Fetch existing attribute values for validation
+  const { data: dbAttrValues } = await supabase.from("product_attribute_values").select("id, attribute_id, value");
+  const attrValMap: Record<string, { id: string; value: string }[]> = {};
+  (dbAttrValues || []).forEach((v: any) => {
+    if (!attrValMap[v.attribute_id]) attrValMap[v.attribute_id] = [];
+    attrValMap[v.attribute_id].push({ id: v.id, value: v.value });
+  });
+
   const { data: dbCategories } = await supabase.from("categories").select("id, name, parent_id");
   const catMap: Record<string, any> = {};
   (dbCategories || []).forEach((c: any) => { catMap[c.name.toLowerCase()] = c; });
@@ -154,14 +162,27 @@ async function processProductUpload(rows: string[][], headers: string[], uploadI
     }
 
     const productAttrs: any[] = [];
+    const attrMapEntries: { attribute_id: string }[] = [];
     for (let a = 1; a <= 5; a++) {
-      const an = record[`attribute_name_${a}`], av = record[`attribute_value_${a}`];
+      const an = record[`attribute_name_${a}`]?.trim(), av = record[`attribute_value_${a}`]?.trim();
       if (an && av) {
-        if (!validAttrNames.has(an.toLowerCase())) rowErrors.push(`attribute '${an}' not found in attributes master`);
-        else {
-          const ex = productAttrs.find(pa => pa.attribute_name.toLowerCase() === an.toLowerCase());
-          if (ex) ex.values.push(av);
-          else productAttrs.push({ attribute_id: attrIdMap[an.toLowerCase()], attribute_name: an, values: [av] });
+        if (!validAttrNames.has(an.toLowerCase())) {
+          rowErrors.push(`attribute '${an}' not found in attributes master`);
+        } else {
+          const attrId = attrIdMap[an.toLowerCase()];
+          // Validate attribute value exists in master
+          const masterVals = attrValMap[attrId] || [];
+          const matchedVal = masterVals.find(mv => mv.value.toLowerCase() === av.toLowerCase());
+          if (!matchedVal) {
+            rowErrors.push(`attribute value '${av}' not found for attribute '${an}' in values master`);
+          } else {
+            const ex = productAttrs.find(pa => pa.attribute_id === attrId);
+            if (ex) { ex.values.push(av); ex.value_ids.push(matchedVal.id); }
+            else {
+              productAttrs.push({ attribute_id: attrId, attribute_name: an, values: [av], value_ids: [matchedVal.id] });
+              attrMapEntries.push({ attribute_id: attrId });
+            }
+          }
         }
       } else if (an && !av) rowErrors.push(`attribute_value_${a} required when attribute_name_${a} provided`);
     }
@@ -181,6 +202,9 @@ async function processProductUpload(rows: string[][], headers: string[], uploadI
       }
       let imagesArr: string[] = [];
       if (record.images) { try { imagesArr = JSON.parse(record.images); } catch { imagesArr = record.images.split("|").filter(Boolean); } }
+
+      // Build clean attrs for JSON column (without value_ids)
+      const cleanAttrs = productAttrs.map(pa => ({ attribute_id: pa.attribute_id, attribute_name: pa.attribute_name, values: pa.values }));
 
       const payload: any = {
         title: record.title, description: record.description || record.short_description || "",
@@ -204,19 +228,30 @@ async function processProductUpload(rows: string[][], headers: string[], uploadI
         promise_p4u: record.promise_p4u || null,
         is_available: record.is_available !== "false" && record.is_available !== "0",
         duration_hours: Number(record.duration_hours) || null, duration_minutes: Number(record.duration_minutes) || null,
-        product_attributes: productAttrs.length > 0 ? productAttrs : null,
+        product_attributes: cleanAttrs.length > 0 ? cleanAttrs : null,
       };
 
+      let productId: string;
       const existingId = record.id?.trim();
       if (existingId) {
         const { error } = await supabase.from("products").update(payload).eq("id", existingId);
         if (error) throw error;
+        productId = existingId;
         updated++;
       } else {
-        const id = `PRD-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
-        const { error } = await supabase.from("products").insert({ ...payload, id } as any);
+        productId = `PRD-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
+        const { error } = await supabase.from("products").insert({ ...payload, id: productId } as any);
         if (error) throw error;
         created++;
+      }
+
+      // Sync product_attribute_map table
+      if (attrMapEntries.length > 0) {
+        // Remove old mappings for this product
+        await supabase.from("product_attribute_map").delete().eq("product_id", productId);
+        // Insert new mappings
+        const mapRows = attrMapEntries.map(e => ({ product_id: productId, attribute_id: e.attribute_id }));
+        await supabase.from("product_attribute_map").insert(mapRows as any);
       }
     } catch (e: any) { errors.push({ row: i + 2, data: record, errors: [e.message] }); }
   }
