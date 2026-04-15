@@ -74,7 +74,8 @@ export default function CustomerClassifiedDetailPage() {
   };
 
   const handleShare = async () => {
-    const shareUrl = `https://www.planext4u.net/app/classifieds/${id}`;
+    const displayUrl = `https://www.planext4u.net/app/classifieds/${id}`;
+    const ogUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=classified&id=${id}`;
     const text = `Check out: ${ad.title} - ₹${ad.price.toLocaleString()}`;
     if (navigator.share) {
       try {
@@ -88,16 +89,14 @@ export default function CustomerClassifiedDetailPage() {
             files = [new File([blob], `classified.${ext}`, { type: blob.type })];
           } catch {}
         }
-        const shareData: ShareData = { title: ad.title, text: `${text}\n${shareUrl}` };
         if (files.length && navigator.canShare?.({ files })) {
-          shareData.files = files;
+          await navigator.share({ title: ad.title, text: `${text}\n${displayUrl}`, files });
         } else {
-          shareData.url = shareUrl;
+          await navigator.share({ title: ad.title, text, url: ogUrl });
         }
-        await navigator.share(shareData);
       } catch {}
     } else {
-      await navigator.clipboard.writeText(`${text}\n${shareUrl}`);
+      await navigator.clipboard.writeText(`${text}\n${displayUrl}`);
       toast.success("Link copied to clipboard");
     }
   };

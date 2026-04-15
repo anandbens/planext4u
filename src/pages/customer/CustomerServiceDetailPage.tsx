@@ -244,7 +244,8 @@ export default function CustomerServiceDetailPage() {
               <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-destructive text-destructive' : ''}`} />
             </button>
             <button onClick={async () => {
-              const shareUrl = `https://www.planext4u.net/app/service/${id}`;
+              const displayUrl = `https://www.planext4u.net/app/service/${id}`;
+              const ogUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=service&id=${id}`;
               const text = `Check out ${service.title} - ₹${service.price.toLocaleString()} on P4U!`;
               if (navigator.share) {
                 try {
@@ -258,16 +259,14 @@ export default function CustomerServiceDetailPage() {
                       files = [new File([blob], `service.${ext}`, { type: blob.type })];
                     } catch {}
                   }
-                  const shareData: ShareData = { title: service.title, text: `${text}\n${shareUrl}` };
                   if (files.length && navigator.canShare?.({ files })) {
-                    shareData.files = files;
+                    await navigator.share({ title: service.title, text: `${text}\n${displayUrl}`, files });
                   } else {
-                    shareData.url = shareUrl;
+                    await navigator.share({ title: service.title, text, url: ogUrl });
                   }
-                  await navigator.share(shareData);
                 } catch {}
               } else {
-                navigator.clipboard.writeText(`${text}\n${shareUrl}`);
+                navigator.clipboard.writeText(`${text}\n${displayUrl}`);
                 toast.success("Link copied to clipboard!");
               }
             }} className="absolute top-4 right-14 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center">
