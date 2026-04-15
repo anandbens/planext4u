@@ -697,7 +697,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
               </div>
             )}
 
-            {/* Thumbnail & Banner */}
+            {/* Thumbnail, Banner & Replacement Time */}
             {editMode && !vendorRestricted && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -712,6 +712,21 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                   <Label className="text-xs text-muted-foreground">Socio Shopping Icon</Label>
                   <MediaLibraryPicker value={form.socio_shopping_icon} onChange={(url) => setForm({ ...form, socio_shopping_icon: url })} folder="product-images" label="Set Shopping Icon" />
                   <p className="text-[10px] text-muted-foreground mt-1">Small square image shown as product sticker on social posts. Auto-generated from product image if empty.</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><RotateCcw className="h-3 w-3" /> Replacement Time</Label>
+                  <Select value={form.replacement_time || "12 Hours"} onValueChange={(v) => setForm({ ...form, replacement_time: v })}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="12 Hours">12 Hours</SelectItem>
+                      <SelectItem value="24 Hours">24 Hours</SelectItem>
+                      <SelectItem value="24-48 Hours">24-48 Hours</SelectItem>
+                      <SelectItem value="1-4 Days">1-4 Days</SelectItem>
+                      <SelectItem value="4-7 Days">4-7 Days</SelectItem>
+                      <SelectItem value="7-14 Days">7-14 Days</SelectItem>
+                      <SelectItem value="No Replacement">No Replacement</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}
