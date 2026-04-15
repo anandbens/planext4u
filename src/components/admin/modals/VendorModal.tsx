@@ -343,11 +343,19 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
 
             <TabsContent value="payment">
               <div className="space-y-4 mt-2">
-                {/* Plan Assignment */}
+                {/* Vendor Plan */}
                 <div className="p-4 rounded-lg bg-secondary/30">
-                  <div className="flex items-center gap-2 mb-2"><Crown className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Assigned Plan</Label></div>
+                  <div className="flex items-center gap-2 mb-2"><Crown className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Vendor Plan</Label></div>
                   {editMode ? (
-                    <Select value={form.plan_id || "none"} onValueChange={(v) => setForm({ ...form, plan_id: v === "none" ? "" : v })}>
+                    <Select value={form.plan_id || "none"} onValueChange={(v) => {
+                      const plan = vendorPlans.find((p: any) => p.id === v);
+                      setForm({
+                        ...form,
+                        plan_id: v === "none" ? "" : v,
+                        membership: plan?.plan_name?.toLowerCase() || form.membership,
+                        commission_rate: plan?.commission_percentage ?? form.commission_rate,
+                      });
+                    }}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Select a plan" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">No Plan</SelectItem>
@@ -370,8 +378,22 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="text-sm font-medium">{vendorPlans.find(p => p.id === (vendor as any)?.plan_id)?.plan_name || "No Plan"}</p>
+                    <p className="text-sm font-medium capitalize">{vendorPlans.find(p => p.id === (vendor as any)?.plan_id)?.plan_name || vendor?.membership || "No Plan"}</p>
                   )}
+                </div>
+
+                {/* Commission & Redemption Overrides */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg bg-secondary/30">
+                    <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Vendor to P4U Commission</Label></div>
+                    {editMode ? <Input type="number" value={form.commission_rate} onChange={(e) => setForm({ ...form, commission_rate: Number(e.target.value) })} className="mt-1" /> : <p className="text-xl font-bold">{vendor?.commission_rate}%</p>}
+                    <p className="text-[9px] text-muted-foreground mt-1">Overrides plan commission</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-secondary/30">
+                    <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-warning" /><Label className="text-xs text-muted-foreground">Max User Redemption %</Label></div>
+                    {editMode ? <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1" placeholder="Plan default" /> : <p className="text-xl font-bold">{(vendor as any)?.max_redemption_percentage != null ? `${(vendor as any).max_redemption_percentage}%` : "Plan default"}</p>}
+                    <p className="text-[9px] text-muted-foreground mt-1">Overrides plan redemption</p>
+                  </div>
                 </div>
 
                 {/* Payment Status */}
