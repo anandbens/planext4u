@@ -262,11 +262,15 @@ export default function VendorRegisterPage() {
               <div><label className="text-xs font-medium text-muted-foreground">Name *</label>
                 <Input value={form.name} onChange={e => updateField('name', e.target.value)} maxLength={100} /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Phone *</label>
-                <Input value={form.phone} onChange={e => updateField('phone', e.target.value.replace(/\D/g, ''))} maxLength={10} inputMode="numeric" /></div>
+                <Input value={form.phone} onChange={e => { updateField('phone', e.target.value.replace(/\D/g, '').slice(0, 10)); setFieldErrors(er => ({ ...er, phone: undefined })); }} onBlur={handlePhoneBlur} maxLength={10} inputMode="numeric" className={fieldErrors.phone ? 'border-destructive' : ''} />
+                {fieldChecking.phone && <p className="text-[10px] text-muted-foreground mt-0.5">Checking...</p>}
+                {fieldErrors.phone && <p className="text-[10px] text-destructive mt-0.5">{fieldErrors.phone}</p>}</div>
               <div><label className="text-xs font-medium text-muted-foreground">Secondary Phone</label>
-                <Input value={form.secondary_phone} onChange={e => updateField('secondary_phone', e.target.value.replace(/\D/g, ''))} maxLength={10} /></div>
+                <Input value={form.secondary_phone} onChange={e => updateField('secondary_phone', e.target.value.replace(/\D/g, '').slice(0, 10))} maxLength={10} /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Email *</label>
-                <Input value={form.email} onChange={e => updateField('email', e.target.value)} type="email" /></div>
+                <Input value={form.email} onChange={e => { updateField('email', e.target.value); setFieldErrors(er => ({ ...er, email: undefined })); }} onBlur={handleEmailBlur} type="email" className={fieldErrors.email ? 'border-destructive' : ''} />
+                {fieldChecking.email && <p className="text-[10px] text-muted-foreground mt-0.5">Checking...</p>}
+                {fieldErrors.email && <p className="text-[10px] text-destructive mt-0.5">{fieldErrors.email}</p>}</div>
               <div><label className="text-xs font-medium text-muted-foreground">State *</label>
                 <Select value={form.state} onValueChange={v => { updateField('state', v); updateField('district', ''); }}>
                   <SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger>
