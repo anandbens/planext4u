@@ -596,10 +596,10 @@ export default function AdminMediaLibraryPage() {
       {/* Move to Folder Dialog */}
       <Dialog open={!!moveItem} onOpenChange={open => { if (!open) setMoveItem(null); }}>
         <DialogContent className="max-w-sm">
-          <DialogTitle className="flex items-center gap-2"><MoveRight className="h-5 w-5" /> Move File</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><MoveRight className="h-5 w-5" /> {moveItem?.id === "__bulk__" ? "Move Files" : "Move File"}</DialogTitle>
           {moveItem && (
             <div className="space-y-4 pt-2">
-              <p className="text-sm text-muted-foreground">Move <strong>{moveItem.file_name}</strong> from <strong>{moveItem.folder || "general"}</strong> to:</p>
+              <p className="text-sm text-muted-foreground">{moveItem.id === "__bulk__" ? `Move ${multiSelected.size} selected file(s)` : <>Move <strong>{moveItem.file_name}</strong></>} from <strong>{moveItem.folder || "general"}</strong> to:</p>
               <Select value={moveTarget} onValueChange={setMoveTarget}>
                 <SelectTrigger><SelectValue placeholder="Select target folder" /></SelectTrigger>
                 <SelectContent>
