@@ -169,6 +169,7 @@ import VendorPaymentHistoryPage from "./pages/vendor/VendorPaymentHistoryPage";
 import VendorAccountControlPage from "./pages/vendor/VendorAccountControlPage";
 import VendorMediaLibraryPage from "./pages/vendor/VendorMediaLibraryPage";
 import VendorChangePasswordPage from "./pages/vendor/VendorChangePasswordPage";
+import VendorBookingsPage from "./pages/vendor/VendorBookingsPage";
 import AccountControlPage from "./pages/customer/AccountControlPage";
 
 const queryClient = new QueryClient();
@@ -446,6 +447,7 @@ const AppRoutes = () => {
         <Route path="/vendor/account-control" element={<VendorPage><VendorAccountControlPage /></VendorPage>} />
         <Route path="/vendor/change-password" element={<VendorPage><VendorChangePasswordPage /></VendorPage>} />
         <Route path="/vendor/media" element={<VendorPage><VendorMediaLibraryPage /></VendorPage>} />
+        <Route path="/vendor/bookings" element={<VendorPage><VendorBookingsPage /></VendorPage>} />
 
         {/* Customer Account Control */}
         <Route path="/app/account-control" element={<CustomerPage><AccountControlPage /></CustomerPage>} />

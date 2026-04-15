@@ -2571,6 +2571,9 @@ export type Database = {
           completion_photo_url: string | null
           created_at: string | null
           customer_id: string
+          customer_pod_confirmed: boolean | null
+          customer_pod_confirmed_at: string | null
+          customer_pod_photo_url: string | null
           customer_rating: number | null
           customer_rating_comment: string | null
           end_time: string
@@ -2586,6 +2589,8 @@ export type Database = {
           status: string
           total_amount: number | null
           updated_at: string | null
+          vendor_completion_confirmed: boolean | null
+          vendor_completion_confirmed_at: string | null
           vendor_id: string
         }
         Insert: {
@@ -2595,6 +2600,9 @@ export type Database = {
           completion_photo_url?: string | null
           created_at?: string | null
           customer_id: string
+          customer_pod_confirmed?: boolean | null
+          customer_pod_confirmed_at?: string | null
+          customer_pod_photo_url?: string | null
           customer_rating?: number | null
           customer_rating_comment?: string | null
           end_time: string
@@ -2610,6 +2618,8 @@ export type Database = {
           status?: string
           total_amount?: number | null
           updated_at?: string | null
+          vendor_completion_confirmed?: boolean | null
+          vendor_completion_confirmed_at?: string | null
           vendor_id: string
         }
         Update: {
@@ -2619,6 +2629,9 @@ export type Database = {
           completion_photo_url?: string | null
           created_at?: string | null
           customer_id?: string
+          customer_pod_confirmed?: boolean | null
+          customer_pod_confirmed_at?: string | null
+          customer_pod_photo_url?: string | null
           customer_rating?: number | null
           customer_rating_comment?: string | null
           end_time?: string
@@ -2634,6 +2647,8 @@ export type Database = {
           status?: string
           total_amount?: number | null
           updated_at?: string | null
+          vendor_completion_confirmed?: boolean | null
+          vendor_completion_confirmed_at?: string | null
           vendor_id?: string
         }
         Relationships: [

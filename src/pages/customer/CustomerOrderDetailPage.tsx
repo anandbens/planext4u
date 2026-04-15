@@ -1,25 +1,22 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Package, Truck, MapPin, Star, CheckCircle2, Clock, Store, Receipt, ChevronRight, Camera, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Package, Truck, MapPin, Star, CheckCircle2, Clock, Store, Receipt, ChevronRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
+import { PodRatingPopup } from "@/components/customer/PodRatingPopup";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
 const statusColor: Record<string, string> = {
   placed: "bg-primary/10 text-primary", paid: "bg-info/10 text-info", accepted: "bg-info/10 text-info",
-  in_progress: "bg-warning/10 text-warning", delivered: "bg-success/10 text-success",
-  completed: "bg-success/10 text-success", cancelled: "bg-destructive/10 text-destructive",
+  in_progress: "bg-warning/10 text-warning", shipped: "bg-blue-500/10 text-blue-600",
+  delivered: "bg-success/10 text-success", completed: "bg-success/10 text-success",
+  cancelled: "bg-destructive/10 text-destructive",
 };
 
 const trackingSteps = [
@@ -35,10 +32,7 @@ export default function CustomerOrderDetailPage() {
   const { orderId } = useParams();
   const { customerUser } = useAuth();
   const qc = useQueryClient();
-  const [rating, setRating] = useState(0);
-  const [ratingComment, setRatingComment] = useState("");
   const [showPodPopup, setShowPodPopup] = useState(false);
-  const [podForm, setPodForm] = useState({ confirmation_type: "received_in_person", recipient_name: "", notes: "" });
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["orderDetail", orderId],
@@ -60,51 +54,17 @@ export default function CustomerOrderDetailPage() {
 
   // Auto-show POD popup when order is delivered and no POD exists
   useEffect(() => {
-    if (order && (order.status === "delivered") && !existingPod && !isLoading) {
+    if (order && order.status === "delivered" && !existingPod && !isLoading) {
       const timer = setTimeout(() => setShowPodPopup(true), 500);
       return () => clearTimeout(timer);
     }
   }, [order, existingPod, isLoading]);
 
-  const submitPod = useMutation({
-    mutationFn: async () => {
-      const customerId = customerUser?.customer_id || customerUser?.id || '';
-      const { error } = await supabase.from("delivery_proofs" as any).insert({
-        order_id: orderId,
-        customer_id: customerId,
-        confirmation_type: podForm.confirmation_type,
-        recipient_name: podForm.recipient_name || null,
-        notes: podForm.notes || null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Delivery confirmed! Thank you.");
-      setShowPodPopup(false);
-      qc.invalidateQueries({ queryKey: ["deliveryProof", orderId] });
-    },
-    onError: (err: any) => toast.error(err.message || "Failed to submit"),
-  });
-
-  const submitRating = useMutation({
-    mutationFn: async () => {
-      if (!rating) { toast.error("Please select a rating"); return; }
-      const { error } = await supabase.from("orders").update({
-        delivery_rating: rating,
-        rating_comment: ratingComment || null,
-        rated_at: new Date().toISOString(),
-      } as any).eq("id", orderId!);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Thank you for your feedback! ⭐");
-      qc.invalidateQueries({ queryKey: ["orderDetail", orderId] });
-    },
-    onError: () => toast.error("Failed to submit rating"),
-  });
-
   const currentStepIdx = order ? trackingSteps.findIndex(s => s.key === order.status) : -1;
   const items: any[] = order?.items || [];
+  const customerId = customerUser?.customer_id || customerUser?.id || '';
+  const supabaseUid = customerUser?.supabase_uid || '';
+  const customerName = customerUser?.name || 'Customer';
 
   if (isLoading) {
     return (
@@ -178,7 +138,7 @@ export default function CustomerOrderDetailPage() {
           </Card>
         )}
 
-        {/* Vendor - clickable link to vendor page */}
+        {/* Vendor */}
         <Link to={`/app/vendor/${order.vendor_id}`}>
           <Card className="p-4 flex items-center gap-3 hover:bg-accent/30 transition-colors cursor-pointer">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -212,7 +172,7 @@ export default function CustomerOrderDetailPage() {
           </Card>
         )}
 
-        {/* Items - with images and product links */}
+        {/* Items */}
         <Card className="p-4">
           <h3 className="text-sm font-semibold mb-3">Items ({items.length})</h3>
           <div className="divide-y divide-border/30">
@@ -289,7 +249,7 @@ export default function CustomerOrderDetailPage() {
           </div>
         </Card>
 
-        {/* Order Info with Payment Reference */}
+        {/* Order Info */}
         <Card className="p-4">
           <h3 className="text-sm font-semibold mb-3">Order Info</h3>
           <div className="space-y-2 text-sm">
@@ -320,49 +280,19 @@ export default function CustomerOrderDetailPage() {
           </div>
         </Card>
 
-        {/* Rating Section */}
-        {(order.status === "delivered" || order.status === "completed") && (
+        {/* Seller Rating Display (after rated) */}
+        {order.delivery_rating && (
           <Card className="p-4">
-            <h3 className="text-sm font-semibold mb-3">
-              {order.delivery_rating ? "Your Rating" : "Rate your delivery"}
-            </h3>
-            {order.delivery_rating ? (
-              <div className="space-y-2">
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <Star key={s} className={`h-6 w-6 ${s <= order.delivery_rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
-                  ))}
-                </div>
-                {order.rating_comment && <p className="text-sm text-muted-foreground">{order.rating_comment}</p>}
-                <p className="text-xs text-muted-foreground">
-                  Rated on {new Date(order.rated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </p>
+            <h3 className="text-sm font-semibold mb-2">Your Seller Rating</h3>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <Star key={s} className={`h-5 w-5 ${s <= order.delivery_rating ? 'fill-warning text-warning' : 'text-muted-foreground/30'}`} />
+                ))}
               </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <button key={s} onClick={() => setRating(s)} className="transition-transform hover:scale-110">
-                      <Star className={`h-8 w-8 ${s <= rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
-                    </button>
-                  ))}
-                </div>
-                {rating > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {rating <= 2 ? "We're sorry. Tell us what went wrong." : rating <= 3 ? "We can do better! Share your feedback." : "Glad you liked it! 🎉"}
-                  </p>
-                )}
-                <Textarea
-                  placeholder="Share your experience (optional)"
-                  value={ratingComment}
-                  onChange={e => setRatingComment(e.target.value)}
-                  className="min-h-[70px] text-sm"
-                />
-                <Button onClick={() => submitRating.mutate()} disabled={!rating || submitRating.isPending} className="w-full">
-                  {submitRating.isPending ? "Submitting..." : "Submit Rating"}
-                </Button>
-              </div>
-            )}
+              {order.rating_comment && <p className="text-xs text-muted-foreground ml-2">{order.rating_comment}</p>}
+            </div>
+            {order.rated_at && <p className="text-xs text-muted-foreground mt-1">Rated on {new Date(order.rated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>}
           </Card>
         )}
 
@@ -381,8 +311,15 @@ export default function CustomerOrderDetailPage() {
           </Card>
         )}
 
+        {/* Manual POD trigger for delivered orders without POD */}
+        {order.status === "delivered" && !existingPod && (
+          <Button className="w-full" onClick={() => setShowPodPopup(true)}>
+            <ShieldCheck className="h-4 w-4 mr-2" /> Confirm Delivery & Rate
+          </Button>
+        )}
+
         {/* Delivery Estimate */}
-        {!["delivered", "completed", "cancelled"].includes(order.status) && (
+        {!["delivered", "completed", "cancelled", "shipped"].includes(order.status) && (
           <Card className="p-4 bg-primary/5 border-primary/20">
             <div className="flex items-center gap-3">
               <Clock className="h-5 w-5 text-primary" />
@@ -397,58 +334,19 @@ export default function CustomerOrderDetailPage() {
         )}
       </div>
 
-      {/* Proof of Delivery Popup */}
-      <Dialog open={showPodPopup} onOpenChange={(open) => { if (!open && existingPod) setShowPodPopup(false); }}>
-        <DialogContent className="max-w-sm" onPointerDownOutside={(e) => { if (!existingPod) e.preventDefault(); }}>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" /> Confirm Delivery
-          </DialogTitle>
-          <DialogDescription>Please confirm you received your order to complete the delivery process.</DialogDescription>
-
-          {/* Order Summary */}
-          <div className="bg-secondary/30 rounded-lg p-3 space-y-2">
-            <p className="text-xs font-semibold">{order.id}</p>
-            {(order.items || []).slice(0, 3).map((item: any, i: number) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="h-8 w-8 bg-secondary rounded flex items-center justify-center text-sm shrink-0 overflow-hidden">
-                  {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji || "📦"}</span>}
-                </div>
-                <p className="text-xs truncate flex-1">{item.title}</p>
-                <p className="text-xs font-medium">×{item.qty}</p>
-              </div>
-            ))}
-            {(order.items || []).length > 3 && <p className="text-xs text-muted-foreground">+{order.items.length - 3} more items</p>}
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs">How was it delivered? *</Label>
-              <Select value={podForm.confirmation_type} onValueChange={v => setPodForm(f => ({ ...f, confirmation_type: v }))}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="received_in_person">Received in person</SelectItem>
-                  <SelectItem value="left_at_door">Left at door</SelectItem>
-                  <SelectItem value="received_by_other">Received by someone else</SelectItem>
-                  <SelectItem value="collected_from_store">Collected from store</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {podForm.confirmation_type === "received_by_other" && (
-              <div>
-                <Label className="text-xs">Recipient Name</Label>
-                <Input value={podForm.recipient_name} onChange={e => setPodForm(f => ({ ...f, recipient_name: e.target.value }))} placeholder="Who received it?" className="mt-1" />
-              </div>
-            )}
-            <div>
-              <Label className="text-xs">Notes (optional)</Label>
-              <Textarea value={podForm.notes} onChange={e => setPodForm(f => ({ ...f, notes: e.target.value }))} placeholder="Any comments about the delivery..." className="mt-1" rows={2} />
-            </div>
-            <Button className="w-full" onClick={() => submitPod.mutate()} disabled={submitPod.isPending}>
-              {submitPod.isPending ? "Submitting..." : "Confirm Delivery ✓"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* 3-Step POD + Rating Popup */}
+      <PodRatingPopup
+        open={showPodPopup}
+        onOpenChange={setShowPodPopup}
+        order={order}
+        customerId={customerId}
+        customerName={customerName}
+        supabaseUid={supabaseUid}
+        onComplete={() => {
+          qc.invalidateQueries({ queryKey: ["deliveryProof", orderId] });
+          qc.invalidateQueries({ queryKey: ["orderDetail", orderId] });
+        }}
+      />
     </CustomerLayout>
   );
 }
