@@ -466,11 +466,11 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                     </h4>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-xs text-muted-foreground">Current Status:</span>
-                      <StatusBadge status={vendorApp.kyc_status || vendorApp.status || "pending"} />
+                      <StatusBadge status={(vendorApp as any).kyc_status || vendorApp.status || "pending"} />
                     </div>
-                    {vendorApp.admin_notes && (
+                    {(vendorApp as any).admin_notes && (
                       <p className="text-xs text-muted-foreground mb-3 p-2 bg-secondary/30 rounded">
-                        <strong>Admin Notes:</strong> {vendorApp.admin_notes}
+                        <strong>Admin Notes:</strong> {(vendorApp as any).admin_notes}
                       </p>
                     )}
                     {kycAction ? (
