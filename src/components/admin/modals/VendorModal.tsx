@@ -53,13 +53,18 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
     },
   });
 
-  // Fetch KYC documents for this vendor
+  // Fetch KYC documents from vendor application
   const { data: kycDocs = [] } = useQuery({
     queryKey: ["vendorKyc", vendor?.id],
     enabled: !!vendor?.id && !isCreate,
     queryFn: async () => {
-      // Find vendor application by phone
-      const { data } = await supabase.from("vendor_applications").select("*").eq("phone", vendor!.mobile).limit(1);
+      // Try matching by phone first, then email
+      const phone = vendor!.mobile;
+      const email = vendor!.email;
+      const { data } = await supabase.from("vendor_applications").select("*")
+        .or(`phone.eq.${phone},email.eq.${email}`)
+        .order("created_at", { ascending: false })
+        .limit(1);
       return data || [];
     },
   });
@@ -269,42 +274,121 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                 {/* Vendor Application KYC */}
                 {vendorApp ? (
                   <>
-                    <h4 className="text-sm font-semibold">Vendor Application Documents</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { label: "GST Certificate", url: vendorApp.gst_certificate_url, num: vendorApp.gst_number },
-                        { label: "PAN Card", url: vendorApp.pan_image_url, num: vendorApp.pan_number },
-                        { label: "Aadhaar Front", url: vendorApp.aadhaar_front_url, num: vendorApp.aadhaar_number },
-                        { label: "Aadhaar Back", url: vendorApp.aadhaar_back_url },
-                        { label: "FSSAI License", url: vendorApp.fssai_url },
-                        { label: "Store Logo", url: vendorApp.store_logo_url },
-                        { label: "Shop Photo", url: vendorApp.shop_photo_url },
-                      ].filter(d => d.url).map((doc, i) => (
-                        <Card key={i} className="p-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-primary" />
-                              <span className="text-xs font-medium">{doc.label}</span>
+                    <h4 className="text-sm font-semibold flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      KYC & Identity Documents
+                    </h4>
+
+                    {/* Aadhaar */}
+                    {(vendorApp.aadhaar_number || vendorApp.aadhaar_front_url) && (
+                      <Card className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="text-xs font-bold flex items-center gap-2">
+                            <FileText className="h-3.5 w-3.5 text-primary" /> Aadhaar Card
+                          </h5>
+                          <Badge className="bg-success/10 text-success border-0 text-[10px]">Submitted</Badge>
+                        </div>
+                        {vendorApp.aadhaar_number && (
+                          <p className="text-xs text-muted-foreground font-mono mb-2">No: {vendorApp.aadhaar_number}</p>
+                        )}
+                        <div className="grid grid-cols-2 gap-2">
+                          {vendorApp.aadhaar_front_url && (
+                            <div>
+                              <p className="text-[10px] text-muted-foreground mb-1">Front</p>
+                              <img src={vendorApp.aadhaar_front_url} alt="Aadhaar Front" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.aadhaar_front_url!, "_blank")} />
                             </div>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => downloadDoc(doc.url!, doc.label)}>
-                              <Download className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                          {doc.num && <p className="text-[10px] text-muted-foreground font-mono">{doc.num}</p>}
-                          {doc.url && (
-                            <img src={doc.url} alt={doc.label} className="mt-2 rounded max-h-24 object-cover w-full cursor-pointer" onClick={() => window.open(doc.url!, "_blank")} />
                           )}
-                        </Card>
-                      ))}
-                    </div>
+                          {vendorApp.aadhaar_back_url && (
+                            <div>
+                              <p className="text-[10px] text-muted-foreground mb-1">Back</p>
+                              <img src={vendorApp.aadhaar_back_url} alt="Aadhaar Back" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.aadhaar_back_url!, "_blank")} />
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    )}
+
+                    {/* PAN */}
+                    {(vendorApp.pan_number || vendorApp.pan_image_url) && (
+                      <Card className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="text-xs font-bold flex items-center gap-2">
+                            <FileText className="h-3.5 w-3.5 text-primary" /> PAN Card
+                          </h5>
+                          <Badge className="bg-success/10 text-success border-0 text-[10px]">Submitted</Badge>
+                        </div>
+                        {vendorApp.pan_number && (
+                          <p className="text-xs text-muted-foreground font-mono mb-2">No: {vendorApp.pan_number}</p>
+                        )}
+                        {vendorApp.pan_image_url && (
+                          <img src={vendorApp.pan_image_url} alt="PAN" className="rounded-lg max-h-28 object-cover cursor-pointer border border-border" onClick={() => window.open(vendorApp.pan_image_url!, "_blank")} />
+                        )}
+                      </Card>
+                    )}
+
+                    {/* GST */}
+                    {(vendorApp.gst_number || vendorApp.gst_certificate_url) && (
+                      <Card className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="text-xs font-bold flex items-center gap-2">
+                            <FileText className="h-3.5 w-3.5 text-primary" /> GST Certificate
+                          </h5>
+                          <Badge className="bg-success/10 text-success border-0 text-[10px]">Submitted</Badge>
+                        </div>
+                        {vendorApp.gst_number && (
+                          <p className="text-xs text-muted-foreground font-mono mb-2">GSTIN: {vendorApp.gst_number}</p>
+                        )}
+                        {vendorApp.gst_certificate_url && (
+                          <img src={vendorApp.gst_certificate_url} alt="GST" className="rounded-lg max-h-28 object-cover cursor-pointer border border-border" onClick={() => window.open(vendorApp.gst_certificate_url!, "_blank")} />
+                        )}
+                      </Card>
+                    )}
+
+                    {/* FSSAI */}
+                    {vendorApp.fssai_url && (
+                      <Card className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h5 className="text-xs font-bold flex items-center gap-2">
+                            <FileText className="h-3.5 w-3.5 text-primary" /> FSSAI License
+                          </h5>
+                          <Badge className="bg-success/10 text-success border-0 text-[10px]">Submitted</Badge>
+                        </div>
+                        <img src={vendorApp.fssai_url} alt="FSSAI" className="rounded-lg max-h-28 object-cover cursor-pointer border border-border" onClick={() => window.open(vendorApp.fssai_url!, "_blank")} />
+                      </Card>
+                    )}
+
+                    {/* Store Logo & Shop Photo */}
+                    {(vendorApp.store_logo_url || vendorApp.shop_photo_url) && (
+                      <Card className="p-4">
+                        <h5 className="text-xs font-bold flex items-center gap-2 mb-3">
+                          <Camera className="h-3.5 w-3.5 text-primary" /> Store Images
+                        </h5>
+                        <div className="grid grid-cols-2 gap-2">
+                          {vendorApp.store_logo_url && (
+                            <div>
+                              <p className="text-[10px] text-muted-foreground mb-1">Store Logo</p>
+                              <img src={vendorApp.store_logo_url} alt="Logo" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.store_logo_url!, "_blank")} />
+                            </div>
+                          )}
+                          {vendorApp.shop_photo_url && (
+                            <div>
+                              <p className="text-[10px] text-muted-foreground mb-1">Shop Photo</p>
+                              <img src={vendorApp.shop_photo_url} alt="Shop" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.shop_photo_url!, "_blank")} />
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    )}
 
                     {/* Bank Details */}
-                    <h4 className="text-sm font-semibold mt-4">Bank Details</h4>
-                    <Card className="p-3">
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div><span className="text-muted-foreground">Account:</span> <span className="font-mono">{vendorApp.bank_account_number || "—"}</span></div>
-                        <div><span className="text-muted-foreground">IFSC:</span> <span className="font-mono">{vendorApp.bank_ifsc || "—"}</span></div>
-                        <div className="col-span-2"><span className="text-muted-foreground">Holder:</span> <span>{vendorApp.bank_holder_name || "—"}</span></div>
+                    <h4 className="text-sm font-semibold flex items-center gap-2 mt-4">
+                      <Building2 className="h-4 w-4 text-primary" /> Bank Details
+                    </h4>
+                    <Card className="p-4">
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div><span className="text-muted-foreground block mb-0.5">Account Holder</span> <span className="font-medium">{vendorApp.bank_holder_name || "—"}</span></div>
+                        <div><span className="text-muted-foreground block mb-0.5">Account Number</span> <span className="font-mono font-medium">{vendorApp.bank_account_number || "—"}</span></div>
+                        <div><span className="text-muted-foreground block mb-0.5">IFSC Code</span> <span className="font-mono font-medium">{vendorApp.bank_ifsc || "—"}</span></div>
                       </div>
                     </Card>
                   </>
@@ -315,7 +399,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                 {/* KYC Documents from kyc_documents table */}
                 {kycDocuments.length > 0 && (
                   <>
-                    <h4 className="text-sm font-semibold mt-4">KYC Documents</h4>
+                    <h4 className="text-sm font-semibold mt-4">Additional KYC Documents</h4>
                     {kycDocuments.map((doc) => (
                       <Card key={doc.id} className="p-3">
                         <div className="flex items-center justify-between mb-2">
