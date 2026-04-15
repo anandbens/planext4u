@@ -251,6 +251,11 @@ export default function VendorRegisterPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      // Final uniqueness check before submit
+      const phoneErr = await checkVendorPhoneUnique(form.phone);
+      if (phoneErr) { toast.error(phoneErr); setLoading(false); return; }
+      const emailErr = await checkVendorEmailUnique(form.email);
+      if (emailErr) { toast.error(emailErr); setLoading(false); return; }
       const payload = {
         user_id: customerId,
         name: form.name, phone: form.phone, secondary_phone: form.secondary_phone,
