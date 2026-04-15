@@ -73,11 +73,11 @@ export default function CustomerClassifiedDetailPage() {
   };
 
   const handleShare = async () => {
-    const url = window.location.href;
+    const shareUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=classified&id=${id}`;
     if (navigator.share) {
-      await navigator.share({ title: ad.title, text: `Check out: ${ad.title} - ₹${ad.price.toLocaleString()}`, url });
+      await navigator.share({ title: ad.title, text: `Check out: ${ad.title} - ₹${ad.price.toLocaleString()}`, url: shareUrl });
     } else {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareUrl);
       toast.success("Link copied to clipboard");
     }
   };
