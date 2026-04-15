@@ -54,6 +54,8 @@ export default function AdminMediaLibraryPage() {
   const [folderSearch, setFolderSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selected, setSelected] = useState<MediaItem | null>(null);
+  const [multiSelected, setMultiSelected] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
