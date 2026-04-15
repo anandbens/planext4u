@@ -244,7 +244,7 @@ export default function CustomerServiceDetailPage() {
               <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-destructive text-destructive' : ''}`} />
             </button>
             <button onClick={() => {
-              const shareUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=service&id=${id}`;
+              const shareUrl = `https://planext4u.lovable.app/app/service/${id}`;
               const text = `Check out ${service.title} - ₹${service.price.toLocaleString()} on P4U!`;
               if (navigator.share) {
                 navigator.share({ title: service.title, text, url: shareUrl }).catch(() => {});
