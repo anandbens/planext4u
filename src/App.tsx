@@ -154,6 +154,7 @@ import ParentItemsPage from "./pages/admin/ParentItemsPage";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
 import AdminVendorOnboardingPage from "./pages/admin/AdminVendorOnboardingPage";
 import AdminSplashScreensPage from "./pages/admin/AdminSplashScreensPage";
+import AdminHomepageCMSPage from "./pages/admin/AdminHomepageCMSPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
@@ -352,6 +353,7 @@ const AppRoutes = () => {
         <Route path="/admin/complaints" element={<ProtectedPage><AdminComplaintsPage /></ProtectedPage>} />
         <Route path="/admin/vendor-onboarding" element={<ProtectedPage><AdminVendorOnboardingPage /></ProtectedPage>} />
         <Route path="/admin/splash-screens" element={<ProtectedPage><AdminSplashScreensPage /></ProtectedPage>} />
+        <Route path="/admin/homepage-cms" element={<ProtectedPage><AdminHomepageCMSPage /></ProtectedPage>} />
 
         {/* Customer-facing routes */}
         <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <GuestPage><CustomerHomePage /></GuestPage>} />
