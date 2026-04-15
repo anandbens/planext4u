@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Mail, Phone, Store, Percent, Crown, ArrowRight, Trash2, FileText, Download, Camera, CreditCard, Building2, Image as ImageIcon } from "lucide-react";
+import { Mail, Phone, Store, Percent, Crown, ArrowRight, Trash2, FileText, Download, Camera, CreditCard, Building2, Image as ImageIcon, CheckCircle, XCircle } from "lucide-react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -143,6 +143,41 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
   };
 
   const vendorApp = kycDocs[0];
+  const [kycAction, setKycAction] = useState<"approve" | "reject" | null>(null);
+  const [kycNotes, setKycNotes] = useState("");
+  const [kycSaving, setKycSaving] = useState(false);
+
+  const handleKycVerification = async (action: "approve" | "reject") => {
+    if (!vendorApp) return;
+    setKycSaving(true);
+    try {
+      const newStatus = action === "approve" ? "approved" : "rejected";
+      await supabase.from("vendor_applications" as any).update({
+        kyc_status: newStatus,
+        admin_notes: kycNotes || null,
+      } as any).eq("id", vendorApp.id);
+
+      // Also update kyc_documents if they exist
+      if (kycDocuments.length > 0) {
+        for (const doc of kycDocuments) {
+          await supabase.from("kyc_documents").update({
+            status: newStatus,
+            admin_notes: kycNotes || null,
+            rejection_reason: action === "reject" ? kycNotes : null,
+          }).eq("id", doc.id);
+        }
+      }
+
+      toast.success(`KYC ${action === "approve" ? "approved" : "rejected"} successfully`);
+      setKycAction(null);
+      setKycNotes("");
+      onRefresh?.();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update KYC status");
+    } finally {
+      setKycSaving(false);
+    }
+  };
 
   const downloadDoc = (url: string, name: string) => {
     if (!url) return;
@@ -421,6 +456,57 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                       </Card>
                     ))}
                   </>
+                )}
+
+                {/* KYC Verification Actions */}
+                {vendorApp && (
+                  <Card className="p-4 mt-4 border-primary/20">
+                    <h4 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                      <CheckCircle className="h-4 w-4 text-primary" /> KYC Verification
+                    </h4>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs text-muted-foreground">Current Status:</span>
+                      <StatusBadge status={(vendorApp as any).kyc_status || vendorApp.status || "pending"} />
+                    </div>
+                    {(vendorApp as any).admin_notes && (
+                      <p className="text-xs text-muted-foreground mb-3 p-2 bg-secondary/30 rounded">
+                        <strong>Admin Notes:</strong> {(vendorApp as any).admin_notes}
+                      </p>
+                    )}
+                    {kycAction ? (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium">{kycAction === "approve" ? "Approve KYC Documents" : "Reject KYC Documents"}</p>
+                        <Textarea
+                          placeholder={kycAction === "approve" ? "Optional notes..." : "Rejection reason (required)..."}
+                          value={kycNotes}
+                          onChange={e => setKycNotes(e.target.value)}
+                          className="text-sm"
+                          rows={3}
+                        />
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => { setKycAction(null); setKycNotes(""); }} disabled={kycSaving}>Cancel</Button>
+                          <Button
+                            size="sm"
+                            variant={kycAction === "approve" ? "default" : "destructive"}
+                            onClick={() => handleKycVerification(kycAction)}
+                            disabled={kycSaving || (kycAction === "reject" && !kycNotes.trim())}
+                          >
+                            {kycSaving && <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-2" />}
+                            {kycAction === "approve" ? "Confirm Approve" : "Confirm Reject"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button size="sm" className="gap-1" onClick={() => setKycAction("approve")}>
+                          <CheckCircle className="h-4 w-4" /> Approve KYC
+                        </Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => setKycAction("reject")}>
+                          <XCircle className="h-4 w-4" /> Reject KYC
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
                 )}
               </div>
             </TabsContent>
