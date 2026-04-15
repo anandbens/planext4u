@@ -353,6 +353,7 @@ const AppRoutes = () => {
         <Route path="/admin/complaints" element={<ProtectedPage><AdminComplaintsPage /></ProtectedPage>} />
         <Route path="/admin/vendor-onboarding" element={<ProtectedPage><AdminVendorOnboardingPage /></ProtectedPage>} />
         <Route path="/admin/splash-screens" element={<ProtectedPage><AdminSplashScreensPage /></ProtectedPage>} />
+        <Route path="/admin/homepage-cms" element={<ProtectedPage><AdminHomepageCMSPage /></ProtectedPage>} />
 
         {/* Customer-facing routes */}
         <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <GuestPage><CustomerHomePage /></GuestPage>} />
