@@ -244,8 +244,22 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
   const discountPct = form.discount_type === "percentage" ? form.discount : (form.price > 0 ? Math.round((form.discount / form.price) * 100) : 0);
 
   const handleSave = async () => {
-    if (!form.title.trim()) { toast.error("Title is required"); return; }
-    if (form.status === 'rejected' && !form.rejection_reason?.trim()) { toast.error("Rejection reason is required"); return; }
+    // Mandatory field validation
+    const errors: string[] = [];
+    if (!form.title.trim()) errors.push("Title is required");
+    if (!form.vendor_id) errors.push("Vendor is required");
+    if (!form.category_id) errors.push("Category is required");
+    if (!form.sku?.trim()) errors.push("SKU is required");
+    if (!form.short_description?.trim()) errors.push("Short Description is required");
+    if (!form.long_description?.trim()) errors.push("Long Description is required");
+    if (form.price <= 0) errors.push("MRP / Price must be greater than 0");
+    if (!form.thumbnail_image) errors.push("Thumbnail image is required");
+    if (!form.banner_image) errors.push("Banner image is required");
+    if (!form.socio_shopping_icon) errors.push("Socio shopping icon is required");
+    if (!form.images || form.images.length === 0) errors.push("At least 1 product image is required");
+    if (form.manage_stock && (form.stock === null || form.stock === undefined || form.stock < 0)) errors.push("Stock quantity is required when stock management is enabled");
+    if (form.status === 'rejected' && !form.rejection_reason?.trim()) errors.push("Rejection reason is required");
+    if (errors.length > 0) { toast.error(errors[0]); return; }
     setSaving(true);
     try {
       const payload = { ...form, tax: taxAmount };
