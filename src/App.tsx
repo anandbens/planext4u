@@ -13,6 +13,7 @@ import { closeOAuthBrowser, extractOAuthResultFromUrl, isNativePlatform, isOAuth
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
+import { GuestOrCustomerRoute } from "@/components/customer/GuestOrCustomerRoute";
 import { VendorProtectedRoute } from "@/components/vendor/VendorProtectedRoute";
 import { FTUXFlow } from "@/components/customer/FTUXFlow";
 import { isVendorApp, isVendorAppSync, getNativeAppId } from "@/lib/capacitor";
@@ -193,6 +194,10 @@ function ProtectedPage({ children }: { children: React.ReactNode }) {
 
 function CustomerPage({ children }: { children: React.ReactNode }) {
   return <CustomerProtectedRoute>{children}</CustomerProtectedRoute>;
+}
+
+function GuestPage({ children }: { children: React.ReactNode }) {
+  return <GuestOrCustomerRoute>{children}</GuestOrCustomerRoute>;
 }
 
 function VendorPage({ children }: { children: React.ReactNode }) {
