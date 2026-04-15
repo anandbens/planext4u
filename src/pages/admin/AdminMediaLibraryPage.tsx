@@ -16,7 +16,9 @@ import {
   Image, Upload, Download, Trash2, Search, Eye, Copy, Filter,
   FileText, FolderOpen, Grid3X3, List, Loader2, X, Shield, CloudUpload,
   FolderPlus, ArrowLeft, Video, FileArchive, MoveRight, ChevronLeft, ChevronRight,
+  CheckSquare, Square,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const DEFAULT_FOLDERS = [
   "banners", "category-images", "category-icons", "product-images",
