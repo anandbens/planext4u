@@ -431,6 +431,14 @@ export default function AdminMediaLibraryPage() {
                     </Select>
                   </div>
                   <div className="flex gap-2 items-center">
+                    <Button variant={selectMode ? "secondary" : "outline"} size="sm" className="gap-1" onClick={() => { setSelectMode(!selectMode); setMultiSelected(new Set()); }}>
+                      <CheckSquare className="h-4 w-4" /> {selectMode ? "Cancel Select" : "Select"}
+                    </Button>
+                    {selectMode && multiSelected.size > 0 && (
+                      <Button variant="outline" size="sm" className="gap-1" onClick={openBulkMove}>
+                        <MoveRight className="h-4 w-4" /> Move {multiSelected.size} file(s)
+                      </Button>
+                    )}
                     <Button variant="destructive" size="sm" className="gap-1" onClick={() => setDeleteFolderTarget(activeFolder)}>
                       <Trash2 className="h-4 w-4" /> Delete Folder
                     </Button>
