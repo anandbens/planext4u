@@ -2921,8 +2921,10 @@ export type Database = {
           id: string
           net_amount: number
           order_id: string
+          rejection_reason: string | null
           settled_at: string | null
           status: string
+          transaction_reference: string | null
           vendor_id: string
           vendor_name: string | null
         }
@@ -2933,8 +2935,10 @@ export type Database = {
           id: string
           net_amount?: number
           order_id: string
+          rejection_reason?: string | null
           settled_at?: string | null
           status?: string
+          transaction_reference?: string | null
           vendor_id: string
           vendor_name?: string | null
         }
@@ -2945,8 +2949,10 @@ export type Database = {
           id?: string
           net_amount?: number
           order_id?: string
+          rejection_reason?: string | null
           settled_at?: string | null
           status?: string
+          transaction_reference?: string | null
           vendor_id?: string
           vendor_name?: string | null
         }
