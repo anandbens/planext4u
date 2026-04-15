@@ -16,7 +16,9 @@ import {
   Image, Upload, Download, Trash2, Search, Eye, Copy, Filter,
   FileText, FolderOpen, Grid3X3, List, Loader2, X, Shield, CloudUpload,
   FolderPlus, ArrowLeft, Video, FileArchive, MoveRight, ChevronLeft, ChevronRight,
+  CheckSquare, Square,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const DEFAULT_FOLDERS = [
   "banners", "category-images", "category-icons", "product-images",
@@ -54,6 +56,8 @@ export default function AdminMediaLibraryPage() {
   const [folderSearch, setFolderSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [selected, setSelected] = useState<MediaItem | null>(null);
+  const [multiSelected, setMultiSelected] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -230,12 +234,41 @@ export default function AdminMediaLibraryPage() {
   const handleMoveFile = async () => {
     if (!moveItem || !moveTarget) return;
     setMoving(true);
+    if (moveItem.id === "__bulk__" && multiSelected.size > 0) {
+      const ids = Array.from(multiSelected);
+      const { error } = await supabase.from("media_library").update({ folder: moveTarget }).in("id", ids);
+      setMoving(false);
+      if (error) { toast.error("Bulk move failed"); return; }
+      toast.success(`Moved ${ids.length} file(s) to ${moveTarget}`);
+      setMoveItem(null); setMoveTarget(""); setMultiSelected(new Set()); setSelectMode(false);
+      qc.invalidateQueries({ queryKey: ["adminMediaLibrary"] });
+      return;
+    }
     const { error } = await supabase.from("media_library").update({ folder: moveTarget }).eq("id", moveItem.id);
     setMoving(false);
     if (error) { toast.error("Move failed"); return; }
     toast.success(`Moved to ${moveTarget}`);
     setMoveItem(null); setMoveTarget("");
     qc.invalidateQueries({ queryKey: ["adminMediaLibrary"] });
+  };
+
+  const toggleSelect = (id: string) => {
+    setMultiSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (multiSelected.size === paginatedFiles.length) setMultiSelected(new Set());
+    else setMultiSelected(new Set(paginatedFiles.map(f => f.id)));
+  };
+
+  const openBulkMove = () => {
+    if (multiSelected.size === 0) { toast.error("Select files first"); return; }
+    setMoveItem({ id: "__bulk__", file_name: `${multiSelected.size} files`, file_url: "", file_type: "", file_size: null, folder: activeFolder, alt_text: null, tags: null, created_at: "" });
+    setMoveTarget("");
   };
 
   const handleDeleteFolder = async () => {
@@ -398,6 +431,14 @@ export default function AdminMediaLibraryPage() {
                     </Select>
                   </div>
                   <div className="flex gap-2 items-center">
+                    <Button variant={selectMode ? "secondary" : "outline"} size="sm" className="gap-1" onClick={() => { setSelectMode(!selectMode); setMultiSelected(new Set()); }}>
+                      <CheckSquare className="h-4 w-4" /> {selectMode ? "Cancel Select" : "Select"}
+                    </Button>
+                    {selectMode && multiSelected.size > 0 && (
+                      <Button variant="outline" size="sm" className="gap-1" onClick={openBulkMove}>
+                        <MoveRight className="h-4 w-4" /> Move {multiSelected.size} file(s)
+                      </Button>
+                    )}
                     <Button variant="destructive" size="sm" className="gap-1" onClick={() => setDeleteFolderTarget(activeFolder)}>
                       <Trash2 className="h-4 w-4" /> Delete Folder
                     </Button>
@@ -417,6 +458,14 @@ export default function AdminMediaLibraryPage() {
                   <Badge variant="outline" className="text-xs">{formatSize(mediaItems.reduce((s, m) => s + (m.file_size || 0), 0))}</Badge>
                 </div>
 
+                {selectMode && mediaItems.length > 0 && (
+                  <div className="flex items-center gap-3 mt-2 p-2 bg-secondary/30 rounded-lg">
+                    <Checkbox checked={multiSelected.size === paginatedFiles.length && paginatedFiles.length > 0} onCheckedChange={toggleSelectAll} />
+                    <span className="text-xs text-muted-foreground">Select all on this page ({paginatedFiles.length})</span>
+                    {multiSelected.size > 0 && <Badge variant="secondary" className="text-xs">{multiSelected.size} selected</Badge>}
+                  </div>
+                )}
+
                 {isLoading ? (
                   <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                 ) : mediaItems.length === 0 ? (
@@ -428,20 +477,27 @@ export default function AdminMediaLibraryPage() {
                 ) : viewMode === "grid" ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mt-4">
                     {paginatedFiles.map(item => (
-                      <Card key={item.id} className={`overflow-hidden cursor-pointer group hover:ring-2 hover:ring-primary/50 transition-all ${selected?.id === item.id ? "ring-2 ring-primary" : ""}`}
-                        onClick={() => { setSelected(item); setPreviewOpen(true); }}>
-                        <div className="aspect-square bg-secondary/30 flex items-center justify-center overflow-hidden">
+                      <Card key={item.id} className={`overflow-hidden cursor-pointer group hover:ring-2 hover:ring-primary/50 transition-all ${multiSelected.has(item.id) ? "ring-2 ring-primary" : selected?.id === item.id ? "ring-2 ring-primary" : ""}`}
+                        onClick={() => { if (selectMode) { toggleSelect(item.id); } else { setSelected(item); setPreviewOpen(true); } }}>
+                        <div className="aspect-square bg-secondary/30 flex items-center justify-center overflow-hidden relative">
                           {renderMediaThumbnail(item)}
+                          {selectMode && (
+                            <div className="absolute top-2 left-2 z-10">
+                              <Checkbox checked={multiSelected.has(item.id)} onCheckedChange={() => toggleSelect(item.id)} onClick={e => e.stopPropagation()} className="bg-background/80 border-foreground/50" />
+                            </div>
+                          )}
                         </div>
                         <div className="p-2 flex items-center justify-between gap-1">
                           <div className="min-w-0">
                             <p className="text-xs font-medium truncate">{item.file_name}</p>
                             <span className="text-[10px] text-muted-foreground">{formatSize(item.file_size)}</span>
                           </div>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
-                            onClick={e => { e.stopPropagation(); setMoveItem(item); setMoveTarget(""); }}>
-                            <MoveRight className="h-3 w-3" />
-                          </Button>
+                          {!selectMode && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100"
+                              onClick={e => { e.stopPropagation(); setMoveItem(item); setMoveTarget(""); }}>
+                              <MoveRight className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </Card>
                     ))}
@@ -449,8 +505,11 @@ export default function AdminMediaLibraryPage() {
                 ) : (
                   <div className="space-y-1 mt-4">
                     {paginatedFiles.map(item => (
-                      <div key={item.id} className={`flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors ${selected?.id === item.id ? "bg-accent" : ""}`}
-                        onClick={() => { setSelected(item); setPreviewOpen(true); }}>
+                      <div key={item.id} className={`flex items-center gap-3 p-3 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors ${multiSelected.has(item.id) ? "bg-accent" : selected?.id === item.id ? "bg-accent" : ""}`}
+                        onClick={() => { if (selectMode) { toggleSelect(item.id); } else { setSelected(item); setPreviewOpen(true); } }}>
+                        {selectMode && (
+                          <Checkbox checked={multiSelected.has(item.id)} onCheckedChange={() => toggleSelect(item.id)} onClick={e => e.stopPropagation()} />
+                        )}
                         <div className="h-12 w-12 rounded bg-secondary/50 flex items-center justify-center overflow-hidden shrink-0">
                           {renderMediaThumbnail(item, "w-full h-full object-cover")}
                         </div>
@@ -458,12 +517,14 @@ export default function AdminMediaLibraryPage() {
                           <p className="text-sm font-medium truncate">{item.file_name}</p>
                           <p className="text-xs text-muted-foreground">{formatSize(item.file_size)} · {new Date(item.created_at).toLocaleDateString()}</p>
                         </div>
-                        <div className="flex gap-1 shrink-0">
-                          <Button size="icon" variant="ghost" className="h-8 w-8" title="Move" onClick={e => { e.stopPropagation(); setMoveItem(item); setMoveTarget(""); }}><MoveRight className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={e => { e.stopPropagation(); copyUrl(item.file_url); }}><Copy className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={e => { e.stopPropagation(); downloadFile(item.file_url, item.file_name); }}><Download className="h-3.5 w-3.5" /></Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={e => { e.stopPropagation(); handleDelete(item); }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                        </div>
+                        {!selectMode && (
+                          <div className="flex gap-1 shrink-0">
+                            <Button size="icon" variant="ghost" className="h-8 w-8" title="Move" onClick={e => { e.stopPropagation(); setMoveItem(item); setMoveTarget(""); }}><MoveRight className="h-3.5 w-3.5" /></Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={e => { e.stopPropagation(); copyUrl(item.file_url); }}><Copy className="h-3.5 w-3.5" /></Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={e => { e.stopPropagation(); downloadFile(item.file_url, item.file_name); }}><Download className="h-3.5 w-3.5" /></Button>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={e => { e.stopPropagation(); handleDelete(item); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -535,10 +596,10 @@ export default function AdminMediaLibraryPage() {
       {/* Move to Folder Dialog */}
       <Dialog open={!!moveItem} onOpenChange={open => { if (!open) setMoveItem(null); }}>
         <DialogContent className="max-w-sm">
-          <DialogTitle className="flex items-center gap-2"><MoveRight className="h-5 w-5" /> Move File</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><MoveRight className="h-5 w-5" /> {moveItem?.id === "__bulk__" ? "Move Files" : "Move File"}</DialogTitle>
           {moveItem && (
             <div className="space-y-4 pt-2">
-              <p className="text-sm text-muted-foreground">Move <strong>{moveItem.file_name}</strong> from <strong>{moveItem.folder || "general"}</strong> to:</p>
+              <p className="text-sm text-muted-foreground">{moveItem.id === "__bulk__" ? `Move ${multiSelected.size} selected file(s)` : <>Move <strong>{moveItem.file_name}</strong></>} from <strong>{moveItem.folder || "general"}</strong> to:</p>
               <Select value={moveTarget} onValueChange={setMoveTarget}>
                 <SelectTrigger><SelectValue placeholder="Select target folder" /></SelectTrigger>
                 <SelectContent>
