@@ -8,10 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
+import { LoginPromptDialog } from "@/components/customer/LoginPromptDialog";
 import { api, CartItem } from "@/lib/api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { BannerAd } from "@/components/customer/BannerAd";
+import { useAuth } from "@/lib/auth";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
