@@ -3947,6 +3947,7 @@ export type Database = {
           aadhaar_back_url: string | null
           aadhaar_front_url: string | null
           aadhaar_number: string | null
+          admin_notes: string | null
           bank_account_number: string | null
           bank_holder_name: string | null
           bank_ifsc: string | null
@@ -3964,6 +3965,7 @@ export type Database = {
           gst_number: string | null
           id: string
           instagram_link: string | null
+          kyc_status: string
           latitude: number | null
           longitude: number | null
           name: string
@@ -3988,6 +3990,7 @@ export type Database = {
           aadhaar_back_url?: string | null
           aadhaar_front_url?: string | null
           aadhaar_number?: string | null
+          admin_notes?: string | null
           bank_account_number?: string | null
           bank_holder_name?: string | null
           bank_ifsc?: string | null
@@ -4005,6 +4008,7 @@ export type Database = {
           gst_number?: string | null
           id?: string
           instagram_link?: string | null
+          kyc_status?: string
           latitude?: number | null
           longitude?: number | null
           name?: string
@@ -4029,6 +4033,7 @@ export type Database = {
           aadhaar_back_url?: string | null
           aadhaar_front_url?: string | null
           aadhaar_number?: string | null
+          admin_notes?: string | null
           bank_account_number?: string | null
           bank_holder_name?: string | null
           bank_ifsc?: string | null
@@ -4046,6 +4051,7 @@ export type Database = {
           gst_number?: string | null
           id?: string
           instagram_link?: string | null
+          kyc_status?: string
           latitude?: number | null
           longitude?: number | null
           name?: string
