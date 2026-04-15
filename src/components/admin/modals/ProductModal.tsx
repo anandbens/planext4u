@@ -47,6 +47,7 @@ const emptyForm = {
   sku: "", slug: "", meta_title: "", meta_description: "",
   manage_stock: false, stock_status: "in_stock",
   parent_item_id: "" as string, parent_item_name: "" as string,
+  replacement_time: "12 Hours" as string,
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete, isVendor, preselectedVendorId }: ProductModalProps) {
@@ -253,10 +254,6 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     if (!form.short_description?.trim()) errors.push("Short Description is required");
     if (!form.long_description?.trim()) errors.push("Long Description is required");
     if (form.price <= 0) errors.push("MRP / Price must be greater than 0");
-    if (!form.thumbnail_image) errors.push("Thumbnail image is required");
-    if (!form.banner_image) errors.push("Banner image is required");
-    if (!form.socio_shopping_icon) errors.push("Socio shopping icon is required");
-    if (!form.images || form.images.length === 0) errors.push("At least 1 product image is required");
     if (form.manage_stock && (form.stock === null || form.stock === undefined || form.stock < 0)) errors.push("Stock quantity is required when stock management is enabled");
     if (form.status === 'rejected' && !form.rejection_reason?.trim()) errors.push("Rejection reason is required");
     if (errors.length > 0) { toast.error(errors[0]); return; }
