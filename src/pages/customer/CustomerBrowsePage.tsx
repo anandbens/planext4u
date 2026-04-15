@@ -18,6 +18,9 @@ import { useAuth } from "@/lib/auth";
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { customerUser } = useAuth();
+  const isGuest = !customerUser;
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [sortBy, setSortBy] = useState("popular");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
