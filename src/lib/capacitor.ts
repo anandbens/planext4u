@@ -37,14 +37,14 @@ export async function getNativeAppId(): Promise<string | null> {
  */
 export async function isVendorApp(): Promise<boolean> {
   const appId = await getNativeAppId();
-  return appId === 'com.planext4u.vendor';
+  return appId === 'com.p4u.p4u_vendor';
 }
 
 /**
  * Synchronous check — only works after getNativeAppId() has resolved at least once.
  */
 export function isVendorAppSync(): boolean {
-  return _cachedAppId === 'com.planext4u.vendor';
+  return _cachedAppId === 'com.p4u.p4u_vendor';
 }
 
 /**
