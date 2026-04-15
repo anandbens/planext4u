@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import ProductReviews from "@/components/customer/ProductReviews";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Heart, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw, ChevronLeft, Search, Clock, Zap } from "lucide-react";
+import { Star, Heart, ShoppingCart, Minus, Plus, Truck, Shield, RotateCcw, ChevronLeft, Search, Clock, Zap, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { api, ProductVariant } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { BannerAd } from "@/components/customer/BannerAd";
+import DOMPurify from "dompurify";
 
 
 export default function CustomerProductPage() {
@@ -384,12 +385,32 @@ export default function CustomerProductPage() {
 
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-3 mt-5">
-              {[{ icon: RotateCcw, text: "12 Hours", sub: "Replacement" }, { icon: Shield, text: "24/7", sub: "Support" }, { icon: Truck, text: "Fast", sub: "Delivery" }].map((b) => (
+              {[
+                { icon: RotateCcw, text: (product as any).replacement_time || "12 Hours", sub: "Replacement" },
+                { icon: Shield, text: "24/7", sub: "Support" },
+                { icon: Truck, text: "Fast", sub: "Delivery" },
+              ].map((b) => (
                 <div key={b.text} className="flex flex-col items-center text-center gap-1 p-3 bg-secondary/30 rounded-xl">
                   <b.icon className="h-5 w-5 text-primary" /><span className="text-xs font-semibold">{b.text}</span>
                   <span className="text-[10px] text-muted-foreground">{b.sub}</span>
                 </div>
               ))}
+            </div>
+
+            {/* Social Share */}
+            <div className="mt-4">
+              <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+                const url = `${window.location.origin}/app/product/${id}`;
+                const text = `Check out ${product.title} - ₹${(product.price + (product.tax || 0)).toLocaleString()} on P4U!`;
+                if (navigator.share) {
+                  navigator.share({ title: product.title, text, url }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(`${text}\n${url}`);
+                  toast.success("Link copied to clipboard!");
+                }
+              }}>
+                <Share2 className="h-4 w-4" /> Share
+              </Button>
             </div>
           </div>
         </div>
@@ -403,7 +424,16 @@ export default function CustomerProductPage() {
           </TabsList>
           <TabsContent value="description" className="mt-4">
             {(product as any).short_description && <p className="text-sm font-medium mb-2">{(product as any).short_description}</p>}
-            <p className="text-sm text-muted-foreground leading-relaxed">{(product as any).long_description || product.description}</p>
+            {(() => {
+              const raw = (product as any).long_description || product.description || "";
+              // Strip HTML comments and sanitize
+              const cleaned = raw.replace(/<!--[\s\S]*?-->/g, "");
+              const hasHtml = /<[a-z][\s\S]*>/i.test(cleaned);
+              if (hasHtml) {
+                return <div className="text-sm text-muted-foreground leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(cleaned) }} />;
+              }
+              return <p className="text-sm text-muted-foreground leading-relaxed">{raw}</p>;
+            })()}
           </TabsContent>
           {realAttrs.length > 0 && (
             <TabsContent value="specs" className="mt-4">

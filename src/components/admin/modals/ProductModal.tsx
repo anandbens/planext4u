@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X, Clock, Phone, Shield, ToggleLeft, Plus, Layers, Search, MapPin } from "lucide-react";
+import { Package, Store, Tag, Star, DollarSign, Trash2, ImageIcon, Youtube, X, Clock, Phone, Shield, ToggleLeft, Plus, Layers, Search, MapPin, RotateCcw } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,7 @@ const emptyForm = {
   sku: "", slug: "", meta_title: "", meta_description: "",
   manage_stock: false, stock_status: "in_stock",
   parent_item_id: "" as string, parent_item_name: "" as string,
+  replacement_time: "12 Hours" as string,
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete, isVendor, preselectedVendorId }: ProductModalProps) {
@@ -231,6 +232,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         parent_item_id: (product as any).parent_item_id || "",
         parent_item_name: (product as any).parent_item_name || "",
         socio_shopping_icon: (product as any).socio_shopping_icon || "",
+        replacement_time: (product as any).replacement_time || "12 Hours",
       });
       setEditMode(mode === "edit");
       setActiveTab("general");
@@ -253,10 +255,6 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     if (!form.short_description?.trim()) errors.push("Short Description is required");
     if (!form.long_description?.trim()) errors.push("Long Description is required");
     if (form.price <= 0) errors.push("MRP / Price must be greater than 0");
-    if (!form.thumbnail_image) errors.push("Thumbnail image is required");
-    if (!form.banner_image) errors.push("Banner image is required");
-    if (!form.socio_shopping_icon) errors.push("Socio shopping icon is required");
-    if (!form.images || form.images.length === 0) errors.push("At least 1 product image is required");
     if (form.manage_stock && (form.stock === null || form.stock === undefined || form.stock < 0)) errors.push("Stock quantity is required when stock management is enabled");
     if (form.status === 'rejected' && !form.rejection_reason?.trim()) errors.push("Rejection reason is required");
     if (errors.length > 0) { toast.error(errors[0]); return; }
@@ -699,7 +697,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
               </div>
             )}
 
-            {/* Thumbnail & Banner */}
+            {/* Thumbnail, Banner & Replacement Time */}
             {editMode && !vendorRestricted && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -714,6 +712,21 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                   <Label className="text-xs text-muted-foreground">Socio Shopping Icon</Label>
                   <MediaLibraryPicker value={form.socio_shopping_icon} onChange={(url) => setForm({ ...form, socio_shopping_icon: url })} folder="product-images" label="Set Shopping Icon" />
                   <p className="text-[10px] text-muted-foreground mt-1">Small square image shown as product sticker on social posts. Auto-generated from product image if empty.</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><RotateCcw className="h-3 w-3" /> Replacement Time</Label>
+                  <Select value={form.replacement_time || "12 Hours"} onValueChange={(v) => setForm({ ...form, replacement_time: v })}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="12 Hours">12 Hours</SelectItem>
+                      <SelectItem value="24 Hours">24 Hours</SelectItem>
+                      <SelectItem value="24-48 Hours">24-48 Hours</SelectItem>
+                      <SelectItem value="1-4 Days">1-4 Days</SelectItem>
+                      <SelectItem value="4-7 Days">4-7 Days</SelectItem>
+                      <SelectItem value="7-14 Days">7-14 Days</SelectItem>
+                      <SelectItem value="No Replacement">No Replacement</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}

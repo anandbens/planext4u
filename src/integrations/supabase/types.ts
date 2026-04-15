@@ -1708,6 +1708,7 @@ export type Database = {
           promise_p4u: string | null
           rating: number | null
           rejection_reason: string | null
+          replacement_time: string | null
           reviews: number | null
           sales: number | null
           short_description: string | null
@@ -1762,6 +1763,7 @@ export type Database = {
           promise_p4u?: string | null
           rating?: number | null
           rejection_reason?: string | null
+          replacement_time?: string | null
           reviews?: number | null
           sales?: number | null
           short_description?: string | null
@@ -1816,6 +1818,7 @@ export type Database = {
           promise_p4u?: string | null
           rating?: number | null
           rejection_reason?: string | null
+          replacement_time?: string | null
           reviews?: number | null
           sales?: number | null
           short_description?: string | null

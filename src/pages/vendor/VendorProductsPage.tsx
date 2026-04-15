@@ -142,9 +142,6 @@ export default function VendorProductsPage() {
     if (!f.long_description?.trim()) return "Long Description is required";
     if (!f.price || parseFloat(f.price) <= 0) return "MRP / Price must be greater than 0";
     if (!f.stock || parseInt(f.stock) < 0) return "Stock quantity is required";
-    if (!f.thumbnail_image) return "Thumbnail image is required";
-    if (!f.banner_image) return "Banner image is required";
-    if (!f.images || f.images.length === 0) return "At least 1 product image is required";
     return null;
   };
 
