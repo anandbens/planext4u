@@ -457,6 +457,57 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                     ))}
                   </>
                 )}
+
+                {/* KYC Verification Actions */}
+                {vendorApp && (
+                  <Card className="p-4 mt-4 border-primary/20">
+                    <h4 className="text-sm font-semibold flex items-center gap-2 mb-3">
+                      <CheckCircle className="h-4 w-4 text-primary" /> KYC Verification
+                    </h4>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs text-muted-foreground">Current Status:</span>
+                      <StatusBadge status={vendorApp.kyc_status || vendorApp.status || "pending"} />
+                    </div>
+                    {vendorApp.admin_notes && (
+                      <p className="text-xs text-muted-foreground mb-3 p-2 bg-secondary/30 rounded">
+                        <strong>Admin Notes:</strong> {vendorApp.admin_notes}
+                      </p>
+                    )}
+                    {kycAction ? (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium">{kycAction === "approve" ? "Approve KYC Documents" : "Reject KYC Documents"}</p>
+                        <Textarea
+                          placeholder={kycAction === "approve" ? "Optional notes..." : "Rejection reason (required)..."}
+                          value={kycNotes}
+                          onChange={e => setKycNotes(e.target.value)}
+                          className="text-sm"
+                          rows={3}
+                        />
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => { setKycAction(null); setKycNotes(""); }} disabled={kycSaving}>Cancel</Button>
+                          <Button
+                            size="sm"
+                            variant={kycAction === "approve" ? "default" : "destructive"}
+                            onClick={() => handleKycVerification(kycAction)}
+                            disabled={kycSaving || (kycAction === "reject" && !kycNotes.trim())}
+                          >
+                            {kycSaving && <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-2" />}
+                            {kycAction === "approve" ? "Confirm Approve" : "Confirm Reject"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button size="sm" className="gap-1" onClick={() => setKycAction("approve")}>
+                          <CheckCircle className="h-4 w-4" /> Approve KYC
+                        </Button>
+                        <Button size="sm" variant="destructive" className="gap-1" onClick={() => setKycAction("reject")}>
+                          <XCircle className="h-4 w-4" /> Reject KYC
+                        </Button>
+                      </div>
+                    )}
+                  </Card>
+                )}
               </div>
             </TabsContent>
 
