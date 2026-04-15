@@ -25,7 +25,8 @@ const statusColor: Record<string, string> = {
 const trackingSteps = [
   { key: "placed", label: "Order Placed", icon: Package },
   { key: "accepted", label: "Confirmed", icon: CheckCircle2 },
-  { key: "in_progress", label: "Out for Delivery", icon: Truck },
+  { key: "in_progress", label: "Processing", icon: Clock },
+  { key: "shipped", label: "Shipped", icon: Truck },
   { key: "delivered", label: "Delivered", icon: MapPin },
   { key: "completed", label: "Completed", icon: CheckCircle2 },
 ];
