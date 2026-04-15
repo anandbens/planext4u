@@ -90,7 +90,7 @@ export default function SocialExplorePage() {
     const hasQuery = searchQuery.trim().length > 0;
     const searchView = (
       <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-40 bg-card border-b border-border/30">
+        <header className="sticky top-0 z-40 bg-card border-b border-border/30 safe-area-top">
           <div className="flex items-center gap-3 px-4 py-3">
             <button onClick={() => setIsSearchFocused(false)}><ArrowLeft className="h-5 w-5" /></button>
             <div className="flex-1 relative">
