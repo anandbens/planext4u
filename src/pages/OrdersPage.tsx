@@ -96,6 +96,8 @@ export default function OrdersPage() {
           { key: "tax", label: "Tax", render: (o) => `₹${o.tax.toLocaleString()}` },
           { key: "discount", label: "Discount", render: (o) => o.discount > 0 ? <span className="text-success">-₹{o.discount}</span> : "—" },
           { key: "total", label: "Total", render: (o) => <span className="font-bold">₹{o.total.toLocaleString()}</span> },
+          { key: "shipping_type", label: "Shipping", render: (o) => o.shipping_type ? (o.shipping_type === 'own' ? '🚗 Own' : `📦 ${o.courier_name || 'Courier'}`) : "—" },
+          { key: "pod_confirmed", label: "POD", render: (o) => o.pod_confirmed === true ? <span className="text-success text-xs">✅ Yes</span> : o.pod_confirmed === false ? <span className="text-destructive text-xs">❌ No</span> : "—" },
           { key: "status", label: "Status", render: (o) => <StatusBadge status={o.status} /> },
           { key: "actions", label: "", render: (o) => (
             <div className="flex gap-1">
@@ -122,8 +124,8 @@ export default function OrdersPage() {
         filters={[{ key: "status", label: "Status", options: [
           { value: "placed", label: "Placed" }, { value: "paid", label: "Paid" },
           { value: "accepted", label: "Accepted" }, { value: "in_progress", label: "In Progress" },
-          { value: "delivered", label: "Delivered" }, { value: "completed", label: "Completed" },
-          { value: "cancelled", label: "Cancelled" },
+          { value: "shipped", label: "Shipped" }, { value: "delivered", label: "Delivered" },
+          { value: "completed", label: "Completed" }, { value: "cancelled", label: "Cancelled" },
         ]}]}
         summaryWidgets={summaryWidgets}
         enableBulkSelect
