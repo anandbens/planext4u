@@ -431,12 +431,12 @@ export default function CustomerProductPage() {
             {/* Social Share */}
             <div className="mt-4">
               <Button variant="outline" size="sm" className="gap-2" onClick={() => {
-                const url = `${window.location.origin}/app/product/${id}`;
+                const shareUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=product&id=${id}`;
                 const text = `Check out ${product.title} - ₹${(product.price + (product.tax || 0)).toLocaleString()} on P4U!`;
                 if (navigator.share) {
-                  navigator.share({ title: product.title, text, url }).catch(() => {});
+                  navigator.share({ title: product.title, text, url: shareUrl }).catch(() => {});
                 } else {
-                  navigator.clipboard.writeText(`${text}\n${url}`);
+                  navigator.clipboard.writeText(`${text}\n${shareUrl}`);
                   toast.success("Link copied to clipboard!");
                 }
               }}>
