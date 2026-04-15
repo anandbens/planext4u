@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Bold, Italic, Underline, List, ListOrdered, Heading1, Heading2, Heading3, Type, Undo, Redo, Link, Strikethrough, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import { Bold, Italic, Underline, List, ListOrdered, Heading1, Heading2, Heading3, Type, Undo, Redo, Link, Strikethrough, AlignLeft, AlignCenter, AlignRight, Eye, Pencil } from "lucide-react";
 
 interface RichTextEditorProps {
   value: string;
@@ -29,6 +29,7 @@ const RichTextEditor = React.forwardRef<HTMLDivElement, RichTextEditorProps>(
   ({ value, onChange, placeholder, className, minHeight = "150px", compact = false }, ref) => {
     const editorRef = React.useRef<HTMLDivElement>(null);
     const isInitialMount = React.useRef(true);
+    const [mode, setMode] = React.useState<"edit" | "preview">("edit");
 
     React.useEffect(() => {
       if (isInitialMount.current && editorRef.current) {
@@ -36,6 +37,13 @@ const RichTextEditor = React.forwardRef<HTMLDivElement, RichTextEditorProps>(
         isInitialMount.current = false;
       }
     }, [value]);
+
+    // Sync editor content when switching back to edit mode
+    React.useEffect(() => {
+      if (mode === "edit" && editorRef.current && !isInitialMount.current) {
+        editorRef.current.innerHTML = value || "";
+      }
+    }, [mode]);
 
     const exec = (cmd: string, val?: string) => {
       document.execCommand(cmd, false, val);
@@ -73,7 +81,7 @@ const RichTextEditor = React.forwardRef<HTMLDivElement, RichTextEditorProps>(
           { icon: Italic, label: "Italic", action: () => exec("italic") },
           { icon: Underline, label: "Underline", action: () => exec("underline") },
           { icon: Strikethrough, label: "Strikethrough", action: () => exec("strikeThrough") },
-          null, // separator
+          null,
           { icon: Heading1, label: "Heading 1", action: () => exec("formatBlock", "<h1>") },
           { icon: Heading2, label: "Heading 2", action: () => exec("formatBlock", "<h2>") },
           { icon: Heading3, label: "Heading 3", action: () => exec("formatBlock", "<h3>") },
@@ -94,27 +102,50 @@ const RichTextEditor = React.forwardRef<HTMLDivElement, RichTextEditorProps>(
     return (
       <div className={cn("border rounded-lg overflow-hidden bg-background", className)} ref={ref}>
         <div className="bg-secondary/30 px-2 py-1 flex items-center gap-0.5 border-b flex-wrap">
-          {toolbarItems.map((item, i) =>
+          {mode === "edit" && toolbarItems.map((item, i) =>
             item === null ? (
               <div key={i} className="w-px h-4 bg-border mx-1" />
             ) : (
               <ToolbarButton key={i} icon={item.icon} label={item.label} onAction={item.action} />
             )
           )}
+          <div className="flex-1" />
+          <div className="flex items-center border-l border-border pl-1 ml-1">
+            <ToolbarButton
+              icon={Pencil}
+              label="Edit"
+              onAction={() => setMode("edit")}
+              active={mode === "edit"}
+            />
+            <ToolbarButton
+              icon={Eye}
+              label="Preview"
+              onAction={() => setMode("preview")}
+              active={mode === "preview"}
+            />
+          </div>
         </div>
-        <div
-          ref={editorRef}
-          contentEditable
-          className={cn(
-            "p-3 prose prose-sm dark:prose-invert max-w-none focus:outline-none",
-            "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
-          )}
-          style={{ minHeight }}
-          data-placeholder={placeholder || "Start typing..."}
-          onInput={handleInput}
-          onBlur={handleInput}
-          onPaste={handlePaste}
-        />
+        {mode === "edit" ? (
+          <div
+            ref={editorRef}
+            contentEditable
+            className={cn(
+              "p-3 prose prose-sm dark:prose-invert max-w-none focus:outline-none",
+              "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
+            )}
+            style={{ minHeight }}
+            data-placeholder={placeholder || "Start typing..."}
+            onInput={handleInput}
+            onBlur={handleInput}
+            onPaste={handlePaste}
+          />
+        ) : (
+          <div
+            className="p-3 prose prose-sm dark:prose-invert max-w-none"
+            style={{ minHeight }}
+            dangerouslySetInnerHTML={{ __html: value || `<p class="text-muted-foreground">No content to preview</p>` }}
+          />
+        )}
       </div>
     );
   }

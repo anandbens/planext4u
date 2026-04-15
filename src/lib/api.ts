@@ -71,12 +71,16 @@ export interface Service {
 export interface Order {
   id: string; customer_id: string; vendor_id: string;
   subtotal: number; tax: number; discount: number; points_used: number; total: number;
-  status: 'placed' | 'paid' | 'accepted' | 'in_progress' | 'delivered' | 'completed' | 'cancelled';
+  status: 'placed' | 'paid' | 'accepted' | 'in_progress' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
   created_at: string; updated_at?: string; customer_name?: string; vendor_name?: string;
-  items?: { title: string; qty: number; emoji: string; price: number; image?: string }[];
+  items?: { title: string; qty: number; emoji: string; price: number; image?: string; id?: string }[];
   delivery_rating?: number | null; rating_comment?: string | null; rated_at?: string | null;
   payment_reference_id?: string | null; razorpay_order_id?: string | null;
   platform_fee?: number; gst_on_platform_fee?: number;
+  shipping_type?: string | null; courier_name?: string | null;
+  tracking_number?: string | null; tracking_url?: string | null;
+  shipping_notes?: string | null;
+  pod_confirmed?: boolean | null; pod_confirmed_at?: string | null;
 }
 
 export interface Settlement {
