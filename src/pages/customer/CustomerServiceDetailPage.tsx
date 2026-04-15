@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Star, Clock, MapPin, Shield, Calendar, CheckCircle, ChevronLeft, Heart, AlertTriangle } from "lucide-react";
+import { Star, Clock, MapPin, Shield, Calendar, CheckCircle, ChevronLeft, Heart, AlertTriangle, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
