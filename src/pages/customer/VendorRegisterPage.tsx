@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { compressToWebP } from "@/lib/webp-compress";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
+import { checkVendorPhoneUnique, checkVendorEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -66,6 +67,26 @@ export default function VendorRegisterPage() {
 
   const [states, setStates] = useState<{ id: string; name: string }[]>([]);
   const [districts, setDistricts] = useState<{ id: string; name: string }[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
+  const [fieldChecking, setFieldChecking] = useState<{ phone?: boolean; email?: boolean }>({});
+
+  const handlePhoneBlur = async () => {
+    const formatErr = validatePhoneFormat(form.phone);
+    if (formatErr) { setFieldErrors(e => ({ ...e, phone: formatErr })); return; }
+    setFieldChecking(c => ({ ...c, phone: true }));
+    const uniqueErr = await checkVendorPhoneUnique(form.phone);
+    setFieldErrors(e => ({ ...e, phone: uniqueErr || undefined }));
+    setFieldChecking(c => ({ ...c, phone: false }));
+  };
+
+  const handleEmailBlur = async () => {
+    const formatErr = validateEmailFormat(form.email);
+    if (formatErr) { setFieldErrors(e => ({ ...e, email: formatErr })); return; }
+    setFieldChecking(c => ({ ...c, email: true }));
+    const uniqueErr = await checkVendorEmailUnique(form.email);
+    setFieldErrors(e => ({ ...e, email: uniqueErr || undefined }));
+    setFieldChecking(c => ({ ...c, email: false }));
+  };
 
   // Location state
   const [showMapModal, setShowMapModal] = useState(false);
@@ -195,8 +216,12 @@ export default function VendorRegisterPage() {
     if (step === 1) {
       if (!form.name.trim() || form.name.length < 2) return "Name must be at least 2 characters";
       if (!/^[a-zA-Z\s]+$/.test(form.name)) return "Name can only contain letters and spaces";
-      if (!/^\d{10}$/.test(form.phone)) return "Phone must be 10 digits";
-      if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) return "Valid email is required";
+      const phoneErr = validatePhoneFormat(form.phone);
+      if (phoneErr) return phoneErr;
+      const emailErr = validateEmailFormat(form.email);
+      if (emailErr) return emailErr;
+      if (fieldErrors.phone) return fieldErrors.phone;
+      if (fieldErrors.email) return fieldErrors.email;
       if (form.fb_link && !/^https?:\/\/.+/.test(form.fb_link)) return "Facebook link must be a valid URL";
       if (form.instagram_link && !/^https?:\/\/.+/.test(form.instagram_link)) return "Instagram link must be a valid URL";
     }
@@ -226,6 +251,11 @@ export default function VendorRegisterPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      // Final uniqueness check before submit
+      const phoneErr = await checkVendorPhoneUnique(form.phone);
+      if (phoneErr) { toast.error(phoneErr); setLoading(false); return; }
+      const emailErr = await checkVendorEmailUnique(form.email);
+      if (emailErr) { toast.error(emailErr); setLoading(false); return; }
       const payload = {
         user_id: customerId,
         name: form.name, phone: form.phone, secondary_phone: form.secondary_phone,
@@ -391,11 +421,15 @@ export default function VendorRegisterPage() {
               <div><label className="text-xs font-medium text-muted-foreground">Name *</label>
                 <Input value={form.name} onChange={e => updateField('name', e.target.value)} maxLength={100} /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Phone *</label>
-                <Input value={form.phone} onChange={e => updateField('phone', e.target.value.replace(/\D/g, ''))} maxLength={10} /></div>
+                <Input value={form.phone} onChange={e => { updateField('phone', e.target.value.replace(/\D/g, '').slice(0, 10)); setFieldErrors(er => ({ ...er, phone: undefined })); }} onBlur={handlePhoneBlur} maxLength={10} inputMode="numeric" className={fieldErrors.phone ? 'border-destructive' : ''} />
+                {fieldChecking.phone && <p className="text-[10px] text-muted-foreground mt-0.5">Checking...</p>}
+                {fieldErrors.phone && <p className="text-[10px] text-destructive mt-0.5">{fieldErrors.phone}</p>}</div>
               <div><label className="text-xs font-medium text-muted-foreground">Secondary Phone</label>
-                <Input value={form.secondary_phone} onChange={e => updateField('secondary_phone', e.target.value.replace(/\D/g, ''))} maxLength={10} /></div>
+                <Input value={form.secondary_phone} onChange={e => updateField('secondary_phone', e.target.value.replace(/\D/g, '').slice(0, 10))} maxLength={10} /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Email *</label>
-                <Input value={form.email} onChange={e => updateField('email', e.target.value)} type="email" /></div>
+                <Input value={form.email} onChange={e => { updateField('email', e.target.value); setFieldErrors(er => ({ ...er, email: undefined })); }} onBlur={handleEmailBlur} type="email" className={fieldErrors.email ? 'border-destructive' : ''} />
+                {fieldChecking.email && <p className="text-[10px] text-muted-foreground mt-0.5">Checking...</p>}
+                {fieldErrors.email && <p className="text-[10px] text-destructive mt-0.5">{fieldErrors.email}</p>}</div>
               <div><label className="text-xs font-medium text-muted-foreground">State *</label>
                 <Select value={form.state} onValueChange={v => { updateField('state', v); updateField('district', ''); }}>
                   <SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger>

@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { logActivity } from "@/lib/auth";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, resetPhoneAuth, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
+import { checkCustomerPhoneUnique, checkCustomerEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 function TermsContent() {
@@ -108,6 +109,26 @@ export default function CustomerRegisterPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
+  const [fieldChecking, setFieldChecking] = useState<{ phone?: boolean; email?: boolean }>({});
+
+  const handlePhoneBlur = async () => {
+    const formatErr = validatePhoneFormat(form.mobile);
+    if (formatErr) { setFieldErrors(e => ({ ...e, phone: formatErr })); return; }
+    setFieldChecking(c => ({ ...c, phone: true }));
+    const uniqueErr = await checkCustomerPhoneUnique(form.mobile);
+    setFieldErrors(e => ({ ...e, phone: uniqueErr || undefined }));
+    setFieldChecking(c => ({ ...c, phone: false }));
+  };
+
+  const handleEmailBlur = async () => {
+    const formatErr = validateEmailFormat(form.email);
+    if (formatErr) { setFieldErrors(e => ({ ...e, email: formatErr })); return; }
+    setFieldChecking(c => ({ ...c, email: true }));
+    const uniqueErr = await checkCustomerEmailUnique(form.email);
+    setFieldErrors(e => ({ ...e, email: uniqueErr || undefined }));
+    setFieldChecking(c => ({ ...c, email: false }));
+  };
 
   useEffect(() => {
     api.getActiveOccupations().then(setOccupations);
@@ -164,8 +185,12 @@ export default function CustomerRegisterPage() {
 
   const validateForm = (): boolean => {
     if (!form.name.trim()) { toast.error("Name is required"); return false; }
-    if (!form.mobile || !/^\d{10}$/.test(form.mobile)) { toast.error("Enter a valid 10-digit mobile number"); return false; }
-    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { toast.error("Enter a valid email address"); return false; }
+    const phoneErr = validatePhoneFormat(form.mobile);
+    if (phoneErr) { toast.error(phoneErr); return false; }
+    const emailErr = validateEmailFormat(form.email);
+    if (emailErr) { toast.error(emailErr); return false; }
+    if (fieldErrors.phone) { toast.error(fieldErrors.phone); return false; }
+    if (fieldErrors.email) { toast.error(fieldErrors.email); return false; }
     if (!form.state) { toast.error("Please select a state"); return false; }
     if (!form.district) { toast.error("Please select a district"); return false; }
     if (!acceptedTerms) { toast.error("Please accept the Terms & Conditions and Privacy Policy"); return false; }
@@ -331,10 +356,17 @@ export default function CustomerRegisterPage() {
               <div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Full Name *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="pl-10 h-11" /></div>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="10-digit Mobile Number *" value={form.mobile} onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0, 10); setForm({ ...form, mobile: v }); }} className="pl-10 h-11" type="tel" maxLength={10} inputMode="numeric" />
-                {form.mobile && form.mobile.length !== 10 && <p className="text-xs text-destructive mt-1">Must be 10 digits</p>}
+                <Input placeholder="10-digit Mobile Number *" value={form.mobile} onChange={e => { const v = e.target.value.replace(/\D/g, "").slice(0, 10); setForm({ ...form, mobile: v }); setFieldErrors(er => ({ ...er, phone: undefined })); }} onBlur={handlePhoneBlur} className={`pl-10 h-11 ${fieldErrors.phone ? 'border-destructive' : ''}`} type="tel" maxLength={10} inputMode="numeric" />
+                {fieldChecking.phone && <p className="text-xs text-muted-foreground mt-1">Checking...</p>}
+                {fieldErrors.phone && <p className="text-xs text-destructive mt-1">{fieldErrors.phone}</p>}
+                {!fieldErrors.phone && form.mobile && form.mobile.length !== 10 && <p className="text-xs text-destructive mt-1">Must be 10 digits</p>}
               </div>
-              <div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Email Address *" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="pl-10 h-11" type="email" /></div>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Email Address *" value={form.email} onChange={e => { setForm({ ...form, email: e.target.value }); setFieldErrors(er => ({ ...er, email: undefined })); }} onBlur={handleEmailBlur} className={`pl-10 h-11 ${fieldErrors.email ? 'border-destructive' : ''}`} type="email" />
+                {fieldChecking.email && <p className="text-xs text-muted-foreground mt-1">Checking...</p>}
+                {fieldErrors.email && <p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>}
+              </div>
 
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">State *</Label>
