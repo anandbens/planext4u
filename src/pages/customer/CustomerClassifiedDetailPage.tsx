@@ -66,8 +66,9 @@ export default function CustomerClassifiedDetailPage() {
   });
 
   const handleWhatsApp = () => {
+    const shareUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=classified&id=${id}`;
     const msg = encodeURIComponent(
-      `Hi, I'm interested in your listing "${ad.title}" priced at ₹${ad.price.toLocaleString()} on planext4u.`
+      `Hi, I'm interested in your listing "${ad.title}" priced at ₹${ad.price.toLocaleString()} on planext4u.\n${shareUrl}`
     );
     window.open(`https://wa.me/?text=${msg}`, "_blank");
   };
