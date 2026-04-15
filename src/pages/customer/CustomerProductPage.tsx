@@ -192,6 +192,29 @@ export default function CustomerProductPage() {
     navigate('/app/cart');
   };
 
+  // Update OG meta tags dynamically for social sharing
+  useEffect(() => {
+    if (!product) return;
+    const ogImage = (product as any).thumbnail_image || product.image || '';
+    const ogDesc = (product as any).short_description || product.description?.slice(0, 160) || '';
+    const ogTitle = `${product.title} - ₹${(product.price + (product.tax || 0)).toLocaleString()} | P4U`;
+    const ogUrl = `${window.location.origin}/app/product/${id}`;
+
+    const setMeta = (property: string, content: string) => {
+      let el = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
+      if (!el) { el = document.createElement('meta'); el.setAttribute('property', property); document.head.appendChild(el); }
+      el.content = content;
+    };
+    setMeta('og:title', ogTitle);
+    setMeta('og:description', ogDesc);
+    setMeta('og:image', ogImage);
+    setMeta('og:url', ogUrl);
+    setMeta('og:type', 'product');
+    document.title = ogTitle;
+
+    return () => { document.title = 'P4U'; };
+  }, [product, id]);
+
   if (isLoading) return <CustomerLayout><div className="p-8"><Skeleton className="h-96 rounded-2xl" /></div></CustomerLayout>;
   if (!product) return <CustomerLayout><div className="p-8 text-center">Product not found</div></CustomerLayout>;
 
