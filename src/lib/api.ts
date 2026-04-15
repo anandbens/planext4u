@@ -683,8 +683,16 @@ export const api = {
     return paginateResult(data || [], count || 0, page, perPage);
   },
 
-  updateOrderStatus: async (id: string, status: Order['status']) => {
-    const { error } = await supabase.from('orders').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
+  updateOrderStatus: async (id: string, status: Order['status'], shippingData?: { shipping_type?: string; courier_name?: string; tracking_number?: string; tracking_url?: string; shipping_notes?: string }) => {
+    const updatePayload: any = { status, updated_at: new Date().toISOString() };
+    if (shippingData) {
+      if (shippingData.shipping_type) updatePayload.shipping_type = shippingData.shipping_type;
+      if (shippingData.courier_name) updatePayload.courier_name = shippingData.courier_name;
+      if (shippingData.tracking_number) updatePayload.tracking_number = shippingData.tracking_number;
+      if (shippingData.tracking_url) updatePayload.tracking_url = shippingData.tracking_url;
+      if (shippingData.shipping_notes) updatePayload.shipping_notes = shippingData.shipping_notes;
+    }
+    const { error } = await supabase.from('orders').update(updatePayload).eq('id', id);
     if (error) throw error;
 
     if (status === 'completed') {
