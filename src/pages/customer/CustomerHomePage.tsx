@@ -335,7 +335,13 @@ export default function CustomerHomePage() {
 
   const handleSplashComplete = useCallback(() => { setShowSplash(false); sessionStorage.setItem("p4u_splash_shown", "1"); }, []);
 
-  const parentCategories = (data?.categories || []).filter((c: any) => !c.parent_id);
+  const parentCategories = (data?.categories || []).filter((c: any) => !c.parent_id)
+    .sort((a: any, b: any) => {
+      // Groceries always first
+      if (a.name === 'Groceries') return -1;
+      if (b.name === 'Groceries') return 1;
+      return a.name.localeCompare(b.name);
+    });
 
   if (showSplash) return <SplashScreen onComplete={handleSplashComplete} />;
 
