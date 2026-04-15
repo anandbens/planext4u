@@ -35,7 +35,7 @@ interface PricingSlot {
 const emptyForm = {
   title: "", description: "", short_description: "", long_description: "",
   price: 0, tax: 0, discount: 0,
-  max_points_redeemable: 0, status: "active" as Service["status"],
+  max_points_redeemable: 0, status: "draft" as Service["status"],
   vendor_id: "", vendor_name: "", category_id: "", category_name: "",
   emoji: "🔧", service_area: "", duration: "1-2 hours",
   image: "",
