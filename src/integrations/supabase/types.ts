@@ -902,6 +902,224 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_analytics: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      homepage_banners: {
+        Row: {
+          background_gradient: string | null
+          clicks: number
+          created_at: string
+          cta_link: string | null
+          cta_text: string | null
+          display_order: number
+          end_date: string | null
+          festival_tag: string | null
+          id: string
+          impressions: number
+          is_active: boolean
+          media_type: string
+          media_url: string | null
+          mobile_media_url: string | null
+          redirect_id: string | null
+          redirect_type: string | null
+          start_date: string | null
+          subtitle: string | null
+          theme_bg_color: string | null
+          theme_button_color: string | null
+          theme_header_color: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          background_gradient?: string | null
+          clicks?: number
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          display_order?: number
+          end_date?: string | null
+          festival_tag?: string | null
+          id?: string
+          impressions?: number
+          is_active?: boolean
+          media_type?: string
+          media_url?: string | null
+          mobile_media_url?: string | null
+          redirect_id?: string | null
+          redirect_type?: string | null
+          start_date?: string | null
+          subtitle?: string | null
+          theme_bg_color?: string | null
+          theme_button_color?: string | null
+          theme_header_color?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          background_gradient?: string | null
+          clicks?: number
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          display_order?: number
+          end_date?: string | null
+          festival_tag?: string | null
+          id?: string
+          impressions?: number
+          is_active?: boolean
+          media_type?: string
+          media_url?: string | null
+          mobile_media_url?: string | null
+          redirect_id?: string | null
+          redirect_type?: string | null
+          start_date?: string | null
+          subtitle?: string | null
+          theme_bg_color?: string | null
+          theme_button_color?: string | null
+          theme_header_color?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      homepage_section_items: {
+        Row: {
+          badge_text: string | null
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string | null
+          item_id: string | null
+          item_type: string
+          link: string | null
+          section_id: string
+          title: string | null
+        }
+        Insert: {
+          badge_text?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          item_id?: string | null
+          item_type?: string
+          link?: string | null
+          section_id: string
+          title?: string | null
+        }
+        Update: {
+          badge_text?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          item_id?: string | null
+          item_type?: string
+          link?: string | null
+          section_id?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_section_items_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "homepage_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_sections: {
+        Row: {
+          background_color: string | null
+          background_gradient: string | null
+          created_at: string
+          cta_link: string | null
+          cta_text: string | null
+          display_order: number
+          end_date: string | null
+          festival_tag: string | null
+          id: string
+          is_visible: boolean
+          metadata: Json | null
+          section_type: string
+          start_date: string | null
+          target_location: string | null
+          target_segment: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string | null
+          background_gradient?: string | null
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          display_order?: number
+          end_date?: string | null
+          festival_tag?: string | null
+          id?: string
+          is_visible?: boolean
+          metadata?: Json | null
+          section_type?: string
+          start_date?: string | null
+          target_location?: string | null
+          target_segment?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string | null
+          background_gradient?: string | null
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          display_order?: number
+          end_date?: string | null
+          festival_tag?: string | null
+          id?: string
+          is_visible?: boolean
+          metadata?: Json | null
+          section_type?: string
+          start_date?: string | null
+          target_location?: string | null
+          target_segment?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       homes_cms: {
         Row: {
           content: string | null
@@ -4365,6 +4583,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      video_ads: {
+        Row: {
+          clicks: number
+          created_at: string
+          cta_link: string | null
+          cta_text: string | null
+          duration_seconds: number | null
+          end_date: string | null
+          id: string
+          impressions: number
+          start_date: string | null
+          status: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          clicks?: number
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          duration_seconds?: number | null
+          end_date?: string | null
+          id?: string
+          impressions?: number
+          start_date?: string | null
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Update: {
+          clicks?: number
+          created_at?: string
+          cta_link?: string | null
+          cta_text?: string | null
+          duration_seconds?: number | null
+          end_date?: string | null
+          id?: string
+          impressions?: number
+          start_date?: string | null
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
       }
       video_processing_jobs: {
         Row: {
