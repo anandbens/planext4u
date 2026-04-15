@@ -232,6 +232,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         parent_item_id: (product as any).parent_item_id || "",
         parent_item_name: (product as any).parent_item_name || "",
         socio_shopping_icon: (product as any).socio_shopping_icon || "",
+        replacement_time: (product as any).replacement_time || "12 Hours",
       });
       setEditMode(mode === "edit");
       setActiveTab("general");
