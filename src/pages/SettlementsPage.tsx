@@ -2,12 +2,18 @@ import { useEffect, useState, useCallback } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Settlement, PaginatedResponse } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Wallet, IndianRupee, Clock, Banknote } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Wallet, IndianRupee, Clock, Banknote, XCircle, Eye, Package } from "lucide-react";
 import { toast } from "sonner";
 import { exportToCSV } from "@/lib/csv";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function SettlementsPage() {
   const [data, setData] = useState<PaginatedResponse<Settlement> | null>(null);
@@ -16,27 +22,112 @@ export default function SettlementsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFrom, setDateFrom] = useState<string>();
   const [dateTo, setDateTo] = useState<string>();
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmTarget, setConfirmTarget] = useState<Settlement | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchData = useCallback(() => {
-    api.getSettlements({ page, per_page: 10, search: search || undefined, status: statusFilter || undefined, date_from: dateFrom, date_to: dateTo }).then(setData);
+  // Settle dialog
+  const [settleOpen, setSettleOpen] = useState(false);
+  const [settleTarget, setSettleTarget] = useState<Settlement | null>(null);
+  const [txnRef, setTxnRef] = useState("");
+
+  // Reject dialog
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectTarget, setRejectTarget] = useState<Settlement | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+
+  // Order detail dialog
+  const [orderDetailOpen, setOrderDetailOpen] = useState(false);
+  const [orderDetail, setOrderDetail] = useState<any>(null);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
+
+  const fetchData = useCallback(async () => {
+    const page_ = page;
+    const perPage = 10;
+    const from = (page_ - 1) * perPage;
+    const to = from + perPage - 1;
+
+    let query = supabase.from('settlements').select('*', { count: 'exact' });
+    if (statusFilter && statusFilter !== 'all') query = query.eq('status', statusFilter);
+    if (dateFrom) query = query.gte('created_at', dateFrom);
+    if (dateTo) query = query.lte('created_at', dateTo + 'T23:59:59Z');
+
+    // Search across multiple columns
+    if (search) {
+      query = query.or(`id.ilike.%${search}%,vendor_name.ilike.%${search}%,order_id.ilike.%${search}%,vendor_id.ilike.%${search}%,transaction_reference.ilike.%${search}%`);
+    }
+
+    query = query.order('created_at', { ascending: false }).range(from, to);
+
+    const { data: rows, count, error } = await query;
+    if (error) { toast.error("Failed to load settlements"); return; }
+    setData({
+      data: (rows || []) as any,
+      total: count || 0,
+      page: page_,
+      per_page: perPage,
+      total_pages: Math.ceil((count || 0) / perPage),
+    });
   }, [page, search, statusFilter, dateFrom, dateTo]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleSettle = (settlement: Settlement) => { setConfirmTarget(settlement); setConfirmOpen(true); };
+  const handleSettle = (s: Settlement) => {
+    setSettleTarget(s);
+    setTxnRef((s as any).transaction_reference || "");
+    setSettleOpen(true);
+  };
 
   const confirmSettle = async () => {
-    if (!confirmTarget) return;
+    if (!settleTarget) return;
+    if (!txnRef.trim()) { toast.error("Transaction reference is required"); return; }
     setLoading(true);
-    try { await api.settleSettlement(confirmTarget.id); toast.success(`Settlement ${confirmTarget.id} processed`); fetchData(); }
-    finally { setLoading(false); setConfirmOpen(false); setConfirmTarget(null); }
+    try {
+      const { error } = await supabase.from('settlements').update({
+        status: 'settled',
+        settled_at: new Date().toISOString(),
+        transaction_reference: txnRef.trim(),
+      } as any).eq('id', settleTarget.id);
+      if (error) throw error;
+      toast.success(`Settlement ${settleTarget.id} processed`);
+      fetchData();
+    } finally { setLoading(false); setSettleOpen(false); setSettleTarget(null); setTxnRef(""); }
+  };
+
+  const handleReject = (s: Settlement) => {
+    setRejectTarget(s);
+    setRejectReason("");
+    setRejectOpen(true);
+  };
+
+  const confirmReject = async () => {
+    if (!rejectTarget) return;
+    if (!rejectReason.trim()) { toast.error("Rejection reason is required"); return; }
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('settlements').update({
+        status: 'rejected',
+        rejection_reason: rejectReason.trim(),
+      } as any).eq('id', rejectTarget.id);
+      if (error) throw error;
+      toast.success(`Settlement ${rejectTarget.id} rejected`);
+      fetchData();
+    } finally { setLoading(false); setRejectOpen(false); setRejectTarget(null); setRejectReason(""); }
+  };
+
+  const viewOrderDetails = async (orderId: string) => {
+    const { data: order } = await supabase.from('orders').select('*').eq('id', orderId).single();
+    if (order) {
+      setOrderDetail(order);
+      setOrderItems(Array.isArray(order.items) ? order.items : (order.items ? JSON.parse(order.items as string) : []));
+      setOrderDetailOpen(true);
+    } else {
+      toast.error("Order not found");
+    }
   };
 
   const handleBulkSettle = async (ids: string[]) => {
-    await api.bulkSettleSettlements(ids);
+    const now = new Date().toISOString();
+    const { error } = await supabase.from('settlements').update({ status: 'settled', settled_at: now } as any).in('id', ids);
+    if (error) { toast.error("Bulk settle failed"); return; }
     toast.success(`${ids.length} settlements processed`);
     fetchData();
   };
@@ -70,25 +161,43 @@ export default function SettlementsPage() {
     <AdminLayout>
       <div className="page-header">
         <h1 className="page-title">Settlements</h1>
-        <p className="page-description">{data.total} settlements · Manual settlement by default</p>
+        <p className="page-description">{data.total} settlements · Search by ID, vendor, order, or txn ref</p>
       </div>
       <DataTable
         columns={[
           { key: "id", label: "ID" },
           { key: "vendor_name", label: "Vendor" },
-          { key: "order_id", label: "Order" },
-          { key: "amount", label: "Order Amount", render: (s) => `₹${s.amount.toLocaleString()}` },
-          { key: "commission", label: "Commission", render: (s) => <span className="text-destructive">-₹{s.commission.toLocaleString()}</span> },
-          { key: "net_amount", label: "Net Payout", render: (s) => <span className="font-bold text-success">₹{s.net_amount.toLocaleString()}</span> },
-          { key: "status", label: "Status", render: (s) => <StatusBadge status={s.status} /> },
-          { key: "actions", label: "", render: (s) => s.status === 'eligible' || s.status === 'pending' ? (
-            <Button variant="outline" size="sm" className="gap-1 text-success border-success/30 hover:bg-success/10"
-              onClick={(e) => { e.stopPropagation(); handleSettle(s); }}>
-              <CheckCircle className="h-3.5 w-3.5" /> Settle
+          { key: "order_id", label: "Order", render: (s: any) => (
+            <Button variant="link" className="h-auto p-0 text-xs text-primary" onClick={(e) => { e.stopPropagation(); viewOrderDetails(s.order_id); }}>
+              {s.order_id}
             </Button>
-          ) : s.status === 'settled' ? (
-            <span className="text-xs text-muted-foreground">Settled</span>
-          ) : null },
+          )},
+          { key: "amount", label: "Order Amount", render: (s: any) => `₹${s.amount.toLocaleString()}` },
+          { key: "commission", label: "Commission", render: (s: any) => <span className="text-destructive">-₹{s.commission.toLocaleString()}</span> },
+          { key: "net_amount", label: "Net Payout", render: (s: any) => <span className="font-bold text-success">₹{s.net_amount.toLocaleString()}</span> },
+          { key: "transaction_reference", label: "Txn Ref", render: (s: any) => <span className="text-xs font-mono">{(s as any).transaction_reference || "—"}</span> },
+          { key: "status", label: "Status", render: (s: any) => <StatusBadge status={s.status} /> },
+          { key: "actions", label: "", render: (s: any) => (
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); viewOrderDetails(s.order_id); }}><Eye className="h-4 w-4" /></Button>
+              {(s.status === 'eligible' || s.status === 'pending') && (
+                <>
+                  <Button variant="outline" size="sm" className="gap-1 text-success border-success/30 hover:bg-success/10 h-7 text-xs"
+                    onClick={(e) => { e.stopPropagation(); handleSettle(s); }}>
+                    <CheckCircle className="h-3.5 w-3.5" /> Settle
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1 text-destructive border-destructive/30 hover:bg-destructive/10 h-7 text-xs"
+                    onClick={(e) => { e.stopPropagation(); handleReject(s); }}>
+                    <XCircle className="h-3.5 w-3.5" /> Reject
+                  </Button>
+                </>
+              )}
+              {s.status === 'settled' && <span className="text-xs text-muted-foreground">Settled</span>}
+              {s.status === 'rejected' && (
+                <span className="text-xs text-destructive" title={(s as any).rejection_reason || ""}>Rejected</span>
+              )}
+            </div>
+          )},
         ]}
         data={data.data}
         total={data.total}
@@ -100,19 +209,116 @@ export default function SettlementsPage() {
         onExport={handleExport}
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } }}
         onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
-        searchPlaceholder="Search settlements..."
+        searchPlaceholder="Search by ID, vendor, order, txn ref..."
         filters={[{ key: "status", label: "Status", options: [
           { value: "pending", label: "Pending" }, { value: "eligible", label: "Eligible" },
-          { value: "settled", label: "Settled" }, { value: "on_hold", label: "On Hold" },
+          { value: "settled", label: "Settled" }, { value: "rejected", label: "Rejected" },
+          { value: "on_hold", label: "On Hold" },
         ]}]}
         summaryWidgets={summaryWidgets}
         enableBulkSelect
         onBulkStatusUpdate={(ids) => handleBulkSettle(ids)}
         bulkStatusOptions={[{ value: "settle", label: "Settle Selected" }]}
       />
-      <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Process Settlement"
-        description={`Process settlement ${confirmTarget?.id} for vendor "${confirmTarget?.vendor_name}"? Net payout: ₹${confirmTarget?.net_amount.toLocaleString()}`}
-        confirmLabel="Process Settlement" variant="default" onConfirm={confirmSettle} loading={loading} />
+
+      {/* Settle Dialog */}
+      <Dialog open={settleOpen} onOpenChange={setSettleOpen}>
+        <DialogContent className="max-w-md">
+          <DialogTitle>Process Settlement</DialogTitle>
+          <div className="space-y-4 mt-2">
+            <div className="p-3 rounded-lg bg-secondary/30 text-sm">
+              <p><strong>Settlement:</strong> {settleTarget?.id}</p>
+              <p><strong>Vendor:</strong> {settleTarget?.vendor_name}</p>
+              <p><strong>Net Payout:</strong> <span className="text-success font-bold">₹{settleTarget?.net_amount.toLocaleString()}</span></p>
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Transaction Reference Number *</Label>
+              <Input value={txnRef} onChange={(e) => setTxnRef(e.target.value)} placeholder="Enter bank txn ref / UTR number" className="mt-1" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettleOpen(false)} disabled={loading}>Cancel</Button>
+            <Button onClick={confirmSettle} disabled={loading || !txnRef.trim()} className="gap-1">
+              {loading && <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />}
+              <CheckCircle className="h-4 w-4" /> Confirm Settlement
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
+        <DialogContent className="max-w-md">
+          <DialogTitle>Reject Settlement</DialogTitle>
+          <div className="space-y-4 mt-2">
+            <div className="p-3 rounded-lg bg-destructive/5 text-sm">
+              <p><strong>Settlement:</strong> {rejectTarget?.id}</p>
+              <p><strong>Vendor:</strong> {rejectTarget?.vendor_name}</p>
+              <p><strong>Amount:</strong> ₹{rejectTarget?.net_amount.toLocaleString()}</p>
+            </div>
+            <div>
+              <Label className="text-xs font-semibold text-destructive">Rejection Reason *</Label>
+              <Textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Explain why this settlement is being rejected..." className="mt-1" rows={3} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectOpen(false)} disabled={loading}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmReject} disabled={loading || !rejectReason.trim()} className="gap-1">
+              {loading && <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin" />}
+              <XCircle className="h-4 w-4" /> Reject Settlement
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Order Detail Dialog */}
+      <Dialog open={orderDetailOpen} onOpenChange={setOrderDetailOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogTitle className="flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> Order Details</DialogTitle>
+          {orderDetail && (
+            <div className="space-y-4 mt-2">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground">Order ID:</span> <span className="font-mono font-medium">{orderDetail.id}</span></div>
+                <div><span className="text-muted-foreground">Status:</span> <StatusBadge status={orderDetail.status} /></div>
+                <div><span className="text-muted-foreground">Customer:</span> {orderDetail.customer_name || orderDetail.customer_id}</div>
+                <div><span className="text-muted-foreground">Vendor:</span> {orderDetail.vendor_name || orderDetail.vendor_id}</div>
+                <div><span className="text-muted-foreground">Subtotal:</span> ₹{orderDetail.subtotal?.toLocaleString()}</div>
+                <div><span className="text-muted-foreground">Tax:</span> ₹{orderDetail.tax?.toLocaleString()}</div>
+                <div><span className="text-muted-foreground">Discount:</span> ₹{orderDetail.discount?.toLocaleString()}</div>
+                <div><span className="text-muted-foreground">Total:</span> <span className="font-bold">₹{orderDetail.total?.toLocaleString()}</span></div>
+                <div><span className="text-muted-foreground">Platform Fee:</span> ₹{orderDetail.platform_fee?.toLocaleString() || 0}</div>
+                <div><span className="text-muted-foreground">Points Used:</span> {orderDetail.points_used || 0}</div>
+              </div>
+
+              {orderItems.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Line Items</h4>
+                  <div className="space-y-2">
+                    {orderItems.map((item: any, idx: number) => (
+                      <Card key={idx} className="p-3">
+                        <div className="flex items-center gap-3">
+                          {item.image && <img src={item.image} alt={item.title} className="h-10 w-10 rounded object-cover" />}
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{item.emoji || ""} {item.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Qty: {item.qty} × ₹{item.price?.toLocaleString()}
+                              {item.id && <span className="ml-2 font-mono text-[10px]">({orderDetail.id}-{idx + 1})</span>}
+                            </p>
+                          </div>
+                          <p className="text-sm font-bold">₹{((item.qty || 1) * (item.price || 0)).toLocaleString()}</p>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-2">
+                    Note: If items are from different vendors, each vendor gets a separate settlement with line item reference (OrderID-LineNo).
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

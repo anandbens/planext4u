@@ -632,6 +632,39 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                 <Label className="text-xs text-muted-foreground"><Phone className="h-3 w-3 inline mr-1" />Mobile</Label>
                 <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="mt-1" />
               </div>
+              <div className="p-4 rounded-lg bg-secondary/30 col-span-2">
+                <div className="flex items-center gap-2 mb-1"><Crown className="h-4 w-4 text-warning" /><Label className="text-xs text-muted-foreground">Vendor Plan</Label></div>
+                <Select value={form.plan_id || "none"} onValueChange={(v) => {
+                  const plan = vendorPlans.find((p: any) => p.id === v);
+                  setForm({
+                    ...form,
+                    plan_id: v === "none" ? "" : v,
+                    membership: plan?.plan_name?.toLowerCase() || form.membership,
+                    commission_rate: plan?.commission_percentage ?? form.commission_rate,
+                  });
+                }}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select a plan" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Plan</SelectItem>
+                    {vendorPlans.filter(p => p.plan_type === "local").length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Local Plans</div>
+                        {vendorPlans.filter(p => p.plan_type === "local").map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.plan_name} - ₹{p.price} ({p.payment_mode})</SelectItem>
+                        ))}
+                      </>
+                    )}
+                    {vendorPlans.filter(p => p.plan_type === "vip").length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">VIP Plans</div>
+                        {vendorPlans.filter(p => p.plan_type === "vip").map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.plan_name} - ₹{p.price} ({p.payment_mode})</SelectItem>
+                        ))}
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="p-4 rounded-lg bg-secondary/30">
                 <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-primary" /><Label className="text-xs text-muted-foreground">Vendor to P4U Commission</Label></div>
                 <Input type="number" value={form.commission_rate} onChange={(e) => setForm({ ...form, commission_rate: Number(e.target.value) })} className="mt-1" />
@@ -639,16 +672,6 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
               <div className="p-4 rounded-lg bg-secondary/30">
                 <div className="flex items-center gap-2 mb-1"><Percent className="h-4 w-4 text-warning" /><Label className="text-xs text-muted-foreground">Max User Redemption %</Label></div>
                 <Input type="number" value={form.max_redemption_percentage ?? ""} onChange={(e) => setForm({ ...form, max_redemption_percentage: e.target.value ? Number(e.target.value) : null })} className="mt-1" placeholder="Plan default" />
-              </div>
-              <div className="p-4 rounded-lg bg-secondary/30">
-                <div className="flex items-center gap-2 mb-1"><Crown className="h-4 w-4 text-warning" /><Label className="text-xs text-muted-foreground">Membership</Label></div>
-                <Select value={form.membership} onValueChange={(v) => setForm({ ...form, membership: v })}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="basic">Basic</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           </div>
