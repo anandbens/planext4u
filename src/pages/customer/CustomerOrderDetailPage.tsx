@@ -25,7 +25,8 @@ const statusColor: Record<string, string> = {
 const trackingSteps = [
   { key: "placed", label: "Order Placed", icon: Package },
   { key: "accepted", label: "Confirmed", icon: CheckCircle2 },
-  { key: "in_progress", label: "Out for Delivery", icon: Truck },
+  { key: "in_progress", label: "Processing", icon: Clock },
+  { key: "shipped", label: "Shipped", icon: Truck },
   { key: "delivered", label: "Delivered", icon: MapPin },
   { key: "completed", label: "Completed", icon: CheckCircle2 },
 ];
@@ -190,6 +191,26 @@ export default function CustomerOrderDetailPage() {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Card>
         </Link>
+
+        {/* Shipping Info */}
+        {order.shipping_type && (
+          <Card className="p-4">
+            <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+              <Truck className="h-4 w-4" /> Shipment Details
+            </h3>
+            <div className="space-y-1 text-sm">
+              <p>Method: <span className="font-medium">{order.shipping_type === 'own' ? 'Seller Delivery' : 'Courier Partner'}</span></p>
+              {order.courier_name && <p>Courier: <span className="font-medium">{order.courier_name}</span></p>}
+              {order.tracking_number && <p>Tracking #: <span className="font-mono text-xs">{order.tracking_number}</span></p>}
+              {order.tracking_url && (
+                <a href={order.tracking_url} target="_blank" rel="noopener noreferrer" className="text-primary underline text-sm inline-block mt-1">
+                  Track your shipment ↗
+                </a>
+              )}
+              {order.shipping_notes && <p className="text-xs text-muted-foreground mt-1">{order.shipping_notes}</p>}
+            </div>
+          </Card>
+        )}
 
         {/* Items - with images and product links */}
         <Card className="p-4">

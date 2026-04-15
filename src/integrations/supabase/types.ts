@@ -1211,6 +1211,7 @@ export type Database = {
       orders: {
         Row: {
           commission_source: string | null
+          courier_name: string | null
           created_at: string
           customer_id: string
           customer_name: string | null
@@ -1223,21 +1224,28 @@ export type Database = {
           items: Json | null
           payment_reference_id: string | null
           platform_fee: number | null
+          pod_confirmed: boolean | null
+          pod_confirmed_at: string | null
           points_used: number
           rated_at: string | null
           rating_comment: string | null
           razorpay_order_id: string | null
           redemption_source: string | null
+          shipping_notes: string | null
+          shipping_type: string | null
           status: string
           subtotal: number
           tax: number
           total: number
+          tracking_number: string | null
+          tracking_url: string | null
           updated_at: string
           vendor_id: string
           vendor_name: string | null
         }
         Insert: {
           commission_source?: string | null
+          courier_name?: string | null
           created_at?: string
           customer_id: string
           customer_name?: string | null
@@ -1250,21 +1258,28 @@ export type Database = {
           items?: Json | null
           payment_reference_id?: string | null
           platform_fee?: number | null
+          pod_confirmed?: boolean | null
+          pod_confirmed_at?: string | null
           points_used?: number
           rated_at?: string | null
           rating_comment?: string | null
           razorpay_order_id?: string | null
           redemption_source?: string | null
+          shipping_notes?: string | null
+          shipping_type?: string | null
           status?: string
           subtotal?: number
           tax?: number
           total?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string
           vendor_id: string
           vendor_name?: string | null
         }
         Update: {
           commission_source?: string | null
+          courier_name?: string | null
           created_at?: string
           customer_id?: string
           customer_name?: string | null
@@ -1277,15 +1292,21 @@ export type Database = {
           items?: Json | null
           payment_reference_id?: string | null
           platform_fee?: number | null
+          pod_confirmed?: boolean | null
+          pod_confirmed_at?: string | null
           points_used?: number
           rated_at?: string | null
           rating_comment?: string | null
           razorpay_order_id?: string | null
           redemption_source?: string | null
+          shipping_notes?: string | null
+          shipping_type?: string | null
           status?: string
           subtotal?: number
           tax?: number
           total?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
           updated_at?: string
           vendor_id?: string
           vendor_name?: string | null

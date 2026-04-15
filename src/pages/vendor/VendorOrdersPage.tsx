@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { VendorLayout } from "@/components/vendor/VendorLayout";
 import { useAuth } from "@/lib/auth";
 import { api, Order } from "@/lib/api";
@@ -33,9 +35,11 @@ export default function VendorOrdersPage() {
   const vendorId = vendorUser?.vendor_id || "VND-001";
   const qc = useQueryClient();
   const [shippingModal, setShippingModal] = useState<Order | null>(null);
+  const [shippingType, setShippingType] = useState<"own" | "courier">("own");
   const [courierName, setCourierName] = useState('');
   const [trackingNumber, setTrackingNumber] = useState('');
-  const [customerMessage, setCustomerMessage] = useState('');
+  const [trackingUrl, setTrackingUrl] = useState('');
+  const [shippingNotes, setShippingNotes] = useState('');
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["vendorOrders", vendorId],
@@ -43,7 +47,7 @@ export default function VendorOrdersPage() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: Order['status'] }) => api.updateOrderStatus(id, status),
+    mutationFn: ({ id, status, shippingData }: { id: string; status: Order['status']; shippingData?: any }) => api.updateOrderStatus(id, status, shippingData),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["vendorOrders"] }); toast.success("Order status updated"); },
   });
 
@@ -56,22 +60,31 @@ export default function VendorOrdersPage() {
     if (!flow) return;
     if (flow.next === 'shipped') {
       setShippingModal(order);
+      setShippingType("own");
+      setCourierName('');
+      setTrackingNumber('');
+      setTrackingUrl('');
+      setShippingNotes('');
       return;
     }
     updateStatus.mutate({ id: order.id, status: flow.next as Order['status'] });
   };
 
   const handleShipOrder = () => {
-    if (!courierName.trim() || !trackingNumber.trim()) {
-      toast.error("Please enter courier and tracking details");
+    if (shippingType === "courier" && (!courierName.trim() || !trackingNumber.trim())) {
+      toast.error("Please enter courier name and tracking number");
       return;
     }
     if (shippingModal) {
-      updateStatus.mutate({ id: shippingModal.id, status: 'shipped' as Order['status'] });
+      const shippingData = {
+        shipping_type: shippingType,
+        courier_name: shippingType === "courier" ? courierName.trim() : undefined,
+        tracking_number: shippingType === "courier" ? trackingNumber.trim() : undefined,
+        tracking_url: shippingType === "courier" ? trackingUrl.trim() || undefined : undefined,
+        shipping_notes: shippingNotes.trim() || undefined,
+      };
+      updateStatus.mutate({ id: shippingModal.id, status: 'shipped' as Order['status'], shippingData });
       setShippingModal(null);
-      setCourierName('');
-      setTrackingNumber('');
-      setCustomerMessage('');
     }
   };
 
@@ -108,6 +121,21 @@ export default function VendorOrdersPage() {
             </div>
           </div>
         ))}
+        {/* Shipping info display */}
+        {o.shipping_type && (
+          <div className="mt-2 p-2 rounded bg-secondary/30 text-xs space-y-0.5">
+            <p className="font-medium">📦 {o.shipping_type === 'own' ? 'Own Delivery' : 'Courier Partner'}</p>
+            {o.courier_name && <p>Courier: {o.courier_name}</p>}
+            {o.tracking_number && <p>AWB: {o.tracking_number}</p>}
+            {o.tracking_url && <a href={o.tracking_url} target="_blank" rel="noopener noreferrer" className="text-primary underline">Track Shipment</a>}
+          </div>
+        )}
+        {/* POD status */}
+        {o.pod_confirmed != null && (
+          <div className={`mt-2 p-2 rounded text-xs ${o.pod_confirmed ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+            {o.pod_confirmed ? '✅ Delivery Confirmed by Customer' : '❌ Customer reported non-delivery'}
+          </div>
+        )}
         {flow && (
           <div className="flex gap-2 mt-3">
             <Button size="sm" className="h-8 text-xs" onClick={() => handleStatusUpdate(o)}>
@@ -174,24 +202,60 @@ export default function VendorOrdersPage() {
         )}
       </div>
 
+      {/* Shipping Modal with Own/Courier selection */}
       <Dialog open={!!shippingModal} onOpenChange={() => setShippingModal(null)}>
         <DialogContent className="max-w-sm">
           <DialogTitle>Shipping Details</DialogTitle>
-          <div className="space-y-3 pt-2">
+          <div className="space-y-4 pt-2">
             <div>
-              <Label className="text-xs">Courier Name *</Label>
-              <Input placeholder="e.g. BlueDart, Delhivery" value={courierName} onChange={e => setCourierName(e.target.value)} className="h-9 mt-1" />
+              <Label className="text-xs font-semibold mb-2 block">Shipment Method *</Label>
+              <RadioGroup value={shippingType} onValueChange={(v) => setShippingType(v as "own" | "courier")} className="flex gap-3">
+                <div className={`flex-1 border rounded-lg p-3 cursor-pointer transition-colors ${shippingType === 'own' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <RadioGroupItem value="own" />
+                    <div>
+                      <p className="text-sm font-medium">Own Delivery</p>
+                      <p className="text-xs text-muted-foreground">Self/staff delivery</p>
+                    </div>
+                  </label>
+                </div>
+                <div className={`flex-1 border rounded-lg p-3 cursor-pointer transition-colors ${shippingType === 'courier' ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <RadioGroupItem value="courier" />
+                    <div>
+                      <p className="text-sm font-medium">Courier Partner</p>
+                      <p className="text-xs text-muted-foreground">Third-party courier</p>
+                    </div>
+                  </label>
+                </div>
+              </RadioGroup>
             </div>
+
+            {shippingType === "courier" && (
+              <>
+                <div>
+                  <Label className="text-xs">Courier Name *</Label>
+                  <Input placeholder="e.g. BlueDart, Delhivery" value={courierName} onChange={e => setCourierName(e.target.value)} className="h-9 mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">AWB / Tracking Number *</Label>
+                  <Input placeholder="Enter tracking number" value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} className="h-9 mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs">Tracking URL (optional)</Label>
+                  <Input placeholder="https://track.courier.com/..." value={trackingUrl} onChange={e => setTrackingUrl(e.target.value)} className="h-9 mt-1" />
+                </div>
+              </>
+            )}
+
             <div>
-              <Label className="text-xs">Tracking Number *</Label>
-              <Input placeholder="Enter tracking number" value={trackingNumber} onChange={e => setTrackingNumber(e.target.value)} className="h-9 mt-1" />
+              <Label className="text-xs">Notes (optional)</Label>
+              <Textarea placeholder="e.g. Expected delivery in 3 days" value={shippingNotes} onChange={e => setShippingNotes(e.target.value)} className="mt-1" rows={2} />
             </div>
-            <div>
-              <Label className="text-xs">Message to Customer (optional)</Label>
-              <Input placeholder="e.g. Expected delivery in 3 days" value={customerMessage} onChange={e => setCustomerMessage(e.target.value)} className="h-9 mt-1" />
-            </div>
-            <Button className="w-full" onClick={handleShipOrder}>
-              <Truck className="h-4 w-4 mr-2" /> Confirm Shipment
+
+            <Button className="w-full" onClick={handleShipOrder} disabled={updateStatus.isPending}>
+              <Truck className="h-4 w-4 mr-2" />
+              {updateStatus.isPending ? "Processing..." : "Confirm Shipment"}
             </Button>
           </div>
         </DialogContent>
