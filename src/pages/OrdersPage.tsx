@@ -15,7 +15,7 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [orderFlow] = useState(["placed", "paid", "accepted", "in_progress", "shipped", "delivered", "completed"]);
+  const [dateFrom, setDateFrom] = useState<string>();
   const [dateTo, setDateTo] = useState<string>();
   const [selected, setSelected] = useState<Order | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "edit">("view");
