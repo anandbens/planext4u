@@ -75,6 +75,7 @@ const socialItems: NavItem[] = [
 ];
 
 const systemItems: NavItem[] = [
+  { title: "Homepage CMS", url: "/admin/homepage-cms", icon: Palette, roles: ['admin'] },
   { title: "Push Notifications", url: "/admin/notifications", icon: Megaphone, roles: ['admin'] },
   { title: "Media Library", url: "/admin/media-library", icon: Image, roles: ['admin'] },
   { title: "File Uploads", url: "/admin/file-uploads", icon: Upload, roles: ['admin'] },

@@ -154,6 +154,7 @@ import ParentItemsPage from "./pages/admin/ParentItemsPage";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
 import AdminVendorOnboardingPage from "./pages/admin/AdminVendorOnboardingPage";
 import AdminSplashScreensPage from "./pages/admin/AdminSplashScreensPage";
+import AdminHomepageCMSPage from "./pages/admin/AdminHomepageCMSPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
