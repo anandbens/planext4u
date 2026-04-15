@@ -143,6 +143,41 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
   };
 
   const vendorApp = kycDocs[0];
+  const [kycAction, setKycAction] = useState<"approve" | "reject" | null>(null);
+  const [kycNotes, setKycNotes] = useState("");
+  const [kycSaving, setKycSaving] = useState(false);
+
+  const handleKycVerification = async (action: "approve" | "reject") => {
+    if (!vendorApp) return;
+    setKycSaving(true);
+    try {
+      const newStatus = action === "approve" ? "approved" : "rejected";
+      await supabase.from("vendor_applications" as any).update({
+        kyc_status: newStatus,
+        admin_notes: kycNotes || null,
+      } as any).eq("id", vendorApp.id);
+
+      // Also update kyc_documents if they exist
+      if (kycDocuments.length > 0) {
+        for (const doc of kycDocuments) {
+          await supabase.from("kyc_documents").update({
+            status: newStatus,
+            admin_notes: kycNotes || null,
+            rejection_reason: action === "reject" ? kycNotes : null,
+          }).eq("id", doc.id);
+        }
+      }
+
+      toast.success(`KYC ${action === "approve" ? "approved" : "rejected"} successfully`);
+      setKycAction(null);
+      setKycNotes("");
+      onRefresh?.();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update KYC status");
+    } finally {
+      setKycSaving(false);
+    }
+  };
 
   const downloadDoc = (url: string, name: string) => {
     if (!url) return;
