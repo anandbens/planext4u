@@ -431,7 +431,8 @@ export default function CustomerProductPage() {
             {/* Social Share */}
             <div className="mt-4">
               <Button variant="outline" size="sm" className="gap-2" onClick={async () => {
-                const shareUrl = `https://www.planext4u.net/app/product/${id}`;
+                const displayUrl = `https://www.planext4u.net/app/product/${id}`;
+                const ogUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=product&id=${id}`;
                 const text = `Check out ${product.title} - ₹${(product.price + (product.tax || 0)).toLocaleString()} on P4U!`;
                 if (navigator.share) {
                   try {
@@ -445,16 +446,14 @@ export default function CustomerProductPage() {
                         files = [new File([blob], `product.${ext}`, { type: blob.type })];
                       } catch {}
                     }
-                    const shareData: ShareData = { title: product.title, text: `${text}\n${shareUrl}` };
                     if (files.length && navigator.canShare?.({ files })) {
-                      shareData.files = files;
+                      await navigator.share({ title: product.title, text: `${text}\n${displayUrl}`, files });
                     } else {
-                      shareData.url = shareUrl;
+                      await navigator.share({ title: product.title, text, url: ogUrl });
                     }
-                    await navigator.share(shareData);
                   } catch {}
                 } else {
-                  navigator.clipboard.writeText(`${text}\n${shareUrl}`);
+                  navigator.clipboard.writeText(`${text}\n${displayUrl}`);
                   toast.success("Link copied to clipboard!");
                 }
               }}>
