@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { api, Vendor, PaginatedResponse } from "@/lib/api";
 import { VendorModal } from "@/components/admin/modals/VendorModal";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, Ban, CreditCard, UserX } from "lucide-react";
@@ -194,10 +195,12 @@ export default function VendorsPage() {
     }
     fetchData(); fetchStats();
   };
+  const [createVendorType, setCreateVendorType] = useState<"product" | "service">("product");
+
   const handleCreate = async (data: Partial<Vendor>) => {
     try {
-      await api.createVendor(data);
-      toast.success("Vendor created");
+      await api.createVendor(data, createVendorType);
+      toast.success(`${createVendorType === "service" ? "Service" : "Product"} vendor created`);
     } catch (err: any) {
       toast.error("Failed to create vendor: " + (err.message || "Unknown error"));
       return;
@@ -365,8 +368,13 @@ export default function VendorsPage() {
         onPageChange={setPage}
         onSearch={setSearch}
         onExport={handleExport}
-        onAdd={!isSpecialTab ? () => openModal(null, "create") : undefined}
-        addLabel="Add Vendor"
+        onAdd={!isSpecialTab ? () => { setCreateVendorType("product"); openModal(null, "create"); } : undefined}
+        addLabel="Add Product Vendor"
+        extraActions={!isSpecialTab ? (
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => { setCreateVendorType("service"); openModal(null, "create"); }}>
+            + Add Service Vendor
+          </Button>
+        ) : undefined}
         onRowClick={(v) => openModal(v, "view")}
         onFilterChange={(key, val) => { if (key === "status") { setStatusFilter(val); setPage(1); } if (key === "payment") { setPaymentFilter(val); setPage(1); } }}
         onDateRangeChange={(f, t) => { setDateFrom(f); setDateTo(t); setPage(1); }}
@@ -385,7 +393,7 @@ export default function VendorsPage() {
           { value: "rejected", label: "Rejected" },
         ] : undefined}
       />
-      <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} onRefresh={fetchData} />
+      <VendorModal vendor={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} vendorType={createVendorType} onRefresh={fetchData} />
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
