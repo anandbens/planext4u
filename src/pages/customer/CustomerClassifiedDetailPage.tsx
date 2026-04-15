@@ -75,10 +75,29 @@ export default function CustomerClassifiedDetailPage() {
 
   const handleShare = async () => {
     const shareUrl = `https://www.planext4u.net/app/classifieds/${id}`;
+    const text = `Check out: ${ad.title} - ₹${ad.price.toLocaleString()}`;
     if (navigator.share) {
-      await navigator.share({ title: ad.title, text: `Check out: ${ad.title} - ₹${ad.price.toLocaleString()}`, url: shareUrl });
+      try {
+        const imgs = Array.isArray(ad.images) ? ad.images as string[] : [];
+        let files: File[] = [];
+        if (imgs[0]) {
+          try {
+            const resp = await fetch(imgs[0]);
+            const blob = await resp.blob();
+            const ext = blob.type.includes('png') ? 'png' : 'jpg';
+            files = [new File([blob], `classified.${ext}`, { type: blob.type })];
+          } catch {}
+        }
+        const shareData: ShareData = { title: ad.title, text: `${text}\n${shareUrl}` };
+        if (files.length && navigator.canShare?.({ files })) {
+          shareData.files = files;
+        } else {
+          shareData.url = shareUrl;
+        }
+        await navigator.share(shareData);
+      } catch {}
     } else {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(`${text}\n${shareUrl}`);
       toast.success("Link copied to clipboard");
     }
   };

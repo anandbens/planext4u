@@ -243,11 +243,29 @@ export default function CustomerServiceDetailPage() {
             <button onClick={toggleServiceWishlist} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center">
               <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-destructive text-destructive' : ''}`} />
             </button>
-            <button onClick={() => {
+            <button onClick={async () => {
               const shareUrl = `https://www.planext4u.net/app/service/${id}`;
               const text = `Check out ${service.title} - ₹${service.price.toLocaleString()} on P4U!`;
               if (navigator.share) {
-                navigator.share({ title: service.title, text, url: shareUrl }).catch(() => {});
+                try {
+                  const imgSrc = service.image || imgUrl;
+                  let files: File[] = [];
+                  if (imgSrc) {
+                    try {
+                      const resp = await fetch(imgSrc);
+                      const blob = await resp.blob();
+                      const ext = blob.type.includes('png') ? 'png' : 'jpg';
+                      files = [new File([blob], `service.${ext}`, { type: blob.type })];
+                    } catch {}
+                  }
+                  const shareData: ShareData = { title: service.title, text: `${text}\n${shareUrl}` };
+                  if (files.length && navigator.canShare?.({ files })) {
+                    shareData.files = files;
+                  } else {
+                    shareData.url = shareUrl;
+                  }
+                  await navigator.share(shareData);
+                } catch {}
               } else {
                 navigator.clipboard.writeText(`${text}\n${shareUrl}`);
                 toast.success("Link copied to clipboard!");
