@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { logActivity } from "@/lib/auth";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, resetPhoneAuth, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
+import { checkCustomerPhoneUnique, checkCustomerEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 function TermsContent() {
@@ -108,6 +109,26 @@ export default function CustomerRegisterPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
+  const [fieldChecking, setFieldChecking] = useState<{ phone?: boolean; email?: boolean }>({});
+
+  const handlePhoneBlur = async () => {
+    const formatErr = validatePhoneFormat(form.mobile);
+    if (formatErr) { setFieldErrors(e => ({ ...e, phone: formatErr })); return; }
+    setFieldChecking(c => ({ ...c, phone: true }));
+    const uniqueErr = await checkCustomerPhoneUnique(form.mobile);
+    setFieldErrors(e => ({ ...e, phone: uniqueErr || undefined }));
+    setFieldChecking(c => ({ ...c, phone: false }));
+  };
+
+  const handleEmailBlur = async () => {
+    const formatErr = validateEmailFormat(form.email);
+    if (formatErr) { setFieldErrors(e => ({ ...e, email: formatErr })); return; }
+    setFieldChecking(c => ({ ...c, email: true }));
+    const uniqueErr = await checkCustomerEmailUnique(form.email);
+    setFieldErrors(e => ({ ...e, email: uniqueErr || undefined }));
+    setFieldChecking(c => ({ ...c, email: false }));
+  };
 
   useEffect(() => {
     api.getActiveOccupations().then(setOccupations);
