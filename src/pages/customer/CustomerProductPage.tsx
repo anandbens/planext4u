@@ -430,11 +430,29 @@ export default function CustomerProductPage() {
 
             {/* Social Share */}
             <div className="mt-4">
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+              <Button variant="outline" size="sm" className="gap-2" onClick={async () => {
                 const shareUrl = `https://www.planext4u.net/app/product/${id}`;
                 const text = `Check out ${product.title} - ₹${(product.price + (product.tax || 0)).toLocaleString()} on P4U!`;
                 if (navigator.share) {
-                  navigator.share({ title: product.title, text, url: shareUrl }).catch(() => {});
+                  try {
+                    const imgUrl = product.thumbnail_image || product.image;
+                    let files: File[] = [];
+                    if (imgUrl) {
+                      try {
+                        const resp = await fetch(imgUrl);
+                        const blob = await resp.blob();
+                        const ext = blob.type.includes('png') ? 'png' : 'jpg';
+                        files = [new File([blob], `product.${ext}`, { type: blob.type })];
+                      } catch {}
+                    }
+                    const shareData: ShareData = { title: product.title, text: `${text}\n${shareUrl}` };
+                    if (files.length && navigator.canShare?.({ files })) {
+                      shareData.files = files;
+                    } else {
+                      shareData.url = shareUrl;
+                    }
+                    await navigator.share(shareData);
+                  } catch {}
                 } else {
                   navigator.clipboard.writeText(`${text}\n${shareUrl}`);
                   toast.success("Link copied to clipboard!");
