@@ -103,6 +103,7 @@ export default function CustomerBrowsePage() {
   };
 
   const quickAdd = async (p: any) => {
+    if (isGuest) { setLoginPromptOpen(true); return; }
     const result = await api.addToCart(p, 1);
     if (result.blocked) { toast.error(result.message, { duration: 5000 }); return; }
     setCartCount(prev => prev + 1);
@@ -112,6 +113,7 @@ export default function CustomerBrowsePage() {
   const toggleWishlist = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isGuest) { setLoginPromptOpen(true); return; }
     let wl = [...wishlist];
     if (wl.includes(id)) {
       wl = wl.filter(w => w !== id);
@@ -127,6 +129,7 @@ export default function CustomerBrowsePage() {
   const buyNow = async (p: any, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isGuest) { setLoginPromptOpen(true); return; }
     const result = await api.addToCart(p, 1);
     if (result.blocked) { toast.error(result.message, { duration: 5000 }); return; }
     navigate('/app/cart');
