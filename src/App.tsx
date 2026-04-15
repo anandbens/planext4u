@@ -424,16 +424,16 @@ const AppRoutes = () => {
         <Route path="/admin/social" element={<ProtectedPage><AdminSocialDashboardPage /></ProtectedPage>} />
 
         {/* Property / Find Home routes */}
-        <Route path="/app/find-home" element={<CustomerPage><PropertyHomePage /></CustomerPage>} />
+        <Route path="/app/find-home" element={<GuestPage><PropertyHomePage /></GuestPage>} />
         <Route path="/app/find-home/post" element={<CustomerPage><PostPropertyPage /></CustomerPage>} />
-        <Route path="/app/find-home/emi" element={<CustomerPage><PropertyEMIPage /></CustomerPage>} />
+        <Route path="/app/find-home/emi" element={<GuestPage><PropertyEMIPage /></GuestPage>} />
         <Route path="/app/find-home/my-properties" element={<CustomerPage><MyPropertiesPage /></CustomerPage>} />
         <Route path="/app/find-home/saved" element={<CustomerPage><MyPropertiesPage /></CustomerPage>} />
         <Route path="/app/find-home/saved-searches" element={<CustomerPage><SavedSearchesPage /></CustomerPage>} />
         <Route path="/app/find-home/messages" element={<CustomerPage><PropertyMessagesPage /></CustomerPage>} />
         <Route path="/app/find-home/rent-tracker" element={<CustomerPage><RentTrackerPage /></CustomerPage>} />
-        <Route path="/app/find-home/value-estimator" element={<CustomerPage><PropertyValueEstimatorPage /></CustomerPage>} />
-        <Route path="/app/find-home/:id" element={<CustomerPage><PropertyDetailPage /></CustomerPage>} />
+        <Route path="/app/find-home/value-estimator" element={<GuestPage><PropertyValueEstimatorPage /></GuestPage>} />
+        <Route path="/app/find-home/:id" element={<GuestPage><PropertyDetailPage /></GuestPage>} />
 
         {/* Vendor-facing routes */}
         <Route path="/vendor/login" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorLoginPage />} />
