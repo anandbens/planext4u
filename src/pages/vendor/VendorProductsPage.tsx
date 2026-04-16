@@ -104,6 +104,106 @@ export default function VendorProductsPage() {
     },
   });
 
+  // Fetch product attributes and their values
+  const { data: attributes } = useQuery({
+    queryKey: ["productAttributes"],
+    queryFn: async () => {
+      const { data } = await supabase.from("product_attributes").select("*").eq("is_active", true).order("sort_order");
+      return (data || []) as any[];
+    },
+  });
+
+  const { data: attributeValues } = useQuery({
+    queryKey: ["productAttributeValues"],
+    queryFn: async () => {
+      const { data } = await supabase.from("product_attribute_values").select("*").order("sort_order");
+      return (data || []) as any[];
+    },
+  });
+
+  // Fetch variants when editing
+  const { data: dbVariants } = useQuery({
+    queryKey: ["productVariants", editingId],
+    queryFn: async () => {
+      if (!editingId) return [];
+      const { data } = await supabase.from("product_variants").select("*").eq("product_id", editingId).order("sort_order");
+      return (data || []) as any[];
+    },
+    enabled: !!editingId && modalOpen,
+  });
+
+  const isColorAttr = (name: string) => name.toLowerCase() === "color" || name.toLowerCase() === "colour";
+
+  const toggleAttribute = (attrId: string, attrName: string, value: string) => {
+    const existing = [...(form.product_attributes || [])];
+    const idx = existing.findIndex((a: any) => a.attribute_id === attrId);
+    if (idx >= 0) {
+      const vals = existing[idx].values as string[];
+      if (vals.includes(value)) {
+        existing[idx] = { ...existing[idx], values: vals.filter((v: string) => v !== value) };
+        if (existing[idx].values.length === 0) existing.splice(idx, 1);
+      } else {
+        existing[idx] = { ...existing[idx], values: [...vals, value] };
+      }
+    } else {
+      existing.push({ attribute_id: attrId, attribute_name: attrName, values: [value] });
+    }
+    setForm({ ...form, product_attributes: existing });
+  };
+
+  const getSelectedValues = (attrId: string): string[] => {
+    const attr = (form.product_attributes || []).find((a: any) => a.attribute_id === attrId);
+    return attr?.values || [];
+  };
+
+  const generateVariants = () => {
+    const selectedAttrs = (form.product_attributes || []).filter((a: any) => a.values?.length > 0);
+    if (selectedAttrs.length === 0) { toast.error("Select attribute values first"); return; }
+    const combos: Record<string, string>[] = [{}];
+    for (const attr of selectedAttrs) {
+      const newCombos: Record<string, string>[] = [];
+      for (const combo of combos) {
+        for (const val of attr.values) {
+          newCombos.push({ ...combo, [attr.attribute_name]: val });
+        }
+      }
+      combos.length = 0;
+      combos.push(...newCombos);
+    }
+    const price = parseFloat(form.price) || 0;
+    const stock = parseInt(form.stock) || 0;
+    const newVariants: ProductVariant[] = combos.map((combo, i) => {
+      const existing = variants.find(v => JSON.stringify(v.variant_attributes) === JSON.stringify(combo));
+      if (existing) return existing;
+      const label = Object.values(combo).join("-").replace(/\s+/g, "-").toUpperCase();
+      return {
+        id: `temp-${Date.now()}-${i}`,
+        product_id: editingId || "",
+        sku: form.sku ? `${form.sku}-${label}` : "",
+        price,
+        compare_at_price: price,
+        stock_quantity: stock,
+        stock_status: "in_stock",
+        variant_attributes: combo,
+        image_url: "",
+        is_active: true,
+        sort_order: i,
+      };
+    });
+    setVariants(newVariants);
+    toast.success(`${newVariants.length} variants generated`);
+  };
+
+  const updateVariant = (idx: number, field: string, value: any) => {
+    const updated = [...variants];
+    (updated[idx] as any)[field] = value;
+    setVariants(updated);
+  };
+
+  const removeVariant = (idx: number) => {
+    setVariants(variants.filter((_, i) => i !== idx));
+  };
+
   const uploadImage = async (file: File, target: "images" | "thumbnail" | "banner") => {
     setUploading(true);
     try {
