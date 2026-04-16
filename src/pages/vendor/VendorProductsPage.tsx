@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, MoreVertical, Edit, Trash2, Upload, X, Camera, Image as ImageIcon, Download } from "lucide-react";
+import { Plus, Search, MoreVertical, Edit, Trash2, Upload, X, Camera, Image as ImageIcon, Download, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,11 +12,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VendorLayout } from "@/components/vendor/VendorLayout";
 import { compressToWebP } from "@/lib/webp-compress";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ProductVariant } from "@/lib/api";
 
 const statusStyle: Record<string, string> = {
   active: "bg-success/10 text-success", inactive: "bg-destructive/10 text-destructive", draft: "bg-muted text-muted-foreground",
@@ -62,6 +65,8 @@ export default function VendorProductsPage() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<"images" | "thumbnail" | "banner">("images");
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [activeFormTab, setActiveFormTab] = useState("general");
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["vendorProducts", vendorId],
