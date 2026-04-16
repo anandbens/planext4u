@@ -282,18 +282,39 @@ export default function VendorProductsPage() {
         parent_item_id: formData.parent_item_id || null,
         parent_item_name: formData.parent_item_name || null,
       };
+      let productId = editingId;
       if (editingId) {
         const { error } = await supabase.from("products").update(payload).eq("id", editingId);
         if (error) throw error;
       } else {
-        const id = `PRD-${Date.now().toString(36).toUpperCase()}`;
-        const { error } = await supabase.from("products").insert({ ...payload, id });
+        productId = `PRD-${Date.now().toString(36).toUpperCase()}`;
+        const { error } = await supabase.from("products").insert({ ...payload, id: productId });
         if (error) throw error;
+      }
+      // Save variants for variable products
+      if (formData.product_type === "variable" && productId) {
+        await supabase.from("product_variants").delete().eq("product_id", productId);
+        for (const v of variants) {
+          await supabase.from("product_variants").insert({
+            product_id: productId,
+            sku: v.sku || null,
+            price: v.price,
+            compare_at_price: v.compare_at_price || 0,
+            stock_quantity: v.stock_quantity,
+            stock_status: v.stock_status,
+            variant_attributes: v.variant_attributes,
+            image_url: v.image_url || "",
+            is_active: v.is_active,
+            sort_order: v.sort_order || 0,
+          } as any);
+        }
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["vendorProducts"] });
-      setModalOpen(false); setEditingId(null); setForm(emptyForm);
+      qc.invalidateQueries({ queryKey: ["productVariants"] });
+      setModalOpen(false); setEditingId(null); setForm(emptyForm); setVariants([]);
+      setActiveFormTab("general");
       toast.success(editingId ? "Product updated" : "Product created for approval");
     },
     onError: (err: any) => toast.error(err.message || "Failed to save product"),
