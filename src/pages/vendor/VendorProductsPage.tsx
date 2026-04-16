@@ -348,8 +348,15 @@ export default function VendorProductsPage() {
       parent_item_id: p.parent_item_id || "", parent_item_name: p.parent_item_name || "",
       thumbnail_image: p.thumbnail_image || "", banner_image: p.banner_image || "",
     });
+    setVariants([]);
+    setActiveFormTab("general");
     setModalOpen(true);
   };
+
+  // Load variants when dbVariants change
+  useMemo(() => {
+    if (dbVariants && dbVariants.length > 0) setVariants(dbVariants);
+  }, [dbVariants]);
 
   const removeImage = (idx: number) => {
     const updated = form.images.filter((_, i) => i !== idx);
