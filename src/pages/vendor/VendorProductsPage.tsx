@@ -462,172 +462,324 @@ export default function VendorProductsPage() {
       </div>
 
       {/* Product Form Dialog */}
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <Dialog open={modalOpen} onOpenChange={(v) => { setModalOpen(v); if (!v) { setVariants([]); setActiveFormTab("general"); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Edit Product" : "Add New Product"}</DialogTitle>
             <DialogDescription>{editingId ? "Update your product details." : "New products will be submitted for admin approval."}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }} className="space-y-4">
-            <div><Label>Title *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
-            <div><Label>SKU</Label><Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="e.g. SKU-001" /></div>
-            
-            <div><Label>Product Type</Label>
-              <Select value={form.product_type} onValueChange={(v) => setForm({ ...form, product_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="simple">Simple</SelectItem>
-                  <SelectItem value="variable">Variable (has variants)</SelectItem>
-                  <SelectItem value="service">Service</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(form); }}>
+            <Tabs value={activeFormTab} onValueChange={setActiveFormTab} className="mt-2">
+              <TabsList className="w-full">
+                <TabsTrigger value="general" className="flex-1">General</TabsTrigger>
+                <TabsTrigger value="pricing" className="flex-1">Pricing</TabsTrigger>
+                <TabsTrigger value="attributes" className="flex-1">Attributes</TabsTrigger>
+                {form.product_type === "variable" && <TabsTrigger value="variants" className="flex-1">Variants ({variants.length})</TabsTrigger>}
+              </TabsList>
 
-            {/* Category & Subcategory */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div><Label>Category</Label>
-                <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v, subcategory_id: "" })}>
-                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                  <SelectContent className="max-h-60 overflow-y-auto">{categories?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div><Label>Subcategory</Label>
-                <Select value={form.subcategory_id} onValueChange={(v) => setForm({ ...form, subcategory_id: v })} disabled={!form.category_id}>
-                  <SelectTrigger><SelectValue placeholder={form.category_id ? "Select subcategory" : "Select category first"} /></SelectTrigger>
-                  <SelectContent className="max-h-60 overflow-y-auto">{subcategories?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Parent Item Autocomplete */}
-            <div>
-              <Label>Parent Item (optional)</Label>
-              {form.parent_item_id ? (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 mt-1">
-                  <span className="text-sm flex-1">{form.parent_item_name || form.parent_item_id}</span>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, parent_item_id: "", parent_item_name: "" })}><X className="h-3 w-3" /></Button>
+              {/* GENERAL TAB */}
+              <TabsContent value="general" className="space-y-4 mt-3">
+                <div><Label>Title *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>SKU</Label><Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="e.g. SKU-001" /></div>
+                  <div><Label>Product Type</Label>
+                    <Select value={form.product_type} onValueChange={(v) => setForm({ ...form, product_type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="simple">Simple</SelectItem>
+                        <SelectItem value="variable">Variable (has variants)</SelectItem>
+                        <SelectItem value="service">Service</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              ) : (
-                <div className="relative mt-1">
-                  <Input value={parentSearch} onChange={(e) => setParentSearch(e.target.value)} placeholder="Type to search parent items..." />
-                  {parentSearch && parentItems && parentItems.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                      {parentItems.map((pi: any) => (
-                        <button key={pi.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-accent/50"
-                          onClick={() => { setForm({ ...form, parent_item_id: pi.id, parent_item_name: `${pi.id} - ${pi.name}` }); setParentSearch(""); }}>
-                          {pi.id} - {pi.name}
+
+                {/* Category & Subcategory */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Category</Label>
+                    <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v, subcategory_id: "" })}>
+                      <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                      <SelectContent className="max-h-60 overflow-y-auto">{categories?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Subcategory</Label>
+                    <Select value={form.subcategory_id} onValueChange={(v) => setForm({ ...form, subcategory_id: v })} disabled={!form.category_id}>
+                      <SelectTrigger><SelectValue placeholder={form.category_id ? "Select subcategory" : "Select category first"} /></SelectTrigger>
+                      <SelectContent className="max-h-60 overflow-y-auto">{subcategories?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Parent Item */}
+                <div>
+                  <Label>Parent Item (optional)</Label>
+                  {form.parent_item_id ? (
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-secondary/50 mt-1">
+                      <span className="text-sm flex-1">{form.parent_item_name || form.parent_item_id}</span>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, parent_item_id: "", parent_item_name: "" })}><X className="h-3 w-3" /></Button>
+                    </div>
+                  ) : (
+                    <div className="relative mt-1">
+                      <Input value={parentSearch} onChange={(e) => setParentSearch(e.target.value)} placeholder="Type to search parent items..." />
+                      {parentSearch && parentItems && parentItems.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                          {parentItems.map((pi: any) => (
+                            <button key={pi.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-accent/50"
+                              onClick={() => { setForm({ ...form, parent_item_id: pi.id, parent_item_name: `${pi.id} - ${pi.name}` }); setParentSearch(""); }}>
+                              {pi.id} - {pi.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Images */}
+                <div>
+                  <Label>Product Images</Label>
+                  <div className="flex gap-2 mt-1">
+                    <Button type="button" variant="outline" size="sm" onClick={() => triggerUpload("images")} disabled={uploading} className="gap-1">
+                      <Camera className="h-3 w-3" /> {uploading ? "Uploading..." : "Upload Image"}
+                    </Button>
+                  </div>
+                  {form.images.length > 0 && (
+                    <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
+                      {form.images.map((img, i) => (
+                        <div key={i} className="relative h-20 w-20 shrink-0 rounded-lg overflow-hidden bg-secondary/30">
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                          <button type="button" className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-card/80 flex items-center justify-center" onClick={() => removeImage(i)}><X className="h-3 w-3" /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Thumbnail & Banner */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Thumbnail</Label>
+                    {form.thumbnail_image ? (
+                      <div className="relative h-20 w-20 rounded-lg overflow-hidden bg-secondary/30 mt-1">
+                        <img src={form.thumbnail_image} alt="" className="w-full h-full object-cover" />
+                        <button type="button" className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-card/80 flex items-center justify-center" onClick={() => setForm({ ...form, thumbnail_image: "" })}><X className="h-3 w-3" /></button>
+                      </div>
+                    ) : (
+                      <Button type="button" variant="outline" size="sm" className="mt-1 gap-1" onClick={() => triggerUpload("thumbnail")} disabled={uploading}>
+                        <ImageIcon className="h-3 w-3" /> Upload
+                      </Button>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Banner</Label>
+                    {form.banner_image ? (
+                      <div className="relative h-20 w-32 rounded-lg overflow-hidden bg-secondary/30 mt-1">
+                        <img src={form.banner_image} alt="" className="w-full h-full object-cover" />
+                        <button type="button" className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-card/80 flex items-center justify-center" onClick={() => setForm({ ...form, banner_image: "" })}><X className="h-3 w-3" /></button>
+                      </div>
+                    ) : (
+                      <Button type="button" variant="outline" size="sm" className="mt-1 gap-1" onClick={() => triggerUpload("banner")} disabled={uploading}>
+                        <ImageIcon className="h-3 w-3" /> Upload
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div><Label>Short Description *</Label><Input value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} placeholder="Brief one-liner" /></div>
+                <div><Label>Description *</Label><RichTextEditor value={form.long_description || form.description} onChange={(v) => setForm({ ...form, long_description: v, description: v })} placeholder="Detailed product description..." minHeight="120px" /></div>
+
+                {/* Emoji Picker */}
+                <div>
+                  <Label>Emoji Icon</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="h-10 w-10 rounded-lg border border-input flex items-center justify-center text-xl hover:bg-accent/50">
+                      {form.emoji}
+                    </button>
+                    <span className="text-xs text-muted-foreground">Click to change</span>
+                  </div>
+                  {showEmojiPicker && (
+                    <div className="grid grid-cols-10 gap-1 mt-2 p-2 border border-border rounded-lg bg-card max-h-32 overflow-y-auto">
+                      {EMOJI_LIST.map(em => (
+                        <button key={em} type="button" className="h-8 w-8 flex items-center justify-center text-lg hover:bg-accent/50 rounded"
+                          onClick={() => { setForm({ ...form, emoji: em }); setShowEmojiPicker(false); }}>
+                          {em}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-            
-            {/* Image Upload from Camera/Browse */}
-            <div>
-              <Label>Product Images</Label>
-              <div className="flex gap-2 mt-1">
-                <Button type="button" variant="outline" size="sm" onClick={() => triggerUpload("images")} disabled={uploading} className="gap-1">
-                  <Camera className="h-3 w-3" /> {uploading ? "Uploading..." : "Upload Image"}
-                </Button>
-              </div>
-              {form.images.length > 0 && (
-                <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
-                  {form.images.map((img, i) => (
-                    <div key={i} className="relative h-20 w-20 shrink-0 rounded-lg overflow-hidden bg-secondary/30">
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                      <button type="button" className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-card/80 flex items-center justify-center" onClick={() => removeImage(i)}><X className="h-3 w-3" /></button>
+
+                <div>
+                  <Label>YouTube Video URL</Label>
+                  <Input value={form.youtube_video_url} onChange={(e) => setForm({ ...form, youtube_video_url: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
+                </div>
+                
+                <div><Label>Status</Label>
+                  <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+
+              {/* PRICING TAB */}
+              <TabsContent value="pricing" className="space-y-4 mt-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Price (₹) *</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required /></div>
+                  <div><Label>Tax (₹)</Label><Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: e.target.value })} /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Discount</Label><Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} /></div>
+                  <div><Label>Discount Type</Label>
+                    <Select value={form.discount_type} onValueChange={(v) => setForm({ ...form, discount_type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent><SelectItem value="fixed">Fixed (₹)</SelectItem><SelectItem value="percentage">Percentage (%)</SelectItem></SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {form.product_type !== "variable" && (
+                  <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} /></div>
+                )}
+                {form.product_type === "variable" && (
+                  <p className="text-xs text-muted-foreground p-3 bg-secondary/20 rounded-lg">
+                    💡 For variable products, price and stock are managed per variant in the Variants tab. The base price above is used as default for new variants.
+                  </p>
+                )}
+              </TabsContent>
+
+              {/* ATTRIBUTES TAB */}
+              <TabsContent value="attributes" className="space-y-4 mt-3">
+                {(attributes || []).length > 0 ? (
+                  <>
+                    <p className="text-xs text-muted-foreground">Select attribute values for this product. {form.product_type === "variable" ? "Variants will be generated from selected combinations." : ""}</p>
+                    {(attributes || []).map((attr: any) => {
+                      const vals = (attributeValues || []).filter((v: any) => v.attribute_id === attr.id);
+                      const selected = getSelectedValues(attr.id);
+                      const isColor = isColorAttr(attr.name);
+
+                      if (attr.attribute_type === "text") {
+                        const textVal = selected[0] || "";
+                        return (
+                          <div key={attr.id}>
+                            <Label className="text-xs text-muted-foreground">{attr.name}</Label>
+                            <Input value={textVal} onChange={(e) => {
+                              const existing = [...(form.product_attributes || [])];
+                              const idx = existing.findIndex((a: any) => a.attribute_id === attr.id);
+                              if (idx >= 0) existing[idx] = { ...existing[idx], values: [e.target.value] };
+                              else existing.push({ attribute_id: attr.id, attribute_name: attr.name, values: [e.target.value] });
+                              setForm({ ...form, product_attributes: existing });
+                            }} className="mt-1" placeholder={`Enter ${attr.name}`} />
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={attr.id}>
+                          <Label className="text-xs text-muted-foreground">{attr.name}</Label>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {vals.map((v: any) => {
+                              const isSelected = selected.includes(v.value);
+                              if (isColor && v.hex_color) {
+                                return (
+                                  <button key={v.id} type="button" onClick={() => toggleAttribute(attr.id, attr.name, v.value)}
+                                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs transition-all ${isSelected ? 'border-primary bg-primary/10 ring-2 ring-primary/30' : 'border-border hover:border-primary/30'}`}
+                                    title={v.value}>
+                                    <span className="h-5 w-5 rounded-full border-2 shrink-0" style={{
+                                      backgroundColor: v.hex_color,
+                                      borderColor: isSelected ? 'hsl(var(--primary))' : v.hex_color === '#FFFFFF' ? '#ddd' : v.hex_color
+                                    }} />
+                                    <span className="font-medium">{v.value}</span>
+                                  </button>
+                                );
+                              }
+                              return (
+                                <button key={v.id} type="button" onClick={() => toggleAttribute(attr.id, attr.name, v.value)}
+                                  className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/30'}`}>
+                                  {v.value}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {form.product_type === "variable" && (
+                      <Button type="button" onClick={generateVariants} className="gap-1">
+                        <Layers className="h-4 w-4" /> Generate Variants from Selection
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground p-4 text-center">No attributes configured yet. Contact admin to add product attributes.</p>
+                )}
+              </TabsContent>
+
+              {/* VARIANTS TAB */}
+              {form.product_type === "variable" && (
+                <TabsContent value="variants" className="space-y-3 mt-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">{variants.length} variant(s)</p>
+                    <Button type="button" size="sm" variant="outline" onClick={generateVariants} className="gap-1">
+                      <Plus className="h-3 w-3" /> Regenerate
+                    </Button>
+                  </div>
+                  {variants.length === 0 ? (
+                    <div className="p-8 text-center border border-dashed rounded-lg">
+                      <Layers className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">No variants yet. Go to Attributes tab, select values, then generate.</p>
                     </div>
-                  ))}
-                </div>
+                  ) : (
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                      {variants.map((v, i) => {
+                        const label = Object.entries(v.variant_attributes).map(([k, val]) => `${k}: ${val}`).join(" • ");
+                        const colorVal = v.variant_attributes["Color"] || v.variant_attributes["Colour"];
+                        const hexColor = colorVal ? (attributeValues || []).find((av: any) => av.value === colorVal)?.hex_color : null;
+                        return (
+                          <div key={v.id} className="p-3 border border-border/50 rounded-lg space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {hexColor && <span className="h-4 w-4 rounded-full border" style={{ backgroundColor: hexColor }} />}
+                                <span className="text-xs font-semibold">{label}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Switch checked={v.is_active} onCheckedChange={(checked) => updateVariant(i, "is_active", checked)} />
+                                <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeVariant(i)}>
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-4 gap-2">
+                              <div>
+                                <Label className="text-[10px] text-muted-foreground">SKU</Label>
+                                <Input value={v.sku || ""} onChange={(e) => updateVariant(i, "sku", e.target.value)} className="h-7 text-xs" />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] text-muted-foreground">Price (₹)</Label>
+                                <Input type="number" value={v.price} onChange={(e) => updateVariant(i, "price", Number(e.target.value))} className="h-7 text-xs" />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] text-muted-foreground">Compare Price</Label>
+                                <Input type="number" value={v.compare_at_price || ""} onChange={(e) => updateVariant(i, "compare_at_price", Number(e.target.value))} className="h-7 text-xs" />
+                              </div>
+                              <div>
+                                <Label className="text-[10px] text-muted-foreground">Stock</Label>
+                                <Input type="number" value={v.stock_quantity} onChange={(e) => updateVariant(i, "stock_quantity", Number(e.target.value))} className="h-7 text-xs" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </TabsContent>
               )}
-            </div>
+            </Tabs>
 
-            {/* Thumbnail & Banner */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Thumbnail</Label>
-                {form.thumbnail_image ? (
-                  <div className="relative h-20 w-20 rounded-lg overflow-hidden bg-secondary/30 mt-1">
-                    <img src={form.thumbnail_image} alt="" className="w-full h-full object-cover" />
-                    <button type="button" className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-card/80 flex items-center justify-center" onClick={() => setForm({ ...form, thumbnail_image: "" })}><X className="h-3 w-3" /></button>
-                  </div>
-                ) : (
-                  <Button type="button" variant="outline" size="sm" className="mt-1 gap-1" onClick={() => triggerUpload("thumbnail")} disabled={uploading}>
-                    <ImageIcon className="h-3 w-3" /> Upload
-                  </Button>
-                )}
-              </div>
-              <div>
-                <Label>Banner</Label>
-                {form.banner_image ? (
-                  <div className="relative h-20 w-32 rounded-lg overflow-hidden bg-secondary/30 mt-1">
-                    <img src={form.banner_image} alt="" className="w-full h-full object-cover" />
-                    <button type="button" className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-card/80 flex items-center justify-center" onClick={() => setForm({ ...form, banner_image: "" })}><X className="h-3 w-3" /></button>
-                  </div>
-                ) : (
-                  <Button type="button" variant="outline" size="sm" className="mt-1 gap-1" onClick={() => triggerUpload("banner")} disabled={uploading}>
-                    <ImageIcon className="h-3 w-3" /> Upload
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Price (₹) *</Label><Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} required /></div>
-              <div><Label>Tax (₹)</Label><Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: e.target.value })} /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Discount</Label><Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} /></div>
-              <div><Label>Discount Type</Label>
-                <Select value={form.discount_type} onValueChange={(v) => setForm({ ...form, discount_type: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="fixed">Fixed (₹)</SelectItem><SelectItem value="percentage">Percentage (%)</SelectItem></SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} /></div>
-            
-            <div><Label>Description</Label><RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Product description..." minHeight="120px" /></div>
-
-            {/* Emoji Picker */}
-            <div>
-              <Label>Emoji Icon</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="h-10 w-10 rounded-lg border border-input flex items-center justify-center text-xl hover:bg-accent/50">
-                  {form.emoji}
-                </button>
-                <span className="text-xs text-muted-foreground">Click to change</span>
-              </div>
-              {showEmojiPicker && (
-                <div className="grid grid-cols-10 gap-1 mt-2 p-2 border border-border rounded-lg bg-card max-h-32 overflow-y-auto">
-                  {EMOJI_LIST.map(em => (
-                    <button key={em} type="button" className="h-8 w-8 flex items-center justify-center text-lg hover:bg-accent/50 rounded"
-                      onClick={() => { setForm({ ...form, emoji: em }); setShowEmojiPicker(false); }}>
-                      {em}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <Label>YouTube Video URL</Label>
-              <Input value={form.youtube_video_url} onChange={(e) => setForm({ ...form, youtube_video_url: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
-            </div>
-            
-            <div><Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" className="w-full" disabled={saveMutation.isPending}>
+            <Button type="submit" className="w-full mt-4" disabled={saveMutation.isPending}>
               {saveMutation.isPending ? "Saving..." : editingId ? "Update Product" : "Submit for Approval"}
             </Button>
           </form>
