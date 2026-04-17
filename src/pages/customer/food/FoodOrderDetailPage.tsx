@@ -289,6 +289,15 @@ export default function FoodOrderDetailPage() {
             <div className="flex justify-between text-sm text-success"><span>Discount</span><span>-₹{order.discount}</span></div>
           )}
           <div className="flex justify-between text-base font-bold mt-1"><span>Total</span><span>₹{order.total}</span></div>
+          <div className="flex justify-between text-xs text-muted-foreground mt-2">
+            <span className="flex items-center gap-1"><Receipt className="h-3 w-3" /> Paid via {(order.payment_method || '').toUpperCase()}</span>
+            <span>{order.payment_status === 'paid' ? '✓ Paid' : order.payment_status === 'refunded' ? 'Refunded' : 'Pending'}</span>
+          </div>
+          {(order.status === 'delivered' || order.status === 'completed') && (
+            <Button variant="outline" size="sm" className="w-full mt-2 gap-1" onClick={handleDownloadInvoice}>
+              <FileText className="h-3 w-3" /> Download Invoice
+            </Button>
+          )}
         </Card>
       </div>
 
