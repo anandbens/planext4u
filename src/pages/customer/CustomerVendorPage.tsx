@@ -218,15 +218,19 @@ export default function CustomerVendorPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {filteredProducts.map((p: any) => {
                 const discountPct = p.discount ? Math.round((p.discount / p.price) * 100) : 0;
+                const isOutOfStock = p.stock !== undefined && p.stock !== null && p.stock <= 0;
                 return (
                   <Link to={`/app/product/${p.id}`} key={p.id}>
                     <Card className="overflow-hidden hover:shadow-lg transition-all group">
                       <div className="h-36 md:h-44 bg-secondary/20 relative overflow-hidden">
-                        {discountPct > 0 && (
+                        {isOutOfStock && (
+                          <Badge variant="destructive" className="absolute top-2 left-2 z-10 text-[9px]">Out of Stock</Badge>
+                        )}
+                        {!isOutOfStock && discountPct > 0 && (
                           <Badge className="absolute top-2 left-2 z-10 bg-success text-success-foreground text-[9px]">New Arrival</Badge>
                         )}
                         {p.image ? (
-                          <img src={p.image} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <img src={p.image} alt={p.title} className={`w-full h-full object-cover group-hover:scale-105 transition-transform ${isOutOfStock ? 'opacity-50' : ''}`} />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-4xl">{p.emoji}</div>
                         )}
