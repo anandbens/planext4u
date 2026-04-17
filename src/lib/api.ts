@@ -693,8 +693,16 @@ export const api = {
       if (shippingData.tracking_url) updatePayload.tracking_url = shippingData.tracking_url;
       if (shippingData.shipping_notes) updatePayload.shipping_notes = shippingData.shipping_notes;
     }
-    const { error } = await supabase.from('orders').update(updatePayload).eq('id', id);
+    // Use .select() so we can detect when an RLS policy silently blocks the update.
+    const { data: updated, error } = await supabase
+      .from('orders')
+      .update(updatePayload)
+      .eq('id', id)
+      .select('id, status, shipping_type, courier_name, tracking_number, tracking_url, shipping_notes');
     if (error) throw error;
+    if (!updated || updated.length === 0) {
+      throw new Error("Order could not be updated. You may not have permission to modify this order.");
+    }
 
     if (status === 'completed') {
       const { data: order } = await supabase.from('orders').select('*').eq('id', id).single();
@@ -1520,6 +1528,37 @@ export const api = {
     // For variant products, use a composite key (productId + variantId) to allow different variants in cart
     const cartKey = variantId ? `${product.id}__${variantId}` : product.id;
     const existing = cart.find((i: CartItem) => i.id === cartKey);
+    const desiredQty = (existing?.qty || 0) + qty;
+
+    // Live stock cross-check before adding/incrementing.
+    let availableStock: number | null = null;
+    try {
+      if (variantId) {
+        const { data: v } = await supabase.from('product_variants').select('stock_quantity').eq('id', variantId).maybeSingle();
+        availableStock = (v as any)?.stock_quantity ?? 0;
+      } else {
+        const { data: p } = await supabase.from('products').select('stock').eq('id', product.id).maybeSingle();
+        availableStock = (p as any)?.stock ?? null;
+      }
+    } catch { availableStock = null; }
+
+    if (availableStock !== null && availableStock <= 0) {
+      return {
+        success: false,
+        blocked: true,
+        message: `${product.title} is out of stock.`,
+        cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
+      };
+    }
+    if (availableStock !== null && desiredQty > availableStock) {
+      return {
+        success: false,
+        blocked: true,
+        message: `Only ${availableStock} unit(s) of ${product.title} available.`,
+        cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
+      };
+    }
+
     if (existing) {
       existing.qty += qty;
     } else {
