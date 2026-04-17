@@ -1,8 +1,10 @@
 import { useEffect, useState, ReactNode, useCallback, useRef } from "react";
+import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContext } from "@/lib/auth-context";
 import { logActivity } from "@/lib/activity-log";
 import { initPushNotifications, linkPushTokenToUser } from "@/lib/push-notifications";
+import { persistentStore } from "@/lib/storage-adapter";
 import type { AuthUser, CustomerUser, VendorUser, UserRole, AppRole } from "@/lib/auth-types";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -27,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: supabaseUid, name, email, role: role as UserRole, portal: 'admin', supabase_uid: supabaseUid,
       };
       setUser(authUser);
-      localStorage.setItem("admin_user", JSON.stringify(authUser));
+      persistentStore.set("admin_user", JSON.stringify(authUser));
     } else if (role === 'vendor') {
       const vendorId = roleRecord.vendor_id || 'VND-001';
       const { data: vendor } = await supabase.from("vendors").select("id, name, business_name, email, status").eq("id", vendorId).single();
@@ -45,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         just_logged_in: isFreshLogin && !roleRecord.password_set,
       };
       setVendorUser(vu);
-      localStorage.setItem("vendor_user", JSON.stringify(vu));
+      persistentStore.set("vendor_user", JSON.stringify(vu));
     } else if (role === 'customer') {
       const customerId = roleRecord.customer_id || 'USR-001';
       const { data: customer } = await supabase.from("customers").select("id, name, email, mobile").eq("id", customerId).single();
@@ -56,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         just_logged_in: isFreshLogin && !roleRecord.password_set,
       };
       setCustomerUser(cu);
-      localStorage.setItem("customer_user", JSON.stringify(cu));
+      persistentStore.set("customer_user", JSON.stringify(cu));
     }
 
     // Log login event for fresh logins
@@ -109,15 +111,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [processRole]);
 
   useEffect(() => {
-    // Restore from localStorage immediately to prevent flash redirects
-    try {
-      const savedUser = localStorage.getItem("admin_user");
-      const savedCustomer = localStorage.getItem("customer_user");
-      const savedVendor = localStorage.getItem("vendor_user");
-      if (savedUser) setUser(JSON.parse(savedUser));
-      if (savedCustomer) setCustomerUser(JSON.parse(savedCustomer));
-      if (savedVendor) setVendorUser(JSON.parse(savedVendor));
-    } catch { /* ignore */ }
+    let cancelled = false;
+    const isNative = Capacitor.isNativePlatform();
+
+    // Restore cached profiles immediately (sync localStorage) to prevent flash redirects.
+    // On native, also re-hydrate from Capacitor Preferences (survives app kill even when WebView storage is purged).
+    const hydrate = async () => {
+      try {
+        const [savedUser, savedCustomer, savedVendor] = await Promise.all([
+          persistentStore.get("admin_user"),
+          persistentStore.get("customer_user"),
+          persistentStore.get("vendor_user"),
+        ]);
+        if (cancelled) return;
+        if (savedUser) setUser(JSON.parse(savedUser));
+        if (savedCustomer) setCustomerUser(JSON.parse(savedCustomer));
+        if (savedVendor) setVendorUser(JSON.parse(savedVendor));
+      } catch { /* ignore */ }
+    };
+    hydrate();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user) {
@@ -126,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const isFreshLogin = isFreshLoginRef.current;
         isFreshLoginRef.current = false;
         setTimeout(async () => {
-          const result = await loadUserRole(id, email || '', name, isFreshLogin);
+          await loadUserRole(id, email || '', name, isFreshLogin);
           setIsLoading(false);
           initPushNotifications(id);
           linkPushTokenToUser(id);
@@ -139,17 +151,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setCustomerUser(null);
         setVendorUser(null);
-        localStorage.removeItem("admin_user");
-        localStorage.removeItem("customer_user");
-        localStorage.removeItem("vendor_user");
+        persistentStore.remove("admin_user");
+        persistentStore.remove("customer_user");
+        persistentStore.remove("vendor_user");
         setIsLoading(false);
       } else if (event === 'INITIAL_SESSION' && !session) {
-        // No session at all - keep localStorage state, just stop loading
+        // No session at all - keep cached profile state, just stop loading
         setIsLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Native safety net: Capacitor Preferences storage is async, so the session
+    // may not be ready when INITIAL_SESSION first fires. Re-check after the
+    // adapter has had time to read the persisted token.
+    if (isNative) {
+      setTimeout(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) return;
+          // If we already have a hydrated profile, no further action needed —
+          // onAuthStateChange will have populated state. This is just a guard
+          // to force a re-emit if nothing fired.
+          if (!user && !customerUser && !vendorUser) {
+            const { id, email, user_metadata } = session.user;
+            const name = user_metadata?.name || email?.split('@')[0] || '';
+            loadUserRole(id, email || '', name, false).finally(() => setIsLoading(false));
+          }
+        });
+      }, 800);
+    }
+
+    return () => { cancelled = true; subscription.unsubscribe(); };
   }, [loadUserRole]);
 
   const login = async (email: string, password: string) => {
@@ -210,19 +241,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem("admin_user");
+    persistentStore.remove("admin_user");
   };
 
   const customerLogout = async () => {
     await supabase.auth.signOut();
     setCustomerUser(null);
-    localStorage.removeItem("customer_user");
+    persistentStore.remove("customer_user");
   };
 
   const vendorLogout = async () => {
     await supabase.auth.signOut();
     setVendorUser(null);
-    localStorage.removeItem("vendor_user");
+    persistentStore.remove("vendor_user");
   };
 
   const hasAccess = (allowedRoles: UserRole[]) => {
