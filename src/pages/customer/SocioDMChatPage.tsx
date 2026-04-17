@@ -13,6 +13,13 @@ import CallScreen from "@/components/social/CallScreen";
 import { useQuery } from "@tanstack/react-query";
 import { compressToWebP } from "@/lib/webp-compress";
 
+interface Reaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+}
+
 interface Message {
   id: string;
   conversation_id: string;
@@ -25,6 +32,7 @@ interface Message {
 }
 
 const EMOJI_QUICK = ['😀', '❤️', '😂', '👍', '🔥', '😍', '🎉', '💯'];
+const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
 
 // Compress audio blob using OfflineAudioContext (re-encode to lower bitrate WebM/Opus)
 async function compressAudioBlob(blob: Blob): Promise<Blob> {
