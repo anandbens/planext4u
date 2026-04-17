@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Phone, Clock } from "lucide-react";
+import { LiveTrackingMap } from "@/components/food/LiveTrackingMap";
 
 const STATUS_STEPS = ['placed', 'accepted', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'];
 const STATUS_LABEL: Record<string, string> = {
@@ -18,6 +19,8 @@ export default function FoodOrderDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [order, setOrder] = useState<FoodOrder | null>(null);
+  const [restaurantCoords, setRestaurantCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [riderId, setRiderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,11 +28,19 @@ export default function FoodOrderDetailPage() {
     const load = async () => {
       const { data } = await supabase.from('food_orders').select('*').eq('id', id).maybeSingle();
       setOrder(data as FoodOrder); setLoading(false);
+      if (data) {
+        const { data: r } = await supabase.from('restaurants').select('latitude,longitude').eq('id', (data as any).restaurant_id).maybeSingle();
+        if (r?.latitude && r?.longitude) setRestaurantCoords({ lat: Number(r.latitude), lng: Number(r.longitude) });
+        const { data: ra } = await supabase.from('rider_assignments').select('rider_id').eq('order_id', id).eq('status', 'accepted').maybeSingle();
+        if (ra?.rider_id) setRiderId(ra.rider_id);
+      }
     };
     load();
     const ch = supabase.channel(`food-order-${id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'food_orders', filter: `id=eq.${id}` },
         (payload) => setOrder(payload.new as FoodOrder))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rider_assignments', filter: `order_id=eq.${id}` },
+        (payload) => { const r: any = payload.new; if (r?.rider_id && r?.status === 'accepted') setRiderId(r.rider_id); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [id]);
@@ -80,6 +91,20 @@ export default function FoodOrderDetailPage() {
                 <p className="text-2xl font-bold tracking-widest mt-1">{order.handover_otp}</p>
               </div>
             )}
+          </Card>
+        )}
+
+        {order.status !== 'delivered' && order.status !== 'cancelled' && order.status !== 'rejected' &&
+          (order.delivery_lat && order.delivery_lng) && (
+          <Card className="p-3">
+            <h3 className="font-semibold text-sm mb-2">Live tracking</h3>
+            <LiveTrackingMap
+              orderId={order.id}
+              riderId={riderId}
+              pickup={restaurantCoords}
+              drop={{ lat: Number(order.delivery_lat), lng: Number(order.delivery_lng) }}
+              height={260}
+            />
           </Card>
         )}
 

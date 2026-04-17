@@ -8,6 +8,7 @@ import { foodApi, Rider } from "@/lib/food-api";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LogOut, MapPin, Phone, Bike, Star } from "lucide-react";
+import { LiveTrackingMap } from "@/components/food/LiveTrackingMap";
 
 export default function RiderDashboardPage() {
   const navigate = useNavigate();
@@ -121,24 +122,34 @@ export default function RiderDashboardPage() {
                 </div>
               )}
               {a.status === 'accepted' && (
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => window.open(`tel:${o.customer_phone || ''}`)}><Phone className="h-3 w-3 mr-1" />Call</Button>
-                  <Button size="sm" variant="outline" onClick={() => {
-                    if (o.delivery_lat && o.delivery_lng) window.open(`https://maps.google.com/?q=${o.delivery_lat},${o.delivery_lng}`);
-                  }}>Navigate</Button>
-                  <Button size="sm" className="ml-auto" onClick={async () => {
-                    if (o.status === 'ready' || o.status === 'assigned') {
-                      await foodApi.updateOrderStatus(o.id, 'picked_up'); toast.success("Picked up"); load();
-                    } else if (o.status === 'picked_up' || o.status === 'on_the_way') {
-                      const otp = prompt("Enter handover OTP from customer:");
-                      if (otp && otp === o.handover_otp) {
-                        await foodApi.updateOrderStatus(o.id, 'delivered'); toast.success("Delivered ✓"); load();
-                      } else if (otp) toast.error("OTP doesn't match");
-                    }
-                  }}>
-                    {o.status === 'picked_up' || o.status === 'on_the_way' ? 'Mark Delivered' : 'Mark Picked Up'}
-                  </Button>
-                </div>
+                <>
+                  {(o.delivery_lat && o.delivery_lng) && (
+                    <LiveTrackingMap
+                      orderId={o.id}
+                      riderId={rider.id}
+                      drop={{ lat: Number(o.delivery_lat), lng: Number(o.delivery_lng) }}
+                      height={200}
+                    />
+                  )}
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => window.open(`tel:${o.customer_phone || ''}`)}><Phone className="h-3 w-3 mr-1" />Call</Button>
+                    <Button size="sm" variant="outline" onClick={() => {
+                      if (o.delivery_lat && o.delivery_lng) window.open(`https://www.google.com/maps/dir/?api=1&destination=${o.delivery_lat},${o.delivery_lng}&travelmode=driving`);
+                    }}>Navigate</Button>
+                    <Button size="sm" className="ml-auto" onClick={async () => {
+                      if (o.status === 'ready' || o.status === 'assigned') {
+                        await foodApi.updateOrderStatus(o.id, 'picked_up'); toast.success("Picked up"); load();
+                      } else if (o.status === 'picked_up' || o.status === 'on_the_way') {
+                        const otp = prompt("Enter handover OTP from customer:");
+                        if (otp && otp === o.handover_otp) {
+                          await foodApi.updateOrderStatus(o.id, 'delivered'); toast.success("Delivered ✓"); load();
+                        } else if (otp) toast.error("OTP doesn't match");
+                      }
+                    }}>
+                      {o.status === 'picked_up' || o.status === 'on_the_way' ? 'Mark Delivered' : 'Mark Picked Up'}
+                    </Button>
+                  </div>
+                </>
               )}
             </Card>
           );

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned, Building, Film, Plus, Compass, Users } from "lucide-react";
+import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned, Building, Film, Plus, Compass, Users, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -90,6 +90,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
     if (path === '/app/social') return location.pathname.startsWith('/app/social');
     if (path === '/app/classifieds') return location.pathname.startsWith('/app/classifieds');
     if (path === '/app/find-home') return location.pathname.startsWith('/app/find-home');
+    if (path === '/app/food') return location.pathname.startsWith('/app/food');
     return location.pathname === path;
   };
 
@@ -159,6 +160,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             {[
               { label: "planext4u", to: "/app", highlight: true },
               { label: "Shop", to: "/app/browse" },
+              { label: "Food", to: "/app/food" },
               { label: "Services", to: "/app/services" },
               { label: "Socio", to: "/app/social" },
               { label: "Find Home", to: "/app/find-home" },
@@ -251,6 +253,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             <div className="flex items-center justify-center gap-1 py-1.5">
               {[
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
+                { icon: UtensilsCrossed, label: "Food", to: "/app/food" },
                 { icon: Wrench, label: "Services", to: "/app/services" },
                 { icon: Megaphone, label: "Socio", to: "/app/social" },
                 { icon: Building, label: "Find Home", to: "/app/find-home" },
