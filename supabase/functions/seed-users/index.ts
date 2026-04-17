@@ -66,6 +66,11 @@ Deno.serve(async (req) => {
         vendor_id: (u as any).vendor_id || null,
         customer_id: (u as any).customer_id || null,
       }, { onConflict: "user_id,role" });
+
+      // Link rider record to auth user
+      if ((u as any).rider_id) {
+        await supabaseAdmin.from("riders").update({ user_id: userId }).eq("id", (u as any).rider_id);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, results }), {
