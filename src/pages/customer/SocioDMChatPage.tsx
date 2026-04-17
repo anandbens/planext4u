@@ -101,6 +101,8 @@ export default function SocioDMChatPage() {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
