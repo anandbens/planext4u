@@ -447,7 +447,12 @@ export const api = {
     svQuery = svQuery.order('created_at', { ascending: false });
 
     const [{ data: vendors, count: vCount }, { data: svcVendors, count: svCount }] = await Promise.all([vQuery, svQuery]);
-    const all = [...(vendors || []), ...(svcVendors || [])];
+    // Merge both tables and sort globally by created_at desc so new entries always show on top
+    const all = [...(vendors || []), ...(svcVendors || [])].sort((a: any, b: any) => {
+      const ta = new Date(a.created_at || 0).getTime();
+      const tb = new Date(b.created_at || 0).getTime();
+      return tb - ta;
+    });
     const total = (vCount || 0) + (svCount || 0);
     const paginated = all.slice(from, to + 1);
     return paginateResult(paginated, total, page, perPage);
