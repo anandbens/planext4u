@@ -177,6 +177,45 @@ export default function FoodCartPage() {
       const otp = String(Math.floor(1000 + Math.random() * 9000));
       const restaurantPayout = subtotal - Math.round(subtotal * (restaurant.commission_rate / 100));
       const p4uCut = Math.max(0, subtotal - restaurantPayout - (riderPayout - tip) + platformFee - couponDiscount - donation);
+
+      // 1️⃣  For online payments, run Razorpay first BEFORE creating the order row
+      let rzpPaymentId: string | null = null;
+      let rzpOrderId: string | null = null;
+      let rzpSignature: string | null = null;
+      let paymentStatus: 'pending' | 'paid' = 'pending';
+
+      if (paymentMethod !== 'cod' && total > 0) {
+        try {
+          const rzpOrder = await foodApi.createRazorpayOrder(total, { p4u_order_id: orderId });
+          const result = await openRazorpayCheckout({
+            keyId: rzpOrder.key_id,
+            orderId: rzpOrder.order_id,
+            amount: rzpOrder.amount,
+            currency: rzpOrder.currency,
+            name: "P4U Food",
+            description: `Order from ${restaurant.name}`,
+            method: paymentMethod,
+            prefill: {
+              name: customerUser.name || undefined,
+              email: customerUser.email || undefined,
+              contact: customerUser.mobile || undefined,
+            },
+            notes: { p4u_order_id: orderId },
+          });
+          const verified = await foodApi.verifyRazorpayPayment(result.razorpay_order_id, result.razorpay_payment_id, result.razorpay_signature);
+          if (!verified) throw new Error("Payment signature verification failed");
+          rzpPaymentId = result.razorpay_payment_id;
+          rzpOrderId = result.razorpay_order_id;
+          rzpSignature = result.razorpay_signature;
+          paymentStatus = 'paid';
+        } catch (e: any) {
+          toast.error(e?.message || "Payment cancelled");
+          setPlacing(false);
+          return;
+        }
+      }
+
+      // 2️⃣  Create the order row
       await foodApi.placeOrder({
         id: orderId,
         customer_id: customerUser.customer_id,
@@ -199,20 +238,33 @@ export default function FoodCartPage() {
         delivery_address: address,
         delivery_lat: coords?.lat, delivery_lng: coords?.lng,
         distance_km: distanceKm, eta_minutes: eta, handover_otp: otp,
-        payment_method: 'cod', payment_status: 'pending', status: 'placed',
+        payment_method: paymentMethod,
+        payment_status: paymentStatus,
+        razorpay_order_id: rzpOrderId,
+        razorpay_payment_id: rzpPaymentId,
+        status: 'placed',
       } as any);
 
-      // Record coupon usage
+      // 3️⃣  Record payment ledger
+      try {
+        await foodApi.recordPayment({
+          order_id: orderId, customer_id: customerUser.customer_id,
+          payment_method: paymentMethod, amount: total,
+          status: paymentStatus === 'paid' ? 'success' : 'pending',
+          razorpay_order_id: rzpOrderId, razorpay_payment_id: rzpPaymentId,
+          razorpay_signature: rzpSignature,
+        });
+      } catch {}
+
       if (coupon) {
         try { await foodApi.recordCouponRedemption(coupon.coupon_id, coupon.code, customerUser.customer_id, orderId, coupon.discount); } catch {}
       }
-      // Deduct wallet
       if (walletApplied > 0) {
         await supabase.from("customers").update({ wallet_points: walletBalance - walletApplied }).eq("id", customerUser.customer_id);
       }
 
       saveCart([]);
-      toast.success("Order placed!");
+      toast.success(paymentStatus === 'paid' ? "Payment successful — order placed!" : "Order placed!");
       navigate(`/app/food/order/${orderId}`);
     } catch (e: any) {
       toast.error(e.message || "Could not place order");
