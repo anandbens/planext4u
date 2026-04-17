@@ -408,6 +408,7 @@ export const api = {
     let svQuery = supabase.from('service_vendors').select('*', { count: 'exact' });
     if (params.search) svQuery = svQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%,mobile.ilike.%${params.search}%`);
     if (params.status && params.status !== 'all') svQuery = svQuery.eq('status', params.status);
+    if (params.payment_status && params.payment_status !== 'all') svQuery = svQuery.eq('plan_payment_status', params.payment_status);
     if (params.date_from) svQuery = svQuery.gte('created_at', params.date_from);
     if (params.date_to) svQuery = svQuery.lte('created_at', params.date_to + 'T23:59:59Z');
     svQuery = svQuery.order('created_at', { ascending: false });
@@ -436,9 +437,10 @@ export const api = {
       'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'background_image', 'max_redemption_percentage'];
     // UUID columns that must be null instead of empty string
     const uuidFields = ['plan_id', 'category_id', 'city_id', 'area_id'];
-    // Valid columns for the `service_vendors` table (subset — no plan/shop/geo columns)
+    // Valid columns for the `service_vendors` table (now includes plan/shop/payment cols)
     const validSvcVendorFields = ['name', 'business_name', 'mobile', 'email', 'category_id', 'city_id', 'area_id',
-      'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue'];
+      'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue',
+      'plan_id', 'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'max_redemption_percentage', 'kyc_status'];
     const filtered: Record<string, any> = {};
     for (const key of validVendorFields) {
       if (key in data) {
@@ -472,13 +474,37 @@ export const api = {
 
   createVendor: async (data: Partial<Vendor>, type: 'product' | 'service' = 'product') => {
     const table = type === 'service' ? 'service_vendors' : 'vendors';
+    // Pre-flight: must have an authenticated admin session, otherwise RLS will reject the insert
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("You must be signed in as an admin to create a vendor.");
+    const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', user.id).in('role', ['admin', 'finance', 'sales']);
+    if (!roles || roles.length === 0) throw new Error("Only admin users can create vendors.");
+
+    // Validate required fields
+    if (!data.name?.trim()) throw new Error("Owner name is required");
+    if (!data.business_name?.trim()) throw new Error("Business name is required");
+    if (!data.mobile?.trim()) throw new Error("Mobile is required");
+    if (!data.email?.trim()) throw new Error("Email is required");
+
+    // Duplicate check across both tables (cross-vendor uniqueness)
+    const cleanedMobile = data.mobile.replace(/\D/g, '');
+    const mobileNorm = cleanedMobile.length === 10 ? `+91${cleanedMobile}` : data.mobile;
+    const lowerEmail = data.email.toLowerCase().trim();
+    const [vDup, svDup] = await Promise.all([
+      supabase.from('vendors').select('id').or(`mobile.eq.${mobileNorm},mobile.eq.${cleanedMobile},email.eq.${lowerEmail}`).is('deleted_at', null).limit(1),
+      supabase.from('service_vendors').select('id').or(`mobile.eq.${mobileNorm},mobile.eq.${cleanedMobile},email.eq.${lowerEmail}`).limit(1),
+    ]);
+    if ((vDup.data && vDup.data.length) || (svDup.data && svDup.data.length)) {
+      throw new Error("A vendor with this mobile or email already exists.");
+    }
+
     const newVendor: Record<string, any> = {
-      id: genId('VND'),
-      name: data.name || '',
-      business_name: data.business_name || '',
-      mobile: data.mobile || '',
-      email: data.email || '',
-      commission_rate: data.commission_rate || 0,
+      id: genId(type === 'service' ? 'SVN' : 'VND'),
+      name: data.name.trim(),
+      business_name: data.business_name.trim(),
+      mobile: mobileNorm,
+      email: lowerEmail,
+      commission_rate: Number(data.commission_rate) || 0,
       membership: data.membership || 'basic',
       status: data.status || 'verified',
       total_products: 0, total_orders: 0, total_revenue: 0,
@@ -489,6 +515,9 @@ export const api = {
     if ((data as any).plan_id) newVendor.plan_id = (data as any).plan_id;
     if ((data as any).max_redemption_percentage != null) newVendor.max_redemption_percentage = (data as any).max_redemption_percentage;
     if ((data as any).shop_photo_url) newVendor.shop_photo_url = (data as any).shop_photo_url;
+    if (type === 'product') {
+      if ((data as any).plan_payment_status) newVendor.plan_payment_status = (data as any).plan_payment_status;
+    }
     const { error } = await supabase.from(table).insert(newVendor as any);
     if (error) throw error;
     return { success: true, vendor: newVendor };
