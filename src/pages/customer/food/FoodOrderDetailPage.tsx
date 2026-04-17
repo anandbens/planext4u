@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Phone, Clock } from "lucide-react";
+import { LiveTrackingMap } from "@/components/food/LiveTrackingMap";
 
 const STATUS_STEPS = ['placed', 'accepted', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'];
 const STATUS_LABEL: Record<string, string> = {
