@@ -334,7 +334,34 @@ export function useSocialFeed(mode: 'following' | 'for_you' = 'for_you') {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+
+      // Hydrate repost posts with the original author profile + caption
+      const reposts = (data || []).filter((p: any) => p.is_repost && p.original_post_id);
+      const originalIds = Array.from(new Set(reposts.map((p: any) => p.original_post_id)));
+      let originalsMap = new Map<string, any>();
+      if (originalIds.length > 0) {
+        const { data: originals } = await supabase
+          .from('social_posts')
+          .select('id, user_id, caption, created_at')
+          .in('id', originalIds);
+        const ownerIds = Array.from(new Set((originals || []).map((o: any) => o.user_id)));
+        const { data: ownerProfiles } = ownerIds.length
+          ? await supabase
+              .from('social_profiles')
+              .select('user_id, username, display_name, avatar_url, is_verified')
+              .in('user_id', ownerIds)
+          : { data: [] as any[] };
+        const ownerMap = new Map((ownerProfiles || []).map((p: any) => [p.user_id, p]));
+        originalsMap = new Map(
+          (originals || []).map((o: any) => [o.id, { ...o, owner: ownerMap.get(o.user_id) || null }])
+        );
+      }
+
+      return (data || []).map((p: any) =>
+        p.is_repost && p.original_post_id
+          ? { ...p, original_post: originalsMap.get(p.original_post_id) || null }
+          : p
+      );
     },
   });
 }
