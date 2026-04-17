@@ -57,6 +57,23 @@ matching `Usage Description`.
   <key>NSAllowsLocalNetworking</key>
   <true/>
 </dict>
+
+<!--
+  Razorpay UPI app picker (GPay / PhonePe / Paytm / BHIM / CRED).
+  Without these schemes, iOS returns `canOpenURL = NO` for every UPI app
+  and the Razorpay native SDK falls back to the "Enter VPA" screen.
+-->
+<key>LSApplicationQueriesSchemes</key>
+<array>
+  <string>tez</string>            <!-- Google Pay -->
+  <string>phonepe</string>        <!-- PhonePe -->
+  <string>paytmmp</string>        <!-- Paytm -->
+  <string>paytm</string>
+  <string>bhim</string>           <!-- BHIM -->
+  <string>credpay</string>        <!-- CRED -->
+  <string>amazonpay</string>      <!-- Amazon Pay -->
+  <string>upi</string>            <!-- generic UPI deeplink -->
+</array>
 ```
 
 ## 2. Capabilities to enable in Xcode
