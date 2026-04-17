@@ -941,6 +941,122 @@ export type Database = {
         }
         Relationships: []
       }
+      food_coupon_redemptions: {
+        Row: {
+          coupon_code: string
+          coupon_id: string
+          created_at: string
+          customer_id: string
+          discount_applied: number
+          id: string
+          order_id: string
+        }
+        Insert: {
+          coupon_code: string
+          coupon_id: string
+          created_at?: string
+          customer_id: string
+          discount_applied?: number
+          id?: string
+          order_id: string
+        }
+        Update: {
+          coupon_code?: string
+          coupon_id?: string
+          created_at?: string
+          customer_id?: string
+          discount_applied?: number
+          id?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "food_coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "food_coupon_redemptions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "food_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          is_platform_wide: boolean
+          max_discount: number | null
+          min_order_amount: number
+          per_customer_limit: number
+          restaurant_id: string | null
+          starts_at: string
+          title: string
+          total_usage_limit: number | null
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_platform_wide?: boolean
+          max_discount?: number | null
+          min_order_amount?: number
+          per_customer_limit?: number
+          restaurant_id?: string | null
+          starts_at?: string
+          title: string
+          total_usage_limit?: number | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_platform_wide?: boolean
+          max_discount?: number | null
+          min_order_amount?: number
+          per_customer_limit?: number
+          restaurant_id?: string | null
+          starts_at?: string
+          title?: string
+          total_usage_limit?: number | null
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_coupons_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_order_status_history: {
         Row: {
           changed_by: string | null
@@ -986,6 +1102,7 @@ export type Database = {
         Row: {
           accepted_at: string | null
           cancellation_reason: string | null
+          coupon_code: string | null
           created_at: string
           customer_id: string
           customer_name: string | null
@@ -998,11 +1115,14 @@ export type Database = {
           delivery_lng: number | null
           discount: number
           distance_km: number | null
+          donation_amount: number
           eta_minutes: number | null
           gst: number
           handover_otp: string | null
           id: string
+          is_contactless: boolean
           items: Json
+          no_cutlery: boolean
           p4u_cut: number
           packaging_fee: number
           payment_method: string
@@ -1017,16 +1137,20 @@ export type Database = {
           restaurant_id: string
           restaurant_name: string | null
           restaurant_payout: number
+          rider_note: string | null
           rider_payout: number
           rider_tip: number
+          scheduled_for: string | null
           status: string
           subtotal: number
           total: number
           updated_at: string
+          wallet_amount_used: number
         }
         Insert: {
           accepted_at?: string | null
           cancellation_reason?: string | null
+          coupon_code?: string | null
           created_at?: string
           customer_id: string
           customer_name?: string | null
@@ -1039,11 +1163,14 @@ export type Database = {
           delivery_lng?: number | null
           discount?: number
           distance_km?: number | null
+          donation_amount?: number
           eta_minutes?: number | null
           gst?: number
           handover_otp?: string | null
           id: string
+          is_contactless?: boolean
           items?: Json
+          no_cutlery?: boolean
           p4u_cut?: number
           packaging_fee?: number
           payment_method?: string
@@ -1058,16 +1185,20 @@ export type Database = {
           restaurant_id: string
           restaurant_name?: string | null
           restaurant_payout?: number
+          rider_note?: string | null
           rider_payout?: number
           rider_tip?: number
+          scheduled_for?: string | null
           status?: string
           subtotal?: number
           total?: number
           updated_at?: string
+          wallet_amount_used?: number
         }
         Update: {
           accepted_at?: string | null
           cancellation_reason?: string | null
+          coupon_code?: string | null
           created_at?: string
           customer_id?: string
           customer_name?: string | null
@@ -1080,11 +1211,14 @@ export type Database = {
           delivery_lng?: number | null
           discount?: number
           distance_km?: number | null
+          donation_amount?: number
           eta_minutes?: number | null
           gst?: number
           handover_otp?: string | null
           id?: string
+          is_contactless?: boolean
           items?: Json
+          no_cutlery?: boolean
           p4u_cut?: number
           packaging_fee?: number
           payment_method?: string
@@ -1099,12 +1233,15 @@ export type Database = {
           restaurant_id?: string
           restaurant_name?: string | null
           restaurant_payout?: number
+          rider_note?: string | null
           rider_payout?: number
           rider_tip?: number
+          scheduled_for?: string | null
           status?: string
           subtotal?: number
           total?: number
           updated_at?: string
+          wallet_amount_used?: number
         }
         Relationships: [
           {
@@ -5687,6 +5824,14 @@ export type Database = {
         Args: { _user_a: string; _user_b: string }
         Returns: boolean
       }
+      best_food_coupon: {
+        Args: {
+          _customer_id: string
+          _restaurant_id: string
+          _subtotal: number
+        }
+        Returns: Json
+      }
       calculate_entity_avg_rating: {
         Args: { _entity_id: string; _entity_type: string }
         Returns: number
@@ -5817,6 +5962,15 @@ export type Database = {
       save_device_token: {
         Args: { _platform?: string; _token: string; _user_id: string }
         Returns: undefined
+      }
+      validate_food_coupon: {
+        Args: {
+          _code: string
+          _customer_id: string
+          _restaurant_id: string
+          _subtotal: number
+        }
+        Returns: Json
       }
     }
     Enums: {
