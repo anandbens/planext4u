@@ -13,6 +13,8 @@ import { loadSelectedCoords, loadSelectedLocation } from "@/components/customer/
 import { haversineDistance } from "@/lib/geo-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PaymentMethodPicker, FoodPaymentMethod } from "@/components/food/PaymentMethodPicker";
+import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 
 const CART_KEY = "p4u_food_cart";
 const DONATION_OPTIONS = [0, 2, 5, 10];
