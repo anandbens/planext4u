@@ -13,6 +13,13 @@ import CallScreen from "@/components/social/CallScreen";
 import { useQuery } from "@tanstack/react-query";
 import { compressToWebP } from "@/lib/webp-compress";
 
+interface Reaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+}
+
 interface Message {
   id: string;
   conversation_id: string;
@@ -25,6 +32,7 @@ interface Message {
 }
 
 const EMOJI_QUICK = ['😀', '❤️', '😂', '👍', '🔥', '😍', '🎉', '💯'];
+const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
 
 // Compress audio blob using OfflineAudioContext (re-encode to lower bitrate WebM/Opus)
 async function compressAudioBlob(blob: Blob): Promise<Blob> {
@@ -93,6 +101,8 @@ export default function SocioDMChatPage() {
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -215,6 +225,64 @@ export default function SocioDMChatPage() {
       ).subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [conversationId, currentUserId]);
+
+  // Load + subscribe to message reactions
+  useEffect(() => {
+    if (!conversationId || messages.length === 0) return;
+    const messageIds = messages.map(m => m.id);
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('social_message_reactions' as any)
+        .select('id, message_id, user_id, emoji')
+        .in('message_id', messageIds);
+      if (!cancelled) setReactions(((data || []) as any) as Reaction[]);
+    })();
+    const channel = supabase
+      .channel(`dm-reactions-${conversationId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'social_message_reactions' }, (payload) => {
+        const newRow = payload.new as any;
+        const oldRow = payload.old as any;
+        const relevantId = newRow?.message_id || oldRow?.message_id;
+        if (!messageIds.includes(relevantId)) return;
+        if (payload.eventType === 'INSERT') {
+          setReactions(prev => prev.some(r => r.id === newRow.id) ? prev : [...prev, newRow as Reaction]);
+        } else if (payload.eventType === 'DELETE') {
+          setReactions(prev => prev.filter(r => r.id !== oldRow.id));
+        }
+      })
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(channel); };
+  }, [conversationId, messages]);
+
+  const toggleReaction = useCallback(async (messageId: string, emoji: string) => {
+    if (!currentUserId) return;
+    const existing = reactions.find(r => r.message_id === messageId && r.user_id === currentUserId && r.emoji === emoji);
+    if (existing) {
+      setReactions(prev => prev.filter(r => r.id !== existing.id));
+      const { error } = await supabase.from('social_message_reactions' as any).delete().eq('id', existing.id);
+      if (error) {
+        toast.error('Failed to remove reaction');
+        setReactions(prev => [...prev, existing]);
+      }
+    } else {
+      const tempId = crypto.randomUUID();
+      const optimistic: Reaction = { id: tempId, message_id: messageId, user_id: currentUserId, emoji };
+      setReactions(prev => [...prev, optimistic]);
+      const { data, error } = await supabase.from('social_message_reactions' as any)
+        .insert({ message_id: messageId, user_id: currentUserId, emoji })
+        .select('id, message_id, user_id, emoji')
+        .single();
+      if (error) {
+        toast.error('Failed to add reaction');
+        setReactions(prev => prev.filter(r => r.id !== tempId));
+      } else if (data) {
+        setReactions(prev => prev.map(r => r.id === tempId ? (data as any as Reaction) : r));
+      }
+    }
+    setReactionPickerFor(null);
+  }, [currentUserId, reactions]);
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -455,14 +523,61 @@ export default function SocioDMChatPage() {
                   ) : msg.message_type !== 'image' && (
                     <p>{msg.content}</p>
                   )}
+                  {/* React button */}
+                  <button
+                    onClick={() => setReactionPickerFor(reactionPickerFor === msg.id ? null : msg.id)}
+                    className={`absolute ${mine ? '-left-7' : '-right-7'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity h-6 w-6 rounded-full bg-card border border-border shadow-sm flex items-center justify-center hover:bg-accent`}
+                    title="React"
+                  >
+                    <Smile className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
                   {mine && (
                     <button onClick={handleDeleteMsg}
-                      className="absolute -left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5 rounded-full bg-destructive/80 flex items-center justify-center"
+                      className="absolute -left-14 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5 rounded-full bg-destructive/80 flex items-center justify-center"
                       title="Delete message">
                       <X className="h-3 w-3 text-white" />
                     </button>
                   )}
                 </div>
+
+                {/* Reaction picker */}
+                {reactionPickerFor === msg.id && (
+                  <div className={`mt-1 inline-flex gap-1 px-2 py-1.5 rounded-full bg-card border border-border shadow-md ${mine ? 'ml-auto' : ''}`}>
+                    {REACTION_EMOJIS.map(em => {
+                      const mineReacted = reactions.some(r => r.message_id === msg.id && r.user_id === currentUserId && r.emoji === em);
+                      return (
+                        <button key={em} onClick={() => toggleReaction(msg.id, em)}
+                          className={`text-lg leading-none px-1.5 py-0.5 rounded-full hover:scale-125 transition-transform ${mineReacted ? 'bg-primary/20' : ''}`}>
+                          {em}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Reaction chips */}
+                {(() => {
+                  const msgReactions = reactions.filter(r => r.message_id === msg.id);
+                  if (msgReactions.length === 0) return null;
+                  const grouped = msgReactions.reduce<Record<string, { count: number; mine: boolean }>>((acc, r) => {
+                    if (!acc[r.emoji]) acc[r.emoji] = { count: 0, mine: false };
+                    acc[r.emoji].count++;
+                    if (r.user_id === currentUserId) acc[r.emoji].mine = true;
+                    return acc;
+                  }, {});
+                  return (
+                    <div className={`flex gap-1 flex-wrap mt-1 ${mine ? 'justify-end' : 'justify-start'}`}>
+                      {Object.entries(grouped).map(([em, info]) => (
+                        <button key={em} onClick={() => toggleReaction(msg.id, em)}
+                          className={`text-[11px] flex items-center gap-1 px-2 py-0.5 rounded-full border ${info.mine ? 'bg-primary/15 border-primary/40' : 'bg-card border-border'} hover:scale-105 transition-transform`}>
+                          <span className="text-sm leading-none">{em}</span>
+                          {info.count > 1 && <span className="text-[10px] text-muted-foreground">{info.count}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
+
                 <div className={`flex items-center gap-1 mt-0.5 ${mine ? 'justify-end' : 'justify-start'}`}>
                   <span className="text-[9px] text-muted-foreground">{format(new Date(msg.created_at), 'h:mm a')}</span>
                   {mine && (msg.is_read ? <CheckCheck className="h-3 w-3 text-primary" /> : <Check className="h-3 w-3 text-muted-foreground" />)}
