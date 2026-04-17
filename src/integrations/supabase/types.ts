@@ -591,6 +591,45 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_notifications: {
+        Row: {
+          created_at: string
+          customer_id: string
+          deep_link: string | null
+          id: string
+          is_read: boolean
+          message: string
+          reference_id: string | null
+          reference_type: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          deep_link?: string | null
+          id?: string
+          is_read?: boolean
+          message: string
+          reference_id?: string | null
+          reference_type?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          deep_link?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           about: string | null
@@ -2963,10 +3002,16 @@ export type Database = {
           deletion_reason: string | null
           email: string
           id: string
+          kyc_status: string | null
+          max_redemption_percentage: number | null
           membership: string
           mobile: string
           name: string
+          plan_id: string | null
+          plan_payment_status: string
+          plan_transaction_id: string | null
           rating: number | null
+          shop_photo_url: string | null
           status: string
           total_orders: number | null
           total_products: number | null
@@ -2983,10 +3028,16 @@ export type Database = {
           deletion_reason?: string | null
           email?: string
           id: string
+          kyc_status?: string | null
+          max_redemption_percentage?: number | null
           membership?: string
           mobile?: string
           name: string
+          plan_id?: string | null
+          plan_payment_status?: string
+          plan_transaction_id?: string | null
           rating?: number | null
+          shop_photo_url?: string | null
           status?: string
           total_orders?: number | null
           total_products?: number | null
@@ -3003,10 +3054,16 @@ export type Database = {
           deletion_reason?: string | null
           email?: string
           id?: string
+          kyc_status?: string | null
+          max_redemption_percentage?: number | null
           membership?: string
           mobile?: string
           name?: string
+          plan_id?: string | null
+          plan_payment_status?: string
+          plan_transaction_id?: string | null
           rating?: number | null
+          shop_photo_url?: string | null
           status?: string
           total_orders?: number | null
           total_products?: number | null
@@ -4825,6 +4882,15 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      fire_push_to_user: {
+        Args: {
+          _body: string
+          _deep_link?: string
+          _title: string
+          _user_id: string
+        }
+        Returns: undefined
       }
       get_customer_id: { Args: { _user_id: string }; Returns: string }
       get_friends_of_friends: {

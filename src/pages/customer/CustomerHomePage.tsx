@@ -494,7 +494,13 @@ export default function CustomerHomePage() {
                 <motion.div key={c.id} variants={itemAnim}>
                   <Link to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-1.5 group">
                     <div className="h-14 w-14 md:h-18 md:w-18 rounded-2xl bg-secondary/50 border border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/50 group-hover:shadow-md transition-all">
-                      {c.image?.startsWith('http') ? <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-2xl" loading="lazy" /> : <span className="text-2xl">{c.image || '📦'}</span>}
+                      {c.image?.startsWith('http') ? (
+                        <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-2xl" loading="lazy" />
+                      ) : c.image && c.image.trim() !== '' ? (
+                        <span className="text-2xl">{c.image}</span>
+                      ) : (
+                        <span className="text-base font-bold text-primary">{c.name?.charAt(0).toUpperCase()}</span>
+                      )}
                     </div>
                     <span className="text-[10px] md:text-xs font-medium text-center leading-tight">{c.name}</span>
                   </Link>
@@ -548,7 +554,13 @@ export default function CustomerHomePage() {
                   <Link key={c.id} to={`/app/services?category=${c.name}`}
                     className="bg-card rounded-xl border border-border/50 p-2.5 hover:border-primary/30 hover:shadow-md transition-all flex items-center gap-2">
                     <div className="h-10 w-10 rounded-full bg-secondary/50 flex items-center justify-center overflow-hidden shrink-0">
-                      {c.image?.startsWith('http') ? <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-full" loading="lazy" /> : <span className="text-lg">{c.image}</span>}
+                      {c.image?.startsWith('http') ? (
+                        <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-full" loading="lazy" />
+                      ) : c.image && c.image.trim() !== '' ? (
+                        <span className="text-lg">{c.image}</span>
+                      ) : (
+                        <span className="text-sm font-bold text-primary">{c.name?.charAt(0).toUpperCase()}</span>
+                      )}
                     </div>
                     <div><p className="text-[11px] font-semibold leading-tight">{c.name}</p><p className="text-[9px] text-muted-foreground">From ₹349</p></div>
                   </Link>

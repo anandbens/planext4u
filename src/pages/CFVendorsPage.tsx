@@ -180,7 +180,8 @@ export default function CFVendorsPage() {
       }
     } else {
       try {
-        await supabase.from('service_vendors' as any).update(updates as any).eq('id', id);
+        // Use api.updateVendor so non-existent columns are filtered out before write
+        await api.updateVendor(id, updates);
         toast.success("Service vendor updated");
       } catch (err: any) {
         toast.error("Failed to update: " + (err.message || "Unknown error"));
