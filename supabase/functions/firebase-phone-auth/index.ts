@@ -347,9 +347,11 @@ Deno.serve(async (req) => {
             referrer_name: referrer.name,
             referee_id: customerId,
             referee_name: registerData.name,
-            referee_type: "customer",
             status: cooling ? "pending" : "completed",
             points_awarded: referralPoints,
+            cooling_until: cooling ? expiresAt : null,
+            first_order_placed: false,
+            bonus_credited: !cooling,
           } as any);
 
           // Insert points transaction (cooling = pending until first order; else credited immediately)
