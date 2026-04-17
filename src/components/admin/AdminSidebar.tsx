@@ -4,7 +4,7 @@ import {
   Grid3X3, Wrench, Receipt, MapPin, Map, Tag, Briefcase, SlidersHorizontal,
   MessageSquare, MonitorPlay, ExternalLink, ClipboardList, Headphones, Key,
   Home, Crown, Shield, Filter, Palette, Flag, Heart, Upload, Layers,
-  Smartphone,
+  Smartphone, UtensilsCrossed, Bike,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -72,6 +72,13 @@ const homesItems: NavItem[] = [
 // P4U Social admin section
 const socialItems: NavItem[] = [
   { title: "Social Dashboard", url: "/admin/social", icon: Heart, roles: ['admin'] },
+];
+
+// P4U Food (Swiggy/Zomato-style delivery)
+const foodItems: NavItem[] = [
+  { title: "Restaurants", url: "/admin/restaurants", icon: UtensilsCrossed, roles: ['admin', 'sales'] },
+  { title: "Riders", url: "/admin/riders", icon: Bike, roles: ['admin', 'sales'] },
+  { title: "Food Orders", url: "/admin/food-orders", icon: ShoppingCart, roles: ['admin', 'sales'] },
 ];
 
 const systemItems: NavItem[] = [
@@ -187,6 +194,7 @@ export function AdminSidebar() {
         <NavGroup label="Configuration" items={configItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="P4U Homes" items={homesItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="P4U Social" items={socialItems} collapsed={collapsed} userRole={role} />
+        <NavGroup label="P4U Food" items={foodItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="System" items={systemItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="Portals" items={portalLinks} collapsed={collapsed} userRole={role} />
       </SidebarContent>
