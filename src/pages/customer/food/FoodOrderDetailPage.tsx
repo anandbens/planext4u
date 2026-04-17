@@ -11,6 +11,7 @@ import { LiveTrackingMap } from "@/components/food/LiveTrackingMap";
 import { OrderChatPanel } from "@/components/food/OrderChatPanel";
 import { CancelOrderDialog } from "@/components/food/CancelOrderDialog";
 import { downloadInvoice } from "@/lib/food-invoice";
+import { FoodReviewModal } from "@/components/food/FoodReviewModal";
 import { toast } from "sonner";
 
 const STATUS_STEPS = ['placed', 'accepted', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'];
@@ -46,6 +47,8 @@ export default function FoodOrderDetailPage() {
   const [showChat, setShowChat] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [showReview, setShowReview] = useState(false);
+  const [existingReview, setExistingReview] = useState<any>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -62,6 +65,9 @@ export default function FoodOrderDetailPage() {
           foodApi.getRider(ra.rider_id).then(setRider);
         }
       }
+      // load existing review for this order
+      const { data: rev } = await supabase.from('food_reviews').select('*').eq('order_id', id).maybeSingle();
+      if (rev) setExistingReview(rev);
     };
     load();
     const ch = supabase.channel(`food-order-${id}`)
