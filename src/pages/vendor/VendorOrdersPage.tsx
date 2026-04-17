@@ -271,6 +271,7 @@ export default function VendorOrdersPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <VendorOrderDetailModal order={detailOrder} onClose={() => setDetailOrder(null)} />
     </VendorLayout>
   );
 }

@@ -7,8 +7,9 @@ import {
   LayoutDashboard, Package, ShoppingCart, DollarSign, User, Wrench,
   Bell, Menu, X, LogOut, CreditCard, History, ChevronRight, Store,
   ArrowLeft, Settings, HelpCircle, Shield, MapPin, TrendingUp, BarChart3,
-  ImageIcon, CalendarClock
+  ImageIcon, CalendarClock, ShieldCheck
 } from "lucide-react";
+import { VendorNotificationBell } from "@/components/vendor/VendorNotificationBell";
 import p4uLogo from "@/assets/p4u-logo.png";
 
 interface VendorLayoutProps {
@@ -28,6 +29,7 @@ const sidebarItems = [
   { label: "Bank Account", to: "/vendor/bank", icon: CreditCard },
   { label: "Profile & Settings", to: "/vendor/profile", icon: User },
   { label: "Media Library", to: "/vendor/media", icon: ImageIcon },
+  { label: "KYC Verification", to: "/vendor/kyc", icon: ShieldCheck },
 ];
 
 const bottomNavItems = [
@@ -138,10 +140,10 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
                   <TrendingUp className="h-3 w-3 text-primary-foreground/80" />
                   <span className="text-xs font-bold text-primary-foreground">Sales</span>
                 </Link>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full bg-primary-foreground/15 hover:bg-primary-foreground/25">
-                  <Bell className="h-4 w-4 text-primary-foreground" />
-                  <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[10px] text-destructive-foreground flex items-center justify-center font-bold">2</span>
-                </Button>
+                <VendorNotificationBell
+                  buttonClassName="h-9 w-9 rounded-full bg-primary-foreground/15 hover:bg-primary-foreground/25"
+                  iconClassName="text-primary-foreground"
+                />
                 <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center">
                   {vendorUser ? (
                     <span className="text-sm font-bold text-primary-foreground">{vendorUser.name.charAt(0)}</span>
@@ -158,10 +160,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
         <header className="hidden lg:flex sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50 px-6 py-3 items-center justify-between">
           <h1 className="text-lg font-bold">{title || "Dashboard"}</h1>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-[10px] text-destructive-foreground flex items-center justify-center font-bold">2</span>
-            </Button>
+            <VendorNotificationBell />
             <div className="flex items-center gap-2 text-sm">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <span className="text-sm font-bold text-primary">{vendorUser?.name?.charAt(0) || 'V'}</span>
