@@ -175,6 +175,20 @@ import VendorBookingsPage from "./pages/vendor/VendorBookingsPage";
 import VendorKYCPage from "./pages/vendor/VendorKYCPage";
 import AccountControlPage from "./pages/customer/AccountControlPage";
 
+// Food delivery
+import FoodHomePage from "./pages/customer/food/FoodHomePage";
+import FoodRestaurantPage from "./pages/customer/food/FoodRestaurantPage";
+import FoodCartPage from "./pages/customer/food/FoodCartPage";
+import FoodOrdersPage from "./pages/customer/food/FoodOrdersPage";
+import FoodOrderDetailPage from "./pages/customer/food/FoodOrderDetailPage";
+import VendorRestaurantPage from "./pages/vendor/VendorRestaurantPage";
+import VendorFoodOrdersPage from "./pages/vendor/VendorFoodOrdersPage";
+import RiderLoginPage from "./pages/rider/RiderLoginPage";
+import RiderDashboardPage from "./pages/rider/RiderDashboardPage";
+import AdminRestaurantsPage from "./pages/admin/AdminRestaurantsPage";
+import AdminRidersPage from "./pages/admin/AdminRidersPage";
+import AdminFoodOrdersPage from "./pages/admin/AdminFoodOrdersPage";
+
 const queryClient = new QueryClient();
 const NATIVE_PORTAL_STORAGE_KEY = "p4u_native_portal";
 
