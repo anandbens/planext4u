@@ -56,6 +56,27 @@ export default function SocialPostDetailPage() {
     enabled: !!post?.user_id,
   });
 
+  // Original post + author for repost credit
+  const { data: originalInfo } = useQuery({
+    queryKey: ['social-original-post', post?.original_post_id],
+    queryFn: async () => {
+      if (!post?.original_post_id) return null;
+      const { data: orig } = await supabase
+        .from('social_posts')
+        .select('id, user_id, caption')
+        .eq('id', post.original_post_id)
+        .maybeSingle();
+      if (!orig) return null;
+      const { data: ownerProfile } = await supabase
+        .from('social_profiles')
+        .select('username, display_name, avatar_url')
+        .eq('user_id', orig.user_id)
+        .maybeSingle();
+      return { ...orig, owner: ownerProfile };
+    },
+    enabled: !!post?.is_repost && !!post?.original_post_id,
+  });
+
   const { isLiked, likeCount, toggleLike } = usePostLike(postId || '');
   const { isSaved, toggleBookmark } = usePostBookmark(postId || '');
   const { comments, commentCount, addComment } = usePostComments(postId || '');
