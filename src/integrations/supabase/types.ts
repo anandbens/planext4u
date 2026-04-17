@@ -1933,6 +1933,7 @@ export type Database = {
           sku: string | null
           slug: string | null
           socio_shopping_icon: string | null
+          sold_count: number
           status: string
           stock: number | null
           stock_status: string | null
@@ -1988,6 +1989,7 @@ export type Database = {
           sku?: string | null
           slug?: string | null
           socio_shopping_icon?: string | null
+          sold_count?: number
           status?: string
           stock?: number | null
           stock_status?: string | null
@@ -2043,6 +2045,7 @@ export type Database = {
           sku?: string | null
           slug?: string | null
           socio_shopping_icon?: string | null
+          sold_count?: number
           status?: string
           stock?: number | null
           stock_status?: string | null
@@ -4488,6 +4491,7 @@ export type Database = {
           deletion_reason: string | null
           email: string
           id: string
+          kyc_status: string | null
           max_redemption_percentage: number | null
           membership: string
           mobile: string
@@ -4519,6 +4523,7 @@ export type Database = {
           deletion_reason?: string | null
           email?: string
           id: string
+          kyc_status?: string | null
           max_redemption_percentage?: number | null
           membership?: string
           mobile?: string
@@ -4550,6 +4555,7 @@ export type Database = {
           deletion_reason?: string | null
           email?: string
           id?: string
+          kyc_status?: string | null
           max_redemption_percentage?: number | null
           membership?: string
           mobile?: string
