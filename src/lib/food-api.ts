@@ -324,4 +324,45 @@ export const foodApi = {
     const { error } = await supabase.from('food_reviews').upsert(payload as any, { onConflict: 'order_id' });
     if (error) throw error;
   },
+
+  // ─── Combos ──────────────────────────────────────────────────
+  listCombos: async (restaurantId: string) => {
+    const { data, error } = await supabase.from('menu_combos' as any).select('*')
+      .eq('restaurant_id', restaurantId).eq('is_active', true).order('display_order');
+    if (error) throw error;
+    return (data || []) as unknown as MenuCombo[];
+  },
+
+  upsertCombo: async (payload: Partial<MenuCombo> & { restaurant_id: string; name: string; combo_price: number }) => {
+    const { data, error } = await supabase.from('menu_combos' as any).upsert(payload as any).select().maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  deleteCombo: async (id: string) => {
+    const { error } = await supabase.from('menu_combos' as any).delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  // ─── Notify-when-available ───────────────────────────────────
+  subscribeNotifyAvailable: async (menuItemId: string, customerId: string) => {
+    const { error } = await supabase.from('menu_item_notify_requests' as any).upsert(
+      { menu_item_id: menuItemId, customer_id: customerId } as any,
+      { onConflict: 'menu_item_id,customer_id' }
+    );
+    if (error) throw error;
+  },
+
+  listMyNotifyRequests: async (customerId: string) => {
+    const { data, error } = await supabase.from('menu_item_notify_requests' as any).select('menu_item_id')
+      .eq('customer_id', customerId).is('notified_at', null);
+    if (error) throw error;
+    return ((data || []) as any[]).map(r => r.menu_item_id as string);
+  },
+
+  // ─── Bestseller refresh (admin) ──────────────────────────────
+  refreshBestsellers: async () => {
+    const { error } = await supabase.rpc('refresh_menu_item_order_counts' as any);
+    if (error) throw error;
+  },
 };
