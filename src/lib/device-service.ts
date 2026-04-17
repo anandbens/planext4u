@@ -130,6 +130,8 @@ export interface MatchedUser {
   name: string;
   mobile: string;
   profile_photo: string | null;
+  source?: "contacts" | "friends_of_friends";
+  mutual_count?: number;
 }
 
 export async function findFriends(): Promise<MatchedUser[]> {
@@ -145,7 +147,7 @@ export async function findFriends(): Promise<MatchedUser[]> {
         _phones: batch,
       });
       if (!error && data) {
-        allMatched.push(...(data as unknown as MatchedUser[]));
+        allMatched.push(...(data as unknown as MatchedUser[]).map((u) => ({ ...u, source: "contacts" as const })));
       }
     }
 
@@ -158,6 +160,33 @@ export async function findFriends(): Promise<MatchedUser[]> {
     });
   } catch (err) {
     console.error("findFriends error:", err);
+    return [];
+  }
+}
+
+// ─── FRIENDS OF FRIENDS ─────────────────────────────────
+
+export interface FriendOfFriend {
+  user_id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  mutual_count: number;
+}
+
+export async function getFriendsOfFriends(userId: string, limit = 10): Promise<FriendOfFriend[]> {
+  try {
+    const { data, error } = await supabase.rpc("get_friends_of_friends", {
+      _user: userId,
+      _limit: limit,
+    });
+    if (error) {
+      console.error("getFriendsOfFriends error:", error);
+      return [];
+    }
+    return (data || []) as FriendOfFriend[];
+  } catch (err) {
+    console.error("getFriendsOfFriends error:", err);
     return [];
   }
 }
