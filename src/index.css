@@ -162,17 +162,42 @@
   flex-direction: column;
 }
 
-/* Sticky headers: respect top safe area */
+/* iOS / Capacitor WebView polish */
+html, body {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+body {
+  /* Smooth momentum scrolling inside the iOS WebView */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent the iOS rubber-band effect from exposing a white background */
+  background-color: hsl(var(--background));
+}
+/* iOS keyboard-open class set by capacitor-ios bootstrap (Keyboard plugin) */
+html.ios-keyboard-open {
+  height: 100vh;
+}
+
+/* Sticky headers: respect top safe area (notch / dynamic island) */
 header.sticky:not([data-no-safe-area]),
 div.sticky.safe-area-top,
 nav.sticky.safe-area-top {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
-/* Fixed bottom bars: respect bottom safe area */
+/* Fixed bottom bars: respect bottom safe area (home indicator) */
 nav.fixed,
 div.fixed[class*="bottom-0"] {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* iPhone landscape: avoid notch / dynamic island on the sides */
+@media screen and (orientation: landscape) {
+  body {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
 }
 
 @layer utilities {
@@ -250,6 +275,12 @@ div.fixed[class*="bottom-0"] {
 
   .capacitor-safe-bottom {
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+  }
+
+  /* Side insets for landscape iPhones (notch / dynamic island) */
+  .safe-area-x {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 
   .scrollbar-hide {
