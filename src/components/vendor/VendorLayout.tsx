@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, DollarSign, User, Wrench,
   Bell, Menu, X, LogOut, CreditCard, History, ChevronRight, Store,
   ArrowLeft, Settings, HelpCircle, Shield, MapPin, TrendingUp, BarChart3,
-  ImageIcon, CalendarClock, ShieldCheck
+  ImageIcon, CalendarClock, ShieldCheck, UtensilsCrossed
 } from "lucide-react";
 import { VendorNotificationBell } from "@/components/vendor/VendorNotificationBell";
 import p4uLogo from "@/assets/p4u-logo.png";
@@ -22,6 +22,8 @@ const sidebarItems = [
   { label: "Dashboard", to: "/vendor", icon: LayoutDashboard },
   { label: "Products", to: "/vendor/products", icon: Package },
   { label: "Services", to: "/vendor/services", icon: Wrench },
+  { label: "Restaurant", to: "/vendor/restaurant", icon: UtensilsCrossed },
+  { label: "Food Orders", to: "/vendor/food-orders", icon: ShoppingCart },
   { label: "Availability", to: "/vendor/availability", icon: CalendarClock },
   { label: "Orders", to: "/vendor/orders", icon: ShoppingCart },
   { label: "Settlements", to: "/vendor/settlements", icon: DollarSign },
