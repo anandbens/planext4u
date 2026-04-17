@@ -124,7 +124,12 @@ export default function AdminRestaurantsPage() {
               <div><Label>Phone</Label><Input value={editing.phone || ""} onChange={e => setEditing({ ...editing, phone: e.target.value })} /></div>
               <div><Label>Vendor ID (link)</Label><Input value={editing.vendor_id || ""} onChange={e => setEditing({ ...editing, vendor_id: e.target.value || null })} /></div>
               <div><Label>Cover Image URL</Label><Input value={editing.cover_image || ""} onChange={e => setEditing({ ...editing, cover_image: e.target.value })} /></div>
+              <div><Label>Banner URL</Label><Input value={(editing as any).banner_url || ""} onChange={e => setEditing({ ...editing, banner_url: e.target.value } as any)} /></div>
               <div><Label>Logo URL</Label><Input value={editing.logo_url || ""} onChange={e => setEditing({ ...editing, logo_url: e.target.value })} /></div>
+              <div className="sm:col-span-2"><Label>Gallery URLs (comma-separated)</Label>
+                <Input value={Array.isArray((editing as any).gallery_urls) ? ((editing as any).gallery_urls as string[]).join(", ") : ""} onChange={e => setEditing({ ...editing, gallery_urls: e.target.value.split(",").map(s => s.trim()).filter(Boolean) } as any)} />
+              </div>
+              <div><Label>FSSAI License</Label><Input value={editing.fssai_license || ""} onChange={e => setEditing({ ...editing, fssai_license: e.target.value })} /></div>
               <div><Label>Opening Time</Label><Input type="time" value={editing.opening_time || ""} onChange={e => setEditing({ ...editing, opening_time: e.target.value })} /></div>
               <div><Label>Closing Time</Label><Input type="time" value={editing.closing_time || ""} onChange={e => setEditing({ ...editing, closing_time: e.target.value })} /></div>
               <div><Label>Avg Prep Min</Label><Input type="number" value={editing.avg_prep_minutes ?? 20} onChange={e => setEditing({ ...editing, avg_prep_minutes: Number(e.target.value) })} /></div>
@@ -247,6 +252,17 @@ function MenuManager({ restaurant, onClose }: { restaurant: Restaurant; onClose:
                 </div>
                 <div><Label>Prep Min</Label><Input type="number" value={editItem.prep_minutes ?? 15} onChange={e => setEditItem({ ...editItem, prep_minutes: Number(e.target.value) })} /></div>
                 <div><Label>GST %</Label><Input type="number" value={editItem.gst_rate ?? 5} onChange={e => setEditItem({ ...editItem, gst_rate: Number(e.target.value) })} /></div>
+                <div><Label>Calories (kcal)</Label><Input type="number" value={(editItem as any).calories ?? ""} onChange={e => setEditItem({ ...editItem, calories: e.target.value ? Number(e.target.value) : null } as any)} /></div>
+                <div><Label>Spice Level</Label>
+                  <select className="w-full border rounded h-10 px-2 bg-background" value={editItem.spice_level || ""} onChange={e => setEditItem({ ...editItem, spice_level: e.target.value || null })}>
+                    <option value="">— None —</option>
+                    <option value="mild">Mild</option><option value="medium">Medium</option>
+                    <option value="spicy">Spicy</option><option value="extra_spicy">Extra Spicy</option>
+                  </select>
+                </div>
+                <div className="sm:col-span-2"><Label>Dietary Tags (comma-separated)</Label>
+                  <Input placeholder="Jain, Halal, Keto, Gluten-Free" value={Array.isArray((editItem as any).dietary_tags) ? ((editItem as any).dietary_tags as string[]).join(", ") : ""} onChange={e => setEditItem({ ...editItem, dietary_tags: e.target.value.split(",").map(s => s.trim()).filter(Boolean) } as any)} />
+                </div>
                 <div className="flex items-center gap-2 pt-6"><Switch checked={!!editItem.is_veg} onCheckedChange={(v) => setEditItem({ ...editItem, is_veg: v })} /><Label>Veg</Label></div>
                 <div className="flex items-center gap-2 pt-6"><Switch checked={!!editItem.in_stock} onCheckedChange={(v) => setEditItem({ ...editItem, in_stock: v })} /><Label>In Stock</Label></div>
                 <div className="flex items-center gap-2 pt-6"><Switch checked={!!editItem.is_bestseller} onCheckedChange={(v) => setEditItem({ ...editItem, is_bestseller: v })} /><Label>Bestseller</Label></div>

@@ -1657,15 +1657,103 @@ export type Database = {
           },
         ]
       }
+      menu_combos: {
+        Row: {
+          combo_price: number
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          item_ids: string[]
+          name: string
+          original_price: number
+          restaurant_id: string
+          updated_at: string
+        }
+        Insert: {
+          combo_price?: number
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_ids?: string[]
+          name: string
+          original_price?: number
+          restaurant_id: string
+          updated_at?: string
+        }
+        Update: {
+          combo_price?: number
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_ids?: string[]
+          name?: string
+          original_price?: number
+          restaurant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_combos_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_item_notify_requests: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          menu_item_id: string
+          notified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          menu_item_id: string
+          notified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          menu_item_id?: string
+          notified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_notify_requests_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           addons: Json | null
+          calories: number | null
           category_id: string | null
           created_at: string
           customizations: Json | null
           description: string | null
+          dietary_tags: string[] | null
           discounted_price: number | null
           display_order: number
+          gallery_urls: Json | null
           gst_rate: number
           id: string
           image_url: string | null
@@ -1673,6 +1761,7 @@ export type Database = {
           is_bestseller: boolean
           is_veg: boolean
           name: string
+          order_count: number | null
           prep_minutes: number | null
           price: number
           restaurant_id: string
@@ -1682,12 +1771,15 @@ export type Database = {
         }
         Insert: {
           addons?: Json | null
+          calories?: number | null
           category_id?: string | null
           created_at?: string
           customizations?: Json | null
           description?: string | null
+          dietary_tags?: string[] | null
           discounted_price?: number | null
           display_order?: number
+          gallery_urls?: Json | null
           gst_rate?: number
           id?: string
           image_url?: string | null
@@ -1695,6 +1787,7 @@ export type Database = {
           is_bestseller?: boolean
           is_veg?: boolean
           name: string
+          order_count?: number | null
           prep_minutes?: number | null
           price: number
           restaurant_id: string
@@ -1704,12 +1797,15 @@ export type Database = {
         }
         Update: {
           addons?: Json | null
+          calories?: number | null
           category_id?: string | null
           created_at?: string
           customizations?: Json | null
           description?: string | null
+          dietary_tags?: string[] | null
           discounted_price?: number | null
           display_order?: number
+          gallery_urls?: Json | null
           gst_rate?: number
           id?: string
           image_url?: string | null
@@ -1717,6 +1813,7 @@ export type Database = {
           is_bestseller?: boolean
           is_veg?: boolean
           name?: string
+          order_count?: number | null
           prep_minutes?: number | null
           price?: number
           restaurant_id?: string
@@ -3134,6 +3231,7 @@ export type Database = {
           address: string
           area_id: string | null
           avg_prep_minutes: number
+          banner_url: string | null
           city_id: string | null
           closing_time: string | null
           commission_rate: number
@@ -3145,6 +3243,7 @@ export type Database = {
           email: string | null
           fssai_expiry: string | null
           fssai_license: string | null
+          gallery_urls: Json | null
           id: string
           is_active: boolean
           latitude: number | null
@@ -3169,6 +3268,7 @@ export type Database = {
           address: string
           area_id?: string | null
           avg_prep_minutes?: number
+          banner_url?: string | null
           city_id?: string | null
           closing_time?: string | null
           commission_rate?: number
@@ -3180,6 +3280,7 @@ export type Database = {
           email?: string | null
           fssai_expiry?: string | null
           fssai_license?: string | null
+          gallery_urls?: Json | null
           id: string
           is_active?: boolean
           latitude?: number | null
@@ -3204,6 +3305,7 @@ export type Database = {
           address?: string
           area_id?: string | null
           avg_prep_minutes?: number
+          banner_url?: string | null
           city_id?: string | null
           closing_time?: string | null
           commission_rate?: number
@@ -3215,6 +3317,7 @@ export type Database = {
           email?: string | null
           fssai_expiry?: string | null
           fssai_license?: string | null
+          gallery_urls?: Json | null
           id?: string
           is_active?: boolean
           latitude?: number | null
@@ -5702,6 +5805,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      refresh_menu_item_order_counts: { Args: never; Returns: undefined }
       refresh_social_post_counts: {
         Args: { _post_id: string }
         Returns: undefined
