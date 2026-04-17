@@ -16,6 +16,7 @@ import { VendorLayout } from "@/components/vendor/VendorLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 
 const statusStyle: Record<string, string> = {
   active: "bg-success/10 text-success", inactive: "bg-destructive/10 text-destructive", draft: "bg-muted text-muted-foreground",
@@ -214,16 +215,20 @@ export default function VendorServicesPage() {
             <div><Label>Title</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required /></div>
             <div><Label>Description</Label><RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Service description..." minHeight="100px" /></div>
             
-            {/* Image URL */}
+            {/* Service Image — via Media Library */}
             <div>
-              <Label>Service Image URL</Label>
-              <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="https://..." />
-              {form.image && (
-                <div className="relative mt-2 h-32 rounded-lg overflow-hidden bg-secondary/30">
-                  <img src={form.image} alt="" className="w-full h-full object-cover" />
-                  <button type="button" className="absolute top-1 right-1 h-6 w-6 rounded-full bg-card/80 flex items-center justify-center" onClick={() => setForm({ ...form, image: "" })}><X className="h-3 w-3" /></button>
-                </div>
-              )}
+              <Label>Service Image *</Label>
+              <MediaLibraryPicker
+                value={form.image}
+                onChange={(url) => setForm({ ...form, image: url })}
+                folder="service-images"
+                label="Upload or pick from Media Library"
+                aspectRatio="aspect-video"
+                className="mt-1"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Images are managed through your Media Library.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
