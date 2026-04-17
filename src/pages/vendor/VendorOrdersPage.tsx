@@ -49,6 +49,10 @@ export default function VendorOrdersPage() {
   const updateStatus = useMutation({
     mutationFn: ({ id, status, shippingData }: { id: string; status: Order['status']; shippingData?: any }) => api.updateOrderStatus(id, status, shippingData),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["vendorOrders"] }); toast.success("Order status updated"); },
+    onError: (err: any) => {
+      console.error("Order status update failed:", err);
+      toast.error(err?.message || "Failed to update order status. Please try again.");
+    },
   });
 
   const newOrders = orders?.filter((o) => o.status === 'placed') || [];

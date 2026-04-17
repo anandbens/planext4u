@@ -81,20 +81,35 @@ export async function decrementStockForCart(cart: CartItem[]): Promise<void> {
     if (qty <= 0) continue;
 
     try {
+      // Always bump the parent product's sold_count regardless of variant
+      const { data: parent } = await supabase
+        .from('products')
+        .select('stock, sold_count')
+        .eq('id', realProductId)
+        .maybeSingle();
+
       if (item.variant_id) {
         const { data: v } = await supabase.from('product_variants').select('stock_quantity').eq('id', item.variant_id).maybeSingle();
-        const current = v?.stock_quantity ?? 0;
+        const current = (v as any)?.stock_quantity ?? 0;
         const next = Math.max(0, current - qty);
         await supabase.from('product_variants').update({
           stock_quantity: next,
           stock_status: next === 0 ? 'out_of_stock' : 'in_stock',
         }).eq('id', item.variant_id);
       } else {
-        const { data: p } = await supabase.from('products').select('stock').eq('id', realProductId).maybeSingle();
-        const current = (p as any)?.stock ?? 0;
+        const current = (parent as any)?.stock ?? 0;
         const next = Math.max(0, current - qty);
-        await supabase.from('products').update({ stock: next }).eq('id', realProductId);
+        await supabase.from('products').update({
+          stock: next,
+          stock_status: next === 0 ? 'out_of_stock' : 'in_stock',
+        } as any).eq('id', realProductId);
       }
+
+      // Increment sold_count on the parent product
+      const currentSold = (parent as any)?.sold_count ?? 0;
+      await supabase.from('products').update({
+        sold_count: currentSold + qty,
+      } as any).eq('id', realProductId);
     } catch (err) {
       console.error('Stock decrement failed for', item.id, err);
     }
