@@ -523,14 +523,61 @@ export default function SocioDMChatPage() {
                   ) : msg.message_type !== 'image' && (
                     <p>{msg.content}</p>
                   )}
+                  {/* React button */}
+                  <button
+                    onClick={() => setReactionPickerFor(reactionPickerFor === msg.id ? null : msg.id)}
+                    className={`absolute ${mine ? '-left-7' : '-right-7'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity h-6 w-6 rounded-full bg-card border border-border shadow-sm flex items-center justify-center hover:bg-accent`}
+                    title="React"
+                  >
+                    <Smile className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
                   {mine && (
                     <button onClick={handleDeleteMsg}
-                      className="absolute -left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5 rounded-full bg-destructive/80 flex items-center justify-center"
+                      className="absolute -left-14 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5 rounded-full bg-destructive/80 flex items-center justify-center"
                       title="Delete message">
                       <X className="h-3 w-3 text-white" />
                     </button>
                   )}
                 </div>
+
+                {/* Reaction picker */}
+                {reactionPickerFor === msg.id && (
+                  <div className={`mt-1 inline-flex gap-1 px-2 py-1.5 rounded-full bg-card border border-border shadow-md ${mine ? 'ml-auto' : ''}`}>
+                    {REACTION_EMOJIS.map(em => {
+                      const mineReacted = reactions.some(r => r.message_id === msg.id && r.user_id === currentUserId && r.emoji === em);
+                      return (
+                        <button key={em} onClick={() => toggleReaction(msg.id, em)}
+                          className={`text-lg leading-none px-1.5 py-0.5 rounded-full hover:scale-125 transition-transform ${mineReacted ? 'bg-primary/20' : ''}`}>
+                          {em}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Reaction chips */}
+                {(() => {
+                  const msgReactions = reactions.filter(r => r.message_id === msg.id);
+                  if (msgReactions.length === 0) return null;
+                  const grouped = msgReactions.reduce<Record<string, { count: number; mine: boolean }>>((acc, r) => {
+                    if (!acc[r.emoji]) acc[r.emoji] = { count: 0, mine: false };
+                    acc[r.emoji].count++;
+                    if (r.user_id === currentUserId) acc[r.emoji].mine = true;
+                    return acc;
+                  }, {});
+                  return (
+                    <div className={`flex gap-1 flex-wrap mt-1 ${mine ? 'justify-end' : 'justify-start'}`}>
+                      {Object.entries(grouped).map(([em, info]) => (
+                        <button key={em} onClick={() => toggleReaction(msg.id, em)}
+                          className={`text-[11px] flex items-center gap-1 px-2 py-0.5 rounded-full border ${info.mine ? 'bg-primary/15 border-primary/40' : 'bg-card border-border'} hover:scale-105 transition-transform`}>
+                          <span className="text-sm leading-none">{em}</span>
+                          {info.count > 1 && <span className="text-[10px] text-muted-foreground">{info.count}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
+
                 <div className={`flex items-center gap-1 mt-0.5 ${mine ? 'justify-end' : 'justify-start'}`}>
                   <span className="text-[9px] text-muted-foreground">{format(new Date(msg.created_at), 'h:mm a')}</span>
                   {mine && (msg.is_read ? <CheckCheck className="h-3 w-3 text-primary" /> : <Check className="h-3 w-3 text-muted-foreground" />)}
