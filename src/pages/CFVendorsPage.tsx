@@ -179,14 +179,31 @@ export default function CFVendorsPage() {
         toast.success("Application updated");
       }
     } else {
-      try {
-        // Use api.updateVendor so non-existent columns are filtered out before write
-        await api.updateVendor(id, updates);
-        toast.success("Service vendor updated");
-      } catch (err: any) {
-        toast.error("Failed to update: " + (err.message || "Unknown error"));
+      // Always update service_vendors table directly — IDs may also exist in `vendors`
+      // table (legacy), in which case api.updateVendor would write to the wrong table.
+      const validSvcFields = ['name', 'business_name', 'mobile', 'email', 'category_id', 'city_id', 'area_id',
+        'commission_rate', 'membership', 'status', 'rating', 'plan_id', 'plan_payment_status',
+        'plan_transaction_id', 'shop_photo_url', 'max_redemption_percentage', 'kyc_status', 'shop_address'];
+      const uuidFields = ['plan_id', 'category_id', 'city_id', 'area_id'];
+      const svcUpdates: Record<string, any> = {};
+      for (const key of validSvcFields) {
+        if (key in (updates as any)) {
+          let v = (updates as any)[key];
+          if (uuidFields.includes(key) && v === '') v = null;
+          svcUpdates[key] = v;
+        }
+      }
+      const { data: updated, error } = await supabase.from('service_vendors' as any)
+        .update(svcUpdates).eq('id', id).select();
+      if (error) {
+        toast.error("Failed to update: " + error.message);
         return;
       }
+      if (!updated || updated.length === 0) {
+        toast.error("Update failed — no matching service vendor found.");
+        return;
+      }
+      toast.success("Service vendor updated");
     }
     fetchData(); fetchStats();
   };
