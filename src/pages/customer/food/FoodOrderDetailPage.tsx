@@ -195,7 +195,7 @@ export default function FoodOrderDetailPage() {
                     </p>
                     {rider.rating > 0 && (
                       <div className="flex items-center gap-1 text-xs mt-0.5">
-                        <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+                        <Star className="h-3 w-3 fill-warning text-warning" />
                         <span>{rider.rating.toFixed(1)} • {rider.total_deliveries} deliveries</span>
                       </div>
                     )}
