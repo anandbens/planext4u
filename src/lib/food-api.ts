@@ -365,4 +365,37 @@ export const foodApi = {
     const { error } = await supabase.rpc('refresh_menu_item_order_counts' as any);
     if (error) throw error;
   },
+
+  // ─── Coupons ─────────────────────────────────────────────────
+  validateCoupon: async (code: string, customerId: string, restaurantId: string, subtotal: number) => {
+    const { data, error } = await supabase.rpc('validate_food_coupon' as any, {
+      _code: code, _customer_id: customerId, _restaurant_id: restaurantId, _subtotal: subtotal,
+    });
+    if (error) throw error;
+    return data as { valid: boolean; reason?: string; discount?: number; code?: string; title?: string; coupon_id?: string };
+  },
+
+  bestCoupon: async (customerId: string, restaurantId: string, subtotal: number) => {
+    const { data, error } = await supabase.rpc('best_food_coupon' as any, {
+      _customer_id: customerId, _restaurant_id: restaurantId, _subtotal: subtotal,
+    });
+    if (error) throw error;
+    return data as { valid: boolean; discount?: number; code?: string; title?: string; coupon_id?: string };
+  },
+
+  listActiveCoupons: async (restaurantId?: string) => {
+    let q = supabase.from('food_coupons' as any).select('*').eq('is_active', true);
+    const { data, error } = await q.order('created_at', { ascending: false });
+    if (error) throw error;
+    const all = (data || []) as any[];
+    if (!restaurantId) return all;
+    return all.filter(c => c.is_platform_wide || c.restaurant_id === restaurantId);
+  },
+
+  recordCouponRedemption: async (couponId: string, code: string, customerId: string, orderId: string, discount: number) => {
+    await supabase.from('food_coupon_redemptions' as any).insert({
+      coupon_id: couponId, coupon_code: code, customer_id: customerId, order_id: orderId, discount_applied: discount,
+    } as any);
+    await supabase.rpc('exec_sql' as any).then(() => {}).catch(() => {});
+  },
 };
