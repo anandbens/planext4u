@@ -8,6 +8,7 @@ import { foodApi, Rider } from "@/lib/food-api";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LogOut, MapPin, Phone, Bike, Star } from "lucide-react";
+import { LiveTrackingMap } from "@/components/food/LiveTrackingMap";
 
 export default function RiderDashboardPage() {
   const navigate = useNavigate();
