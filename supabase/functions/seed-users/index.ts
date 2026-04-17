@@ -21,6 +21,8 @@ Deno.serve(async (req) => {
       { email: "sales@planext4u.com", password: "P4u@Sales2026", name: "Sales Executive", role: "sales" as const },
       { email: "vendor@planext4u.com", password: "P4u@Vendor2026", name: "Ravi Kumar", role: "vendor" as const, vendor_id: "VND-001" },
       { email: "customer@planext4u.com", password: "P4u@Customer2026", name: "Rahul Sharma", role: "customer" as const, customer_id: "USR-001" },
+      { email: "rider1@planext4u.com", password: "P4u@Rider2026", name: "Karthik Raja", role: "rider" as const, rider_id: "RIDER-001" },
+      { email: "rider2@planext4u.com", password: "P4u@Rider2026", name: "Manoj Kumar", role: "rider" as const, rider_id: "RIDER-002" },
     ];
 
     const results = [];
