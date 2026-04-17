@@ -52,6 +52,16 @@ export default function PeopleYouMayKnow() {
       const merged: Suggestion[] = [];
       const seenIds = new Set<string>([userId]);
 
+      // Pre-load IDs the current user already follows so we never suggest them again
+      const { data: existingFollows } = await supabase
+        .from("social_follows")
+        .select("following_id")
+        .eq("follower_id", userId)
+        .eq("status", "active");
+      for (const f of existingFollows || []) {
+        seenIds.add((f as any).following_id);
+      }
+
       // 1. Friends of friends (always available, no permission required)
       const fof = await getFriendsOfFriends(userId, 10);
       for (const f of fof) {
@@ -71,13 +81,13 @@ export default function PeopleYouMayKnow() {
         const matched = await findFriends();
         for (const m of matched) {
           if (seenIds.has(m.id)) continue;
-          // Look up the social profile to get user_id
           const { data: profile } = await supabase
             .from("social_profiles")
             .select("user_id, display_name, username, avatar_url")
             .eq("user_id", m.id)
             .maybeSingle();
           if (!profile) continue;
+          if (seenIds.has(profile.user_id)) continue;
           seenIds.add(profile.user_id);
           merged.push({
             id: profile.user_id,
@@ -88,13 +98,16 @@ export default function PeopleYouMayKnow() {
         }
       }
 
-      // 3. Fallback: discover new profiles if list is short
+      // 3. Fallback: discover new profiles if list is short — excludes already-followed users
       if (merged.length < 6) {
         const excludeIds = Array.from(seenIds);
+        const excludeList = excludeIds.length > 0
+          ? `(${excludeIds.map((id) => `"${id}"`).join(",")})`
+          : '("00000000-0000-0000-0000-000000000000")';
         const { data: profiles } = await supabase
           .from("social_profiles")
           .select("user_id, display_name, username, avatar_url")
-          .not("user_id", "in", `(${excludeIds.join(",")})`)
+          .not("user_id", "in", excludeList)
           .limit(10 - merged.length);
 
         for (const p of profiles || []) {
@@ -112,7 +125,7 @@ export default function PeopleYouMayKnow() {
       return merged.slice(0, 12);
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
   });
 
   const followMutation = useMutation({
