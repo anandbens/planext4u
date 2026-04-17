@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { BannerAd } from "@/components/customer/BannerAd";
 import { useAuth } from "@/lib/auth";
+import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";
+import { CategoryProductRow } from "@/components/customer/CategoryProductRow";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
@@ -74,6 +76,24 @@ export default function CustomerBrowsePage() {
   });
 
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
+
+  // Detect parent category & subcategories for sectioned layout
+  const activeCategory = categories?.find((c) => c.name === categoryFilter);
+  const subcategories = activeCategory && !activeCategory.parent_id
+    ? (categories || []).filter((c) => c.parent_id === activeCategory.id)
+    : [];
+  const isParentCategoryView = !!activeCategory && !activeCategory.parent_id && subcategories.length > 0 && !searchFilter;
+
+  // Derive featured / popular / most-redeemed slices from the loaded products
+  const featuredProducts = isParentCategoryView
+    ? [...(products || [])].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 8)
+    : [];
+  const popularProducts = isParentCategoryView
+    ? [...(products || [])].sort((a, b) => ((b as any).sales || 0) - ((a as any).sales || 0)).slice(0, 8)
+    : [];
+  const mostRedeemedProducts = isParentCategoryView
+    ? [...(products || [])].sort((a, b) => (b.max_points_redeemable || 0) - (a.max_points_redeemable || 0)).slice(0, 8)
+    : [];
 
   useEffect(() => {
     api.getCart().then(items => setCartCount(items.reduce((s, i) => s + i.qty, 0)));
@@ -206,6 +226,43 @@ export default function CustomerBrowsePage() {
             ))}
           </div>
         </div>
+
+        {/* Sectioned layout for parent categories */}
+        {isParentCategoryView && (
+          <>
+            <SubcategoryStrip parentName={activeCategory!.name} subcategories={subcategories} />
+            <CategoryProductRow
+              title="Featured"
+              products={featuredProducts as any}
+              isLoading={isLoading}
+              wishlist={wishlist}
+              onToggleWishlist={toggleWishlist}
+              onQuickAdd={quickAdd}
+              onBuyNow={buyNow}
+            />
+            <CategoryProductRow
+              title="Popular in this category"
+              products={popularProducts as any}
+              isLoading={isLoading}
+              wishlist={wishlist}
+              onToggleWishlist={toggleWishlist}
+              onQuickAdd={quickAdd}
+              onBuyNow={buyNow}
+            />
+            <CategoryProductRow
+              title="Most redeemed with points"
+              products={mostRedeemedProducts as any}
+              isLoading={isLoading}
+              wishlist={wishlist}
+              onToggleWishlist={toggleWishlist}
+              onQuickAdd={quickAdd}
+              onBuyNow={buyNow}
+            />
+            <div className="flex items-center justify-between mb-3 px-1 mt-2">
+              <h2 className="text-base md:text-lg font-bold">All products</h2>
+            </div>
+          </>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
