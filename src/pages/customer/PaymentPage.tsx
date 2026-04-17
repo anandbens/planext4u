@@ -9,6 +9,7 @@ import { ArrowLeft, CheckCircle, XCircle, Copy, Share2, ShoppingBag, CreditCard 
 import { api } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveCommissionCascade } from "@/lib/commission-cascade";
+import { checkCartStock, decrementStockForCart } from "@/lib/stock-check";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 import { format, addDays } from "date-fns";
@@ -46,6 +47,20 @@ export default function PaymentPage() {
     setPaymentState('processing');
 
     try {
+      // Final stock cross-check right before charging the customer
+      try {
+        const issues = await checkCartStock(cart as any);
+        if (issues.length > 0) {
+          const first = issues[0];
+          toast.error(`Stock Unavailable for the Product ${first.title} so remove the item from the cart to checkout`, { duration: 6000 });
+          setPaymentState('select');
+          navigate('/app/cart');
+          return;
+        }
+      } catch (e) {
+        console.error('Pre-payment stock check failed', e);
+      }
+
       const loaded = await loadRazorpayScript();
       if (!loaded) { toast.error("Failed to load payment gateway"); setPaymentState('select'); return; }
 
@@ -177,6 +192,8 @@ export default function PaymentPage() {
       });
 
       await Promise.all(orderPromises);
+      // Decrement stock for the products that were just paid for
+      try { await decrementStockForCart(cart as any); } catch (e) { console.error('Stock decrement failed', e); }
       await api.clearCart();
 
       // Deduct wallet points and record the redemption transaction
