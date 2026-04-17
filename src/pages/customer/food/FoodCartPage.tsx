@@ -470,7 +470,9 @@ export default function FoodCartPage() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border/50 px-4 py-3">
         <Button onClick={placeOrder} disabled={placing} className="w-full h-12 text-base font-semibold">
-          {placing ? "Placing..." : `Place Order • ₹${total}`}
+          {placing
+            ? (paymentMethod === 'cod' ? "Placing..." : "Processing payment...")
+            : (paymentMethod === 'cod' ? `Place Order • ₹${total}` : `Pay ₹${total}`)}
         </Button>
       </div>
     </div>
