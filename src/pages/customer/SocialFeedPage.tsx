@@ -359,8 +359,27 @@ function PostCard({ post }: { post: any }) {
 
   const displayComments = isMock ? mockComments : (showAllComments ? allComments : recentComments);
 
+  const isRepost = !!post.is_repost && !!post.original_post;
+  const original = post.original_post;
+  const originalOwner = original?.owner;
+  const originalOwnerName = originalOwner?.display_name || originalOwner?.username || 'user';
+
   return (
     <article className="border-b border-border/20">
+      {/* Repost credit banner */}
+      {isRepost && (
+        <div className="flex items-center gap-2 px-4 pt-3 pb-1 text-xs text-muted-foreground">
+          <Repeat2 className="h-3.5 w-3.5" />
+          <span>
+            <Link to={`/app/social/profile/${post.user_id}`} className="font-semibold text-foreground">{username}</Link>
+            {' reposted • Original by '}
+            <Link to={`/app/social/profile/${original.user_id}`} className="font-semibold text-foreground">@{originalOwnerName}</Link>
+          </span>
+        </div>
+      )}
+      {isRepost && post.repost_note && (
+        <p className="px-4 pb-1 text-sm text-foreground/80 italic">"{post.repost_note}"</p>
+      )}
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3">
         <Link to={`/app/social/profile/${post.user_id}`}>
