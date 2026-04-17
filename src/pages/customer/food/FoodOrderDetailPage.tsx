@@ -6,10 +6,11 @@ import { useAuth } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Clock, MessageCircle, Phone, RotateCcw, X, Star, Bike, ChefHat, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, MessageCircle, Phone, RotateCcw, X, Star, Bike, ChefHat, CheckCircle2, FileText, Receipt } from "lucide-react";
 import { LiveTrackingMap } from "@/components/food/LiveTrackingMap";
 import { OrderChatPanel } from "@/components/food/OrderChatPanel";
 import { CancelOrderDialog } from "@/components/food/CancelOrderDialog";
+import { downloadInvoice } from "@/lib/food-invoice";
 import { toast } from "sonner";
 
 const STATUS_STEPS = ['placed', 'accepted', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'];
