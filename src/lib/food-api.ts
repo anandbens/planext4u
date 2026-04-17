@@ -396,7 +396,7 @@ export const foodApi = {
     await supabase.from('food_coupon_redemptions' as any).insert({
       coupon_id: couponId, coupon_code: code, customer_id: customerId, order_id: orderId, discount_applied: discount,
     } as any);
-    await supabase.rpc('exec_sql' as any).then(() => {}).catch(() => {});
+    try { await supabase.rpc('exec_sql' as any); } catch {}
   },
 
   // ─── Chat ────────────────────────────────────────────────────

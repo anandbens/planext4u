@@ -145,6 +145,7 @@ export default function VendorRegisterPage() {
         bank_account_number: app.bank_account_number || '', bank_confirm_account: app.bank_account_number || '',
         bank_ifsc: app.bank_ifsc || '', bank_holder_name: app.bank_holder_name || '',
         store_logo_url: app.store_logo_url || '',
+        referral_code: (app as any).referral_code || '',
       });
     }
     setAppLoading(false);
