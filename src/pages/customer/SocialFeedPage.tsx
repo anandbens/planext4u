@@ -615,7 +615,10 @@ function PostCard({ post }: { post: any }) {
             >
               <div className="px-4 space-y-1 max-h-60 overflow-y-auto">
                 {(!showAllComments && !isMock ? recentComments : displayComments).map((c: any) => (
-                  <CommentItem key={c.id} comment={c} isMock={isMock} />
+                  <CommentItem key={c.id} comment={c} isMock={isMock} postId={postId} onReply={(name) => {
+                    setShowCommentInput(true);
+                    setCommentText(prev => prev.includes(`@${name}`) ? prev : `@${name} ` + prev);
+                  }} />
                 ))}
               </div>
               {showAllComments && (
