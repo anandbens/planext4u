@@ -449,4 +449,89 @@ export const foodApi = {
     if (error) throw error;
     return data;
   },
+
+  // ─── Payments (Razorpay) ─────────────────────────────────────
+  createRazorpayOrder: async (amount: number, notes?: Record<string, string>) => {
+    const { data, error } = await supabase.functions.invoke('razorpay', {
+      body: { action: 'create_order', amount, currency: 'INR', notes },
+    });
+    if (error) throw error;
+    if ((data as any)?.error) throw new Error((data as any).error);
+    return data as { order_id: string; key_id: string; amount: number; currency: string };
+  },
+
+  verifyRazorpayPayment: async (order_id: string, payment_id: string, razorpay_signature: string) => {
+    const { data, error } = await supabase.functions.invoke('razorpay', {
+      body: { action: 'verify_payment', order_id, payment_id, razorpay_signature },
+    });
+    if (error) throw error;
+    return (data as any)?.verified === true;
+  },
+
+  recordPayment: async (payload: {
+    order_id: string; customer_id: string; payment_method: string;
+    payment_provider?: string; amount: number; status?: string;
+    razorpay_order_id?: string | null; razorpay_payment_id?: string | null;
+    razorpay_signature?: string | null; failure_reason?: string | null;
+    metadata?: Record<string, unknown>;
+  }) => {
+    const { data, error } = await supabase.from('food_payments' as any).insert({
+      order_id: payload.order_id, customer_id: payload.customer_id,
+      txn_type: 'payment', payment_method: payload.payment_method,
+      payment_provider: payload.payment_provider || (payload.payment_method === 'cod' ? 'cod' : 'razorpay'),
+      amount: payload.amount, status: payload.status || 'pending',
+      razorpay_order_id: payload.razorpay_order_id || null,
+      razorpay_payment_id: payload.razorpay_payment_id || null,
+      razorpay_signature: payload.razorpay_signature || null,
+      failure_reason: payload.failure_reason || null,
+      metadata: (payload.metadata || {}) as any,
+    } as any).select().maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  listMyPayments: async (customerId: string) => {
+    const { data, error } = await supabase.from('food_payments' as any)
+      .select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as any[];
+  },
+
+  listOrderPayments: async (orderId: string) => {
+    const { data, error } = await supabase.from('food_payments' as any)
+      .select('*').eq('order_id', orderId).order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as any[];
+  },
+
+  // ─── Refunds ─────────────────────────────────────────────────
+  initiateRefund: async (orderId: string, amount: number, reason = 'order_cancelled', method: 'original'|'wallet'|'manual' = 'original') => {
+    const { data, error } = await supabase.rpc('initiate_food_refund' as any, {
+      _order_id: orderId, _amount: amount, _reason: reason, _refund_method: method,
+    });
+    if (error) throw error;
+    return data as { ok: boolean; reason?: string; refund_id?: string; note?: string };
+  },
+
+  listMyRefunds: async (customerId: string) => {
+    const { data, error } = await supabase.from('food_refunds' as any)
+      .select('*').eq('customer_id', customerId).order('initiated_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as any[];
+  },
+
+  // ─── Invoices ────────────────────────────────────────────────
+  getInvoice: async (orderId: string) => {
+    const { data, error } = await supabase.from('food_invoices' as any)
+      .select('*').eq('order_id', orderId).maybeSingle();
+    if (error) throw error;
+    return data as any;
+  },
+
+  listMyInvoices: async (customerId: string) => {
+    const { data, error } = await supabase.from('food_invoices' as any)
+      .select('*').eq('customer_id', customerId).order('generated_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as any[];
+  },
 };
