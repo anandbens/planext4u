@@ -32,7 +32,8 @@ const statusFlow: Vendor["status"][] = ["pending", "level1_approved", "level2_ap
 
 const emptyForm = {
   name: "", business_name: "", email: "", mobile: "", rejection_reason: "",
-  commission_rate: 10, membership: "basic", status: "pending" as Vendor["status"],
+  // Admin-created vendors bypass the Submitted review state and go live immediately as `verified`.
+  commission_rate: 10, membership: "basic", status: "verified" as Vendor["status"],
   category_id: "1", city_id: "1", area_id: "1", plan_id: "",
   plan_payment_status: "unpaid", plan_transaction_id: "", shop_photo_url: "",
   max_redemption_percentage: null as number | null,

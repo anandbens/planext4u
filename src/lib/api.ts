@@ -349,8 +349,24 @@ export const api = {
   },
 
   createCustomer: async (data: Partial<User>) => {
+    // Welcome bonus is configured via platform_variables (key: welcome_points). Default 200.
+    let welcomePoints = 200;
+    try {
+      const { data: pv } = await supabase
+        .from('platform_variables')
+        .select('value')
+        .eq('key', 'welcome_points')
+        .maybeSingle();
+      const parsed = Number(pv?.value);
+      if (!Number.isNaN(parsed) && parsed > 0) welcomePoints = parsed;
+    } catch { /* keep default */ }
+
+    const newId = genId('USR');
+    // If caller explicitly passed wallet_points, honour it; otherwise grant the configured welcome bonus.
+    const initialPoints = (data.wallet_points != null) ? Number(data.wallet_points) : welcomePoints;
+
     const newCustomer = {
-      id: genId('USR'),
+      id: newId,
       name: data.name || '',
       email: data.email || '',
       mobile: data.mobile || '',
@@ -358,7 +374,7 @@ export const api = {
       area_id: data.area_id || '1',
       latitude: data.latitude || 0,
       longitude: data.longitude || 0,
-      wallet_points: data.wallet_points || 0,
+      wallet_points: initialPoints,
       referral_code: `MRCP4U${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`,
       referred_by: data.referred_by || null,
       status: data.status || 'active',
@@ -366,6 +382,23 @@ export const api = {
     };
     const { error } = await supabase.from('customers').insert(newCustomer);
     if (error) throw error;
+
+    // Record the welcome bonus in points_transactions so it shows under Wallet/Points history
+    if (initialPoints > 0) {
+      try {
+        await supabase.from('points_transactions').insert({
+          id: genId('PT'),
+          user_id: newId,
+          type: 'welcome',
+          points: initialPoints,
+          description: 'Welcome bonus on registration',
+          user_name: newCustomer.name,
+        });
+      } catch (e) {
+        console.warn('Welcome bonus transaction insert failed (customer still created):', e);
+      }
+    }
+
     return { success: true, customer: newCustomer };
   },
 
@@ -414,7 +447,12 @@ export const api = {
     svQuery = svQuery.order('created_at', { ascending: false });
 
     const [{ data: vendors, count: vCount }, { data: svcVendors, count: svCount }] = await Promise.all([vQuery, svQuery]);
-    const all = [...(vendors || []), ...(svcVendors || [])];
+    // Merge both tables and sort globally by created_at desc so new entries always show on top
+    const all = [...(vendors || []), ...(svcVendors || [])].sort((a: any, b: any) => {
+      const ta = new Date(a.created_at || 0).getTime();
+      const tb = new Date(b.created_at || 0).getTime();
+      return tb - ta;
+    });
     const total = (vCount || 0) + (svCount || 0);
     const paginated = all.slice(from, to + 1);
     return paginateResult(paginated, total, page, perPage);

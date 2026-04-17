@@ -204,6 +204,9 @@ export default function VendorsPage() {
       toast.error("Failed to create vendor: " + (err.message || "Unknown error"));
       return;
     }
+    // Jump to the "All" tab so the newly created (verified) vendor is visible right away.
+    if (activeTab !== "all") setActiveTab("all");
+    setPage(1);
     fetchData(); fetchStats();
   };
   const handleDelete = async (id: string) => { await api.deleteVendor(id); toast.success("Vendor deleted"); fetchData(); fetchStats(); };
