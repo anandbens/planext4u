@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, Camera, X, Bike, ChefHat, Utensils } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { compressImage } from "@/lib/webp-compress";
+import { compressToWebP } from "@/lib/webp-compress";
 import { toast } from "sonner";
 
 const FOOD_TAGS = ["Tasty Food", "Hot & Fresh", "Good Packaging", "Worth the price", "Cold Food", "Stale", "Bland", "Wrong Item"];
@@ -74,10 +74,9 @@ export function FoodReviewModal(p: Props) {
     if (photos.length >= 3) { toast.error("Maximum 3 photos"); return; }
     setUploading(true);
     try {
-      const compressed = await compressImage(file, { maxWidth: 1200, quality: 0.7 });
-      const ext = "webp";
-      const path = `food-reviews/${p.customerId}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("media-library").upload(path, compressed, { contentType: "image/webp", upsert: false });
+      const { blob } = await compressToWebP(file, { maxDimension: 1200, quality: 0.7 });
+      const path = `food-reviews/${p.customerId}/${Date.now()}.webp`;
+      const { error } = await supabase.storage.from("media-library").upload(path, blob, { contentType: "image/webp", upsert: false });
       if (error) throw error;
       const { data } = supabase.storage.from("media-library").getPublicUrl(path);
       setPhotos(ps => [...ps, data.publicUrl]);
