@@ -941,6 +941,33 @@ export type Database = {
         }
         Relationships: []
       }
+      food_cancellation_reasons: {
+        Row: {
+          applies_to: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          reason: string
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          reason: string
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          reason?: string
+        }
+        Relationships: []
+      }
       food_coupon_redemptions: {
         Row: {
           coupon_code: string
@@ -1053,6 +1080,47 @@ export type Database = {
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_order_chats: {
+        Row: {
+          created_at: string
+          id: string
+          is_quick_reply: boolean
+          message: string
+          order_id: string
+          read_at: string | null
+          sender_id: string
+          sender_role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_quick_reply?: boolean
+          message: string
+          order_id: string
+          read_at?: string | null
+          sender_id: string
+          sender_role: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_quick_reply?: boolean
+          message?: string
+          order_id?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_order_chats_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "food_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -5835,6 +5903,10 @@ export type Database = {
       calculate_entity_avg_rating: {
         Args: { _entity_id: string; _entity_type: string }
         Returns: number
+      }
+      cancel_food_order_by_customer: {
+        Args: { _order_id: string; _reason: string }
+        Returns: Json
       }
       check_otp_rate_limit: { Args: { _phone: string }; Returns: Json }
       check_phone_registered: { Args: { _phone: string }; Returns: boolean }
