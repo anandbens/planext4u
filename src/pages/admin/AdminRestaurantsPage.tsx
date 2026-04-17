@@ -157,12 +157,18 @@ export default function AdminRestaurantsPage() {
 function MenuManager({ restaurant, onClose }: { restaurant: Restaurant; onClose: () => void }) {
   const [cats, setCats] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
+  const [combos, setCombos] = useState<any[]>([]);
   const [newCat, setNewCat] = useState("");
   const [editItem, setEditItem] = useState<Partial<MenuItem> | null>(null);
+  const [editCombo, setEditCombo] = useState<any | null>(null);
 
   const load = async () => {
     const { categories, items } = await foodApi.listMenu(restaurant.id);
     setCats(categories); setItems(items);
+    try {
+      const { data } = await supabase.from("menu_combos" as any).select("*").eq("restaurant_id", restaurant.id).order("display_order");
+      setCombos((data as any[]) || []);
+    } catch {}
   };
   useEffect(() => { load(); }, [restaurant.id]);
 
@@ -192,13 +198,35 @@ function MenuManager({ restaurant, onClose }: { restaurant: Restaurant; onClose:
     await foodApi.deleteMenuItem(id); load();
   };
 
+  const saveCombo = async () => {
+    if (!editCombo?.name || !editCombo.combo_price) return toast.error("Name & combo price required");
+    if (!editCombo.item_ids || editCombo.item_ids.length < 2) return toast.error("Select at least 2 items");
+    const original = items.filter(i => editCombo.item_ids.includes(i.id)).reduce((s, i) => s + Number(i.price), 0);
+    await foodApi.upsertCombo({
+      ...editCombo,
+      restaurant_id: restaurant.id,
+      original_price: original,
+      combo_price: Number(editCombo.combo_price),
+    });
+    setEditCombo(null); load();
+  };
+
+  const delCombo = async (id: string) => {
+    if (!confirm("Delete this combo?")) return;
+    await foodApi.deleteCombo(id); load();
+  };
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Menu — {restaurant.name}</DialogTitle></DialogHeader>
 
         <Tabs defaultValue="cats">
-          <TabsList><TabsTrigger value="cats">Categories</TabsTrigger><TabsTrigger value="items">Items</TabsTrigger></TabsList>
+          <TabsList>
+            <TabsTrigger value="cats">Categories</TabsTrigger>
+            <TabsTrigger value="items">Items</TabsTrigger>
+            <TabsTrigger value="combos">Combos</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="cats" className="space-y-3 pt-3">
             <div className="flex gap-2">
@@ -232,8 +260,34 @@ function MenuManager({ restaurant, onClose }: { restaurant: Restaurant; onClose:
             ))}
             {items.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No items yet.</p>}
           </TabsContent>
+
+          <TabsContent value="combos" className="space-y-3 pt-3">
+            <Button size="sm" onClick={() => setEditCombo({ restaurant_id: restaurant.id, item_ids: [], display_order: combos.length + 1, is_active: true })}><Plus className="w-4 h-4 mr-1" /> New Combo</Button>
+            {combos.map(c => {
+              const itemsInCombo = items.filter(i => (c.item_ids || []).includes(i.id));
+              return (
+                <Card key={c.id} className="p-3 flex justify-between items-start gap-3">
+                  {c.image_url && <img src={c.image_url} alt={c.name} className="w-14 h-14 rounded object-cover" />}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">{c.name}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{itemsInCombo.map(i => i.name).join(", ")}</p>
+                    <p className="text-sm font-bold mt-1">
+                      <span className="line-through text-muted-foreground mr-2">₹{c.original_price}</span>
+                      <span className="text-success">₹{c.combo_price}</span>
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => setEditCombo(c)}><Pencil className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => delCombo(c.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                  </div>
+                </Card>
+              );
+            })}
+            {combos.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No combos yet.</p>}
+          </TabsContent>
         </Tabs>
 
+        {/* Item edit dialog */}
         <Dialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)}>
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>{editItem?.id ? "Edit Item" : "New Item"}</DialogTitle></DialogHeader>
@@ -269,6 +323,51 @@ function MenuManager({ restaurant, onClose }: { restaurant: Restaurant; onClose:
               </div>
             )}
             <DialogFooter><Button variant="outline" onClick={() => setEditItem(null)}>Cancel</Button><Button onClick={saveItem}>Save</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Combo edit dialog */}
+        <Dialog open={!!editCombo} onOpenChange={(o) => !o && setEditCombo(null)}>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>{editCombo?.id ? "Edit Combo" : "New Combo"}</DialogTitle></DialogHeader>
+            {editCombo && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="sm:col-span-2"><Label>Name *</Label><Input value={editCombo.name || ""} onChange={e => setEditCombo({ ...editCombo, name: e.target.value })} /></div>
+                <div className="sm:col-span-2"><Label>Description</Label><Textarea rows={2} value={editCombo.description || ""} onChange={e => setEditCombo({ ...editCombo, description: e.target.value })} /></div>
+                <div className="sm:col-span-2"><Label>Image URL</Label><Input value={editCombo.image_url || ""} onChange={e => setEditCombo({ ...editCombo, image_url: e.target.value })} /></div>
+                <div><Label>Combo Price ₹ *</Label><Input type="number" value={editCombo.combo_price ?? ""} onChange={e => setEditCombo({ ...editCombo, combo_price: Number(e.target.value) })} /></div>
+                <div><Label>Display Order</Label><Input type="number" value={editCombo.display_order ?? 0} onChange={e => setEditCombo({ ...editCombo, display_order: Number(e.target.value) })} /></div>
+                <div className="sm:col-span-2">
+                  <Label>Items in combo (select 2+) *</Label>
+                  <div className="max-h-48 overflow-y-auto border rounded p-2 space-y-1 mt-1">
+                    {items.map(it => {
+                      const checked = (editCombo.item_ids || []).includes(it.id);
+                      return (
+                        <label key={it.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input type="checkbox" checked={checked} onChange={(e) => {
+                            const ids: string[] = editCombo.item_ids || [];
+                            setEditCombo({ ...editCombo, item_ids: e.target.checked ? [...ids, it.id] : ids.filter(x => x !== it.id) });
+                          }} />
+                          <span className="flex-1">{it.name}</span>
+                          <span className="text-xs text-muted-foreground">₹{it.price}</span>
+                        </label>
+                      );
+                    })}
+                    {items.length === 0 && <p className="text-xs text-muted-foreground">Add menu items first</p>}
+                  </div>
+                  {editCombo.item_ids?.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Original total: ₹{items.filter(i => editCombo.item_ids.includes(i.id)).reduce((s, i) => s + Number(i.price), 0)}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 pt-2 sm:col-span-2">
+                  <Switch checked={!!editCombo.is_active} onCheckedChange={(v) => setEditCombo({ ...editCombo, is_active: v })} />
+                  <Label>Active</Label>
+                </div>
+              </div>
+            )}
+            <DialogFooter><Button variant="outline" onClick={() => setEditCombo(null)}>Cancel</Button><Button onClick={saveCombo}>Save</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       </DialogContent>
