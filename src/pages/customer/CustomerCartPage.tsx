@@ -16,6 +16,7 @@ import { api, CartItem } from "@/lib/api";
 import { format, addDays, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, isSameMonth, isBefore, startOfDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveCommissionCascade } from "@/lib/commission-cascade";
+import { checkCartStock } from "@/lib/stock-check";
 
 const TIME_SLOTS = [
   { id: "morning", label: "Morning 9 - 11 AM" },
@@ -245,6 +246,19 @@ export default function CustomerCartPage() {
       toast.error(`You can redeem a maximum of ${maxPoints} points for this order. Please enter a value between 1 and ${maxPoints}.`);
       return;
     }
+
+    // Live stock cross-check before proceeding to payment
+    try {
+      const issues = await checkCartStock(cart as any);
+      if (issues.length > 0) {
+        const first = issues[0];
+        toast.error(`Stock Unavailable for the Product ${first.title} so remove the item from the cart to checkout`, { duration: 6000 });
+        return;
+      }
+    } catch (e) {
+      console.error('Stock check failed', e);
+    }
+
     navigate('/app/payment', {
       state: {
         cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings,
