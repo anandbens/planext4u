@@ -3011,6 +3011,7 @@ export type Database = {
           plan_payment_status: string
           plan_transaction_id: string | null
           rating: number | null
+          referred_by: string | null
           shop_photo_url: string | null
           status: string
           total_orders: number | null
@@ -3037,6 +3038,7 @@ export type Database = {
           plan_payment_status?: string
           plan_transaction_id?: string | null
           rating?: number | null
+          referred_by?: string | null
           shop_photo_url?: string | null
           status?: string
           total_orders?: number | null
@@ -3063,6 +3065,7 @@ export type Database = {
           plan_payment_status?: string
           plan_transaction_id?: string | null
           rating?: number | null
+          referred_by?: string | null
           shop_photo_url?: string | null
           status?: string
           total_orders?: number | null
@@ -4274,6 +4277,7 @@ export type Database = {
           pan_image_url: string | null
           pan_number: string | null
           phone: string
+          referred_by: string | null
           rejection_reason: string | null
           secondary_phone: string | null
           selected_categories: Json | null
@@ -4317,6 +4321,7 @@ export type Database = {
           pan_image_url?: string | null
           pan_number?: string | null
           phone?: string
+          referred_by?: string | null
           rejection_reason?: string | null
           secondary_phone?: string | null
           selected_categories?: Json | null
@@ -4360,6 +4365,7 @@ export type Database = {
           pan_image_url?: string | null
           pan_number?: string | null
           phone?: string
+          referred_by?: string | null
           rejection_reason?: string | null
           secondary_phone?: string | null
           selected_categories?: Json | null
@@ -4604,6 +4610,7 @@ export type Database = {
           plan_start_date: string | null
           plan_transaction_id: string | null
           rating: number | null
+          referred_by: string | null
           shop_address: string | null
           shop_latitude: number | null
           shop_longitude: number | null
@@ -4636,6 +4643,7 @@ export type Database = {
           plan_start_date?: string | null
           plan_transaction_id?: string | null
           rating?: number | null
+          referred_by?: string | null
           shop_address?: string | null
           shop_latitude?: number | null
           shop_longitude?: number | null
@@ -4668,6 +4676,7 @@ export type Database = {
           plan_start_date?: string | null
           plan_transaction_id?: string | null
           rating?: number | null
+          referred_by?: string | null
           shop_address?: string | null
           shop_latitude?: number | null
           shop_longitude?: number | null
