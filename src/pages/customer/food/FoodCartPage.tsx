@@ -428,6 +428,9 @@ export default function FoodCartPage() {
           </div>
         </Card>
 
+        {/* Payment method */}
+        <PaymentMethodPicker value={paymentMethod} onChange={setPaymentMethod} allowCod={total > 0} />
+
         {/* Bill */}
         <Card className="p-3 space-y-1.5 text-sm">
           <h3 className="font-semibold text-xs uppercase text-muted-foreground mb-2">Bill Details</h3>
