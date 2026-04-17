@@ -291,7 +291,19 @@ export default function CustomerCartPage() {
   return (
     <CustomerLayout>
       <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-md border-b border-border/50 px-4 py-3 flex items-center justify-between md:hidden">
-        <button onClick={() => navigate(-1)} className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
+        <button
+          onClick={() => {
+            // Prefer real browser history; fall back to shop home so we never
+            // land on auth/redirect screens or get stuck on the cart itself.
+            if (window.history.length > 1 && document.referrer && !document.referrer.includes('/cart')) {
+              navigate(-1);
+            } else {
+              navigate('/app/browse');
+            }
+          }}
+          className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center"
+          aria-label="Go back"
+        >
           <ChevronLeft className="h-4 w-4" />
         </button>
         <h1 className="text-base font-semibold">Cart</h1>
