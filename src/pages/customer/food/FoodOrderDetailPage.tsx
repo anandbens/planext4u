@@ -6,10 +6,11 @@ import { useAuth } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin, Clock, MessageCircle, Phone, RotateCcw, X, Star, Bike, ChefHat, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, MessageCircle, Phone, RotateCcw, X, Star, Bike, ChefHat, CheckCircle2, FileText, Receipt } from "lucide-react";
 import { LiveTrackingMap } from "@/components/food/LiveTrackingMap";
 import { OrderChatPanel } from "@/components/food/OrderChatPanel";
 import { CancelOrderDialog } from "@/components/food/CancelOrderDialog";
+import { downloadInvoice } from "@/lib/food-invoice";
 import { toast } from "sonner";
 
 const STATUS_STEPS = ['placed', 'accepted', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'];
@@ -88,7 +89,6 @@ export default function FoodOrderDetailPage() {
     try {
       const data = await foodApi.reorder(order.id);
       if (!data) return;
-      // store reorder cart payload in localStorage for FoodCartPage to pick up
       localStorage.setItem('food_reorder_payload', JSON.stringify({
         restaurant_id: order.restaurant_id,
         items: data.items,
@@ -97,6 +97,25 @@ export default function FoodOrderDetailPage() {
       navigate(`/app/food/restaurant/${order.restaurant_id}`);
     } catch (e: any) {
       toast.error(e.message || "Couldn't reorder");
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!order) return;
+    try {
+      const inv = await foodApi.getInvoice(order.id);
+      if (!inv) { toast.error("Invoice not yet generated"); return; }
+      downloadInvoice({
+        invoice_no: inv.invoice_no, order_id: order.id, generated_at: inv.generated_at,
+        customer_name: order.customer_name, customer_phone: order.customer_phone,
+        delivery_address: order.delivery_address, restaurant_name: order.restaurant_name,
+        items: (order.items as any[]).map(it => ({ name: it.name, qty: it.qty, price: it.price })),
+        subtotal: order.subtotal, delivery_fee: order.delivery_fee, packaging_fee: order.packaging_fee,
+        platform_fee: order.platform_fee, tax: order.gst, discount: order.discount, total: order.total,
+        payment_method: order.payment_method, payment_id: (order as any).razorpay_payment_id,
+      });
+    } catch (e: any) {
+      toast.error(e.message || "Could not download invoice");
     }
   };
 
@@ -270,6 +289,15 @@ export default function FoodOrderDetailPage() {
             <div className="flex justify-between text-sm text-success"><span>Discount</span><span>-₹{order.discount}</span></div>
           )}
           <div className="flex justify-between text-base font-bold mt-1"><span>Total</span><span>₹{order.total}</span></div>
+          <div className="flex justify-between text-xs text-muted-foreground mt-2">
+            <span className="flex items-center gap-1"><Receipt className="h-3 w-3" /> Paid via {(order.payment_method || '').toUpperCase()}</span>
+            <span>{order.payment_status === 'paid' ? '✓ Paid' : order.payment_status === 'refunded' ? 'Refunded' : 'Pending'}</span>
+          </div>
+          {(order.status === 'delivered' || order.status === 'completed') && (
+            <Button variant="outline" size="sm" className="w-full mt-2 gap-1" onClick={handleDownloadInvoice}>
+              <FileText className="h-3 w-3" /> Download Invoice
+            </Button>
+          )}
         </Card>
       </div>
 

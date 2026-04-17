@@ -1084,6 +1084,74 @@ export type Database = {
           },
         ]
       }
+      food_invoices: {
+        Row: {
+          customer_id: string
+          delivery_fee: number
+          discount: number
+          generated_at: string
+          id: string
+          invoice_no: string
+          metadata: Json | null
+          order_id: string
+          packaging_fee: number
+          payment_id: string | null
+          payment_method: string | null
+          pdf_url: string | null
+          platform_fee: number
+          restaurant_id: string
+          subtotal: number
+          tax: number
+          total: number
+        }
+        Insert: {
+          customer_id: string
+          delivery_fee?: number
+          discount?: number
+          generated_at?: string
+          id?: string
+          invoice_no: string
+          metadata?: Json | null
+          order_id: string
+          packaging_fee?: number
+          payment_id?: string | null
+          payment_method?: string | null
+          pdf_url?: string | null
+          platform_fee?: number
+          restaurant_id: string
+          subtotal?: number
+          tax?: number
+          total?: number
+        }
+        Update: {
+          customer_id?: string
+          delivery_fee?: number
+          discount?: number
+          generated_at?: string
+          id?: string
+          invoice_no?: string
+          metadata?: Json | null
+          order_id?: string
+          packaging_fee?: number
+          payment_id?: string | null
+          payment_method?: string | null
+          pdf_url?: string | null
+          platform_fee?: number
+          restaurant_id?: string
+          subtotal?: number
+          tax?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "food_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_order_chats: {
         Row: {
           created_at: string
@@ -1188,6 +1256,7 @@ export type Database = {
           gst: number
           handover_otp: string | null
           id: string
+          invoice_no: string | null
           is_contactless: boolean
           items: Json
           no_cutlery: boolean
@@ -1202,6 +1271,8 @@ export type Database = {
           razorpay_order_id: string | null
           razorpay_payment_id: string | null
           ready_at: string | null
+          refund_amount: number
+          refund_status: string | null
           restaurant_id: string
           restaurant_name: string | null
           restaurant_payout: number
@@ -1236,6 +1307,7 @@ export type Database = {
           gst?: number
           handover_otp?: string | null
           id: string
+          invoice_no?: string | null
           is_contactless?: boolean
           items?: Json
           no_cutlery?: boolean
@@ -1250,6 +1322,8 @@ export type Database = {
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
           ready_at?: string | null
+          refund_amount?: number
+          refund_status?: string | null
           restaurant_id: string
           restaurant_name?: string | null
           restaurant_payout?: number
@@ -1284,6 +1358,7 @@ export type Database = {
           gst?: number
           handover_otp?: string | null
           id?: string
+          invoice_no?: string | null
           is_contactless?: boolean
           items?: Json
           no_cutlery?: boolean
@@ -1298,6 +1373,8 @@ export type Database = {
           razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
           ready_at?: string | null
+          refund_amount?: number
+          refund_status?: string | null
           restaurant_id?: string
           restaurant_name?: string | null
           restaurant_payout?: number
@@ -1324,6 +1401,130 @@ export type Database = {
             columns: ["restaurant_id"]
             isOneToOne: false
             referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          customer_id: string
+          failure_reason: string | null
+          id: string
+          metadata: Json | null
+          order_id: string
+          payment_method: string
+          payment_provider: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_refund_id: string | null
+          razorpay_signature: string | null
+          status: string
+          txn_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_id: string
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id: string
+          payment_method: string
+          payment_provider?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_refund_id?: string | null
+          razorpay_signature?: string | null
+          status?: string
+          txn_type?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_id?: string
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string
+          payment_method?: string
+          payment_provider?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_refund_id?: string | null
+          razorpay_signature?: string | null
+          status?: string
+          txn_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "food_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      food_refunds: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          customer_id: string
+          id: string
+          initiated_at: string
+          initiated_by: string | null
+          metadata: Json | null
+          notes: string | null
+          order_id: string
+          razorpay_refund_id: string | null
+          reason: string
+          refund_method: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          customer_id: string
+          id?: string
+          initiated_at?: string
+          initiated_by?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          order_id: string
+          razorpay_refund_id?: string | null
+          reason?: string
+          refund_method?: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          customer_id?: string
+          id?: string
+          initiated_at?: string
+          initiated_by?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          order_id?: string
+          razorpay_refund_id?: string | null
+          reason?: string
+          refund_method?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "food_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -5990,6 +6191,15 @@ export type Database = {
       haversine_distance: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
+      }
+      initiate_food_refund: {
+        Args: {
+          _amount: number
+          _order_id: string
+          _reason?: string
+          _refund_method?: string
+        }
+        Returns: Json
       }
       is_admin_user: { Args: { _user_id: string }; Returns: boolean }
       is_conversation_participant: {
