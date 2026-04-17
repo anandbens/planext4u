@@ -70,7 +70,16 @@ export function usePostLike(postId: string) {
         await supabase.from('social_likes').delete().eq('post_id', postId).eq('user_id', uid);
       } else {
         await supabase.from('social_likes').insert({ post_id: postId, user_id: uid });
-        awardPoints(uid, 'post_like_points', 'Points for liking a post');
+        // Only award points if the post has a tagged product link
+        const { data: postRow } = await supabase
+          .from('social_posts')
+          .select('product_tags')
+          .eq('id', postId)
+          .maybeSingle();
+        const tags = Array.isArray(postRow?.product_tags) ? postRow!.product_tags as any[] : [];
+        if (tags.length > 0) {
+          awardPoints(uid, 'post_like_points', 'Points for liking a post with tagged products');
+        }
       }
     },
     onSuccess: () => {
@@ -336,7 +345,6 @@ export function useSharePost() {
     // Always use the published URL so links work across devices/platforms
     const publishedOrigin = 'https://www.planext4u.net';
     const webOrigin = window.location.origin;
-    // Use published URL if on native/capacitor, otherwise use current origin
     const origin = webOrigin.includes('localhost') || webOrigin.includes('capacitor://') ? publishedOrigin : webOrigin;
     const url = `${origin}/app/social/post/${postId}`;
     let shared = false;
@@ -352,71 +360,132 @@ export function useSharePost() {
     }
     if (shared) {
       const uid = await getAuthUserId();
-      if (uid) awardPoints(uid, 'post_share_points', 'Points for sharing a post');
+      if (uid) {
+        // Only award points when the shared post has a tagged product link
+        const { data: postRow } = await supabase
+          .from('social_posts')
+          .select('product_tags')
+          .eq('id', postId)
+          .maybeSingle();
+        const tags = Array.isArray(postRow?.product_tags) ? postRow!.product_tags as any[] : [];
+        if (tags.length > 0) {
+          awardPoints(uid, 'post_share_points', 'Points for sharing a post with tagged products');
+        }
+      }
     }
   }, []);
 }
 
-// ─── REPOST (Share to story instead of duplicating) ──────────────────────────────────
+// ─── SHARE STORY ─────────────────────────────
+// Story shares earn points only when the story author is a verified vendor.
+export function useShareStory() {
+  return useCallback(async (storyId: string, authorUserId: string, mediaUrl?: string) => {
+    const publishedOrigin = 'https://www.planext4u.net';
+    const webOrigin = window.location.origin;
+    const origin = webOrigin.includes('localhost') || webOrigin.includes('capacitor://') ? publishedOrigin : webOrigin;
+    const url = `${origin}/app/social/story/${storyId}`;
+    let shared = false;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Check this story on P4U Social', url }); shared = true; }
+      catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success("Story link copied");
+      shared = true;
+    }
+    if (shared) {
+      const uid = await getAuthUserId();
+      if (uid && authorUserId) {
+        // Check author is a vendor via user_roles
+        const { data: role } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', authorUserId)
+          .eq('role', 'vendor')
+          .maybeSingle();
+        if (role) {
+          awardPoints(uid, 'vendor_story_share_points', "Points for sharing a vendor's story");
+        }
+      }
+    }
+  }, []);
+}
+
+// ─── REPOST ──────────────────────────────────
+// Creates a NEW social_post with is_repost=true and original_post_id pointing to source.
+// Awards points only if original post has tagged products.
 export function useRepost() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (postId: string) => {
+    mutationFn: async ({ postId, note }: { postId: string; note?: string }) => {
       const uid = await getAuthUserId();
       if (!uid) { toast.error("Please login"); return; }
 
-      // Fetch the original post for sharing
       const { data: original } = await supabase
         .from('social_posts')
-        .select('id, user_id, caption, media')
+        .select('id, user_id, caption, media, post_type, product_tags, hashtags')
         .eq('id', postId)
         .single();
 
       if (!original) throw new Error('Post not found');
 
-      // Get original author profile
-      const { data: authorProfile } = await supabase
-        .from('social_profiles')
-        .select('username, display_name, avatar_url')
-        .eq('user_id', original.user_id)
+      // Prevent duplicate reposts by the same user
+      const { data: existing } = await supabase
+        .from('social_posts')
+        .select('id')
+        .eq('user_id', uid)
+        .eq('original_post_id', postId)
+        .eq('is_repost', true)
         .maybeSingle();
 
-      const authorName = authorProfile?.display_name || authorProfile?.username || 'user';
-
-      // Get first media item for story thumbnail
-      const mediaItems = Array.isArray(original.media) ? original.media as any[] : [];
-      const firstMedia = mediaItems[0];
-
-      if (!firstMedia?.url) {
-        toast.error("Cannot share a post with no media");
+      if (existing) {
+        toast.info("You've already reposted this");
         return;
       }
 
-      // Create a story that references the original post (shared/reposted content)
-      const storyId = crypto.randomUUID();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-      await supabase.from('social_stories').insert({
-        id: storyId,
+      const repostId = crypto.randomUUID();
+      await supabase.from('social_posts').insert({
+        id: repostId,
         user_id: uid,
-        media_url: firstMedia.url,
-        media_type: firstMedia.type === 'video' ? 'video' : 'image',
-        text_content: `📤 Shared from @${authorName}: ${original.caption || ''}`.slice(0, 500),
-        expires_at: expiresAt,
+        post_type: original.post_type || 'post',
+        caption: original.caption || '',
+        media: original.media as any,
+        product_tags: original.product_tags as any,
+        hashtags: original.hashtags as any,
+        is_repost: true,
+        original_post_id: postId,
+        repost_note: note?.trim() || null,
+        status: 'published',
       } as any);
 
-      // Increment share count on original post
-      try { await (supabase.rpc as any)('refresh_social_post_counts', { _post_id: postId }); } catch {}
+      // Award points only when the reposted post has tagged products
+      const tags = Array.isArray(original.product_tags) ? original.product_tags as any[] : [];
+      if (tags.length > 0) {
+        awardPoints(uid, 'post_repost_points', 'Points for reposting a post with tagged products');
+      }
 
-      toast.success(`Shared to your story!`);
+      toast.success("Reposted! Your followers will see this in their feed.");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['social-feed'] });
-      qc.invalidateQueries({ queryKey: ['social-feed-stories'] });
-      qc.invalidateQueries({ queryKey: ['own-stories-exist'] });
+      qc.invalidateQueries({ queryKey: ['social-user-posts'] });
+      qc.invalidateQueries({ queryKey: ['social-user-reposts'] });
+    },
+    onError: (err: any) => {
+      console.error('Repost error:', err);
+      toast.error("Failed to repost");
     },
   });
+}
+
+// ─── REPLY TO COMMENT ────────────────────────
+// (addComment in usePostComments already supports parent_id; this is just a thin wrapper)
+export function useReplyToComment(postId: string) {
+  const { addComment } = usePostComments(postId);
+  return useCallback((parentId: string, text: string) => {
+    addComment({ text, parentId });
+  }, [addComment]);
 }
 
 // ─── DELETE COMMENT ──────────────────────────────────
