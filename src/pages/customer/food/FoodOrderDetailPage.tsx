@@ -89,7 +89,6 @@ export default function FoodOrderDetailPage() {
     try {
       const data = await foodApi.reorder(order.id);
       if (!data) return;
-      // store reorder cart payload in localStorage for FoodCartPage to pick up
       localStorage.setItem('food_reorder_payload', JSON.stringify({
         restaurant_id: order.restaurant_id,
         items: data.items,
@@ -98,6 +97,25 @@ export default function FoodOrderDetailPage() {
       navigate(`/app/food/restaurant/${order.restaurant_id}`);
     } catch (e: any) {
       toast.error(e.message || "Couldn't reorder");
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!order) return;
+    try {
+      const inv = await foodApi.getInvoice(order.id);
+      if (!inv) { toast.error("Invoice not yet generated"); return; }
+      downloadInvoice({
+        invoice_no: inv.invoice_no, order_id: order.id, generated_at: inv.generated_at,
+        customer_name: order.customer_name, customer_phone: order.customer_phone,
+        delivery_address: order.delivery_address, restaurant_name: order.restaurant_name,
+        items: (order.items as any[]).map(it => ({ name: it.name, qty: it.qty, price: it.price })),
+        subtotal: order.subtotal, delivery_fee: order.delivery_fee, packaging_fee: order.packaging_fee,
+        platform_fee: order.platform_fee, tax: order.gst, discount: order.discount, total: order.total,
+        payment_method: order.payment_method, payment_id: (order as any).razorpay_payment_id,
+      });
+    } catch (e: any) {
+      toast.error(e.message || "Could not download invoice");
     }
   };
 
