@@ -153,22 +153,6 @@ export default function FoodRestaurantPage() {
 
   const addToCart = (item: MenuItem, notes?: string) => {
     if (!restaurant) return;
-    if (cart.length > 0 && cart[0].restaurant_id !== restaurant.id) {
-      if (!confirm("Your cart has items from another restaurant. Clear it?")) return;
-      setCart([
-        {
-          item_id: item.id,
-          name: item.name,
-          price: item.discounted_price ?? item.price,
-          qty: 1,
-          restaurant_id: restaurant.id,
-          image_url: item.image_url,
-          notes,
-        },
-      ]);
-      toast.success("Added to cart");
-      return;
-    }
     setCart((prev) => {
       const existing = prev.find((l) => l.item_id === item.id);
       if (existing)
@@ -214,10 +198,6 @@ export default function FoodRestaurantPage() {
 
   const addComboToCart = (combo: MenuCombo) => {
     if (!restaurant) return;
-    if (cart.length > 0 && cart[0].restaurant_id !== restaurant.id) {
-      if (!confirm("Your cart has items from another restaurant. Clear it?")) return;
-      setCart([]);
-    }
     setCart((prev) => [
       ...prev,
       {
