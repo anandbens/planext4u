@@ -1529,45 +1529,98 @@ export type Database = {
           },
         ]
       }
+      food_review_helpful: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          review_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          review_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          review_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_review_helpful_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "food_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       food_reviews: {
         Row: {
           comment: string | null
           created_at: string
           customer_id: string
+          edited_at: string | null
           food_rating: number | null
+          helpful_count: number
           id: string
           order_id: string
+          photos: Json | null
           restaurant_id: string
           restaurant_rating: number | null
+          restaurant_reply: string | null
+          restaurant_reply_at: string | null
           rider_id: string | null
           rider_rating: number | null
+          rider_tags: string[] | null
           status: string
+          tags: string[] | null
+          updated_at: string
         }
         Insert: {
           comment?: string | null
           created_at?: string
           customer_id: string
+          edited_at?: string | null
           food_rating?: number | null
+          helpful_count?: number
           id?: string
           order_id: string
+          photos?: Json | null
           restaurant_id: string
           restaurant_rating?: number | null
+          restaurant_reply?: string | null
+          restaurant_reply_at?: string | null
           rider_id?: string | null
           rider_rating?: number | null
+          rider_tags?: string[] | null
           status?: string
+          tags?: string[] | null
+          updated_at?: string
         }
         Update: {
           comment?: string | null
           created_at?: string
           customer_id?: string
+          edited_at?: string | null
           food_rating?: number | null
+          helpful_count?: number
           id?: string
           order_id?: string
+          photos?: Json | null
           restaurant_id?: string
           restaurant_rating?: number | null
+          restaurant_reply?: string | null
+          restaurant_reply_at?: string | null
           rider_id?: string | null
           rider_rating?: number | null
+          rider_tags?: string[] | null
           status?: string
+          tags?: string[] | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -6086,7 +6139,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      restaurant_rating_summary: {
+        Row: {
+          avg_food: number | null
+          avg_restaurant: number | null
+          avg_rider: number | null
+          restaurant_id: string | null
+          review_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_reviews_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       are_mutual_followers: {
@@ -6244,6 +6314,10 @@ export type Database = {
       save_device_token: {
         Args: { _platform?: string; _token: string; _user_id: string }
         Returns: undefined
+      }
+      toggle_food_review_helpful: {
+        Args: { _review_id: string }
+        Returns: Json
       }
       validate_food_coupon: {
         Args: {

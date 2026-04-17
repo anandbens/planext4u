@@ -11,6 +11,7 @@ import { LiveTrackingMap } from "@/components/food/LiveTrackingMap";
 import { OrderChatPanel } from "@/components/food/OrderChatPanel";
 import { CancelOrderDialog } from "@/components/food/CancelOrderDialog";
 import { downloadInvoice } from "@/lib/food-invoice";
+import { FoodReviewModal } from "@/components/food/FoodReviewModal";
 import { toast } from "sonner";
 
 const STATUS_STEPS = ['placed', 'accepted', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'];
@@ -46,6 +47,8 @@ export default function FoodOrderDetailPage() {
   const [showChat, setShowChat] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [showReview, setShowReview] = useState(false);
+  const [existingReview, setExistingReview] = useState<any>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -62,6 +65,9 @@ export default function FoodOrderDetailPage() {
           foodApi.getRider(ra.rider_id).then(setRider);
         }
       }
+      // load existing review for this order
+      const { data: rev } = await supabase.from('food_reviews').select('*').eq('order_id', id).maybeSingle();
+      if (rev) setExistingReview(rev);
     };
     load();
     const ch = supabase.channel(`food-order-${id}`)
@@ -294,15 +300,36 @@ export default function FoodOrderDetailPage() {
             <span>{order.payment_status === 'paid' ? '✓ Paid' : order.payment_status === 'refunded' ? 'Refunded' : 'Pending'}</span>
           </div>
           {(order.status === 'delivered' || order.status === 'completed') && (
-            <Button variant="outline" size="sm" className="w-full mt-2 gap-1" onClick={handleDownloadInvoice}>
-              <FileText className="h-3 w-3" /> Download Invoice
-            </Button>
+            <div className="flex gap-2 mt-2">
+              <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={handleDownloadInvoice}>
+                <FileText className="h-3 w-3" /> Invoice
+              </Button>
+              <Button size="sm" className="flex-1 gap-1" onClick={() => setShowReview(true)}>
+                <Star className="h-3 w-3" /> {existingReview ? "Edit review" : "Rate order"}
+              </Button>
+            </div>
           )}
         </Card>
       </div>
 
       <CancelOrderDialog open={showCancel} onOpenChange={setShowCancel} orderId={order.id}
         onCancelled={() => setOrder(o => o ? { ...o, status: 'cancelled' } : o)} />
+
+      {customerUser?.id && (
+        <FoodReviewModal
+          open={showReview}
+          onOpenChange={setShowReview}
+          orderId={order.id}
+          customerId={customerUser.id}
+          restaurantId={order.restaurant_id}
+          riderId={riderId}
+          initial={existingReview}
+          onSubmitted={async () => {
+            const { data } = await supabase.from('food_reviews').select('*').eq('order_id', order.id).maybeSingle();
+            if (data) setExistingReview(data);
+          }}
+        />
+      )}
     </div>
   );
 }

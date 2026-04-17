@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { foodApi, MenuCategory, MenuItem, Restaurant, MenuCombo } from "@/lib/food-api";
+import { RestaurantReviewsList } from "@/components/food/RestaurantReviewsList";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -595,7 +596,12 @@ export default function FoodRestaurantPage() {
         )}
       </div>
 
-      {/* Sticky cart bar */}
+      {restaurant && (
+        <section className="px-4 py-4 border-t border-border/40 bg-muted/10">
+          <h2 className="text-base font-bold mb-3">Customer reviews</h2>
+          <RestaurantReviewsList restaurantId={restaurant.id} max={8} />
+        </section>
+      )}
       {cartCount > 0 && (
         <div className="fixed bottom-16 left-0 right-0 px-4 z-40">
           <button

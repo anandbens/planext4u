@@ -553,14 +553,27 @@ export default function CustomerHomePage() {
                 data?.serviceCategories?.slice(0, 8).map((c: any) => (
                   <Link key={c.id} to={`/app/services?category=${c.name}`}
                     className="bg-card rounded-xl border border-border/50 p-2.5 hover:border-primary/30 hover:shadow-md transition-all flex items-center gap-2">
-                    <div className="h-10 w-10 rounded-full bg-secondary/50 flex items-center justify-center overflow-hidden shrink-0">
-                      {c.image?.startsWith('http') ? (
-                        <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-full" loading="lazy" />
-                      ) : c.image && c.image.trim() !== '' ? (
-                        <span className="text-lg">{c.image}</span>
-                      ) : (
-                        <span className="text-sm font-bold text-primary">{c.name?.charAt(0).toUpperCase()}</span>
-                      )}
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-primary/10">
+                      {c.image && (c.image.startsWith('http') || c.image.startsWith('/')) ? (
+                        <img
+                          src={c.image}
+                          alt={c.name}
+                          className="w-full h-full object-cover rounded-full"
+                          loading="lazy"
+                          onError={(e) => {
+                            const t = e.currentTarget;
+                            t.style.display = 'none';
+                            const fb = t.nextElementSibling as HTMLElement | null;
+                            if (fb) fb.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <span
+                        className="text-sm font-bold text-primary w-full h-full items-center justify-center"
+                        style={{ display: c.image && (c.image.startsWith('http') || c.image.startsWith('/')) ? 'none' : 'flex' }}
+                      >
+                        {c.name?.charAt(0).toUpperCase()}
+                      </span>
                     </div>
                     <div><p className="text-[11px] font-semibold leading-tight">{c.name}</p><p className="text-[9px] text-muted-foreground">From ₹349</p></div>
                   </Link>
