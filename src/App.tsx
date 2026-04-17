@@ -188,6 +188,7 @@ import RiderDashboardPage from "./pages/rider/RiderDashboardPage";
 import AdminRestaurantsPage from "./pages/admin/AdminRestaurantsPage";
 import AdminRidersPage from "./pages/admin/AdminRidersPage";
 import AdminFoodOrdersPage from "./pages/admin/AdminFoodOrdersPage";
+import { RiderProtectedRoute } from "@/components/rider/RiderProtectedRoute";
 
 const queryClient = new QueryClient();
 const NATIVE_PORTAL_STORAGE_KEY = "p4u_native_portal";
@@ -474,6 +475,26 @@ const AppRoutes = () => {
 
         {/* Customer Account Control */}
         <Route path="/app/account-control" element={<CustomerPage><AccountControlPage /></CustomerPage>} />
+
+        {/* Food delivery — Customer */}
+        <Route path="/app/food" element={<GuestPage><FoodHomePage /></GuestPage>} />
+        <Route path="/app/food/restaurant/:id" element={<GuestPage><FoodRestaurantPage /></GuestPage>} />
+        <Route path="/app/food/cart" element={<CustomerPage><FoodCartPage /></CustomerPage>} />
+        <Route path="/app/food/orders" element={<CustomerPage><FoodOrdersPage /></CustomerPage>} />
+        <Route path="/app/food/orders/:id" element={<CustomerPage><FoodOrderDetailPage /></CustomerPage>} />
+
+        {/* Food delivery — Vendor (Restaurant) */}
+        <Route path="/vendor/restaurant" element={<VendorPage><VendorRestaurantPage /></VendorPage>} />
+        <Route path="/vendor/food-orders" element={<VendorPage><VendorFoodOrdersPage /></VendorPage>} />
+
+        {/* Food delivery — Rider */}
+        <Route path="/rider/login" element={<RiderLoginPage />} />
+        <Route path="/rider" element={<RiderProtectedRoute><RiderDashboardPage /></RiderProtectedRoute>} />
+
+        {/* Food delivery — Admin */}
+        <Route path="/admin/restaurants" element={<ProtectedPage><AdminRestaurantsPage /></ProtectedPage>} />
+        <Route path="/admin/riders" element={<ProtectedPage><AdminRidersPage /></ProtectedPage>} />
+        <Route path="/admin/food-orders" element={<ProtectedPage><AdminFoodOrdersPage /></ProtectedPage>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
