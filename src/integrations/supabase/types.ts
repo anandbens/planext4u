@@ -1433,6 +1433,7 @@ export type Database = {
           created_at: string
           customer_id: string
           customer_name: string | null
+          customer_notes: string | null
           delivery_rating: number | null
           discount: number
           effective_commission: number | null
@@ -1467,6 +1468,7 @@ export type Database = {
           created_at?: string
           customer_id: string
           customer_name?: string | null
+          customer_notes?: string | null
           delivery_rating?: number | null
           discount?: number
           effective_commission?: number | null
@@ -1501,6 +1503,7 @@ export type Database = {
           created_at?: string
           customer_id?: string
           customer_name?: string | null
+          customer_notes?: string | null
           delivery_rating?: number | null
           discount?: number
           effective_commission?: number | null
@@ -2795,6 +2798,7 @@ export type Database = {
           completion_photo_url: string | null
           created_at: string | null
           customer_id: string
+          customer_notes: string | null
           customer_pod_confirmed: boolean | null
           customer_pod_confirmed_at: string | null
           customer_pod_photo_url: string | null
@@ -2824,6 +2828,7 @@ export type Database = {
           completion_photo_url?: string | null
           created_at?: string | null
           customer_id: string
+          customer_notes?: string | null
           customer_pod_confirmed?: boolean | null
           customer_pod_confirmed_at?: string | null
           customer_pod_photo_url?: string | null
@@ -2853,6 +2858,7 @@ export type Database = {
           completion_photo_url?: string | null
           created_at?: string | null
           customer_id?: string
+          customer_notes?: string | null
           customer_pod_confirmed?: boolean | null
           customer_pod_confirmed_at?: string | null
           customer_pod_photo_url?: string | null
@@ -4382,6 +4388,45 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_notifications: {
+        Row: {
+          created_at: string
+          deep_link: string | null
+          id: string
+          is_read: boolean
+          message: string
+          reference_id: string | null
+          reference_type: string | null
+          title: string
+          type: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          deep_link?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          title: string
+          type?: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          deep_link?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          title?: string
+          type?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       vendor_onboarding_screens: {
         Row: {
           created_at: string
@@ -4760,6 +4805,18 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      create_vendor_notification: {
+        Args: {
+          _deep_link?: string
+          _message: string
+          _reference_id?: string
+          _reference_type?: string
+          _title: string
+          _type: string
+          _vendor_id: string
+        }
+        Returns: string
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
