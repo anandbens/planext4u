@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 
 export function CustomerProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -10,11 +11,13 @@ export function CustomerProtectedRoute({ children }: { children: React.ReactNode
 
   useEffect(() => {
     if (!customerUser && !isLoading) {
+      // On native, async storage may delay session restore — give it more time.
+      const grace = Capacitor.isNativePlatform() ? 5000 : 3000;
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (!session) {
           setCheckingSession(false);
         } else {
-          const timeout = setTimeout(() => setCheckingSession(false), 3000);
+          const timeout = setTimeout(() => setCheckingSession(false), grace);
           return () => clearTimeout(timeout);
         }
       });
