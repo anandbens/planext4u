@@ -14,7 +14,8 @@ import { VendorLayout } from "@/components/vendor/VendorLayout";
 import { useAuth } from "@/lib/auth";
 import { api, Order } from "@/lib/api";
 import { toast } from "sonner";
-import { Package, Truck, CheckCircle, Clock } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock, Eye } from "lucide-react";
+import { VendorOrderDetailModal } from "@/components/vendor/VendorOrderDetailModal";
 
 const statusStyle: Record<string, string> = {
   placed: "bg-primary/10 text-primary", paid: "bg-info/10 text-info", accepted: "bg-info/10 text-info",
@@ -40,6 +41,7 @@ export default function VendorOrdersPage() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [trackingUrl, setTrackingUrl] = useState('');
   const [shippingNotes, setShippingNotes] = useState('');
+  const [detailOrder, setDetailOrder] = useState<Order | null>(null);
 
   const { data: orders, isLoading } = useQuery({
     queryKey: ["vendorOrders", vendorId],
@@ -140,18 +142,23 @@ export default function VendorOrdersPage() {
             {o.pod_confirmed ? '✅ Delivery Confirmed by Customer' : '❌ Customer reported non-delivery'}
           </div>
         )}
-        {flow && (
-          <div className="flex gap-2 mt-3">
-            <Button size="sm" className="h-8 text-xs" onClick={() => handleStatusUpdate(o)}>
-              {flow.label}
-            </Button>
-            {o.status === 'placed' && (
-              <Button size="sm" variant="outline" className="h-8 text-xs text-destructive" onClick={() => updateStatus.mutate({ id: o.id, status: 'cancelled' })}>
-                Reject
+        <div className="flex gap-2 mt-3">
+          <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => setDetailOrder(o)}>
+            <Eye className="h-3.5 w-3.5" /> View
+          </Button>
+          {flow && (
+            <>
+              <Button size="sm" className="h-8 text-xs" onClick={() => handleStatusUpdate(o)}>
+                {flow.label}
               </Button>
-            )}
-          </div>
-        )}
+              {o.status === 'placed' && (
+                <Button size="sm" variant="outline" className="h-8 text-xs text-destructive" onClick={() => updateStatus.mutate({ id: o.id, status: 'cancelled' })}>
+                  Reject
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </Card>
     );
   };
