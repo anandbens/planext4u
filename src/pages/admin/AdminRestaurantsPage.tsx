@@ -252,6 +252,17 @@ function MenuManager({ restaurant, onClose }: { restaurant: Restaurant; onClose:
                 </div>
                 <div><Label>Prep Min</Label><Input type="number" value={editItem.prep_minutes ?? 15} onChange={e => setEditItem({ ...editItem, prep_minutes: Number(e.target.value) })} /></div>
                 <div><Label>GST %</Label><Input type="number" value={editItem.gst_rate ?? 5} onChange={e => setEditItem({ ...editItem, gst_rate: Number(e.target.value) })} /></div>
+                <div><Label>Calories (kcal)</Label><Input type="number" value={(editItem as any).calories ?? ""} onChange={e => setEditItem({ ...editItem, calories: e.target.value ? Number(e.target.value) : null } as any)} /></div>
+                <div><Label>Spice Level</Label>
+                  <select className="w-full border rounded h-10 px-2 bg-background" value={editItem.spice_level || ""} onChange={e => setEditItem({ ...editItem, spice_level: e.target.value || null })}>
+                    <option value="">— None —</option>
+                    <option value="mild">Mild</option><option value="medium">Medium</option>
+                    <option value="spicy">Spicy</option><option value="extra_spicy">Extra Spicy</option>
+                  </select>
+                </div>
+                <div className="sm:col-span-2"><Label>Dietary Tags (comma-separated)</Label>
+                  <Input placeholder="Jain, Halal, Keto, Gluten-Free" value={Array.isArray((editItem as any).dietary_tags) ? ((editItem as any).dietary_tags as string[]).join(", ") : ""} onChange={e => setEditItem({ ...editItem, dietary_tags: e.target.value.split(",").map(s => s.trim()).filter(Boolean) } as any)} />
+                </div>
                 <div className="flex items-center gap-2 pt-6"><Switch checked={!!editItem.is_veg} onCheckedChange={(v) => setEditItem({ ...editItem, is_veg: v })} /><Label>Veg</Label></div>
                 <div className="flex items-center gap-2 pt-6"><Switch checked={!!editItem.in_stock} onCheckedChange={(v) => setEditItem({ ...editItem, in_stock: v })} /><Label>In Stock</Label></div>
                 <div className="flex items-center gap-2 pt-6"><Switch checked={!!editItem.is_bestseller} onCheckedChange={(v) => setEditItem({ ...editItem, is_bestseller: v })} /><Label>Bestseller</Label></div>
