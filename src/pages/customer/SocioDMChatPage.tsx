@@ -226,6 +226,64 @@ export default function SocioDMChatPage() {
     return () => { supabase.removeChannel(channel); };
   }, [conversationId, currentUserId]);
 
+  // Load + subscribe to message reactions
+  useEffect(() => {
+    if (!conversationId || messages.length === 0) return;
+    const messageIds = messages.map(m => m.id);
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('social_message_reactions' as any)
+        .select('id, message_id, user_id, emoji')
+        .in('message_id', messageIds);
+      if (!cancelled) setReactions(((data || []) as any) as Reaction[]);
+    })();
+    const channel = supabase
+      .channel(`dm-reactions-${conversationId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'social_message_reactions' }, (payload) => {
+        const newRow = payload.new as any;
+        const oldRow = payload.old as any;
+        const relevantId = newRow?.message_id || oldRow?.message_id;
+        if (!messageIds.includes(relevantId)) return;
+        if (payload.eventType === 'INSERT') {
+          setReactions(prev => prev.some(r => r.id === newRow.id) ? prev : [...prev, newRow as Reaction]);
+        } else if (payload.eventType === 'DELETE') {
+          setReactions(prev => prev.filter(r => r.id !== oldRow.id));
+        }
+      })
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(channel); };
+  }, [conversationId, messages]);
+
+  const toggleReaction = useCallback(async (messageId: string, emoji: string) => {
+    if (!currentUserId) return;
+    const existing = reactions.find(r => r.message_id === messageId && r.user_id === currentUserId && r.emoji === emoji);
+    if (existing) {
+      setReactions(prev => prev.filter(r => r.id !== existing.id));
+      const { error } = await supabase.from('social_message_reactions' as any).delete().eq('id', existing.id);
+      if (error) {
+        toast.error('Failed to remove reaction');
+        setReactions(prev => [...prev, existing]);
+      }
+    } else {
+      const tempId = crypto.randomUUID();
+      const optimistic: Reaction = { id: tempId, message_id: messageId, user_id: currentUserId, emoji };
+      setReactions(prev => [...prev, optimistic]);
+      const { data, error } = await supabase.from('social_message_reactions' as any)
+        .insert({ message_id: messageId, user_id: currentUserId, emoji })
+        .select('id, message_id, user_id, emoji')
+        .single();
+      if (error) {
+        toast.error('Failed to add reaction');
+        setReactions(prev => prev.filter(r => r.id !== tempId));
+      } else if (data) {
+        setReactions(prev => prev.map(r => r.id === tempId ? (data as any as Reaction) : r));
+      }
+    }
+    setReactionPickerFor(null);
+  }, [currentUserId, reactions]);
+
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
