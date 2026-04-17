@@ -79,6 +79,7 @@ const foodItems: NavItem[] = [
   { title: "Restaurants", url: "/admin/restaurants", icon: UtensilsCrossed, roles: ['admin', 'sales'] },
   { title: "Riders", url: "/admin/riders", icon: Bike, roles: ['admin', 'sales'] },
   { title: "Food Orders", url: "/admin/food-orders", icon: ShoppingCart, roles: ['admin', 'sales'] },
+  { title: "Food Coupons", url: "/admin/food-coupons", icon: UtensilsCrossed, roles: ['admin', 'sales'] },
 ];
 
 const systemItems: NavItem[] = [

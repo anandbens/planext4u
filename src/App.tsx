@@ -188,6 +188,7 @@ import RiderDashboardPage from "./pages/rider/RiderDashboardPage";
 import AdminRestaurantsPage from "./pages/admin/AdminRestaurantsPage";
 import AdminRidersPage from "./pages/admin/AdminRidersPage";
 import AdminFoodOrdersPage from "./pages/admin/AdminFoodOrdersPage";
+import AdminFoodCouponsPage from "./pages/admin/AdminFoodCouponsPage";
 import { RiderProtectedRoute } from "@/components/rider/RiderProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -495,6 +496,7 @@ const AppRoutes = () => {
         <Route path="/admin/restaurants" element={<ProtectedPage><AdminRestaurantsPage /></ProtectedPage>} />
         <Route path="/admin/riders" element={<ProtectedPage><AdminRidersPage /></ProtectedPage>} />
         <Route path="/admin/food-orders" element={<ProtectedPage><AdminFoodOrdersPage /></ProtectedPage>} />
+        <Route path="/admin/food-coupons" element={<ProtectedPage><AdminFoodCouponsPage /></ProtectedPage>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
