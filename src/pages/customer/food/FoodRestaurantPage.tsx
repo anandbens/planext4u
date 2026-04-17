@@ -151,8 +151,19 @@ export default function FoodRestaurantPage() {
   const cartCount = cart.reduce((s, l) => s + l.qty, 0);
   const cartTotal = cart.reduce((s, l) => s + l.qty * l.price, 0);
 
+  const hasShopOrServiceItems = (): boolean => {
+    try {
+      const shop = JSON.parse(localStorage.getItem('app_db_cart') || '[]');
+      return Array.isArray(shop) && shop.length > 0;
+    } catch { return false; }
+  };
+
   const addToCart = (item: MenuItem, notes?: string) => {
     if (!restaurant) return;
+    if (hasShopOrServiceItems()) {
+      toast.error("Remove the items from shop or services first before adding a food item in the cart");
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((l) => l.item_id === item.id);
       if (existing)
@@ -198,6 +209,10 @@ export default function FoodRestaurantPage() {
 
   const addComboToCart = (combo: MenuCombo) => {
     if (!restaurant) return;
+    if (hasShopOrServiceItems()) {
+      toast.error("Remove the items from shop or services first before adding a food item in the cart");
+      return;
+    }
     setCart((prev) => [
       ...prev,
       {
