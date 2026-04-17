@@ -94,6 +94,20 @@ export default function FoodOrderDetailPage() {
           </Card>
         )}
 
+        {order.status !== 'delivered' && order.status !== 'cancelled' && order.status !== 'rejected' &&
+          (order.delivery_lat && order.delivery_lng) && (
+          <Card className="p-3">
+            <h3 className="font-semibold text-sm mb-2">Live tracking</h3>
+            <LiveTrackingMap
+              orderId={order.id}
+              riderId={riderId}
+              pickup={restaurantCoords}
+              drop={{ lat: Number(order.delivery_lat), lng: Number(order.delivery_lng) }}
+              height={260}
+            />
+          </Card>
+        )}
+
         <Card className="p-4">
           <h3 className="font-semibold text-sm mb-2">Delivery address</h3>
           <p className="text-xs text-muted-foreground"><MapPin className="h-3 w-3 inline mr-1" />{order.delivery_address}</p>
