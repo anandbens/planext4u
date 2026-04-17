@@ -63,6 +63,7 @@ export default function FoodCartPage() {
   const [riderNote, setRiderNote] = useState("");
   const [slot, setSlot] = useState("asap");
   const [multiRestaurantWarn, setMultiRestaurantWarn] = useState<{ existing: string; incoming: string } | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<FoodPaymentMethod>("upi");
 
   const coords = loadSelectedCoords();
   const address = loadSelectedLocation() || "Current location";
