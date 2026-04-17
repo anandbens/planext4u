@@ -49,4 +49,30 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!--
+      Android 11+ package visibility. Razorpay's native SDK launches installed
+      UPI apps (GPay / PhonePe / Paytm / BHIM / CRED / Amazon Pay) via Intent.
+      Without these <queries>, PackageManager.queryIntentActivities returns an
+      empty list and the UPI app picker shows up empty in production builds.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" android:host="pay" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <package android:name="com.google.android.apps.nbu.paisa.user" />     <!-- Google Pay -->
+        <package android:name="com.phonepe.app" />                              <!-- PhonePe -->
+        <package android:name="net.one97.paytm" />                              <!-- Paytm -->
+        <package android:name="in.org.npci.upiapp" />                           <!-- BHIM -->
+        <package android:name="com.dreamplug.androidapp" />                     <!-- CRED -->
+        <package android:name="in.amazon.mShop.android.shopping" />             <!-- Amazon Pay -->
+        <package android:name="com.whatsapp" />                                 <!-- WhatsApp Pay -->
+        <package android:name="com.mobikwik_new" />                             <!-- MobiKwik -->
+        <package android:name="com.freecharge.android" />                       <!-- Freecharge -->
+    </queries>
 </manifest>
