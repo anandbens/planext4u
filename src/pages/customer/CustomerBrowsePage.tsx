@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { BannerAd } from "@/components/customer/BannerAd";
 import { useAuth } from "@/lib/auth";
+import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";
+import { CategoryProductRow } from "@/components/customer/CategoryProductRow";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
