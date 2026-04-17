@@ -63,6 +63,7 @@ export default function VendorRegisterPage() {
     aadhaar_number: '', aadhaar_front_url: '', aadhaar_back_url: '',
     bank_account_number: '', bank_confirm_account: '', bank_ifsc: '', bank_holder_name: '',
     store_logo_url: '',
+    referral_code: '',
   });
 
   const [states, setStates] = useState<{ id: string; name: string }[]>([]);
@@ -263,7 +264,7 @@ export default function VendorRegisterPage() {
       if (phoneErr) { toast.error(phoneErr); setLoading(false); return; }
       const emailErr = await checkVendorEmailUnique(form.email);
       if (emailErr) { toast.error(emailErr); setLoading(false); return; }
-      const payload = {
+      const payload: any = {
         user_id: customerId,
         name: form.name, phone: form.phone, secondary_phone: form.secondary_phone,
         email: form.email, state: form.state, city: form.district, district: form.district,
@@ -279,6 +280,7 @@ export default function VendorRegisterPage() {
         bank_holder_name: form.bank_holder_name, store_logo_url: form.store_logo_url,
         selected_categories: selectedCategories,
         selected_subcategories: selectedSubcategories,
+        referred_by: form.referral_code?.trim().toUpperCase() || null,
         status: 'submitted',
       };
 
