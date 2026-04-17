@@ -642,7 +642,7 @@ export default function VendorProductsPage() {
                   </div>
                 </div>
                 {form.product_type !== "variable" && (
-                  <div><Label>Stock</Label><Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} /></div>
+                  <div><Label>Stock *</Label><Input type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} required /></div>
                 )}
                 {form.product_type === "variable" && (
                   <p className="text-xs text-muted-foreground p-3 bg-secondary/20 rounded-lg">
