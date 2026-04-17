@@ -1577,19 +1577,6 @@ export const api = {
     const { loadCart, saveCart } = await import('./persist');
     const cart = loadCart();
 
-    // Cross-cart restriction: block shop/service additions when a food cart exists
-    try {
-      const food = JSON.parse(localStorage.getItem('p4u_food_cart') || '[]');
-      if (Array.isArray(food) && food.length > 0) {
-        return {
-          success: false,
-          blocked: true,
-          message: "Remove the items from food cart first before adding shop or service items",
-          cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
-        };
-      }
-    } catch {}
-
     // Cart restriction: check parent_item_id vendor conflict
     if (product.parent_item_id) {
       const conflicting = cart.find((i: CartItem) =>
