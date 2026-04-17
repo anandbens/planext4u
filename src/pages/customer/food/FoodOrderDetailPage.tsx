@@ -300,15 +300,36 @@ export default function FoodOrderDetailPage() {
             <span>{order.payment_status === 'paid' ? '✓ Paid' : order.payment_status === 'refunded' ? 'Refunded' : 'Pending'}</span>
           </div>
           {(order.status === 'delivered' || order.status === 'completed') && (
-            <Button variant="outline" size="sm" className="w-full mt-2 gap-1" onClick={handleDownloadInvoice}>
-              <FileText className="h-3 w-3" /> Download Invoice
-            </Button>
+            <div className="flex gap-2 mt-2">
+              <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={handleDownloadInvoice}>
+                <FileText className="h-3 w-3" /> Invoice
+              </Button>
+              <Button size="sm" className="flex-1 gap-1" onClick={() => setShowReview(true)}>
+                <Star className="h-3 w-3" /> {existingReview ? "Edit review" : "Rate order"}
+              </Button>
+            </div>
           )}
         </Card>
       </div>
 
       <CancelOrderDialog open={showCancel} onOpenChange={setShowCancel} orderId={order.id}
         onCancelled={() => setOrder(o => o ? { ...o, status: 'cancelled' } : o)} />
+
+      {customerUser?.id && (
+        <FoodReviewModal
+          open={showReview}
+          onOpenChange={setShowReview}
+          orderId={order.id}
+          customerId={customerUser.id}
+          restaurantId={order.restaurant_id}
+          riderId={riderId}
+          initial={existingReview}
+          onSubmitted={async () => {
+            const { data } = await supabase.from('food_reviews').select('*').eq('order_id', order.id).maybeSingle();
+            if (data) setExistingReview(data);
+          }}
+        />
+      )}
     </div>
   );
 }
