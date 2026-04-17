@@ -103,7 +103,11 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-function CommentItem({ comment, isMock }: { comment: any; isMock: boolean }) {
+function CommentItem({ comment, isMock, postId, onReply }: { comment: any; isMock: boolean; postId: string; onReply?: (name: string) => void }) {
+  const { customerUser } = useAuth();
+  const qc = useQueryClient();
+  const userId = customerUser?.supabase_uid || customerUser?.id;
+
   const { data: profile } = useQuery({
     queryKey: ['social-comment-profile', comment.user_id],
     queryFn: async () => {
@@ -112,17 +116,60 @@ function CommentItem({ comment, isMock }: { comment: any; isMock: boolean }) {
     },
     enabled: !isMock && !!comment.user_id,
   });
+
+  const { data: isLiked = false } = useQuery({
+    queryKey: ['social-comment-like', comment.id, userId],
+    queryFn: async () => {
+      if (!userId) return false;
+      const { data } = await supabase.from('social_comment_likes').select('id').eq('comment_id', comment.id).eq('user_id', userId).maybeSingle();
+      return !!data;
+    },
+    enabled: !isMock && !!userId && !!comment.id,
+  });
+
+  const toggleLike = useMutation({
+    mutationFn: async () => {
+      if (isMock) return;
+      if (!userId) { toast.error("Please login"); return; }
+      if (isLiked) {
+        await supabase.from('social_comment_likes').delete().eq('comment_id', comment.id).eq('user_id', userId);
+      } else {
+        await supabase.from('social_comment_likes').insert({ comment_id: comment.id, user_id: userId });
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['social-comment-like', comment.id] });
+      qc.invalidateQueries({ queryKey: ['social-recent-comments', postId] });
+      qc.invalidateQueries({ queryKey: ['social-all-comments', postId] });
+    },
+  });
+
   const name = isMock ? (comment.user_id === 'user1' ? 'vijay' : comment.user_id === 'user2' ? 'priya' : 'anita') : (profile?.display_name || profile?.username || 'user');
   const avatar = profile?.avatar_url || '';
+  const likeCount = comment.like_count || 0;
+
   return (
     <div className="flex items-start gap-2 py-1">
       <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
         {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : <span className="text-[9px] font-bold">{name.charAt(0).toUpperCase()}</span>}
       </div>
-      <p className="text-sm flex-1">
-        <span className="font-semibold mr-1">{name}</span>
-        <span className="text-muted-foreground">{comment.content}</span>
-      </p>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm">
+          <span className="font-semibold mr-1">{name}</span>
+          <span className="text-muted-foreground">{comment.content}</span>
+        </p>
+        <div className="flex items-center gap-3 mt-0.5">
+          {likeCount > 0 && <span className="text-[10px] text-muted-foreground">{likeCount} {likeCount === 1 ? 'like' : 'likes'}</span>}
+          {onReply && (
+            <button className="text-[10px] font-semibold text-muted-foreground hover:text-foreground" onClick={() => onReply(name)}>
+              Reply
+            </button>
+          )}
+        </div>
+      </div>
+      <button onClick={() => toggleLike.mutate()} className="shrink-0 pt-1" aria-label="Like comment">
+        <Heart className={`h-3.5 w-3.5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
+      </button>
     </div>
   );
 }
@@ -229,7 +276,7 @@ function PostCard({ post }: { post: any }) {
   const { data: recentComments = [] } = useQuery({
     queryKey: ['social-recent-comments', postId],
     queryFn: async () => {
-      const { data } = await supabase.from('social_comments').select('id, content, user_id').eq('post_id', postId).eq('status', 'active').is('parent_id', null).order('created_at', { ascending: false }).limit(2);
+      const { data } = await supabase.from('social_comments').select('id, content, user_id, like_count').eq('post_id', postId).eq('status', 'active').is('parent_id', null).order('created_at', { ascending: false }).limit(2);
       return data || [];
     },
     enabled: !isMock,
@@ -312,8 +359,27 @@ function PostCard({ post }: { post: any }) {
 
   const displayComments = isMock ? mockComments : (showAllComments ? allComments : recentComments);
 
+  const isRepost = !!post.is_repost && !!post.original_post;
+  const original = post.original_post;
+  const originalOwner = original?.owner;
+  const originalOwnerName = originalOwner?.display_name || originalOwner?.username || 'user';
+
   return (
     <article className="border-b border-border/20">
+      {/* Repost credit banner */}
+      {isRepost && (
+        <div className="flex items-center gap-2 px-4 pt-3 pb-1 text-xs text-muted-foreground">
+          <Repeat2 className="h-3.5 w-3.5" />
+          <span>
+            <Link to={`/app/social/profile/${post.user_id}`} className="font-semibold text-foreground">{username}</Link>
+            {' reposted • Original by '}
+            <Link to={`/app/social/profile/${original.user_id}`} className="font-semibold text-foreground">@{originalOwnerName}</Link>
+          </span>
+        </div>
+      )}
+      {isRepost && post.repost_note && (
+        <p className="px-4 pb-1 text-sm text-foreground/80 italic">"{post.repost_note}"</p>
+      )}
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3">
         <Link to={`/app/social/profile/${post.user_id}`}>
@@ -568,7 +634,10 @@ function PostCard({ post }: { post: any }) {
             >
               <div className="px-4 space-y-1 max-h-60 overflow-y-auto">
                 {(!showAllComments && !isMock ? recentComments : displayComments).map((c: any) => (
-                  <CommentItem key={c.id} comment={c} isMock={isMock} />
+                  <CommentItem key={c.id} comment={c} isMock={isMock} postId={postId} onReply={(name) => {
+                    setShowCommentInput(true);
+                    setCommentText(prev => prev.includes(`@${name}`) ? prev : `@${name} ` + prev);
+                  }} />
                 ))}
               </div>
               {showAllComments && (

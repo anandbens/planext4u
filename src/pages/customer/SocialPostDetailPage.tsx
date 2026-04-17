@@ -56,6 +56,27 @@ export default function SocialPostDetailPage() {
     enabled: !!post?.user_id,
   });
 
+  // Original post + author for repost credit
+  const { data: originalInfo } = useQuery({
+    queryKey: ['social-original-post', post?.original_post_id],
+    queryFn: async () => {
+      if (!post?.original_post_id) return null;
+      const { data: orig } = await supabase
+        .from('social_posts')
+        .select('id, user_id, caption')
+        .eq('id', post.original_post_id)
+        .maybeSingle();
+      if (!orig) return null;
+      const { data: ownerProfile } = await supabase
+        .from('social_profiles')
+        .select('username, display_name, avatar_url')
+        .eq('user_id', orig.user_id)
+        .maybeSingle();
+      return { ...orig, owner: ownerProfile };
+    },
+    enabled: !!post?.is_repost && !!post?.original_post_id,
+  });
+
   const { isLiked, likeCount, toggleLike } = usePostLike(postId || '');
   const { isSaved, toggleBookmark } = usePostBookmark(postId || '');
   const { comments, commentCount, addComment } = usePostComments(postId || '');
@@ -101,6 +122,21 @@ export default function SocialPostDetailPage() {
           <span className="text-lg font-semibold">Post</span>
         </div>
       </header>
+
+      {/* Repost credit banner */}
+      {post.is_repost && originalInfo && (
+        <div className="px-4 pt-3">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Repeat2 className="h-3.5 w-3.5" />
+            <span>
+              <Link to={`/app/social/profile/${post.user_id}`} className="font-semibold text-foreground">{username}</Link>
+              {' reposted • Original by '}
+              <Link to={`/app/social/profile/${originalInfo.user_id}`} className="font-semibold text-foreground">@{originalInfo.owner?.display_name || originalInfo.owner?.username || 'user'}</Link>
+            </span>
+          </div>
+          {post.repost_note && <p className="mt-1 text-sm text-foreground/80 italic">"{post.repost_note}"</p>}
+        </div>
+      )}
 
       {/* Author */}
       <div className="flex items-center gap-3 px-4 py-3">
