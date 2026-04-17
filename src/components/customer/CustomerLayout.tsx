@@ -253,6 +253,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             <div className="flex items-center justify-center gap-1 py-1.5">
               {[
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
+                { icon: UtensilsCrossed, label: "Food", to: "/app/food" },
                 { icon: Wrench, label: "Services", to: "/app/services" },
                 { icon: Megaphone, label: "Socio", to: "/app/social" },
                 { icon: Building, label: "Find Home", to: "/app/find-home" },
