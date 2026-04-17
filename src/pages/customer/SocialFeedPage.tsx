@@ -276,7 +276,7 @@ function PostCard({ post }: { post: any }) {
   const { data: recentComments = [] } = useQuery({
     queryKey: ['social-recent-comments', postId],
     queryFn: async () => {
-      const { data } = await supabase.from('social_comments').select('id, content, user_id').eq('post_id', postId).eq('status', 'active').is('parent_id', null).order('created_at', { ascending: false }).limit(2);
+      const { data } = await supabase.from('social_comments').select('id, content, user_id, like_count').eq('post_id', postId).eq('status', 'active').is('parent_id', null).order('created_at', { ascending: false }).limit(2);
       return data || [];
     },
     enabled: !isMock,
