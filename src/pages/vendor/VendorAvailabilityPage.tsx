@@ -65,23 +65,34 @@ export default function VendorAvailabilityPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      // Delete existing and reinsert
-      await supabase.from("vendor_availability" as any).delete().eq("vendor_id", vendorId);
+      if (!vendorId || vendorId === "VND-001") {
+        throw new Error("Vendor not authenticated. Please log in again.");
+      }
+      // Upsert each row by (vendor_id, day_of_week) so we don't lose data on partial failures
       const rows = schedule.map((d) => ({
         vendor_id: vendorId,
         day_of_week: d.day_of_week,
         is_available: d.is_available,
-        time_slots: d.time_slots,
+        time_slots: d.time_slots || [],
       }));
-      const { error } = await supabase.from("vendor_availability" as any).insert(rows as any);
+      const { data, error } = await supabase
+        .from("vendor_availability" as any)
+        .upsert(rows as any, { onConflict: "vendor_id,day_of_week" })
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Failed to save availability. Please verify you are logged in as a vendor.");
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["vendorAvailability"] });
       setHasChanges(false);
       toast.success("Availability saved successfully");
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: any) => {
+      console.error("Availability save error:", err);
+      toast.error(err?.message || "Failed to save availability");
+    },
   });
 
   const updateDay = (dayIndex: number, updates: Partial<DayAvailability>) => {
