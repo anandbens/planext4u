@@ -31,6 +31,8 @@ export interface Restaurant {
   rating: number;
   reviews_count: number;
   total_orders: number;
+  banner_url?: string | null;
+  gallery_urls?: string[];
 }
 
 export interface MenuItem {
@@ -51,6 +53,23 @@ export interface MenuItem {
   gst_rate: number;
   in_stock: boolean;
   is_bestseller: boolean;
+  display_order: number;
+  dietary_tags?: string[];
+  calories?: number | null;
+  gallery_urls?: string[];
+  order_count?: number;
+}
+
+export interface MenuCombo {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  description?: string | null;
+  image_url?: string | null;
+  item_ids: string[];
+  original_price: number;
+  combo_price: number;
+  is_active: boolean;
   display_order: number;
 }
 
