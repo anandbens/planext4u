@@ -227,6 +227,43 @@ export default function CustomerBrowsePage() {
           </div>
         </div>
 
+        {/* Sectioned layout for parent categories */}
+        {isParentCategoryView && (
+          <>
+            <SubcategoryStrip parentName={activeCategory!.name} subcategories={subcategories} />
+            <CategoryProductRow
+              title="Featured"
+              products={featuredProducts as any}
+              isLoading={isLoading}
+              wishlist={wishlist}
+              onToggleWishlist={toggleWishlist}
+              onQuickAdd={quickAdd}
+              onBuyNow={buyNow}
+            />
+            <CategoryProductRow
+              title="Popular in this category"
+              products={popularProducts as any}
+              isLoading={isLoading}
+              wishlist={wishlist}
+              onToggleWishlist={toggleWishlist}
+              onQuickAdd={quickAdd}
+              onBuyNow={buyNow}
+            />
+            <CategoryProductRow
+              title="Most redeemed with points"
+              products={mostRedeemedProducts as any}
+              isLoading={isLoading}
+              wishlist={wishlist}
+              onToggleWishlist={toggleWishlist}
+              onQuickAdd={quickAdd}
+              onBuyNow={buyNow}
+            />
+            <div className="flex items-center justify-between mb-3 px-1 mt-2">
+              <h2 className="text-base md:text-lg font-bold">All products</h2>
+            </div>
+          </>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />)}
