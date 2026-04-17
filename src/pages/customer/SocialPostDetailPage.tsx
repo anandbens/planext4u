@@ -245,7 +245,10 @@ export default function SocialPostDetailPage() {
             <MessageCircle className="h-6 w-6" />
             <span className="text-sm">{commentCount}</span>
           </button>
-          <button onClick={() => repost.mutate(postId!)}><Repeat2 className="h-6 w-6" /></button>
+          <button onClick={() => {
+            const note = window.prompt("Add a note to your repost (optional)") || undefined;
+            repost.mutate({ postId: postId!, note });
+          }}><Repeat2 className="h-6 w-6" /></button>
           <button onClick={() => sharePost(postId!, post.caption)}><Send className="h-6 w-6" /></button>
         </div>
         <button onClick={() => toggleBookmark()}><Bookmark className={`h-6 w-6 ${isSaved ? 'fill-foreground' : ''}`} /></button>

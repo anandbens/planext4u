@@ -3546,6 +3546,8 @@ export type Database = {
           content: string | null
           conversation_id: string
           created_at: string | null
+          deleted_at: string | null
+          deleted_for_everyone: boolean
           id: string
           is_read: boolean | null
           is_vanish: boolean | null
@@ -3558,6 +3560,8 @@ export type Database = {
           content?: string | null
           conversation_id: string
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_for_everyone?: boolean
           id?: string
           is_read?: boolean | null
           is_vanish?: boolean | null
@@ -3570,6 +3574,8 @@ export type Database = {
           content?: string | null
           conversation_id?: string
           created_at?: string | null
+          deleted_at?: string | null
+          deleted_for_everyone?: boolean
           id?: string
           is_read?: boolean | null
           is_vanish?: boolean | null
@@ -3673,6 +3679,7 @@ export type Database = {
           original_post_id: string | null
           post_type: string
           product_tags: Json | null
+          repost_note: string | null
           save_count: number | null
           scheduled_at: string | null
           share_count: number | null
@@ -3703,6 +3710,7 @@ export type Database = {
           original_post_id?: string | null
           post_type?: string
           product_tags?: Json | null
+          repost_note?: string | null
           save_count?: number | null
           scheduled_at?: string | null
           share_count?: number | null
@@ -3733,6 +3741,7 @@ export type Database = {
           original_post_id?: string | null
           post_type?: string
           product_tags?: Json | null
+          repost_note?: string | null
           save_count?: number | null
           scheduled_at?: string | null
           share_count?: number | null
@@ -4731,6 +4740,10 @@ export type Database = {
       }
       check_otp_rate_limit: { Args: { _phone: string }; Returns: Json }
       check_phone_registered: { Args: { _phone: string }; Returns: boolean }
+      count_mutual_followers: {
+        Args: { _profile: string; _viewer: string }
+        Returns: number
+      }
       create_social_notification: {
         Args: {
           _actor_id: string
@@ -4751,6 +4764,25 @@ export type Database = {
         Returns: number
       }
       get_customer_id: { Args: { _user_id: string }; Returns: string }
+      get_friends_of_friends: {
+        Args: { _limit?: number; _user: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          mutual_count: number
+          user_id: string
+          username: string
+        }[]
+      }
+      get_mutual_followers: {
+        Args: { _limit?: number; _profile: string; _viewer: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          user_id: string
+          username: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

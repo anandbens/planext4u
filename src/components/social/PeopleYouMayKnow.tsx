@@ -1,13 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserPlus, Check } from "lucide-react";
+import { UserPlus, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
-import { findFriends, MatchedUser } from "@/lib/device-service";
+import { findFriends, getFriendsOfFriends } from "@/lib/device-service";
 import { toast } from "sonner";
 import { isNativePlatform } from "@/lib/capacitor";
+
+interface Suggestion {
+  id: string;
+  name: string;
+  profile_photo: string | null;
+  source: "contacts" | "friends_of_friends" | "discover";
+  mutual_count?: number;
+}
 
 export default function PeopleYouMayKnow() {
   const { customerUser } = useAuth();
@@ -35,38 +44,72 @@ export default function PeopleYouMayKnow() {
     }
   };
 
-  const { data: suggestions = [], isLoading } = useQuery({
+  const { data: suggestions = [], isLoading } = useQuery<Suggestion[]>({
     queryKey: ["people-you-may-know", userId, contactsRequested],
     queryFn: async () => {
       if (!userId) return [];
 
-      // On native, try contact matching
-      if (isNativePlatform() && contactsRequested) {
-        const matched = await findFriends();
-        return matched.filter((u) => u.id !== userId);
+      const merged: Suggestion[] = [];
+      const seenIds = new Set<string>([userId]);
+
+      // 1. Friends of friends (always available, no permission required)
+      const fof = await getFriendsOfFriends(userId, 10);
+      for (const f of fof) {
+        if (seenIds.has(f.user_id)) continue;
+        seenIds.add(f.user_id);
+        merged.push({
+          id: f.user_id,
+          name: f.display_name || f.username || "User",
+          profile_photo: f.avatar_url,
+          source: "friends_of_friends",
+          mutual_count: f.mutual_count,
+        });
       }
 
-      // Fallback: suggest users the current user doesn't follow
-      const { data: following } = await supabase
-        .from("social_follows")
-        .select("following_id")
-        .eq("follower_id", userId);
+      // 2. Phone contact matches (only if user opted in on native)
+      if (isNativePlatform() && contactsRequested) {
+        const matched = await findFriends();
+        for (const m of matched) {
+          if (seenIds.has(m.id)) continue;
+          // Look up the social profile to get user_id
+          const { data: profile } = await supabase
+            .from("social_profiles")
+            .select("user_id, display_name, username, avatar_url")
+            .eq("user_id", m.id)
+            .maybeSingle();
+          if (!profile) continue;
+          seenIds.add(profile.user_id);
+          merged.push({
+            id: profile.user_id,
+            name: profile.display_name || profile.username || m.name || "User",
+            profile_photo: profile.avatar_url || m.profile_photo,
+            source: "contacts",
+          });
+        }
+      }
 
-      const followingIds = (following || []).map((f: any) => f.following_id);
-      followingIds.push(userId); // exclude self
+      // 3. Fallback: discover new profiles if list is short
+      if (merged.length < 6) {
+        const excludeIds = Array.from(seenIds);
+        const { data: profiles } = await supabase
+          .from("social_profiles")
+          .select("user_id, display_name, username, avatar_url")
+          .not("user_id", "in", `(${excludeIds.join(",")})`)
+          .limit(10 - merged.length);
 
-      const { data: profiles } = await supabase
-        .from("social_profiles")
-        .select("user_id, display_name, username, avatar_url")
-        .not("user_id", "in", `(${followingIds.join(",")})`)
-        .limit(10);
+        for (const p of profiles || []) {
+          if (seenIds.has(p.user_id)) continue;
+          seenIds.add(p.user_id);
+          merged.push({
+            id: p.user_id,
+            name: p.display_name || p.username || "User",
+            profile_photo: p.avatar_url,
+            source: "discover",
+          });
+        }
+      }
 
-      return (profiles || []).map((p: any) => ({
-        id: p.user_id,
-        name: p.display_name || p.username || "User",
-        mobile: "",
-        profile_photo: p.avatar_url,
-      }));
+      return merged.slice(0, 12);
     },
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
@@ -81,7 +124,7 @@ export default function PeopleYouMayKnow() {
       });
       if (error && error.code !== "23505") throw error;
     },
-    onSuccess: (_, targetId) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["people-you-may-know"] });
       qc.invalidateQueries({ queryKey: ["social-followers"] });
       toast.success("Followed!");
@@ -104,7 +147,7 @@ export default function PeopleYouMayKnow() {
         <h3 className="font-semibold text-sm mb-3">People You May Know</h3>
         <div className="flex gap-3 overflow-x-auto pb-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex flex-col items-center gap-2 min-w-[100px]">
+            <div key={i} className="flex flex-col items-center gap-2 min-w-[120px]">
               <Skeleton className="h-16 w-16 rounded-full" />
               <Skeleton className="h-3 w-16" />
               <Skeleton className="h-7 w-20 rounded-full" />
@@ -116,7 +159,6 @@ export default function PeopleYouMayKnow() {
   }
 
   if (visibleSuggestions.length === 0) {
-    // On native, show "Find Friends" button if contacts not yet requested
     if (isNativePlatform() && !contactsRequested) {
       return (
         <div className="px-4 py-3">
@@ -157,32 +199,43 @@ export default function PeopleYouMayKnow() {
         {visibleSuggestions.map((user) => (
           <div
             key={user.id}
-            className="flex flex-col items-center gap-1.5 min-w-[100px] shrink-0"
+            className="flex flex-col items-center gap-1.5 min-w-[120px] shrink-0 bg-card border border-border/30 rounded-xl p-3"
           >
-            <div className="h-16 w-16 rounded-full bg-muted overflow-hidden border-2 border-primary/20">
-              {user.profile_photo ? (
-                <img
-                  src={user.profile_photo}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-lg font-bold text-muted-foreground">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-            <span className="text-xs font-medium text-center truncate w-full px-1">
+            <Link to={`/app/social/profile/${user.id}`}>
+              <div className="h-16 w-16 rounded-full bg-muted overflow-hidden border-2 border-primary/20">
+                {user.profile_photo ? (
+                  <img
+                    src={user.profile_photo}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-lg font-bold text-muted-foreground">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+            </Link>
+            <Link to={`/app/social/profile/${user.id}`} className="text-xs font-medium text-center truncate w-full px-1">
               {user.name}
-            </span>
+            </Link>
+            {user.source === "friends_of_friends" && user.mutual_count ? (
+              <p className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                <Users className="h-2.5 w-2.5" />
+                {user.mutual_count} mutual
+              </p>
+            ) : user.source === "contacts" ? (
+              <p className="text-[10px] text-muted-foreground">From contacts</p>
+            ) : (
+              <p className="text-[10px] text-muted-foreground">Suggested</p>
+            )}
             <Button
               size="sm"
               variant="default"
-              className="h-7 text-xs rounded-full px-4"
+              className="h-7 text-xs rounded-full px-4 w-full"
               onClick={() => handleFollow(user.id)}
               disabled={followMutation.isPending}
             >
-              <UserPlus className="h-3 w-3 mr-1" />
               Follow
             </Button>
           </div>

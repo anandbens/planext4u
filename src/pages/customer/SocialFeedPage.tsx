@@ -524,7 +524,10 @@ function PostCard({ post }: { post: any }) {
               <span className="text-sm">{formatCount(comments)}</span>
             </button>
           )}
-          <button className="flex items-center gap-1.5" onClick={() => repost.mutate(postId)} title="Share to Story">
+          <button className="flex items-center gap-1.5" onClick={() => {
+            const note = window.prompt("Add a note to your repost (optional)") || undefined;
+            repost.mutate({ postId, note });
+          }} title="Repost">
             <Repeat2 className="h-6 w-6" />
           </button>
           <button className="flex items-center gap-1.5" onClick={() => sharePost(postId, post.caption)} title="Share Link">

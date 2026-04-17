@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Settings, Plus, Grid3X3, Film, Bookmark, Users, MoreHorizontal, ChevronDown, UserPlus, Bookmark as BookmarkIcon, Play } from "lucide-react";
+import { ArrowLeft, Settings, Plus, Grid3X3, Film, Bookmark, Users, MoreHorizontal, ChevronDown, UserPlus, Bookmark as BookmarkIcon, Play, Repeat2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
+import FollowedByChip from "@/components/social/FollowedByChip";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFollow } from "@/hooks/use-social-interactions";
@@ -239,6 +240,7 @@ export default function SocialProfilePage() {
             <p className="text-sm font-semibold">{displayName}</p>
             {bio && <p className="text-sm whitespace-pre-line">{bio}</p>}
             {profile?.website && <a href={profile.website} className="text-sm text-primary" target="_blank" rel="noopener noreferrer">{profile.website}</a>}
+            {!isOwnProfile && targetUserId && <FollowedByChip profileUserId={targetUserId} />}
           </div>
 
           <div className="flex gap-2 mt-4">
