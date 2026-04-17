@@ -713,6 +713,20 @@ export default function VendorRegisterPage() {
                 </div>
               ))}
             </div>
+
+            <div className="pt-2 border-t border-border/50">
+              <label className="text-xs font-medium text-muted-foreground">Referral Code (optional)</label>
+              <Input
+                value={form.referral_code}
+                onChange={e => updateField('referral_code', e.target.value.toUpperCase().slice(0, 12))}
+                placeholder="Enter your referrer's code"
+                maxLength={12}
+                className="mt-1 font-mono"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                The customer who referred you will earn referral points after your first sale is delivered.
+              </p>
+            </div>
           </Card>
         )}
 
