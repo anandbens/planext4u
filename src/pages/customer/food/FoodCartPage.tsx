@@ -66,13 +66,31 @@ export default function FoodCartPage() {
   const address = loadSelectedLocation() || "Current location";
   const slots = useMemo(() => generateSlots(), []);
 
-  // Detect multi-restaurant cart on load
+  // Detect multi-restaurant cart on load + handle reorder payload
   useEffect(() => {
+    const reorderRaw = localStorage.getItem('food_reorder_payload');
+    if (reorderRaw) {
+      try {
+        const payload = JSON.parse(reorderRaw);
+        const reorderLines: CartLine[] = (payload.items || []).map((it: any) => ({
+          restaurant_id: payload.restaurant_id,
+          menu_item_id: it.menu_item_id || it.id,
+          name: it.name, price: it.price, qty: it.qty, gst_rate: it.gst_rate || 5,
+        }));
+        if (reorderLines.length) {
+          const merged = [...cart.filter(l => l.restaurant_id === payload.restaurant_id), ...reorderLines];
+          setCart(merged);
+          toast.success("Items added from previous order");
+        }
+        localStorage.removeItem('food_reorder_payload');
+      } catch {}
+    }
     const ids = new Set(cart.map(l => l.restaurant_id));
     if (ids.size > 1) {
       const arr = Array.from(ids);
       setMultiRestaurantWarn({ existing: arr[0], incoming: arr[1] });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

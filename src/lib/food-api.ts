@@ -398,4 +398,55 @@ export const foodApi = {
     } as any);
     await supabase.rpc('exec_sql' as any).then(() => {}).catch(() => {});
   },
+
+  // ─── Chat ────────────────────────────────────────────────────
+  listChatMessages: async (orderId: string) => {
+    const { data, error } = await supabase.from('food_order_chats' as any)
+      .select('*').eq('order_id', orderId).order('created_at', { ascending: true });
+    if (error) throw error;
+    return (data || []) as any[];
+  },
+
+  sendChatMessage: async (orderId: string, senderId: string, senderRole: 'customer'|'rider'|'restaurant'|'admin', message: string, isQuickReply = false) => {
+    const { error } = await supabase.from('food_order_chats' as any).insert({
+      order_id: orderId, sender_id: senderId, sender_role: senderRole, message, is_quick_reply: isQuickReply,
+    } as any);
+    if (error) throw error;
+  },
+
+  markChatRead: async (orderId: string, userId: string) => {
+    await supabase.from('food_order_chats' as any).update({ read_at: new Date().toISOString() } as any)
+      .eq('order_id', orderId).neq('sender_id', userId).is('read_at', null);
+  },
+
+  // ─── Cancellation ────────────────────────────────────────────
+  listCancellationReasons: async (appliesTo: 'customer'|'restaurant'|'rider'|'admin' = 'customer') => {
+    const { data, error } = await supabase.from('food_cancellation_reasons' as any)
+      .select('*').eq('applies_to', appliesTo).eq('is_active', true).order('display_order');
+    if (error) throw error;
+    return (data || []) as any[];
+  },
+
+  cancelOrderByCustomer: async (orderId: string, reason: string) => {
+    const { data, error } = await supabase.rpc('cancel_food_order_by_customer' as any, {
+      _order_id: orderId, _reason: reason,
+    });
+    if (error) throw error;
+    return data as { ok: boolean; reason?: string };
+  },
+
+  // ─── Rider details ───────────────────────────────────────────
+  getRider: async (riderId: string) => {
+    const { data, error } = await supabase.from('riders').select('id,name,mobile,vehicle_type,vehicle_number,rating,total_deliveries')
+      .eq('id', riderId).maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+
+  // ─── Reorder ─────────────────────────────────────────────────
+  reorder: async (orderId: string) => {
+    const { data, error } = await supabase.from('food_orders').select('items,restaurant_id').eq('id', orderId).maybeSingle();
+    if (error) throw error;
+    return data;
+  },
 };
