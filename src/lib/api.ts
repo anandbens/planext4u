@@ -434,40 +434,42 @@ export const api = {
     const validVendorFields = ['name', 'business_name', 'mobile', 'email', 'category_id', 'city_id', 'area_id',
       'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue',
       'shop_latitude', 'shop_longitude', 'shop_address', 'plan_id', 'plan_start_date', 'plan_end_date',
-      'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'background_image', 'max_redemption_percentage'];
+      'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'background_image', 'max_redemption_percentage', 'referred_by'];
     // UUID columns that must be null instead of empty string
     const uuidFields = ['plan_id', 'category_id', 'city_id', 'area_id'];
     // Valid columns for the `service_vendors` table (now includes plan/shop/payment cols)
     const validSvcVendorFields = ['name', 'business_name', 'mobile', 'email', 'category_id', 'city_id', 'area_id',
       'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue',
-      'plan_id', 'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'max_redemption_percentage', 'kyc_status'];
-    const filtered: Record<string, any> = {};
-    for (const key of validVendorFields) {
-      if (key in data) {
-        let val = (data as any)[key];
-        // Convert empty strings to null for UUID/FK columns
-        if (uuidFields.includes(key) && val === '') val = null;
-        filtered[key] = val;
-      }
-    }
-    // Try vendors table first, use .select() to detect 0-row silent failures
-    const { data: updated, error: e1 } = await supabase.from('vendors').update(filtered).eq('id', id).select();
-    if (e1) {
-      console.error("Vendor update error:", e1);
-      // For service_vendors, filter to only columns that exist on that table
-      const svcFiltered: Record<string, any> = {};
-      for (const key of validSvcVendorFields) {
+      'plan_id', 'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'max_redemption_percentage', 'kyc_status', 'referred_by'];
+
+    const buildFiltered = (allowed: string[]) => {
+      const out: Record<string, any> = {};
+      for (const key of allowed) {
         if (key in data) {
           let val = (data as any)[key];
           if (uuidFields.includes(key) && val === '') val = null;
-          svcFiltered[key] = val;
+          out[key] = val;
         }
       }
-      const { data: svcUpdated, error: e2 } = await supabase.from('service_vendors').update(svcFiltered).eq('id', id).select();
-      if (e2) throw e2;
-      if (!svcUpdated || svcUpdated.length === 0) throw new Error("Update failed — no rows were affected. Check your permissions.");
-    } else if (!updated || updated.length === 0) {
-      throw new Error("Update failed — no rows were affected. Check your permissions.");
+      return out;
+    };
+
+    // Detect which table this id belongs to (IDs may be SVN-* for service vendors, VND-* for product vendors)
+    // Important: if vendors update returns 0 rows AND no error, fall through to service_vendors instead of throwing.
+    const filtered = buildFiltered(validVendorFields);
+    const { data: updated, error: e1 } = await supabase.from('vendors').update(filtered).eq('id', id).select();
+    if (!e1 && updated && updated.length > 0) return { success: true };
+
+    // Either errored or no rows matched — try service_vendors as a fallback
+    const svcFiltered = buildFiltered(validSvcVendorFields);
+    const { data: svcUpdated, error: e2 } = await supabase.from('service_vendors').update(svcFiltered).eq('id', id).select();
+    if (e2) {
+      console.error("Service vendor update error:", e2);
+      throw e2;
+    }
+    if (!svcUpdated || svcUpdated.length === 0) {
+      // Neither table had a matching row updatable by this user
+      throw new Error("Update failed — no matching vendor row was updated. Check the vendor ID and your permissions.");
     }
     return { success: true };
   },

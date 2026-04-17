@@ -321,20 +321,40 @@ Deno.serve(async (req) => {
         console.log("Welcome bonus credited:", welcomePoints, "pts to", customerId);
       }
 
-      // 7. Handle referral bonus
+      // 7. Handle referral bonus (creates a referrals row + points transaction)
       if (registerData.referral_code) {
+        const refCode = String(registerData.referral_code).trim().toUpperCase();
         const { data: referrer } = await supabase
           .from("customers")
           .select("id, name, wallet_points")
-          .eq("referral_code", registerData.referral_code)
+          .eq("referral_code", refCode)
           .eq("status", "active")
           .maybeSingle();
 
         if (referrer) {
+          // Read configurable referral amount and cooling flag
           let referralPoints = 100;
           const { data: refVar } = await supabase.from("platform_variables").select("value").eq("key", "referral_points").maybeSingle();
           if (refVar) referralPoints = Number(refVar.value) || 100;
-          // Credit referral bonus to the referrer
+          const { data: coolingVar } = await supabase.from("platform_variables").select("value").eq("key", "referral_cooling_enabled").maybeSingle();
+          const cooling = coolingVar?.value === "1";
+          const expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
+
+          // Always log a referrals row so it shows up on the referrals admin/customer page
+          await supabase.from("referrals").insert({
+            id: "REF-" + crypto.randomUUID().substring(0, 8).toUpperCase(),
+            referrer_id: referrer.id,
+            referrer_name: referrer.name,
+            referee_id: customerId,
+            referee_name: registerData.name,
+            status: cooling ? "pending" : "completed",
+            points_awarded: referralPoints,
+            cooling_until: cooling ? expiresAt : null,
+            first_order_placed: false,
+            bonus_credited: !cooling,
+          } as any);
+
+          // Insert points transaction (cooling = pending until first order; else credited immediately)
           const { error: refInsertErr } = await supabase.from("points_transactions").insert({
             id: "PT-R-" + crypto.randomUUID().substring(0, 8).toUpperCase(),
             user_id: referrer.id,
@@ -343,17 +363,22 @@ Deno.serve(async (req) => {
             points: referralPoints,
             description: `Referral bonus: ${registerData.name} joined using your code`,
             is_expired: false,
-          });
+            cooling_status: cooling ? "pending" : "credited",
+            expires_at: expiresAt,
+          } as any);
+
           if (refInsertErr) {
             console.error("Referral bonus insert error:", refInsertErr.message);
-          } else {
+          } else if (!cooling) {
             await supabase.from("customers").update({
               wallet_points: (referrer.wallet_points || 0) + referralPoints,
             }).eq("id", referrer.id);
             console.log("Referral bonus credited:", referralPoints, "pts to referrer", referrer.id);
+          } else {
+            console.log("Referral bonus pending (cooling) for referrer", referrer.id);
           }
         } else {
-          console.log("Referral code not found or inactive:", registerData.referral_code);
+          console.log("Referral code not found or inactive:", refCode);
         }
       }
 
