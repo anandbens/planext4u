@@ -21,6 +21,8 @@ Deno.serve(async (req) => {
       { email: "sales@planext4u.com", password: "P4u@Sales2026", name: "Sales Executive", role: "sales" as const },
       { email: "vendor@planext4u.com", password: "P4u@Vendor2026", name: "Ravi Kumar", role: "vendor" as const, vendor_id: "VND-001" },
       { email: "customer@planext4u.com", password: "P4u@Customer2026", name: "Rahul Sharma", role: "customer" as const, customer_id: "USR-001" },
+      { email: "rider1@planext4u.com", password: "P4u@Rider2026", name: "Karthik Raja", role: "rider" as const, rider_id: "RIDER-001" },
+      { email: "rider2@planext4u.com", password: "P4u@Rider2026", name: "Manoj Kumar", role: "rider" as const, rider_id: "RIDER-002" },
     ];
 
     const results = [];
@@ -64,6 +66,11 @@ Deno.serve(async (req) => {
         vendor_id: (u as any).vendor_id || null,
         customer_id: (u as any).customer_id || null,
       }, { onConflict: "user_id,role" });
+
+      // Link rider record to auth user
+      if ((u as any).rider_id) {
+        await supabaseAdmin.from("riders").update({ user_id: userId }).eq("id", (u as any).rider_id);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, results }), {
