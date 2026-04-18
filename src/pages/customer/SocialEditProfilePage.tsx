@@ -15,7 +15,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function SocialEditProfilePage() {
   const navigate = useNavigate();
-  const { customerUser } = useAuth();
+  const { customerUser, isLoading: authLoading } = useAuth();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const currentUserId = customerUser?.supabase_uid || customerUser?.id;
@@ -28,7 +28,10 @@ export default function SocialEditProfilePage() {
       const { data } = await supabase.from('social_profiles').select('*').eq('user_id', currentUserId).maybeSingle();
       return data;
     },
-    enabled: !!currentUserId,
+    // Wait for auth session restore before querying — otherwise RLS returns
+    // null on cold reload and the form binds to empty values.
+    enabled: !authLoading && !!currentUserId,
+    staleTime: 30_000,
   });
 
   const [form, setForm] = useState({

@@ -41,7 +41,7 @@ const getGoogleMapsKey = async (): Promise<string> => {
 
 export default function CustomerProfileEditPage() {
   const navigate = useNavigate();
-  const { customerUser } = useAuth();
+  const { customerUser, isLoading: authLoading } = useAuth();
   const customerId = customerUser?.customer_id || customerUser?.id || '';
   const photoRef = useRef<HTMLInputElement>(null);
 
@@ -64,12 +64,15 @@ export default function CustomerProfileEditPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if (customerId) {
+    // Wait for the auth session to finish restoring on cold reload — RLS
+    // otherwise blocks the read while auth.uid() is still null and the form
+    // ends up bound to stale/blank values.
+    if (!authLoading && customerId) {
       loadProfile();
       loadAddresses();
       loadOccupations();
     }
-  }, [customerId]);
+  }, [customerId, authLoading]);
 
   const cleanEmail = (email: string | null | undefined): string => {
     if (!email || email.includes('@phone.planext4u.local')) return '';
