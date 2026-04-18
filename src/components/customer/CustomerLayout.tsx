@@ -606,10 +606,12 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         return (
           <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
             <div className="relative flex items-center justify-around px-1 py-2">
-              {shopTabs.map((item) => {
+              {shopTabs.map((item: any) => {
                 const active = isActive(item.to);
                 return (
-                  <Link key={item.to + item.label} to={item.to} className="flex-1 flex flex-col items-center relative">
+                  <Link key={item.to + item.label} to={item.comingSoon ? "#" : item.to}
+                    onClick={(e) => { if (item.comingSoon) { e.preventDefault(); toast.info(`${item.label} — Coming Soon!`); } }}
+                    className={`flex-1 flex flex-col items-center relative ${item.comingSoon ? 'opacity-70' : ''}`}>
                     <div className="flex flex-col items-center relative z-10">
                       {active ? (
                         <motion.div
@@ -622,9 +624,12 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                           <span className="text-[8px] font-bold text-primary-foreground mt-0.5 leading-tight whitespace-nowrap">{item.label}</span>
                         </motion.div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center py-1">
+                        <div className="flex flex-col items-center justify-center py-1 relative">
                           <item.icon className="h-4 w-4 text-muted-foreground" />
                           <span className="text-[8px] font-medium text-muted-foreground mt-0.5 leading-tight whitespace-nowrap">{item.label}</span>
+                          {item.comingSoon && (
+                            <span className="absolute -top-1 -right-2 bg-warning text-warning-foreground text-[6px] font-bold px-1 py-px rounded-full leading-none">SOON</span>
+                          )}
                         </div>
                       )}
                     </div>
