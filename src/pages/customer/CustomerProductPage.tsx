@@ -247,7 +247,7 @@ export default function CustomerProductPage() {
         </button>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-4 pb-36 md:pb-6">
+      <div className="max-w-5xl mx-auto px-4 py-4 pb-2 md:pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Product Image */}
           <div className="relative">
