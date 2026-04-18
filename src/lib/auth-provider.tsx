@@ -76,6 +76,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return 'loaded';
   }, []);
 
+  // Detect which portal the user is currently signing into so that when a single
+  // Supabase auth user has BOTH vendor and customer roles (same email/phone shared
+  // between a vendor account and a customer account), we load the correct profile.
+  const detectActivePortal = useCallback((): 'admin' | 'vendor' | 'customer' => {
+    if (typeof window === 'undefined') return 'customer';
+    try {
+      const path = window.location.pathname || '';
+      if (path.startsWith('/vendor')) return 'vendor';
+      if (path === '/login' || path.startsWith('/admin') || path.startsWith('/dashboard')) return 'admin';
+      if (path.startsWith('/app')) return 'customer';
+      // Native APK fallback — vendor APK stores this flag
+      const nativePortal = sessionStorage.getItem('p4u_native_portal');
+      if (nativePortal === 'vendor') return 'vendor';
+    } catch {}
+    return 'customer';
+  }, []);
+
+  const pickPreferredRole = useCallback((roles: any[], portal: 'admin' | 'vendor' | 'customer') => {
+    if (!roles || roles.length === 0) return null;
+    if (roles.length === 1) return roles[0];
+    // Prefer a role matching the portal the user is signing into
+    if (portal === 'vendor') {
+      const v = roles.find(r => r.role === 'vendor');
+      if (v) return v;
+    } else if (portal === 'customer') {
+      const c = roles.find(r => r.role === 'customer');
+      if (c) return c;
+    } else if (portal === 'admin') {
+      const a = roles.find(r => ['admin', 'finance', 'sales'].includes(r.role));
+      if (a) return a;
+    }
+    return roles[0];
+  }, []);
+
   const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string, isFreshLogin: boolean) => {
     const { data: roles } = await supabase
       .from("user_roles")
@@ -95,7 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .select("role, vendor_id, customer_id, password_set")
               .eq("user_id", supabaseUid);
             if (newRoles && newRoles.length > 0) {
-              return await processRole(newRoles[0], supabaseUid, email, name, isFreshLogin);
+              const portal = detectActivePortal();
+              const picked = pickPreferredRole(newRoles, portal);
+              return await processRole(picked, supabaseUid, email, name, isFreshLogin);
             }
           }
         } catch {}
@@ -107,8 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return 'unregistered';
     }
 
-    return await processRole(roles[0], supabaseUid, email, name, isFreshLogin);
-  }, [processRole]);
+    const portal = detectActivePortal();
+    const picked = pickPreferredRole(roles, portal);
+    return await processRole(picked, supabaseUid, email, name, isFreshLogin);
+  }, [processRole, detectActivePortal, pickPreferredRole]);
 
   useEffect(() => {
     let cancelled = false;
