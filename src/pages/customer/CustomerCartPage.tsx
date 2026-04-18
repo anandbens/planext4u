@@ -17,6 +17,7 @@ import { format, addDays, addMonths, subMonths, startOfMonth, endOfMonth, startO
 import { supabase } from "@/integrations/supabase/client";
 import { resolveCommissionCascade } from "@/lib/commission-cascade";
 import { checkCartStock } from "@/lib/stock-check";
+import { getCustomerAddressOwnerContext, requireCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 
 const TIME_SLOTS = [
   { id: "morning", label: "Morning 9 - 11 AM" },
@@ -31,7 +32,7 @@ interface SavedAddress {
 export default function CustomerCartPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
-  const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
+  const customerId = customerUser?.customer_id || customerUser?.id || "";
   const [cart, setCart] = useState<CartItem[]>([]);
   const [savedForLater, setSavedForLater] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +100,10 @@ export default function CustomerCartPage() {
   };
 
   const loadAddresses = async () => {
-    const { data } = await supabase.from('customer_addresses').select('*').eq('customer_id', customerId).order('is_default', { ascending: false });
+    const { ownerIds } = await getCustomerAddressOwnerContext(customerUser);
+    if (!ownerIds.length) return;
+
+    const { data } = await supabase.from('customer_addresses').select('*').in('customer_id', ownerIds).order('is_default', { ascending: false });
     if (data) {
       setAddresses(data as SavedAddress[]);
       const def = (data as SavedAddress[]).find(a => a.is_default);
@@ -112,17 +116,20 @@ export default function CustomerCartPage() {
       toast.error("Please fill all address fields"); return;
     }
     if (editingAddress) {
-      await supabase.from('customer_addresses').update({
+      const { error } = await supabase.from('customer_addresses').update({
         label: addressForm.label, type: addressForm.type,
         address_line: addressForm.address_line, city: addressForm.city, pincode: addressForm.pincode,
       }).eq('id', editingAddress.id);
+      if (error) throw error;
       toast.success("Address updated!");
     } else {
+      const { preferredId } = await requireCustomerAddressOwnerContext(customerUser);
       const isFirst = addresses.length === 0;
-      await supabase.from('customer_addresses').insert({
-        customer_id: customerId, label: addressForm.label, type: addressForm.type,
+      const { error } = await supabase.from('customer_addresses').insert({
+        customer_id: preferredId, label: addressForm.label, type: addressForm.type,
         address_line: addressForm.address_line, city: addressForm.city, pincode: addressForm.pincode, is_default: isFirst,
       });
+      if (error) throw error;
       toast.success("Address added!");
     }
     setShowAddressDialog(false);

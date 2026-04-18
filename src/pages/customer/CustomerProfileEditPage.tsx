@@ -16,6 +16,7 @@ import { logActivity } from "@/lib/activity-log";
 import { supabase } from "@/integrations/supabase/client";
 import { compressToWebP } from "@/lib/webp-compress";
 import { useAuth } from "@/lib/auth";
+import { getCustomerAddressOwnerContext, requireCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 
 interface SavedAddress {
   id: string; label: string; type: string; address_line: string; city: string; pincode: string; is_default: boolean;
@@ -94,7 +95,10 @@ export default function CustomerProfileEditPage() {
   };
 
   const loadAddresses = async () => {
-    const { data } = await supabase.from('customer_addresses').select('*').eq('customer_id', customerId).order('is_default', { ascending: false });
+    const { ownerIds } = await getCustomerAddressOwnerContext(customerUser);
+    if (!ownerIds.length) return;
+
+    const { data } = await supabase.from('customer_addresses').select('*').in('customer_id', ownerIds).order('is_default', { ascending: false });
     if (data) setAddresses(data as SavedAddress[]);
   };
 
@@ -336,18 +340,21 @@ export default function CustomerProfileEditPage() {
     const lng = mapAddress?.lng || 0;
 
     if (editingAddress) {
-      await supabase.from('customer_addresses').update({
+      const { error } = await supabase.from('customer_addresses').update({
         label: addrForm.label, type: addrForm.type, address_line: addressLine, city, pincode,
         latitude: lat, longitude: lng,
       } as any).eq('id', editingAddress.id);
+      if (error) throw error;
       toast.success("Address updated!");
     } else {
+      const { preferredId } = await requireCustomerAddressOwnerContext(customerUser);
       const isFirst = addresses.length === 0;
-      await supabase.from('customer_addresses').insert({
-        customer_id: customerId, label: addrForm.label, type: addrForm.type,
+      const { error } = await supabase.from('customer_addresses').insert({
+        customer_id: preferredId, label: addrForm.label, type: addrForm.type,
         address_line: addressLine, city, pincode, is_default: isFirst,
         latitude: lat, longitude: lng,
       } as any);
+      if (error) throw error;
       toast.success("Address added!");
     }
     setShowMapModal(false);
