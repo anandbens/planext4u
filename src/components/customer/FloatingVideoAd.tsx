@@ -133,7 +133,7 @@ export function FloatingVideoAd({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.92 }}
         transition={{ type: "spring", stiffness: 280, damping: 26 }}
-        className="fixed z-50 left-2.5 bottom-[5.25rem] md:bottom-8 md:left-8 w-[clamp(64px,14vw,88px)] aspect-[9/16] rounded-xl overflow-hidden shadow-2xl bg-black"
+        className="fixed z-50 left-2.5 bottom-[5.25rem] md:bottom-8 md:left-8 w-[clamp(96px,21vw,132px)] aspect-[9/16] rounded-xl overflow-hidden shadow-2xl bg-black"
         onClick={handleTogglePlay}
         role="button"
         aria-label="Floating video advertisement"
@@ -144,13 +144,18 @@ export function FloatingVideoAd({
           autoPlay
           loop
           muted
+          defaultMuted
           playsInline
           {...({ "webkit-playsinline": "true" } as Record<string, string>)}
           preload="auto"
-          crossOrigin="anonymous"
           src={playableVideoUrl || videoUrl}
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
+          onLoadedMetadata={(e) => {
+            const v = e.currentTarget;
+            v.muted = true;
+            v.play().catch(() => {});
+          }}
           onError={(e) => {
             const v = e.currentTarget;
             console.warn("[FloatingVideoAd] video error", {
