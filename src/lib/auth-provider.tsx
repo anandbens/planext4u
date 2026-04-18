@@ -7,6 +7,8 @@ import { initPushNotifications, linkPushTokenToUser } from "@/lib/push-notificat
 import { persistentStore } from "@/lib/storage-adapter";
 import type { AuthUser, CustomerUser, VendorUser, UserRole, AppRole } from "@/lib/auth-types";
 
+const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [customerUser, setCustomerUser] = useState<CustomerUser | null>(null);
@@ -49,8 +51,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return 'orphan_role';
       }
 
-      // Vendor exists but not verified
-      if (vendor.status !== 'active' && vendor.status !== 'verified') {
+      // Vendor exists but is not yet allowed into the vendor portal
+      if (!ACTIVE_VENDOR_STATUSES.has(vendor.status)) {
         await supabase.auth.signOut();
         return 'vendor_not_verified';
       }

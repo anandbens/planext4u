@@ -58,6 +58,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
   const navigate = useNavigate();
   const { vendorUser, vendorLogout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const vendorInitial = vendorUser?.name?.trim()?.charAt(0)?.toUpperCase() || "V";
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -148,7 +149,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
                 />
                 <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center">
                   {vendorUser ? (
-                    <span className="text-sm font-bold text-primary-foreground">{vendorUser.name.charAt(0)}</span>
+                    <span className="text-sm font-bold text-primary-foreground">{vendorInitial}</span>
                   ) : (
                     <User className="h-4 w-4 text-primary-foreground" />
                   )}
@@ -235,7 +236,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
               <div className="p-5 bg-card">
                 <Link to="/vendor/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-4">
                   <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary">{vendorUser?.name?.charAt(0) || 'V'}</span>
+                    <span className="text-2xl font-bold text-primary">{vendorInitial}</span>
                   </div>
                   <div className="flex-1">
                     <p className="text-xl font-bold">{vendorUser?.name || "Vendor"}</p>

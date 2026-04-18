@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogo from "@/assets/p4u-logo.png";
 
+const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
+
 export default function VendorLoginPage() {
   const { vendorLogin } = useAuth();
   const navigate = useNavigate();
@@ -61,7 +63,7 @@ export default function VendorLoginPage() {
           toast.error(`Your vendor application was rejected. ${vendorApp.rejection_reason ? 'Reason: ' + vendorApp.rejection_reason : 'Please contact support for details.'}`, { duration: 7000 });
           return;
         }
-        if (vendorApp.status !== 'approved' && vendorApp.status !== 'verified') {
+        if (!ACTIVE_VENDOR_STATUSES.has(vendorApp.status)) {
           setLoading(false);
           toast.info("Your profile is submitted for approval. You will be notified once your profile is approved.", { duration: 6000 });
           return;
@@ -74,7 +76,7 @@ export default function VendorLoginPage() {
         return;
       }
 
-      if (vendor && vendor.status !== 'active' && vendor.status !== 'verified') {
+      if (vendor && !ACTIVE_VENDOR_STATUSES.has(vendor.status)) {
         setLoading(false);
         toast.info("Your profile is submitted for approval. You will be notified once your profile is approved.", { duration: 6000 });
         return;
