@@ -3,6 +3,7 @@ import { X, Maximize2, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoAdOverlay } from "./VideoAdOverlay";
+import { usePlayableVideoSource } from "@/hooks/usePlayableVideoSource";
 
 interface FloatingVideoAdProps {
   videoUrl: string;
@@ -32,6 +33,7 @@ export function FloatingVideoAd({
   const [playing, setPlaying] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const impressionLogged = useRef(false);
+  const playableVideoUrl = usePlayableVideoSource(videoUrl);
 
   // Track impression once
   useEffect(() => {
@@ -75,7 +77,7 @@ export function FloatingVideoAd({
       cancelled = true;
       v.removeEventListener("canplay", handleCanPlay);
     };
-  }, [videoUrl]);
+  }, [playableVideoUrl]);
 
   // Optionally open fullscreen automatically after a delay (only if explicitly enabled)
   useEffect(() => {
@@ -114,7 +116,7 @@ export function FloatingVideoAd({
   if (fullscreen) {
     return (
       <VideoAdOverlay
-        videoUrl={videoUrl}
+        videoUrl={playableVideoUrl || videoUrl}
         thumbnailUrl={thumbnailUrl}
         ctaText={ctaText}
         ctaLink={ctaLink}
@@ -152,8 +154,8 @@ export function FloatingVideoAd({
         >
           {/* Explicit type hints help mobile browsers when the CDN serves
               the file as application/octet-stream. */}
-          <source src={videoUrl} type="video/mp4" />
-          <source src={videoUrl} />
+          <source src={playableVideoUrl || videoUrl} type="video/mp4" />
+          <source src={playableVideoUrl || videoUrl} />
         </video>
 
         <button
