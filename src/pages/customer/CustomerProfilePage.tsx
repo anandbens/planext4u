@@ -13,17 +13,24 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function CustomerProfilePage() {
-  const { customerUser, customerLogout } = useAuth();
+  const { customerUser, customerLogout, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const customerId = customerUser?.customer_id || customerUser?.id || '';
+  const supabaseUid = customerUser?.supabase_uid || '';
+  // Wait for the auth session to be fully restored before querying — otherwise
+  // RLS rejects the read on a cold reload (auth.uid() is still null) and we
+  // cache an empty profile until the next manual refresh.
+  const queriesEnabled = !authLoading && !!customerId && !!supabaseUid;
+
   const { data: profile, isLoading } = useQuery({
-    queryKey: ["customerProfile", customerId],
+    queryKey: ["customerProfile", customerId, supabaseUid],
     queryFn: () => api.getCustomerProfile(customerId),
-    enabled: !!customerId,
+    enabled: queriesEnabled,
+    staleTime: 30_000,
   });
 
   const { data: counts } = useQuery({
-    queryKey: ["profileCounts", customerId],
+    queryKey: ["profileCounts", customerId, supabaseUid],
     queryFn: async () => {
       const [wishlist, classifieds, addresses, orders] = await Promise.all([
         supabase.from("property_bookmarks").select("id", { count: "exact", head: true }).eq("user_id", customerId),
@@ -38,7 +45,8 @@ export default function CustomerProfilePage() {
         orders: orders.count || 0,
       };
     },
-    enabled: !!customerId,
+    enabled: queriesEnabled,
+    staleTime: 30_000,
   });
 
   const handleLogout = () => {
