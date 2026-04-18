@@ -138,17 +138,23 @@ export function FloatingVideoAd({
       >
         <video
           ref={videoRef}
-          src={videoUrl}
           poster={thumbnailUrl}
           autoPlay
           loop
           muted
           playsInline
+          {...({ "webkit-playsinline": "true" } as Record<string, string>)}
           preload="auto"
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
+          onError={(e) => console.warn("[FloatingVideoAd] video error", e)}
           className="w-full h-full object-cover"
-        />
+        >
+          {/* Explicit type hints help mobile browsers when the CDN serves
+              the file as application/octet-stream. */}
+          <source src={videoUrl} type="video/mp4" />
+          <source src={videoUrl} />
+        </video>
 
         <button
           onClick={handleClose}
