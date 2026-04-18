@@ -2,12 +2,17 @@ import { initializeApp } from "firebase/app";
 import { Capacitor } from "@capacitor/core";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, signOut } from "firebase/auth";
 
-// Use production authDomain everywhere except localhost so OTP SMS shows www.planext4u.net
-const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+const PUBLISHED_APP_URL = "https://planext4u.lovable.app";
+const FIREBASE_FALLBACK_AUTH_DOMAIN = "p4u-console.firebaseapp.com";
+const PLANEXT_HOSTNAMES = ["www.planext4u.net", "planext4u.net"];
+
+const currentHostname = typeof window !== "undefined" ? window.location.hostname : "";
+const isLocalhost = currentHostname === "localhost" || currentHostname === "127.0.0.1";
+const useCustomAuthDomain = PLANEXT_HOSTNAMES.includes(currentHostname);
 
 const firebaseConfig = {
   apiKey: "AIzaSyDfQ-0baPOXaa31xnQXranIIwvHC2zbmiE",
-  authDomain: isLocalhost ? "p4u-console.firebaseapp.com" : "www.planext4u.net",
+  authDomain: isLocalhost ? FIREBASE_FALLBACK_AUTH_DOMAIN : (useCustomAuthDomain ? currentHostname : FIREBASE_FALLBACK_AUTH_DOMAIN),
   projectId: "p4u-console",
   storageBucket: "p4u-console.appspot.com",
   messagingSenderId: "784503032650",
@@ -18,7 +23,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const firebaseAuth = getAuth(app);
 
-const PLANEXT_HOSTNAMES = ["www.planext4u.net", "planext4u.net"];
 const WEB_ALLOWED_HOSTNAMES = ["localhost", "127.0.0.1", "planext4u.lovable.app", ...PLANEXT_HOSTNAMES];
 
 function isAllowedHostname(host: string): boolean {
@@ -28,7 +32,7 @@ function isAllowedHostname(host: string): boolean {
 
   return WEB_ALLOWED_HOSTNAMES.includes(host);
 }
-const PRODUCTION_URL = "https://www.planext4u.net";
+const PRODUCTION_URL = PUBLISHED_APP_URL;
 
 function getAuthorizedFirebaseUrl(): string {
   return `${PRODUCTION_URL}${window.location.pathname}${window.location.search}${window.location.hash}`;
