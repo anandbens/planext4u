@@ -36,29 +36,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(authUser);
       persistentStore.set("admin_user", JSON.stringify(authUser));
     } else if (role === 'vendor') {
-      const vendorId = roleRecord.vendor_id || 'VND-001';
-      const { data: vendor } = await supabase.from("vendors").select("id, name, business_name, email, status").eq("id", vendorId).single();
-      
-      // Check if vendor is verified
-      if (vendor && vendor.status !== 'active' && vendor.status !== 'verified') {
+      const vendorId = roleRecord.vendor_id;
+      if (!vendorId) {
+        console.warn('[auth] vendor role has no vendor_id — orphan record');
+        return 'orphan_role';
+      }
+      const { data: vendor } = await supabase.from("vendors").select("id, name, business_name, email, status").eq("id", vendorId).maybeSingle();
+
+      // Orphan: role row exists but vendor record is missing → signal caller to try other roles
+      if (!vendor) {
+        console.warn(`[auth] vendor profile ${vendorId} not found for user ${supabaseUid} — orphan role`);
+        return 'orphan_role';
+      }
+
+      // Vendor exists but not verified
+      if (vendor.status !== 'active' && vendor.status !== 'verified') {
         await supabase.auth.signOut();
         return 'vendor_not_verified';
       }
-      
+
       const vu: VendorUser = {
-        id: vendor?.id || vendorId, name: vendor?.name || name, email: cleanEmail(vendor?.email) || cleanEmail(email),
-        business_name: vendor?.business_name || '', vendor_id: vendorId, supabase_uid: supabaseUid,
+        id: vendor.id, name: vendor.name || name, email: cleanEmail(vendor.email) || cleanEmail(email),
+        business_name: vendor.business_name || '', vendor_id: vendorId, supabase_uid: supabaseUid,
         password_set: !!roleRecord.password_set,
         just_logged_in: isFreshLogin && !roleRecord.password_set,
       };
       setVendorUser(vu);
       persistentStore.set("vendor_user", JSON.stringify(vu));
     } else if (role === 'customer') {
-      const customerId = roleRecord.customer_id || 'USR-001';
-      const { data: customer } = await supabase.from("customers").select("id, name, email, mobile").eq("id", customerId).single();
+      const customerId = roleRecord.customer_id;
+      if (!customerId) {
+        console.warn('[auth] customer role has no customer_id — orphan record');
+        return 'orphan_role';
+      }
+      const { data: customer } = await supabase.from("customers").select("id, name, email, mobile, status").eq("id", customerId).maybeSingle();
+
+      // Orphan: role row exists but customer record is missing → signal caller to try other roles
+      if (!customer) {
+        console.warn(`[auth] customer profile ${customerId} not found for user ${supabaseUid} — orphan role`);
+        return 'orphan_role';
+      }
+
+      // Customer must be active
+      if (customer.status && customer.status !== 'active') {
+        await supabase.auth.signOut();
+        return 'customer_not_active';
+      }
+
       const cu: CustomerUser = {
-        id: customer?.id || customerId, name: customer?.name || name, email: cleanEmail(customer?.email) || cleanEmail(email),
-        mobile: customer?.mobile || '', customer_id: customerId, supabase_uid: supabaseUid,
+        id: customer.id, name: customer.name || name, email: cleanEmail(customer.email) || cleanEmail(email),
+        mobile: customer.mobile || '', customer_id: customerId, supabase_uid: supabaseUid,
         password_set: !!roleRecord.password_set,
         just_logged_in: isFreshLogin && !roleRecord.password_set,
       };
