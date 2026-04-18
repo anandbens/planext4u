@@ -598,10 +598,10 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         const shopTabs = [
           { icon: Home, label: "Home", to: "/app", badge: 0 },
           { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: 0 },
-          { icon: Wrench, label: "Services", to: "/app/services", badge: 0 },
-          { icon: Building, label: "Find Home", to: "/app/find-home", badge: 0 },
           { icon: Megaphone, label: "Socio", to: "/app/social", badge: 0 },
-          { icon: Newspaper, label: "Classified", to: "/app/classifieds", badge: 0 },
+          { icon: Wrench, label: "Services", to: "/app/services", badge: 0, comingSoon: true },
+          { icon: Building, label: "Find Home", to: "/app/find-home", badge: 0, comingSoon: true },
+          { icon: Newspaper, label: "Classified", to: "/app/classifieds", badge: 0, comingSoon: true },
         ];
         return (
           <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
