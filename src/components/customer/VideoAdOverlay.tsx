@@ -76,13 +76,17 @@ export function VideoAdOverlay({ videoUrl, thumbnailUrl, ctaText, ctaLink, adId,
         {/* Video */}
         <video
           ref={videoRef}
-          src={videoUrl}
           poster={thumbnailUrl}
           autoPlay
           muted={muted}
           playsInline
+          {...({ "webkit-playsinline": "true" } as Record<string, string>)}
+          preload="auto"
           className="w-full h-full object-contain"
-        />
+        >
+          <source src={videoUrl} type="video/mp4" />
+          <source src={videoUrl} />
+        </video>
 
         {/* CTA at bottom */}
         {ctaText && (

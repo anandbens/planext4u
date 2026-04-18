@@ -143,12 +143,8 @@ export function FloatingVideoAd({
           loop
           muted
           playsInline
-          // iOS Safari requires this attribute in addition to playsInline
-          // (with hyphen) to allow inline autoplay without going fullscreen.
-          // @ts-expect-error - non-standard attribute
-          webkit-playsinline="true"
+          {...({ "webkit-playsinline": "true" } as Record<string, string>)}
           preload="auto"
-          crossOrigin="anonymous"
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
           onError={(e) => console.warn("[FloatingVideoAd] video error", e)}
