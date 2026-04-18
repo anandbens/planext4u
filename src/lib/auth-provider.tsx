@@ -36,29 +36,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(authUser);
       persistentStore.set("admin_user", JSON.stringify(authUser));
     } else if (role === 'vendor') {
-      const vendorId = roleRecord.vendor_id || 'VND-001';
-      const { data: vendor } = await supabase.from("vendors").select("id, name, business_name, email, status").eq("id", vendorId).single();
-      
-      // Check if vendor is verified
-      if (vendor && vendor.status !== 'active' && vendor.status !== 'verified') {
+      const vendorId = roleRecord.vendor_id;
+      if (!vendorId) {
+        console.warn('[auth] vendor role has no vendor_id — orphan record');
+        return 'orphan_role';
+      }
+      const { data: vendor } = await supabase.from("vendors").select("id, name, business_name, email, status").eq("id", vendorId).maybeSingle();
+
+      // Orphan: role row exists but vendor record is missing → signal caller to try other roles
+      if (!vendor) {
+        console.warn(`[auth] vendor profile ${vendorId} not found for user ${supabaseUid} — orphan role`);
+        return 'orphan_role';
+      }
+
+      // Vendor exists but not verified
+      if (vendor.status !== 'active' && vendor.status !== 'verified') {
         await supabase.auth.signOut();
         return 'vendor_not_verified';
       }
-      
+
       const vu: VendorUser = {
-        id: vendor?.id || vendorId, name: vendor?.name || name, email: cleanEmail(vendor?.email) || cleanEmail(email),
-        business_name: vendor?.business_name || '', vendor_id: vendorId, supabase_uid: supabaseUid,
+        id: vendor.id, name: vendor.name || name, email: cleanEmail(vendor.email) || cleanEmail(email),
+        business_name: vendor.business_name || '', vendor_id: vendorId, supabase_uid: supabaseUid,
         password_set: !!roleRecord.password_set,
         just_logged_in: isFreshLogin && !roleRecord.password_set,
       };
       setVendorUser(vu);
       persistentStore.set("vendor_user", JSON.stringify(vu));
     } else if (role === 'customer') {
-      const customerId = roleRecord.customer_id || 'USR-001';
-      const { data: customer } = await supabase.from("customers").select("id, name, email, mobile").eq("id", customerId).single();
+      const customerId = roleRecord.customer_id;
+      if (!customerId) {
+        console.warn('[auth] customer role has no customer_id — orphan record');
+        return 'orphan_role';
+      }
+      const { data: customer } = await supabase.from("customers").select("id, name, email, mobile, status").eq("id", customerId).maybeSingle();
+
+      // Orphan: role row exists but customer record is missing → signal caller to try other roles
+      if (!customer) {
+        console.warn(`[auth] customer profile ${customerId} not found for user ${supabaseUid} — orphan role`);
+        return 'orphan_role';
+      }
+
+      // Customer must be active
+      if (customer.status && customer.status !== 'active') {
+        await supabase.auth.signOut();
+        return 'customer_not_active';
+      }
+
       const cu: CustomerUser = {
-        id: customer?.id || customerId, name: customer?.name || name, email: cleanEmail(customer?.email) || cleanEmail(email),
-        mobile: customer?.mobile || '', customer_id: customerId, supabase_uid: supabaseUid,
+        id: customer.id, name: customer.name || name, email: cleanEmail(customer.email) || cleanEmail(email),
+        mobile: customer.mobile || '', customer_id: customerId, supabase_uid: supabaseUid,
         password_set: !!roleRecord.password_set,
         just_logged_in: isFreshLogin && !roleRecord.password_set,
       };
@@ -115,6 +142,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return roles[0];
   }, []);
 
+  // Try roles in order, falling back to the next one if the picked role is orphaned
+  // (e.g. user_roles row points to a customer_id/vendor_id that no longer exists).
+  const tryRolesWithFallback = useCallback(async (
+    roles: any[],
+    portal: 'admin' | 'vendor' | 'customer',
+    supabaseUid: string,
+    email: string,
+    name: string,
+    isFreshLogin: boolean,
+  ): Promise<string> => {
+    if (!roles || roles.length === 0) return 'unregistered';
+
+    // Build an ordered candidate list: preferred first, then the rest (deduped)
+    const preferred = pickPreferredRole(roles, portal);
+    const ordered = [preferred, ...roles.filter(r => r !== preferred)].filter(Boolean);
+
+    let lastResult = 'unregistered';
+    for (const candidate of ordered) {
+      const result = await processRole(candidate, supabaseUid, email, name, isFreshLogin);
+      lastResult = result;
+      // 'orphan_role' = no underlying customer/vendor row → try next role
+      if (result !== 'orphan_role') return result;
+    }
+    // All roles were orphans — sign out and report
+    console.error(`[auth] All roles for user ${supabaseUid} are orphaned`);
+    await supabase.auth.signOut();
+    return lastResult === 'orphan_role' ? 'unregistered' : lastResult;
+  }, [processRole, pickPreferredRole]);
+
   const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string, isFreshLogin: boolean) => {
     const { data: roles } = await supabase
       .from("user_roles")
@@ -135,8 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               .eq("user_id", supabaseUid);
             if (newRoles && newRoles.length > 0) {
               const portal = detectActivePortal();
-              const picked = pickPreferredRole(newRoles, portal);
-              return await processRole(picked, supabaseUid, email, name, isFreshLogin);
+              return await tryRolesWithFallback(newRoles, portal, supabaseUid, email, name, isFreshLogin);
             }
           }
         } catch {}
@@ -149,9 +204,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const portal = detectActivePortal();
-    const picked = pickPreferredRole(roles, portal);
-    return await processRole(picked, supabaseUid, email, name, isFreshLogin);
-  }, [processRole, detectActivePortal, pickPreferredRole]);
+    return await tryRolesWithFallback(roles, portal, supabaseUid, email, name, isFreshLogin);
+  }, [tryRolesWithFallback, detectActivePortal]);
 
   useEffect(() => {
     let cancelled = false;
