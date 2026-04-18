@@ -131,40 +131,40 @@ export function FloatingVideoAd({
         <button
           onClick={handleClose}
           aria-label="Close ad"
-          className="absolute top-1.5 right-1.5 h-7 w-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+          className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-3 w-3" />
         </button>
 
         {/* Top-left: expand to fullscreen */}
         <button
           onClick={handleExpand}
           aria-label="Expand to fullscreen"
-          className="absolute top-1.5 left-1.5 h-7 w-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+          className="absolute top-1 left-1 h-6 w-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors"
         >
-          <Maximize2 className="h-3.5 w-3.5" />
+          <Maximize2 className="h-3 w-3" />
         </button>
 
         {/* Bottom-right: mute toggle */}
         <button
           onClick={handleToggleMute}
           aria-label={muted ? "Unmute" : "Mute"}
-          className="absolute bottom-1.5 right-1.5 h-7 w-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+          className="absolute bottom-1 right-1 h-6 w-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors"
         >
-          {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+          {muted ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
         </button>
 
         {/* Center play indicator when paused */}
         {!playing && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="h-10 w-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-              <Play className="h-5 w-5 text-white fill-white" />
+            <div className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+              <Play className="h-4 w-4 text-white fill-white" />
             </div>
           </div>
         )}
 
         {/* Bottom Ad badge */}
-        <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-black/60 backdrop-blur-sm text-white/90">
+        <div className="absolute bottom-1 left-1 px-1 py-0.5 rounded text-[8px] font-semibold bg-black/60 backdrop-blur-sm text-white/90">
           Ad
         </div>
       </motion.div>
