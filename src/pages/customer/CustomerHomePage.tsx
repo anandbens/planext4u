@@ -295,16 +295,14 @@ export default function CustomerHomePage() {
     },
   });
 
-  // Show video ad once per session per ad-id (so a new ad still appears even if a previous one was already shown)
+  // Always show the active video ad on every home-page mount/reload (admin-controlled).
+  // The user can dismiss it for the current view via the close button; reloading replays it.
   useEffect(() => {
     if (videoAds.length === 0) return;
     const ad = videoAds[0];
-    const sessionKey = `p4u_video_ad_shown_${ad.id}`;
-    if (sessionStorage.getItem(sessionKey)) return;
     const delayMs = Math.max(0, (ad.show_delay_seconds ?? 3)) * 1000;
     const timer = setTimeout(() => {
       setVideoAd(ad);
-      sessionStorage.setItem(sessionKey, "1");
     }, delayMs);
     return () => clearTimeout(timer);
   }, [videoAds]);
