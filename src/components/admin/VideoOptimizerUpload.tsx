@@ -223,7 +223,7 @@ export function VideoOptimizerUpload({
         <div className="space-y-1.5 rounded-md border border-border/60 bg-muted/30 p-3">
           <div className="flex items-center gap-2 text-xs">
             {percent >= 100 ? (
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
             ) : (
               <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
             )}
