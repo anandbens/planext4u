@@ -147,16 +147,20 @@ export function FloatingVideoAd({
           playsInline
           {...({ "webkit-playsinline": "true" } as Record<string, string>)}
           preload="auto"
+          crossOrigin="anonymous"
+          src={playableVideoUrl || videoUrl}
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
-          onError={(e) => console.warn("[FloatingVideoAd] video error", e)}
+          onError={(e) => {
+            const v = e.currentTarget;
+            console.warn("[FloatingVideoAd] video error", {
+              src: v.currentSrc || v.src,
+              code: v.error?.code,
+              message: v.error?.message,
+            });
+          }}
           className="w-full h-full object-cover"
-        >
-          {/* Explicit type hints help mobile browsers when the CDN serves
-              the file as application/octet-stream. */}
-          <source src={playableVideoUrl || videoUrl} type="video/mp4" />
-          <source src={playableVideoUrl || videoUrl} />
-        </video>
+        />
 
         <button
           onClick={handleClose}
