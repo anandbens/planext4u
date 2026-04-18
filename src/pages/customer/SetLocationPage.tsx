@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { MapPin, Navigation, Loader2, ArrowLeft, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { requireCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 
 interface GeoAddress {
   lat: number;
@@ -247,25 +248,18 @@ export default function SetLocationPage() {
 
     setLoading(true);
     try {
-      // Use the supabase auth UID for customer_id since that's the PK in customers table
-      const { data: { session } } = await supabase.auth.getSession();
-      const authUid = session?.user?.id;
-      const customerId = customerUser?.customer_id || customerUser?.id || authUid || "";
-
-      if (!customerId) {
-        toast.error("User session not found. Please login again.");
-        setLoading(false);
-        return;
-      }
+      const { preferredId: customerId } = await requireCustomerAddressOwnerContext(customerUser);
 
       // Build full address line
       const fullAddress = [houseNo, street, apartment, landmark].filter(Boolean).join(", ");
 
       // Upsert address — set all other addresses as non-default first
-      await supabase
+      const { error: clearDefaultError } = await supabase
         .from("customer_addresses")
         .update({ is_default: false } as any)
         .eq("customer_id", customerId);
+
+      if (clearDefaultError) throw clearDefaultError;
 
       const { error } = await supabase.from("customer_addresses").insert({
         customer_id: customerId,
@@ -282,13 +276,15 @@ export default function SetLocationPage() {
       if (error) throw error;
 
       // Update customer coordinates
-      await supabase
+      const { error: updateCustomerError } = await supabase
         .from("customers")
         .update({
           latitude: address.lat,
           longitude: address.lng,
         } as any)
         .eq("id", customerId);
+
+      if (updateCustomerError) throw updateCustomerError;
 
       // Save to localStorage for quick access
       localStorage.setItem("app_db_selected_location", `${address.area || address.city}, ${state || district}`);
