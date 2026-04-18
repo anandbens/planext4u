@@ -54,10 +54,10 @@ export function FloatingVideoAd({
     v.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
   }, []);
 
-  // Optionally open fullscreen automatically after a few seconds
+  // Optionally open fullscreen automatically after a delay (only if explicitly enabled)
   useEffect(() => {
     if (!autoOpenFullscreen) return;
-    const t = setTimeout(() => setFullscreen(true), 5000);
+    const t = setTimeout(() => setFullscreen(true), 8000);
     return () => clearTimeout(t);
   }, [autoOpenFullscreen]);
 
