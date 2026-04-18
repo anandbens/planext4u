@@ -112,7 +112,7 @@ export function FloatingVideoAd({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 40, scale: 0.85 }}
         transition={{ type: "spring", stiffness: 260, damping: 24 }}
-        className="fixed z-50 left-3 bottom-24 md:bottom-6 md:left-6 w-[140px] h-[220px] md:w-[160px] md:h-[260px] rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black"
+        className="fixed z-50 left-2 bottom-20 md:bottom-6 md:left-6 w-[22vw] max-w-[110px] md:w-[140px] md:max-w-none aspect-[9/16] rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-black"
         onClick={handleTogglePlay}
         role="button"
         aria-label="Floating video advertisement"
