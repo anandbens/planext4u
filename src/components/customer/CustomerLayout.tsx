@@ -256,17 +256,21 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             <div className="flex items-center justify-center gap-1 py-1.5">
               {[
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
-                { icon: UtensilsCrossed, label: "Food", to: "/app/food" },
-                { icon: Wrench, label: "Services", to: "/app/services" },
                 { icon: Megaphone, label: "Socio", to: "/app/social" },
-                { icon: Building, label: "Find Home", to: "/app/find-home" },
-                { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds" },
+                { icon: Wrench, label: "Services", to: "/app/services", comingSoon: true },
+                { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: true },
+                { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds", comingSoon: true },
               ].map((tab) => (
-                  <Link key={tab.label} to={tab.to}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-full border transition-colors
-                      ${isActive(tab.to) ? 'bg-primary text-primary-foreground border-primary' : 'border-primary/20 bg-card hover:bg-primary/5 text-primary'}`}>
+                  <Link key={tab.label} to={tab.comingSoon ? "#" : tab.to}
+                    onClick={(e) => { if (tab.comingSoon) { e.preventDefault(); toast.info(`${tab.label} — Coming Soon!`); } }}
+                    className={`relative flex items-center gap-2 px-5 py-2 rounded-full border transition-colors
+                      ${isActive(tab.to) ? 'bg-primary text-primary-foreground border-primary' : 'border-primary/20 bg-card hover:bg-primary/5 text-primary'}
+                      ${tab.comingSoon ? 'opacity-80' : ''}`}>
                     <tab.icon className="h-4 w-4" />
                     <span className="text-sm font-semibold">{tab.label}</span>
+                    {tab.comingSoon && (
+                      <span className="ml-1 bg-warning text-warning-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">SOON</span>
+                    )}
                   </Link>
               ))}
             </div>
