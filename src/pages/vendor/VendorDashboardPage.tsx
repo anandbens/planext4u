@@ -26,6 +26,7 @@ export default function VendorDashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["vendorDashboard", vendorId],
     queryFn: () => api.getVendorDashboard(vendorId),
+    retry: 1,
   });
 
   return (
@@ -33,9 +34,9 @@ export default function VendorDashboardPage() {
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {isLoading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) : [
-            { icon: DollarSign, label: "Total Revenue", value: `₹${(data?.todayRevenue || 0).toLocaleString()}`, trend: `${data?.orders.length} orders` },
+            { icon: DollarSign, label: "Total Revenue", value: `₹${(data?.todayRevenue || 0).toLocaleString()}`, trend: `${data?.orders?.length || 0} orders` },
             { icon: ShoppingCart, label: "Active Orders", value: String(data?.activeOrders || 0), trend: "" },
-            { icon: Package, label: "Products", value: String(data?.products.length || 0), trend: "" },
+            { icon: Package, label: "Products", value: String(data?.products?.length || 0), trend: "" },
             { icon: Star, label: "Rating", value: String((data?.vendor as any)?.rating || 0), trend: `${(data?.vendor as any)?.total_orders || 0} total orders` },
           ].map((s) => (
             <Card key={s.label} className="p-4">
