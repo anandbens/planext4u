@@ -45,13 +45,37 @@ export function FloatingVideoAd({
     } as any).then(() => {});
   }, [adId]);
 
-  // Try to autoplay (muted) once mounted
+  // Try to autoplay (muted) once mounted; retry when the media becomes playable.
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    v.muted = true;
-    v.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
-  }, []);
+
+    let cancelled = false;
+    const attemptPlay = async () => {
+      if (cancelled) return;
+      v.muted = true;
+      try {
+        await v.play();
+        if (!cancelled) setPlaying(true);
+      } catch {
+        if (!cancelled) setPlaying(false);
+      }
+    };
+
+    const handleCanPlay = () => {
+      void attemptPlay();
+    };
+
+    v.preload = "auto";
+    v.load();
+    void attemptPlay();
+    v.addEventListener("canplay", handleCanPlay);
+
+    return () => {
+      cancelled = true;
+      v.removeEventListener("canplay", handleCanPlay);
+    };
+  }, [videoUrl]);
 
   // Optionally open fullscreen automatically after a delay (only if explicitly enabled)
   useEffect(() => {
@@ -70,12 +94,16 @@ export function FloatingVideoAd({
     onClose();
   };
 
-  const handleTogglePlay = () => {
+  const handleTogglePlay = async () => {
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
-      v.play();
-      setPlaying(true);
+      try {
+        await v.play();
+        setPlaying(true);
+      } catch {
+        setPlaying(false);
+      }
     } else {
       v.pause();
       setPlaying(false);
@@ -99,11 +127,11 @@ export function FloatingVideoAd({
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: 40, scale: 0.85 }}
+        initial={{ opacity: 0, y: 20, scale: 0.92 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 40, scale: 0.85 }}
-        transition={{ type: "spring", stiffness: 260, damping: 24 }}
-        className="fixed z-50 left-3 bottom-24 md:bottom-8 md:left-8 w-[32vw] max-w-[140px] md:w-[180px] md:max-w-none aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl bg-black"
+        exit={{ opacity: 0, y: 20, scale: 0.92 }}
+        transition={{ type: "spring", stiffness: 280, damping: 26 }}
+        className="fixed z-50 left-2.5 bottom-[5.25rem] md:bottom-8 md:left-8 w-[clamp(64px,14vw,88px)] aspect-[9/16] rounded-xl overflow-hidden shadow-2xl bg-black"
         onClick={handleTogglePlay}
         role="button"
         aria-label="Floating video advertisement"
@@ -112,35 +140,36 @@ export function FloatingVideoAd({
           ref={videoRef}
           src={videoUrl}
           poster={thumbnailUrl}
+          autoPlay
           loop
           muted
           playsInline
+          preload="auto"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
           className="w-full h-full object-cover"
         />
 
-        {/* Top-left: close (like reference) */}
         <button
           onClick={handleClose}
           aria-label="Close ad"
-          className="absolute top-2 left-2 h-7 w-7 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/75 transition-colors"
+          className="absolute top-1.5 left-1.5 h-5 w-5 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/75 transition-colors"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-3 w-3" />
         </button>
 
-        {/* Bottom-right: expand to fullscreen (like reference) */}
         <button
           onClick={handleExpand}
           aria-label="Expand to fullscreen"
-          className="absolute bottom-2 right-2 h-7 w-7 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/75 transition-colors"
+          className="absolute bottom-1.5 right-1.5 h-5 w-5 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/75 transition-colors"
         >
-          <Maximize2 className="h-3.5 w-3.5" />
+          <Maximize2 className="h-3 w-3" />
         </button>
 
-        {/* Center play indicator when paused */}
         {!playing && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-              <Play className="h-4 w-4 text-white fill-white" />
+            <div className="h-6 w-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+              <Play className="h-3 w-3 text-white fill-white" />
             </div>
           </div>
         )}
