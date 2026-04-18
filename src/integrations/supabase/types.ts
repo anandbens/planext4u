@@ -6039,14 +6039,17 @@ export type Database = {
       }
       video_ads: {
         Row: {
+          auto_open_fullscreen: boolean
           clicks: number
           created_at: string
           cta_link: string | null
           cta_text: string | null
+          display_mode: string
           duration_seconds: number | null
           end_date: string | null
           id: string
           impressions: number
+          show_delay_seconds: number
           start_date: string | null
           status: string
           thumbnail_url: string | null
@@ -6055,14 +6058,17 @@ export type Database = {
           video_url: string
         }
         Insert: {
+          auto_open_fullscreen?: boolean
           clicks?: number
           created_at?: string
           cta_link?: string | null
           cta_text?: string | null
+          display_mode?: string
           duration_seconds?: number | null
           end_date?: string | null
           id?: string
           impressions?: number
+          show_delay_seconds?: number
           start_date?: string | null
           status?: string
           thumbnail_url?: string | null
@@ -6071,14 +6077,17 @@ export type Database = {
           video_url?: string
         }
         Update: {
+          auto_open_fullscreen?: boolean
           clicks?: number
           created_at?: string
           cta_link?: string | null
           cta_text?: string | null
+          display_mode?: string
           duration_seconds?: number | null
           end_date?: string | null
           id?: string
           impressions?: number
+          show_delay_seconds?: number
           start_date?: string | null
           status?: string
           thumbnail_url?: string | null
