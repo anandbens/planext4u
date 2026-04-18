@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GripVertical, Plus, Pencil, Trash2, Eye, EyeOff, Image, Video, Layout, Play, ChevronUp, ChevronDown, Calendar } from "lucide-react";
+import { VideoOptimizerUpload } from "@/components/admin/VideoOptimizerUpload";
 
 /* ── Banner Modal ── */
 function BannerModal({ open, onClose, banner, onSave }: any) {
@@ -173,8 +174,30 @@ function VideoAdModal({ open, onClose, ad, onSave }: any) {
         <DialogTitle>{ad ? "Edit Video Ad" : "Add Video Ad"}</DialogTitle>
         <div className="grid gap-4 mt-4">
           <div><Label>Title *</Label><Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
-          <div><Label>Video URL (MP4) *</Label><Input value={form.video_url} onChange={e => setForm({ ...form, video_url: e.target.value })} /></div>
-          <div><Label>Thumbnail URL</Label><Input value={form.thumbnail_url || ""} onChange={e => setForm({ ...form, thumbnail_url: e.target.value })} /></div>
+
+          <div className="space-y-2">
+            <Label>Optimized Video *</Label>
+            <p className="text-[11px] text-muted-foreground -mt-1">
+              Pick any video file — it will be re-encoded to 480p H.264 MP4 (~1 Mbps),
+              served with the correct <code>video/mp4</code> mime so it plays everywhere.
+            </p>
+            <VideoOptimizerUpload
+              value={form.video_url}
+              folder="homepage-videos"
+              onUploaded={(r) =>
+                setForm({
+                  ...form,
+                  video_url: r.videoUrl,
+                  thumbnail_url: r.thumbnailUrl || form.thumbnail_url,
+                  duration_seconds: r.durationSeconds || form.duration_seconds,
+                })
+              }
+              onClear={() => setForm({ ...form, video_url: "" })}
+            />
+          </div>
+
+          <div><Label>Video URL (auto-filled)</Label><Input value={form.video_url} onChange={e => setForm({ ...form, video_url: e.target.value })} placeholder="Paste a URL or upload above" /></div>
+          <div><Label>Thumbnail URL (auto-filled)</Label><Input value={form.thumbnail_url || ""} onChange={e => setForm({ ...form, thumbnail_url: e.target.value })} /></div>
           <div className="grid grid-cols-2 gap-4">
             <div><Label>Duration (seconds)</Label><Input type="number" value={form.duration_seconds || 0} onChange={e => setForm({ ...form, duration_seconds: +e.target.value })} /></div>
             <div><Label>Status</Label>
