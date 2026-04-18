@@ -3,6 +3,7 @@ import { X, Volume2, VolumeX, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { usePlayableVideoSource } from "@/hooks/usePlayableVideoSource";
 
 interface VideoAdOverlayProps {
   videoUrl: string;
@@ -17,6 +18,7 @@ export function VideoAdOverlay({ videoUrl, thumbnailUrl, ctaText, ctaLink, adId,
   const videoRef = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [progress, setProgress] = useState(0);
+  const playableVideoUrl = usePlayableVideoSource(videoUrl);
 
   useEffect(() => {
     // Track impression
@@ -84,8 +86,8 @@ export function VideoAdOverlay({ videoUrl, thumbnailUrl, ctaText, ctaLink, adId,
           preload="auto"
           className="w-full h-full object-contain"
         >
-          <source src={videoUrl} type="video/mp4" />
-          <source src={videoUrl} />
+          <source src={playableVideoUrl || videoUrl} type="video/mp4" />
+          <source src={playableVideoUrl || videoUrl} />
         </video>
 
         {/* CTA at bottom */}
