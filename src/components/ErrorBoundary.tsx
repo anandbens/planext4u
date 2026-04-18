@@ -34,9 +34,14 @@ export class ErrorBoundary extends Component<Props, State> {
               <AlertTriangle className="h-10 w-10 text-destructive" />
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-2">Something went wrong</h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-3">
               We're sorry, an unexpected error occurred. Please try refreshing the page.
             </p>
+            {this.state.error?.message && (
+              <p className="text-xs text-destructive/80 bg-destructive/5 rounded-md px-3 py-2 mb-6 font-mono break-words">
+                {this.state.error.message}
+              </p>
+            )}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
                 onClick={() => window.location.reload()}
