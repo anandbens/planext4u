@@ -1,0 +1,1 @@
+UPDATE public.video_ads SET status = 'inactive' WHERE id = 'c8548cdd-35de-4a1f-85e2-ac5a70c91d1f';
