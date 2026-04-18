@@ -77,10 +77,10 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
   const navItems = [
     { icon: Home, label: "Home", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
-    { icon: Wrench, label: "Services", to: "/app/services" },
     { icon: Megaphone, label: "Socio", to: "/app/social" },
-    { icon: Building, label: "Find Home", to: "/app/find-home" },
-    { icon: Newspaper, label: "Classified", to: "/app/classifieds" },
+    { icon: Wrench, label: "Services", to: "/app/services", comingSoon: true },
+    { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: true },
+    { icon: Newspaper, label: "Classified", to: "/app/classifieds", comingSoon: true },
   ];
 
   const isActive = (path: string) => {
@@ -160,21 +160,24 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             {[
               { label: "planext4u", to: "/app", highlight: true },
               { label: "Shop", to: "/app/browse" },
-              { label: "Food", to: "/app/food" },
-              { label: "Services", to: "/app/services" },
               { label: "Socio", to: "/app/social" },
-              { label: "Find Home", to: "/app/find-home" },
-              { label: "Classified", to: "/app/classifieds" },
+              { label: "Services", to: "/app/services", comingSoon: true },
+              { label: "Find Home", to: "/app/find-home", comingSoon: true },
+              { label: "Classified", to: "/app/classifieds", comingSoon: true },
             ].map((tab) => (
-              <Link key={tab.label} to={tab.to}
-                className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap
+              <Link key={tab.label} to={tab.comingSoon ? "#" : tab.to}
+                onClick={(e) => { if (tab.comingSoon) { e.preventDefault(); toast.info(`${tab.label} — Coming Soon!`); } }}
+                className={`relative shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap
                   ${tab.highlight
                     ? 'bg-primary-foreground text-primary'
                     : isActive(tab.to)
                       ? 'bg-primary-foreground text-primary'
                       : 'bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25'
-                  }`}>
+                  } ${tab.comingSoon ? 'opacity-70' : ''}`}>
                 {tab.label}
+                {tab.comingSoon && (
+                  <span className="absolute -top-1.5 -right-1 bg-warning text-warning-foreground text-[7px] font-bold px-1 py-px rounded-full leading-none whitespace-nowrap">SOON</span>
+                )}
               </Link>
             ))}
           </div>
@@ -253,17 +256,21 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             <div className="flex items-center justify-center gap-1 py-1.5">
               {[
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
-                { icon: UtensilsCrossed, label: "Food", to: "/app/food" },
-                { icon: Wrench, label: "Services", to: "/app/services" },
                 { icon: Megaphone, label: "Socio", to: "/app/social" },
-                { icon: Building, label: "Find Home", to: "/app/find-home" },
-                { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds" },
+                { icon: Wrench, label: "Services", to: "/app/services", comingSoon: true },
+                { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: true },
+                { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds", comingSoon: true },
               ].map((tab) => (
-                  <Link key={tab.label} to={tab.to}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-full border transition-colors
-                      ${isActive(tab.to) ? 'bg-primary text-primary-foreground border-primary' : 'border-primary/20 bg-card hover:bg-primary/5 text-primary'}`}>
+                  <Link key={tab.label} to={tab.comingSoon ? "#" : tab.to}
+                    onClick={(e) => { if (tab.comingSoon) { e.preventDefault(); toast.info(`${tab.label} — Coming Soon!`); } }}
+                    className={`relative flex items-center gap-2 px-5 py-2 rounded-full border transition-colors
+                      ${isActive(tab.to) ? 'bg-primary text-primary-foreground border-primary' : 'border-primary/20 bg-card hover:bg-primary/5 text-primary'}
+                      ${tab.comingSoon ? 'opacity-80' : ''}`}>
                     <tab.icon className="h-4 w-4" />
                     <span className="text-sm font-semibold">{tab.label}</span>
+                    {tab.comingSoon && (
+                      <span className="ml-1 bg-warning text-warning-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">SOON</span>
+                    )}
                   </Link>
               ))}
             </div>
@@ -591,18 +598,20 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         const shopTabs = [
           { icon: Home, label: "Home", to: "/app", badge: 0 },
           { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: 0 },
-          { icon: Wrench, label: "Services", to: "/app/services", badge: 0 },
-          { icon: Building, label: "Find Home", to: "/app/find-home", badge: 0 },
           { icon: Megaphone, label: "Socio", to: "/app/social", badge: 0 },
-          { icon: Newspaper, label: "Classified", to: "/app/classifieds", badge: 0 },
+          { icon: Wrench, label: "Services", to: "/app/services", badge: 0, comingSoon: true },
+          { icon: Building, label: "Find Home", to: "/app/find-home", badge: 0, comingSoon: true },
+          { icon: Newspaper, label: "Classified", to: "/app/classifieds", badge: 0, comingSoon: true },
         ];
         return (
           <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
             <div className="relative flex items-center justify-around px-1 py-2">
-              {shopTabs.map((item) => {
+              {shopTabs.map((item: any) => {
                 const active = isActive(item.to);
                 return (
-                  <Link key={item.to + item.label} to={item.to} className="flex-1 flex flex-col items-center relative">
+                  <Link key={item.to + item.label} to={item.comingSoon ? "#" : item.to}
+                    onClick={(e) => { if (item.comingSoon) { e.preventDefault(); toast.info(`${item.label} — Coming Soon!`); } }}
+                    className={`flex-1 flex flex-col items-center relative ${item.comingSoon ? 'opacity-70' : ''}`}>
                     <div className="flex flex-col items-center relative z-10">
                       {active ? (
                         <motion.div
@@ -615,9 +624,12 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                           <span className="text-[8px] font-bold text-primary-foreground mt-0.5 leading-tight whitespace-nowrap">{item.label}</span>
                         </motion.div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center py-1">
+                        <div className="flex flex-col items-center justify-center py-1 relative">
                           <item.icon className="h-4 w-4 text-muted-foreground" />
                           <span className="text-[8px] font-medium text-muted-foreground mt-0.5 leading-tight whitespace-nowrap">{item.label}</span>
+                          {item.comingSoon && (
+                            <span className="absolute -top-1 -right-2 bg-warning text-warning-foreground text-[6px] font-bold px-1 py-px rounded-full leading-none">SOON</span>
+                          )}
                         </div>
                       )}
                     </div>
