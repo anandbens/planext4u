@@ -144,7 +144,7 @@ export function FloatingVideoAd({
           autoPlay
           loop
           muted
-          defaultMuted
+          {...({ defaultMuted: true } as any)}
           playsInline
           {...({ "webkit-playsinline": "true" } as Record<string, string>)}
           preload="auto"
