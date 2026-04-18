@@ -233,7 +233,7 @@ const AppRoutes = () => {
   useEffect(() => {
     if (!isNativePlatform() || forcedVendorPortal) return;
     getNativeAppId().then((appId) => {
-      const isVendor = appId === "com.planext4u.vendor" || isVendorAppSync();
+      const isVendor = appId === "com.p4u.p4u_vendor" || appId === "com.planext4u.vendor" || isVendorAppSync();
       setIsVendorNativeApp(isVendor);
       if (isVendor) {
         sessionStorage.setItem(NATIVE_PORTAL_STORAGE_KEY, "vendor");
