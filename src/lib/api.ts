@@ -1674,18 +1674,23 @@ export const api = {
   // ===== Vendor-facing APIs =====
   getVendorDashboard: async (vendorId: string) => {
     const [
-      { data: vendor },
-      { data: orders },
-      { data: products },
-      { data: services },
-      { data: settlements },
+      vendorRes,
+      ordersRes,
+      productsRes,
+      servicesRes,
+      settlementsRes,
     ] = await Promise.all([
-      supabase.from('vendors').select('*').eq('id', vendorId).single(),
+      supabase.from('vendors').select('*').eq('id', vendorId).maybeSingle(),
       supabase.from('orders').select('*').eq('vendor_id', vendorId),
       supabase.from('products').select('*').eq('vendor_id', vendorId),
       supabase.from('services').select('*').eq('vendor_id', vendorId),
       supabase.from('settlements').select('*').eq('vendor_id', vendorId),
     ]);
+    const vendor = vendorRes.data;
+    const orders = ordersRes.data;
+    const products = productsRes.data;
+    const services = servicesRes.data;
+    const settlements = settlementsRes.data;
     const allOrders = orders || [];
     return {
       vendor: vendor || {},
@@ -1714,9 +1719,9 @@ export const api = {
   },
 
   getVendorProfile: async (vendorId: string) => {
-    const { data: vendor } = await supabase.from('vendors').select('*').eq('id', vendorId).single();
+    const { data: vendor } = await supabase.from('vendors').select('*').eq('id', vendorId).maybeSingle();
     if (vendor) return vendor as any;
-    const { data: svcVendor } = await supabase.from('service_vendors').select('*').eq('id', vendorId).single();
+    const { data: svcVendor } = await supabase.from('service_vendors').select('*').eq('id', vendorId).maybeSingle();
     return svcVendor as any;
   },
 
