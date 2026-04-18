@@ -295,17 +295,18 @@ export default function CustomerHomePage() {
     },
   });
 
-  // Show video ad once per session (delay configurable per ad)
+  // Show video ad once per session per ad-id (so a new ad still appears even if a previous one was already shown)
   useEffect(() => {
-    if (videoAds.length > 0 && !sessionStorage.getItem("p4u_video_ad_shown")) {
-      const ad = videoAds[0];
-      const delayMs = Math.max(0, (ad.show_delay_seconds ?? 3)) * 1000;
-      const timer = setTimeout(() => {
-        setVideoAd(ad);
-        sessionStorage.setItem("p4u_video_ad_shown", "1");
-      }, delayMs);
-      return () => clearTimeout(timer);
-    }
+    if (videoAds.length === 0) return;
+    const ad = videoAds[0];
+    const sessionKey = `p4u_video_ad_shown_${ad.id}`;
+    if (sessionStorage.getItem(sessionKey)) return;
+    const delayMs = Math.max(0, (ad.show_delay_seconds ?? 3)) * 1000;
+    const timer = setTimeout(() => {
+      setVideoAd(ad);
+      sessionStorage.setItem(sessionKey, "1");
+    }, delayMs);
+    return () => clearTimeout(timer);
   }, [videoAds]);
 
   useEffect(() => {
