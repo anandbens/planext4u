@@ -67,15 +67,15 @@ export default function VendorDashboardPage() {
               <Link to="/vendor/orders" className="text-xs text-primary hover:underline">View All</Link>
             </div>
             <div className="space-y-3">
-              {data?.orders.slice(0, 4).map((o) => (
+              {data?.orders?.slice(0, 4).map((o: any) => (
                 <div key={o.id} className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium">{o.id}</p>
                     <p className="text-[11px] text-muted-foreground">{o.customer_name}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-bold">₹{o.total.toLocaleString()}</p>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusColor[o.status] || 'bg-muted'}`}>{o.status.replace('_', ' ')}</span>
+                    <p className="text-xs font-bold">₹{Number(o.total || 0).toLocaleString()}</p>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusColor[o.status] || 'bg-muted'}`}>{(o.status || '').replace('_', ' ')}</span>
                   </div>
                 </div>
               ))}
