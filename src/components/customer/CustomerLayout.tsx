@@ -77,10 +77,10 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
   const navItems = [
     { icon: Home, label: "Home", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
-    { icon: Wrench, label: "Services", to: "/app/services" },
     { icon: Megaphone, label: "Socio", to: "/app/social" },
-    { icon: Building, label: "Find Home", to: "/app/find-home" },
-    { icon: Newspaper, label: "Classified", to: "/app/classifieds" },
+    { icon: Wrench, label: "Services", to: "/app/services", comingSoon: true },
+    { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: true },
+    { icon: Newspaper, label: "Classified", to: "/app/classifieds", comingSoon: true },
   ];
 
   const isActive = (path: string) => {
