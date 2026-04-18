@@ -160,21 +160,24 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             {[
               { label: "planext4u", to: "/app", highlight: true },
               { label: "Shop", to: "/app/browse" },
-              { label: "Food", to: "/app/food" },
-              { label: "Services", to: "/app/services" },
               { label: "Socio", to: "/app/social" },
-              { label: "Find Home", to: "/app/find-home" },
-              { label: "Classified", to: "/app/classifieds" },
+              { label: "Services", to: "/app/services", comingSoon: true },
+              { label: "Find Home", to: "/app/find-home", comingSoon: true },
+              { label: "Classified", to: "/app/classifieds", comingSoon: true },
             ].map((tab) => (
-              <Link key={tab.label} to={tab.to}
-                className={`shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap
+              <Link key={tab.label} to={tab.comingSoon ? "#" : tab.to}
+                onClick={(e) => { if (tab.comingSoon) { e.preventDefault(); toast.info(`${tab.label} — Coming Soon!`); } }}
+                className={`relative shrink-0 px-3.5 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap
                   ${tab.highlight
                     ? 'bg-primary-foreground text-primary'
                     : isActive(tab.to)
                       ? 'bg-primary-foreground text-primary'
                       : 'bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25'
-                  }`}>
+                  } ${tab.comingSoon ? 'opacity-70' : ''}`}>
                 {tab.label}
+                {tab.comingSoon && (
+                  <span className="absolute -top-1.5 -right-1 bg-warning text-warning-foreground text-[7px] font-bold px-1 py-px rounded-full leading-none whitespace-nowrap">SOON</span>
+                )}
               </Link>
             ))}
           </div>
