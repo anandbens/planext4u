@@ -10,6 +10,7 @@ import { Upload, Search, Check, X, Loader2, ImageIcon, FolderOpen, Grid3X3, List
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -123,6 +124,13 @@ export function MediaLibraryDialog({ open, onOpenChange, onSelect, defaultFolder
   const [uploading, setUploading] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const fileRef = useRef<HTMLInputElement>(null);
+  const { user, vendorUser } = useAuth();
+  // Admins write to the public media-library bucket; vendors fall back to
+  // the writable vendor-assets bucket (their RLS allows it). Both buckets
+  // are public, so the resulting URL is renderable everywhere.
+  const isAdmin = !!user && (user.role === 'admin' || user.role === 'finance' || user.role === 'sales');
+  const vendorId = vendorUser?.vendor_id || null;
+  const targetBucket = isAdmin ? 'media-library' : 'vendor-assets';
 
   // Upload state
   const [uploadFolder, setUploadFolder] = useState(resolvedDefault);
@@ -163,54 +171,69 @@ export function MediaLibraryDialog({ open, onOpenChange, onSelect, defaultFolder
       const { file } = previewFile;
       const { compressToWebP } = await import("@/lib/webp-compress");
       const { blob, contentType } = await compressToWebP(file);
-      const fileName = `${uploadFolder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
-      
-      const { error } = await supabase.storage.from("media-library").upload(fileName, blob, { contentType, upsert: false });
-      if (error) {
-        // Try vendor-assets as fallback
-        const { error: err2 } = await supabase.storage.from("vendor-assets").upload(fileName, blob, { contentType, upsert: false });
-        if (err2) throw err2;
-        const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(fileName);
-        
-        await supabase.from("media_library").insert({
-          file_name: file.name,
-          file_url: urlData.publicUrl,
-          file_type: file.type.startsWith("image") ? "image" : "file",
-          file_size: blob.size,
-          folder: uploadFolder,
-          alt_text: altText,
-          tags: [uploadFolder],
-        } as any);
-        
-        toast.success("Image uploaded to media library");
-        setPreviewFile(null);
-        setAltText("");
-        setTab("library");
-        setFolderFilter(uploadFolder);
-        fetchMedia();
-        return;
+
+      // Vendor RLS on storage.objects ('Auth upload vendor-assets other')
+      // requires the first folder NOT to be 'store-logos'. We additionally
+      // namespace vendor uploads under their vendor id to keep media tidy.
+      const safeFolder = uploadFolder === 'store-logos' ? 'general' : uploadFolder;
+      const pathPrefix = !isAdmin && vendorId ? `vendor-${vendorId}/${safeFolder}` : safeFolder;
+      const fileName = `${pathPrefix}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
+
+      // 1) Upload the binary to the bucket the current user can write to.
+      let usedBucket = targetBucket;
+      let uploadErr = (await supabase.storage.from(usedBucket).upload(fileName, blob, { contentType, upsert: false })).error;
+      if (uploadErr) {
+        // Try the alternate bucket (e.g. an admin whose session was demoted, or
+        // a vendor when the admin bucket happens to allow them). This keeps
+        // older flows working but never silently swallows a real error.
+        const altBucket = usedBucket === 'media-library' ? 'vendor-assets' : 'media-library';
+        const { error: err2 } = await supabase.storage.from(altBucket).upload(fileName, blob, { contentType, upsert: false });
+        if (err2) throw uploadErr; // surface the original error message
+        usedBucket = altBucket;
       }
 
-      const { data: urlData } = supabase.storage.from("media-library").getPublicUrl(fileName);
-      
-      await supabase.from("media_library").insert({
+      const { data: urlData } = supabase.storage.from(usedBucket).getPublicUrl(fileName);
+      const publicUrl = urlData?.publicUrl || '';
+
+      // 2) Insert into media_library (RLS-aware: include vendor_id for vendors).
+      const insertPayload: Record<string, any> = {
         file_name: file.name,
-        file_url: urlData.publicUrl,
-        file_type: file.type.startsWith("image") ? "image" : "file",
+        file_url: publicUrl,
+        file_type: file.type.startsWith('image') ? 'image' : 'file',
         file_size: blob.size,
         folder: uploadFolder,
         alt_text: altText,
         tags: [uploadFolder],
-      } as any);
+      };
+      if (!isAdmin && vendorId) insertPayload.vendor_id = vendorId;
+      const { data: inserted, error: insertErr } = await supabase
+        .from('media_library')
+        .insert(insertPayload as any)
+        .select()
+        .maybeSingle();
+      if (insertErr) {
+        // The file exists in storage but couldn't be indexed. Still return the
+        // public URL so the parent form can use it, but make the failure
+        // visible to the user instead of pretending success.
+        console.error('[MediaLibrary] index insert failed', insertErr);
+        toast.error('Uploaded but could not save to library: ' + insertErr.message);
+        onSelect(publicUrl);
+        setPreviewFile(null);
+        setAltText('');
+        return;
+      }
 
-      toast.success("Image uploaded to media library");
+      toast.success('Image uploaded to media library');
       setPreviewFile(null);
-      setAltText("");
-      setTab("library");
+      setAltText('');
+      setTab('library');
       setFolderFilter(uploadFolder);
+      // Pre-select the freshly uploaded item so the user can confirm it.
+      if (inserted) setSelectedItem(inserted as MediaItem);
       fetchMedia();
     } catch (err: any) {
-      toast.error(err.message || "Upload failed");
+      console.error('[MediaLibrary] upload failed', err);
+      toast.error(err?.message || 'Upload failed');
     } finally { setUploading(false); }
   };
 
