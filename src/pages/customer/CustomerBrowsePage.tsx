@@ -16,6 +16,7 @@ import { BannerAd } from "@/components/customer/BannerAd";
 import { useAuth } from "@/lib/auth";
 import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";
 import { CategoryProductRow } from "@/components/customer/CategoryProductRow";
+import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
@@ -41,12 +42,12 @@ export default function CustomerBrowsePage() {
   useEffect(() => {
     const loadLocation = async () => {
       try {
-        const { data: { user } } = await (await import("@/integrations/supabase/client")).supabase.auth.getUser();
-        if (user) {
+        const { ownerIds } = await getCustomerAddressOwnerContext(customerUser);
+        if (ownerIds.length) {
           const { data: addr } = await (await import("@/integrations/supabase/client")).supabase
             .from('customer_addresses')
             .select('latitude, longitude')
-            .eq('customer_id', user.id)
+            .in('customer_id', ownerIds)
             .eq('is_default', true)
             .maybeSingle();
           if (addr?.latitude && addr?.longitude) {
