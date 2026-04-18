@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Maximize2, Volume2, VolumeX, Play } from "lucide-react";
+import { X, Maximize2, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoAdOverlay } from "./VideoAdOverlay";
