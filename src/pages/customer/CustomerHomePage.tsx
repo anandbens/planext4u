@@ -22,6 +22,7 @@ import { useAuth } from "@/lib/auth";
 import { RatingPopup } from "@/components/customer/RatingPopup";
 import { BannerAd } from "@/components/customer/BannerAd";
 import { VideoAdOverlay } from "@/components/customer/VideoAdOverlay";
+import { FloatingVideoAd } from "@/components/customer/FloatingVideoAd";
 
 /* ── Helpers ── */
 const containerAnim = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
@@ -294,13 +295,15 @@ export default function CustomerHomePage() {
     },
   });
 
-  // Show video ad once per session
+  // Show video ad once per session (delay configurable per ad)
   useEffect(() => {
     if (videoAds.length > 0 && !sessionStorage.getItem("p4u_video_ad_shown")) {
+      const ad = videoAds[0];
+      const delayMs = Math.max(0, (ad.show_delay_seconds ?? 3)) * 1000;
       const timer = setTimeout(() => {
-        setVideoAd(videoAds[0]);
+        setVideoAd(ad);
         sessionStorage.setItem("p4u_video_ad_shown", "1");
-      }, 3000);
+      }, delayMs);
       return () => clearTimeout(timer);
     }
   }, [videoAds]);
@@ -620,8 +623,8 @@ export default function CustomerHomePage() {
         </motion.section>
       </div>
 
-      {/* ── Video Ad Overlay ── */}
-      {videoAd && (
+      {/* ── Video Ad: floating PiP (default) or fullscreen takeover ── */}
+      {videoAd && (videoAd.display_mode === "fullscreen" ? (
         <VideoAdOverlay
           videoUrl={videoAd.video_url}
           thumbnailUrl={videoAd.thumbnail_url}
@@ -630,7 +633,17 @@ export default function CustomerHomePage() {
           adId={videoAd.id}
           onClose={() => setVideoAd(null)}
         />
-      )}
+      ) : (
+        <FloatingVideoAd
+          videoUrl={videoAd.video_url}
+          thumbnailUrl={videoAd.thumbnail_url}
+          ctaText={videoAd.cta_text}
+          ctaLink={videoAd.cta_link}
+          adId={videoAd.id}
+          autoOpenFullscreen={!!videoAd.auto_open_fullscreen}
+          onClose={() => setVideoAd(null)}
+        />
+      ))}
 
       {/* Notification consent */}
       {customerUser && <NotificationConsentModal open={showNotifConsent} onClose={() => setShowNotifConsent(false)} userId={customerUser.supabase_uid || customerUser.id} />}

@@ -156,6 +156,7 @@ function VideoAdModal({ open, onClose, ad, onSave }: any) {
   const [form, setForm] = useState(ad || {
     title: "", video_url: "", thumbnail_url: "", duration_seconds: 0,
     cta_text: "", cta_link: "", status: "active", start_date: "", end_date: "",
+    display_mode: "floating", show_delay_seconds: 3, auto_open_fullscreen: false,
   });
   const [saving, setSaving] = useState(false);
 
@@ -189,6 +190,42 @@ function VideoAdModal({ open, onClose, ad, onSave }: any) {
           </div>
           <div><Label>CTA Text</Label><Input value={form.cta_text || ""} onChange={e => setForm({ ...form, cta_text: e.target.value })} /></div>
           <div><Label>CTA Link</Label><Input value={form.cta_link || ""} onChange={e => setForm({ ...form, cta_link: e.target.value })} /></div>
+
+          {/* Display behaviour */}
+          <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+            <div>
+              <Label>Display Mode</Label>
+              <Select value={form.display_mode || "floating"} onValueChange={v => setForm({ ...form, display_mode: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="floating">Floating (small PiP)</SelectItem>
+                  <SelectItem value="fullscreen">Fullscreen takeover</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">Floating shows as a small video the user can close or expand.</p>
+            </div>
+            <div>
+              <Label>Show after (seconds)</Label>
+              <Input type="number" min={0} max={60} value={form.show_delay_seconds ?? 3} onChange={e => setForm({ ...form, show_delay_seconds: +e.target.value })} />
+              <p className="text-[11px] text-muted-foreground mt-1">Delay after page loads.</p>
+            </div>
+          </div>
+
+          {form.display_mode === "floating" && (
+            <label className="flex items-start gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!form.auto_open_fullscreen}
+                onChange={e => setForm({ ...form, auto_open_fullscreen: e.target.checked })}
+                className="mt-0.5"
+              />
+              <span>
+                Auto-expand to fullscreen after 5 seconds
+                <span className="block text-[11px] text-muted-foreground">User can still close. Leave off for non-intrusive ads.</span>
+              </span>
+            </label>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div><Label>Start Date</Label><Input type="datetime-local" value={form.start_date ? form.start_date.slice(0, 16) : ""} onChange={e => setForm({ ...form, start_date: e.target.value })} /></div>
             <div><Label>End Date</Label><Input type="datetime-local" value={form.end_date ? form.end_date.slice(0, 16) : ""} onChange={e => setForm({ ...form, end_date: e.target.value })} /></div>
