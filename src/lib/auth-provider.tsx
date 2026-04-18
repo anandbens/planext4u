@@ -22,6 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const processRole = useCallback(async (roleRecord: any, supabaseUid: string, email: string, name: string, isFreshLogin: boolean): Promise<string> => {
+    if (!roleRecord) {
+      console.warn('[auth] processRole called with null role record');
+      await supabase.auth.signOut();
+      return 'unregistered';
+    }
     const role = roleRecord.role as AppRole;
 
     if (role === 'admin' || role === 'finance' || role === 'sales') {
