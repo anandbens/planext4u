@@ -321,15 +321,7 @@ export default function VendorRegisterPage() {
                     <SelectItem value="pvt_ltd">Pvt Ltd</SelectItem>
                   </SelectContent>
                 </Select></div>
-              <div><label className="text-xs font-medium text-muted-foreground">Category</label>
-                <Select value={form.category} onValueChange={v => updateField('category', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="product">Product Seller</SelectItem>
-                    <SelectItem value="service">Service Provider</SelectItem>
-                    <SelectItem value="both">Both</SelectItem>
-                  </SelectContent>
-                </Select></div>
+              {/* Vendor Type selector removed — defaults to product. Admin manages vendor type from admin portal. */}
               <div><label className="text-xs font-medium text-muted-foreground">Store Name</label>
                 <Input value={form.store_name} onChange={e => updateField('store_name', e.target.value)} placeholder="Optional" /></div>
               <div className="sm:col-span-2"><label className="text-xs font-medium text-muted-foreground">Description</label>
