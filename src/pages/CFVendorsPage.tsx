@@ -118,8 +118,10 @@ export default function CFVendorsPage() {
       return;
     }
 
-    // all tab — service vendors from service_vendors table
-    let q = supabase.from('service_vendors' as any).select('*', { count: 'exact' }).eq('status', 'verified');
+    // all tab — service vendors from service_vendors table (strictly category=service)
+    let q = (supabase.from('service_vendors' as any).select('*', { count: 'exact' }) as any)
+      .eq('status', 'verified')
+      .or('vendor_category.eq.service,vendor_category.is.null');
     if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,mobile.ilike.%${search}%`);
     if (dateFrom) q = q.gte('created_at', dateFrom);
     if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');

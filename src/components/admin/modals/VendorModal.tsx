@@ -267,16 +267,13 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                                 const toTable = newType === "service" ? "service_vendors" : "vendors";
                                 const { data: row, error: fetchErr } = await supabase.from(fromTable).select("*").eq("id", vendor.id).single();
                                 if (fetchErr || !row) throw fetchErr || new Error("Vendor not found");
-                                const newId = `${newType === "service" ? "SVN" : "VND"}-${Date.now().toString(36).toUpperCase()}`;
-                                const { id: _omit, deleted_at: _d, ...rest } = row as any;
-                                const { error: insErr } = await supabase.from(toTable).insert({ ...rest, id: newId, vendor_category: newType } as any);
+                                // Preserve the original vendor ID so existing references (orders, user_roles, products) stay intact
+                                const { deleted_at: _d, ...rest } = row as any;
+                                const { error: insErr } = await supabase.from(toTable).insert({ ...rest, vendor_category: newType } as any);
                                 if (insErr) throw insErr;
-                                // Soft-delete from origin (mark deleted to keep audit history)
-                                if (fromTable === "vendors") {
-                                  await supabase.from("vendors").update({ status: "deleted", deleted_at: new Date().toISOString() } as any).eq("id", vendor.id);
-                                } else {
-                                  await supabase.from("service_vendors").delete().eq("id", vendor.id);
-                                }
+                                // Hard-delete from origin so the vendor never appears in both lists
+                                const { error: delErr } = await supabase.from(fromTable).delete().eq("id", vendor.id);
+                                if (delErr) throw delErr;
                                 toast.success(`Vendor moved to ${newType} vendors`);
                                 onOpenChange(false);
                                 onRefresh?.();
