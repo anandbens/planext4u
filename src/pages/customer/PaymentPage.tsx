@@ -22,7 +22,7 @@ export default function PaymentPage() {
   const { customerUser } = useAuth();
   const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
 
-  const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress, itemRedemptionMap } = location.state || {};
+  const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress, itemRedemptionMap, isServiceBooking, bookingDate, bookingSlot } = location.state || {};
 
   const [paymentState, setPaymentState] = useState<PaymentState>('select');
   const [orderId, setOrderId] = useState('');
@@ -99,7 +99,11 @@ export default function PaymentPage() {
             return;
           }
 
-          await createOrder(response.razorpay_payment_id, data.order_id);
+          if (isServiceBooking) {
+            await createBooking(response.razorpay_payment_id, data.order_id);
+          } else {
+            await createOrder(response.razorpay_payment_id, data.order_id);
+          }
         },
         prefill: {
           name: customerUser?.name || "",
@@ -124,6 +128,130 @@ export default function PaymentPage() {
       console.error("Payment error:", err);
       toast.error("Payment failed: " + (err.message || "Unknown error"));
       setPaymentState('select');
+    }
+  };
+
+  const parseSlot = (slot: string): { start: string; end: string } => {
+    // slot e.g. "10:00 AM" → start 10:00:00, end 11:00:00
+    const [time, ampm] = slot.split(' ');
+    const [hStr, mStr] = time.split(':');
+    let h = parseInt(hStr, 10);
+    const m = parseInt(mStr || '0', 10);
+    if (ampm === 'PM' && h !== 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const start = `${pad(h)}:${pad(m)}:00`;
+    const end = `${pad((h + 1) % 24)}:${pad(m)}:00`;
+    return { start, end };
+  };
+
+  const createBooking = async (paymentId: string | null, rzpOrderId?: string) => {
+    try {
+      const item = cart[0];
+      const vendorId = item.vendor_id || 'VND-001';
+      const serviceId = item.id;
+
+      // Resolve commission and tax split
+      let commissionRate = 0;
+      let gstRate: number = 18;
+      let sacCode: string | null = null;
+      try {
+        const { data: svc } = await supabase.from('services').select('commission_override, gst_rate, sac_code').eq('id', serviceId).maybeSingle();
+        const cascade = await resolveCommissionCascade(vendorId, (svc as any)?.commission_override, undefined);
+        commissionRate = cascade.commission;
+        gstRate = (svc as any)?.gst_rate ?? 18;
+        sacCode = (svc as any)?.sac_code ?? null;
+      } catch (e) { console.error('Cascade error:', e); }
+
+      // Customer + vendor state for interstate split
+      const { data: cust } = await supabase.from('customers').select('name, mobile').eq('id', customerId).maybeSingle();
+      const { data: vend } = await supabase.from('vendors').select('business_name, state_name, state_code').eq('id', vendorId).maybeSingle();
+      const customerStateCode = (selectedAddress as any)?.state_code || null;
+      const vendorStateCode = (vend as any)?.state_code || null;
+      const isInterstate = !!customerStateCode && !!vendorStateCode && customerStateCode !== vendorStateCode;
+
+      const baseAmount = Number(item.price) * Number(item.qty || 1);
+      const couponDiscount = Number(discount || 0);
+      const taxableValue = Math.max(0, baseAmount - couponDiscount);
+      const taxAmt = Math.round((taxableValue * (Number(gstRate) / 100)) * 100) / 100;
+      const cgst = isInterstate ? 0 : Math.round((taxAmt / 2) * 100) / 100;
+      const sgst = isInterstate ? 0 : Math.round((taxAmt / 2) * 100) / 100;
+      const igst = isInterstate ? taxAmt : 0;
+      const commissionAmount = Math.round(((taxableValue * commissionRate) / 100) * 100) / 100;
+      const netToVendor = Math.round((taxableValue - commissionAmount) * 100) / 100;
+
+      const { start, end } = parseSlot(bookingSlot);
+
+      const insertPayload: any = {
+        service_id: serviceId,
+        service_title: item.title,
+        customer_id: customerId,
+        customer_name: cust?.name || customerUser?.name || 'Customer',
+        customer_phone: cust?.mobile || customerUser?.mobile || null,
+        customer_address: selectedAddress ? `${selectedAddress.address_line}, ${selectedAddress.city} - ${selectedAddress.pincode}` : null,
+        vendor_id: vendorId,
+        assigned_vendor_name: vend?.business_name || item.vendor || null,
+        booking_date: bookingDate,
+        start_time: start,
+        end_time: end,
+        status: 'pending',
+        payment_status: 'paid',
+        razorpay_payment_id: paymentId,
+        razorpay_order_id: rzpOrderId || null,
+        total_amount: total,
+        sac_code: sacCode,
+        subtotal: baseAmount,
+        discount: couponDiscount,
+        taxable_value: taxableValue,
+        gst_rate: gstRate,
+        cgst_amount: cgst,
+        sgst_amount: sgst,
+        igst_amount: igst,
+        is_interstate: isInterstate,
+        place_of_supply_state: (selectedAddress as any)?.state || null,
+        place_of_supply_code: customerStateCode,
+        platform_fee: platformFee || 0,
+        gst_on_platform_fee: gstOnPlatformFee || 0,
+        commission_rate: commissionRate,
+        commission_amount: commissionAmount,
+        net_to_vendor: netToVendor,
+        points_used: pointsUsed || 0,
+      };
+
+      const { data: booking, error: bookErr } = await supabase
+        .from('service_bookings')
+        .insert(insertPayload)
+        .select('id, otp_code')
+        .single();
+      if (bookErr) {
+        if ((bookErr as any).code === '23505') throw new Error('This time slot was just booked. Please pick another slot.');
+        throw new Error(bookErr.message);
+      }
+
+      // Deduct wallet points
+      if (pointsUsed > 0 && customerId) {
+        try {
+          const { data: c } = await supabase.from('customers').select('wallet_points').eq('id', customerId).maybeSingle();
+          if (c) await supabase.from('customers').update({ wallet_points: Math.max(0, (c.wallet_points || 0) - pointsUsed) }).eq('id', customerId);
+          await supabase.from('points_transactions').insert({
+            id: `PT-RD-${booking.id.toString().slice(-8)}`,
+            user_id: customerId, user_name: customerUser?.name || 'Customer',
+            type: 'redemption', points: -pointsUsed,
+            description: `Redeemed ${pointsUsed} points on booking ${booking.id}`,
+            is_expired: false, cooling_status: 'credited',
+          } as any);
+        } catch (e) { console.error('Points deduction error:', e); }
+      }
+
+      await api.clearCart();
+      setOrderId(String(booking.id));
+      setOrderItems(cart || []);
+      setPaymentState('success');
+      toast.success(`Booking confirmed. Share OTP ${booking.otp_code} with the vendor on arrival.`, { duration: 8000 });
+    } catch (err: any) {
+      console.error('Booking creation failed:', err);
+      toast.error(err?.message || 'Failed to create booking');
+      setPaymentState('failure');
     }
   };
 

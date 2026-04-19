@@ -31,6 +31,8 @@ export default function VendorBookingsPage() {
   const [completionPhotoPreview, setCompletionPhotoPreview] = useState("");
   const [completionNotes, setCompletionNotes] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [otpModal, setOtpModal] = useState<any>(null);
+  const [otpInput, setOtpInput] = useState("");
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["vendorBookings", vendorId],
@@ -102,6 +104,22 @@ export default function VendorBookingsPage() {
     },
   });
 
+  const verifyOtpAndStart = async () => {
+    if (!otpModal) return;
+    const code = otpInput.trim();
+    if (code.length !== 6) { toast.error("Enter the 6-digit OTP"); return; }
+    if (code !== (otpModal.otp_code || "").trim()) { toast.error("Incorrect OTP. Ask the customer for the code shared on their booking page."); return; }
+    const { error } = await supabase.from("service_bookings").update({
+      status: "in_progress",
+      otp_verified_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as any).eq("id", otpModal.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("OTP verified. Service started.");
+    setOtpModal(null); setOtpInput("");
+    qc.invalidateQueries({ queryKey: ["vendorBookings"] });
+  };
+
   const pending = (bookings || []).filter((b: any) => b.status === 'pending' || b.status === 'confirmed');
   const active = (bookings || []).filter((b: any) => b.status === 'in_progress');
   const completed = (bookings || []).filter((b: any) => b.status === 'completed' || b.status === 'cancelled');
@@ -133,8 +151,8 @@ export default function VendorBookingsPage() {
               </>
             )}
             {canStart && (
-              <Button size="sm" className="h-7 text-xs" onClick={() => updateBookingStatus.mutate({ id: b.id, status: 'in_progress' })}>
-                <Clock className="h-3 w-3 mr-1" /> Start Service
+              <Button size="sm" className="h-7 text-xs" onClick={() => { setOtpModal(b); setOtpInput(""); }}>
+                <Clock className="h-3 w-3 mr-1" /> Start Service (OTP)
               </Button>
             )}
             {canComplete && (
@@ -250,6 +268,29 @@ export default function VendorBookingsPage() {
 
             <Button className="w-full" onClick={handleSubmitCompletion} disabled={!completionPhoto || uploading}>
               {uploading ? "Uploading..." : "Submit Completion ✓"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* OTP Verification Modal */}
+      <Dialog open={!!otpModal} onOpenChange={() => { setOtpModal(null); setOtpInput(""); }}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" /> Verify Booking OTP
+          </DialogTitle>
+          <div className="space-y-4 pt-2">
+            <p className="text-xs text-muted-foreground">Ask the customer for the 6-digit OTP shown on their booking. This confirms you have arrived and starts the service timer.</p>
+            <Input
+              value={otpInput}
+              onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="123456"
+              inputMode="numeric"
+              className="text-center text-lg tracking-widest font-mono"
+              maxLength={6}
+            />
+            <Button className="w-full" onClick={verifyOtpAndStart} disabled={otpInput.length !== 6}>
+              Verify & Start Service
             </Button>
           </div>
         </DialogContent>

@@ -43,6 +43,8 @@ const emptyForm = {
   pricing_slots: [] as PricingSlot[],
   booking_duration_minutes: 60,
   max_bookings_per_slot: 1,
+  sac_code: "",
+  gst_rate: 18,
 };
 
 export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCreate, onDelete }: ServiceModalProps) {
@@ -157,6 +159,8 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
         pricing_slots: (service.pricing_slots || []) as PricingSlot[],
         booking_duration_minutes: service.booking_duration_minutes || 60,
         max_bookings_per_slot: service.max_bookings_per_slot || 1,
+        sac_code: (service as any).sac_code || "",
+        gst_rate: (service as any).gst_rate ?? 18,
       });
       setEditMode(mode === "edit");
       setActiveTab("general");
