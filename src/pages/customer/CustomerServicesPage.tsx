@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Star, Clock, MapPin, Heart } from "lucide-react";
@@ -11,6 +11,8 @@ import { api } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BannerAd } from "@/components/customer/BannerAd";
+import { useAuth } from "@/lib/auth";
+import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 
 function useServiceWishlist() {
   const getList = () => { try { return JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]'); } catch { return []; } };
