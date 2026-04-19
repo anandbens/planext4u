@@ -272,6 +272,29 @@ export default function VendorBookingsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* OTP Verification Modal */}
+      <Dialog open={!!otpModal} onOpenChange={() => { setOtpModal(null); setOtpInput(""); }}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" /> Verify Booking OTP
+          </DialogTitle>
+          <div className="space-y-4 pt-2">
+            <p className="text-xs text-muted-foreground">Ask the customer for the 6-digit OTP shown on their booking. This confirms you have arrived and starts the service timer.</p>
+            <Input
+              value={otpInput}
+              onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="123456"
+              inputMode="numeric"
+              className="text-center text-lg tracking-widest font-mono"
+              maxLength={6}
+            />
+            <Button className="w-full" onClick={verifyOtpAndStart} disabled={otpInput.length !== 6}>
+              Verify & Start Service
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </VendorLayout>
   );
 }
