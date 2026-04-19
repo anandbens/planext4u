@@ -478,7 +478,11 @@ async function processVendorUpload(rows: string[][], headers: string[], uploadId
       if (cleanMobile && mobileIdMap[cleanMobile]) rowErrors.push("mobile already exists in vendors");
     }
 
-    if (rowErrors.length > 0) { errors.push({ row: i + 2, data: record, errors: rowErrors }); continue; }
+    if (rowErrors.length > 0) {
+      errors.push({ row: i + 2, data: record, errors: rowErrors });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, rowErrors);
+      continue;
+    }
 
     try {
       const payload: any = {
@@ -509,19 +513,30 @@ async function processVendorUpload(rows: string[][], headers: string[], uploadId
         status: record.status || "pending",
       };
 
+      let vendorId: string;
+      let action: "created" | "updated";
       if (existingId) {
-        const { error } = await supabase.from("vendors").update(payload).eq("id", existingId);
+        const { data: upd, error } = await supabase.from("vendors").update(payload).eq("id", existingId).select("id").single();
         if (error) throw error;
+        if (!upd) throw new Error("Update returned no row — record may not exist or RLS denied");
+        vendorId = existingId;
+        action = "updated";
         updated++;
       } else {
-        const id = `VND-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
-        const { error } = await supabase.from("vendors").insert({ ...payload, id } as any);
+        vendorId = `VND-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
+        const { data: ins, error } = await supabase.from("vendors").insert({ ...payload, id: vendorId } as any).select("id").single();
         if (error) throw error;
-        emailIdMap[payload.email] = id;
-        mobileIdMap[payload.mobile.replace(/\D/g, "")] = id;
+        if (!ins) throw new Error("Insert returned no row — RLS may have blocked it");
+        emailIdMap[payload.email] = vendorId;
+        mobileIdMap[payload.mobile.replace(/\D/g, "")] = vendorId;
+        action = "created";
         created++;
       }
-    } catch (e: any) { errors.push({ row: i + 2, data: record, errors: [e.message] }); }
+      await archiveRow(uploadId, i + 2, record, "success", action, vendorId, null);
+    } catch (e: any) {
+      errors.push({ row: i + 2, data: record, errors: [e.message] });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, [e.message]);
+    }
   }
 
   await supabase.from("file_uploads" as any).update({
