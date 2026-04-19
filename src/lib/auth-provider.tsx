@@ -255,7 +255,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         persistentStore.remove("vendor_user");
         setIsLoading(false);
       } else if (event === 'INITIAL_SESSION' && !session) {
-        // No session at all - keep cached profile state, just stop loading
+        // On web, no session means any cached portal profile is stale and must be cleared.
+        // On native, keep the cache briefly because the async storage adapter may hydrate late.
+        if (!isNative) {
+          setUser(null);
+          setCustomerUser(null);
+          setVendorUser(null);
+          persistentStore.remove("admin_user");
+          persistentStore.remove("customer_user");
+          persistentStore.remove("vendor_user");
+        }
         setIsLoading(false);
       }
     });
