@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import FinanceReportFilters, { FinanceFiltersValue, getDateRangeFromFilters } from "@/components/admin/FinanceReportFilters";
 import { exportToCSV } from "@/lib/csv";
-import { exportToXLSX, getCurrentFinancialYear } from "@/lib/xlsx-export";
+import { exportToXLSX, getCurrentFinancialYear, buildCoverSheet, amountInWordsINR } from "@/lib/xlsx-export";
 
 export default function DayBookReportPage() {
   const [filters, setFilters] = useState<FinanceFiltersValue>({
@@ -126,28 +126,81 @@ export default function DayBookReportPage() {
     pf_value: pfRegister.reduce((s, r) => s + r.total, 0),
   }), [salesRegister, cnRegister, pfRegister]);
 
+  // Ledger summary (sum debits/credits per ledger account)
+  const ledgerSummary = useMemo(() => {
+    const m = new Map<string, { ledger: string; debit: number; credit: number; net: number }>();
+    journal.forEach(j => {
+      const cur = m.get(j.ledger) || { ledger: j.ledger, debit: 0, credit: 0, net: 0 };
+      cur.debit += Number(j.debit || 0);
+      cur.credit += Number(j.credit || 0);
+      cur.net = cur.debit - cur.credit;
+      m.set(j.ledger, cur);
+    });
+    return Array.from(m.values()).map(r => ({
+      ledger: r.ledger,
+      debit: Number(r.debit.toFixed(2)),
+      credit: Number(r.credit.toFixed(2)),
+      net: Number(r.net.toFixed(2)),
+    })).sort((a, b) => Math.abs(b.net) - Math.abs(a.net));
+  }, [journal]);
+
+  const trialBalance = useMemo(() => {
+    const totalDebit = ledgerSummary.reduce((s, r) => s + r.debit, 0);
+    const totalCredit = ledgerSummary.reduce((s, r) => s + r.credit, 0);
+    return { totalDebit: Number(totalDebit.toFixed(2)), totalCredit: Number(totalCredit.toFixed(2)), diff: Number((totalDebit - totalCredit).toFixed(2)) };
+  }, [ledgerSummary]);
+
+  const range = getDateRangeFromFilters(filters);
+
   const handleXLSX = () => exportToXLSX("DayBook-Tally-Export", [
+    buildCoverSheet({
+      reportTitle: "Day Book — Tally / Zoho Books Import",
+      statutoryBasis: "Section 35 & 36, CGST Act, 2017 — Books of accounts to be maintained for 6 years; Income Tax Act Section 44AA",
+      period: range.label, fyLabel: `FY ${filters.fyStart}-${String(filters.fyStart + 1).slice(-2)}`,
+      filters: { Vendor: filters.vendorId, "POS State Code": filters.stateCode },
+      notes: [
+        "Sales Register: one row per tax invoice (Tally voucher type 'Sales').",
+        "Credit Notes: one row per CN (Tally voucher type 'Credit Note').",
+        "Platform Fee Invoices: services billed by P4U to customer (SAC 998599).",
+        "Journal Entries: full double-entry with Customer Dr / Sales+Output GST Cr (and reversal for CNs).",
+        "Ledger Summary & Trial Balance auto-aggregate the journal — debits must equal credits.",
+        "Import via Tally Prime: Gateway → Import → Vouchers (XML/Excel). For Zoho Books: Settings → Data Administration → Import.",
+      ],
+    }),
     { name: "Sales Register", rows: salesRegister, columns: [
       { key: "voucher_date", label: "Date" }, { key: "voucher_type", label: "Voucher Type" }, { key: "voucher_no", label: "Voucher No" },
-      { key: "party_name", label: "Party" }, { key: "place_of_supply", label: "POS" }, { key: "gstin", label: "Party GSTIN" },
+      { key: "party_name", label: "Party", width: 24 }, { key: "place_of_supply", label: "POS" }, { key: "gstin", label: "Party GSTIN" },
       { key: "taxable_value", label: "Taxable (₹)" }, { key: "cgst", label: "CGST (₹)" }, { key: "sgst", label: "SGST (₹)" },
-      { key: "igst", label: "IGST (₹)" }, { key: "cess", label: "Cess (₹)" }, { key: "total", label: "Total (₹)" }, { key: "narration", label: "Narration" },
+      { key: "igst", label: "IGST (₹)" }, { key: "cess", label: "Cess (₹)" }, { key: "total", label: "Total (₹)" }, { key: "narration", label: "Narration", width: 40 },
     ]},
     { name: "Credit Notes", rows: cnRegister, columns: [
       { key: "voucher_date", label: "Date" }, { key: "voucher_type", label: "Voucher Type" }, { key: "voucher_no", label: "CN No" },
-      { key: "party_name", label: "Party" }, { key: "against_invoice", label: "Against Invoice" },
+      { key: "party_name", label: "Party", width: 24 }, { key: "against_invoice", label: "Against Invoice" },
       { key: "taxable_value", label: "Taxable (₹)" }, { key: "cgst", label: "CGST (₹)" }, { key: "sgst", label: "SGST (₹)" },
-      { key: "igst", label: "IGST (₹)" }, { key: "total", label: "Total (₹)" }, { key: "narration", label: "Narration" },
+      { key: "igst", label: "IGST (₹)" }, { key: "total", label: "Total (₹)" }, { key: "narration", label: "Narration", width: 40 },
     ]},
     { name: "Platform Fee Invoices", rows: pfRegister, columns: [
       { key: "voucher_date", label: "Date" }, { key: "voucher_type", label: "Type" }, { key: "voucher_no", label: "Invoice No" },
-      { key: "party_name", label: "Party" }, { key: "sac", label: "SAC" },
+      { key: "party_name", label: "Party", width: 24 }, { key: "sac", label: "SAC" },
       { key: "taxable_value", label: "Taxable (₹)" }, { key: "cgst", label: "CGST (₹)" }, { key: "sgst", label: "SGST (₹)" },
-      { key: "igst", label: "IGST (₹)" }, { key: "total", label: "Total (₹)" }, { key: "narration", label: "Narration" },
+      { key: "igst", label: "IGST (₹)" }, { key: "total", label: "Total (₹)" }, { key: "narration", label: "Narration", width: 40 },
     ]},
     { name: "Journal Entries", rows: journal, columns: [
-      { key: "date", label: "Date" }, { key: "voucher_no", label: "Voucher No" }, { key: "ledger", label: "Ledger" },
-      { key: "debit", label: "Debit (₹)" }, { key: "credit", label: "Credit (₹)" }, { key: "narration", label: "Narration" },
+      { key: "date", label: "Date" }, { key: "voucher_no", label: "Voucher No" }, { key: "ledger", label: "Ledger", width: 28 },
+      { key: "debit", label: "Debit (₹)" }, { key: "credit", label: "Credit (₹)" }, { key: "narration", label: "Narration", width: 40 },
+    ]},
+    { name: "Ledger Summary", rows: ledgerSummary, columns: [
+      { key: "ledger", label: "Ledger", width: 30 }, { key: "debit", label: "Total Debit (₹)" },
+      { key: "credit", label: "Total Credit (₹)" }, { key: "net", label: "Net (Dr − Cr) (₹)" },
+    ]},
+    { name: "Trial Balance Check", rows: [
+      { particulars: "Total Debits (₹)", value: trialBalance.totalDebit },
+      { particulars: "Total Credits (₹)", value: trialBalance.totalCredit },
+      { particulars: "Difference (must be zero)", value: trialBalance.diff },
+      { particulars: "Status", value: trialBalance.diff === 0 ? "✓ BALANCED" : "✗ MISMATCH — review journal" },
+      { particulars: "Total Sales (in words)", value: amountInWordsINR(totals.sales_value) },
+    ], columns: [
+      { key: "particulars", label: "Particulars", width: 40 }, { key: "value", label: "Value", width: 40 },
     ]},
   ]);
 

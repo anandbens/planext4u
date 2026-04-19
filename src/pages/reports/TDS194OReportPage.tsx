@@ -8,7 +8,7 @@ import { Banknote, DollarSign, Users, Calculator } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import FinanceReportFilters, { FinanceFiltersValue, getDateRangeFromFilters } from "@/components/admin/FinanceReportFilters";
 import { exportToCSV } from "@/lib/csv";
-import { exportToXLSX, getCurrentFinancialYear } from "@/lib/xlsx-export";
+import { exportToXLSX, getCurrentFinancialYear, buildCoverSheet, amountInWordsINR } from "@/lib/xlsx-export";
 
 const TDS_THRESHOLD = 500000; // ₹5L per FY per vendor
 const TDS_RATE = 0.01;        // 1% (0.5% if PAN missing → 5%, but keep simple)
@@ -76,20 +76,49 @@ export default function TDS194OReportPage() {
     { key: "effective_rate", label: "Rate" }, { key: "tds_amount", label: "TDS (₹)" }, { key: "net_payable", label: "Net Payable (₹)" },
   ], "TDS_194O_Form26Q");
 
+  const range = getDateRangeFromFilters(filters);
   const handleXLSX = () => exportToXLSX("TDS-194O-Form-26Q", [
-    { name: "Per-Vendor TDS", rows: perVendor, columns: [
-      { key: "vendor_id", label: "Vendor ID" }, { key: "vendor_name", label: "Name" },
-      { key: "pan", label: "PAN" }, { key: "gstin", label: "GSTIN" },
-      { key: "orders", label: "Orders" }, { key: "gross", label: "Gross (₹)" },
+    buildCoverSheet({
+      reportTitle: "TDS u/s 194-O — Form 26Q (E-commerce Operator)",
+      statutoryBasis: "Section 194-O, Income Tax Act, 1961 — 1% TDS on gross sale to e-commerce participants (rate 5% if PAN unavailable, threshold ₹5,00,000 per FY)",
+      period: range.label, fyLabel: `FY ${filters.fyStart}-${String(filters.fyStart + 1).slice(-2)}`,
+      filters: { Vendor: filters.vendorId, Threshold: `₹${TDS_THRESHOLD.toLocaleString("en-IN")}`, Rate: "1% (5% if PAN missing)" },
+      notes: [
+        "TDS to be deposited within 7 days of the end of the month in which deduction is made (30 April for March).",
+        "Issue Form 16A to the vendor (deductee) within 15 days of furnishing Form 26Q.",
+        "Vendors with PAN missing are charged 5% — verify PAN/aadhaar in Vendor Master.",
+      ],
+    }),
+    { name: "Per-Vendor TDS", rows: perVendor.map(v => ({
+      ...v,
+      gross: Number(v.gross.toFixed(2)),
+      deductible_base: Number(v.deductible_base.toFixed(2)),
+      tds_amount: Number(v.tds_amount.toFixed(2)),
+      net_payable: Number(v.net_payable.toFixed(2)),
+      threshold_breached: v.threshold_breached ? "Yes" : "No",
+    })), columns: [
+      { key: "vendor_id", label: "Vendor ID" }, { key: "vendor_name", label: "Name", width: 24 },
+      { key: "pan", label: "PAN" }, { key: "gstin", label: "GSTIN", width: 18 },
+      { key: "orders", label: "Orders" }, { key: "gross", label: "Gross Payout (₹)" },
       { key: "threshold_breached", label: ">₹5L Threshold" }, { key: "deductible_base", label: "Taxable Base (₹)" },
       { key: "effective_rate", label: "Rate" }, { key: "tds_amount", label: "TDS Deducted (₹)" }, { key: "net_payable", label: "Net Payable (₹)" },
+    ]},
+    { name: "PAN Missing — Action Needed", rows: perVendor.filter(v => !v.pan).map(v => ({
+      vendor_id: v.vendor_id, vendor_name: v.vendor_name, gross: Number(v.gross.toFixed(2)),
+      action: "Collect PAN from vendor — applicable rate is 5% until PAN provided",
+    })), columns: [
+      { key: "vendor_id", label: "Vendor ID" }, { key: "vendor_name", label: "Vendor", width: 26 },
+      { key: "gross", label: "Gross Payout (₹)" }, { key: "action", label: "Required Action", width: 60 },
     ]},
     { name: "Summary", rows: [
       { metric: "Total vendors", value: totals.vendors_total },
       { metric: "Vendors above ₹5L threshold", value: totals.vendors_above_threshold },
       { metric: "Gross payouts (₹)", value: totals.gross_payouts.toFixed(2) },
       { metric: "Total TDS collected (₹)", value: totals.tds_collected.toFixed(2) },
-      { metric: "Note", value: "Deduct 1% TDS on gross payable to vendors with annual sales > ₹5,00,000. Deposit by 7th of next month. File Form 26Q quarterly." },
+      { metric: "Total TDS in words", value: amountInWordsINR(totals.tds_collected) },
+      { metric: "Filing", value: "Deposit TDS by 7th of next month. File Form 26Q quarterly. Issue Form 16A to vendors." },
+    ], columns: [
+      { key: "metric", label: "Metric", width: 36 }, { key: "value", label: "Value", width: 60 },
     ]},
   ]);
 

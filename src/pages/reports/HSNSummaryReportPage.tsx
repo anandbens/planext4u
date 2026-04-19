@@ -5,10 +5,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import FinanceReportFilters, { FinanceFiltersValue, getDateRangeFromFilters } from "@/components/admin/FinanceReportFilters";
 import { exportToCSV } from "@/lib/csv";
-import { exportToXLSX, getCurrentFinancialYear } from "@/lib/xlsx-export";
+import { exportToXLSX, getCurrentFinancialYear, buildCoverSheet, amountInWordsINR } from "@/lib/xlsx-export";
 
 interface HSNRow {
-  hsn: string; description: string; uqc: string;
+  hsn: string; description: string; uqc: string; gst_rate: number;
   quantity: number; taxable: number;
   cgst: number; sgst: number; igst: number; cess: number; total_value: number;
 }
@@ -41,14 +41,18 @@ export default function HSNSummaryReportPage() {
   }, [filters]);
 
   const hsnRows: HSNRow[] = useMemo(() => {
+    // Group by HSN + GST rate (statutory requirement for GSTR-1 Table 12)
     const map = new Map<string, HSNRow>();
     rows.forEach(r => {
       const items = Array.isArray(r.items) ? r.items : [];
       const itemCount = Math.max(items.length, 1);
       items.forEach((it: any) => {
         const hsn = it.hsn_code || it.hsn || "9999";
-        const cur = map.get(hsn) || {
+        const gstRate = Number(it.gst_rate || it.tax_rate || 18);
+        const key = `${hsn}__${gstRate}`;
+        const cur = map.get(key) || {
           hsn, description: it.name || it.title || "—", uqc: it.uqc || "NOS",
+          gst_rate: gstRate,
           quantity: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, cess: 0, total_value: 0,
         };
         const qty = Number(it.quantity || it.qty || 1);
@@ -59,7 +63,7 @@ export default function HSNSummaryReportPage() {
         cur.sgst += Number(r.sgst_amount || 0) / itemCount;
         cur.igst += Number(r.igst_amount || 0) / itemCount;
         cur.total_value += lineTaxable + (Number(r.cgst_amount || 0) + Number(r.sgst_amount || 0) + Number(r.igst_amount || 0)) / itemCount;
-        map.set(hsn, cur);
+        map.set(key, cur);
       });
     });
     return Array.from(map.values()).map(r => ({
@@ -79,21 +83,42 @@ export default function HSNSummaryReportPage() {
     igst: hsnRows.reduce((s, r) => s + r.igst, 0),
   }), [hsnRows]);
 
-  const handleCSV = () => exportToCSV(hsnRows, [
-    { key: "hsn", label: "HSN" }, { key: "description", label: "Description" },
-    { key: "uqc", label: "UQC" }, { key: "quantity", label: "Total Qty" },
-    { key: "taxable", label: "Taxable Value" }, { key: "cgst", label: "CGST" },
-    { key: "sgst", label: "SGST" }, { key: "igst", label: "IGST" },
-    { key: "cess", label: "Cess" }, { key: "total_value", label: "Total Value" },
-  ], "HSN-Summary");
+  const range = getDateRangeFromFilters(filters);
+  const auditCols = [
+    { key: "hsn", label: "HSN/SAC Code" }, { key: "description", label: "Description", width: 30 },
+    { key: "uqc", label: "UQC" }, { key: "gst_rate", label: "GST Rate (%)" },
+    { key: "quantity", label: "Total Qty" },
+    { key: "taxable", label: "Taxable Value (₹)" }, { key: "cgst", label: "CGST (₹)" },
+    { key: "sgst", label: "SGST (₹)" }, { key: "igst", label: "IGST (₹)" },
+    { key: "cess", label: "Cess (₹)" }, { key: "total_value", label: "Total Value (₹)" },
+  ];
 
-  const handleXLSX = () => exportToXLSX("HSN-Summary", [
-    { name: "HSN-wise Summary", rows: hsnRows, columns: [
-      { key: "hsn", label: "HSN Code" }, { key: "description", label: "Description", width: 30 },
-      { key: "uqc", label: "UQC" }, { key: "quantity", label: "Total Qty" },
-      { key: "taxable", label: "Taxable Value (₹)" }, { key: "cgst", label: "CGST (₹)" },
+  const handleCSV = () => exportToCSV(hsnRows, auditCols, "HSN-Summary");
+
+  const handleXLSX = () => exportToXLSX("HSN-Summary-Table12", [
+    buildCoverSheet({
+      reportTitle: "HSN-wise Summary — GSTR-1 Table 12",
+      statutoryBasis: "Rule 59(3), CGST Rules — HSN-wise summary of outward supplies (mandatory: 4-digit for AATO ≤ ₹5cr, 6-digit > ₹5cr)",
+      period: range.label, fyLabel: `FY ${filters.fyStart}-${String(filters.fyStart + 1).slice(-2)}`,
+      filters: { Vendor: filters.vendorId, "POS State Code": filters.stateCode },
+      notes: [
+        "Each row represents one (HSN/SAC × GST Rate) combination as required by GSTR-1 Table 12.",
+        "UQC (Unit Quantity Code) defaults to NOS when not configured on product master.",
+        "CGST/SGST/IGST are pro-rated across line items per invoice — verify against the invoice register.",
+      ],
+    }),
+    { name: "HSN-wise Summary", rows: hsnRows, columns: auditCols },
+    { name: "Period Totals", rows: [{
+      hsn_count: totals.rows, qty: totals.qty,
+      taxable: Number(totals.taxable.toFixed(2)),
+      cgst: Number(totals.cgst.toFixed(2)), sgst: Number(totals.sgst.toFixed(2)), igst: Number(totals.igst.toFixed(2)),
+      total_tax: Number((totals.cgst + totals.sgst + totals.igst).toFixed(2)),
+      tax_in_words: amountInWordsINR(totals.cgst + totals.sgst + totals.igst),
+    }], columns: [
+      { key: "hsn_count", label: "Unique HSNs" }, { key: "qty", label: "Total Qty" },
+      { key: "taxable", label: "Taxable (₹)" }, { key: "cgst", label: "CGST (₹)" },
       { key: "sgst", label: "SGST (₹)" }, { key: "igst", label: "IGST (₹)" },
-      { key: "cess", label: "Cess (₹)" }, { key: "total_value", label: "Total Value (₹)" },
+      { key: "total_tax", label: "Total Tax (₹)" }, { key: "tax_in_words", label: "Tax in Words", width: 60 },
     ]},
   ]);
 

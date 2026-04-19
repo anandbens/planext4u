@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import FinanceReportFilters, { FinanceFiltersValue, getDateRangeFromFilters } from "@/components/admin/FinanceReportFilters";
 import { exportToCSV } from "@/lib/csv";
-import { exportToXLSX, getCurrentFinancialYear } from "@/lib/xlsx-export";
+import { exportToXLSX, getCurrentFinancialYear, buildCoverSheet, amountInWordsINR, stateName } from "@/lib/xlsx-export";
 import { downloadOrderInvoice } from "@/lib/order-invoice";
 
 export default function InvoicesListPage() {
@@ -57,40 +57,99 @@ export default function InvoicesListPage() {
     total: filtered.reduce((s, r) => s + Number(r.total_amount || 0), 0),
   }), [filtered]);
 
-  const handleCSV = () => exportToCSV(filtered.map((r: any) => ({
-    invoice_no: r.invoice_no,
-    date: format(parseISO(r.invoice_date), "dd-MMM-yyyy"),
-    order_id: r.order_id,
-    customer: r.customer_name, vendor: r.vendor_name, vendor_gstin: r.vendor_gstin || "",
-    pos: r.place_of_supply_code || "", supply_type: r.is_interstate ? "Inter-state" : "Intra-state",
-    taxable: Number(r.taxable_value || 0),
-    cgst: Number(r.cgst_amount || 0), sgst: Number(r.sgst_amount || 0), igst: Number(r.igst_amount || 0),
-    total: Number(r.total_amount || 0),
-  })), [
-    { key: "invoice_no", label: "Invoice No" }, { key: "date", label: "Date" }, { key: "order_id", label: "Order" },
-    { key: "customer", label: "Customer" }, { key: "vendor", label: "Vendor" }, { key: "vendor_gstin", label: "Vendor GSTIN" },
-    { key: "pos", label: "POS" }, { key: "supply_type", label: "Supply Type" },
-    { key: "taxable", label: "Taxable" }, { key: "cgst", label: "CGST" }, { key: "sgst", label: "SGST" }, { key: "igst", label: "IGST" },
-    { key: "total", label: "Total" },
-  ], "Tax_Invoices");
+  const auditRows = useMemo(() => filtered.map((r: any) => {
+    const cgst = Number(r.cgst_amount || 0);
+    const sgst = Number(r.sgst_amount || 0);
+    const igst = Number(r.igst_amount || 0);
+    const cess = Number(r.cess_amount || 0);
+    const taxable = Number(r.taxable_value || 0);
+    const total = Number(r.total_amount || 0);
+    const totalTax = cgst + sgst + igst + cess;
+    const effectiveRate = taxable > 0 ? Number(((totalTax / taxable) * 100).toFixed(2)) : 0;
+    return {
+      invoice_no: r.invoice_no,
+      invoice_date: format(parseISO(r.invoice_date), "dd-MMM-yyyy"),
+      fy: r.fy_start ? `FY ${r.fy_start}-${String(r.fy_start + 1).slice(-2)}` : "—",
+      order_id: r.order_id,
+      vendor_id: r.vendor_id,
+      vendor_name: r.vendor_name || "—",
+      vendor_gstin: r.vendor_gstin || "—",
+      vendor_pan: r.vendor_pan || "—",
+      vendor_state: r.vendor_state || stateName(r.vendor_state_code),
+      vendor_state_code: r.vendor_state_code || "—",
+      vendor_address: r.vendor_address || "—",
+      customer_id: r.customer_id || "—",
+      customer_name: r.customer_name || "—",
+      customer_phone: r.customer_phone || "—",
+      customer_email: r.customer_email || "—",
+      pos_state: r.place_of_supply_state || stateName(r.place_of_supply_code),
+      pos_code: r.place_of_supply_code || "—",
+      supply_type: r.is_interstate ? "Inter-state" : "Intra-state",
+      reverse_charge: "No",
+      invoice_type: "Regular",
+      hsn_or_sac: Array.isArray(r.items) && r.items.length > 0 ? r.items.map((it: any) => it.hsn_code || it.hsn || it.sac_code || "—").filter(Boolean).join(", ").slice(0, 80) : "—",
+      taxable_value: Number(taxable.toFixed(2)),
+      cgst_amount: Number(cgst.toFixed(2)),
+      sgst_amount: Number(sgst.toFixed(2)),
+      igst_amount: Number(igst.toFixed(2)),
+      cess_amount: Number(cess.toFixed(2)),
+      total_tax: Number(totalTax.toFixed(2)),
+      effective_tax_rate_pct: effectiveRate,
+      discount: Number((r.discount || 0).toFixed(2)),
+      round_off: Number((r.round_off || 0).toFixed(2)),
+      total_amount: Number(total.toFixed(2)),
+      amount_in_words: amountInWordsINR(total),
+      status: "Issued",
+    };
+  }), [filtered]);
 
-  const handleXLSX = () => exportToXLSX("Tax-Invoices", [{
-    name: "Invoices",
-    rows: filtered.map((r: any) => ({
-      invoice_no: r.invoice_no, date: format(parseISO(r.invoice_date), "dd-MMM-yyyy"),
-      order_id: r.order_id, customer: r.customer_name, vendor: r.vendor_name,
-      vendor_gstin: r.vendor_gstin || "—", pos: r.place_of_supply_code || "—",
-      taxable: Number(r.taxable_value || 0), cgst: Number(r.cgst_amount || 0),
-      sgst: Number(r.sgst_amount || 0), igst: Number(r.igst_amount || 0), total: Number(r.total_amount || 0),
-    })),
-    columns: [
-      { key: "invoice_no", label: "Invoice No" }, { key: "date", label: "Date" }, { key: "order_id", label: "Order" },
-      { key: "customer", label: "Customer" }, { key: "vendor", label: "Vendor" }, { key: "vendor_gstin", label: "Vendor GSTIN" },
-      { key: "pos", label: "POS" },
-      { key: "taxable", label: "Taxable (₹)" }, { key: "cgst", label: "CGST (₹)" }, { key: "sgst", label: "SGST (₹)" },
-      { key: "igst", label: "IGST (₹)" }, { key: "total", label: "Total (₹)" },
-    ],
-  }]);
+  const auditColumns = [
+    { key: "invoice_no", label: "Invoice No" }, { key: "invoice_date", label: "Invoice Date" }, { key: "fy", label: "FY" },
+    { key: "order_id", label: "Order ID" },
+    { key: "vendor_id", label: "Vendor ID" }, { key: "vendor_name", label: "Vendor Name", width: 26 },
+    { key: "vendor_gstin", label: "Vendor GSTIN", width: 18 }, { key: "vendor_pan", label: "Vendor PAN" },
+    { key: "vendor_state", label: "Vendor State" }, { key: "vendor_state_code", label: "Vendor State Code" },
+    { key: "vendor_address", label: "Vendor Address", width: 40 },
+    { key: "customer_id", label: "Customer ID" }, { key: "customer_name", label: "Customer Name", width: 24 },
+    { key: "customer_phone", label: "Customer Phone" }, { key: "customer_email", label: "Customer Email", width: 26 },
+    { key: "pos_state", label: "Place of Supply (State)" }, { key: "pos_code", label: "POS Code" },
+    { key: "supply_type", label: "Supply Type" }, { key: "reverse_charge", label: "Reverse Charge" },
+    { key: "invoice_type", label: "Invoice Type" }, { key: "hsn_or_sac", label: "HSN / SAC", width: 24 },
+    { key: "taxable_value", label: "Taxable Value (₹)" },
+    { key: "cgst_amount", label: "CGST (₹)" }, { key: "sgst_amount", label: "SGST (₹)" }, { key: "igst_amount", label: "IGST (₹)" },
+    { key: "cess_amount", label: "Cess (₹)" }, { key: "total_tax", label: "Total Tax (₹)" },
+    { key: "effective_tax_rate_pct", label: "Effective Tax Rate (%)" },
+    { key: "discount", label: "Discount (₹)" }, { key: "round_off", label: "Round Off (₹)" },
+    { key: "total_amount", label: "Invoice Total (₹)" },
+    { key: "amount_in_words", label: "Amount in Words", width: 60 }, { key: "status", label: "Status" },
+  ];
+
+  const range = getDateRangeFromFilters(filters);
+  const handleCSV = () => exportToCSV(auditRows, auditColumns, "Tax_Invoices");
+
+  const handleXLSX = () => exportToXLSX("Tax-Invoices-Register", [
+    buildCoverSheet({
+      reportTitle: "Tax Invoices Register",
+      statutoryBasis: "Section 31, CGST Act, 2017 — Tax Invoice issued on supply of goods/services",
+      period: range.label, fyLabel: `FY ${filters.fyStart}-${String(filters.fyStart + 1).slice(-2)}`,
+      filters: { Vendor: filters.vendorId, "POS State Code": filters.stateCode, Search: search || undefined },
+      notes: [
+        "Each row represents one tax invoice auto-generated on order delivery/completion.",
+        "Reverse Charge defaults to 'No' (B2C marketplace flow).",
+        "HSN/SAC column is concatenated from line items — see GSTR-1 export for line-level breakup.",
+      ],
+    }),
+    { name: "Invoices", rows: auditRows, columns: auditColumns },
+    { name: "Period Totals", rows: [{
+      invoices: totals.count, taxable: Number(totals.taxable.toFixed(2)),
+      total_tax: Number(totals.tax.toFixed(2)), invoice_total: Number(totals.total.toFixed(2)),
+      amount_in_words: amountInWordsINR(totals.total),
+    }], columns: [
+      { key: "invoices", label: "Total Invoices" }, { key: "taxable", label: "Total Taxable (₹)" },
+      { key: "total_tax", label: "Total Tax (₹)" }, { key: "invoice_total", label: "Invoice Total (₹)" },
+      { key: "amount_in_words", label: "Total in Words", width: 60 },
+    ]},
+  ]);
 
   return (
     <AdminLayout>

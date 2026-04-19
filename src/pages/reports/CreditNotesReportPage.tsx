@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import FinanceReportFilters, { FinanceFiltersValue, getDateRangeFromFilters } from "@/components/admin/FinanceReportFilters";
 import { exportToCSV } from "@/lib/csv";
-import { exportToXLSX, getCurrentFinancialYear } from "@/lib/xlsx-export";
+import { exportToXLSX, getCurrentFinancialYear, buildCoverSheet, amountInWordsINR, stateName } from "@/lib/xlsx-export";
 import { downloadOrderInvoice } from "@/lib/order-invoice";
 
 export default function CreditNotesReportPage() {
@@ -43,18 +43,47 @@ export default function CreditNotesReportPage() {
   const formatted = useMemo(() => rows.map((r: any) => ({
     cn_no: r.credit_note_no,
     cn_date: format(parseISO(r.issue_date), "dd-MMM-yyyy"),
+    fy: r.fy_start ? `FY ${r.fy_start}-${String(r.fy_start + 1).slice(-2)}` : "—",
     original_invoice: r.original_invoice_no || "—",
+    original_invoice_id: r.original_invoice_id || "—",
     order_id: r.order_id,
+    customer_id: r.customer_id || "—",
     customer: r.customer_name || "—",
     vendor: r.vendor_id,
     vendor_gstin: r.vendor_gstin || "—",
+    pos_state: stateName(r.place_of_supply_code),
+    pos_code: r.place_of_supply_code || "—",
+    supply_type: r.is_interstate ? "Inter-state" : "Intra-state",
     reason: r.reason,
+    note_type: "Credit Note",
+    pre_gst: "No",
     taxable: Number(r.taxable_value || 0),
     cgst: Number(r.cgst_amount || 0),
     sgst: Number(r.sgst_amount || 0),
     igst: Number(r.igst_amount || 0),
+    cess: Number(r.cess_amount || 0),
+    total_tax: Number(r.cgst_amount || 0) + Number(r.sgst_amount || 0) + Number(r.igst_amount || 0) + Number(r.cess_amount || 0),
     total: Number(r.total_amount || 0),
+    amount_in_words: amountInWordsINR(Number(r.total_amount || 0)),
+    notes: r.notes || "",
   })), [rows]);
+
+  const auditColumns = [
+    { key: "cn_no", label: "Credit Note No" }, { key: "cn_date", label: "CN Date" }, { key: "fy", label: "FY" },
+    { key: "original_invoice", label: "Original Invoice No" }, { key: "original_invoice_id", label: "Original Invoice ID" },
+    { key: "order_id", label: "Order ID" },
+    { key: "customer_id", label: "Customer ID" }, { key: "customer", label: "Customer Name", width: 24 },
+    { key: "vendor", label: "Vendor ID" }, { key: "vendor_gstin", label: "Vendor GSTIN", width: 18 },
+    { key: "pos_state", label: "Place of Supply" }, { key: "pos_code", label: "POS Code" },
+    { key: "supply_type", label: "Supply Type" }, { key: "note_type", label: "Note Type" }, { key: "pre_gst", label: "Pre-GST" },
+    { key: "reason", label: "Reason" },
+    { key: "taxable", label: "Taxable (₹)" },
+    { key: "cgst", label: "CGST (₹)" }, { key: "sgst", label: "SGST (₹)" }, { key: "igst", label: "IGST (₹)" }, { key: "cess", label: "Cess (₹)" },
+    { key: "total_tax", label: "Total Tax (₹)" }, { key: "total", label: "CN Total (₹)" },
+    { key: "amount_in_words", label: "Amount in Words", width: 60 },
+    { key: "notes", label: "Notes", width: 30 },
+  ];
+  const range = getDateRangeFromFilters(filters);
 
   const totals = useMemo(() => ({
     count: formatted.length,
@@ -65,23 +94,50 @@ export default function CreditNotesReportPage() {
     total: formatted.reduce((s, r) => s + r.total, 0),
   }), [formatted]);
 
-  const handleCSV = () => exportToCSV(formatted, [
-    { key: "cn_no", label: "Credit Note No" }, { key: "cn_date", label: "Date" },
-    { key: "original_invoice", label: "Original Invoice" }, { key: "order_id", label: "Order ID" },
-    { key: "customer", label: "Customer" }, { key: "vendor", label: "Vendor" },
-    { key: "vendor_gstin", label: "Vendor GSTIN" }, { key: "reason", label: "Reason" },
-    { key: "taxable", label: "Taxable" }, { key: "cgst", label: "CGST" },
-    { key: "sgst", label: "SGST" }, { key: "igst", label: "IGST" }, { key: "total", label: "Total" },
-  ], "Credit_Notes");
+  const handleCSV = () => exportToCSV(formatted, auditColumns as any, "Credit_Notes");
+
+  // Reason breakup
+  const reasonBreakup = useMemo(() => {
+    const m = new Map<string, { reason: string; count: number; taxable: number; tax: number; total: number }>();
+    formatted.forEach(r => {
+      const k = r.reason || "—";
+      const cur = m.get(k) || { reason: k, count: 0, taxable: 0, tax: 0, total: 0 };
+      cur.count += 1; cur.taxable += r.taxable; cur.tax += r.total_tax; cur.total += r.total;
+      m.set(k, cur);
+    });
+    return Array.from(m.values()).map(r => ({
+      ...r, taxable: Number(r.taxable.toFixed(2)), tax: Number(r.tax.toFixed(2)), total: Number(r.total.toFixed(2)),
+    }));
+  }, [formatted]);
 
   const handleXLSX = () => exportToXLSX("Credit-Notes-GSTR1-Table-9B", [
-    { name: "Credit Notes", rows: formatted, columns: [
-      { key: "cn_no", label: "CN No" }, { key: "cn_date", label: "Date" },
-      { key: "original_invoice", label: "Original Invoice" }, { key: "order_id", label: "Order" },
-      { key: "customer", label: "Customer" }, { key: "vendor", label: "Vendor" },
-      { key: "vendor_gstin", label: "Vendor GSTIN" }, { key: "reason", label: "Reason" },
-      { key: "taxable", label: "Taxable (₹)" }, { key: "cgst", label: "CGST (₹)" },
-      { key: "sgst", label: "SGST (₹)" }, { key: "igst", label: "IGST (₹)" }, { key: "total", label: "Total (₹)" },
+    buildCoverSheet({
+      reportTitle: "Credit Notes Register — GSTR-1 Table 9B / 9B(CDNUR)",
+      statutoryBasis: "Section 34, CGST Act, 2017 — Credit/Debit notes issued in respect of taxable supplies",
+      period: range.label, fyLabel: `FY ${filters.fyStart}-${String(filters.fyStart + 1).slice(-2)}`,
+      filters: { Vendor: filters.vendorId, "POS State Code": filters.stateCode },
+      notes: [
+        "Credit notes are auto-generated when an order with an issued tax invoice is cancelled.",
+        "Use this register to populate GSTR-1 Tables 9B (registered) & 9B-CDNUR (unregistered B2CL/Export).",
+        "Reverse the corresponding tax liability in GSTR-3B Table 3.1(a) for the same period.",
+      ],
+    }),
+    { name: "Credit Notes", rows: formatted, columns: auditColumns },
+    { name: "Reason Breakup", rows: reasonBreakup, columns: [
+      { key: "reason", label: "Reason" }, { key: "count", label: "Count" },
+      { key: "taxable", label: "Taxable (₹)" }, { key: "tax", label: "Tax (₹)" }, { key: "total", label: "Total (₹)" },
+    ]},
+    { name: "Period Totals", rows: [{
+      cn_count: totals.count,
+      taxable: Number(totals.taxable.toFixed(2)),
+      cgst: Number(totals.cgst.toFixed(2)), sgst: Number(totals.sgst.toFixed(2)),
+      igst: Number(totals.igst.toFixed(2)), total: Number(totals.total.toFixed(2)),
+      amount_in_words: amountInWordsINR(totals.total),
+    }], columns: [
+      { key: "cn_count", label: "Total CNs" }, { key: "taxable", label: "Total Taxable (₹)" },
+      { key: "cgst", label: "CGST (₹)" }, { key: "sgst", label: "SGST (₹)" },
+      { key: "igst", label: "IGST (₹)" }, { key: "total", label: "Total (₹)" },
+      { key: "amount_in_words", label: "Total in Words", width: 60 },
     ]},
   ]);
 

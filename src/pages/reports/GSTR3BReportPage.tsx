@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import FinanceReportFilters, { FinanceFiltersValue, getDateRangeFromFilters } from "@/components/admin/FinanceReportFilters";
 import { exportToCSV } from "@/lib/csv";
-import { exportToXLSX, getCurrentFinancialYear } from "@/lib/xlsx-export";
+import { exportToXLSX, getCurrentFinancialYear, buildCoverSheet, amountInWordsINR, stateName } from "@/lib/xlsx-export";
 
 export default function GSTR3BReportPage() {
   const [filters, setFilters] = useState<FinanceFiltersValue>({
@@ -59,6 +59,44 @@ export default function GSTR3BReportPage() {
     { sr: "(e)", nature: "Non-GST outward supplies", taxable: 0, igst: 0, cgst: 0, sgst: 0, cess: 0 },
   ];
 
+  // Vendor-wise breakup (audit drilldown)
+  const vendorBreakup = useMemo(() => {
+    const m = new Map<string, any>();
+    rows.forEach(r => {
+      const k = r.vendor_id || "—";
+      const cur = m.get(k) || { vendor_id: k, invoices: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
+      cur.invoices += 1;
+      cur.taxable += Number(r.taxable_value || r.subtotal || 0);
+      cur.cgst += Number(r.cgst_amount || 0);
+      cur.sgst += Number(r.sgst_amount || 0);
+      cur.igst += Number(r.igst_amount || 0);
+      cur.total += Number(r.total || 0);
+      m.set(k, cur);
+    });
+    return Array.from(m.values()).map(v => ({
+      ...v,
+      taxable: Number(v.taxable.toFixed(2)),
+      cgst: Number(v.cgst.toFixed(2)), sgst: Number(v.sgst.toFixed(2)), igst: Number(v.igst.toFixed(2)),
+      total: Number(v.total.toFixed(2)),
+      total_tax: Number((v.cgst + v.sgst + v.igst).toFixed(2)),
+    })).sort((a, b) => b.taxable - a.taxable);
+  }, [rows]);
+
+  // 3.2 inter-state supplies to unregistered persons (POS-wise)
+  const interStateUnregistered = useMemo(() => {
+    const m = new Map<string, any>();
+    rows.filter(r => r.is_interstate).forEach(r => {
+      const k = r.place_of_supply_code || "—";
+      const cur = m.get(k) || { pos_code: k, pos_state: stateName(k), taxable: 0, igst: 0 };
+      cur.taxable += Number(r.taxable_value || r.subtotal || 0);
+      cur.igst += Number(r.igst_amount || 0);
+      m.set(k, cur);
+    });
+    return Array.from(m.values()).map(v => ({
+      ...v, taxable: Number(v.taxable.toFixed(2)), igst: Number(v.igst.toFixed(2)),
+    }));
+  }, [rows]);
+
   const handleCSV = () => {
     exportToCSV(tableSection3_1, [
       { key: "sr", label: "Sr." }, { key: "nature", label: "Nature of Supplies" },
@@ -68,18 +106,60 @@ export default function GSTR3BReportPage() {
   };
 
   const handleXLSX = () => {
-    exportToXLSX("GSTR3B-Summary", [
+    exportToXLSX("GSTR3B-Monthly-Return", [
+      buildCoverSheet({
+        reportTitle: "GSTR-3B — Monthly Self-Declaration Return",
+        statutoryBasis: "Section 39, CGST Act + Rule 61(5), CGST Rules — Monthly summary return of outward & inward supplies, ITC and tax payable",
+        period: range.label, fyLabel: `FY ${filters.fyStart}-${String(filters.fyStart + 1).slice(-2)}`,
+        filters: { Vendor: filters.vendorId, "POS State Code": filters.stateCode, Month: filters.month >= 0 ? filters.month + 1 : "Full FY" },
+        notes: [
+          "Auto-derived from delivered/completed orders only — verify against the Tax Invoices register.",
+          "Table 4 (ITC) is NOT auto-populated — fill manually based on vendor procurement invoices.",
+          "Table 5 (Exempt/Nil/Non-GST inward) defaults to zero.",
+          "Reverse charge (RCM) entries default to zero — add manually if applicable.",
+          "Filing due date: 20th of the following month (QRMP scheme: 22nd/24th alternative).",
+        ],
+      }),
       { name: "3.1 Outward & RCM", rows: tableSection3_1, columns: [
         { key: "sr", label: "Sr." }, { key: "nature", label: "Nature of Supplies", width: 60 },
         { key: "taxable", label: "Taxable Value (₹)" }, { key: "igst", label: "IGST (₹)" },
         { key: "cgst", label: "CGST (₹)" }, { key: "sgst", label: "SGST (₹)" }, { key: "cess", label: "Cess (₹)" },
       ]},
+      { name: "3.2 Inter-State to URP", rows: interStateUnregistered, columns: [
+        { key: "pos_code", label: "POS Code" }, { key: "pos_state", label: "Place of Supply", width: 28 },
+        { key: "taxable", label: "Taxable (₹)" }, { key: "igst", label: "IGST (₹)" },
+      ]},
+      { name: "4. ITC (manual)", rows: [
+        { particulars: "(A) ITC Available — All other ITC", igst: 0, cgst: 0, sgst: 0, cess: 0 },
+        { particulars: "(B) ITC Reversed — As per Rule 42 & 43", igst: 0, cgst: 0, sgst: 0, cess: 0 },
+        { particulars: "(C) Net ITC Available [A − B]", igst: 0, cgst: 0, sgst: 0, cess: 0 },
+        { particulars: "(D) Ineligible ITC", igst: 0, cgst: 0, sgst: 0, cess: 0 },
+      ], columns: [
+        { key: "particulars", label: "Particulars", width: 50 },
+        { key: "igst", label: "IGST (₹)" }, { key: "cgst", label: "CGST (₹)" },
+        { key: "sgst", label: "SGST (₹)" }, { key: "cess", label: "Cess (₹)" },
+      ]},
+      { name: "Vendor Breakup", rows: vendorBreakup, columns: [
+        { key: "vendor_id", label: "Vendor ID" }, { key: "invoices", label: "Invoices" },
+        { key: "taxable", label: "Taxable (₹)" }, { key: "cgst", label: "CGST (₹)" },
+        { key: "sgst", label: "SGST (₹)" }, { key: "igst", label: "IGST (₹)" },
+        { key: "total_tax", label: "Total Tax (₹)" }, { key: "total", label: "Total (₹)" },
+      ]},
       { name: "Period Summary", rows: [{
         period: range.label, invoices: summary.invoices,
         intrastate_invoices: summary.intrastate, interstate_invoices: summary.interstate,
-        taxable_value: summary.taxable, cgst: summary.cgst, sgst: summary.sgst, igst: summary.igst,
-        total_tax_liability: summary.total_tax,
-      }]},
+        taxable_value: Number(summary.taxable.toFixed(2)),
+        cgst: Number(summary.cgst.toFixed(2)), sgst: Number(summary.sgst.toFixed(2)), igst: Number(summary.igst.toFixed(2)),
+        total_tax_liability: Number(summary.total_tax.toFixed(2)),
+        tax_in_words: amountInWordsINR(summary.total_tax),
+      }], columns: [
+        { key: "period", label: "Period" }, { key: "invoices", label: "Invoices" },
+        { key: "intrastate_invoices", label: "Intra-state Inv" }, { key: "interstate_invoices", label: "Inter-state Inv" },
+        { key: "taxable_value", label: "Taxable (₹)" }, { key: "cgst", label: "CGST (₹)" },
+        { key: "sgst", label: "SGST (₹)" }, { key: "igst", label: "IGST (₹)" },
+        { key: "total_tax_liability", label: "Tax Payable (₹)" },
+        { key: "tax_in_words", label: "Tax in Words", width: 60 },
+      ]},
     ]);
   };
 

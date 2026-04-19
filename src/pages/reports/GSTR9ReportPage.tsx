@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FileBarChart, Calendar, TrendingUp, ArrowDownCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { exportToCSV } from "@/lib/csv";
-import { exportToXLSX, getCurrentFinancialYear } from "@/lib/xlsx-export";
+import { exportToXLSX, getCurrentFinancialYear, buildCoverSheet, amountInWordsINR } from "@/lib/xlsx-export";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet } from "lucide-react";
@@ -78,20 +78,77 @@ export default function GSTR9ReportPage() {
     { key: "cn_taxable", label: "CN Taxable" }, { key: "cn_cgst", label: "CN CGST" }, { key: "cn_sgst", label: "CN SGST" }, { key: "cn_igst", label: "CN IGST" },
   ], `GSTR9_FY${fyStart}-${(fyStart+1)%100}`);
 
+  // Annual HSN summary (Table 17)
+  const annualHSN = useMemo(() => {
+    const m = new Map<string, any>();
+    invoices.forEach((inv: any) => {
+      const items = Array.isArray(inv.items) ? inv.items : [];
+      items.forEach((it: any) => {
+        const hsn = it.hsn_code || it.hsn || it.sac_code || "9999";
+        const rate = Number(it.gst_rate || it.tax_rate || 18);
+        const k = `${hsn}__${rate}`;
+        const cur = m.get(k) || { hsn, gst_rate: rate, uqc: it.uqc || "NOS", qty: 0, taxable: 0, cgst: 0, sgst: 0, igst: 0, cess: 0 };
+        const qty = Number(it.quantity || it.qty || 1);
+        cur.qty += qty;
+        cur.taxable += Number(it.price || it.unit_price || 0) * qty;
+        m.set(k, cur);
+      });
+    });
+    return Array.from(m.values()).map(r => ({ ...r, taxable: Number(r.taxable.toFixed(2)) }));
+  }, [invoices]);
+
+  const taxPaidTable = [
+    { description: "Integrated Tax (IGST)", payable: Number(annual.igst_payable.toFixed(2)), paid_cash: Number(annual.igst_payable.toFixed(2)), paid_itc: 0 },
+    { description: "Central Tax (CGST)", payable: Number(annual.cgst_payable.toFixed(2)), paid_cash: Number(annual.cgst_payable.toFixed(2)), paid_itc: 0 },
+    { description: "State/UT Tax (SGST)", payable: Number(annual.sgst_payable.toFixed(2)), paid_cash: Number(annual.sgst_payable.toFixed(2)), paid_itc: 0 },
+    { description: "Cess", payable: 0, paid_cash: 0, paid_itc: 0 },
+    { description: "Interest", payable: 0, paid_cash: 0, paid_itc: 0 },
+    { description: "Late fee", payable: 0, paid_cash: 0, paid_itc: 0 },
+  ];
+
   const handleXLSX = () => exportToXLSX(`GSTR9-Annual-Return-FY${fyStart}-${String(fyStart+1).slice(-2)}`, [
+    buildCoverSheet({
+      reportTitle: `GSTR-9 — Annual Return FY ${fyStart}-${String(fyStart + 1).slice(-2)}`,
+      statutoryBasis: "Section 44, CGST Act, 2017 + Rule 80, CGST Rules — Annual return for every registered person (turnover above ₹2cr)",
+      period: `01-Apr-${fyStart} to 31-Mar-${fyStart + 1}`,
+      fyLabel: `FY ${fyStart}-${String(fyStart + 1).slice(-2)}`,
+      notes: [
+        "Auto-aggregated from monthly tax invoices and credit notes — must reconcile with monthly GSTR-1 & GSTR-3B filings.",
+        "Pt. III — ITC details to be filled manually based on procurement invoices.",
+        "Pt. V — Particulars of transactions for the previous FY declared in returns of April–Sept of current FY (amendments) to be added manually.",
+        "Pt. VI — Other information (refund / demands / HSN summary) — annual HSN sheet auto-populated; refunds & demands manual.",
+        "Filing due date: 31 December following the end of the relevant FY.",
+      ],
+    }),
     { name: "Annual Summary", rows: [
       { item: "Pt. II - Outward Supplies", taxable: annual.gross_taxable.toFixed(2), cgst: monthly.reduce((s, m) => s + m.cgst, 0).toFixed(2), sgst: monthly.reduce((s, m) => s + m.sgst, 0).toFixed(2), igst: monthly.reduce((s, m) => s + m.igst, 0).toFixed(2) },
       { item: "Less: Credit Notes (Pt. II 4I)", taxable: annual.cn_taxable.toFixed(2), cgst: monthly.reduce((s, m) => s + m.cn_cgst, 0).toFixed(2), sgst: monthly.reduce((s, m) => s + m.cn_sgst, 0).toFixed(2), igst: monthly.reduce((s, m) => s + m.cn_igst, 0).toFixed(2) },
-      { item: "Net Outward Supplies", taxable: annual.net_taxable.toFixed(2), cgst: annual.cgst_payable.toFixed(2), sgst: annual.sgst_payable.toFixed(2), igst: annual.igst_payable.toFixed(2) },
-      { item: "Total Tax Payable", taxable: "—", cgst: "", sgst: "", igst: annual.total_tax_payable.toFixed(2) },
+      { item: "Net Outward Supplies (Pt. II 4N)", taxable: annual.net_taxable.toFixed(2), cgst: annual.cgst_payable.toFixed(2), sgst: annual.sgst_payable.toFixed(2), igst: annual.igst_payable.toFixed(2) },
+      { item: "Total Tax Payable (in words)", taxable: amountInWordsINR(annual.total_tax_payable), cgst: "", sgst: "", igst: annual.total_tax_payable.toFixed(2) },
     ], columns: [
-      { key: "item", label: "Particulars" }, { key: "taxable", label: "Taxable Value (₹)" },
+      { key: "item", label: "Particulars", width: 40 }, { key: "taxable", label: "Taxable Value (₹)" },
       { key: "cgst", label: "CGST (₹)" }, { key: "sgst", label: "SGST (₹)" }, { key: "igst", label: "IGST (₹)" },
     ]},
     { name: "Monthly Breakup", rows: monthly, columns: [
       { key: "month", label: "Month" }, { key: "invoices", label: "Invoices" },
       { key: "taxable", label: "Outward Taxable (₹)" }, { key: "cgst", label: "CGST (₹)" }, { key: "sgst", label: "SGST (₹)" }, { key: "igst", label: "IGST (₹)" },
       { key: "cn_taxable", label: "CN Taxable (₹)" }, { key: "cn_cgst", label: "CN CGST (₹)" }, { key: "cn_sgst", label: "CN SGST (₹)" }, { key: "cn_igst", label: "CN IGST (₹)" },
+    ]},
+    { name: "Pt. IV — Tax Paid (Tbl 9)", rows: taxPaidTable, columns: [
+      { key: "description", label: "Description", width: 30 }, { key: "payable", label: "Tax Payable (₹)" },
+      { key: "paid_cash", label: "Paid through Cash (₹)" }, { key: "paid_itc", label: "Paid through ITC (₹)" },
+    ]},
+    { name: "Pt. VI — HSN Summary (Tbl 17)", rows: annualHSN, columns: [
+      { key: "hsn", label: "HSN/SAC" }, { key: "gst_rate", label: "GST Rate (%)" }, { key: "uqc", label: "UQC" },
+      { key: "qty", label: "Total Qty" }, { key: "taxable", label: "Taxable Value (₹)" },
+    ]},
+    { name: "Pt. V — Amendments (manual)", rows: [
+      { particulars: "Supplies/tax declared through Amendments (+) (net of debit notes)", taxable: 0, igst: 0, cgst: 0, sgst: 0, cess: 0 },
+      { particulars: "Supplies/tax reduced through Amendments (-) (net of credit notes)", taxable: 0, igst: 0, cgst: 0, sgst: 0, cess: 0 },
+    ], columns: [
+      { key: "particulars", label: "Particulars", width: 60 },
+      { key: "taxable", label: "Taxable (₹)" }, { key: "igst", label: "IGST (₹)" },
+      { key: "cgst", label: "CGST (₹)" }, { key: "sgst", label: "SGST (₹)" }, { key: "cess", label: "Cess (₹)" },
     ]},
   ]);
 

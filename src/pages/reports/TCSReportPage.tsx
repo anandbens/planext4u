@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import FinanceReportFilters, { FinanceFiltersValue, getDateRangeFromFilters } from "@/components/admin/FinanceReportFilters";
 import { exportToCSV } from "@/lib/csv";
-import { exportToXLSX, getCurrentFinancialYear } from "@/lib/xlsx-export";
+import { exportToXLSX, getCurrentFinancialYear, buildCoverSheet, amountInWordsINR } from "@/lib/xlsx-export";
 
 const TCS_RATE = 1.0; // 1% u/s 52(1) of CGST Act for e-commerce operators
 
@@ -93,7 +93,31 @@ export default function TCSReportPage() {
     { key: "tcs_amount", label: "TCS @1%" },
   ], "GSTR8-TCS");
 
+  // Per-rate breakup (split between IGST 1% and CGST 0.5% + SGST 0.5%)
+  const rateBreakup = useMemo(() => {
+    const intraNet = orders.filter(o => !o.is_interstate && ["delivered", "completed"].includes(o.status))
+      .reduce((s, o) => s + Number(o.taxable_value || o.subtotal || 0), 0);
+    const interNet = orders.filter(o => o.is_interstate && ["delivered", "completed"].includes(o.status))
+      .reduce((s, o) => s + Number(o.taxable_value || o.subtotal || 0), 0);
+    return [
+      { component: "CGST TCS @ 0.5%", base: Number(intraNet.toFixed(2)), rate_pct: 0.5, amount: Number((intraNet * 0.005).toFixed(2)) },
+      { component: "SGST/UTGST TCS @ 0.5%", base: Number(intraNet.toFixed(2)), rate_pct: 0.5, amount: Number((intraNet * 0.005).toFixed(2)) },
+      { component: "IGST TCS @ 1.0% (inter-state)", base: Number(interNet.toFixed(2)), rate_pct: 1.0, amount: Number((interNet * 0.01).toFixed(2)) },
+    ];
+  }, [orders]);
+
   const handleXLSX = () => exportToXLSX("GSTR8-TCS-Report", [
+    buildCoverSheet({
+      reportTitle: "TCS u/s 52 — GSTR-8 (E-commerce Operator)",
+      statutoryBasis: "Section 52, CGST Act, 2017 — TCS @ 1% on net taxable supplies of goods/services made through e-commerce operator (split as 0.5% CGST + 0.5% SGST intra-state, 1% IGST inter-state)",
+      period: range.label, fyLabel: `FY ${filters.fyStart}-${String(filters.fyStart + 1).slice(-2)}`,
+      filters: { Vendor: filters.vendorId, "POS State Code": filters.stateCode, "TCS Rate": `${TCS_RATE}%` },
+      notes: [
+        "Net Supplies = Gross delivered/completed supplies minus cancelled/refunded/returned supplies in the period.",
+        "GSTR-8 must be filed by the 10th of the following month.",
+        "TCS deposited can be claimed by registered vendors as ITC in their electronic cash ledger.",
+      ],
+    }),
     { name: "TCS by Vendor", rows: tcsRows, columns: [
       { key: "vendor_id", label: "Vendor ID" }, { key: "vendor_name", label: "Vendor", width: 24 },
       { key: "vendor_gstin", label: "GSTIN", width: 18 }, { key: "vendor_state", label: "State" },
@@ -101,11 +125,24 @@ export default function TCSReportPage() {
       { key: "returns", label: "Returns (₹)" }, { key: "net_supplies", label: "Net Supplies (₹)" },
       { key: "tcs_amount", label: "TCS @1% (₹)" },
     ]},
+    { name: "Per-Rate Breakup", rows: rateBreakup, columns: [
+      { key: "component", label: "Tax Component", width: 36 }, { key: "base", label: "Net Taxable Base (₹)" },
+      { key: "rate_pct", label: "Rate (%)" }, { key: "amount", label: "TCS Payable (₹)" },
+    ]},
     { name: "Period Summary", rows: [{
       period: range.label, tcs_rate: `${TCS_RATE}%`,
-      vendors: totals.vendors, gross: totals.gross, returns: totals.returns,
-      net: totals.net, total_tcs_collected: totals.tcs,
-    }]},
+      vendors: totals.vendors,
+      gross: Number(totals.gross.toFixed(2)),
+      returns: Number(totals.returns.toFixed(2)),
+      net: Number(totals.net.toFixed(2)),
+      total_tcs_collected: Number(totals.tcs.toFixed(2)),
+      tcs_in_words: amountInWordsINR(totals.tcs),
+    }], columns: [
+      { key: "period", label: "Period" }, { key: "tcs_rate", label: "Rate" },
+      { key: "vendors", label: "Vendors" }, { key: "gross", label: "Gross (₹)" },
+      { key: "returns", label: "Returns (₹)" }, { key: "net", label: "Net (₹)" },
+      { key: "total_tcs_collected", label: "Total TCS (₹)" }, { key: "tcs_in_words", label: "TCS in Words", width: 60 },
+    ]},
   ]);
 
   return (
