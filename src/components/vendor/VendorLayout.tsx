@@ -82,6 +82,31 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const vendorInitial = vendorUser?.name?.trim()?.charAt(0)?.toUpperCase() || "V";
 
+  // Determine vendor capabilities (product/service/restaurant) to filter menus
+  const { data: vendorFlags } = useQuery<VendorMenuFlags>({
+    queryKey: ["vendorMenuFlags", vendorUser?.vendor_id || vendorUser?.id],
+    enabled: !!(vendorUser?.vendor_id || vendorUser?.id),
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const vid = vendorUser?.vendor_id || vendorUser?.id;
+      const [{ data: pv }, { data: sv }, { data: rest }] = await Promise.all([
+        supabase.from("vendors").select("vendor_category").eq("id", vid!).maybeSingle(),
+        supabase.from("service_vendors" as any).select("vendor_category").eq("id", vid!).maybeSingle(),
+        supabase.from("restaurants").select("id").eq("vendor_id", vid!).maybeSingle(),
+      ]);
+      const cat = ((pv as any)?.vendor_category || (sv as any)?.vendor_category || "").toLowerCase();
+      return {
+        isProduct: cat === "product" || cat === "both" || (!cat && !sv),
+        isService: cat === "service" || cat === "both" || !!sv,
+        isRestaurant: !!rest,
+      };
+    },
+  });
+
+  const flags: VendorMenuFlags = vendorFlags || { isProduct: true, isService: false, isRestaurant: false };
+  const sidebarItems = useMemo(() => buildSidebarItems(flags), [flags.isProduct, flags.isService, flags.isRestaurant]);
+  const bottomNavItems = useMemo(() => buildBottomNavItems(flags), [flags.isProduct, flags.isService, flags.isRestaurant]);
+
   useEffect(() => {
     setMobileMenuOpen(false);
     window.scrollTo(0, 0);
