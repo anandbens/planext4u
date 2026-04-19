@@ -185,8 +185,7 @@ function VideoAdModal({ open, onClose, ad, onSave }: any) {
   const { data: serviceCategories = [] } = useQuery({
     queryKey: ["cms_service_categories"],
     queryFn: async () => {
-      const { data } = await supabase.from("categories").select("id,name").eq("status", "active").order("name");
-      // Re-using the shared categories table; service-specific filter could be added if available.
+      const { data } = await supabase.from("service_categories" as any).select("id,name").eq("status", "active").order("name");
       return (data || []) as any[];
     },
   });
