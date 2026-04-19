@@ -180,28 +180,6 @@ export default function SocialProfilePage() {
 
   const content = (
     <div className="pb-28 md:pb-8">
-      {/* In-page title bar (non-sticky on mobile to avoid overlap with CustomerLayout's sticky header) */}
-      <div className="bg-card border-b border-border/30 md:hidden">
-        <div className="flex items-center justify-between px-4 py-3 max-w-xl mx-auto">
-          <div className="flex items-center gap-2 min-w-0">
-            {!isOwnProfile && <button onClick={() => navigate(-1)} className="shrink-0"><ArrowLeft className="h-6 w-6" /></button>}
-            <div className="flex items-center gap-1 min-w-0">
-              <span className="text-lg font-bold truncate">{displayUsername}</span>
-              {isVerified && <svg className="h-4 w-4 text-primary fill-current shrink-0" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>}
-            </div>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            {isOwnProfile && (
-              <>
-                <button onClick={() => navigate("/app/social/notifications")} aria-label="Notifications"><Bell className="h-6 w-6" /></button>
-                <Link to="/app/social/create" aria-label="Create"><Plus className="h-6 w-6" /></Link>
-                <button onClick={() => navigate("/app/social/settings")} aria-label="Settings"><MoreHorizontal className="h-6 w-6" /></button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-xl mx-auto relative z-0">
         {/* Profile Info */}
         <div className="px-4 pt-4">
