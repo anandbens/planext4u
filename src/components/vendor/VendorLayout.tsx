@@ -30,11 +30,13 @@ function buildSidebarItems(flags: VendorMenuFlags) {
   if (flags.isService) items.push({ label: "Services", to: "/vendor/services", icon: Wrench });
   if (flags.isRestaurant) {
     items.push({ label: "Restaurant", to: "/vendor/restaurant", icon: UtensilsCrossed });
-    items.push({ label: "Food Orders", to: "/vendor/food-orders", icon: ShoppingCart });
   }
   if (flags.isService) items.push({ label: "Availability", to: "/vendor/availability", icon: CalendarClock });
+  // Segregated order/booking entries — product vendors see Orders, service providers see Bookings, restaurants see Food Orders
+  if (flags.isProduct) items.push({ label: "Orders", to: "/vendor/orders", icon: ShoppingCart });
+  if (flags.isService) items.push({ label: "Bookings", to: "/vendor/bookings", icon: CalendarClock });
+  if (flags.isRestaurant) items.push({ label: "Food Orders", to: "/vendor/food-orders", icon: ShoppingCart });
   items.push(
-    { label: "Orders", to: "/vendor/orders", icon: ShoppingCart },
     { label: "Settlements", to: "/vendor/settlements", icon: DollarSign },
     { label: "Payment History", to: "/vendor/payments", icon: History },
     { label: "Bank Account", to: "/vendor/bank", icon: CreditCard },
@@ -56,19 +58,34 @@ function buildBottomNavItems(flags: VendorMenuFlags) {
   } else if (flags.isRestaurant) {
     items.push({ label: "Menu", to: "/vendor/restaurant", icon: UtensilsCrossed });
   }
+  // Segregated bottom-nav: service providers → Bookings, restaurants → Food Orders, product vendors → Orders
+  const ordersTo = flags.isService && !flags.isProduct
+    ? "/vendor/bookings"
+    : flags.isRestaurant && !flags.isProduct && !flags.isService
+      ? "/vendor/food-orders"
+      : "/vendor/orders";
+  const ordersLabel = flags.isService && !flags.isProduct ? "Bookings" : "Orders";
   items.push(
-    { label: "Orders", to: flags.isRestaurant && !flags.isProduct && !flags.isService ? "/vendor/food-orders" : "/vendor/orders", icon: ShoppingCart },
+    { label: ordersLabel, to: ordersTo, icon: ShoppingCart },
     { label: "Payments", to: "/vendor/settlements", icon: DollarSign },
     { label: "Profile", to: "/vendor/profile", icon: User },
   );
   return items;
 }
 
-const quickActions = [
-  { label: "Your\nOrders", icon: ShoppingCart, to: "/vendor/orders" },
-  { label: "Help &\nSupport", icon: HelpCircle, to: "#" },
-  { label: "Store\nInsights", icon: BarChart3, to: "/vendor" },
-];
+function buildQuickActions(flags: VendorMenuFlags) {
+  const ordersTo = flags.isService && !flags.isProduct
+    ? "/vendor/bookings"
+    : flags.isRestaurant && !flags.isProduct && !flags.isService
+      ? "/vendor/food-orders"
+      : "/vendor/orders";
+  const ordersLabel = flags.isService && !flags.isProduct ? "Your\nBookings" : "Your\nOrders";
+  return [
+    { label: ordersLabel, icon: ShoppingCart, to: ordersTo },
+    { label: "Help &\nSupport", icon: HelpCircle, to: "#" },
+    { label: "Store\nInsights", icon: BarChart3, to: "/vendor" },
+  ];
+}
 
 const menuListItems = [
   { label: "Account & Control", icon: Shield, to: "/vendor/account-control" },
@@ -106,6 +123,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
   const flags: VendorMenuFlags = vendorFlags || { isProduct: true, isService: false, isRestaurant: false };
   const sidebarItems = useMemo(() => buildSidebarItems(flags), [flags.isProduct, flags.isService, flags.isRestaurant]);
   const bottomNavItems = useMemo(() => buildBottomNavItems(flags), [flags.isProduct, flags.isService, flags.isRestaurant]);
+  const quickActions = useMemo(() => buildQuickActions(flags), [flags.isProduct, flags.isService, flags.isRestaurant]);
 
   useEffect(() => {
     setMobileMenuOpen(false);
