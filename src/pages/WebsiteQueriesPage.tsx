@@ -41,7 +41,7 @@ export default function WebsiteQueriesPage() {
     try {
       const { data: u } = await supabase.auth.getUser();
       await api.replyToWebsiteQuery(selected.id, replyText.trim(), u?.user?.email || u?.user?.id || "admin");
-      toast.success(`Reply saved. Email visitor at ${selected.email} to send the response.`);
+      toast.success(`Reply sent to ${selected.email}`);
       setSelected(null); setReplyText(""); fetchData();
     } catch (e: any) {
       toast.error(e.message || "Failed to save reply");
