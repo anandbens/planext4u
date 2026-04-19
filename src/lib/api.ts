@@ -840,22 +840,88 @@ export const api = {
   },
 
   // Orders
-  getOrders: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string }) => {
+  getOrders: async (params: {
+    page?: number; per_page?: number; search?: string; status?: string;
+    date_from?: string; date_to?: string;
+    vendor_type?: 'product' | 'service' | 'all';
+    deleted?: boolean;
+    vendor_filter?: string;
+    product_filter?: string;
+  }) => {
     const page = params.page || 1;
     const perPage = params.per_page || 10;
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
 
+    // Resolve vendor IDs by type (product = vendors table, service = service_vendors)
+    let restrictVendorIds: string[] | null = null;
+    if (params.vendor_type === 'product' || params.vendor_type === 'service') {
+      const tbl = params.vendor_type === 'product' ? 'vendors' : 'service_vendors';
+      let vq = supabase.from(tbl as any).select('id');
+      if (params.vendor_filter) vq = vq.or(`id.ilike.%${params.vendor_filter}%,name.ilike.%${params.vendor_filter}%,business_name.ilike.%${params.vendor_filter}%`);
+      const { data: vRows } = await vq.limit(2000);
+      restrictVendorIds = (vRows || []).map((r: any) => r.id);
+      if (restrictVendorIds.length === 0) {
+        return paginateResult([], 0, page, perPage);
+      }
+    } else if (params.vendor_filter) {
+      // Without a type filter, search both
+      const [{ data: a }, { data: b }] = await Promise.all([
+        supabase.from('vendors').select('id').or(`id.ilike.%${params.vendor_filter}%,name.ilike.%${params.vendor_filter}%,business_name.ilike.%${params.vendor_filter}%`),
+        supabase.from('service_vendors').select('id').or(`id.ilike.%${params.vendor_filter}%,name.ilike.%${params.vendor_filter}%,business_name.ilike.%${params.vendor_filter}%`),
+      ]);
+      restrictVendorIds = [...(a || []).map((r: any) => r.id), ...(b || []).map((r: any) => r.id)];
+      if (restrictVendorIds.length === 0) return paginateResult([], 0, page, perPage);
+    }
+
     let query = supabase.from('orders').select('*', { count: 'exact' });
+
+    // Soft-delete filter
+    if (params.deleted) query = query.not('deleted_at', 'is', null);
+    else query = query.is('deleted_at', null);
+
     if (params.search) query = query.or(`id.ilike.%${params.search}%,customer_name.ilike.%${params.search}%,vendor_name.ilike.%${params.search}%`);
     if (params.status && params.status !== 'all') query = query.eq('status', params.status);
     if (params.date_from) query = query.gte('created_at', params.date_from);
     if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    if (restrictVendorIds) query = query.in('vendor_id', restrictVendorIds);
+
     query = query.order('created_at', { ascending: false }).range(from, to);
 
-    const { data, count, error } = await query;
+    let { data, count, error } = await query;
     if (error) throw error;
+
+    // Optional client-side product filter (search inside items JSON)
+    if (params.product_filter && data) {
+      const needle = params.product_filter.toLowerCase();
+      data = (data as any[]).filter(o =>
+        Array.isArray(o.items) && o.items.some((it: any) =>
+          String(it.title || '').toLowerCase().includes(needle) ||
+          String(it.id || '').toLowerCase().includes(needle)
+        )
+      );
+    }
+
     return paginateResult(data || [], count || 0, page, perPage);
+  },
+
+  softDeleteOrders: async (ids: string[], reason?: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase.from('orders').update({
+      deleted_at: new Date().toISOString(),
+      deleted_by: user?.id || null,
+      deletion_reason: reason || null,
+    } as any).in('id', ids);
+    if (error) throw error;
+  },
+
+  restoreOrders: async (ids: string[]) => {
+    const { error } = await supabase.from('orders').update({
+      deleted_at: null,
+      deleted_by: null,
+      deletion_reason: null,
+    } as any).in('id', ids);
+    if (error) throw error;
   },
 
   updateOrderStatus: async (id: string, status: Order['status'], shippingData?: { shipping_type?: string; courier_name?: string; tracking_number?: string; tracking_url?: string; shipping_notes?: string }) => {
