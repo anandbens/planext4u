@@ -8,86 +8,103 @@
   :root {
     --font-sans: 'DM Sans', system-ui, sans-serif;
 
-    /* P4U Premium Palette — Logo-aligned (#011d33 deep navy, #009999 teal, #f89f03 amber)
-       Inspired by Zepto/Blinkit: airy off-white surfaces, deep navy ink, vibrant teal CTA, warm amber accent */
-    --background: 180 30% 98.5%;
-    --foreground: 207 70% 12%;
+    /* P4U Premium Palette v3 — Logo-aligned with refreshed accent spectrum
+       Core: deep navy #011d33 · teal #009999 · amber #f89f03
+       Adds: mint, coral, indigo, lavender for gradient depth */
+    --background: 190 40% 98.5%;
+    --foreground: 210 65% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 207 70% 12%;
+    --card-foreground: 210 65% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 207 70% 12%;
+    --popover-foreground: 210 65% 11%;
 
-    --primary: 180 100% 30%;
+    --primary: 178 90% 32%;
     --primary-foreground: 0 0% 100%;
+    --primary-glow: 168 85% 48%;
 
-    --secondary: 180 40% 96%;
-    --secondary-foreground: 207 70% 12%;
+    --secondary: 178 50% 95%;
+    --secondary-foreground: 210 65% 11%;
 
-    --muted: 195 25% 95.5%;
-    --muted-foreground: 207 18% 42%;
+    --muted: 195 30% 95.5%;
+    --muted-foreground: 210 16% 42%;
 
-    --accent: 37 100% 96%;
-    --accent-foreground: 30 90% 30%;
+    --accent: 32 100% 95%;
+    --accent-foreground: 24 90% 32%;
 
-    --destructive: 0 78% 52%;
+    --destructive: 354 78% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 65% 38%;
+    --success: 158 68% 38%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 37 95% 49%;
-    --warning-foreground: 207 90% 12%;
+    --warning: 35 96% 52%;
+    --warning-foreground: 210 70% 12%;
 
-    --info: 199 89% 48%;
+    --info: 214 90% 54%;
     --info-foreground: 0 0% 100%;
 
-    --border: 195 22% 91%;
-    --input: 195 22% 91%;
-    --ring: 180 100% 30%;
+    --border: 195 28% 90%;
+    --input: 195 28% 90%;
+    --ring: 178 90% 32%;
 
-    --radius: 0.875rem;
+    --radius: 1rem;
 
-    --sidebar-background: 207 80% 8%;
-    --sidebar-foreground: 180 25% 82%;
-    --sidebar-primary: 180 90% 42%;
+    /* Brand spectrum tokens */
+    --brand-dark: 210 95% 10%;
+    --brand-light: 180 40% 95%;
+    --brand-teal: 178 90% 32%;
+    --brand-mint: 158 75% 55%;
+    --brand-amber: 35 96% 52%;
+    --brand-coral: 12 92% 62%;
+    --brand-indigo: 232 75% 58%;
+    --brand-lavender: 268 70% 65%;
+
+    --sidebar-background: 215 75% 9%;
+    --sidebar-foreground: 195 30% 82%;
+    --sidebar-primary: 178 85% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 207 55% 15%;
+    --sidebar-accent: 215 50% 16%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 207 50% 16%;
-    --sidebar-ring: 180 100% 35%;
-    --sidebar-muted: 207 25% 32%;
+    --sidebar-border: 215 45% 17%;
+    --sidebar-ring: 178 85% 40%;
+    --sidebar-muted: 215 25% 32%;
 
-    --brand-dark: 207 96% 10%;
-    --brand-light: 180 33% 94%;
-    --brand-teal: 180 100% 30%;
-    --brand-amber: 37 95% 49%;
-
-    /* Premium gradient system — soft, modern, depth-rich */
-    --gradient-primary: linear-gradient(135deg, hsl(180 100% 32%) 0%, hsl(190 95% 28%) 50%, hsl(207 90% 14%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(180 100% 30%) 0%, hsl(195 80% 35%) 50%, hsl(37 95% 55%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(152 65% 40%), hsl(170 60% 45%));
-    --gradient-warning: linear-gradient(135deg, hsl(37 95% 55%), hsl(25 90% 50%));
-    --gradient-info: linear-gradient(135deg, hsl(199 89% 48%), hsl(210 80% 55%));
-    --gradient-danger: linear-gradient(135deg, hsl(0 78% 55%), hsl(340 70% 50%));
-    --gradient-brand: linear-gradient(135deg, hsl(180 100% 30%) 0%, hsl(37 95% 52%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(180 30% 98.5%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(180 40% 97%) 0%, hsl(195 30% 99%) 100%);
-    --gradient-amber-soft: linear-gradient(135deg, hsl(37 100% 96%) 0%, hsl(30 100% 92%) 100%);
-    --gradient-teal-soft: linear-gradient(135deg, hsl(180 60% 96%) 0%, hsl(180 70% 92%) 100%);
+    /* Premium gradient system — depth-rich, multi-stop, modern */
+    --gradient-primary: linear-gradient(135deg, hsl(178 90% 34%) 0%, hsl(190 85% 28%) 50%, hsl(215 80% 16%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(178 90% 36%) 0%, hsl(168 85% 48%) 45%, hsl(35 96% 58%) 100%);
+    --gradient-aurora: linear-gradient(135deg, hsl(178 90% 38%) 0%, hsl(232 75% 58%) 50%, hsl(268 70% 65%) 100%);
+    --gradient-sunset: linear-gradient(135deg, hsl(35 96% 58%) 0%, hsl(12 92% 62%) 60%, hsl(345 80% 60%) 100%);
+    --gradient-mint: linear-gradient(135deg, hsl(168 85% 48%) 0%, hsl(178 90% 38%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(158 68% 40%), hsl(168 75% 48%));
+    --gradient-warning: linear-gradient(135deg, hsl(35 96% 58%), hsl(22 92% 52%));
+    --gradient-info: linear-gradient(135deg, hsl(214 90% 56%), hsl(232 75% 58%));
+    --gradient-danger: linear-gradient(135deg, hsl(354 78% 58%), hsl(335 72% 52%));
+    --gradient-brand: linear-gradient(135deg, hsl(178 90% 34%) 0%, hsl(35 96% 55%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(190 40% 98.5%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(178 50% 97%) 0%, hsl(195 35% 99%) 100%);
+    --gradient-amber-soft: linear-gradient(135deg, hsl(35 100% 95%) 0%, hsl(22 100% 92%) 100%);
+    --gradient-teal-soft: linear-gradient(135deg, hsl(178 60% 95%) 0%, hsl(168 70% 92%) 100%);
+    --gradient-coral-soft: linear-gradient(135deg, hsl(12 100% 96%) 0%, hsl(345 100% 95%) 100%);
+    --gradient-indigo-soft: linear-gradient(135deg, hsl(232 80% 96%) 0%, hsl(268 70% 95%) 100%);
+    --gradient-mesh: radial-gradient(at 20% 20%, hsl(178 90% 90% / 0.6) 0px, transparent 50%),
+                     radial-gradient(at 80% 30%, hsl(35 96% 90% / 0.5) 0px, transparent 50%),
+                     radial-gradient(at 60% 90%, hsl(232 75% 92% / 0.5) 0px, transparent 50%);
 
     /* Premium shadow system — softer, layered, modern */
-    --shadow-xs: 0 1px 2px 0 hsl(207 60% 15% / 0.04);
-    --shadow-sm: 0 1px 3px 0 hsl(207 60% 15% / 0.06), 0 1px 2px -1px hsl(207 60% 15% / 0.04);
-    --shadow-md: 0 4px 8px -2px hsl(207 60% 15% / 0.08), 0 2px 4px -2px hsl(207 60% 15% / 0.04);
-    --shadow-lg: 0 12px 24px -6px hsl(207 60% 15% / 0.1), 0 4px 8px -4px hsl(207 60% 15% / 0.05);
-    --shadow-xl: 0 24px 48px -12px hsl(207 60% 15% / 0.14), 0 8px 16px -8px hsl(207 60% 15% / 0.06);
-    --shadow-glass: 0 8px 32px 0 hsl(180 100% 30% / 0.1);
-    --shadow-glow-teal: 0 0 32px hsl(180 100% 35% / 0.25);
-    --shadow-glow-amber: 0 0 32px hsl(37 95% 55% / 0.25);
-    --shadow-card: 0 1px 3px 0 hsl(207 60% 15% / 0.05), 0 1px 2px -1px hsl(207 60% 15% / 0.03);
-    --shadow-elevated: 0 8px 16px -4px hsl(207 60% 15% / 0.08), 0 4px 6px -2px hsl(207 60% 15% / 0.04);
+    --shadow-xs: 0 1px 2px 0 hsl(215 60% 15% / 0.04);
+    --shadow-sm: 0 1px 3px 0 hsl(215 60% 15% / 0.06), 0 1px 2px -1px hsl(215 60% 15% / 0.04);
+    --shadow-md: 0 4px 8px -2px hsl(215 60% 15% / 0.08), 0 2px 4px -2px hsl(215 60% 15% / 0.04);
+    --shadow-lg: 0 12px 24px -6px hsl(215 60% 15% / 0.1), 0 4px 8px -4px hsl(215 60% 15% / 0.05);
+    --shadow-xl: 0 24px 48px -12px hsl(215 60% 15% / 0.14), 0 8px 16px -8px hsl(215 60% 15% / 0.06);
+    --shadow-glass: 0 8px 32px 0 hsl(178 90% 32% / 0.12);
+    --shadow-glow-teal: 0 0 32px hsl(178 90% 40% / 0.28);
+    --shadow-glow-amber: 0 0 32px hsl(35 96% 55% / 0.28);
+    --shadow-glow-coral: 0 0 32px hsl(12 92% 62% / 0.28);
+    --shadow-glow-indigo: 0 0 32px hsl(232 75% 58% / 0.28);
+    --shadow-card: 0 1px 3px 0 hsl(215 60% 15% / 0.05), 0 1px 2px -1px hsl(215 60% 15% / 0.03);
+    --shadow-elevated: 0 8px 16px -4px hsl(215 60% 15% / 0.08), 0 4px 6px -2px hsl(215 60% 15% / 0.04);
   }
 
   .dark {
@@ -233,6 +250,9 @@ div.fixed[class*="bottom-0"] {
 
   .gradient-primary { background: var(--gradient-primary); }
   .gradient-hero { background: var(--gradient-hero); }
+  .gradient-aurora { background: var(--gradient-aurora); }
+  .gradient-sunset { background: var(--gradient-sunset); }
+  .gradient-mint { background: var(--gradient-mint); }
   .gradient-success { background: var(--gradient-success); }
   .gradient-warning { background: var(--gradient-warning); }
   .gradient-info { background: var(--gradient-info); }
@@ -242,6 +262,12 @@ div.fixed[class*="bottom-0"] {
   .gradient-subtle { background: var(--gradient-subtle); }
   .gradient-amber-soft { background: var(--gradient-amber-soft); }
   .gradient-teal-soft { background: var(--gradient-teal-soft); }
+  .gradient-coral-soft { background: var(--gradient-coral-soft); }
+  .gradient-indigo-soft { background: var(--gradient-indigo-soft); }
+  .gradient-mesh { background: var(--gradient-mesh); }
+
+  .glow-coral { box-shadow: var(--shadow-glow-coral); }
+  .glow-indigo { box-shadow: var(--shadow-glow-indigo); }
 
   .glow-teal { box-shadow: var(--shadow-glow-teal); }
   .glow-amber { box-shadow: var(--shadow-glow-amber); }
@@ -345,7 +371,21 @@ div.fixed[class*="bottom-0"] {
     -webkit-text-fill-color: transparent;
   }
 
-  /* Premium button shimmer */
+  .text-gradient-aurora {
+    background: var(--gradient-aurora);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-gradient-sunset {
+    background: var(--gradient-sunset);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Premium button with gradient + shimmer */
   .btn-premium {
     @apply relative overflow-hidden;
     background: var(--gradient-brand);
@@ -356,6 +396,38 @@ div.fixed[class*="bottom-0"] {
     box-shadow: var(--shadow-glow-teal);
     transform: translateY(-1px);
   }
+
+  .btn-aurora {
+    @apply relative overflow-hidden text-white;
+    background: var(--gradient-aurora);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-aurora:hover {
+    box-shadow: var(--shadow-glow-indigo);
+    transform: translateY(-1px);
+  }
+
+  .btn-sunset {
+    @apply relative overflow-hidden text-white;
+    background: var(--gradient-sunset);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-sunset:hover {
+    box-shadow: var(--shadow-glow-coral);
+    transform: translateY(-1px);
+  }
+
+  /* Animated gradient surface for hero / featured cards */
+  .gradient-animate {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* Progressive font-size scale for large desktops */

@@ -66,7 +66,11 @@ export default {
           dark: "hsl(var(--brand-dark))",
           light: "hsl(var(--brand-light))",
           teal: "hsl(var(--brand-teal))",
+          mint: "hsl(var(--brand-mint))",
           amber: "hsl(var(--brand-amber))",
+          coral: "hsl(var(--brand-coral))",
+          indigo: "hsl(var(--brand-indigo))",
+          lavender: "hsl(var(--brand-lavender))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
