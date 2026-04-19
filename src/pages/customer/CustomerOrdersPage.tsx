@@ -6,11 +6,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
-import { Search, Calendar, ChevronLeft, ChevronRight, Package, Truck, MapPin, RefreshCcw, ArrowLeft, Star } from "lucide-react";
+import { Search, Calendar, ChevronLeft, ChevronRight, Package, Truck, MapPin, RefreshCcw, ArrowLeft, Star, Wrench, Copy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 const statusColor: Record<string, string> = {
   placed: "bg-primary/10 text-primary", paid: "bg-info/10 text-info", accepted: "bg-info/10 text-info",
