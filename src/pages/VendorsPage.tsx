@@ -37,7 +37,9 @@ export default function VendorsPage() {
   const fetchData = useCallback(async () => {
     if (activeTab === "deactivated" || activeTab === "deleted") {
       const targetStatus = activeTab;
-      let q = supabase.from('vendors').select('*', { count: 'exact' }).eq('status', targetStatus);
+      let q = (supabase.from('vendors').select('*', { count: 'exact' }) as any)
+        .eq('status', targetStatus)
+        .or('vendor_category.eq.product,vendor_category.is.null');
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,mobile.ilike.%${search}%`);
       if (dateFrom) q = q.gte('created_at', dateFrom);
       if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
