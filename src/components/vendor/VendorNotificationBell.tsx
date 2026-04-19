@@ -71,8 +71,10 @@ export function VendorNotificationBell({ iconClassName, buttonClassName }: Props
   // Realtime subscription for new vendor notifications
   useEffect(() => {
     if (!vendorId) return;
-    const channel = supabase
-      .channel(`vendor_notifications_${vendorId}`)
+    // Unique channel name per mount to avoid "callbacks after subscribe()" error
+    // when StrictMode / re-renders try to reuse a channel that's already subscribed
+    const channel = supabase.channel(`vendor_notif_${vendorId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+    channel
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "vendor_notifications", filter: `vendor_id=eq.${vendorId}` },
