@@ -1471,7 +1471,8 @@ export const api = {
     const validFields = ['title', 'description', 'short_description', 'long_description', 'price', 'tax', 'discount',
       'max_points_redeemable', 'status', 'vendor_id', 'vendor_name', 'category_id', 'category_name',
       'emoji', 'image', 'images', 'service_area', 'duration', 'meta_title', 'meta_description', 'slug',
-      'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot'];
+      'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot',
+      'sac_code', 'gst_rate', 'commission_override', 'max_redemption_percentage'];
     const newSrv: Record<string, any> = { id: genId('SRV'), rating: 0, reviews: 0 };
     for (const key of validFields) {
       if (key in data && (data as any)[key] !== undefined) newSrv[key] = (data as any)[key];
