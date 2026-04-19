@@ -248,6 +248,57 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                     <Label className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Mobile</Label>
                     {editMode ? <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{vendor?.mobile}</p>}
                   </div>
+                  {/* Vendor Type — read-only display + admin can switch between product/service */}
+                  {!isCreate && vendor && (() => {
+                    const currentType: "product" | "service" = vendor.id?.startsWith("SVN") ? "service" : "product";
+                    return (
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Vendor Type</Label>
+                        {editMode ? (
+                          <Select
+                            value={currentType}
+                            onValueChange={async (v) => {
+                              const newType = v as "product" | "service";
+                              if (newType === currentType) return;
+                              if (!confirm(`Move this vendor from ${currentType.toUpperCase()} to ${newType.toUpperCase()}? The vendor record will be migrated to the ${newType} vendors table.`)) return;
+                              try {
+                                setSaving(true);
+                                const fromTable = currentType === "service" ? "service_vendors" : "vendors";
+                                const toTable = newType === "service" ? "service_vendors" : "vendors";
+                                const { data: row, error: fetchErr } = await supabase.from(fromTable).select("*").eq("id", vendor.id).single();
+                                if (fetchErr || !row) throw fetchErr || new Error("Vendor not found");
+                                const newId = `${newType === "service" ? "SVN" : "VND"}-${Date.now().toString(36).toUpperCase()}`;
+                                const { id: _omit, deleted_at: _d, ...rest } = row as any;
+                                const { error: insErr } = await supabase.from(toTable).insert({ ...rest, id: newId } as any);
+                                if (insErr) throw insErr;
+                                // Soft-delete from origin (mark deleted to keep audit history)
+                                if (fromTable === "vendors") {
+                                  await supabase.from("vendors").update({ status: "deleted", deleted_at: new Date().toISOString() } as any).eq("id", vendor.id);
+                                } else {
+                                  await supabase.from("service_vendors").delete().eq("id", vendor.id);
+                                }
+                                toast.success(`Vendor moved to ${newType} vendors`);
+                                onOpenChange(false);
+                                onRefresh?.();
+                              } catch (err: any) {
+                                toast.error(err.message || "Failed to change vendor type");
+                              } finally {
+                                setSaving(false);
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="product">Product Vendor</SelectItem>
+                              <SelectItem value="service">Service Vendor</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <p className="text-sm font-medium mt-1 capitalize">{currentType} Vendor</p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   {editMode && (
                     <div>
                       <Label className="text-xs text-muted-foreground">Status</Label>
