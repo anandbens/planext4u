@@ -66,16 +66,25 @@ export default function CustomerLoginPage() {
     setLoading(true);
     try {
       const fullPhone = `${countryCode}${cleaned}`;
-      const { data: isRegistered, error: registrationCheckError } = await supabase.rpc("check_phone_registered", {
-        _phone: fullPhone,
+      const { data: loginStatus, error: registrationCheckError } = await supabase.rpc("check_phone_login_status" as any, {
+        _phone: cleaned,
       });
 
       if (registrationCheckError) {
         throw new Error("Unable to verify mobile number right now. Please try again.");
       }
 
-      if (!isRegistered) {
-        toast.error("Only registered users must be able to trigger OTP and login.", { duration: 5000 });
+      const ls = (loginStatus || {}) as { found?: boolean; status?: string };
+      if (!ls.found) {
+        toast.error("No account found with this mobile number. Please create an account first.", { duration: 5000 });
+        return;
+      }
+      const s = (ls.status || '').toLowerCase();
+      if (s !== 'active') {
+        if (s === 'deleted') toast.error("Your account has been deleted. Please contact support if this is a mistake.", { duration: 6000 });
+        else if (s === 'suspended') toast.error("Your account has been suspended. Please contact support to restore access.", { duration: 6000 });
+        else if (s === 'deactivated' || s === 'inactive') toast.error("Your account is inactive. Please contact support to reactivate.", { duration: 6000 });
+        else toast.error(`Your account is ${s} and cannot sign in. Contact support.`, { duration: 6000 });
         return;
       }
 
