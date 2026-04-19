@@ -62,6 +62,7 @@ export default function VendorProductsPage() {
   const [showCsvDialog, setShowCsvDialog] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [parentSearch, setParentSearch] = useState("");
+  const [parentFocused, setParentFocused] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<"images" | "thumbnail" | "banner">("images");
@@ -526,15 +527,27 @@ export default function VendorProductsPage() {
                     </div>
                   ) : (
                     <div className="relative mt-1">
-                      <Input value={parentSearch} onChange={(e) => setParentSearch(e.target.value)} placeholder="Type to search parent items..." />
-                      {parentSearch && parentItems && parentItems.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                      <Input
+                        value={parentSearch}
+                        onChange={(e) => setParentSearch(e.target.value)}
+                        onFocus={() => setParentFocused(true)}
+                        onBlur={() => setTimeout(() => setParentFocused(false), 200)}
+                        placeholder="Type to search parent items..."
+                      />
+                      {parentFocused && parentItems && parentItems.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                           {parentItems.map((pi: any) => (
                             <button key={pi.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-accent/50"
-                              onClick={() => { setForm({ ...form, parent_item_id: pi.id, parent_item_name: `${pi.id} - ${pi.name}` }); setParentSearch(""); }}>
-                              {pi.id} - {pi.name}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => { setForm({ ...form, parent_item_id: pi.id, parent_item_name: pi.name }); setParentSearch(""); setParentFocused(false); }}>
+                              <span className="font-mono text-xs text-muted-foreground">{pi.id}</span> — <span className="font-medium">{pi.name}</span>
                             </button>
                           ))}
+                        </div>
+                      )}
+                      {parentFocused && parentItems && parentItems.length === 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg p-3 text-xs text-muted-foreground">
+                          No parent items found{parentSearch ? ` for "${parentSearch}"` : ""}. Ask admin to add parent items.
                         </div>
                       )}
                     </div>
