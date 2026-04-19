@@ -232,28 +232,36 @@ async function processProductUpload(rows: string[][], headers: string[], uploadI
       };
 
       let productId: string;
+      let action: "created" | "updated";
       const existingId = record.id?.trim();
       if (existingId) {
-        const { error } = await supabase.from("products").update(payload).eq("id", existingId);
+        const { data: upd, error } = await supabase.from("products").update(payload).eq("id", existingId).select("id").single();
         if (error) throw error;
+        if (!upd) throw new Error("Update returned no row — record may not exist or RLS denied");
         productId = existingId;
+        action = "updated";
         updated++;
       } else {
         productId = `PRD-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
-        const { error } = await supabase.from("products").insert({ ...payload, id: productId } as any);
+        const { data: ins, error } = await supabase.from("products").insert({ ...payload, id: productId } as any).select("id").single();
         if (error) throw error;
+        if (!ins) throw new Error("Insert returned no row — RLS may have blocked it");
+        action = "created";
         created++;
       }
 
       // Sync product_attribute_map table
       if (attrMapEntries.length > 0) {
-        // Remove old mappings for this product
         await supabase.from("product_attribute_map").delete().eq("product_id", productId);
-        // Insert new mappings
         const mapRows = attrMapEntries.map(e => ({ product_id: productId, attribute_id: e.attribute_id }));
         await supabase.from("product_attribute_map").insert(mapRows as any);
       }
-    } catch (e: any) { errors.push({ row: i + 2, data: record, errors: [e.message] }); }
+
+      await archiveRow(uploadId, i + 2, record, "success", action, productId, null);
+    } catch (e: any) {
+      errors.push({ row: i + 2, data: record, errors: [e.message] });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, [e.message]);
+    }
   }
 
   await supabase.from("file_uploads" as any).update({
