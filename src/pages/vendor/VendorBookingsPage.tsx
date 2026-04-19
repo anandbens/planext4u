@@ -31,6 +31,8 @@ export default function VendorBookingsPage() {
   const [completionPhotoPreview, setCompletionPhotoPreview] = useState("");
   const [completionNotes, setCompletionNotes] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [otpModal, setOtpModal] = useState<any>(null);
+  const [otpInput, setOtpInput] = useState("");
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["vendorBookings", vendorId],
