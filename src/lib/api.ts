@@ -912,7 +912,12 @@ export const api = {
   },
 
   /** Fetch ALL orders matching the same filters (no pagination) — used for full export. */
-  getOrdersForExport: async (params: Parameters<typeof api.getOrders>[0]) => {
+  getOrdersForExport: async (params: {
+    search?: string; status?: string; date_from?: string; date_to?: string;
+    vendor_type?: 'product' | 'service' | 'all'; deleted?: boolean;
+    vendor_filter?: string; product_filter?: string;
+    min_amount?: number; max_amount?: number; customer_filter?: string;
+  }) => {
     const all: Order[] = [];
     let page = 1;
     while (true) {
