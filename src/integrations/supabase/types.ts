@@ -4288,6 +4288,7 @@ export type Database = {
       service_vendors: {
         Row: {
           area_id: string | null
+          background_image: string | null
           business_name: string
           category_id: string | null
           city_id: string | null
@@ -4302,11 +4303,16 @@ export type Database = {
           membership: string
           mobile: string
           name: string
+          plan_end_date: string | null
           plan_id: string | null
           plan_payment_status: string
+          plan_start_date: string | null
           plan_transaction_id: string | null
           rating: number | null
           referred_by: string | null
+          shop_address: string | null
+          shop_latitude: number | null
+          shop_longitude: number | null
           shop_photo_url: string | null
           status: string
           total_orders: number | null
@@ -4316,6 +4322,7 @@ export type Database = {
         }
         Insert: {
           area_id?: string | null
+          background_image?: string | null
           business_name?: string
           category_id?: string | null
           city_id?: string | null
@@ -4330,11 +4337,16 @@ export type Database = {
           membership?: string
           mobile?: string
           name: string
+          plan_end_date?: string | null
           plan_id?: string | null
           plan_payment_status?: string
+          plan_start_date?: string | null
           plan_transaction_id?: string | null
           rating?: number | null
           referred_by?: string | null
+          shop_address?: string | null
+          shop_latitude?: number | null
+          shop_longitude?: number | null
           shop_photo_url?: string | null
           status?: string
           total_orders?: number | null
@@ -4344,6 +4356,7 @@ export type Database = {
         }
         Update: {
           area_id?: string | null
+          background_image?: string | null
           business_name?: string
           category_id?: string | null
           city_id?: string | null
@@ -4358,11 +4371,16 @@ export type Database = {
           membership?: string
           mobile?: string
           name?: string
+          plan_end_date?: string | null
           plan_id?: string | null
           plan_payment_status?: string
+          plan_start_date?: string | null
           plan_transaction_id?: string | null
           rating?: number | null
           referred_by?: string | null
+          shop_address?: string | null
+          shop_latitude?: number | null
+          shop_longitude?: number | null
           shop_photo_url?: string | null
           status?: string
           total_orders?: number | null
