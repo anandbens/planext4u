@@ -10,6 +10,19 @@ import type { AuthUser, CustomerUser, VendorUser, UserRole, AppRole } from "@/li
 const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
 const VENDOR_PROFILE_SELECT = "id, name, business_name, email, mobile, status";
 
+const buildVendorAuthEmailCandidates = (value: string) => {
+  const trimmed = value.trim().toLowerCase();
+  const digits = trimmed.replace(/\D/g, "");
+  const localDigits = digits.length > 10 ? digits.slice(-10) : digits;
+  const candidates = new Set<string>();
+
+  if (trimmed) candidates.add(trimmed);
+  if (digits) candidates.add(`${digits}@phone.planext4u.local`);
+  if (localDigits) candidates.add(`${localDigits}@phone.planext4u.local`);
+
+  return Array.from(candidates);
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [customerUser, setCustomerUser] = useState<CustomerUser | null>(null);
@@ -348,12 +361,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const vendorLogin = async (email: string, password: string) => {
     setIsLoading(true);
     isFreshLoginRef.current = true;
-    const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
+    let signInData: any = null;
+    let lastError: Error | null = null;
+
+    for (const candidateEmail of buildVendorAuthEmailCandidates(email)) {
+      const { error, data } = await supabase.auth.signInWithPassword({ email: candidateEmail, password });
+      if (!error) {
+        signInData = data;
+        lastError = null;
+        break;
+      }
+      lastError = new Error(error.message);
+    }
+
+    if (!signInData?.user) {
       setIsLoading(false);
       isFreshLoginRef.current = false;
-      throw new Error(error.message);
+      throw lastError || new Error("Invalid email or password");
     }
+
     if (signInData?.user) {
       await supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id);
     }
