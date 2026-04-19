@@ -253,13 +253,25 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     // Mandatory field validation
     const errors: string[] = [];
     if (!form.title.trim()) errors.push("Title is required");
+    else if (form.title.trim().length < 2) errors.push("Title must be at least 2 characters");
+    else if (form.title.length > 200) errors.push("Title must be under 200 characters");
     if (!form.vendor_id) errors.push("Vendor is required");
     if (!form.category_id) errors.push("Category is required");
     if (!form.sku?.trim()) errors.push("SKU is required");
+    else if (!/^[A-Za-z0-9_-]{2,50}$/.test(form.sku.trim())) errors.push("SKU must be 2-50 chars (letters, numbers, _ or -)");
+    if (form.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) errors.push("Slug must be lowercase letters/numbers/hyphens only");
     if (!form.short_description?.trim()) errors.push("Short Description is required");
     if (!form.long_description?.trim()) errors.push("Long Description is required");
     if (form.price <= 0) errors.push("MRP / Price must be greater than 0");
+    if (form.discount_type === "percentage" && (form.discount < 0 || form.discount > 100)) errors.push("Discount % must be between 0 and 100");
+    if (form.discount_type === "fixed" && form.discount > form.price) errors.push("Fixed discount cannot exceed price");
+    if (form.hsn_code && !/^\d{4,8}$/.test(form.hsn_code.trim())) errors.push("HSN code must be 4-8 digits");
+    if (form.sac_code && !/^\d{4,8}$/.test(form.sac_code.trim())) errors.push("SAC code must be 4-8 digits");
+    if (form.youtube_video_url && !/^https?:\/\/.+/.test(form.youtube_video_url)) errors.push("YouTube URL must start with http:// or https://");
+    if (form.helpline_number && !/^(?:\+?91|0)?[6-9]\d{9}$/.test(form.helpline_number.replace(/[\s-]/g, ""))) errors.push("Helpline must be a valid 10-digit Indian mobile");
     if (form.manage_stock && (form.stock === null || form.stock === undefined || form.stock < 0)) errors.push("Stock quantity is required when stock management is enabled");
+    if (form.max_redemption_percentage !== null && form.max_redemption_percentage !== undefined && (form.max_redemption_percentage < 0 || form.max_redemption_percentage > 100)) errors.push("Max redemption % must be between 0 and 100");
+    if (form.commission_override !== null && form.commission_override !== undefined && (form.commission_override < 0 || form.commission_override > 100)) errors.push("Commission override must be between 0 and 100");
     if (form.status === 'rejected' && !form.rejection_reason?.trim()) errors.push("Rejection reason is required");
     if (errors.length > 0) { toast.error(errors[0]); return; }
     setSaving(true);
