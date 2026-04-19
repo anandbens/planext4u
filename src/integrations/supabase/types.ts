@@ -6230,6 +6230,7 @@ export type Database = {
         Returns: Json
       }
       check_otp_rate_limit: { Args: { _phone: string }; Returns: Json }
+      check_phone_login_status: { Args: { _phone: string }; Returns: Json }
       check_phone_registered: { Args: { _phone: string }; Returns: boolean }
       count_mutual_followers: {
         Args: { _profile: string; _viewer: string }
