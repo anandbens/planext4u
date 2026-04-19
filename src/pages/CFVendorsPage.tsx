@@ -73,32 +73,46 @@ export default function CFVendorsPage() {
     }
 
     if (activeTab === "rejected") {
-      let q = (supabase
+      // Combine rejected applications + rejected service vendors
+      let appQ = (supabase
         .from('vendor_applications')
         .select('*', { count: 'exact' }) as any)
         .eq('status', 'rejected');
+      let venQ = supabase
+        .from('service_vendors' as any)
+        .select('*', { count: 'exact' })
+        .eq('status', 'rejected');
 
-      if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
-      if (dateFrom) q = q.gte('created_at', dateFrom);
-      if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
+      if (search) {
+        appQ = appQ.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
+        venQ = venQ.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,mobile.ilike.%${search}%`);
+      }
+      if (dateFrom) { appQ = appQ.gte('created_at', dateFrom); venQ = venQ.gte('created_at', dateFrom); }
+      if (dateTo) { appQ = appQ.lte('created_at', dateTo + 'T23:59:59Z'); venQ = venQ.lte('created_at', dateTo + 'T23:59:59Z'); }
 
-      const { data: apps, count, error } = await q.order('created_at', { ascending: false }).range((page - 1) * 10, page * 10 - 1);
+      const [{ data: apps, count: appCount, error: appErr }, { data: vens, count: venCount, error: venErr }] = await Promise.all([
+        appQ.order('created_at', { ascending: false }),
+        venQ.order('created_at', { ascending: false }),
+      ]);
 
-      if (error) {
+      if (appErr || venErr) {
         toast.error("Failed to load rejected service vendors");
         setData({ data: [], total: 0, page, per_page: 10, total_pages: 0 } as any);
         return;
       }
 
-      const mapped = (apps || []).map((a: any) => ({
+      const mappedApps = (apps || []).map((a: any) => ({
         id: a.id, name: a.name, business_name: a.business_name,
         mobile: a.phone, email: a.email, status: 'rejected',
         commission_rate: 0, membership: '', category_id: '', city_id: '', area_id: '',
         created_at: a.created_at, _isApplication: true,
         rejection_reason: a.rejection_reason || '',
       }));
-
-      setData({ data: mapped as any, total: count || 0, page, per_page: 10, total_pages: Math.ceil((count || 0) / 10) });
+      const mappedVens = (vens || []).map((v: any) => ({ ...v, commission_rate: v.commission_rate || 0, membership: v.membership || '' }));
+      const merged = [...mappedApps, ...mappedVens].sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      const total = (appCount || 0) + (venCount || 0);
+      const paged = merged.slice((page - 1) * 10, page * 10);
+      setData({ data: paged as any, total, page, per_page: 10, total_pages: Math.ceil(total / 10) });
       return;
     }
 
