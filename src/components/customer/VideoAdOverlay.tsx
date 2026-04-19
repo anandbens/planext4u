@@ -45,7 +45,13 @@ export function VideoAdOverlay({ videoUrl, thumbnailUrl, ctaText, ctaLink, adId,
       entity_type: "video_ad", entity_id: adId, event_type: "click",
       session_id: sessionStorage.getItem("p4u_session_id") || "anon",
     } as any);
-    if (ctaLink) window.location.href = ctaLink;
+    if (!ctaLink) return;
+    if (ctaLink.startsWith("/")) {
+      navigate(ctaLink);
+      onClose();
+    } else {
+      window.location.href = ctaLink;
+    }
   };
 
   return (
