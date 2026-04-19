@@ -50,23 +50,37 @@ export default function OrdersPage() {
   const [hardImpactLoading, setHardImpactLoading] = useState(false);
   const [hardSubmitting, setHardSubmitting] = useState(false);
 
-  const fetchData = useCallback(() => {
-    api.getOrders({
-      page, per_page: 10,
+  const buildFilterParams = useCallback(() => {
+    const min = minAmount === "" ? undefined : Number(minAmount);
+    const max = maxAmount === "" ? undefined : Number(maxAmount);
+    const effectiveType: "product" | "service" | "all" =
+      tab === "deleted" ? deletedTypeFilter : tab;
+    return {
       search: search || undefined,
       status: statusFilter || undefined,
       date_from: dateFrom, date_to: dateTo,
-      vendor_type: tab === "deleted" ? "all" : tab,
+      vendor_type: effectiveType,
       deleted: tab === "deleted",
       vendor_filter: vendorFilter || undefined,
       product_filter: productFilter || undefined,
-    }).then(setData);
-  }, [page, search, statusFilter, dateFrom, dateTo, tab, vendorFilter, productFilter]);
+      customer_filter: customerFilter || undefined,
+      min_amount: typeof min === "number" && !isNaN(min) ? min : undefined,
+      max_amount: typeof max === "number" && !isNaN(max) ? max : undefined,
+    };
+  }, [search, statusFilter, dateFrom, dateTo, tab, deletedTypeFilter, vendorFilter, productFilter, customerFilter, minAmount, maxAmount]);
+
+  const fetchData = useCallback(() => {
+    api.getOrders({ page, per_page: 10, ...buildFilterParams() }).then(setData);
+  }, [page, buildFilterParams]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Reset page when tab changes
-  useEffect(() => { setPage(1); setSearch(""); setStatusFilter(""); }, [tab]);
+  useEffect(() => {
+    setPage(1); setSearch(""); setStatusFilter("");
+    setVendorFilter(""); setProductFilter(""); setCustomerFilter("");
+    setMinAmount(""); setMaxAmount("");
+    if (tab !== "deleted") setDeletedTypeFilter("all");
+  }, [tab]);
 
   const openModal = (order: Order, mode: "view" | "edit") => {
     setSelected(order); setModalMode(mode); setModalOpen(true);
