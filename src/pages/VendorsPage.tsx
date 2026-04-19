@@ -297,6 +297,10 @@ export default function VendorsPage() {
     { label: "Notifications", count: hardImpact.notifications || 0 },
   ] : [];
 
+  const openConfirm = (vendor: Vendor, action: "approve" | "reject" | "delete") => {
+    setConfirmAction({ vendor, action }); setConfirmOpen(true);
+  };
+
   const handleConfirm = async (reason?: string) => {
     if (!confirmAction) return;
     setConfirmLoading(true);
