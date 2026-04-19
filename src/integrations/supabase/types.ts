@@ -593,6 +593,96 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_notes: {
+        Row: {
+          cgst_amount: number
+          created_at: string
+          credit_note_no: string
+          customer_id: string
+          customer_name: string | null
+          fy_start: number
+          id: string
+          igst_amount: number
+          is_interstate: boolean
+          issue_date: string
+          notes: string | null
+          order_id: string | null
+          original_invoice_id: string | null
+          original_invoice_no: string | null
+          pdf_url: string | null
+          place_of_supply_code: string | null
+          reason: string
+          sgst_amount: number
+          taxable_value: number
+          total_amount: number
+          vendor_gstin: string | null
+          vendor_id: string
+        }
+        Insert: {
+          cgst_amount?: number
+          created_at?: string
+          credit_note_no: string
+          customer_id: string
+          customer_name?: string | null
+          fy_start: number
+          id?: string
+          igst_amount?: number
+          is_interstate?: boolean
+          issue_date?: string
+          notes?: string | null
+          order_id?: string | null
+          original_invoice_id?: string | null
+          original_invoice_no?: string | null
+          pdf_url?: string | null
+          place_of_supply_code?: string | null
+          reason?: string
+          sgst_amount?: number
+          taxable_value?: number
+          total_amount?: number
+          vendor_gstin?: string | null
+          vendor_id: string
+        }
+        Update: {
+          cgst_amount?: number
+          created_at?: string
+          credit_note_no?: string
+          customer_id?: string
+          customer_name?: string | null
+          fy_start?: number
+          id?: string
+          igst_amount?: number
+          is_interstate?: boolean
+          issue_date?: string
+          notes?: string | null
+          order_id?: string | null
+          original_invoice_id?: string | null
+          original_invoice_no?: string | null
+          pdf_url?: string | null
+          place_of_supply_code?: string | null
+          reason?: string
+          sgst_amount?: number
+          taxable_value?: number
+          total_amount?: number
+          vendor_gstin?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_notes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_notes_original_invoice_id_fkey"
+            columns: ["original_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "order_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_addresses: {
         Row: {
           address_line: string
@@ -2058,6 +2148,36 @@ export type Database = {
           },
         ]
       }
+      invoice_sequences: {
+        Row: {
+          doc_type: string
+          fy_start: number
+          id: string
+          last_value: number
+          prefix: string
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          doc_type: string
+          fy_start: number
+          id?: string
+          last_value?: number
+          prefix?: string
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          doc_type?: string
+          fy_start?: number
+          id?: string
+          last_value?: number
+          prefix?: string
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
       kyc_documents: {
         Row: {
           admin_notes: string | null
@@ -2487,6 +2607,277 @@ export type Database = {
         }
         Relationships: []
       }
+      order_invoices: {
+        Row: {
+          amount_in_words: string | null
+          cancelled_at: string | null
+          cess_amount: number
+          cgst_amount: number
+          created_at: string
+          customer_address: string | null
+          customer_email: string | null
+          customer_id: string
+          customer_name: string | null
+          customer_phone: string | null
+          discount: number
+          emailed_at: string | null
+          fy_start: number
+          id: string
+          igst_amount: number
+          invoice_date: string
+          invoice_no: string
+          is_interstate: boolean
+          items: Json
+          metadata: Json | null
+          notes: string | null
+          order_id: string
+          pdf_url: string | null
+          place_of_supply_code: string | null
+          place_of_supply_state: string | null
+          round_off: number
+          sgst_amount: number
+          taxable_value: number
+          tcs_amount: number
+          total_amount: number
+          updated_at: string
+          vendor_address: string | null
+          vendor_gstin: string | null
+          vendor_id: string
+          vendor_name: string | null
+          vendor_pan: string | null
+          vendor_state: string | null
+          vendor_state_code: string | null
+        }
+        Insert: {
+          amount_in_words?: string | null
+          cancelled_at?: string | null
+          cess_amount?: number
+          cgst_amount?: number
+          created_at?: string
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_id: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount?: number
+          emailed_at?: string | null
+          fy_start: number
+          id?: string
+          igst_amount?: number
+          invoice_date?: string
+          invoice_no: string
+          is_interstate?: boolean
+          items?: Json
+          metadata?: Json | null
+          notes?: string | null
+          order_id: string
+          pdf_url?: string | null
+          place_of_supply_code?: string | null
+          place_of_supply_state?: string | null
+          round_off?: number
+          sgst_amount?: number
+          taxable_value?: number
+          tcs_amount?: number
+          total_amount?: number
+          updated_at?: string
+          vendor_address?: string | null
+          vendor_gstin?: string | null
+          vendor_id: string
+          vendor_name?: string | null
+          vendor_pan?: string | null
+          vendor_state?: string | null
+          vendor_state_code?: string | null
+        }
+        Update: {
+          amount_in_words?: string | null
+          cancelled_at?: string | null
+          cess_amount?: number
+          cgst_amount?: number
+          created_at?: string
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_id?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount?: number
+          emailed_at?: string | null
+          fy_start?: number
+          id?: string
+          igst_amount?: number
+          invoice_date?: string
+          invoice_no?: string
+          is_interstate?: boolean
+          items?: Json
+          metadata?: Json | null
+          notes?: string | null
+          order_id?: string
+          pdf_url?: string | null
+          place_of_supply_code?: string | null
+          place_of_supply_state?: string | null
+          round_off?: number
+          sgst_amount?: number
+          taxable_value?: number
+          tcs_amount?: number
+          total_amount?: number
+          updated_at?: string
+          vendor_address?: string | null
+          vendor_gstin?: string | null
+          vendor_id?: string
+          vendor_name?: string | null
+          vendor_pan?: string | null
+          vendor_state?: string | null
+          vendor_state_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          customer_id: string
+          failure_reason: string | null
+          gateway_fee: number | null
+          gateway_gst: number | null
+          id: string
+          metadata: Json | null
+          order_id: string
+          payment_method: string | null
+          payment_provider: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_refund_id: string | null
+          razorpay_signature: string | null
+          status: string
+          txn_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_id: string
+          failure_reason?: string | null
+          gateway_fee?: number | null
+          gateway_gst?: number | null
+          id?: string
+          metadata?: Json | null
+          order_id: string
+          payment_method?: string | null
+          payment_provider?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_refund_id?: string | null
+          razorpay_signature?: string | null
+          status?: string
+          txn_type?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          customer_id?: string
+          failure_reason?: string | null
+          gateway_fee?: number | null
+          gateway_gst?: number | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string
+          payment_method?: string | null
+          payment_provider?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_refund_id?: string | null
+          razorpay_signature?: string | null
+          status?: string
+          txn_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_refunds: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          credit_note_id: string | null
+          customer_id: string
+          id: string
+          initiated_at: string
+          initiated_by: string | null
+          metadata: Json | null
+          notes: string | null
+          order_id: string
+          razorpay_refund_id: string | null
+          reason: string
+          refund_method: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          credit_note_id?: string | null
+          customer_id: string
+          id?: string
+          initiated_at?: string
+          initiated_by?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          order_id: string
+          razorpay_refund_id?: string | null
+          reason?: string
+          refund_method?: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          credit_note_id?: string | null
+          customer_id?: string
+          id?: string
+          initiated_at?: string
+          initiated_by?: string | null
+          metadata?: Json | null
+          notes?: string | null
+          order_id?: string
+          razorpay_refund_id?: string | null
+          reason?: string
+          refund_method?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_refunds_credit_note_id_fkey"
+            columns: ["credit_note_id"]
+            isOneToOne: false
+            referencedRelation: "credit_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_refunds_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           cgst_amount: number | null
@@ -2697,6 +3088,86 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_fee_invoices: {
+        Row: {
+          bill_to: string
+          cgst_amount: number
+          created_at: string
+          description: string
+          fy_start: number
+          gst_rate: number
+          id: string
+          igst_amount: number
+          invoice_date: string
+          invoice_no: string
+          is_interstate: boolean
+          order_id: string
+          pdf_url: string | null
+          recipient_gstin: string | null
+          recipient_id: string
+          recipient_name: string | null
+          recipient_state_code: string | null
+          sac_code: string
+          sgst_amount: number
+          taxable_value: number
+          total_amount: number
+        }
+        Insert: {
+          bill_to?: string
+          cgst_amount?: number
+          created_at?: string
+          description?: string
+          fy_start: number
+          gst_rate?: number
+          id?: string
+          igst_amount?: number
+          invoice_date?: string
+          invoice_no: string
+          is_interstate?: boolean
+          order_id: string
+          pdf_url?: string | null
+          recipient_gstin?: string | null
+          recipient_id: string
+          recipient_name?: string | null
+          recipient_state_code?: string | null
+          sac_code?: string
+          sgst_amount?: number
+          taxable_value?: number
+          total_amount?: number
+        }
+        Update: {
+          bill_to?: string
+          cgst_amount?: number
+          created_at?: string
+          description?: string
+          fy_start?: number
+          gst_rate?: number
+          id?: string
+          igst_amount?: number
+          invoice_date?: string
+          invoice_no?: string
+          is_interstate?: boolean
+          order_id?: string
+          pdf_url?: string | null
+          recipient_gstin?: string | null
+          recipient_id?: string
+          recipient_name?: string | null
+          recipient_state_code?: string | null
+          sac_code?: string
+          sgst_amount?: number
+          taxable_value?: number
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_fee_invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -4679,43 +5150,82 @@ export type Database = {
       settlements: {
         Row: {
           amount: number
+          cgst_collected: number | null
           commission: number
           created_at: string
+          gross_sales: number | null
+          gst_on_commission: number | null
           id: string
+          igst_collected: number | null
           net_amount: number
           order_id: string
+          payable_to_vendor: number | null
+          payout_method: string | null
           rejection_reason: string | null
           settled_at: string | null
+          settlement_period_from: string | null
+          settlement_period_to: string | null
+          sgst_collected: number | null
           status: string
+          taxable_value: number | null
+          tcs_deducted: number | null
+          tds_deducted: number | null
           transaction_reference: string | null
+          utr_number: string | null
           vendor_id: string
           vendor_name: string | null
         }
         Insert: {
           amount?: number
+          cgst_collected?: number | null
           commission?: number
           created_at?: string
+          gross_sales?: number | null
+          gst_on_commission?: number | null
           id: string
+          igst_collected?: number | null
           net_amount?: number
           order_id: string
+          payable_to_vendor?: number | null
+          payout_method?: string | null
           rejection_reason?: string | null
           settled_at?: string | null
+          settlement_period_from?: string | null
+          settlement_period_to?: string | null
+          sgst_collected?: number | null
           status?: string
+          taxable_value?: number | null
+          tcs_deducted?: number | null
+          tds_deducted?: number | null
           transaction_reference?: string | null
+          utr_number?: string | null
           vendor_id: string
           vendor_name?: string | null
         }
         Update: {
           amount?: number
+          cgst_collected?: number | null
           commission?: number
           created_at?: string
+          gross_sales?: number | null
+          gst_on_commission?: number | null
           id?: string
+          igst_collected?: number | null
           net_amount?: number
           order_id?: string
+          payable_to_vendor?: number | null
+          payout_method?: string | null
           rejection_reason?: string | null
           settled_at?: string | null
+          settlement_period_from?: string | null
+          settlement_period_to?: string | null
+          sgst_collected?: number | null
           status?: string
+          taxable_value?: number | null
+          tcs_deducted?: number | null
+          tds_deducted?: number | null
           transaction_reference?: string | null
+          utr_number?: string | null
           vendor_id?: string
           vendor_name?: string | null
         }
@@ -6144,6 +6654,60 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_tds_ledger: {
+        Row: {
+          certificate_no: string | null
+          challan_no: string | null
+          created_at: string
+          deposited_at: string | null
+          fy_start: number
+          gross_payout: number
+          id: string
+          net_payout: number
+          order_id: string | null
+          quarter: number
+          settlement_id: string | null
+          tds_amount: number
+          tds_rate: number
+          vendor_id: string
+          vendor_pan: string | null
+        }
+        Insert: {
+          certificate_no?: string | null
+          challan_no?: string | null
+          created_at?: string
+          deposited_at?: string | null
+          fy_start: number
+          gross_payout: number
+          id?: string
+          net_payout: number
+          order_id?: string | null
+          quarter: number
+          settlement_id?: string | null
+          tds_amount: number
+          tds_rate?: number
+          vendor_id: string
+          vendor_pan?: string | null
+        }
+        Update: {
+          certificate_no?: string | null
+          challan_no?: string | null
+          created_at?: string
+          deposited_at?: string | null
+          fy_start?: number
+          gross_payout?: number
+          id?: string
+          net_payout?: number
+          order_id?: string | null
+          quarter?: number
+          settlement_id?: string | null
+          tds_amount?: number
+          tds_rate?: number
+          vendor_id?: string
+          vendor_pan?: string | null
+        }
+        Relationships: []
+      }
       vendors: {
         Row: {
           area_id: string | null
@@ -6593,6 +7157,10 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      next_invoice_number: {
+        Args: { _doc_type: string; _fy_start: number; _vendor_id: string }
+        Returns: string
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
