@@ -32,7 +32,9 @@ export default function CFVendorsPage() {
   const fetchData = useCallback(async () => {
     if (activeTab === "deactivated" || activeTab === "deleted") {
       const targetStatus = activeTab;
-      let q = supabase.from('service_vendors' as any).select('*', { count: 'exact' }).eq('status', targetStatus);
+      let q = (supabase.from('service_vendors' as any).select('*', { count: 'exact' }) as any)
+        .eq('status', targetStatus)
+        .or('vendor_category.eq.service,vendor_category.is.null');
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,mobile.ilike.%${search}%`);
       if (dateFrom) q = q.gte('created_at', dateFrom);
       if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
@@ -80,10 +82,11 @@ export default function CFVendorsPage() {
         .select('*', { count: 'exact' }) as any)
         .eq('status', 'rejected')
         .eq('vendor_category', 'service');
-      let venQ = supabase
+      let venQ = (supabase
         .from('service_vendors' as any)
-        .select('*', { count: 'exact' })
-        .eq('status', 'rejected');
+        .select('*', { count: 'exact' }) as any)
+        .eq('status', 'rejected')
+        .or('vendor_category.eq.service,vendor_category.is.null');
 
       if (search) {
         appQ = appQ.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
