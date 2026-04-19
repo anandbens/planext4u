@@ -127,6 +127,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Customer must be active
       if (customer.status && customer.status !== 'active') {
         await supabase.auth.signOut();
+        const s = (customer.status || '').toLowerCase();
+        if (s === 'deleted') {
+          lastAuthErrorRef.current = 'Your account has been deleted. Please contact support if this is a mistake.';
+        } else if (s === 'suspended') {
+          lastAuthErrorRef.current = 'Your account has been suspended. Please contact support to restore access.';
+        } else if (s === 'deactivated') {
+          lastAuthErrorRef.current = 'Your account is deactivated. Please contact support to reactivate.';
+        } else if (s === 'inactive') {
+          lastAuthErrorRef.current = 'Your account is inactive. Please contact support to reactivate.';
+        } else {
+          lastAuthErrorRef.current = `Your account is ${s} and cannot sign in.`;
+        }
         return 'customer_not_active';
       }
 
