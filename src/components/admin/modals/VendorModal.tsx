@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isValidEmail, isValidIndianMobile, isValidGSTIN, isValidPAN } from "@/lib/admin-validation";
 
 interface VendorModalProps {
   vendor: Vendor | null;
@@ -112,14 +113,33 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
 
   const currentStep = vendor ? statusFlow.indexOf(vendor.status) : -1;
 
+  const validateVendorForm = (): string | null => {
+    if (!form.name?.trim()) return "Owner name is required";
+    if (form.name.trim().length < 2) return "Owner name must be at least 2 characters";
+    if (!form.business_name?.trim()) return "Business name is required";
+    if (form.business_name.trim().length < 2) return "Business name must be at least 2 characters";
+    if (!form.email?.trim()) return "Email is required";
+    if (!isValidEmail(form.email)) return "Enter a valid email (e.g. owner@example.com)";
+    if (!form.mobile?.trim()) return "Mobile number is required";
+    if (!isValidIndianMobile(form.mobile)) return "Enter a valid 10-digit Indian mobile (starts with 6-9)";
+    if (form.gstin && !isValidGSTIN(form.gstin)) return "GSTIN format is invalid (15 chars: 22AAAAA0000A1Z5)";
+    if (form.pan && !isValidPAN(form.pan)) return "PAN format is invalid (10 chars: AAAAA9999A)";
+    if (form.state_code && !/^\d{2}$/.test(form.state_code)) return "State code must be exactly 2 digits";
+    if (form.status === 'rejected' && !form.rejection_reason?.trim()) return "Rejection reason is required when status is Rejected";
+    if (form.commission_rate < 0 || form.commission_rate > 100) return "Commission rate must be between 0 and 100";
+    return null;
+  };
+
   const handleSave = async () => {
-    if (!form.name || !form.business_name) return;
-    if (form.status === 'rejected' && !form.rejection_reason?.trim()) return;
+    const err = validateVendorForm();
+    if (err) { toast.error(err); return; }
     setSaving(true);
     try {
       if (isCreate) { await onCreate?.(form); }
       else if (vendor) { await onSave?.(vendor.id, form); }
       onOpenChange(false);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to save vendor");
     } finally { setSaving(false); }
   };
 
