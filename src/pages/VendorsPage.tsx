@@ -172,6 +172,7 @@ export default function VendorsPage() {
             toast.error("This applicant registered as a Service Provider. Please approve them from the Service Vendors page.");
             return;
           }
+          const newVendor: any = {
             id: `VND-${Date.now()}`,
             name: updates.name || a.name, business_name: updates.business_name || a.business_name,
             mobile: updates.mobile || a.phone, email: updates.email || a.email,
