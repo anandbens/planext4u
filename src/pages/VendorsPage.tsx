@@ -277,6 +277,10 @@ export default function VendorsPage() {
           const appData = await supabase.from('vendor_applications').select('*').eq('id', vendor.id).single();
           if (appData.data) {
             const a = appData.data;
+            if (a.vendor_category && a.vendor_category !== 'product') {
+              toast.error("This applicant registered as a Service Provider. Please approve them from the Service Vendors page.");
+              return;
+            }
             const newVendorId = `VND-${Date.now()}`;
             const newVendor: Record<string, any> = {
               id: newVendorId,
