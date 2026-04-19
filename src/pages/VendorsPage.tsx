@@ -428,7 +428,12 @@ export default function VendorsPage() {
           { key: "deleted_at", label: activeTab === "deleted" ? "Deleted At" : "Deactivated", render: (v: any) => <span className="text-xs text-muted-foreground">{v.deleted_at ? new Date(v.deleted_at).toLocaleDateString() : '—'}</span> },
           { key: "status", label: "Status", render: (v: any) => <StatusBadge status={v.status} /> },
           { key: "actions", label: "", render: (v: any) => (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
+              {activeTab === "deleted" && (
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Permanently delete" onClick={(e: any) => { e.stopPropagation(); requestHardDelete(v); }}><Trash2 className="h-4 w-4" /></Button>
+              )}
+            </div>
           )},
         ] : [
           { key: "id", label: "ID" },
@@ -493,6 +498,17 @@ export default function VendorsPage() {
         showReasonField={confirmAction?.action === "reject"}
         reasonLabel="Rejection Reason *"
         reasonPlaceholder="Explain why this vendor is being rejected..."
+      />
+
+      <ImpactConfirmDialog
+        open={hardOpen}
+        onOpenChange={(o) => { setHardOpen(o); if (!o) { setHardTarget(null); setHardImpact(null); } }}
+        title={`Permanently delete ${hardTarget?.business_name || "vendor"}`}
+        description="Vendors cannot be deleted while products and orders reference them. This action will first delete all of the vendor's products, services and orders (so foreign key relationships stay intact) and then remove the vendor itself. All sales, settlement and payout reports for this vendor will lose their source data."
+        impacts={hardRows}
+        loading={hardLoading}
+        submitting={hardSubmitting}
+        onConfirm={handleHardDelete}
       />
     </AdminLayout>
   );
