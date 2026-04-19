@@ -139,12 +139,12 @@ export default function CFVendorsPage() {
       { count: deactivated },
       { count: deleted },
     ] = await Promise.all([
-      supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }),
-      supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }).eq('status', 'verified'),
+      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).or('vendor_category.eq.service,vendor_category.is.null'),
+      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'verified').or('vendor_category.eq.service,vendor_category.is.null'),
       (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).eq('status', 'rejected').eq('vendor_category', 'service'),
       (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).eq('status', 'submitted').eq('vendor_category', 'service'),
-      supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }).eq('status', 'deactivated'),
-      supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }).eq('status', 'deleted'),
+      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'deactivated').or('vendor_category.eq.service,vendor_category.is.null'),
+      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'deleted').or('vendor_category.eq.service,vendor_category.is.null'),
     ]);
 
     setTotalStats({ total: total || 0, verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0, deactivated: deactivated || 0, deleted: deleted || 0 });

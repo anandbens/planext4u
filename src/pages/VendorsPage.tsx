@@ -140,12 +140,12 @@ export default function VendorsPage() {
       { count: deactivated },
       { count: deleted },
     ] = await Promise.all([
-      supabase.from('vendors').select('*', { count: 'exact', head: true }).is('deleted_at', null),
-      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'verified'),
-      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
+      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).is('deleted_at', null).or('vendor_category.eq.product,vendor_category.is.null'),
+      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'verified').or('vendor_category.eq.product,vendor_category.is.null'),
+      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'rejected').or('vendor_category.eq.product,vendor_category.is.null'),
       (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).not('status', 'in', '(approved,verified,active,rejected)').eq('vendor_category', 'product'),
-      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'deactivated'),
-      supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'deleted'),
+      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'deactivated').or('vendor_category.eq.product,vendor_category.is.null'),
+      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'deleted').or('vendor_category.eq.product,vendor_category.is.null'),
     ]);
 
     setTotalStats({ total: total || 0, verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0, deactivated: deactivated || 0, deleted: deleted || 0 });
