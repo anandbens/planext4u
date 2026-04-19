@@ -73,11 +73,19 @@ function buildBottomNavItems(flags: VendorMenuFlags) {
   return items;
 }
 
-const quickActions = [
-  { label: "Your\nOrders", icon: ShoppingCart, to: "/vendor/orders" },
-  { label: "Help &\nSupport", icon: HelpCircle, to: "#" },
-  { label: "Store\nInsights", icon: BarChart3, to: "/vendor" },
-];
+function buildQuickActions(flags: VendorMenuFlags) {
+  const ordersTo = flags.isService && !flags.isProduct
+    ? "/vendor/bookings"
+    : flags.isRestaurant && !flags.isProduct && !flags.isService
+      ? "/vendor/food-orders"
+      : "/vendor/orders";
+  const ordersLabel = flags.isService && !flags.isProduct ? "Your\nBookings" : "Your\nOrders";
+  return [
+    { label: ordersLabel, icon: ShoppingCart, to: ordersTo },
+    { label: "Help &\nSupport", icon: HelpCircle, to: "#" },
+    { label: "Store\nInsights", icon: BarChart3, to: "/vendor" },
+  ];
+}
 
 const menuListItems = [
   { label: "Account & Control", icon: Shield, to: "/vendor/account-control" },
