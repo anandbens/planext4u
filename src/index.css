@@ -219,15 +219,35 @@ div.fixed[class*="bottom-0"] {
     box-shadow: var(--shadow-glass);
   }
 
+  .premium-card {
+    @apply bg-card border border-border/60 rounded-2xl;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .premium-card:hover {
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-2px);
+    border-color: hsl(var(--primary) / 0.25);
+  }
+
   .gradient-primary { background: var(--gradient-primary); }
+  .gradient-hero { background: var(--gradient-hero); }
   .gradient-success { background: var(--gradient-success); }
   .gradient-warning { background: var(--gradient-warning); }
   .gradient-info { background: var(--gradient-info); }
   .gradient-danger { background: var(--gradient-danger); }
   .gradient-brand { background: var(--gradient-brand); }
+  .gradient-card { background: var(--gradient-card); }
+  .gradient-subtle { background: var(--gradient-subtle); }
+  .gradient-amber-soft { background: var(--gradient-amber-soft); }
+  .gradient-teal-soft { background: var(--gradient-teal-soft); }
+
+  .glow-teal { box-shadow: var(--shadow-glow-teal); }
+  .glow-amber { box-shadow: var(--shadow-glow-amber); }
 
   .brand-header {
-    background: hsl(var(--brand-dark));
+    background: var(--gradient-primary);
     color: white;
   }
 
@@ -236,13 +256,15 @@ div.fixed[class*="bottom-0"] {
   }
 
   .stat-card {
-    @apply relative overflow-hidden rounded-xl p-4 lg:p-6 transition-all duration-300;
-    box-shadow: var(--shadow-md);
+    @apply relative overflow-hidden rounded-2xl p-4 lg:p-6 transition-all duration-300 border border-border/40;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
   }
 
   .stat-card:hover {
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-elevated);
     transform: translateY(-2px);
+    border-color: hsl(var(--primary) / 0.2);
   }
 
   .admin-table {
@@ -306,6 +328,33 @@ div.fixed[class*="bottom-0"] {
 
   .product-img-placeholder {
     @apply bg-gradient-to-br from-secondary/60 to-secondary/20 flex items-center justify-center;
+  }
+
+  /* Premium text utilities */
+  .text-gradient-brand {
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-gradient-primary {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Premium button shimmer */
+  .btn-premium {
+    @apply relative overflow-hidden;
+    background: var(--gradient-brand);
+    color: hsl(var(--primary-foreground));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-premium:hover {
+    box-shadow: var(--shadow-glow-teal);
+    transform: translateY(-1px);
   }
 }
 
