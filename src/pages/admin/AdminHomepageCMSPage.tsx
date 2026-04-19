@@ -154,12 +154,71 @@ function SectionModal({ open, onClose, section, onSave }: any) {
 
 /* ── Video Ad Modal ── */
 function VideoAdModal({ open, onClose, ad, onSave }: any) {
-  const [form, setForm] = useState(ad || {
-    title: "", video_url: "", thumbnail_url: "", duration_seconds: 0,
-    cta_text: "", cta_link: "", status: "active", start_date: "", end_date: "",
-    display_mode: "floating", show_delay_seconds: 3, auto_open_fullscreen: false,
+  // Derive an initial cta_target_type / cta_target_id from any existing cta_link.
+  const parseExistingLink = (link?: string) => {
+    if (!link) return { cta_target_type: "none", cta_target_id: "" };
+    if (link.startsWith("/app/product/")) return { cta_target_type: "product", cta_target_id: link.replace("/app/product/", "") };
+    if (link.startsWith("/app/service/")) return { cta_target_type: "service", cta_target_id: link.replace("/app/service/", "") };
+    if (link.startsWith("/app/browse?category=")) return { cta_target_type: "product_category", cta_target_id: decodeURIComponent(link.replace("/app/browse?category=", "")) };
+    if (link.startsWith("/app/services?category=")) return { cta_target_type: "service_category", cta_target_id: decodeURIComponent(link.replace("/app/services?category=", "")) };
+    return { cta_target_type: "url", cta_target_id: link };
+  };
+
+  const [form, setForm] = useState(() => {
+    const base = ad || {
+      title: "", video_url: "", thumbnail_url: "", duration_seconds: 0,
+      cta_text: "", cta_link: "", status: "active", start_date: "", end_date: "",
+      display_mode: "floating", show_delay_seconds: 3, auto_open_fullscreen: false,
+    };
+    return { ...base, ...parseExistingLink(base.cta_link) };
   });
   const [saving, setSaving] = useState(false);
+
+  // Lookup data for the CTA target picker
+  const { data: productCategories = [] } = useQuery({
+    queryKey: ["cms_product_categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("id,name").eq("status", "active").order("name");
+      return (data || []) as any[];
+    },
+  });
+  const { data: serviceCategories = [] } = useQuery({
+    queryKey: ["cms_service_categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("id,name").eq("status", "active").order("name");
+      // Re-using the shared categories table; service-specific filter could be added if available.
+      return (data || []) as any[];
+    },
+  });
+  const { data: productList = [] } = useQuery({
+    queryKey: ["cms_products_for_ad", form.cta_target_type],
+    enabled: form.cta_target_type === "product",
+    queryFn: async () => {
+      const { data } = await supabase.from("products").select("id,name").eq("status", "active").order("name").limit(500);
+      return (data || []) as any[];
+    },
+  });
+  const { data: serviceList = [] } = useQuery({
+    queryKey: ["cms_services_for_ad", form.cta_target_type],
+    enabled: form.cta_target_type === "service",
+    queryFn: async () => {
+      const { data } = await supabase.from("products").select("id,name").eq("type", "service").eq("status", "active").order("name").limit(500);
+      return (data || []) as any[];
+    },
+  });
+
+  // Build the cta_link string from the structured picker selection.
+  const buildCtaLink = (type: string, id: string): string => {
+    if (!id && type !== "none") return "";
+    switch (type) {
+      case "product": return `/app/product/${id}`;
+      case "service": return `/app/service/${id}`;
+      case "product_category": return `/app/browse?category=${encodeURIComponent(id)}`;
+      case "service_category": return `/app/services?category=${encodeURIComponent(id)}`;
+      case "url": return id;
+      default: return "";
+    }
+  };
 
   const handleSave = async () => {
     if (!form.title || !form.video_url) { toast.error("Title and video URL required"); return; }
