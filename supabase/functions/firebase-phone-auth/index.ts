@@ -414,17 +414,25 @@ Deno.serve(async (req) => {
           .from("vendors")
           .select("id, name, email, mobile, business_name, status")
           .or(vendorPhoneFilter)
-          .limit(1)
-          .maybeSingle(),
+          .order("created_at", { ascending: false })
+          .limit(1),
         supabase
           .from("service_vendors")
           .select("id, name, email, mobile, business_name, status")
           .or(vendorPhoneFilter)
-          .limit(1)
-          .maybeSingle(),
+          .order("created_at", { ascending: false })
+          .limit(1),
       ]);
 
-      const existingVendor = productVendorResult.data || serviceVendorResult.data;
+      // Prefer an active/verified record over any other status (defensive against stale duplicates)
+      const candidates = [
+        ...(productVendorResult.data || []),
+        ...(serviceVendorResult.data || []),
+      ];
+      const existingVendor =
+        candidates.find((v: any) => v.status === "active" || v.status === "verified") ||
+        candidates[0] ||
+        null;
       const vendorLookupErr = productVendorResult.error || serviceVendorResult.error;
 
       if (vendorLookupErr) console.error("Vendor lookup error:", vendorLookupErr.message);
