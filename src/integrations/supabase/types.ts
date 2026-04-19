@@ -483,6 +483,53 @@ export type Database = {
         }
         Relationships: []
       }
+      complaint_messages: {
+        Row: {
+          attachment_url: string | null
+          complaint_id: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          message: string
+          read_at: string | null
+          sender_id: string
+          sender_name: string | null
+          sender_role: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          complaint_id: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message: string
+          read_at?: string | null
+          sender_id: string
+          sender_name?: string | null
+          sender_role: string
+        }
+        Update: {
+          attachment_url?: string | null
+          complaint_id?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_name?: string | null
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "complaint_messages_complaint_id_fkey"
+            columns: ["complaint_id"]
+            isOneToOne: false
+            referencedRelation: "complaints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       complaints: {
         Row: {
           assigned_to: string | null
@@ -5418,6 +5465,53 @@ export type Database = {
         }
         Relationships: []
       }
+      support_ticket_messages: {
+        Row: {
+          attachment_url: string | null
+          created_at: string
+          id: string
+          is_internal: boolean
+          message: string
+          read_at: string | null
+          sender_id: string
+          sender_name: string | null
+          sender_role: string
+          ticket_id: string
+        }
+        Insert: {
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message: string
+          read_at?: string | null
+          sender_id: string
+          sender_name?: string | null
+          sender_role: string
+          ticket_id: string
+        }
+        Update: {
+          attachment_url?: string | null
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_name?: string | null
+          sender_role?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           assigned_to: string | null
@@ -6183,34 +6277,46 @@ export type Database = {
       }
       website_queries: {
         Row: {
+          admin_reply: string | null
           created_at: string
           email: string
           id: string
           message: string
           name: string
           phone: string
+          replied_at: string | null
+          replied_by: string | null
           status: string
           subject: string
+          updated_at: string
         }
         Insert: {
+          admin_reply?: string | null
           created_at?: string
           email?: string
           id: string
           message?: string
           name: string
           phone?: string
+          replied_at?: string | null
+          replied_by?: string | null
           status?: string
           subject?: string
+          updated_at?: string
         }
         Update: {
+          admin_reply?: string | null
           created_at?: string
           email?: string
           id?: string
           message?: string
           name?: string
           phone?: string
+          replied_at?: string | null
+          replied_by?: string | null
           status?: string
           subject?: string
+          updated_at?: string
         }
         Relationships: []
       }
