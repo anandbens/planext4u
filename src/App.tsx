@@ -61,6 +61,10 @@ import ClassifiedReportPage from "./pages/reports/ClassifiedReportPage";
 import TaxReportPage from "./pages/reports/TaxReportPage";
 import PaymentReportPage from "./pages/reports/PaymentReportPage";
 import P4URevenueReportPage from "./pages/reports/P4URevenueReportPage";
+import GSTR1ReportPage from "./pages/reports/GSTR1ReportPage";
+import GSTR3BReportPage from "./pages/reports/GSTR3BReportPage";
+import HSNSummaryReportPage from "./pages/reports/HSNSummaryReportPage";
+import TCSReportPage from "./pages/reports/TCSReportPage";
 
 // Customer pages
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
@@ -331,6 +335,10 @@ const AppRoutes = () => {
         <Route path="/reports/tax" element={<ProtectedPage><TaxReportPage /></ProtectedPage>} />
         <Route path="/reports/payments" element={<ProtectedPage><PaymentReportPage /></ProtectedPage>} />
         <Route path="/reports/revenue" element={<ProtectedPage><P4URevenueReportPage /></ProtectedPage>} />
+        <Route path="/reports/gstr1" element={<ProtectedPage><GSTR1ReportPage /></ProtectedPage>} />
+        <Route path="/reports/gstr3b" element={<ProtectedPage><GSTR3BReportPage /></ProtectedPage>} />
+        <Route path="/reports/hsn" element={<ProtectedPage><HSNSummaryReportPage /></ProtectedPage>} />
+        <Route path="/reports/tcs" element={<ProtectedPage><TCSReportPage /></ProtectedPage>} />
         <Route path="/cms" element={<ProtectedPage><CMSPage /></ProtectedPage>} />
         <Route path="/admin/cms-pages" element={<ProtectedPage><AdminCMSPagesPage /></ProtectedPage>} />
         <Route path="/settings" element={<ProtectedPage><SettingsPage /></ProtectedPage>} />
