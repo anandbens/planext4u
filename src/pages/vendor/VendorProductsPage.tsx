@@ -256,19 +256,22 @@ export default function VendorProductsPage() {
       const err = validateProductForm(formData);
       if (err) throw new Error(err);
       const payload: any = {
-        title: formData.title, description: formData.description,
-        short_description: formData.short_description, long_description: formData.long_description,
+        title: formData.title,
+        description: formData.description || formData.short_description || formData.long_description || formData.title || "",
+        short_description: formData.short_description || "",
+        long_description: formData.long_description || "",
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
-        discount: parseFloat(formData.discount) || 0, discount_type: formData.discount_type,
+        discount: parseFloat(formData.discount) || 0, discount_type: formData.discount_type || "fixed",
         stock: parseInt(formData.stock) || 0,
         category_id: formData.category_id || null,
         category_name: categories?.find(c => c.id === formData.category_id)?.name || "",
         subcategory_id: formData.subcategory_id || null,
         subcategory_name: subcategories?.find(c => c.id === formData.subcategory_id)?.name || "",
-        emoji: formData.emoji, status: editingId ? formData.status : 'pending_approval',
+        emoji: formData.emoji || "📦",
+        status: editingId ? formData.status : 'pending_approval',
         vendor_id: vendorId, vendor_name: vendorUser?.name || "",
         image: formData.image || formData.images[0] || null,
-        images: formData.images,
+        images: formData.images || [],
         thumbnail_image: formData.thumbnail_image || null,
         banner_image: formData.banner_image || null,
         youtube_video_url: formData.youtube_video_url || "",
@@ -283,6 +286,11 @@ export default function VendorProductsPage() {
         parent_item_id: formData.parent_item_id || null,
         parent_item_name: formData.parent_item_name || null,
       };
+
+      // Hard guard: if vendor_id is the placeholder fallback, the RLS check will reject the insert silently.
+      if (!vendorUser?.vendor_id) {
+        throw new Error("Your login is not linked to a vendor account. Please re-login or contact admin to fix the vendor mapping before adding products.");
+      }
       let productId = editingId;
       if (editingId) {
         const { data: updated, error } = await supabase.from("products").update(payload).eq("id", editingId).select();
