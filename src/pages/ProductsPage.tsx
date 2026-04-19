@@ -12,7 +12,7 @@ import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
 export default function ProductsPage() {
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("all");
   const [data, setData] = useState<PaginatedResponse<Product> | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");

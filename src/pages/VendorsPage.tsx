@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function VendorsPage() {
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("all");
   const [data, setData] = useState<PaginatedResponse<Vendor> | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
