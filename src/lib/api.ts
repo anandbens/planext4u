@@ -581,7 +581,7 @@ export const api = {
     // Soft delete: append _DEL_<timestamp> to unique fields
     const ts = Date.now().toString();
     // Try vendors table first
-    const { data: vend } = await supabase.from('vendors').select('email, mobile').eq('id', id).single();
+    const { data: vend } = await supabase.from('vendors').select('email, mobile').eq('id', id).maybeSingle();
     if (vend) {
       const updates: Record<string, any> = {
         status: 'deleted',
@@ -589,21 +589,24 @@ export const api = {
         email: vend.email ? `${vend.email}_DEL_${ts}` : `deleted_${ts}`,
         mobile: vend.mobile ? `${vend.mobile}_DEL_${ts}` : `deleted_${ts}`,
       };
-      await supabase.from('vendors').update(updates).eq('id', id);
+      const { error } = await supabase.from('vendors').update(updates).eq('id', id);
+      if (error) throw error;
       await supabase.from('audit_logs').insert({
         table_name: 'vendors', operation: 'SOFT_DELETE', record_id: id,
         old_data: vend, new_data: updates,
       });
     } else {
       // Try service_vendors
-      const { data: sv } = await supabase.from('service_vendors').select('email, mobile').eq('id', id).single();
+      const { data: sv } = await supabase.from('service_vendors').select('email, mobile').eq('id', id).maybeSingle();
+      if (!sv) throw new Error('Vendor not found');
       const updates: Record<string, any> = {
         status: 'deleted',
         deleted_at: new Date().toISOString(),
         email: sv?.email ? `${sv.email}_DEL_${ts}` : `deleted_${ts}`,
         mobile: sv?.mobile ? `${sv.mobile}_DEL_${ts}` : `deleted_${ts}`,
       };
-      await supabase.from('service_vendors').update(updates).eq('id', id);
+      const { error } = await supabase.from('service_vendors').update(updates).eq('id', id);
+      if (error) throw error;
       await supabase.from('audit_logs').insert({
         table_name: 'service_vendors', operation: 'SOFT_DELETE', record_id: id,
         old_data: sv, new_data: updates,
