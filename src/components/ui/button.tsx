@@ -16,6 +16,8 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         premium: "btn-premium shadow-md hover:shadow-lg",
+        aurora: "btn-aurora shadow-md hover:shadow-lg",
+        sunset: "btn-sunset shadow-md hover:shadow-lg",
         amber: "bg-[hsl(var(--brand-amber))] text-[hsl(var(--brand-dark))] shadow-sm hover:brightness-105 hover:shadow-md",
       },
       size: {
