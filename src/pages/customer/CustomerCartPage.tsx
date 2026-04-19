@@ -581,18 +581,19 @@ export default function CustomerCartPage() {
                     <div className="flex justify-between pl-3 border-l-2 border-border/50">
                       <span className="text-muted-foreground font-medium">Subtotal</span><span className="font-medium">₹{subtotal.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between pl-3 border-l-2 border-border/50">
-                      <div>
-                        <span className="text-muted-foreground">Platform Fee</span>
-                        {referralCountThisMonth >= 4 && <p className="text-[10px] text-success font-medium">🎉 FREE (4+ referrals this month!)</p>}
-                        {referralCountThisMonth < 4 && <p className="text-[10px] text-muted-foreground/70">Service charge</p>}
-                      </div>
-                      <span>{referralCountThisMonth >= 4 ? <span className="line-through text-muted-foreground">₹{platformFeeValue}</span> : `+ ₹${platformFee}`}</span>
-                    </div>
-                    {platformFee > 0 && (
+                    {(platformFee > 0 || referralCountThisMonth >= 4) && (
                       <div className="flex justify-between pl-3 border-l-2 border-border/50">
-                        <div><span className="text-muted-foreground">GST on Platform Fee</span><p className="text-[10px] text-muted-foreground/70">{platformFeeGst}% on platform fee</p></div>
-                        <span>+ ₹{gstOnPlatformFee.toFixed(2)}</span>
+                        <div>
+                          <span className="text-muted-foreground">Service & convenience fee</span>
+                          {referralCountThisMonth >= 4
+                            ? <p className="text-[10px] text-success font-medium">🎉 FREE (4+ referrals this month!)</p>
+                            : <p className="text-[10px] text-muted-foreground/70">Inclusive of all applicable taxes</p>}
+                        </div>
+                        <span>
+                          {referralCountThisMonth >= 4
+                            ? <span className="line-through text-muted-foreground">₹{(platformFeeValue + Math.round(platformFeeValue * platformFeeGst) / 100).toFixed(0)}</span>
+                            : `+ ₹${(platformFee + gstOnPlatformFee).toFixed(2)}`}
+                        </span>
                       </div>
                     )}
                     {pointsUsed > 0 && (

@@ -390,8 +390,15 @@ export default function PaymentPage() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>₹{(mrpTotal || subtotal)?.toLocaleString()}</span></div>
                 {(totalDiscount || 0) > 0 && <div className="flex justify-between text-success"><span>Product Discount</span><span>-₹{totalDiscount?.toLocaleString()}</span></div>}
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{subtotal?.toLocaleString()}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>{platformFee === 0 ? <span className="text-success">FREE</span> : `₹${platformFee}`}</span></div>
-                {(gstOnPlatformFee || 0) > 0 && <div className="flex justify-between"><span className="text-muted-foreground">GST on Platform Fee</span><span>₹{gstOnPlatformFee?.toFixed(2)}</span></div>}
+                {(platformFee > 0 || (gstOnPlatformFee || 0) > 0) && (
+                  <div className="flex justify-between">
+                    <div>
+                      <span className="text-muted-foreground">Service & convenience fee</span>
+                      <p className="text-[10px] text-muted-foreground/70">Inclusive of all applicable taxes</p>
+                    </div>
+                    <span>{platformFee === 0 && (gstOnPlatformFee || 0) === 0 ? <span className="text-success">FREE</span> : `₹${(platformFee + (gstOnPlatformFee || 0)).toFixed(2)}`}</span>
+                  </div>
+                )}
                 {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>-₹{discount}</span></div>}
                 {pointsUsed > 0 && (
                   <div className="flex justify-between pl-3 border-l-2 border-success/30 text-success">
