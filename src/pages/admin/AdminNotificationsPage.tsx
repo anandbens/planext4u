@@ -28,48 +28,39 @@ export default function AdminNotificationsPage() {
 
     setSending(true);
     try {
-      let userIds: string[] | undefined;
-
-      if (targetType === "specific") {
-        userIds = specificIds.split(",").map((id) => id.trim()).filter(Boolean);
-        if (userIds.length === 0) {
-          toast.error("Enter at least one user ID");
-          setSending(false);
-          return;
-        }
-      } else if (targetType === "all" || targetType === "customers" || targetType === "vendors") {
-        // Fetch user IDs based on target type
-        const roleFilter = targetType === "vendors" ? "vendor" : targetType === "customers" ? "customer" : undefined;
-        
-        if (roleFilter) {
-          const { data: roles } = await supabase
-            .from("user_roles" as any)
-            .select("user_id")
-            .eq("role", roleFilter);
-          userIds = (roles as any[])?.map((r) => r.user_id) || [];
-        } else {
-          // All users with push tokens
-          const { data: devices } = await supabase
-            .from("user_devices")
-            .select("user_id")
-            .neq("push_token", "");
-          userIds = [...new Set((devices || []).map((d) => d.user_id))];
-        }
-      }
-
       const data: Record<string, string> = {};
       if (deepLink.trim()) {
         data.deep_link = deepLink.trim();
       }
 
+      const body_payload: any = { title: title.trim(), body: body.trim(), data };
+
+      if (targetType === "specific") {
+        const userIds = specificIds.split(",").map((id) => id.trim()).filter(Boolean);
+        if (userIds.length === 0) {
+          toast.error("Enter at least one user ID");
+          setSending(false);
+          return;
+        }
+        body_payload.user_ids = userIds;
+      } else {
+        body_payload.target = targetType; // "all" | "customers" | "vendors" | "riders"
+      }
+
       const { data: result, error } = await supabase.functions.invoke("send-push-notification", {
-        body: { user_ids: userIds, title: title.trim(), body: body.trim(), data },
+        body: body_payload,
       });
 
       if (error) throw error;
+      if (result?.error) throw new Error(result.error);
 
       const sent = result?.sent || 0;
-      toast.success(`Notification sent to ${sent} device(s)`);
+      const total = result?.total || 0;
+      if (sent === 0 && total === 0) {
+        toast.warning(result?.message || "No registered devices for this audience");
+      } else {
+        toast.success(`Notification sent to ${sent} of ${total} device(s)`);
+      }
       setHistory((prev) => [
         { title, body, target: targetType, sent, time: new Date().toLocaleString() },
         ...prev,
@@ -104,6 +95,7 @@ export default function AdminNotificationsPage() {
                   <SelectItem value="all"><div className="flex items-center gap-2"><Globe className="h-4 w-4" /> All Users</div></SelectItem>
                   <SelectItem value="customers"><div className="flex items-center gap-2"><Users className="h-4 w-4" /> Customers Only</div></SelectItem>
                   <SelectItem value="vendors"><div className="flex items-center gap-2"><Store className="h-4 w-4" /> Vendors Only</div></SelectItem>
+                  <SelectItem value="riders"><div className="flex items-center gap-2"><Bell className="h-4 w-4" /> Riders Only</div></SelectItem>
                   <SelectItem value="specific">Specific Users</SelectItem>
                 </SelectContent>
               </Select>
