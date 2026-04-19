@@ -1,5 +1,6 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import {
   ImageIcon, CalendarClock, ShieldCheck, UtensilsCrossed
 } from "lucide-react";
 import { VendorNotificationBell } from "@/components/vendor/VendorNotificationBell";
+import { supabase } from "@/integrations/supabase/client";
 import p4uLogo from "@/assets/p4u-logo.png";
 
 interface VendorLayoutProps {
@@ -18,29 +20,49 @@ interface VendorLayoutProps {
   showBack?: boolean;
 }
 
-const sidebarItems = [
-  { label: "Dashboard", to: "/vendor", icon: LayoutDashboard },
-  { label: "Products", to: "/vendor/products", icon: Package },
-  { label: "Services", to: "/vendor/services", icon: Wrench },
-  { label: "Restaurant", to: "/vendor/restaurant", icon: UtensilsCrossed },
-  { label: "Food Orders", to: "/vendor/food-orders", icon: ShoppingCart },
-  { label: "Availability", to: "/vendor/availability", icon: CalendarClock },
-  { label: "Orders", to: "/vendor/orders", icon: ShoppingCart },
-  { label: "Settlements", to: "/vendor/settlements", icon: DollarSign },
-  { label: "Payment History", to: "/vendor/payments", icon: History },
-  { label: "Bank Account", to: "/vendor/bank", icon: CreditCard },
-  { label: "Profile & Settings", to: "/vendor/profile", icon: User },
-  { label: "Media Library", to: "/vendor/media", icon: ImageIcon },
-  { label: "KYC Verification", to: "/vendor/kyc", icon: ShieldCheck },
-];
+type VendorMenuFlags = { isService: boolean; isProduct: boolean; isRestaurant: boolean };
 
-const bottomNavItems = [
-  { label: "Home", to: "/vendor", icon: LayoutDashboard },
-  { label: "Products", to: "/vendor/products", icon: Package },
-  { label: "Orders", to: "/vendor/orders", icon: ShoppingCart },
-  { label: "Payments", to: "/vendor/settlements", icon: DollarSign },
-  { label: "Profile", to: "/vendor/profile", icon: User },
-];
+function buildSidebarItems(flags: VendorMenuFlags) {
+  const items: { label: string; to: string; icon: any }[] = [
+    { label: "Dashboard", to: "/vendor", icon: LayoutDashboard },
+  ];
+  if (flags.isProduct) items.push({ label: "Products", to: "/vendor/products", icon: Package });
+  if (flags.isService) items.push({ label: "Services", to: "/vendor/services", icon: Wrench });
+  if (flags.isRestaurant) {
+    items.push({ label: "Restaurant", to: "/vendor/restaurant", icon: UtensilsCrossed });
+    items.push({ label: "Food Orders", to: "/vendor/food-orders", icon: ShoppingCart });
+  }
+  if (flags.isService) items.push({ label: "Availability", to: "/vendor/availability", icon: CalendarClock });
+  items.push(
+    { label: "Orders", to: "/vendor/orders", icon: ShoppingCart },
+    { label: "Settlements", to: "/vendor/settlements", icon: DollarSign },
+    { label: "Payment History", to: "/vendor/payments", icon: History },
+    { label: "Bank Account", to: "/vendor/bank", icon: CreditCard },
+    { label: "Profile & Settings", to: "/vendor/profile", icon: User },
+    { label: "Media Library", to: "/vendor/media", icon: ImageIcon },
+    { label: "KYC Verification", to: "/vendor/kyc", icon: ShieldCheck },
+  );
+  return items;
+}
+
+function buildBottomNavItems(flags: VendorMenuFlags) {
+  const items: { label: string; to: string; icon: any }[] = [
+    { label: "Home", to: "/vendor", icon: LayoutDashboard },
+  ];
+  if (flags.isProduct) {
+    items.push({ label: "Products", to: "/vendor/products", icon: Package });
+  } else if (flags.isService) {
+    items.push({ label: "Services", to: "/vendor/services", icon: Wrench });
+  } else if (flags.isRestaurant) {
+    items.push({ label: "Menu", to: "/vendor/restaurant", icon: UtensilsCrossed });
+  }
+  items.push(
+    { label: "Orders", to: flags.isRestaurant && !flags.isProduct && !flags.isService ? "/vendor/food-orders" : "/vendor/orders", icon: ShoppingCart },
+    { label: "Payments", to: "/vendor/settlements", icon: DollarSign },
+    { label: "Profile", to: "/vendor/profile", icon: User },
+  );
+  return items;
+}
 
 const quickActions = [
   { label: "Your\nOrders", icon: ShoppingCart, to: "/vendor/orders" },
