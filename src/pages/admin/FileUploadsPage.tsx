@@ -579,22 +579,75 @@ export default function FileUploadsPage() {
     const { headers, rows } = parseCSV(text);
     if (rows.length === 0) { toast.error("File is empty"); setUploading(false); return; }
 
+    // 1. Create upload record
     const { data: uploadRecord, error: insertErr } = await supabase.from("file_uploads" as any).insert({
       file_name: file.name, upload_type: uploadType, status: "processing",
       total_records: rows.length, uploaded_by: user?.name || "Admin",
     }).select().single();
 
     if (insertErr || !uploadRecord) { toast.error("Failed to create upload record"); setUploading(false); return; }
+    const uploadId = (uploadRecord as any).id;
+
+    // 2. Persist original CSV to private storage so it can always be re-processed
+    const storagePath = `${uploadType}/${uploadId}/${file.name}`;
+    const { error: storageErr } = await supabase.storage.from("file-uploads").upload(storagePath, file, {
+      contentType: "text/csv", upsert: true,
+    });
+    if (storageErr) {
+      console.error("Failed to archive original CSV:", storageErr);
+      toast.warning("CSV processing started, but storage backup failed: " + storageErr.message);
+    } else {
+      await supabase.from("file_uploads" as any).update({ original_file_path: storagePath }).eq("id", uploadId);
+    }
 
     toast.success(`Processing ${rows.length} records in background...`);
     fetchUploads();
     setUploading(false);
     if (fileRef.current) fileRef.current.value = "";
 
-    const uploadId = (uploadRecord as any).id;
     if (uploadType === "product") processProductUpload(rows, headers, uploadId).then(fetchUploads);
     else if (uploadType === "customer") processCustomerUpload(rows, headers, uploadId).then(fetchUploads);
     else processVendorUpload(rows, headers, uploadId).then(fetchUploads);
+  };
+
+  const downloadOriginalCSV = async (upload: any) => {
+    if (!upload.original_file_path) { toast.error("No original CSV archived for this upload"); return; }
+    const { data, error } = await supabase.storage.from("file-uploads").download(upload.original_file_path);
+    if (error || !data) { toast.error("Failed to download: " + (error?.message || "unknown")); return; }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url; a.download = upload.file_name; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const reprocessUpload = async (upload: any) => {
+    if (!upload.original_file_path) { toast.error("No original CSV archived — cannot re-process"); return; }
+    if (!confirm(`Re-process ${upload.file_name}? This creates a new upload run from the archived CSV.`)) return;
+
+    const { data: blob, error: dlErr } = await supabase.storage.from("file-uploads").download(upload.original_file_path);
+    if (dlErr || !blob) { toast.error("Failed to download original: " + (dlErr?.message || "unknown")); return; }
+
+    const text = await blob.text();
+    const { headers, rows } = parseCSV(text);
+
+    const { data: newRec } = await supabase.from("file_uploads" as any).insert({
+      file_name: `[REPROCESS] ${upload.file_name}`,
+      upload_type: upload.upload_type,
+      status: "processing",
+      total_records: rows.length,
+      uploaded_by: user?.name || "Admin",
+      original_file_path: upload.original_file_path,
+    }).select().single();
+
+    if (!newRec) { toast.error("Failed to create re-process record"); return; }
+    const newId = (newRec as any).id;
+
+    toast.success(`Re-processing ${rows.length} rows...`);
+    fetchUploads();
+
+    if (upload.upload_type === "product") processProductUpload(rows, headers, newId).then(fetchUploads);
+    else if (upload.upload_type === "customer") processCustomerUpload(rows, headers, newId).then(fetchUploads);
+    else processVendorUpload(rows, headers, newId).then(fetchUploads);
   };
 
   const downloadErrors = (upload: any) => {
