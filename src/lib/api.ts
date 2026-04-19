@@ -1454,8 +1454,9 @@ export const api = {
             mobile: pv.mobile, email: pv.email, category_id: pv.category_id || null,
             city_id: validCityId, area_id: validAreaId,
             commission_rate: pv.commission_rate, membership: 'basic',
-            // service_vendors.status allows: pending | level1_approved | level2_approved | verified | rejected
-            status: ['pending','level1_approved','level2_approved','verified','rejected'].includes(pv.status as string) ? pv.status : 'verified',
+            vendor_category: 'service',
+            // service_vendors.status allows ONLY: pending | level1_approved | level2_approved | verified | rejected
+            status: (['pending','level1_approved','level2_approved','verified','rejected'] as const).includes(String(pv.status) as any) ? String(pv.status) : 'verified',
           } as any);
           if (svErr) {
             console.error("ensureServiceVendor:", svErr.message);
