@@ -1616,6 +1616,17 @@ export const api = {
     return { success: true };
   },
 
+  replyToWebsiteQuery: async (id: string, reply: string, repliedBy: string) => {
+    const { error } = await (supabase as any).from('website_queries').update({
+      admin_reply: reply,
+      replied_at: new Date().toISOString(),
+      replied_by: repliedBy,
+      status: 'resolved',
+    }).eq('id', id);
+    if (error) throw error;
+    return { success: true };
+  },
+
   // Report Log
   getReportLog: async (params: { page?: number; per_page?: number; status?: string; date_from?: string; date_to?: string }) => {
     const page = params.page || 1;
