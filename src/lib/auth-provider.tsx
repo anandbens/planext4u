@@ -8,6 +8,7 @@ import { persistentStore } from "@/lib/storage-adapter";
 import type { AuthUser, CustomerUser, VendorUser, UserRole, AppRole } from "@/lib/auth-types";
 
 const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
+const VENDOR_PROFILE_SELECT = "id, name, business_name, email, mobile, status";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -22,6 +23,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!email || email.includes('@phone.planext4u.local')) return '';
     return email;
   };
+
+  const getVendorProfile = useCallback(async (vendorId: string) => {
+    const [{ data: productVendor }, { data: serviceVendor }] = await Promise.all([
+      supabase.from("vendors").select(VENDOR_PROFILE_SELECT).eq("id", vendorId).maybeSingle(),
+      supabase.from("service_vendors" as any).select(VENDOR_PROFILE_SELECT).eq("id", vendorId).maybeSingle(),
+    ]);
+
+    return (productVendor || serviceVendor || null) as {
+      id: string;
+      name: string | null;
+      business_name: string | null;
+      email: string | null;
+      mobile?: string | null;
+      status: string;
+    } | null;
+  }, []);
 
   const processRole = useCallback(async (roleRecord: any, supabaseUid: string, email: string, name: string, isFreshLogin: boolean): Promise<string> => {
     if (!roleRecord) {
@@ -43,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('[auth] vendor role has no vendor_id — orphan record');
         return 'orphan_role';
       }
-      const { data: vendor } = await supabase.from("vendors").select("id, name, business_name, email, status").eq("id", vendorId).maybeSingle();
+      const vendor = await getVendorProfile(vendorId);
 
       // Orphan: role row exists but vendor record is missing → signal caller to try other roles
       if (!vendor) {
@@ -108,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return 'loaded';
-  }, []);
+  }, [getVendorProfile]);
 
   // Detect which portal the user is currently signing into so that when a single
   // Supabase auth user has BOTH vendor and customer roles (same email/phone shared

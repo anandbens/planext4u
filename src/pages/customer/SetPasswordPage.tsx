@@ -42,10 +42,14 @@ export default function SetPasswordPage() {
         }
       }
       if (role && isVendor && role.vendor_id) {
-        const { data: vend } = await supabase.from("vendors").select("email, mobile").eq("id", role.vendor_id).single();
-        if (vend) {
-          setUserEmail((vend as any).email || "");
-          setUserPhone((vend as any).mobile || "");
+        const [{ data: vend }, { data: serviceVend }] = await Promise.all([
+          supabase.from("vendors").select("email, mobile").eq("id", role.vendor_id).maybeSingle(),
+          supabase.from("service_vendors" as any).select("email, mobile").eq("id", role.vendor_id).maybeSingle(),
+        ]);
+        const vendorRecord = vend || serviceVend;
+        if (vendorRecord) {
+          setUserEmail((vendorRecord as any).email || "");
+          setUserPhone((vendorRecord as any).mobile || "");
           return;
         }
       }
