@@ -12,6 +12,7 @@ import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, B
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureVendorUserRole } from "@/lib/vendor-auth-link";
 
 export default function VendorsPage() {
   const [activeTab, setActiveTab] = useState("all");
