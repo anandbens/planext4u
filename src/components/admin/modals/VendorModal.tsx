@@ -266,21 +266,43 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                             onValueChange={async (v) => {
                               const newType = v as "product" | "service";
                               if (newType === currentType) return;
-                              if (!confirm(`Move this vendor from ${currentType.toUpperCase()} to ${newType.toUpperCase()}? The vendor record will be migrated to the ${newType} vendors table.`)) return;
+                              if (!confirm(`Move this vendor from ${currentType.toUpperCase()} to ${newType.toUpperCase()}?\n\nThe vendor will be migrated to the ${newType} vendors table and their status will be reset to PENDING. They must re-submit verification details before being re-approved.`)) return;
                               try {
                                 setSaving(true);
                                 const fromTable = currentType === "service" ? "service_vendors" : "vendors";
                                 const toTable = newType === "service" ? "service_vendors" : "vendors";
                                 const { data: row, error: fetchErr } = await supabase.from(fromTable).select("*").eq("id", vendor.id).single();
                                 if (fetchErr || !row) throw fetchErr || new Error("Vendor not found");
-                                // Preserve the original vendor ID so existing references (orders, user_roles, products) stay intact
+                                // Preserve the original vendor ID so existing references (orders, user_roles, products) stay intact.
+                                // Reset verification so the vendor must re-submit category-specific data before being re-approved.
                                 const { deleted_at: _d, ...rest } = row as any;
-                                const { error: insErr } = await supabase.from(toTable).insert({ ...rest, vendor_category: newType } as any);
+                                const resetPayload: Record<string, any> = {
+                                  ...rest,
+                                  vendor_category: newType,
+                                  status: "pending",
+                                  verification_status: "pending",
+                                  rejection_reason: null,
+                                  verified_at: null,
+                                  verified_by: null,
+                                };
+                                const { error: insErr } = await supabase.from(toTable).insert(resetPayload as any);
                                 if (insErr) throw insErr;
                                 // Hard-delete from origin so the vendor never appears in both lists
                                 const { error: delErr } = await supabase.from(fromTable).delete().eq("id", vendor.id);
                                 if (delErr) throw delErr;
-                                toast.success(`Vendor moved to ${newType} vendors`);
+                                // Notify the vendor in-app so they know to complete the new category profile
+                                try {
+                                  await supabase.rpc("create_vendor_notification" as any, {
+                                    _vendor_id: vendor.id,
+                                    _type: "verification",
+                                    _title: "Re-verification required",
+                                    _message: `Your account has been moved to ${newType === "service" ? "Service Provider" : "Product Seller"}. Please update your profile and KYC details to get re-approved.`,
+                                    _reference_id: vendor.id,
+                                    _reference_type: "vendor",
+                                    _deep_link: "/vendor/profile",
+                                  });
+                                } catch { /* notification is best-effort */ }
+                                toast.success(`Vendor moved to ${newType} vendors and set to pending verification`);
                                 onOpenChange(false);
                                 onRefresh?.();
                               } catch (err: any) {
