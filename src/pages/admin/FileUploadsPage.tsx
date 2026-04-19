@@ -862,6 +862,11 @@ export default function FileUploadsPage() {
                             </Button>
                           </>
                         )}
+                        {(u.success_count > 0 || u.error_count > 0) && (
+                          <Button variant="ghost" size="sm" onClick={() => downloadFullReport(u)} className="gap-1 text-success">
+                            <Download className="h-3 w-3" /> Full Report
+                          </Button>
+                        )}
                         {u.error_count > 0 && (
                           <Button variant="ghost" size="sm" onClick={() => downloadErrors(u)} className="gap-1 text-destructive">
                             <Download className="h-3 w-3" /> Errors
