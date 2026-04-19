@@ -531,10 +531,10 @@ const AppRoutes = () => {
         <Route path="/rider" element={<RiderProtectedRoute><RiderDashboardPage /></RiderProtectedRoute>} />
 
         {/* Food delivery — Admin */}
-        <Route path="/admin/restaurants" element={<ProtectedPage><AdminRestaurantsPage /></ProtectedPage>} />
-        <Route path="/admin/riders" element={<ProtectedPage><AdminRidersPage /></ProtectedPage>} />
-        <Route path="/admin/food-orders" element={<ProtectedPage><AdminFoodOrdersPage /></ProtectedPage>} />
-        <Route path="/admin/food-coupons" element={<ProtectedPage><AdminFoodCouponsPage /></ProtectedPage>} />
+        <Route path="/admin/restaurants" element={<SalesPage><AdminRestaurantsPage /></SalesPage>} />
+        <Route path="/admin/riders" element={<SalesPage><AdminRidersPage /></SalesPage>} />
+        <Route path="/admin/food-orders" element={<SalesPage><AdminFoodOrdersPage /></SalesPage>} />
+        <Route path="/admin/food-coupons" element={<SalesPage><AdminFoodCouponsPage /></SalesPage>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
