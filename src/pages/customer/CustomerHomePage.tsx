@@ -144,14 +144,30 @@ function HeroBannerCarousel({ banners, cmsBanners }: { banners: any[]; cmsBanner
           )}
         </motion.div>
       </AnimatePresence>
-      <button onClick={() => setIdx(p => (p - 1 + allBanners.length) % allBanners.length)}
-        className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-card"><ChevronLeft className="h-4 w-4" /></button>
-      <button onClick={() => setIdx(p => (p + 1) % allBanners.length)}
-        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-card"><ChevronRight className="h-4 w-4" /></button>
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+      {/* Desktop-only chevrons (mobile uses swipe + dots, Zepto/Blinkit style) */}
+      <button
+        aria-label="Previous banner"
+        onClick={() => setIdx(p => (p - 1 + allBanners.length) % allBanners.length)}
+        className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-background/40 hover:bg-background/70 backdrop-blur-md text-foreground items-center justify-center shadow-md transition-colors opacity-0 group-hover:opacity-100"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      <button
+        aria-label="Next banner"
+        onClick={() => setIdx(p => (p + 1) % allBanners.length)}
+        className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-background/40 hover:bg-background/70 backdrop-blur-md text-foreground items-center justify-center shadow-md transition-colors opacity-0 group-hover:opacity-100"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+      {/* Pill dot indicator */}
+      <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-1 rounded-full bg-background/30 backdrop-blur-md">
         {allBanners.map((_, i) => (
-          <button key={i} onClick={() => setIdx(i)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${i === idx ? 'w-5 bg-card' : 'w-1.5 bg-card/50'}`} />
+          <button
+            key={i}
+            aria-label={`Go to banner ${i + 1}`}
+            onClick={() => setIdx(i)}
+            className={`h-1.5 rounded-full transition-all duration-300 ${i === idx ? 'w-5 bg-card' : 'w-1.5 bg-card/60'}`}
+          />
         ))}
       </div>
     </div>
