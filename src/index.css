@@ -371,7 +371,21 @@ div.fixed[class*="bottom-0"] {
     -webkit-text-fill-color: transparent;
   }
 
-  /* Premium button shimmer */
+  .text-gradient-aurora {
+    background: var(--gradient-aurora);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .text-gradient-sunset {
+    background: var(--gradient-sunset);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Premium button with gradient + shimmer */
   .btn-premium {
     @apply relative overflow-hidden;
     background: var(--gradient-brand);
@@ -382,6 +396,38 @@ div.fixed[class*="bottom-0"] {
     box-shadow: var(--shadow-glow-teal);
     transform: translateY(-1px);
   }
+
+  .btn-aurora {
+    @apply relative overflow-hidden text-white;
+    background: var(--gradient-aurora);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-aurora:hover {
+    box-shadow: var(--shadow-glow-indigo);
+    transform: translateY(-1px);
+  }
+
+  .btn-sunset {
+    @apply relative overflow-hidden text-white;
+    background: var(--gradient-sunset);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-sunset:hover {
+    box-shadow: var(--shadow-glow-coral);
+    transform: translateY(-1px);
+  }
+
+  /* Animated gradient surface for hero / featured cards */
+  .gradient-animate {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* Progressive font-size scale for large desktops */
