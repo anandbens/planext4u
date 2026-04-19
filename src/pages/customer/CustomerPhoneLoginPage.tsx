@@ -43,12 +43,27 @@ export default function CustomerPhoneLoginPage() {
     if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
-      // Check if user is registered before sending OTP (uses SECURITY DEFINER to bypass RLS)
+      // Check if user is registered + account status (SECURITY DEFINER bypasses RLS)
       const fullPhone = `${countryCode}${cleaned}`;
-      const { data: isRegistered } = await supabase.rpc('check_phone_registered', { _phone: cleaned });
-      if (!isRegistered) {
+      const { data: loginStatus } = await supabase.rpc('check_phone_login_status' as any, { _phone: cleaned });
+      const ls = (loginStatus || {}) as { found?: boolean; status?: string };
+      if (!ls.found) {
         setLoading(false);
         toast.error("No account found with this mobile number. Please create an account first.", { duration: 5000 });
+        return;
+      }
+      const s = (ls.status || '').toLowerCase();
+      if (s !== 'active') {
+        setLoading(false);
+        if (s === 'deleted') {
+          toast.error("Your account has been deleted. Please contact support if this is a mistake.", { duration: 6000 });
+        } else if (s === 'suspended') {
+          toast.error("Your account has been suspended. Please contact support to restore access.", { duration: 6000 });
+        } else if (s === 'deactivated' || s === 'inactive') {
+          toast.error("Your account is inactive. Please contact support to reactivate.", { duration: 6000 });
+        } else {
+          toast.error(`Your account is ${s} and cannot sign in. Contact support.`, { duration: 6000 });
+        }
         return;
       }
 

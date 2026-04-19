@@ -30,6 +30,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const loginResolveRef = useRef<(() => void) | null>(null);
   const isFreshLoginRef = useRef(false);
+  // Captures the most recent role-load outcome so login() can surface a friendly
+  // message when the user was signed out due to status (deleted/suspended/etc.)
+  const lastAuthErrorRef = useRef<string | null>(null);
 
   // Helper: filter out synthetic Firebase phone-auth emails
   const cleanEmail = (email: string | null | undefined): string => {
@@ -84,6 +87,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Vendor exists but is not yet allowed into the vendor portal
       if (!ACTIVE_VENDOR_STATUSES.has(vendor.status)) {
         await supabase.auth.signOut();
+        const s = (vendor.status || '').toLowerCase();
+        if (s === 'deleted') {
+          lastAuthErrorRef.current = 'Your vendor account has been deleted. Please contact support if this is a mistake.';
+        } else if (s === 'suspended') {
+          lastAuthErrorRef.current = 'Your vendor account has been suspended. Please contact support to restore access.';
+        } else if (s === 'inactive' || s === 'deactivated') {
+          lastAuthErrorRef.current = 'Your vendor account is inactive. Please contact support to reactivate.';
+        } else if (s === 'rejected') {
+          lastAuthErrorRef.current = 'Your vendor application was rejected. Please contact support.';
+        } else {
+          lastAuthErrorRef.current = 'Your vendor profile is not yet approved. You will be notified once approved.';
+        }
         return 'vendor_not_verified';
       }
 
@@ -112,6 +127,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Customer must be active
       if (customer.status && customer.status !== 'active') {
         await supabase.auth.signOut();
+        const s = (customer.status || '').toLowerCase();
+        if (s === 'deleted') {
+          lastAuthErrorRef.current = 'Your account has been deleted. Please contact support if this is a mistake.';
+        } else if (s === 'suspended') {
+          lastAuthErrorRef.current = 'Your account has been suspended. Please contact support to restore access.';
+        } else if (s === 'deactivated') {
+          lastAuthErrorRef.current = 'Your account is deactivated. Please contact support to reactivate.';
+        } else if (s === 'inactive') {
+          lastAuthErrorRef.current = 'Your account is inactive. Please contact support to reactivate.';
+        } else {
+          lastAuthErrorRef.current = `Your account is ${s} and cannot sign in.`;
+        }
         return 'customer_not_active';
       }
 
@@ -324,6 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     isFreshLoginRef.current = true;
+    lastAuthErrorRef.current = null;
     const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setIsLoading(false);
@@ -337,11 +365,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginResolveRef.current = resolve;
       setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 5000);
     });
+    if (lastAuthErrorRef.current) {
+      const msg = lastAuthErrorRef.current;
+      lastAuthErrorRef.current = null;
+      throw new Error(msg);
+    }
   };
 
   const customerLogin = async (email: string, password: string) => {
     setIsLoading(true);
     isFreshLoginRef.current = true;
+    lastAuthErrorRef.current = null;
     const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setIsLoading(false);
@@ -355,12 +389,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginResolveRef.current = resolve;
       setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 5000);
     });
+    if (lastAuthErrorRef.current) {
+      const msg = lastAuthErrorRef.current;
+      lastAuthErrorRef.current = null;
+      throw new Error(msg);
+    }
     logActivity('login', `Customer logged in with ${email}`);
   };
 
   const vendorLogin = async (email: string, password: string) => {
     setIsLoading(true);
     isFreshLoginRef.current = true;
+    lastAuthErrorRef.current = null;
     let signInData: any = null;
     let lastError: Error | null = null;
 
@@ -387,6 +427,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginResolveRef.current = resolve;
       setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 5000);
     });
+    if (lastAuthErrorRef.current) {
+      const msg = lastAuthErrorRef.current;
+      lastAuthErrorRef.current = null;
+      throw new Error(msg);
+    }
   };
 
   const logout = async () => {
