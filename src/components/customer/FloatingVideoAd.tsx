@@ -210,6 +210,17 @@ export function FloatingVideoAd({
             </div>
           </div>
         )}
+
+        {ctaLink && (
+          <button
+            onClick={handleCTA}
+            aria-label={ctaText || "Click here"}
+            className="absolute bottom-1 left-1/2 -translate-x-1/2 max-w-[calc(100%-0.5rem)] truncate px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-lg flex items-center gap-1 hover:scale-105 transition-transform"
+          >
+            <span className="truncate">{ctaText || "Click here"}</span>
+            <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+          </button>
+        )}
       </motion.div>
     </AnimatePresence>
   );
