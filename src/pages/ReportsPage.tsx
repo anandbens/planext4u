@@ -1,6 +1,7 @@
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { BarChart3, TrendingUp, FileText, Users, Star, Gift, Megaphone, DollarSign, CreditCard, Receipt, FileBarChart, Package, Building2, BookOpen, RotateCcw, Percent, ScrollText } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 
 const operationalReports = [
   { title: "Sales Report", desc: "Revenue, orders, and transaction analytics", icon: TrendingUp, color: "gradient-primary", to: "/reports/sales" },
