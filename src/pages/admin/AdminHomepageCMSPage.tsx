@@ -467,6 +467,8 @@ export default function AdminHomepageCMSPage() {
   const saveVideoAd = async (form: any) => {
     const payload = { ...form };
     delete payload.id; delete payload.created_at; delete payload.updated_at; delete payload.impressions; delete payload.clicks;
+    // Strip UI-only helper fields that are not real columns on video_ads
+    delete payload.cta_target_type; delete payload.cta_target_id;
     if (form.id) {
       const { error } = await supabase.from("video_ads" as any).update(payload as any).eq("id", form.id);
       if (error) throw error;
