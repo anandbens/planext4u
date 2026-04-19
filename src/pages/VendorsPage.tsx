@@ -39,7 +39,7 @@ export default function VendorsPage() {
       const targetStatus = activeTab;
       let q = (supabase.from('vendors').select('*', { count: 'exact' }) as any)
         .eq('status', targetStatus)
-        .or('vendor_category.eq.product,vendor_category.is.null');
+        .eq('vendor_category', 'product');
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,mobile.ilike.%${search}%`);
       if (dateFrom) q = q.gte('created_at', dateFrom);
       if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
@@ -93,7 +93,7 @@ export default function VendorsPage() {
         .from('vendors')
         .select('*', { count: 'exact' }) as any)
         .eq('status', 'rejected')
-        .or('vendor_category.eq.product,vendor_category.is.null');
+        .eq('vendor_category', 'product');
 
       if (search) {
         appQ = appQ.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
@@ -140,12 +140,12 @@ export default function VendorsPage() {
       { count: deactivated },
       { count: deleted },
     ] = await Promise.all([
-      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).is('deleted_at', null).or('vendor_category.eq.product,vendor_category.is.null'),
-      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'verified').or('vendor_category.eq.product,vendor_category.is.null'),
-      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'rejected').or('vendor_category.eq.product,vendor_category.is.null'),
+      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).is('deleted_at', null).eq('vendor_category', 'product'),
+      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'verified').eq('vendor_category', 'product'),
+      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'rejected').eq('vendor_category', 'product'),
       (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).not('status', 'in', '(approved,verified,active,rejected)').eq('vendor_category', 'product'),
-      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'deactivated').or('vendor_category.eq.product,vendor_category.is.null'),
-      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'deleted').or('vendor_category.eq.product,vendor_category.is.null'),
+      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'deactivated').eq('vendor_category', 'product'),
+      (supabase.from('vendors').select('*', { count: 'exact', head: true }) as any).eq('status', 'deleted').eq('vendor_category', 'product'),
     ]);
 
     setTotalStats({ total: total || 0, verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0, deactivated: deactivated || 0, deleted: deleted || 0 });

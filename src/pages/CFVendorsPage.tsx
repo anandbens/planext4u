@@ -34,7 +34,7 @@ export default function CFVendorsPage() {
       const targetStatus = activeTab;
       let q = (supabase.from('service_vendors' as any).select('*', { count: 'exact' }) as any)
         .eq('status', targetStatus)
-        .or('vendor_category.eq.service,vendor_category.is.null');
+        .eq('vendor_category', 'service');
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,mobile.ilike.%${search}%`);
       if (dateFrom) q = q.gte('created_at', dateFrom);
       if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
@@ -86,7 +86,7 @@ export default function CFVendorsPage() {
         .from('service_vendors' as any)
         .select('*', { count: 'exact' }) as any)
         .eq('status', 'rejected')
-        .or('vendor_category.eq.service,vendor_category.is.null');
+        .eq('vendor_category', 'service');
 
       if (search) {
         appQ = appQ.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
@@ -124,7 +124,7 @@ export default function CFVendorsPage() {
     // all tab — service vendors from service_vendors table (strictly category=service)
     let q = (supabase.from('service_vendors' as any).select('*', { count: 'exact' }) as any)
       .eq('status', 'verified')
-      .or('vendor_category.eq.service,vendor_category.is.null');
+      .eq('vendor_category', 'service');
     if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,mobile.ilike.%${search}%`);
     if (dateFrom) q = q.gte('created_at', dateFrom);
     if (dateTo) q = q.lte('created_at', dateTo + 'T23:59:59Z');
@@ -142,12 +142,12 @@ export default function CFVendorsPage() {
       { count: deactivated },
       { count: deleted },
     ] = await Promise.all([
-      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).or('vendor_category.eq.service,vendor_category.is.null'),
-      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'verified').or('vendor_category.eq.service,vendor_category.is.null'),
+      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('vendor_category', 'service'),
+      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'verified').eq('vendor_category', 'service'),
       (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).eq('status', 'rejected').eq('vendor_category', 'service'),
       (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).eq('status', 'submitted').eq('vendor_category', 'service'),
-      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'deactivated').or('vendor_category.eq.service,vendor_category.is.null'),
-      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'deleted').or('vendor_category.eq.service,vendor_category.is.null'),
+      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'deactivated').eq('vendor_category', 'service'),
+      (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'deleted').eq('vendor_category', 'service'),
     ]);
 
     setTotalStats({ total: total || 0, verified: verified || 0, pending: pendingCount || 0, rejected: rejected || 0, deactivated: deactivated || 0, deleted: deleted || 0 });
