@@ -47,7 +47,7 @@ export default function TaxReportPage() {
     { key: "subtotal", label: "Subtotal (₹)", sortable: true, align: "right", render: r => `₹${Number(r.subtotal || 0).toLocaleString("en-IN")}` },
     { key: "tax", label: "Product Tax (₹)", sortable: true, align: "right", render: r => <span className="font-semibold">₹{Number(r.tax || 0).toLocaleString("en-IN")}</span> },
     { key: "platform_fee", label: "Platform Fee (₹)", sortable: true, align: "right", render: r => `₹${r.platform_fee.toLocaleString("en-IN")}` },
-    { key: "gst_on_platform_fee", label: "GST on PF (₹)", sortable: true, align: "right", render: r => <span className="font-semibold">₹${r.gst_on_platform_fee.toLocaleString("en-IN")}</span> },
+    { key: "gst_on_platform_fee", label: "GST on PF (₹)", sortable: true, align: "right", render: r => <span className="font-semibold">₹{r.gst_on_platform_fee.toLocaleString("en-IN")}</span> },
     { key: "total", label: "Order Total (₹)", sortable: true, align: "right", render: r => `₹${Number(r.total || 0).toLocaleString("en-IN")}` },
     { key: "status", label: "Status", sortable: true, align: "center", render: r => <Badge className={`border-0 text-[10px] ${["completed", "delivered"].includes(r.status) ? "bg-success/10 text-success" : r.status === "cancelled" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>{r.status.replace("_", " ")}</Badge> },
   ];
