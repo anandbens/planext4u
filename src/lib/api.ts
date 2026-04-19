@@ -847,6 +847,9 @@ export const api = {
     deleted?: boolean;
     vendor_filter?: string;
     product_filter?: string;
+    min_amount?: number;
+    max_amount?: number;
+    customer_filter?: string;
   }) => {
     const page = params.page || 1;
     const perPage = params.per_page || 10;
