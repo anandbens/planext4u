@@ -30,6 +30,13 @@ export default function CustomersPage() {
   const [confirmTarget, setConfirmTarget] = useState<User | null>(null);
   const [totalStats, setTotalStats] = useState({ total: 0, active: 0, inactive: 0, deactivated: 0, deleted: 0, points: 0 });
 
+  // Permanent deletion state
+  const [hardTarget, setHardTarget] = useState<User | null>(null);
+  const [hardOpen, setHardOpen] = useState(false);
+  const [hardImpact, setHardImpact] = useState<Record<string, number> | null>(null);
+  const [hardLoading, setHardLoading] = useState(false);
+  const [hardSubmitting, setHardSubmitting] = useState(false);
+
   const { data: occupations = [] } = useQuery({
     queryKey: ["occupationsForFilter"],
     queryFn: async () => {
