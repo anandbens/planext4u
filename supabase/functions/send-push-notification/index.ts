@@ -8,6 +8,7 @@ const corsHeaders = {
 interface NotificationPayload {
   user_ids?: string[];
   device_tokens?: string[];
+  target?: "all" | "customers" | "vendors" | "riders";
   title: string;
   body: string;
   data?: Record<string, string>;
@@ -187,12 +188,38 @@ Deno.serve(async (req: Request) => {
 
     // Collect device tokens
     let tokens: string[] = payload.device_tokens || [];
+    let userIds: string[] = payload.user_ids || [];
 
-    if (payload.user_ids && payload.user_ids.length > 0) {
+    // Resolve audience server-side using service role (bypasses RLS)
+    if (payload.target && (!userIds || userIds.length === 0)) {
+      if (payload.target === "all") {
+        const { data: devices } = await serviceClient
+          .from("user_devices")
+          .select("user_id")
+          .neq("push_token", "");
+        userIds = [...new Set((devices || []).map((d: any) => d.user_id))];
+      } else {
+        const roleMap: Record<string, string> = {
+          customers: "customer",
+          vendors: "vendor",
+          riders: "rider",
+        };
+        const role = roleMap[payload.target];
+        if (role) {
+          const { data: roles } = await serviceClient
+            .from("user_roles")
+            .select("user_id")
+            .eq("role", role);
+          userIds = (roles || []).map((r: any) => r.user_id);
+        }
+      }
+    }
+
+    if (userIds.length > 0) {
       const { data: devices } = await serviceClient
         .from("user_devices")
         .select("push_token")
-        .in("user_id", payload.user_ids)
+        .in("user_id", userIds)
         .neq("push_token", "");
 
       if (devices) {
@@ -200,11 +227,13 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Remove duplicates
-    tokens = [...new Set(tokens)];
+    // Remove duplicates and empties
+    tokens = [...new Set(tokens.filter(Boolean))];
+
+    console.log(`Push send: target=${payload.target || "manual"}, users=${userIds.length}, tokens=${tokens.length}`);
 
     if (tokens.length === 0) {
-      return new Response(JSON.stringify({ error: "No device tokens found", sent: 0 }), {
+      return new Response(JSON.stringify({ success: true, sent: 0, failed: 0, total: 0, message: "No device tokens registered for this audience" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
