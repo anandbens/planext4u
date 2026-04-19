@@ -2401,6 +2401,9 @@ export type Database = {
           customer_id: string
           customer_name: string | null
           customer_notes: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deletion_reason: string | null
           delivery_rating: number | null
           discount: number
           effective_commission: number | null
@@ -2436,6 +2439,9 @@ export type Database = {
           customer_id: string
           customer_name?: string | null
           customer_notes?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deletion_reason?: string | null
           delivery_rating?: number | null
           discount?: number
           effective_commission?: number | null
@@ -2471,6 +2477,9 @@ export type Database = {
           customer_id?: string
           customer_name?: string | null
           customer_notes?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deletion_reason?: string | null
           delivery_rating?: number | null
           discount?: number
           effective_commission?: number | null
