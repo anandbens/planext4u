@@ -341,26 +341,6 @@ const AppRoutes = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<ProtectedPage><DashboardPage /></ProtectedPage>} />
-        <Route path="/customers" element={<ProtectedPage><CustomersPage /></ProtectedPage>} />
-        <Route path="/vendors" element={<ProtectedPage><VendorsPage /></ProtectedPage>} />
-        <Route path="/products" element={<ProtectedPage><ProductsPage /></ProtectedPage>} />
-        <Route path="/orders" element={<ProtectedPage><OrdersPage /></ProtectedPage>} />
-        <Route path="/settlements" element={<ProtectedPage><SettlementsPage /></ProtectedPage>} />
-        <Route path="/classifieds" element={<ProtectedPage><ClassifiedsPage /></ProtectedPage>} />
-        <Route path="/points" element={<ProtectedPage><PointsPage /></ProtectedPage>} />
-        <Route path="/referrals" element={<ProtectedPage><ReferralsPage /></ProtectedPage>} />
-        <Route path="/reports" element={<ProtectedPage><ReportsPage /></ProtectedPage>} />
-        <Route path="/reports/sales" element={<ProtectedPage><SalesReportPage /></ProtectedPage>} />
-        <Route path="/reports/vendors" element={<ProtectedPage><VendorReportPage /></ProtectedPage>} />
-        <Route path="/reports/settlements" element={<ProtectedPage><SettlementReportPage /></ProtectedPage>} />
-        <Route path="/reports/customers" element={<ProtectedPage><CustomerReportPage /></ProtectedPage>} />
-        <Route path="/reports/points" element={<ProtectedPage><PointsReportPage /></ProtectedPage>} />
-        <Route path="/reports/referrals" element={<ProtectedPage><ReferralReportPage /></ProtectedPage>} />
-        <Route path="/reports/classifieds" element={<ProtectedPage><ClassifiedReportPage /></ProtectedPage>} />
-        <Route path="/reports/tax" element={<ProtectedPage><TaxReportPage /></ProtectedPage>} />
-        <Route path="/reports/payments" element={<ProtectedPage><PaymentReportPage /></ProtectedPage>} />
-        <Route path="/reports/revenue" element={<ProtectedPage><P4URevenueReportPage /></ProtectedPage>} />
-        <Route path="/dashboard" element={<ProtectedPage><DashboardPage /></ProtectedPage>} />
         <Route path="/customers" element={<SalesPage><CustomersPage /></SalesPage>} />
         <Route path="/vendors" element={<SalesPage><VendorsPage /></SalesPage>} />
         <Route path="/products" element={<SalesPage><ProductsPage /></SalesPage>} />
