@@ -78,7 +78,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
     { icon: Home, label: "Home", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
     { icon: Megaphone, label: "Socio", to: "/app/social" },
-    { icon: Wrench, label: "Services", to: "/app/services", comingSoon: true },
+    { icon: Wrench, label: "Services", to: "/app/services" },
     { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: true },
     { icon: Newspaper, label: "Classified", to: "/app/classifieds", comingSoon: true },
   ];
@@ -161,7 +161,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               { label: "planext4u", to: "/app", highlight: true },
               { label: "Shop", to: "/app/browse" },
               { label: "Socio", to: "/app/social" },
-              { label: "Services", to: "/app/services", comingSoon: true },
+              { label: "Services", to: "/app/services" },
               { label: "Find Home", to: "/app/find-home", comingSoon: true },
               { label: "Classified", to: "/app/classifieds", comingSoon: true },
             ].map((tab) => (
@@ -257,7 +257,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               {[
                 { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
                 { icon: Megaphone, label: "Socio", to: "/app/social" },
-                { icon: Wrench, label: "Services", to: "/app/services", comingSoon: true },
+                { icon: Wrench, label: "Services", to: "/app/services" },
                 { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: true },
                 { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds", comingSoon: true },
               ].map((tab) => (
@@ -599,7 +599,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           { icon: Home, label: "Home", to: "/app", badge: 0 },
           { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: 0 },
           { icon: Megaphone, label: "Socio", to: "/app/social", badge: 0 },
-          { icon: Wrench, label: "Services", to: "/app/services", badge: 0, comingSoon: true },
+          { icon: Wrench, label: "Services", to: "/app/services", badge: 0 },
           { icon: Building, label: "Find Home", to: "/app/find-home", badge: 0, comingSoon: true },
           { icon: Newspaper, label: "Classified", to: "/app/classifieds", badge: 0, comingSoon: true },
         ];
