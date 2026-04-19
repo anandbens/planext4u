@@ -297,18 +297,15 @@ export default function GSTR1ReportPage() {
   const handleXLSX = () => {
     const range = getDateRangeFromFilters(filters);
     const cover = buildCoverSheet({
-      reportTitle: "GSTR-1 — Outward Supplies",
-      reportSection: "B2C(L) · B2C(S) · CDNUR · HSN Summary · Document Summary",
-      legalBasis: "Section 37 of the CGST Act, 2017 — Furnishing details of outward supplies",
-      periodLabel: range.label, periodFrom: range.from, periodTo: range.to,
+      reportTitle: "GSTR-1 — Outward Supplies (B2C(L) · B2C(S) · CDNUR · HSN Summary · Document Summary)",
+      statutoryBasis: "Section 37 of the CGST Act, 2017 — Furnishing details of outward supplies",
+      period: range.label,
+      fyLabel: `FY ${filters.fyStart}-${String(filters.fyStart + 1).slice(-2)}`,
       filters: {
-        "Financial Year": `FY ${filters.fyStart}-${String(filters.fyStart + 1).slice(-2)}`,
         "Month": filters.month === -1 ? "Whole FY" : range.label,
         "Vendor": filters.vendorId === "all" ? "All vendors" : (vendors.find(v => v.id === filters.vendorId)?.name || filters.vendorId),
         "Place of Supply": filters.stateCode === "all" ? "All states" : `${filters.stateCode} — ${stateName(filters.stateCode)}`,
         "Status filter": "delivered, completed (only)",
-      },
-      totals: {
         "Total Invoices": totals.invoices,
         "Cancelled Invoices": totals.cancelled,
         "Total Taxable Value (₹)": totals.taxable.toFixed(2),
