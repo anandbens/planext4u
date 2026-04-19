@@ -414,17 +414,25 @@ Deno.serve(async (req) => {
           .from("vendors")
           .select("id, name, email, mobile, business_name, status")
           .or(vendorPhoneFilter)
-          .limit(1)
-          .maybeSingle(),
+          .order("created_at", { ascending: false })
+          .limit(1),
         supabase
           .from("service_vendors")
           .select("id, name, email, mobile, business_name, status")
           .or(vendorPhoneFilter)
-          .limit(1)
-          .maybeSingle(),
+          .order("created_at", { ascending: false })
+          .limit(1),
       ]);
 
-      const existingVendor = productVendorResult.data || serviceVendorResult.data;
+      // Prefer an active/verified record over any other status (defensive against stale duplicates)
+      const candidates = [
+        ...(productVendorResult.data || []),
+        ...(serviceVendorResult.data || []),
+      ];
+      const existingVendor =
+        candidates.find((v: any) => v.status === "active" || v.status === "verified") ||
+        candidates[0] ||
+        null;
       const vendorLookupErr = productVendorResult.error || serviceVendorResult.error;
 
       if (vendorLookupErr) console.error("Vendor lookup error:", vendorLookupErr.message);
@@ -465,10 +473,10 @@ Deno.serve(async (req) => {
         supabaseUser = newUser.user;
       }
 
-      // Ensure vendor user_roles entry exists
+      // Ensure vendor user_roles entry exists and points to the correct vendor record
       const { data: existingVendorRole } = await supabase
         .from("user_roles")
-        .select("id")
+        .select("id, vendor_id")
         .eq("user_id", supabaseUser.id)
         .eq("role", "vendor")
         .maybeSingle();
@@ -479,6 +487,12 @@ Deno.serve(async (req) => {
           role: "vendor",
           vendor_id: existingVendor.id,
         });
+      } else if (existingVendorRole.vendor_id !== existingVendor.id) {
+        // Repair stale vendor_id (e.g., after admin migrated vendor between tables)
+        await supabase
+          .from("user_roles")
+          .update({ vendor_id: existingVendor.id })
+          .eq("id", existingVendorRole.id);
       }
 
       // Generate magic link token

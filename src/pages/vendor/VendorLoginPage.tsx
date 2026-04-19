@@ -59,64 +59,76 @@ export default function VendorLoginPage() {
     if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
-      const phoneVariants = normalizePhoneVariants(cleaned);
-      // Check vendor verification status before sending OTP
-      const { data: vendorApp } = await supabase.from("vendor_applications").select("status, rejection_reason").eq("phone", cleaned).order("created_at", { ascending: false }).limit(1).maybeSingle();
-      const [{ data: productVendor }, { data: serviceVendor }] = await Promise.all([
-        supabase.from("vendors").select("status, mobile").in("mobile", phoneVariants).maybeSingle(),
-        supabase.from("service_vendors" as any).select("status, mobile").in("mobile", phoneVariants).maybeSingle(),
+      const intl = `+91${cleaned}`;
+      // Match any common phone storage format: raw 10 digits, +91 prefix, or stored with spaces
+      const phoneFilter = `mobile.eq.${intl},mobile.eq.${cleaned},mobile.ilike.%${cleaned}%`;
+
+      // Use .limit(1) without .maybeSingle() to avoid PostgREST errors when multiple rows match
+      const [productRes, serviceRes, appRes] = await Promise.all([
+        supabase.from("vendors").select("status, mobile").or(phoneFilter).limit(1),
+        supabase.from("service_vendors" as any).select("status, mobile").or(phoneFilter).limit(1),
+        supabase
+          .from("vendor_applications")
+          .select("status, rejection_reason, phone")
+          .or(`phone.eq.${intl},phone.eq.${cleaned},phone.ilike.%${cleaned}%`)
+          .order("created_at", { ascending: false })
+          .limit(1),
       ]);
-      const vendor = (productVendor || serviceVendor) as { status?: string; mobile?: string } | null;
-      
-      if (vendorApp && !vendor) {
-        if (vendorApp.status === 'rejected') {
-          setLoading(false);
-          toast.error(`Your vendor application was rejected. ${vendorApp.rejection_reason ? 'Reason: ' + vendorApp.rejection_reason : 'Please contact support for details.'}`, { duration: 7000 });
-          return;
-        }
-        if (!ACTIVE_VENDOR_STATUSES.has(vendorApp.status)) {
-          setLoading(false);
-          toast.info("Your profile is submitted for approval. You will be notified once your profile is approved.", { duration: 6000 });
-          return;
-        }
-      }
-      
+
+      const vendor = ((productRes.data?.[0]) || (serviceRes.data?.[0])) as { status?: string; mobile?: string } | undefined;
+      const vendorApp = appRes.data?.[0] as { status?: string; rejection_reason?: string } | undefined;
+
       if (vendor && vendor.status === 'rejected') {
         setLoading(false);
         toast.error("Your vendor profile has been rejected. Please contact support.", { duration: 6000 });
         return;
       }
 
-      if (vendor && !ACTIVE_VENDOR_STATUSES.has(vendor.status)) {
+      if (vendor && !ACTIVE_VENDOR_STATUSES.has(vendor.status as string)) {
         setLoading(false);
         toast.info("Your profile is submitted for approval. You will be notified once your profile is approved.", { duration: 6000 });
         return;
       }
-      
-      if (!vendorApp && !vendor) {
+
+      // No verified vendor row — fall back to application status messaging
+      if (!vendor && vendorApp) {
+        if (vendorApp.status === 'rejected') {
+          setLoading(false);
+          toast.error(`Your vendor application was rejected. ${vendorApp.rejection_reason ? 'Reason: ' + vendorApp.rejection_reason : 'Please contact support for details.'}`, { duration: 7000 });
+          return;
+        }
+        if (!ACTIVE_VENDOR_STATUSES.has(vendorApp.status as string)) {
+          setLoading(false);
+          toast.info("Your profile is submitted for approval. You will be notified once your profile is approved.", { duration: 6000 });
+          return;
+        }
+      }
+
+      if (!vendor && !vendorApp) {
         setLoading(false);
         toast.error("No vendor account found with this phone number. Please register first.");
         return;
       }
 
       // Rate limit check before Firebase OTP
-      const rateCheck = await checkOtpRateLimit(`${countryCode}${cleaned}`);
+      const rateCheck = await checkOtpRateLimit(intl);
       if (!rateCheck.allowed) {
         setLoading(false);
         toast.error("Too many OTP requests. Please try again after 5 minutes.", { duration: 6000 });
         setTimer(rateCheck.retry_after);
         return;
       }
-      
+
       await sendOTP(`${countryCode}${cleaned}`);
       setOtpSent(true); setTimer(30);
       toast.success("OTP sent successfully!");
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
+      console.error('[vendor-login] sendOTP failed:', err);
       if (err.code === "auth/too-many-requests") {
         toast.error("OTP limit reached. Please wait 2-3 minutes before retrying.", { duration: 6000 });
         setTimer(120);
-      } else toast.error("Failed to send OTP. Please try again.");
+      } else toast.error(err?.message || "Failed to send OTP. Please try again.");
       clearRecaptcha();
     } finally { setLoading(false); }
   };
