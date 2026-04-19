@@ -2489,6 +2489,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          cgst_amount: number | null
           commission_source: string | null
           courier_name: string | null
           created_at: string
@@ -2504,8 +2505,13 @@ export type Database = {
           effective_max_redemption: number | null
           gst_on_platform_fee: number | null
           id: string
+          igst_amount: number | null
+          invoice_no: string | null
+          is_interstate: boolean | null
           items: Json | null
           payment_reference_id: string | null
+          place_of_supply_code: string | null
+          place_of_supply_state: string | null
           platform_fee: number | null
           pod_confirmed: boolean | null
           pod_confirmed_at: string | null
@@ -2514,19 +2520,25 @@ export type Database = {
           rating_comment: string | null
           razorpay_order_id: string | null
           redemption_source: string | null
+          sgst_amount: number | null
           shipping_notes: string | null
           shipping_type: string | null
           status: string
           subtotal: number
           tax: number
+          taxable_value: number | null
+          tcs_amount: number | null
           total: number
           tracking_number: string | null
           tracking_url: string | null
           updated_at: string
+          vendor_gstin: string | null
           vendor_id: string
           vendor_name: string | null
+          vendor_state: string | null
         }
         Insert: {
+          cgst_amount?: number | null
           commission_source?: string | null
           courier_name?: string | null
           created_at?: string
@@ -2542,8 +2554,13 @@ export type Database = {
           effective_max_redemption?: number | null
           gst_on_platform_fee?: number | null
           id: string
+          igst_amount?: number | null
+          invoice_no?: string | null
+          is_interstate?: boolean | null
           items?: Json | null
           payment_reference_id?: string | null
+          place_of_supply_code?: string | null
+          place_of_supply_state?: string | null
           platform_fee?: number | null
           pod_confirmed?: boolean | null
           pod_confirmed_at?: string | null
@@ -2552,19 +2569,25 @@ export type Database = {
           rating_comment?: string | null
           razorpay_order_id?: string | null
           redemption_source?: string | null
+          sgst_amount?: number | null
           shipping_notes?: string | null
           shipping_type?: string | null
           status?: string
           subtotal?: number
           tax?: number
+          taxable_value?: number | null
+          tcs_amount?: number | null
           total?: number
           tracking_number?: string | null
           tracking_url?: string | null
           updated_at?: string
+          vendor_gstin?: string | null
           vendor_id: string
           vendor_name?: string | null
+          vendor_state?: string | null
         }
         Update: {
+          cgst_amount?: number | null
           commission_source?: string | null
           courier_name?: string | null
           created_at?: string
@@ -2580,8 +2603,13 @@ export type Database = {
           effective_max_redemption?: number | null
           gst_on_platform_fee?: number | null
           id?: string
+          igst_amount?: number | null
+          invoice_no?: string | null
+          is_interstate?: boolean | null
           items?: Json | null
           payment_reference_id?: string | null
+          place_of_supply_code?: string | null
+          place_of_supply_state?: string | null
           platform_fee?: number | null
           pod_confirmed?: boolean | null
           pod_confirmed_at?: string | null
@@ -2590,17 +2618,22 @@ export type Database = {
           rating_comment?: string | null
           razorpay_order_id?: string | null
           redemption_source?: string | null
+          sgst_amount?: number | null
           shipping_notes?: string | null
           shipping_type?: string | null
           status?: string
           subtotal?: number
           tax?: number
+          taxable_value?: number | null
+          tcs_amount?: number | null
           total?: number
           tracking_number?: string | null
           tracking_url?: string | null
           updated_at?: string
+          vendor_gstin?: string | null
           vendor_id?: string
           vendor_name?: string | null
+          vendor_state?: string | null
         }
         Relationships: [
           {
@@ -2979,7 +3012,9 @@ export type Database = {
           duration_hours: number | null
           duration_minutes: number | null
           emoji: string | null
+          gst_rate: number | null
           helpline_number: string | null
+          hsn_code: string | null
           id: string
           image: string | null
           images: Json | null
@@ -3001,6 +3036,7 @@ export type Database = {
           rejection_reason: string | null
           replacement_time: string | null
           reviews: number | null
+          sac_code: string | null
           sales: number | null
           short_description: string | null
           sku: string | null
@@ -3017,6 +3053,7 @@ export type Database = {
           thumbnail_image: string | null
           title: string
           updated_at: string
+          uqc: string | null
           vendor_id: string
           vendor_name: string | null
           weight: number | null
@@ -3035,7 +3072,9 @@ export type Database = {
           duration_hours?: number | null
           duration_minutes?: number | null
           emoji?: string | null
+          gst_rate?: number | null
           helpline_number?: string | null
+          hsn_code?: string | null
           id: string
           image?: string | null
           images?: Json | null
@@ -3057,6 +3096,7 @@ export type Database = {
           rejection_reason?: string | null
           replacement_time?: string | null
           reviews?: number | null
+          sac_code?: string | null
           sales?: number | null
           short_description?: string | null
           sku?: string | null
@@ -3073,6 +3113,7 @@ export type Database = {
           thumbnail_image?: string | null
           title: string
           updated_at?: string
+          uqc?: string | null
           vendor_id: string
           vendor_name?: string | null
           weight?: number | null
@@ -3091,7 +3132,9 @@ export type Database = {
           duration_hours?: number | null
           duration_minutes?: number | null
           emoji?: string | null
+          gst_rate?: number | null
           helpline_number?: string | null
+          hsn_code?: string | null
           id?: string
           image?: string | null
           images?: Json | null
@@ -3113,6 +3156,7 @@ export type Database = {
           rejection_reason?: string | null
           replacement_time?: string | null
           reviews?: number | null
+          sac_code?: string | null
           sales?: number | null
           short_description?: string | null
           sku?: string | null
@@ -3129,6 +3173,7 @@ export type Database = {
           thumbnail_image?: string | null
           title?: string
           updated_at?: string
+          uqc?: string | null
           vendor_id?: string
           vendor_name?: string | null
           weight?: number | null
@@ -4400,12 +4445,14 @@ export type Database = {
           deleted_at: string | null
           deletion_reason: string | null
           email: string
+          gstin: string | null
           id: string
           kyc_status: string | null
           max_redemption_percentage: number | null
           membership: string
           mobile: string
           name: string
+          pan: string | null
           plan_end_date: string | null
           plan_id: string | null
           plan_payment_status: string
@@ -4417,6 +4464,8 @@ export type Database = {
           shop_latitude: number | null
           shop_longitude: number | null
           shop_photo_url: string | null
+          state_code: string | null
+          state_name: string | null
           status: string
           total_orders: number | null
           total_products: number | null
@@ -4434,12 +4483,14 @@ export type Database = {
           deleted_at?: string | null
           deletion_reason?: string | null
           email?: string
+          gstin?: string | null
           id: string
           kyc_status?: string | null
           max_redemption_percentage?: number | null
           membership?: string
           mobile?: string
           name: string
+          pan?: string | null
           plan_end_date?: string | null
           plan_id?: string | null
           plan_payment_status?: string
@@ -4451,6 +4502,8 @@ export type Database = {
           shop_latitude?: number | null
           shop_longitude?: number | null
           shop_photo_url?: string | null
+          state_code?: string | null
+          state_name?: string | null
           status?: string
           total_orders?: number | null
           total_products?: number | null
@@ -4468,12 +4521,14 @@ export type Database = {
           deleted_at?: string | null
           deletion_reason?: string | null
           email?: string
+          gstin?: string | null
           id?: string
           kyc_status?: string | null
           max_redemption_percentage?: number | null
           membership?: string
           mobile?: string
           name?: string
+          pan?: string | null
           plan_end_date?: string | null
           plan_id?: string | null
           plan_payment_status?: string
@@ -4485,6 +4540,8 @@ export type Database = {
           shop_latitude?: number | null
           shop_longitude?: number | null
           shop_photo_url?: string | null
+          state_code?: string | null
+          state_name?: string | null
           status?: string
           total_orders?: number | null
           total_products?: number | null
@@ -6099,12 +6156,14 @@ export type Database = {
           deleted_at: string | null
           deletion_reason: string | null
           email: string
+          gstin: string | null
           id: string
           kyc_status: string | null
           max_redemption_percentage: number | null
           membership: string
           mobile: string
           name: string
+          pan: string | null
           plan_end_date: string | null
           plan_id: string | null
           plan_payment_status: string
@@ -6116,6 +6175,8 @@ export type Database = {
           shop_latitude: number | null
           shop_longitude: number | null
           shop_photo_url: string | null
+          state_code: string | null
+          state_name: string | null
           status: string
           total_orders: number | null
           total_products: number | null
@@ -6133,12 +6194,14 @@ export type Database = {
           deleted_at?: string | null
           deletion_reason?: string | null
           email?: string
+          gstin?: string | null
           id: string
           kyc_status?: string | null
           max_redemption_percentage?: number | null
           membership?: string
           mobile?: string
           name: string
+          pan?: string | null
           plan_end_date?: string | null
           plan_id?: string | null
           plan_payment_status?: string
@@ -6150,6 +6213,8 @@ export type Database = {
           shop_latitude?: number | null
           shop_longitude?: number | null
           shop_photo_url?: string | null
+          state_code?: string | null
+          state_name?: string | null
           status?: string
           total_orders?: number | null
           total_products?: number | null
@@ -6167,12 +6232,14 @@ export type Database = {
           deleted_at?: string | null
           deletion_reason?: string | null
           email?: string
+          gstin?: string | null
           id?: string
           kyc_status?: string | null
           max_redemption_percentage?: number | null
           membership?: string
           mobile?: string
           name?: string
+          pan?: string | null
           plan_end_date?: string | null
           plan_id?: string | null
           plan_payment_status?: string
@@ -6184,6 +6251,8 @@ export type Database = {
           shop_latitude?: number | null
           shop_longitude?: number | null
           shop_photo_url?: string | null
+          state_code?: string | null
+          state_name?: string | null
           status?: string
           total_orders?: number | null
           total_products?: number | null
