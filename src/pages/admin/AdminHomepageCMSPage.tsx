@@ -154,12 +154,70 @@ function SectionModal({ open, onClose, section, onSave }: any) {
 
 /* ── Video Ad Modal ── */
 function VideoAdModal({ open, onClose, ad, onSave }: any) {
-  const [form, setForm] = useState(ad || {
-    title: "", video_url: "", thumbnail_url: "", duration_seconds: 0,
-    cta_text: "", cta_link: "", status: "active", start_date: "", end_date: "",
-    display_mode: "floating", show_delay_seconds: 3, auto_open_fullscreen: false,
+  // Derive an initial cta_target_type / cta_target_id from any existing cta_link.
+  const parseExistingLink = (link?: string) => {
+    if (!link) return { cta_target_type: "none", cta_target_id: "" };
+    if (link.startsWith("/app/product/")) return { cta_target_type: "product", cta_target_id: link.replace("/app/product/", "") };
+    if (link.startsWith("/app/service/")) return { cta_target_type: "service", cta_target_id: link.replace("/app/service/", "") };
+    if (link.startsWith("/app/browse?category=")) return { cta_target_type: "product_category", cta_target_id: decodeURIComponent(link.replace("/app/browse?category=", "")) };
+    if (link.startsWith("/app/services?category=")) return { cta_target_type: "service_category", cta_target_id: decodeURIComponent(link.replace("/app/services?category=", "")) };
+    return { cta_target_type: "url", cta_target_id: link };
+  };
+
+  const [form, setForm] = useState(() => {
+    const base = ad || {
+      title: "", video_url: "", thumbnail_url: "", duration_seconds: 0,
+      cta_text: "", cta_link: "", status: "active", start_date: "", end_date: "",
+      display_mode: "floating", show_delay_seconds: 3, auto_open_fullscreen: false,
+    };
+    return { ...base, ...parseExistingLink(base.cta_link) };
   });
   const [saving, setSaving] = useState(false);
+
+  // Lookup data for the CTA target picker
+  const { data: productCategories = [] } = useQuery({
+    queryKey: ["cms_product_categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("id,name").eq("status", "active").order("name");
+      return (data || []) as any[];
+    },
+  });
+  const { data: serviceCategories = [] } = useQuery({
+    queryKey: ["cms_service_categories"],
+    queryFn: async () => {
+      const { data } = await supabase.from("service_categories" as any).select("id,name").eq("status", "active").order("name");
+      return (data || []) as any[];
+    },
+  });
+  const { data: productList = [] } = useQuery({
+    queryKey: ["cms_products_for_ad", form.cta_target_type],
+    enabled: form.cta_target_type === "product",
+    queryFn: async () => {
+      const { data } = await supabase.from("products").select("id,name").eq("status", "active").order("name").limit(500);
+      return (data || []) as any[];
+    },
+  });
+  const { data: serviceList = [] } = useQuery({
+    queryKey: ["cms_services_for_ad", form.cta_target_type],
+    enabled: form.cta_target_type === "service",
+    queryFn: async () => {
+      const { data } = await supabase.from("services" as any).select("id,title").eq("status", "active").order("title").limit(500);
+      return (data || []) as any[];
+    },
+  });
+
+  // Build the cta_link string from the structured picker selection.
+  const buildCtaLink = (type: string, id: string): string => {
+    if (!id && type !== "none") return "";
+    switch (type) {
+      case "product": return `/app/product/${id}`;
+      case "service": return `/app/service/${id}`;
+      case "product_category": return `/app/browse?category=${encodeURIComponent(id)}`;
+      case "service_category": return `/app/services?category=${encodeURIComponent(id)}`;
+      case "url": return id;
+      default: return "";
+    }
+  };
 
   const handleSave = async () => {
     if (!form.title || !form.video_url) { toast.error("Title and video URL required"); return; }
@@ -211,8 +269,76 @@ function VideoAdModal({ open, onClose, ad, onSave }: any) {
               </Select>
             </div>
           </div>
-          <div><Label>CTA Text</Label><Input value={form.cta_text || ""} onChange={e => setForm({ ...form, cta_text: e.target.value })} /></div>
-          <div><Label>CTA Link</Label><Input value={form.cta_link || ""} onChange={e => setForm({ ...form, cta_link: e.target.value })} /></div>
+          <div><Label>CTA Button Text</Label><Input value={form.cta_text || ""} onChange={e => setForm({ ...form, cta_text: e.target.value })} placeholder="e.g. Click here, Shop Now, Book Now" /></div>
+
+          {/* Structured CTA target picker — admin chooses what the 'Click here' button opens */}
+          <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">CTA Destination</Label>
+            <p className="text-[11px] text-muted-foreground">Where the 'Click here' button takes the customer.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Link Type</Label>
+                <Select
+                  value={form.cta_target_type || "none"}
+                  onValueChange={(v) => {
+                    const next = { ...form, cta_target_type: v, cta_target_id: "" };
+                    next.cta_link = buildCtaLink(v, "");
+                    setForm(next);
+                  }}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No link</SelectItem>
+                    <SelectItem value="product_category">Product Category</SelectItem>
+                    <SelectItem value="product">Specific Product</SelectItem>
+                    <SelectItem value="service_category">Service Category</SelectItem>
+                    <SelectItem value="service">Specific Service</SelectItem>
+                    <SelectItem value="url">Custom URL</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Target</Label>
+                {form.cta_target_type === "product_category" && (
+                  <Select value={form.cta_target_id || ""} onValueChange={(v) => setForm({ ...form, cta_target_id: v, cta_link: buildCtaLink("product_category", v) })}>
+                    <SelectTrigger><SelectValue placeholder="Pick a category" /></SelectTrigger>
+                    <SelectContent>{productCategories.map((c: any) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
+                {form.cta_target_type === "service_category" && (
+                  <Select value={form.cta_target_id || ""} onValueChange={(v) => setForm({ ...form, cta_target_id: v, cta_link: buildCtaLink("service_category", v) })}>
+                    <SelectTrigger><SelectValue placeholder="Pick a service category" /></SelectTrigger>
+                    <SelectContent>{serviceCategories.map((c: any) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
+                {form.cta_target_type === "product" && (
+                  <Select value={form.cta_target_id || ""} onValueChange={(v) => setForm({ ...form, cta_target_id: v, cta_link: buildCtaLink("product", v) })}>
+                    <SelectTrigger><SelectValue placeholder="Pick a product" /></SelectTrigger>
+                    <SelectContent>{productList.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
+                {form.cta_target_type === "service" && (
+                  <Select value={form.cta_target_id || ""} onValueChange={(v) => setForm({ ...form, cta_target_id: v, cta_link: buildCtaLink("service", v) })}>
+                    <SelectTrigger><SelectValue placeholder="Pick a service" /></SelectTrigger>
+                    <SelectContent>{serviceList.map((s: any) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}</SelectContent>
+                  </Select>
+                )}
+                {form.cta_target_type === "url" && (
+                  <Input
+                    value={form.cta_target_id || ""}
+                    onChange={(e) => setForm({ ...form, cta_target_id: e.target.value, cta_link: buildCtaLink("url", e.target.value) })}
+                    placeholder="https://… or /app/…"
+                  />
+                )}
+                {(!form.cta_target_type || form.cta_target_type === "none") && (
+                  <Input disabled placeholder="Pick a link type first" />
+                )}
+              </div>
+            </div>
+            {form.cta_link && (
+              <p className="text-[11px] text-muted-foreground">Resolved link: <code className="font-mono">{form.cta_link}</code></p>
+            )}
+          </div>
 
           {/* Display behaviour */}
           <div className="grid grid-cols-2 gap-4 pt-2 border-t">
@@ -341,6 +467,8 @@ export default function AdminHomepageCMSPage() {
   const saveVideoAd = async (form: any) => {
     const payload = { ...form };
     delete payload.id; delete payload.created_at; delete payload.updated_at; delete payload.impressions; delete payload.clicks;
+    // Strip UI-only helper fields that are not real columns on video_ads
+    delete payload.cta_target_type; delete payload.cta_target_id;
     if (form.id) {
       const { error } = await supabase.from("video_ads" as any).update(payload as any).eq("id", form.id);
       if (error) throw error;

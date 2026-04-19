@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Maximize2, Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { X, Maximize2, Play, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoAdOverlay } from "./VideoAdOverlay";
@@ -30,6 +31,7 @@ export function FloatingVideoAd({
   onClose,
 }: FloatingVideoAdProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const navigate = useNavigate();
   const [playing, setPlaying] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const impressionLogged = useRef(false);
@@ -112,7 +114,25 @@ export function FloatingVideoAd({
     }
   };
 
-  // Fullscreen mode delegates to the existing VideoAdOverlay
+  // Handle "Click here" CTA: log click, then route in-app for /paths or open external URLs.
+  const handleCTA = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!ctaLink) return;
+    supabase.from("homepage_analytics" as any).insert({
+      entity_type: "video_ad",
+      entity_id: adId,
+      event_type: "click",
+      session_id: sessionStorage.getItem("p4u_session_id") || "anon",
+    } as any).then(() => {});
+    if (ctaLink.startsWith("/")) {
+      navigate(ctaLink);
+      onClose();
+    } else {
+      window.open(ctaLink, "_blank", "noopener,noreferrer");
+    }
+  };
+
+
   if (fullscreen) {
     return (
       <VideoAdOverlay
@@ -189,6 +209,17 @@ export function FloatingVideoAd({
               <Play className="h-3 w-3 text-white fill-white" />
             </div>
           </div>
+        )}
+
+        {ctaLink && (
+          <button
+            onClick={handleCTA}
+            aria-label={ctaText || "Click here"}
+            className="absolute bottom-1 left-1/2 -translate-x-1/2 max-w-[calc(100%-0.5rem)] truncate px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-lg flex items-center gap-1 hover:scale-105 transition-transform"
+          >
+            <span className="truncate">{ctaText || "Click here"}</span>
+            <ExternalLink className="h-2.5 w-2.5 shrink-0" />
+          </button>
         )}
       </motion.div>
     </AnimatePresence>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { X, Volume2, VolumeX, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,6 +17,7 @@ interface VideoAdOverlayProps {
 
 export function VideoAdOverlay({ videoUrl, thumbnailUrl, ctaText, ctaLink, adId, onClose }: VideoAdOverlayProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const navigate = useNavigate();
   const [muted, setMuted] = useState(true);
   const [progress, setProgress] = useState(0);
   const playableVideoUrl = usePlayableVideoSource(videoUrl);
@@ -43,7 +45,13 @@ export function VideoAdOverlay({ videoUrl, thumbnailUrl, ctaText, ctaLink, adId,
       entity_type: "video_ad", entity_id: adId, event_type: "click",
       session_id: sessionStorage.getItem("p4u_session_id") || "anon",
     } as any);
-    if (ctaLink) window.location.href = ctaLink;
+    if (!ctaLink) return;
+    if (ctaLink.startsWith("/")) {
+      navigate(ctaLink);
+      onClose();
+    } else {
+      window.location.href = ctaLink;
+    }
   };
 
   return (
@@ -90,15 +98,15 @@ export function VideoAdOverlay({ videoUrl, thumbnailUrl, ctaText, ctaLink, adId,
           <source src={playableVideoUrl || videoUrl} />
         </video>
 
-        {/* CTA at bottom */}
-        {ctaText && (
+        {/* CTA at bottom — always shown when a destination link is configured */}
+        {ctaLink && (
           <div className="absolute bottom-8 left-0 right-0 flex justify-center z-20 px-6">
             <Button
               onClick={handleCTA}
               className="gap-2 rounded-full px-8 py-3 text-base font-semibold shadow-2xl"
               size="lg"
             >
-              {ctaText} <ExternalLink className="h-4 w-4" />
+              {ctaText || "Click here"} <ExternalLink className="h-4 w-4" />
             </Button>
           </div>
         )}
