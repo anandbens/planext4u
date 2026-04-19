@@ -212,7 +212,11 @@ async function processProductUpload(rows: string[][], headers: string[], uploadI
       } else if (an && !av) rowErrors.push(`attribute_value_${a} required when attribute_name_${a} provided`);
     }
 
-    if (rowErrors.length > 0) { errors.push({ row: i + 2, data: record, errors: rowErrors }); continue; }
+    if (rowErrors.length > 0) {
+      errors.push({ row: i + 2, data: record, errors: rowErrors });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, rowErrors);
+      continue;
+    }
 
     try {
       let categoryId = "", categoryName = record.category_name || "", subcategoryId = "", subcategoryName = record.subcategory_name || "";
