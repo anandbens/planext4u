@@ -114,7 +114,25 @@ export function FloatingVideoAd({
     }
   };
 
-  // Fullscreen mode delegates to the existing VideoAdOverlay
+  // Handle "Click here" CTA: log click, then route in-app for /paths or open external URLs.
+  const handleCTA = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!ctaLink) return;
+    supabase.from("homepage_analytics" as any).insert({
+      entity_type: "video_ad",
+      entity_id: adId,
+      event_type: "click",
+      session_id: sessionStorage.getItem("p4u_session_id") || "anon",
+    } as any).then(() => {});
+    if (ctaLink.startsWith("/")) {
+      navigate(ctaLink);
+      onClose();
+    } else {
+      window.open(ctaLink, "_blank", "noopener,noreferrer");
+    }
+  };
+
+
   if (fullscreen) {
     return (
       <VideoAdOverlay
