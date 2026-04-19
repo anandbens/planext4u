@@ -650,6 +650,77 @@ export default function FileUploadsPage() {
     else processVendorUpload(rows, headers, newId).then(fetchUploads);
   };
 
+  const downloadFullReport = async (upload: any) => {
+    // Fetch every archived row (success + error) for this upload
+    const { data: archivedRows, error } = await supabase
+      .from("file_upload_rows" as any)
+      .select("row_number, raw_data, status, action, resulting_record_id, error_messages")
+      .eq("upload_id", upload.id)
+      .order("row_number", { ascending: true });
+
+    if (error) { toast.error("Failed to load row archive: " + error.message); return; }
+    if (!archivedRows || archivedRows.length === 0) {
+      toast.error("No archived row data found for this upload");
+      return;
+    }
+
+    // Collect all unique data keys across rows (preserves original column order best-effort)
+    const keySet = new Set<string>();
+    archivedRows.forEach((r: any) => {
+      if (r.raw_data && typeof r.raw_data === "object") {
+        Object.keys(r.raw_data).forEach(k => keySet.add(k));
+      }
+    });
+    const dataKeys = Array.from(keySet);
+
+    // Determine max number of error messages per row to pad columns evenly
+    const maxErrors = Math.max(
+      1,
+      ...archivedRows.map((r: any) => Array.isArray(r.error_messages) ? r.error_messages.length : 0),
+    );
+
+    // Build header: original columns + Status + Remarks + Error_1..N
+    const csvHeaders = [
+      "Row",
+      ...dataKeys,
+      "Upload_Status",
+      "Action",
+      "Resulting_Record_ID",
+      "Remarks",
+    ];
+    for (let i = 1; i <= maxErrors; i++) csvHeaders.push(`Error_${i}`);
+
+    const escape = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+
+    const csvRows = archivedRows.map((r: any) => {
+      const status = r.status === "success" ? "Imported" : "Errored";
+      const errs: string[] = Array.isArray(r.error_messages) ? r.error_messages : [];
+      const remarks = r.status === "success"
+        ? (r.action === "updated" ? "Record updated successfully" : "Record created successfully")
+        : (errs[0] || "Import failed");
+
+      const vals: string[] = [
+        String(r.row_number),
+        ...dataKeys.map(k => String(r.raw_data?.[k] ?? "")),
+        status,
+        r.action || "",
+        r.resulting_record_id || "",
+        remarks,
+      ];
+      for (let i = 0; i < maxErrors; i++) vals.push(errs[i] || "");
+      return vals.map(escape).join(",");
+    });
+
+    const csv = [csvHeaders.join(","), ...csvRows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const baseName = upload.file_name.replace(/\.csv$/i, "");
+    a.href = url; a.download = `${baseName}_full_report.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${archivedRows.length} rows with status & remarks`);
+  };
+
   const downloadErrors = (upload: any) => {
     if (!upload.error_log || upload.error_log.length === 0) return;
     const errorData = upload.error_log as any[];
@@ -790,6 +861,11 @@ export default function FileUploadsPage() {
                               <RefreshCw className="h-3 w-3" /> Re-process
                             </Button>
                           </>
+                        )}
+                        {(u.success_count > 0 || u.error_count > 0) && (
+                          <Button variant="ghost" size="sm" onClick={() => downloadFullReport(u)} className="gap-1 text-success">
+                            <Download className="h-3 w-3" /> Full Report
+                          </Button>
                         )}
                         {u.error_count > 0 && (
                           <Button variant="ghost" size="sm" onClick={() => downloadErrors(u)} className="gap-1 text-destructive">
