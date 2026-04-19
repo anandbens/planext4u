@@ -114,7 +114,7 @@ function HeroBannerCarousel({ banners, cmsBanners }: { banners: any[]; cmsBanner
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl shadow-lg mx-4 mt-2"
+    <div className="group relative overflow-hidden rounded-2xl shadow-lg mx-4 mt-2"
       style={themeColor ? { background: themeColor } : undefined}
       onTouchStart={e => { touchStart.current = e.touches[0].clientX; }}
       onTouchEnd={e => {
