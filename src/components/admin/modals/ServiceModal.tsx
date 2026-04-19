@@ -170,15 +170,24 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
   const handleSave = async () => {
     const errors: string[] = [];
     if (!form.title.trim()) errors.push("Service title is required");
+    else if (form.title.trim().length < 2) errors.push("Title must be at least 2 characters");
+    else if (form.title.length > 200) errors.push("Title must be under 200 characters");
     if (!form.vendor_id) errors.push("Vendor is required");
     if (!form.category_id) errors.push("Service category is required");
     if (!form.description?.trim()) errors.push("Description is required");
     if (!form.short_description?.trim()) errors.push("Short Description is required");
     if (!form.long_description?.trim()) errors.push("Long Description is required");
     if (form.price <= 0) errors.push("Base price must be greater than 0");
+    if (form.discount && form.discount < 0) errors.push("Discount cannot be negative");
+    if (form.discount && form.discount > form.price) errors.push("Discount cannot exceed price");
     if (!form.duration?.trim()) errors.push("Duration is required");
     if (!form.service_area?.trim()) errors.push("Service area is required");
     if (!form.image) errors.push("Service image is required");
+    if (form.sac_code && !/^\d{4,8}$/.test(form.sac_code.trim())) errors.push("SAC code must be 4-8 digits");
+    if (form.gst_rate !== null && form.gst_rate !== undefined && (form.gst_rate < 0 || form.gst_rate > 28)) errors.push("GST rate must be between 0 and 28");
+    if (form.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) errors.push("Slug must be lowercase letters/numbers/hyphens only");
+    if (form.booking_duration_minutes < 5 || form.booking_duration_minutes > 1440) errors.push("Booking duration must be 5-1440 minutes");
+    if (form.max_bookings_per_slot < 1) errors.push("Max bookings per slot must be at least 1");
     if (errors.length > 0) { toast.error(errors[0]); return; }
     setSaving(true);
     try {

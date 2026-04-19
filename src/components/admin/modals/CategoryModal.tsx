@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
+import { toast } from "sonner";
 
 interface CategoryModalProps {
   category: Category | null;
@@ -66,15 +67,30 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
   }, [category, mode, defaultAsSubcategory]);
 
   const handleSave = async () => {
-    if (!form.name) return;
+    // Validation
+    if (!form.name?.trim()) { toast.error("Category name is required"); return; }
+    if (form.name.trim().length < 2) { toast.error("Name must be at least 2 characters"); return; }
+    if (form.name.length > 80) { toast.error("Name must be under 80 characters"); return; }
+    if (form.commission_rate) {
+      const rate = parseFloat(form.commission_rate);
+      if (isNaN(rate) || rate < 0 || rate > 100) {
+        toast.error("Commission rate must be a number between 0 and 100");
+        return;
+      }
+    }
+    if (form.promotion_active && !form.promotion_title?.trim()) {
+      toast.error("Promotion title is required when promotion is active");
+      return;
+    }
     setSaving(true);
     try {
       const payload: any = {
         ...form,
+        name: form.name.trim(),
         parent_id: form.parent_id || null,
         commission_rate: form.commission_rate ? parseFloat(form.commission_rate) : null,
         promotion_banner_url: form.promotion_banner_url || null,
-        promotion_title: form.promotion_title || null,
+        promotion_title: form.promotion_title?.trim() || null,
         promotion_active: form.promotion_active,
         is_emergency: form.is_emergency,
         verification_status: form.verification_status,
@@ -82,6 +98,8 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
       onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to save category");
     } finally { setSaving(false); }
   };
 
