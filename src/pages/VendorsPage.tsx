@@ -167,7 +167,11 @@ export default function VendorsPage() {
         const { data: appData } = await supabase.from('vendor_applications').select('*').eq('id', id).single();
         if (appData) {
           const a = appData;
-          const newVendor: any = {
+          // Guard: this page is for PRODUCT vendors. Block approval if applicant registered as a service provider.
+          if (a.vendor_category && a.vendor_category !== 'product') {
+            toast.error("This applicant registered as a Service Provider. Please approve them from the Service Vendors page.");
+            return;
+          }
             id: `VND-${Date.now()}`,
             name: updates.name || a.name, business_name: updates.business_name || a.business_name,
             mobile: updates.mobile || a.phone, email: updates.email || a.email,
