@@ -183,17 +183,6 @@ export function getCurrentFinancialYear(): number {
   return now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1;
 }
 
-/** Convert number to Indian numbering words (used on tax invoices & audit summaries). */
-export function amountInWordsINR(amount: number): string {
-  if (!isFinite(amount)) return "";
-  const rupees = Math.floor(Math.abs(amount));
-  const paise = Math.round((Math.abs(amount) - rupees) * 100);
-  const sign = amount < 0 ? "Minus " : "";
-  const words = numToIndianWords(rupees);
-  const paiseWords = paise > 0 ? ` and ${numToIndianWords(paise)} Paise` : "";
-  return `${sign}Rupees ${words}${paiseWords} Only`;
-}
-
 function numToIndianWords(n: number): string {
   if (n === 0) return "Zero";
   const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
