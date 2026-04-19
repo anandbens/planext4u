@@ -29,6 +29,13 @@ const financeReports = [
 ];
 
 export default function ReportsPage() {
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash) {
+      const el = document.getElementById(hash.slice(1));
+      if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    }
+  }, [hash]);
   return (
     <AdminLayout>
       <div className="page-header">
