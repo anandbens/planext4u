@@ -943,6 +943,50 @@ export type Database = {
         }
         Relationships: []
       }
+      file_upload_rows: {
+        Row: {
+          action: string | null
+          created_at: string
+          error_messages: Json | null
+          id: string
+          raw_data: Json
+          resulting_record_id: string | null
+          row_number: number
+          status: string
+          upload_id: string
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string
+          error_messages?: Json | null
+          id?: string
+          raw_data: Json
+          resulting_record_id?: string | null
+          row_number: number
+          status?: string
+          upload_id: string
+        }
+        Update: {
+          action?: string | null
+          created_at?: string
+          error_messages?: Json | null
+          id?: string
+          raw_data?: Json
+          resulting_record_id?: string | null
+          row_number?: number
+          status?: string
+          upload_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_upload_rows_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "file_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       file_uploads: {
         Row: {
           created_at: string
@@ -951,6 +995,7 @@ export type Database = {
           file_name: string
           file_url: string | null
           id: string
+          original_file_path: string | null
           status: string
           success_count: number
           total_records: number
@@ -965,6 +1010,7 @@ export type Database = {
           file_name: string
           file_url?: string | null
           id?: string
+          original_file_path?: string | null
           status?: string
           success_count?: number
           total_records?: number
@@ -979,6 +1025,7 @@ export type Database = {
           file_name?: string
           file_url?: string | null
           id?: string
+          original_file_path?: string | null
           status?: string
           success_count?: number
           total_records?: number
