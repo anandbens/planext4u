@@ -504,6 +504,44 @@ export const api = {
       'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue',
       'plan_id', 'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'max_redemption_percentage', 'kyc_status', 'referred_by'];
 
+    // ── Mobile validation: exactly 10 digits ───────────────────────────────
+    if ('mobile' in data) {
+      const raw = String((data as any).mobile ?? '').trim();
+      if (raw.length > 0) {
+        let digits = raw.replace(/\D/g, '');
+        if (digits.length > 10) digits = digits.slice(-10);
+        if (!/^\d{10}$/.test(digits)) {
+          throw new Error("Mobile number must be exactly 10 digits.");
+        }
+        (data as any).mobile = digits;
+      }
+    }
+    if ('email' in data && typeof (data as any).email === 'string') {
+      (data as any).email = (data as any).email.trim().toLowerCase();
+    }
+
+    // ── Duplicate detection across BOTH vendor tables ──────────────────────
+    const newEmail = (data as any).email;
+    const newMobile = (data as any).mobile;
+    if (newEmail) {
+      const [{ data: a }, { data: b }] = await Promise.all([
+        supabase.from('vendors').select('id').eq('email', newEmail).neq('id', id).is('deleted_at', null).limit(1),
+        supabase.from('service_vendors').select('id').eq('email', newEmail).neq('id', id).limit(1),
+      ]);
+      if ((a && a.length) || (b && b.length)) {
+        throw new Error("This email is already used by another vendor.");
+      }
+    }
+    if (newMobile) {
+      const [{ data: a }, { data: b }] = await Promise.all([
+        supabase.from('vendors').select('id').eq('mobile', newMobile).neq('id', id).is('deleted_at', null).limit(1),
+        supabase.from('service_vendors').select('id').eq('mobile', newMobile).neq('id', id).limit(1),
+      ]);
+      if ((a && a.length) || (b && b.length)) {
+        throw new Error("This mobile number is already used by another vendor.");
+      }
+    }
+
     const buildFiltered = (allowed: string[]) => {
       const out: Record<string, any> = {};
       for (const key of allowed) {
@@ -516,21 +554,30 @@ export const api = {
       return out;
     };
 
+    const friendlyDup = (err: any) => {
+      const msg = (err?.message || '').toLowerCase();
+      if (msg.includes('duplicate') || msg.includes('unique')) {
+        if (msg.includes('mobile')) return new Error("This mobile number is already in use.");
+        if (msg.includes('email')) return new Error("This email is already in use.");
+      }
+      return err;
+    };
+
     // Detect which table this id belongs to (IDs may be SVN-* for service vendors, VND-* for product vendors)
     // Important: if vendors update returns 0 rows AND no error, fall through to service_vendors instead of throwing.
     const filtered = buildFiltered(validVendorFields);
     const { data: updated, error: e1 } = await supabase.from('vendors').update(filtered).eq('id', id).select();
-    if (!e1 && updated && updated.length > 0) return { success: true };
+    if (e1) throw friendlyDup(e1);
+    if (updated && updated.length > 0) return { success: true };
 
-    // Either errored or no rows matched — try service_vendors as a fallback
+    // No rows matched — try service_vendors as a fallback
     const svcFiltered = buildFiltered(validSvcVendorFields);
     const { data: svcUpdated, error: e2 } = await supabase.from('service_vendors').update(svcFiltered).eq('id', id).select();
     if (e2) {
       console.error("Service vendor update error:", e2);
-      throw e2;
+      throw friendlyDup(e2);
     }
     if (!svcUpdated || svcUpdated.length === 0) {
-      // Neither table had a matching row updatable by this user
       throw new Error("Update failed — no matching vendor row was updated. Check the vendor ID and your permissions.");
     }
     return { success: true };
