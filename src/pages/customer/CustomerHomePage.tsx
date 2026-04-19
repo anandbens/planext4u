@@ -490,7 +490,7 @@ export default function CustomerHomePage() {
             <Link to="/app/browse" className="text-xs text-primary flex items-center gap-0.5 font-medium">View All <ChevronRight className="h-3 w-3" /></Link>
           </div>
           <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
-            className="grid gap-3 grid-cols-4 sm:grid-cols-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))' }}>
+            className="grid grid-cols-4 sm:grid-cols-5 gap-3 md:[grid-template-columns:repeat(auto-fit,minmax(96px,1fr))]">
             {isLoading ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
               parentCategories.map((c: any) => (
                 <motion.div key={c.id} variants={itemAnim}>
