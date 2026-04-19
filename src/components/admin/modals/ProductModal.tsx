@@ -48,6 +48,7 @@ const emptyForm = {
   manage_stock: false, stock_status: "in_stock",
   parent_item_id: "" as string, parent_item_name: "" as string,
   replacement_time: "12 Hours" as string,
+  hsn_code: "" as string, sac_code: "" as string,
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete, isVendor, preselectedVendorId }: ProductModalProps) {
@@ -234,6 +235,8 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         parent_item_name: (product as any).parent_item_name || "",
         socio_shopping_icon: (product as any).socio_shopping_icon || "",
         replacement_time: (product as any).replacement_time || "12 Hours",
+        hsn_code: (product as any).hsn_code || "",
+        sac_code: (product as any).sac_code || "",
       });
       setEditMode(mode === "edit");
       setActiveTab("general");
@@ -763,7 +766,31 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                   ) : <p className="text-sm font-medium mt-1">{taxSlabs?.find((t: any) => t.id === form.tax_slab_id)?.name || `₹${form.tax}`}</p>}
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">
+                    {form.product_type === "service" ? "SAC Code (Service Code)" : "HSN Code"}
+                    <span className="text-[10px] text-muted-foreground/70 ml-1">— required for GST invoice</span>
+                  </Label>
+                  {editMode && !vendorRestricted ? (
+                    <Input
+                      value={form.product_type === "service" ? form.sac_code : form.hsn_code}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 8);
+                        setForm({ ...form, [form.product_type === "service" ? "sac_code" : "hsn_code"]: val });
+                      }}
+                      className="mt-1 font-mono"
+                      placeholder={form.product_type === "service" ? "e.g. 998314" : "e.g. 84713010"}
+                      maxLength={8}
+                    />
+                  ) : <p className="text-sm font-medium mt-1 font-mono">{(form.product_type === "service" ? form.sac_code : form.hsn_code) || "—"}</p>}
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Tax Amount (auto)</Label>
+                  <p className="text-sm font-medium mt-2">₹{taxAmount.toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground">Discount Type</Label>
                   {editMode ? (
@@ -779,10 +806,6 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <div>
                   <Label className="text-xs text-muted-foreground">Discount {form.discount_type === "percentage" ? "(%)" : "(₹)"}</Label>
                   {editMode ? <Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1 text-success">{form.discount > 0 ? (form.discount_type === "percentage" ? `${form.discount}%` : `₹${form.discount}`) : "—"}</p>}
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground">Tax Amount</Label>
-                  <p className="text-sm font-medium mt-2">₹{taxAmount.toLocaleString()}</p>
                 </div>
               </div>
               <Separator />
