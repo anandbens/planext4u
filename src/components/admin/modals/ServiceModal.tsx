@@ -43,6 +43,8 @@ const emptyForm = {
   pricing_slots: [] as PricingSlot[],
   booking_duration_minutes: 60,
   max_bookings_per_slot: 1,
+  sac_code: "",
+  gst_rate: 18,
 };
 
 export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCreate, onDelete }: ServiceModalProps) {

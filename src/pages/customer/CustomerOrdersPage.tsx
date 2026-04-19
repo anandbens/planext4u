@@ -107,45 +107,91 @@ export default function CustomerOrdersPage() {
           </div>
         </Card>
 
-        <div className="space-y-3">
-          {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />) :
-            filtered.length === 0 ? <p className="text-center py-16 text-muted-foreground">{searchTerm || dateFrom || dateTo ? 'No matching orders' : 'No orders yet'}</p> :
-            paginated.map((o) => (
-              <Link to={`/app/orders/${o.id}`} key={o.id}>
-                <Card className="p-4 hover:shadow-sm transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="text-sm font-semibold">{o.id}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })} • {o.vendor_name}</p>
-                    </div>
-                    <Badge className={(statusColor[o.status] || "bg-muted") + " border-0"}>{o.status.replace("_", " ")}</Badge>
-                  </div>
-                  {o.items?.map((item: any, i: number) => (
-                    <div key={i} className="flex items-center gap-3 mb-1">
-                      <div className="h-10 w-10 bg-secondary/30 rounded-lg flex items-center justify-center text-lg shrink-0 overflow-hidden">
-                        {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji}</span>}
+        <Tabs defaultValue="orders" className="mb-3">
+          <TabsList className="grid grid-cols-2 w-full">
+            <TabsTrigger value="orders">Product Orders ({filtered.length})</TabsTrigger>
+            <TabsTrigger value="bookings">Service Bookings ({(bookings || []).length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="orders" className="mt-3">
+            <div className="space-y-3">
+              {isLoading ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />) :
+                filtered.length === 0 ? <p className="text-center py-16 text-muted-foreground">{searchTerm || dateFrom || dateTo ? 'No matching orders' : 'No orders yet'}</p> :
+                paginated.map((o) => (
+                  <Link to={`/app/orders/${o.id}`} key={o.id}>
+                    <Card className="p-4 hover:shadow-sm transition-shadow">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="text-sm font-semibold">{o.id}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })} • {o.vendor_name}</p>
+                        </div>
+                        <Badge className={(statusColor[o.status] || "bg-muted") + " border-0"}>{o.status.replace("_", " ")}</Badge>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{item.title}</p>
-                        <p className="text-xs text-muted-foreground">Qty: {item.qty} × ₹{(item.price || 0).toLocaleString()}</p>
+                      {o.items?.map((item: any, i: number) => (
+                        <div key={i} className="flex items-center gap-3 mb-1">
+                          <div className="h-10 w-10 bg-secondary/30 rounded-lg flex items-center justify-center text-lg shrink-0 overflow-hidden">
+                            {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji}</span>}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{item.title}</p>
+                            <p className="text-xs text-muted-foreground">Qty: {item.qty} × ₹{(item.price || 0).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/30">
+                        <p className="text-sm font-bold">₹{o.total.toLocaleString()}</p>
+                        <div className="flex gap-2 items-center">
+                          {(o as any).delivery_rating ? (
+                            <span className="flex items-center gap-1 text-xs text-warning">
+                              <Star className="h-3 w-3 fill-warning" /> {(o as any).delivery_rating}/5
+                            </span>
+                          ) : null}
+                          <span className="text-xs text-primary font-medium">View Details →</span>
+                        </div>
                       </div>
+                    </Card>
+                  </Link>
+                ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="bookings" className="mt-3">
+            <div className="space-y-3">
+              {loadingBookings ? Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />) :
+                (bookings || []).length === 0 ? <p className="text-center py-16 text-muted-foreground text-sm">No service bookings yet</p> :
+                (bookings || []).map((b: any) => (
+                  <Card key={b.id} className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Wrench className="h-4 w-4 text-primary" />
+                        <div>
+                          <p className="text-sm font-semibold">{b.service_title || 'Service'}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(b.booking_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} • {String(b.start_time).slice(0,5)} - {String(b.end_time).slice(0,5)}</p>
+                          <p className="text-xs text-muted-foreground">Vendor: {b.assigned_vendor_name || b.vendor_id}</p>
+                        </div>
+                      </div>
+                      <Badge className={(statusColor[b.status] || "bg-muted") + " border-0 text-[10px]"}>{String(b.status).replace("_", " ")}</Badge>
                     </div>
-                  ))}
-                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/30">
-                    <p className="text-sm font-bold">₹{o.total.toLocaleString()}</p>
-                    <div className="flex gap-2 items-center">
-                      {(o as any).delivery_rating ? (
-                        <span className="flex items-center gap-1 text-xs text-amber-500">
-                          <Star className="h-3 w-3 fill-amber-400" /> {(o as any).delivery_rating}/5
-                        </span>
-                      ) : null}
-                      <span className="text-xs text-primary font-medium">View Details →</span>
+                    {b.otp_code && !b.otp_verified_at && ['pending','confirmed'].includes(b.status) && (
+                      <div className="mt-2 p-2 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Share this OTP with the vendor</p>
+                          <p className="font-mono text-lg font-bold tracking-widest text-primary">{b.otp_code}</p>
+                        </div>
+                        <Button size="icon" variant="ghost" onClick={() => { navigator.clipboard.writeText(b.otp_code); toast.success("OTP copied"); }}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/30">
+                      <p className="text-sm font-bold">₹{Number(b.total_amount || 0).toLocaleString()}</p>
+                      {b.completion_photo_url && <span className="text-xs text-success">✓ Service completed</span>}
                     </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-        </div>
+                  </Card>
+                ))}
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {filtered.length > ITEMS_PER_PAGE && (
           <div className="flex items-center justify-center gap-2 mt-6">
