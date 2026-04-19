@@ -11,6 +11,8 @@ const VALID_AUDIENCES = [
   "784503032650",
 ];
 
+const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -430,7 +432,7 @@ Deno.serve(async (req) => {
         ...(serviceVendorResult.data || []),
       ];
       const existingVendor =
-        candidates.find((v: any) => v.status === "active" || v.status === "verified") ||
+        candidates.find((v: any) => ACTIVE_VENDOR_STATUSES.has(String(v.status || "").toLowerCase())) ||
         candidates[0] ||
         null;
       const vendorLookupErr = productVendorResult.error || serviceVendorResult.error;
@@ -445,7 +447,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (existingVendor.status !== "active" && existingVendor.status !== "verified") {
+      if (!ACTIVE_VENDOR_STATUSES.has(String(existingVendor.status || "").toLowerCase())) {
         return respond(false, {
           error: "Your vendor profile is not yet active. Please wait for admin approval.",
           code: "VENDOR_NOT_ACTIVE",
