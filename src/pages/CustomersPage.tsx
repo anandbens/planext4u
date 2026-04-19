@@ -247,6 +247,17 @@ export default function CustomersPage() {
       <CustomerModal customer={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
       <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Delete Customer" description={`Are you sure you want to delete "${confirmTarget?.name}"? The account data will be retained for 90 days for audit purposes.`} confirmLabel="Delete" variant="destructive"
         onConfirm={async () => { if (confirmTarget) { await handleDelete(confirmTarget.id); setConfirmOpen(false); } }} />
+
+      <ImpactConfirmDialog
+        open={hardOpen}
+        onOpenChange={(o) => { setHardOpen(o); if (!o) { setHardTarget(null); setHardImpact(null); } }}
+        title={`Permanently delete ${hardTarget?.name || "customer"}`}
+        description="This will erase the customer account and ALL their owned records from the database. Sales reports, points reports, complaints and audit history that reference this customer will lose their source data."
+        impacts={hardRows}
+        loading={hardLoading}
+        submitting={hardSubmitting}
+        onConfirm={handleHardDelete}
+      />
     </AdminLayout>
   );
 }
