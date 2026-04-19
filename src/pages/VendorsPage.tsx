@@ -269,9 +269,33 @@ export default function VendorsPage() {
     catch (err: any) { toast.error("Failed to update vendors: " + (err.message || "Unknown error")); }
   };
 
-  const openConfirm = (vendor: Vendor, action: "approve" | "reject" | "delete") => {
-    setConfirmAction({ vendor, action }); setConfirmOpen(true);
+  const requestHardDelete = async (vendor: Vendor) => {
+    setHardTarget(vendor); setHardOpen(true); setHardImpact(null); setHardLoading(true);
+    try { setHardImpact(await api.getVendorDeletionImpact(vendor.id)); }
+    catch (e: any) { toast.error(e?.message || "Could not load impact"); }
+    finally { setHardLoading(false); }
   };
+
+  const handleHardDelete = async () => {
+    if (!hardTarget) return;
+    setHardSubmitting(true);
+    try {
+      const res = await api.hardDeleteVendor(hardTarget.id);
+      toast.success(`${hardTarget.business_name} permanently deleted (${res.cascaded_products} product${res.cascaded_products === 1 ? "" : "s"} cascaded)`);
+      fetchData(); fetchStats();
+      setHardOpen(false); setHardTarget(null); setHardImpact(null);
+    } catch (e: any) { toast.error(e?.message || "Failed to permanently delete"); }
+    finally { setHardSubmitting(false); }
+  };
+
+  const hardRows: ImpactRow[] = hardImpact ? [
+    { label: "Products", count: hardImpact.products || 0, critical: true, note: "deleted before vendor (FK cascade)" },
+    { label: "Services", count: hardImpact.services || 0, critical: true, note: "deleted before vendor (FK cascade)" },
+    { label: "Orders", count: hardImpact.orders || 0, critical: true, note: "removed from sales / settlement reports" },
+    { label: "Settlements", count: hardImpact.settlements || 0, note: "vendor payout history" },
+    { label: "Media library assets", count: hardImpact.media_assets || 0 },
+    { label: "Notifications", count: hardImpact.notifications || 0 },
+  ] : [];
 
   const handleConfirm = async (reason?: string) => {
     if (!confirmAction) return;
