@@ -168,6 +168,12 @@ export default function CFVendorsPage() {
         const { data: appData } = await supabase.from('vendor_applications').select('*').eq('id', id).single();
         if (appData) {
           const a = appData;
+          // Guard: this page is for SERVICE vendors only. Block approval if the application
+          // was registered as a product seller — admin must approve it from Product Vendors.
+          if (a.vendor_category && a.vendor_category !== 'service') {
+            toast.error("This applicant registered as a Product Seller. Please approve them from the Product Vendors page.");
+            return;
+          }
           const newVendor: any = {
             id: `SVN-${Date.now()}`,
             name: updates.name || a.name, business_name: updates.business_name || a.business_name,
@@ -286,6 +292,10 @@ export default function CFVendorsPage() {
           const appData = await supabase.from('vendor_applications').select('*').eq('id', vendor.id).single();
           if (appData.data) {
             const a = appData.data;
+            if (a.vendor_category && a.vendor_category !== 'service') {
+              toast.error("This applicant registered as a Product Seller. Please approve them from the Product Vendors page.");
+              return;
+            }
             const newVendorId = `SVN-${Date.now()}`;
             const newVendor: Record<string, any> = {
               id: newVendorId,
