@@ -22,9 +22,14 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
   const [productFilter, setProductFilter] = useState("");
+  const [customerFilter, setCustomerFilter] = useState("");
+  const [minAmount, setMinAmount] = useState<string>("");
+  const [maxAmount, setMaxAmount] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFrom, setDateFrom] = useState<string>();
   const [dateTo, setDateTo] = useState<string>();
+  /** Sub-filter applied to the Deleted tab to classify by Product / Service */
+  const [deletedTypeFilter, setDeletedTypeFilter] = useState<"all" | "product" | "service">("all");
 
   const [selected, setSelected] = useState<Order | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "edit">("view");
@@ -45,23 +50,37 @@ export default function OrdersPage() {
   const [hardImpactLoading, setHardImpactLoading] = useState(false);
   const [hardSubmitting, setHardSubmitting] = useState(false);
 
-  const fetchData = useCallback(() => {
-    api.getOrders({
-      page, per_page: 10,
+  const buildFilterParams = useCallback(() => {
+    const min = minAmount === "" ? undefined : Number(minAmount);
+    const max = maxAmount === "" ? undefined : Number(maxAmount);
+    const effectiveType: "product" | "service" | "all" =
+      tab === "deleted" ? deletedTypeFilter : tab;
+    return {
       search: search || undefined,
       status: statusFilter || undefined,
       date_from: dateFrom, date_to: dateTo,
-      vendor_type: tab === "deleted" ? "all" : tab,
+      vendor_type: effectiveType,
       deleted: tab === "deleted",
       vendor_filter: vendorFilter || undefined,
       product_filter: productFilter || undefined,
-    }).then(setData);
-  }, [page, search, statusFilter, dateFrom, dateTo, tab, vendorFilter, productFilter]);
+      customer_filter: customerFilter || undefined,
+      min_amount: typeof min === "number" && !isNaN(min) ? min : undefined,
+      max_amount: typeof max === "number" && !isNaN(max) ? max : undefined,
+    };
+  }, [search, statusFilter, dateFrom, dateTo, tab, deletedTypeFilter, vendorFilter, productFilter, customerFilter, minAmount, maxAmount]);
+
+  const fetchData = useCallback(() => {
+    api.getOrders({ page, per_page: 10, ...buildFilterParams() }).then(setData);
+  }, [page, buildFilterParams]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Reset page when tab changes
-  useEffect(() => { setPage(1); setSearch(""); setStatusFilter(""); }, [tab]);
+  useEffect(() => {
+    setPage(1); setSearch(""); setStatusFilter("");
+    setVendorFilter(""); setProductFilter(""); setCustomerFilter("");
+    setMinAmount(""); setMaxAmount("");
+    if (tab !== "deleted") setDeletedTypeFilter("all");
+  }, [tab]);
 
   const openModal = (order: Order, mode: "view" | "edit") => {
     setSelected(order); setModalMode(mode); setModalOpen(true);
@@ -144,14 +163,99 @@ export default function OrdersPage() {
     { label: "Customer ratings", count: hardImpact.ratings || 0, note: "reviews left for these orders" },
   ] : [];
 
-  const handleExport = () => {
-    if (!data) return;
-    exportToCSV(data.data, [
-      { key: "id", label: "Order ID" }, { key: "customer_name", label: "Customer" },
-      { key: "vendor_name", label: "Vendor" }, { key: "total", label: "Total" },
-      { key: "status", label: "Status" },
-    ], `orders-${tab}`);
-    toast.success("CSV exported");
+  const handleExport = async () => {
+    try {
+      toast.loading("Preparing export…", { id: "orders-export" });
+      const orders = await api.getOrdersForExport(buildFilterParams());
+      // Expand each order into one row per line item.
+      // The Invoice No is the Order ID (shared across line rows of the same order).
+      // Each line gets a unique reference: {orderId}-L{n}
+      const rows: any[] = [];
+      orders.forEach((o) => {
+        const items = Array.isArray(o.items) && o.items.length > 0
+          ? o.items
+          : [{ title: "—", qty: 1, price: o.total } as any];
+        const lineCount = items.length;
+        items.forEach((it: any, idx: number) => {
+          const lineQty = Number(it.qty || 1);
+          const linePrice = Number(it.price || 0);
+          const lineSubtotal = +(lineQty * linePrice).toFixed(2);
+          rows.push({
+            line_ref_id: `${o.id}-L${String(idx + 1).padStart(2, "0")}`,
+            invoice_no: o.id,
+            order_id: o.id,
+            line_no: idx + 1,
+            line_count: lineCount,
+            order_date: o.created_at ? new Date(o.created_at).toISOString() : "",
+            order_status: o.status,
+            customer_id: o.customer_id || "",
+            customer_name: o.customer_name || "",
+            vendor_id: o.vendor_id || "",
+            vendor_name: o.vendor_name || "",
+            item_id: it.id || "",
+            item_title: it.title || "",
+            qty: lineQty,
+            unit_price: linePrice,
+            line_subtotal: lineSubtotal,
+            order_subtotal: Number(o.subtotal || 0),
+            tax: Number(o.tax || 0),
+            discount: Number(o.discount || 0),
+            points_used: Number(o.points_used || 0),
+            platform_fee: Number(o.platform_fee || 0),
+            order_total: Number(o.total || 0),
+            payment_reference_id: o.payment_reference_id || "",
+            razorpay_order_id: o.razorpay_order_id || "",
+            shipping_type: o.shipping_type || "",
+            courier_name: o.courier_name || "",
+            tracking_number: o.tracking_number || "",
+            tracking_url: o.tracking_url || "",
+            shipping_notes: o.shipping_notes || "",
+            pod_confirmed: o.pod_confirmed ? "yes" : "no",
+            pod_confirmed_at: o.pod_confirmed_at || "",
+            delivery_rating: o.delivery_rating ?? "",
+            rating_comment: o.rating_comment || "",
+          });
+        });
+      });
+      exportToCSV(rows, [
+        { key: "line_ref_id", label: "Line Reference ID" },
+        { key: "invoice_no", label: "Invoice No" },
+        { key: "order_id", label: "Order ID" },
+        { key: "line_no", label: "Line #" },
+        { key: "line_count", label: "Total Lines" },
+        { key: "order_date", label: "Order Date" },
+        { key: "order_status", label: "Status" },
+        { key: "customer_id", label: "Customer ID" },
+        { key: "customer_name", label: "Customer" },
+        { key: "vendor_id", label: "Vendor ID" },
+        { key: "vendor_name", label: "Vendor" },
+        { key: "item_id", label: "Item ID" },
+        { key: "item_title", label: "Item" },
+        { key: "qty", label: "Qty" },
+        { key: "unit_price", label: "Unit Price" },
+        { key: "line_subtotal", label: "Line Subtotal" },
+        { key: "order_subtotal", label: "Order Subtotal" },
+        { key: "tax", label: "Tax" },
+        { key: "discount", label: "Discount" },
+        { key: "points_used", label: "Points Used" },
+        { key: "platform_fee", label: "Platform Fee" },
+        { key: "order_total", label: "Order Total" },
+        { key: "payment_reference_id", label: "Payment Reference" },
+        { key: "razorpay_order_id", label: "Razorpay Order ID" },
+        { key: "shipping_type", label: "Shipping Type" },
+        { key: "courier_name", label: "Courier" },
+        { key: "tracking_number", label: "Tracking #" },
+        { key: "tracking_url", label: "Tracking URL" },
+        { key: "shipping_notes", label: "Shipping Notes" },
+        { key: "pod_confirmed", label: "POD" },
+        { key: "pod_confirmed_at", label: "POD At" },
+        { key: "delivery_rating", label: "Rating" },
+        { key: "rating_comment", label: "Rating Comment" },
+      ], `orders-${tab}${tab === "deleted" && deletedTypeFilter !== "all" ? "-" + deletedTypeFilter : ""}`);
+      toast.success(`Exported ${rows.length} line items from ${orders.length} orders`, { id: "orders-export" });
+    } catch (e: any) {
+      toast.error(e?.message || "Export failed", { id: "orders-export" });
+    }
   };
 
   const totalRevenue = (data?.data || []).filter(o => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total || 0), 0);
@@ -213,12 +317,33 @@ export default function OrdersPage() {
 
         {(["product", "service", "deleted"] as TabKey[]).map((k) => (
           <TabsContent key={k} value={k} className="space-y-3">
-            {/* Vendor & product filters */}
-            <div className="flex flex-wrap gap-2">
-              <Input placeholder="Filter by vendor (name / ID)…" value={vendorFilter} onChange={(e) => { setVendorFilter(e.target.value); setPage(1); }} className="max-w-xs h-9 bg-secondary/50 border-0" />
-              <Input placeholder="Filter by product / item title…" value={productFilter} onChange={(e) => { setProductFilter(e.target.value); setPage(1); }} className="max-w-xs h-9 bg-secondary/50 border-0" />
-              {(vendorFilter || productFilter) && (
-                <Button variant="ghost" size="sm" className="h-9 text-xs" onClick={() => { setVendorFilter(""); setProductFilter(""); setPage(1); }}>Clear filters</Button>
+            {/* Filters row */}
+            <div className="flex flex-wrap gap-2 items-center">
+              {k === "deleted" && (
+                <div className="flex items-center gap-1 mr-2">
+                  {(["all", "product", "service"] as const).map((t) => (
+                    <Button
+                      key={t}
+                      variant={deletedTypeFilter === t ? "default" : "outline"}
+                      size="sm"
+                      className="h-9 text-xs capitalize"
+                      onClick={() => { setDeletedTypeFilter(t); setPage(1); }}
+                    >
+                      {t === "all" ? "All Types" : t === "product" ? <><Package className="h-3.5 w-3.5 mr-1" />Product</> : <><Wrench className="h-3.5 w-3.5 mr-1" />Service</>}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              <Input placeholder="Vendor (name / ID)…" value={vendorFilter} onChange={(e) => { setVendorFilter(e.target.value); setPage(1); }} className="w-48 h-9 bg-secondary/50 border-0" />
+              <Input placeholder="Product / item title…" value={productFilter} onChange={(e) => { setProductFilter(e.target.value); setPage(1); }} className="w-48 h-9 bg-secondary/50 border-0" />
+              <Input placeholder="Customer (name / ID)…" value={customerFilter} onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }} className="w-48 h-9 bg-secondary/50 border-0" />
+              <Input type="number" inputMode="decimal" placeholder="Min ₹" value={minAmount} onChange={(e) => { setMinAmount(e.target.value); setPage(1); }} className="w-24 h-9 bg-secondary/50 border-0" />
+              <Input type="number" inputMode="decimal" placeholder="Max ₹" value={maxAmount} onChange={(e) => { setMaxAmount(e.target.value); setPage(1); }} className="w-24 h-9 bg-secondary/50 border-0" />
+              {(vendorFilter || productFilter || customerFilter || minAmount || maxAmount) && (
+                <Button variant="ghost" size="sm" className="h-9 text-xs" onClick={() => {
+                  setVendorFilter(""); setProductFilter(""); setCustomerFilter("");
+                  setMinAmount(""); setMaxAmount(""); setPage(1);
+                }}>Clear filters</Button>
               )}
             </div>
 

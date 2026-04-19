@@ -847,6 +847,9 @@ export const api = {
     deleted?: boolean;
     vendor_filter?: string;
     product_filter?: string;
+    min_amount?: number;
+    max_amount?: number;
+    customer_filter?: string;
   }) => {
     const page = params.page || 1;
     const perPage = params.per_page || 10;
@@ -881,9 +884,12 @@ export const api = {
     else query = query.is('deleted_at', null);
 
     if (params.search) query = query.or(`id.ilike.%${params.search}%,customer_name.ilike.%${params.search}%,vendor_name.ilike.%${params.search}%`);
+    if (params.customer_filter) query = query.or(`customer_name.ilike.%${params.customer_filter}%,customer_id.ilike.%${params.customer_filter}%`);
     if (params.status && params.status !== 'all') query = query.eq('status', params.status);
     if (params.date_from) query = query.gte('created_at', params.date_from);
     if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
+    if (typeof params.min_amount === 'number' && !isNaN(params.min_amount)) query = query.gte('total', params.min_amount);
+    if (typeof params.max_amount === 'number' && !isNaN(params.max_amount)) query = query.lte('total', params.max_amount);
     if (restrictVendorIds) query = query.in('vendor_id', restrictVendorIds);
 
     query = query.order('created_at', { ascending: false }).range(from, to);
@@ -903,6 +909,25 @@ export const api = {
     }
 
     return paginateResult(data || [], count || 0, page, perPage);
+  },
+
+  /** Fetch ALL orders matching the same filters (no pagination) — used for full export. */
+  getOrdersForExport: async (params: {
+    search?: string; status?: string; date_from?: string; date_to?: string;
+    vendor_type?: 'product' | 'service' | 'all'; deleted?: boolean;
+    vendor_filter?: string; product_filter?: string;
+    min_amount?: number; max_amount?: number; customer_filter?: string;
+  }) => {
+    const all: Order[] = [];
+    let page = 1;
+    while (true) {
+      const res = await api.getOrders({ ...params, page, per_page: 500 });
+      all.push(...res.data);
+      if (page * 500 >= res.total || res.data.length === 0) break;
+      page++;
+      if (page > 50) break; // hard safety cap (25k rows)
+    }
+    return all;
   },
 
   softDeleteOrders: async (ids: string[], reason?: string) => {
