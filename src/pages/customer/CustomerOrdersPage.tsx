@@ -41,6 +41,19 @@ export default function CustomerOrdersPage() {
     enabled: !!customerId,
   });
 
+  const { data: bookings, isLoading: loadingBookings } = useQuery({
+    queryKey: ["customerBookings", customerId],
+    enabled: !!customerId,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("service_bookings")
+        .select("id, service_id, service_title, vendor_id, assigned_vendor_name, booking_date, start_time, end_time, status, total_amount, otp_code, otp_verified_at, completion_photo_url")
+        .eq("customer_id", customerId)
+        .order("booking_date", { ascending: false });
+      return data || [];
+    },
+  });
+
   // Search by order ID or product name
   const filtered = (orders || []).filter(o => {
     const term = searchTerm.toLowerCase();
