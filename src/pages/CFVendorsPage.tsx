@@ -292,6 +292,10 @@ export default function CFVendorsPage() {
           const appData = await supabase.from('vendor_applications').select('*').eq('id', vendor.id).single();
           if (appData.data) {
             const a = appData.data;
+            if (a.vendor_category && a.vendor_category !== 'service') {
+              toast.error("This applicant registered as a Product Seller. Please approve them from the Product Vendors page.");
+              return;
+            }
             const newVendorId = `SVN-${Date.now()}`;
             const newVendor: Record<string, any> = {
               id: newVendorId,
