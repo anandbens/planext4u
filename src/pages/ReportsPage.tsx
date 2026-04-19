@@ -42,11 +42,14 @@ export default function ReportsPage() {
         </div>
       </section>
 
-      <section className="space-y-3 mt-8">
+      <section id="finance" className="space-y-3 mt-8 scroll-mt-20">
         <div className="flex items-baseline gap-3">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Finance & GST Compliance</h2>
           <span className="text-[10px] text-muted-foreground/70">India audit & statutory filings</span>
         </div>
+        <p className="text-xs text-muted-foreground max-w-3xl">
+          All reports below are auto-generated from completed orders &amp; settlements, support date-range filters, and export to CSV / XLSX for direct upload to the GSTN portal or import into Tally / Zoho Books.
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {financeReports.map((r) => <ReportCard key={r.title} {...r} />)}
         </div>
