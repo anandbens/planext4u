@@ -1,8 +1,19 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import type { UserRole } from "@/lib/auth-types";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  /**
+   * Optional allow-list of admin-portal roles permitted to access this route.
+   * If omitted, any authenticated admin-portal user (admin/finance/sales) may enter.
+   * 'admin' always has access regardless of the list (super-user).
+   */
+  allowedRoles?: UserRole[];
+}
+
+export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -14,6 +25,14 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && allowedRoles.length > 0 && user) {
+    const role = user.role;
+    // Admins always pass; otherwise the role must be explicitly listed.
+    if (role !== 'admin' && !allowedRoles.includes(role)) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;
