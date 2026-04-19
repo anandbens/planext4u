@@ -3,6 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { ImpactConfirmDialog, type ImpactRow } from "@/components/admin/ImpactConfirmDialog";
 import { api, Vendor, PaginatedResponse } from "@/lib/api";
 import { VendorModal } from "@/components/admin/modals/VendorModal";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,13 @@ export default function VendorsPage() {
   const [confirmAction, setConfirmAction] = useState<{ vendor: Vendor; action: "approve" | "reject" | "delete" } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [totalStats, setTotalStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0, deactivated: 0, deleted: 0 });
+
+  // Permanent deletion state
+  const [hardTarget, setHardTarget] = useState<Vendor | null>(null);
+  const [hardOpen, setHardOpen] = useState(false);
+  const [hardImpact, setHardImpact] = useState<Record<string, number> | null>(null);
+  const [hardLoading, setHardLoading] = useState(false);
+  const [hardSubmitting, setHardSubmitting] = useState(false);
 
   const [pendingApps, setPendingApps] = useState<any[]>([]);
 
