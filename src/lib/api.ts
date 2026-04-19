@@ -1410,7 +1410,8 @@ export const api = {
     const validFields = ['vendor_id', 'category_id', 'title', 'description', 'price', 'tax', 'discount',
       'max_points_redeemable', 'status', 'vendor_name', 'category_name', 'emoji', 'image', 'service_area',
       'duration', 'images', 'short_description', 'long_description', 'meta_title', 'meta_description',
-      'slug', 'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot', 'updated_at'];
+      'slug', 'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot',
+      'sac_code', 'gst_rate', 'commission_override', 'max_redemption_percentage', 'updated_at'];
     const filtered: Record<string, any> = { updated_at: new Date().toISOString() };
     for (const key of validFields) {
       if (key in data) {
