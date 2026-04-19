@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { fmtTs } from "@/lib/format-date";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -47,7 +48,8 @@ export default function TaxPage() {
           )},
           { key: "applied_to", label: "Applied To" },
           { key: "status", label: "Status", render: (t) => <StatusBadge status={t.status} /> },
-          { key: "created_at", label: "Created", render: (t) => new Date(t.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) },
+          { key: "created_at", label: "Created", render: (t: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(t.created_at)}</span> },
+          { key: "updated_at", label: "Updated", render: (t: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(t.updated_at || t.created_at)}</span> },
         ]}
         data={data.data}
         total={data.total}

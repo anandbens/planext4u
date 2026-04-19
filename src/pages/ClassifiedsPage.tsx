@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { fmtTs } from "@/lib/format-date";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -117,6 +118,8 @@ export default function ClassifiedsPage() {
           { key: "city", label: "Location", render: (a) => `${a.area}, ${a.city}` },
           { key: "user_name", label: "Posted By" },
           { key: "status", label: "Status", render: (a) => <StatusBadge status={a.status} /> },
+          { key: "created_at", label: "Created", render: (a: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(a.created_at)}</span> },
+          { key: "updated_at", label: "Updated", render: (a: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(a.updated_at || a.created_at)}</span> },
           { key: "actions", label: "", render: (a) => a.status === 'pending' ? (
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={(e) => { e.stopPropagation(); setConfirmAction({ ad: a, action: "approve" }); setConfirmOpen(true); }}><CheckCircle className="h-4 w-4" /></Button>

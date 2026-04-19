@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { fmtTs } from "@/lib/format-date";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -43,7 +44,8 @@ export default function CFCityPage() {
           { key: "state", label: "State" },
           { key: "area_count", label: "Areas", render: (c) => <span className="font-semibold">{c.area_count}</span> },
           { key: "status", label: "Status", render: (c) => <StatusBadge status={c.status} /> },
-          { key: "created_at", label: "Created", render: (c) => new Date(c.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) },
+          { key: "created_at", label: "Created", render: (c: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(c.created_at)}</span> },
+          { key: "updated_at", label: "Updated", render: (c: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(c.updated_at || c.created_at)}</span> },
         ]}
         data={data.data}
         total={data.total}

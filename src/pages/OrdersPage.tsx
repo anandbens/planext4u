@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { fmtTs } from "@/lib/format-date";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -279,6 +280,8 @@ export default function OrdersPage() {
     { key: "items", label: "Items", render: (o: Order) => <span className="text-xs text-muted-foreground">{(o.items || []).slice(0, 2).map((i: any) => i.title).join(", ") || "—"}{(o.items || []).length > 2 ? ` +${(o.items || []).length - 2}` : ""}</span> },
     { key: "total", label: "Total", render: (o: Order) => <span className="font-bold">₹{Number(o.total).toLocaleString()}</span> },
     { key: "status", label: "Status", render: (o: Order) => <StatusBadge status={o.status} /> },
+    { key: "created_at", label: "Created", render: (o: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(o.created_at)}</span> },
+    { key: "updated_at", label: "Updated", render: (o: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(o.updated_at || o.created_at)}</span> },
     { key: "actions", label: "", render: (o: Order) => (
       <div className="flex gap-1">
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(o, "view"); }}><Eye className="h-4 w-4" /></Button>

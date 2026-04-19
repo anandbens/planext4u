@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { fmtTs } from "@/lib/format-date";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -426,6 +427,8 @@ export default function VendorsPage() {
           { key: "email", label: "Email", render: (v: any) => <span className="text-xs">{v.email?.replace(/_DEL_\d+$/, '') || '—'}</span> },
           { key: "mobile", label: "Mobile", render: (v: any) => <span className="text-xs">{v.mobile?.replace(/_DEL_\d+$/, '') || '—'}</span> },
           { key: "deleted_at", label: activeTab === "deleted" ? "Deleted At" : "Deactivated", render: (v: any) => <span className="text-xs text-muted-foreground">{v.deleted_at ? new Date(v.deleted_at).toLocaleDateString() : '—'}</span> },
+          { key: "created_at", label: "Created", render: (v: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(v.created_at)}</span> },
+          { key: "updated_at", label: "Updated", render: (v: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(v.updated_at || v.created_at)}</span> },
           { key: "status", label: "Status", render: (v: any) => <StatusBadge status={v.status} /> },
           { key: "actions", label: "", render: (v: any) => (
             <div className="flex gap-1">
@@ -449,6 +452,8 @@ export default function VendorsPage() {
             return <Badge className={`border-0 text-[10px] ${color}`}>{ps === "offline_pending" ? "Pending" : ps}</Badge>;
           }},
           { key: "status", label: "Status", render: (v: any) => <StatusBadge status={v.status} /> },
+          { key: "created_at", label: "Created", render: (v: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(v.created_at)}</span> },
+          { key: "updated_at", label: "Updated", render: (v: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(v.updated_at || v.created_at)}</span> },
           { key: "actions", label: "Actions", render: (v: any) => (
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>

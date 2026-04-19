@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { fmtTs } from "@/lib/format-date";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -130,6 +131,8 @@ export default function ProductsPage() {
         )}
       </div>
     )},
+    { key: "created_at", label: "Created", render: (p: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(p.created_at)}</span> },
+    { key: "updated_at", label: "Updated", render: (p: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(p.updated_at || p.created_at)}</span> },
     { key: "actions", label: "", render: (p: Product) => (
       <div className="flex gap-1">
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(p, "view"); }}><Eye className="h-4 w-4" /></Button>

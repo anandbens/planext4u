@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { fmtTs } from "@/lib/format-date";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -102,6 +103,8 @@ export default function AdvertisementsPage() {
           { key: "clicks", label: "Clicks", render: (a: any) => <span>{(a.clicks || 0).toLocaleString()}</span> },
           { key: "start_date", label: "Period", render: (a: any) => <span className="text-xs">{a.start_date} → {a.end_date}</span> },
           { key: "status", label: "Status", render: (a: any) => <StatusBadge status={a.status} /> },
+          { key: "created_at", label: "Created", render: (a: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(a.created_at)}</span> },
+          { key: "updated_at", label: "Updated", render: (a: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(a.updated_at || a.created_at)}</span> },
         ]}
         data={data.data}
         total={data.total}

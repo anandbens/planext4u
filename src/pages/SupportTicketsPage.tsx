@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { fmtTs } from "@/lib/format-date";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -70,7 +71,8 @@ export default function SupportTicketsPage() {
     )},
     { key: "status", label: "Status", render: (row: SupportTicket) => <StatusBadge status={row.status} /> },
     { key: "assigned_to", label: "Assigned To" },
-    { key: "created_at", label: "Created", render: (row: SupportTicket) => new Date(row.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) },
+    { key: "created_at", label: "Created", render: (row: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(row.created_at)}</span> },
+    { key: "updated_at", label: "Updated", render: (row: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(row.updated_at || row.created_at)}</span> },
   ];
 
   return (

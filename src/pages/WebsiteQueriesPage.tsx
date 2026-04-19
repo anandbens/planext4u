@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { fmtTs } from "@/lib/format-date";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -55,9 +56,8 @@ export default function WebsiteQueriesPage() {
           { key: "subject", label: "Subject", render: (q) => <span className="font-medium">{q.subject}</span> },
           { key: "message", label: "Message", render: (q) => <span className="text-xs text-muted-foreground line-clamp-1 max-w-[200px]">{q.message}</span> },
           { key: "status", label: "Status", render: (q) => <StatusBadge status={q.status} /> },
-          { key: "created_at", label: "Received", render: (q) => (
-            <span className="text-xs">{new Date(q.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-          )},
+          { key: "created_at", label: "Received", render: (q: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(q.created_at)}</span> },
+          { key: "updated_at", label: "Updated", render: (q: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(q.updated_at || q.created_at)}</span> },
           { key: "actions", label: "", render: (q) => q.status !== 'resolved' ? (
             <div className="flex gap-1">
               {q.status === 'new' && (
