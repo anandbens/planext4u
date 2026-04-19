@@ -172,7 +172,12 @@ export default function CustomersPage() {
     { key: "deleted_at", label: activeTab === "deleted" ? "Deleted At" : "Deactivated", render: (u: any) => <span className="text-xs text-muted-foreground">{u.deleted_at ? new Date(u.deleted_at).toLocaleDateString() : u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</span> },
     { key: "status", label: "Status", render: (u: any) => <StatusBadge status={u.status} /> },
     { key: "actions", label: "", render: (u: any) => (
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(u, "view"); }}><Eye className="h-4 w-4" /></Button>
+      <div className="flex gap-1">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(u, "view"); }}><Eye className="h-4 w-4" /></Button>
+        {activeTab === "deleted" && (
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Permanently delete" onClick={(e) => { e.stopPropagation(); requestHardDelete(u); }}><Trash2 className="h-4 w-4" /></Button>
+        )}
+      </div>
     )},
   ] : [
     { key: "id", label: "ID" },
