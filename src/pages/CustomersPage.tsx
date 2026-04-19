@@ -3,6 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { ImpactConfirmDialog, type ImpactRow } from "@/components/admin/ImpactConfirmDialog";
 import { api, User, PaginatedResponse } from "@/lib/api";
 import { CustomerModal } from "@/components/admin/modals/CustomerModal";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,13 @@ export default function CustomersPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<User | null>(null);
   const [totalStats, setTotalStats] = useState({ total: 0, active: 0, inactive: 0, deactivated: 0, deleted: 0, points: 0 });
+
+  // Permanent deletion state
+  const [hardTarget, setHardTarget] = useState<User | null>(null);
+  const [hardOpen, setHardOpen] = useState(false);
+  const [hardImpact, setHardImpact] = useState<Record<string, number> | null>(null);
+  const [hardLoading, setHardLoading] = useState(false);
+  const [hardSubmitting, setHardSubmitting] = useState(false);
 
   const { data: occupations = [] } = useQuery({
     queryKey: ["occupationsForFilter"],
@@ -94,6 +102,36 @@ export default function CustomersPage() {
     catch (err: any) { toast.error("Failed to delete customers: " + (err.message || "Unknown error")); }
   };
 
+  const requestHardDelete = async (user: User) => {
+    setHardTarget(user); setHardOpen(true); setHardImpact(null); setHardLoading(true);
+    try { setHardImpact(await api.getCustomerDeletionImpact(user.id)); }
+    catch (e: any) { toast.error(e?.message || "Could not load impact"); }
+    finally { setHardLoading(false); }
+  };
+
+  const handleHardDelete = async () => {
+    if (!hardTarget) return;
+    setHardSubmitting(true);
+    try {
+      await api.hardDeleteCustomer(hardTarget.id);
+      toast.success(`${hardTarget.name} permanently deleted`);
+      fetchData(); fetchStats();
+      setHardOpen(false); setHardTarget(null); setHardImpact(null);
+    } catch (e: any) { toast.error(e?.message || "Failed to permanently delete"); }
+    finally { setHardSubmitting(false); }
+  };
+
+  const hardRows: ImpactRow[] = hardImpact ? [
+    { label: "Orders", count: hardImpact.orders || 0, critical: true, note: "removed from sales reports" },
+    { label: "Food orders", count: hardImpact.food_orders || 0, critical: true, note: "removed from food revenue reports" },
+    { label: "Saved addresses", count: hardImpact.addresses || 0 },
+    { label: "Notifications", count: hardImpact.notifications || 0 },
+    { label: "KYC documents", count: hardImpact.kyc_documents || 0 },
+    { label: "Complaints", count: hardImpact.complaints || 0 },
+    { label: "Classified ads", count: hardImpact.classifieds || 0 },
+    { label: "Reviews left", count: hardImpact.reviews || 0 },
+  ] : [];
+
   const handleBulkStatus = async (ids: string[], status: string) => {
     try { await api.bulkUpdateCustomerStatus(ids, status); toast.success(`${ids.length} customers updated to ${status}`); fetchData(); fetchStats(); }
     catch (err: any) { toast.error("Failed to update customers: " + (err.message || "Unknown error")); }
@@ -134,7 +172,12 @@ export default function CustomersPage() {
     { key: "deleted_at", label: activeTab === "deleted" ? "Deleted At" : "Deactivated", render: (u: any) => <span className="text-xs text-muted-foreground">{u.deleted_at ? new Date(u.deleted_at).toLocaleDateString() : u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</span> },
     { key: "status", label: "Status", render: (u: any) => <StatusBadge status={u.status} /> },
     { key: "actions", label: "", render: (u: any) => (
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(u, "view"); }}><Eye className="h-4 w-4" /></Button>
+      <div className="flex gap-1">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(u, "view"); }}><Eye className="h-4 w-4" /></Button>
+        {activeTab === "deleted" && (
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Permanently delete" onClick={(e) => { e.stopPropagation(); requestHardDelete(u); }}><Trash2 className="h-4 w-4" /></Button>
+        )}
+      </div>
     )},
   ] : [
     { key: "id", label: "ID" },
@@ -204,6 +247,17 @@ export default function CustomersPage() {
       <CustomerModal customer={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
       <ConfirmDialog open={confirmOpen} onOpenChange={setConfirmOpen} title="Delete Customer" description={`Are you sure you want to delete "${confirmTarget?.name}"? The account data will be retained for 90 days for audit purposes.`} confirmLabel="Delete" variant="destructive"
         onConfirm={async () => { if (confirmTarget) { await handleDelete(confirmTarget.id); setConfirmOpen(false); } }} />
+
+      <ImpactConfirmDialog
+        open={hardOpen}
+        onOpenChange={(o) => { setHardOpen(o); if (!o) { setHardTarget(null); setHardImpact(null); } }}
+        title={`Permanently delete ${hardTarget?.name || "customer"}`}
+        description="This will erase the customer account and ALL their owned records from the database. Sales reports, points reports, complaints and audit history that reference this customer will lose their source data."
+        impacts={hardRows}
+        loading={hardLoading}
+        submitting={hardSubmitting}
+        onConfirm={handleHardDelete}
+      />
     </AdminLayout>
   );
 }

@@ -3,6 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { ImpactConfirmDialog, type ImpactRow } from "@/components/admin/ImpactConfirmDialog";
 import { api, Vendor, PaginatedResponse } from "@/lib/api";
 import { VendorModal } from "@/components/admin/modals/VendorModal";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,13 @@ export default function VendorsPage() {
   const [confirmAction, setConfirmAction] = useState<{ vendor: Vendor; action: "approve" | "reject" | "delete" } | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [totalStats, setTotalStats] = useState({ total: 0, verified: 0, pending: 0, rejected: 0, deactivated: 0, deleted: 0 });
+
+  // Permanent deletion state
+  const [hardTarget, setHardTarget] = useState<Vendor | null>(null);
+  const [hardOpen, setHardOpen] = useState(false);
+  const [hardImpact, setHardImpact] = useState<Record<string, number> | null>(null);
+  const [hardLoading, setHardLoading] = useState(false);
+  const [hardSubmitting, setHardSubmitting] = useState(false);
 
   const [pendingApps, setPendingApps] = useState<any[]>([]);
 
@@ -261,6 +269,34 @@ export default function VendorsPage() {
     catch (err: any) { toast.error("Failed to update vendors: " + (err.message || "Unknown error")); }
   };
 
+  const requestHardDelete = async (vendor: Vendor) => {
+    setHardTarget(vendor); setHardOpen(true); setHardImpact(null); setHardLoading(true);
+    try { setHardImpact(await api.getVendorDeletionImpact(vendor.id)); }
+    catch (e: any) { toast.error(e?.message || "Could not load impact"); }
+    finally { setHardLoading(false); }
+  };
+
+  const handleHardDelete = async () => {
+    if (!hardTarget) return;
+    setHardSubmitting(true);
+    try {
+      const res = await api.hardDeleteVendor(hardTarget.id);
+      toast.success(`${hardTarget.business_name} permanently deleted (${res.cascaded_products} product${res.cascaded_products === 1 ? "" : "s"} cascaded)`);
+      fetchData(); fetchStats();
+      setHardOpen(false); setHardTarget(null); setHardImpact(null);
+    } catch (e: any) { toast.error(e?.message || "Failed to permanently delete"); }
+    finally { setHardSubmitting(false); }
+  };
+
+  const hardRows: ImpactRow[] = hardImpact ? [
+    { label: "Products", count: hardImpact.products || 0, critical: true, note: "deleted before vendor (FK cascade)" },
+    { label: "Services", count: hardImpact.services || 0, critical: true, note: "deleted before vendor (FK cascade)" },
+    { label: "Orders", count: hardImpact.orders || 0, critical: true, note: "removed from sales / settlement reports" },
+    { label: "Settlements", count: hardImpact.settlements || 0, note: "vendor payout history" },
+    { label: "Media library assets", count: hardImpact.media_assets || 0 },
+    { label: "Notifications", count: hardImpact.notifications || 0 },
+  ] : [];
+
   const openConfirm = (vendor: Vendor, action: "approve" | "reject" | "delete") => {
     setConfirmAction({ vendor, action }); setConfirmOpen(true);
   };
@@ -392,7 +428,12 @@ export default function VendorsPage() {
           { key: "deleted_at", label: activeTab === "deleted" ? "Deleted At" : "Deactivated", render: (v: any) => <span className="text-xs text-muted-foreground">{v.deleted_at ? new Date(v.deleted_at).toLocaleDateString() : '—'}</span> },
           { key: "status", label: "Status", render: (v: any) => <StatusBadge status={v.status} /> },
           { key: "actions", label: "", render: (v: any) => (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e: any) => { e.stopPropagation(); openModal(v, "view"); }}><Eye className="h-4 w-4" /></Button>
+              {activeTab === "deleted" && (
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Permanently delete" onClick={(e: any) => { e.stopPropagation(); requestHardDelete(v); }}><Trash2 className="h-4 w-4" /></Button>
+              )}
+            </div>
           )},
         ] : [
           { key: "id", label: "ID" },
@@ -457,6 +498,17 @@ export default function VendorsPage() {
         showReasonField={confirmAction?.action === "reject"}
         reasonLabel="Rejection Reason *"
         reasonPlaceholder="Explain why this vendor is being rejected..."
+      />
+
+      <ImpactConfirmDialog
+        open={hardOpen}
+        onOpenChange={(o) => { setHardOpen(o); if (!o) { setHardTarget(null); setHardImpact(null); } }}
+        title={`Permanently delete ${hardTarget?.business_name || "vendor"}`}
+        description="Vendors cannot be deleted while products and orders reference them. This action will first delete all of the vendor's products, services and orders (so foreign key relationships stay intact) and then remove the vendor itself. All sales, settlement and payout reports for this vendor will lose their source data."
+        impacts={hardRows}
+        loading={hardLoading}
+        submitting={hardSubmitting}
+        onConfirm={handleHardDelete}
       />
     </AdminLayout>
   );

@@ -3,6 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { ImpactConfirmDialog, type ImpactRow } from "@/components/admin/ImpactConfirmDialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { api, Order, PaginatedResponse } from "@/lib/api";
@@ -36,6 +37,13 @@ export default function OrdersPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<string[]>([]);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Permanent (hard) delete state
+  const [hardOpen, setHardOpen] = useState(false);
+  const [hardIds, setHardIds] = useState<string[]>([]);
+  const [hardImpact, setHardImpact] = useState<Record<string, number> | null>(null);
+  const [hardImpactLoading, setHardImpactLoading] = useState(false);
+  const [hardSubmitting, setHardSubmitting] = useState(false);
 
   const fetchData = useCallback(() => {
     api.getOrders({
@@ -107,6 +115,35 @@ export default function OrdersPage() {
     } catch (e: any) { toast.error(e?.message || "Failed to restore"); }
   };
 
+  const requestHardDelete = async (ids: string[]) => {
+    setHardIds(ids); setHardOpen(true); setHardImpact(null); setHardImpactLoading(true);
+    try {
+      const impact = await api.getOrdersDeletionImpact(ids);
+      setHardImpact(impact);
+    } catch (e: any) { toast.error(e?.message || "Could not check impact"); }
+    finally { setHardImpactLoading(false); }
+  };
+
+  const handleHardDelete = async () => {
+    if (hardIds.length === 0) return;
+    setHardSubmitting(true);
+    try {
+      await api.hardDeleteOrders(hardIds);
+      toast.success(`${hardIds.length} order${hardIds.length > 1 ? 's' : ''} permanently deleted`);
+      fetchData();
+      setHardOpen(false); setHardIds([]); setHardImpact(null);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to permanently delete orders");
+    } finally { setHardSubmitting(false); }
+  };
+
+  const hardImpactRows: ImpactRow[] = hardImpact ? [
+    { label: "Orders", count: hardImpact.orders || 0, critical: true, note: "removed from all reports" },
+    { label: "Settlement records", count: hardImpact.settlements || 0, note: "vendor payouts tied to these orders" },
+    { label: "Payment transactions", count: hardImpact.payments || 0, note: "Razorpay / wallet ledger entries" },
+    { label: "Customer ratings", count: hardImpact.ratings || 0, note: "reviews left for these orders" },
+  ] : [];
+
   const handleExport = () => {
     if (!data) return;
     exportToCSV(data.data, [
@@ -151,7 +188,10 @@ export default function OrdersPage() {
           </>
         )}
         {tab === "deleted" && (
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={(e) => { e.stopPropagation(); handleRestore([o.id]); }} title="Restore"><RotateCcw className="h-4 w-4" /></Button>
+          <>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={(e) => { e.stopPropagation(); handleRestore([o.id]); }} title="Restore"><RotateCcw className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); requestHardDelete([o.id]); }} title="Permanently delete"><Trash2 className="h-4 w-4" /></Button>
+          </>
         )}
       </div>
     )},
@@ -207,7 +247,7 @@ export default function OrdersPage() {
                 ]}]}
                 summaryWidgets={summaryWidgets}
                 enableBulkSelect
-                onBulkDelete={tab === "deleted" ? undefined : requestDelete}
+                onBulkDelete={tab === "deleted" ? requestHardDelete : requestDelete}
                 onBulkStatusUpdate={tab === "deleted" ? undefined : handleBulkStatus}
                 bulkStatusOptions={tab === "deleted" ? undefined : [
                   { value: "placed", label: "Placed" }, { value: "accepted", label: "Accepted" },
@@ -230,6 +270,17 @@ export default function OrdersPage() {
       <ConfirmDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen} title="Move to Deleted Orders"
         description={`Move ${deleteIds.length} order${deleteIds.length > 1 ? 's' : ''} to the Deleted tab? You can restore them later.`}
         confirmLabel="Move to Deleted" variant="destructive" onConfirm={handleDeleteConfirm} loading={deleteLoading} />
+
+      <ImpactConfirmDialog
+        open={hardOpen}
+        onOpenChange={(o) => { setHardOpen(o); if (!o) { setHardIds([]); setHardImpact(null); } }}
+        title={`Permanently delete ${hardIds.length} order${hardIds.length > 1 ? "s" : ""}`}
+        description="This will erase the orders from the database. The records will disappear from every report (sales, tax, settlements, vendor revenue) and cannot be recovered."
+        impacts={hardImpactRows}
+        loading={hardImpactLoading}
+        submitting={hardSubmitting}
+        onConfirm={handleHardDelete}
+      />
     </AdminLayout>
   );
 }
