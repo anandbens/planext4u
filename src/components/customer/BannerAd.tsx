@@ -123,18 +123,18 @@ export function BannerAd({ placement, className = "", variant = "banner" }: Bann
         </button>
       </div>
       {imgSrc ? (
-        <img src={imgSrc} alt={ad.title} className="w-full h-32 md:h-40 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+        <img src={imgSrc} alt={ad.title} className="w-full h-20 md:h-40 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
       ) : (
-        <div className="w-full h-32 md:h-40 bg-gradient-to-r from-primary to-primary/60 flex items-center justify-center">
-          <div className="text-center text-primary-foreground">
-            <p className="font-bold text-lg">{ad.title}</p>
-            {ad.description && <p className="text-sm opacity-90">{ad.description}</p>}
+        <div className="w-full h-20 md:h-40 bg-gradient-to-r from-primary to-primary/60 flex items-center justify-center">
+          <div className="text-center text-primary-foreground px-2">
+            <p className="font-bold text-sm md:text-lg leading-tight">{ad.title}</p>
+            {ad.description && <p className="text-[11px] md:text-sm opacity-90 line-clamp-1">{ad.description}</p>}
           </div>
         </div>
       )}
-      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-foreground/60 to-transparent p-3">
-        <p className="text-card text-sm font-semibold">{ad.title}</p>
-        <p className="text-card/80 text-xs">{ad.advertiser} · Tap to explore</p>
+      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-foreground/70 to-transparent px-2 py-1 md:p-3">
+        <p className="text-card text-xs md:text-sm font-semibold leading-tight line-clamp-1">{ad.title}</p>
+        <p className="text-card/80 text-[10px] md:text-xs leading-tight line-clamp-1">{ad.advertiser} · Tap to explore</p>
       </div>
     </div>
   );
