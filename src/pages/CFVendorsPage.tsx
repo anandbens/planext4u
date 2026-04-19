@@ -169,6 +169,7 @@ export default function CFVendorsPage() {
             mobile: updates.mobile || a.phone, email: updates.email || a.email,
             commission_rate: (updates as any).commission_rate || 10, membership: (updates as any).membership || 'basic',
             status: 'verified',
+            vendor_category: 'service',
             shop_photo_url: a.shop_photo_url || '',
             shop_address: a.shop_address || '',
             plan_id: (updates as any).plan_id || null,
@@ -285,6 +286,7 @@ export default function CFVendorsPage() {
               id: newVendorId,
               name: a.name, business_name: a.business_name, mobile: a.phone, email: a.email,
               commission_rate: 10, membership: 'basic', status: 'verified',
+              vendor_category: 'service',
               shop_address: a.shop_address || '',
               shop_photo_url: a.shop_photo_url || '',
             };
