@@ -422,40 +422,24 @@ export const api = {
     return { success: true };
   },
 
-  // Vendors
+  // Vendors — PRODUCT vendors only. Service vendors live in `service_vendors`
+  // and are managed exclusively from the Service Vendors page.
   getVendors: async (params: { page?: number; per_page?: number; search?: string; status?: string; date_from?: string; date_to?: string; payment_status?: string }) => {
     const page = params.page || 1;
     const perPage = params.per_page || 10;
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
 
-    // Fetch product vendors
     let vQuery = supabase.from('vendors').select('*', { count: 'exact' }).is('deleted_at', null);
     if (params.search) vQuery = vQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%,mobile.ilike.%${params.search}%`);
     if (params.status && params.status !== 'all') vQuery = vQuery.eq('status', params.status);
     if (params.payment_status && params.payment_status !== 'all') vQuery = vQuery.eq('plan_payment_status', params.payment_status);
     if (params.date_from) vQuery = vQuery.gte('created_at', params.date_from);
     if (params.date_to) vQuery = vQuery.lte('created_at', params.date_to + 'T23:59:59Z');
-    vQuery = vQuery.order('created_at', { ascending: false });
+    vQuery = vQuery.order('created_at', { ascending: false }).range(from, to);
 
-    let svQuery = supabase.from('service_vendors').select('*', { count: 'exact' });
-    if (params.search) svQuery = svQuery.or(`name.ilike.%${params.search}%,business_name.ilike.%${params.search}%,email.ilike.%${params.search}%,mobile.ilike.%${params.search}%`);
-    if (params.status && params.status !== 'all') svQuery = svQuery.eq('status', params.status);
-    if (params.payment_status && params.payment_status !== 'all') svQuery = svQuery.eq('plan_payment_status', params.payment_status);
-    if (params.date_from) svQuery = svQuery.gte('created_at', params.date_from);
-    if (params.date_to) svQuery = svQuery.lte('created_at', params.date_to + 'T23:59:59Z');
-    svQuery = svQuery.order('created_at', { ascending: false });
-
-    const [{ data: vendors, count: vCount }, { data: svcVendors, count: svCount }] = await Promise.all([vQuery, svQuery]);
-    // Merge both tables and sort globally by created_at desc so new entries always show on top
-    const all = [...(vendors || []), ...(svcVendors || [])].sort((a: any, b: any) => {
-      const ta = new Date(a.created_at || 0).getTime();
-      const tb = new Date(b.created_at || 0).getTime();
-      return tb - ta;
-    });
-    const total = (vCount || 0) + (svCount || 0);
-    const paginated = all.slice(from, to + 1);
-    return paginateResult(paginated, total, page, perPage);
+    const { data: vendors, count } = await vQuery;
+    return paginateResult(vendors || [], count || 0, page, perPage);
   },
 
   updateVendorStatus: async (id: string, status: string) => {
