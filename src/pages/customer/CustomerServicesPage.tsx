@@ -207,7 +207,7 @@ export default function CustomerServicesPage() {
           </div>
         )}
       </div>
-      <div className="px-3 py-1 pb-24 md:px-4 md:py-3 md:pb-6">
+      <div className="px-3 pt-2 pb-24 md:px-4 md:pt-3 md:pb-6">
         <BannerAd placement="services" />
       </div>
     </CustomerLayout>
