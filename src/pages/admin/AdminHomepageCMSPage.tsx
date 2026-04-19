@@ -202,7 +202,7 @@ function VideoAdModal({ open, onClose, ad, onSave }: any) {
     queryKey: ["cms_services_for_ad", form.cta_target_type],
     enabled: form.cta_target_type === "service",
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("id,name").eq("type", "service").eq("status", "active").order("name").limit(500);
+      const { data } = await supabase.from("services" as any).select("id,title").eq("status", "active").order("title").limit(500);
       return (data || []) as any[];
     },
   });
