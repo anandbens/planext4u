@@ -95,6 +95,7 @@ export default function AdminNotificationsPage() {
                   <SelectItem value="all"><div className="flex items-center gap-2"><Globe className="h-4 w-4" /> All Users</div></SelectItem>
                   <SelectItem value="customers"><div className="flex items-center gap-2"><Users className="h-4 w-4" /> Customers Only</div></SelectItem>
                   <SelectItem value="vendors"><div className="flex items-center gap-2"><Store className="h-4 w-4" /> Vendors Only</div></SelectItem>
+                  <SelectItem value="riders"><div className="flex items-center gap-2"><Bell className="h-4 w-4" /> Riders Only</div></SelectItem>
                   <SelectItem value="specific">Specific Users</SelectItem>
                 </SelectContent>
               </Select>
