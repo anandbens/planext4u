@@ -525,7 +525,7 @@ export default function CustomerProductPage() {
           </Button>
         </div>
       </div>
-      <div className="px-3 pt-0 pb-32 md:px-4 md:pt-1 md:pb-4">
+      <div className="px-3 pt-2 pb-24 md:px-4 md:pt-3 md:pb-6">
         <BannerAd placement="product_detail" />
       </div>
       <LoginPromptDialog open={loginPromptOpen} onOpenChange={setLoginPromptOpen} message="Please sign in to add items to your cart and place orders." />
