@@ -123,6 +123,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
   const flags: VendorMenuFlags = vendorFlags || { isProduct: true, isService: false, isRestaurant: false };
   const sidebarItems = useMemo(() => buildSidebarItems(flags), [flags.isProduct, flags.isService, flags.isRestaurant]);
   const bottomNavItems = useMemo(() => buildBottomNavItems(flags), [flags.isProduct, flags.isService, flags.isRestaurant]);
+  const quickActions = useMemo(() => buildQuickActions(flags), [flags.isProduct, flags.isService, flags.isRestaurant]);
 
   useEffect(() => {
     setMobileMenuOpen(false);
