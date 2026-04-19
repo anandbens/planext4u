@@ -84,18 +84,19 @@ export default function CustomersPage() {
 
   const handleSave = async (id: string, updates: Partial<User>) => { try { await api.updateCustomer(id, updates); toast.success("Customer updated"); fetchData(); fetchStats(); } catch (err: any) { toast.error("Failed to update customer: " + (err.message || "Unknown error")); } };
   const handleCreate = async (data: Partial<User>) => { try { await api.createCustomer(data); toast.success("Customer created"); fetchData(); fetchStats(); } catch (err: any) { toast.error("Failed to create customer: " + (err.message || "Unknown error")); } };
-  const handleDelete = async (id: string) => { await api.deleteCustomer(id); toast.success("Customer deleted (soft)"); fetchData(); fetchStats(); };
+  const handleDelete = async (id: string) => {
+    try { await api.deleteCustomer(id); toast.success("Customer deleted (soft)"); fetchData(); fetchStats(); }
+    catch (err: any) { toast.error("Failed to delete customer: " + (err.message || "Unknown error")); }
+  };
 
   const handleBulkDelete = async (ids: string[]) => {
-    await api.bulkDeleteCustomers(ids);
-    toast.success(`${ids.length} customers deleted (soft)`);
-    fetchData(); fetchStats();
+    try { await api.bulkDeleteCustomers(ids); toast.success(`${ids.length} customers deleted (soft)`); fetchData(); fetchStats(); }
+    catch (err: any) { toast.error("Failed to delete customers: " + (err.message || "Unknown error")); }
   };
 
   const handleBulkStatus = async (ids: string[], status: string) => {
-    await api.bulkUpdateCustomerStatus(ids, status);
-    toast.success(`${ids.length} customers updated to ${status}`);
-    fetchData(); fetchStats();
+    try { await api.bulkUpdateCustomerStatus(ids, status); toast.success(`${ids.length} customers updated to ${status}`); fetchData(); fetchStats(); }
+    catch (err: any) { toast.error("Failed to update customers: " + (err.message || "Unknown error")); }
   };
 
   const handleExport = () => {

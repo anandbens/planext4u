@@ -246,18 +246,19 @@ export default function VendorsPage() {
     setPage(1);
     fetchData(); fetchStats();
   };
-  const handleDelete = async (id: string) => { await api.deleteVendor(id); toast.success("Vendor deleted"); fetchData(); fetchStats(); };
+  const handleDelete = async (id: string) => {
+    try { await api.deleteVendor(id); toast.success("Vendor deleted"); fetchData(); fetchStats(); }
+    catch (err: any) { toast.error("Failed to delete vendor: " + (err.message || "Unknown error")); throw err; }
+  };
 
   const handleBulkDelete = async (ids: string[]) => {
-    await api.bulkDeleteVendors(ids);
-    toast.success(`${ids.length} vendors deleted`);
-    fetchData(); fetchStats();
+    try { await api.bulkDeleteVendors(ids); toast.success(`${ids.length} vendors deleted`); fetchData(); fetchStats(); }
+    catch (err: any) { toast.error("Failed to delete vendors: " + (err.message || "Unknown error")); }
   };
 
   const handleBulkStatus = async (ids: string[], status: string) => {
-    await api.bulkUpdateVendorStatus(ids, status);
-    toast.success(`${ids.length} vendors updated to ${status}`);
-    fetchData(); fetchStats();
+    try { await api.bulkUpdateVendorStatus(ids, status); toast.success(`${ids.length} vendors updated to ${status}`); fetchData(); fetchStats(); }
+    catch (err: any) { toast.error("Failed to update vendors: " + (err.message || "Unknown error")); }
   };
 
   const openConfirm = (vendor: Vendor, action: "approve" | "reject" | "delete") => {
