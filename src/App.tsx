@@ -65,6 +65,11 @@ import GSTR1ReportPage from "./pages/reports/GSTR1ReportPage";
 import GSTR3BReportPage from "./pages/reports/GSTR3BReportPage";
 import HSNSummaryReportPage from "./pages/reports/HSNSummaryReportPage";
 import TCSReportPage from "./pages/reports/TCSReportPage";
+import CreditNotesReportPage from "./pages/reports/CreditNotesReportPage";
+import TDS194OReportPage from "./pages/reports/TDS194OReportPage";
+import GSTR9ReportPage from "./pages/reports/GSTR9ReportPage";
+import DayBookReportPage from "./pages/reports/DayBookReportPage";
+import InvoicesListPage from "./pages/reports/InvoicesListPage";
 
 // Customer pages
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
