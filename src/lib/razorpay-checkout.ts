@@ -43,14 +43,11 @@ export interface RazorpayResult {
   razorpay_signature: string;
 }
 
-const methodMap: Record<FoodPaymentMethod, any> = {
-  upi: { upi: true },
-  card: { card: true },
-  netbanking: { netbanking: true },
-  wallet: { wallet: true },
-  emi: { emi: true, card: true },
-  cod: {},
-};
+// NOTE: We intentionally DO NOT pass a `method` restriction to Razorpay.
+// Passing e.g. { upi: true } collapses the checkout to UPI-collect-only and
+// hides Cards / Netbanking / Wallets / installed UPI apps. Letting Razorpay
+// render the full picker lets the customer pick GPay / PhonePe / Paytm intents
+// natively on Android, plus all other enabled methods.
 
 /** Native Capacitor flow — uses Android/iOS Razorpay SDK so installed UPI apps appear */
 async function openNative(opts: RazorpayOpenOpts): Promise<RazorpayResult> {
@@ -66,8 +63,7 @@ async function openNative(opts: RazorpayOpenOpts): Promise<RazorpayResult> {
     prefill: opts.prefill || {},
     notes: opts.notes || {},
     theme: { color: "#0d9488" },
-    // Hint to the SDK which method to surface; native SDK still shows full UPI picker
-    method: methodMap[opts.method] || {},
+    // No `method` restriction — show full UPI app picker + all enabled options
   };
   // The plugin returns { response: { razorpay_payment_id, razorpay_order_id, razorpay_signature } }
   const result: any = await Checkout.open(options);
@@ -93,7 +89,7 @@ async function openWeb(opts: RazorpayOpenOpts): Promise<RazorpayResult> {
       description: opts.description || "Order",
       prefill: opts.prefill || {},
       notes: opts.notes || {},
-      method: methodMap[opts.method] || {},
+      // No method restriction — show full payment picker
       theme: { color: "#0d9488" },
       handler: (resp: RazorpayResult) => resolve(resp),
       modal: { ondismiss: () => reject(new Error("Payment cancelled")) },
