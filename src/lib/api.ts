@@ -1993,6 +1993,158 @@ export const api = {
     return { success: true, ticket: newTicket };
   },
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // PERMANENT DELETION (admin only) — impact preview + cascade-aware removal
+  // Used from the "Deleted" tabs in Customers / Vendors / Orders pages.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /** Preview the cascade impact of permanently deleting a customer. */
+  getCustomerDeletionImpact: async (customerId: string) => {
+    const [orders, addresses, notifs, kyc, complaints, classifieds, foodOrders, reviews] = await Promise.all([
+      supabase.from('orders').select('*', { count: 'exact', head: true }).eq('customer_id', customerId),
+      supabase.from('customer_addresses').select('*', { count: 'exact', head: true }).eq('customer_id', customerId),
+      supabase.from('customer_notifications').select('*', { count: 'exact', head: true }).eq('customer_id', customerId),
+      supabase.from('kyc_documents').select('*', { count: 'exact', head: true }).eq('user_id', customerId),
+      supabase.from('complaints').select('*', { count: 'exact', head: true }).eq('user_id', customerId),
+      supabase.from('classified_ads').select('*', { count: 'exact', head: true }).eq('user_id', customerId),
+      supabase.from('food_orders').select('*', { count: 'exact', head: true }).eq('customer_id', customerId),
+      supabase.from('reviews' as any).select('*', { count: 'exact', head: true }).eq('user_id', customerId),
+    ]);
+    return {
+      orders: orders.count || 0,
+      addresses: addresses.count || 0,
+      notifications: notifs.count || 0,
+      kyc_documents: kyc.count || 0,
+      complaints: complaints.count || 0,
+      classifieds: classifieds.count || 0,
+      food_orders: foodOrders.count || 0,
+      reviews: reviews.count || 0,
+    };
+  },
+
+  /** Hard delete a customer and all their owned records. */
+  hardDeleteCustomer: async (customerId: string) => {
+    // Remove dependent rows first to avoid FK violations.
+    await supabase.from('customer_addresses').delete().eq('customer_id', customerId);
+    await supabase.from('customer_notifications').delete().eq('customer_id', customerId);
+    await supabase.from('kyc_documents').delete().eq('user_id', customerId);
+    await supabase.from('classified_ads').delete().eq('user_id', customerId);
+    await supabase.from('complaints').delete().eq('user_id', customerId);
+    await supabase.from('reviews' as any).delete().eq('user_id', customerId);
+    await supabase.from('orders').delete().eq('customer_id', customerId);
+    await supabase.from('food_orders').delete().eq('customer_id', customerId);
+    await supabase.from('points_transactions' as any).delete().eq('user_id', customerId);
+    await supabase.from('user_roles').delete().eq('customer_id', customerId);
+
+    const { error } = await supabase.from('customers').delete().eq('id', customerId);
+    if (error) throw error;
+
+    await supabase.from('audit_logs').insert({
+      table_name: 'customers', operation: 'HARD_DELETE', record_id: customerId,
+      old_data: { id: customerId } as any,
+    });
+    return { success: true };
+  },
+
+  /** Preview the cascade impact of permanently deleting a vendor. */
+  getVendorDeletionImpact: async (vendorId: string) => {
+    const [products, services, orders, settlements, mediaLib, notifs] = await Promise.all([
+      supabase.from('products').select('*', { count: 'exact', head: true }).eq('vendor_id', vendorId),
+      supabase.from('services' as any).select('*', { count: 'exact', head: true }).eq('vendor_id', vendorId),
+      supabase.from('orders').select('*', { count: 'exact', head: true }).eq('vendor_id', vendorId),
+      supabase.from('settlements' as any).select('*', { count: 'exact', head: true }).eq('vendor_id', vendorId),
+      supabase.from('media_library').select('*', { count: 'exact', head: true }).eq('vendor_id', vendorId),
+      supabase.from('vendor_notifications' as any).select('*', { count: 'exact', head: true }).eq('vendor_id', vendorId),
+    ]);
+    return {
+      products: products.count || 0,
+      services: services.count || 0,
+      orders: orders.count || 0,
+      settlements: settlements.count || 0,
+      media_assets: mediaLib.count || 0,
+      notifications: notifs.count || 0,
+    };
+  },
+
+  /** Hard delete a vendor: orders → products/services → settlements → vendor row. */
+  hardDeleteVendor: async (vendorId: string) => {
+    // Discover whether this is a product vendor or service vendor
+    const { data: pv } = await supabase.from('vendors').select('id').eq('id', vendorId).maybeSingle();
+    const table = pv ? 'vendors' : 'service_vendors';
+
+    // 1) Get all products of this vendor → cascade orders for those products handled below
+    const { data: prodRows } = await supabase.from('products').select('id').eq('vendor_id', vendorId);
+    const productIds = (prodRows || []).map((p: any) => p.id);
+
+    // 2) Delete vendor-level orders (covers product/service orders by vendor_id)
+    await supabase.from('orders').delete().eq('vendor_id', vendorId);
+
+    // 3) Delete product-side dependents then products themselves
+    if (productIds.length > 0) {
+      await supabase.from('product_variants' as any).delete().in('product_id', productIds);
+      await supabase.from('inventory_log').delete().in('product_id', productIds);
+      await supabase.from('product_attribute_map' as any).delete().in('product_id', productIds);
+      await supabase.from('products').delete().in('id', productIds);
+    }
+
+    // 4) Services (for service vendors)
+    await supabase.from('services' as any).delete().eq('vendor_id', vendorId);
+
+    // 5) Settlements & vendor notifications & media library
+    await supabase.from('settlements' as any).delete().eq('vendor_id', vendorId);
+    await supabase.from('vendor_notifications' as any).delete().eq('vendor_id', vendorId);
+    await supabase.from('media_library').delete().eq('vendor_id', vendorId);
+
+    // 6) User role mapping
+    await supabase.from('user_roles').delete().eq('vendor_id', vendorId);
+
+    // 7) Finally remove the vendor record itself
+    const { error } = await supabase.from(table as any).delete().eq('id', vendorId);
+    if (error) throw error;
+
+    await supabase.from('audit_logs').insert({
+      table_name: table, operation: 'HARD_DELETE', record_id: vendorId,
+      old_data: { id: vendorId, cascaded_products: productIds.length } as any,
+    });
+    return { success: true, cascaded_products: productIds.length };
+  },
+
+  /** Preview the cascade impact of permanently deleting one or more orders. */
+  getOrdersDeletionImpact: async (orderIds: string[]) => {
+    if (orderIds.length === 0) return { orders: 0, settlements: 0, payments: 0, ratings: 0 };
+    const [settlements, payments, ratings] = await Promise.all([
+      supabase.from('settlements' as any).select('*', { count: 'exact', head: true }).in('order_id', orderIds),
+      supabase.from('payment_transactions' as any).select('*', { count: 'exact', head: true }).in('order_id', orderIds),
+      supabase.from('reviews' as any).select('*', { count: 'exact', head: true }).in('order_id', orderIds),
+    ]);
+    return {
+      orders: orderIds.length,
+      settlements: settlements.count || 0,
+      payments: payments.count || 0,
+      ratings: ratings.count || 0,
+    };
+  },
+
+  /** Hard delete orders along with their financial / report dependents. */
+  hardDeleteOrders: async (orderIds: string[]) => {
+    if (orderIds.length === 0) return { success: true };
+    await supabase.from('settlements' as any).delete().in('order_id', orderIds);
+    await supabase.from('payment_transactions' as any).delete().in('order_id', orderIds);
+    await supabase.from('reviews' as any).delete().in('order_id', orderIds);
+    await supabase.from('delivery_proofs').delete().in('order_id', orderIds);
+
+    const { error } = await supabase.from('orders').delete().in('id', orderIds);
+    if (error) throw error;
+
+    await supabase.from('audit_logs').insert(
+      orderIds.map((id) => ({
+        table_name: 'orders', operation: 'HARD_DELETE', record_id: id,
+        old_data: { id } as any,
+      })) as any
+    );
+    return { success: true };
+  },
+
   // Reset all data (no-op with Supabase)
   resetData: () => {
     localStorage.clear();
