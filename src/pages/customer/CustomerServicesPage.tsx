@@ -33,10 +33,41 @@ export default function CustomerServicesPage() {
   const [sortBy, setSortBy] = useState("popular");
   const categoryFilter = searchParams.get("category") || undefined;
   const { list: wishlist, toggle: toggleWishlist } = useServiceWishlist();
+  const { customerUser } = useAuth();
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
+
+  // Resolve user location: default address → GPS fallback
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { ownerIds } = await getCustomerAddressOwnerContext(customerUser);
+        if (ownerIds.length) {
+          const { data: addr } = await supabase
+            .from('customer_addresses')
+            .select('latitude, longitude')
+            .in('customer_id', ownerIds)
+            .eq('is_default', true)
+            .maybeSingle();
+          if (!cancelled && addr?.latitude && addr?.longitude) {
+            setUserLocation({ lat: addr.latitude, lng: addr.longitude });
+            return;
+          }
+        }
+      } catch {}
+      if (!cancelled && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => !cancelled && setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+          () => {},
+        );
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [customerUser]);
 
   const { data: services, isLoading } = useQuery({
-    queryKey: ["browseServices", categoryFilter, sortBy],
-    queryFn: () => api.browseServices({ category: categoryFilter, sort: sortBy }),
+    queryKey: ["browseServices", categoryFilter, sortBy, userLocation.lat, userLocation.lng],
+    queryFn: () => api.browseServices({ category: categoryFilter, sort: sortBy, userLat: userLocation.lat, userLng: userLocation.lng }),
   });
 
   const { data: categories } = useQuery({
