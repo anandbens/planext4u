@@ -272,6 +272,7 @@ export default function VendorRegisterPage() {
         fb_link: form.fb_link, instagram_link: form.instagram_link,
         business_name: form.business_name, business_type: form.business_type,
         store_name: form.store_name, category: form.category,
+        vendor_category: form.category === 'service' ? 'service' : 'product',
         business_description: form.business_description,
         gst_number: form.gst_number, gst_certificate_url: form.gst_certificate_url,
         pan_number: form.pan_number, pan_image_url: form.pan_image_url,
@@ -478,7 +479,7 @@ export default function VendorRegisterPage() {
                     <SelectItem value="pvt_ltd">Pvt Ltd</SelectItem>
                   </SelectContent>
                 </Select></div>
-              <div><label className="text-xs font-medium text-muted-foreground">Vendor Type *</label>
+              <div><label className="text-xs font-medium text-muted-foreground">Vendor Category *</label>
                 <Select value={form.category} onValueChange={v => { updateField('category', v); setSelectedCategories([]); setSelectedSubcategories([]); }}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>

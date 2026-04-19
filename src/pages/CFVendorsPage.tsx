@@ -46,7 +46,8 @@ export default function CFVendorsPage() {
       let q = (supabase
         .from('vendor_applications')
         .select('*', { count: 'exact' }) as any)
-        .eq('status', 'submitted');
+        .eq('status', 'submitted')
+        .eq('vendor_category', 'service');
 
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
       if (dateFrom) q = q.gte('created_at', dateFrom);
@@ -77,7 +78,8 @@ export default function CFVendorsPage() {
       let appQ = (supabase
         .from('vendor_applications')
         .select('*', { count: 'exact' }) as any)
-        .eq('status', 'rejected');
+        .eq('status', 'rejected')
+        .eq('vendor_category', 'service');
       let venQ = supabase
         .from('service_vendors' as any)
         .select('*', { count: 'exact' })
@@ -137,8 +139,8 @@ export default function CFVendorsPage() {
     ] = await Promise.all([
       supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }),
       supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }).eq('status', 'verified'),
-      supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
-      supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).eq('status', 'submitted'),
+      (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).eq('status', 'rejected').eq('vendor_category', 'service'),
+      (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).eq('status', 'submitted').eq('vendor_category', 'service'),
       supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }).eq('status', 'deactivated'),
       supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }).eq('status', 'deleted'),
     ]);
@@ -167,6 +169,7 @@ export default function CFVendorsPage() {
             mobile: updates.mobile || a.phone, email: updates.email || a.email,
             commission_rate: (updates as any).commission_rate || 10, membership: (updates as any).membership || 'basic',
             status: 'verified',
+            vendor_category: 'service',
             shop_photo_url: a.shop_photo_url || '',
             shop_address: a.shop_address || '',
             plan_id: (updates as any).plan_id || null,
@@ -283,6 +286,7 @@ export default function CFVendorsPage() {
               id: newVendorId,
               name: a.name, business_name: a.business_name, mobile: a.phone, email: a.email,
               commission_rate: 10, membership: 'basic', status: 'verified',
+              vendor_category: 'service',
               shop_address: a.shop_address || '',
               shop_photo_url: a.shop_photo_url || '',
             };

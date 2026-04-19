@@ -180,6 +180,7 @@ export default function VendorRegisterPage() {
         fb_link: form.fb_link, instagram_link: form.instagram_link,
         business_name: form.business_name, business_type: form.business_type,
         store_name: form.store_name, category: form.category,
+        vendor_category: form.category === 'service' ? 'service' : 'product',
         business_description: form.business_description,
         gst_number: form.gst_number, gst_certificate_url: form.gst_certificate_url,
         pan_number: form.pan_number, pan_image_url: form.pan_image_url,
@@ -321,7 +322,7 @@ export default function VendorRegisterPage() {
                     <SelectItem value="pvt_ltd">Pvt Ltd</SelectItem>
                   </SelectContent>
                 </Select></div>
-              <div><label className="text-xs font-medium text-muted-foreground">Vendor Type</label>
+              <div><label className="text-xs font-medium text-muted-foreground">Vendor Category</label>
                 <Select value={form.category} onValueChange={v => updateField('category', v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -451,7 +452,7 @@ export default function VendorRegisterPage() {
               <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-secondary/50">
                 <p className="text-muted-foreground">Business</p><p className="font-medium">{form.business_name}</p>
                 <p className="text-muted-foreground">Type</p><p className="font-medium capitalize">{form.business_type}</p>
-                <p className="text-muted-foreground">Category</p><p className="font-medium capitalize">{form.category}</p>
+                <p className="text-muted-foreground">Vendor Category</p><p className="font-medium capitalize">{form.category === 'service' ? 'Service Provider' : 'Product Seller'}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-secondary/50">
                 <p className="text-muted-foreground">Aadhaar</p><p className="font-medium">{form.aadhaar_number ? `XXXX-XXXX-${form.aadhaar_number.slice(-4)}` : '—'}</p>

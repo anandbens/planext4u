@@ -248,12 +248,12 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                     <Label className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Mobile</Label>
                     {editMode ? <Input value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className="mt-1" /> : <p className="text-sm font-medium mt-1">{vendor?.mobile}</p>}
                   </div>
-                  {/* Vendor Type — read-only display + admin can switch between product/service */}
+                  {/* Vendor Category — read-only display + admin can switch between product/service */}
                   {!isCreate && vendor && (() => {
                     const currentType: "product" | "service" = vendor.id?.startsWith("SVN") ? "service" : "product";
                     return (
                       <div>
-                        <Label className="text-xs text-muted-foreground">Vendor Type</Label>
+                        <Label className="text-xs text-muted-foreground">Vendor Category</Label>
                         {editMode ? (
                           <Select
                             value={currentType}
@@ -269,7 +269,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                                 if (fetchErr || !row) throw fetchErr || new Error("Vendor not found");
                                 const newId = `${newType === "service" ? "SVN" : "VND"}-${Date.now().toString(36).toUpperCase()}`;
                                 const { id: _omit, deleted_at: _d, ...rest } = row as any;
-                                const { error: insErr } = await supabase.from(toTable).insert({ ...rest, id: newId } as any);
+                                const { error: insErr } = await supabase.from(toTable).insert({ ...rest, id: newId, vendor_category: newType } as any);
                                 if (insErr) throw insErr;
                                 // Soft-delete from origin (mark deleted to keep audit history)
                                 if (fromTable === "vendors") {
@@ -281,7 +281,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                                 onOpenChange(false);
                                 onRefresh?.();
                               } catch (err: any) {
-                                toast.error(err.message || "Failed to change vendor type");
+                                toast.error(err.message || "Failed to change vendor category");
                               } finally {
                                 setSaving(false);
                               }
@@ -289,12 +289,12 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                           >
                             <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="product">Product Vendor</SelectItem>
-                              <SelectItem value="service">Service Vendor</SelectItem>
+                              <SelectItem value="product">Product Seller</SelectItem>
+                              <SelectItem value="service">Service Provider</SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
-                          <p className="text-sm font-medium mt-1 capitalize">{currentType} Vendor</p>
+                          <p className="text-sm font-medium mt-1">{currentType === "service" ? "Service Provider" : "Product Seller"}</p>
                         )}
                       </div>
                     );

@@ -4312,6 +4312,7 @@ export type Database = {
           total_orders: number | null
           total_products: number | null
           total_revenue: number | null
+          vendor_category: string
         }
         Insert: {
           area_id?: string | null
@@ -4339,6 +4340,7 @@ export type Database = {
           total_orders?: number | null
           total_products?: number | null
           total_revenue?: number | null
+          vendor_category?: string
         }
         Update: {
           area_id?: string | null
@@ -4366,6 +4368,7 @@ export type Database = {
           total_orders?: number | null
           total_products?: number | null
           total_revenue?: number | null
+          vendor_category?: string
         }
         Relationships: [
           {
@@ -5618,6 +5621,7 @@ export type Database = {
           subcategory: string | null
           updated_at: string
           user_id: string
+          vendor_category: string
         }
         Insert: {
           aadhaar_back_url?: string | null
@@ -5662,6 +5666,7 @@ export type Database = {
           subcategory?: string | null
           updated_at?: string
           user_id: string
+          vendor_category?: string
         }
         Update: {
           aadhaar_back_url?: string | null
@@ -5706,6 +5711,7 @@ export type Database = {
           subcategory?: string | null
           updated_at?: string
           user_id?: string
+          vendor_category?: string
         }
         Relationships: []
       }
@@ -5946,6 +5952,7 @@ export type Database = {
           total_orders: number | null
           total_products: number | null
           total_revenue: number | null
+          vendor_category: string
         }
         Insert: {
           area_id?: string | null
@@ -5979,6 +5986,7 @@ export type Database = {
           total_orders?: number | null
           total_products?: number | null
           total_revenue?: number | null
+          vendor_category?: string
         }
         Update: {
           area_id?: string | null
@@ -6012,6 +6020,7 @@ export type Database = {
           total_orders?: number | null
           total_products?: number | null
           total_revenue?: number | null
+          vendor_category?: string
         }
         Relationships: [
           {

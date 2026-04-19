@@ -48,10 +48,11 @@ export default function VendorsPage() {
     }
 
     if (activeTab === "pending") {
-      let q = supabase
+      let q = (supabase
         .from('vendor_applications')
-        .select('*', { count: 'exact' })
-        .not('status', 'in', '(approved,verified,active,rejected)');
+        .select('*', { count: 'exact' }) as any)
+        .not('status', 'in', '(approved,verified,active,rejected)')
+        .eq('vendor_category', 'product');
 
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
       if (dateFrom) q = q.gte('created_at', dateFrom);
@@ -81,10 +82,11 @@ export default function VendorsPage() {
 
     if (activeTab === "rejected") {
       // Combine rejected applications + rejected product vendors
-      let appQ = supabase
+      let appQ = (supabase
         .from('vendor_applications')
-        .select('*', { count: 'exact' })
-        .eq('status', 'rejected');
+        .select('*', { count: 'exact' }) as any)
+        .eq('status', 'rejected')
+        .eq('vendor_category', 'product');
       let venQ = supabase
         .from('vendors')
         .select('*', { count: 'exact' })
@@ -138,7 +140,7 @@ export default function VendorsPage() {
       supabase.from('vendors').select('*', { count: 'exact', head: true }).is('deleted_at', null),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'verified'),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
-      supabase.from('vendor_applications').select('*', { count: 'exact', head: true }).not('status', 'in', '(approved,verified,active,rejected)'),
+      (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).not('status', 'in', '(approved,verified,active,rejected)').eq('vendor_category', 'product'),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'deactivated'),
       supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('status', 'deleted'),
     ]);
@@ -168,6 +170,7 @@ export default function VendorsPage() {
             mobile: updates.mobile || a.phone, email: updates.email || a.email,
             commission_rate: (updates as any).commission_rate || 10, membership: (updates as any).membership || 'basic',
             status: 'verified',
+            vendor_category: 'product',
             shop_photo_url: a.shop_photo_url || '', shop_latitude: a.latitude || 0, shop_longitude: a.longitude || 0,
             shop_address: a.shop_address || '',
             plan_id: (updates as any).plan_id || null,
@@ -271,6 +274,7 @@ export default function VendorsPage() {
               id: newVendorId,
               name: a.name, business_name: a.business_name, mobile: a.phone, email: a.email,
               commission_rate: 10, membership: 'basic', status: 'verified',
+              vendor_category: 'product',
               shop_latitude: a.latitude || 0, shop_longitude: a.longitude || 0,
               shop_address: a.shop_address || '',
               shop_photo_url: a.shop_photo_url || '',
