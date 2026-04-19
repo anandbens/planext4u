@@ -9,6 +9,31 @@ import { Upload, Download, FileText, AlertTriangle, CheckCircle, Clock, X, Refre
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
+// ── Per-row archive helper — saves every parsed row (success or error) for recovery ──
+async function archiveRow(
+  uploadId: string,
+  rowNumber: number,
+  rawData: Record<string, any>,
+  status: "success" | "error",
+  action: "created" | "updated" | null,
+  resultingRecordId: string | null,
+  errorMessages: string[] | null,
+) {
+  try {
+    await supabase.from("file_upload_rows" as any).insert({
+      upload_id: uploadId,
+      row_number: rowNumber,
+      raw_data: rawData,
+      status,
+      action,
+      resulting_record_id: resultingRecordId,
+      error_messages: errorMessages,
+    });
+  } catch (e) {
+    console.error("Failed to archive row", rowNumber, e);
+  }
+}
+
 // ── Product CSV ──
 const PRODUCT_CSV_HEADERS = [
   "id","title","description","short_description","long_description","price","tax","discount","discount_type",
@@ -187,7 +212,11 @@ async function processProductUpload(rows: string[][], headers: string[], uploadI
       } else if (an && !av) rowErrors.push(`attribute_value_${a} required when attribute_name_${a} provided`);
     }
 
-    if (rowErrors.length > 0) { errors.push({ row: i + 2, data: record, errors: rowErrors }); continue; }
+    if (rowErrors.length > 0) {
+      errors.push({ row: i + 2, data: record, errors: rowErrors });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, rowErrors);
+      continue;
+    }
 
     try {
       let categoryId = "", categoryName = record.category_name || "", subcategoryId = "", subcategoryName = record.subcategory_name || "";
@@ -232,28 +261,36 @@ async function processProductUpload(rows: string[][], headers: string[], uploadI
       };
 
       let productId: string;
+      let action: "created" | "updated";
       const existingId = record.id?.trim();
       if (existingId) {
-        const { error } = await supabase.from("products").update(payload).eq("id", existingId);
+        const { data: upd, error } = await supabase.from("products").update(payload).eq("id", existingId).select("id").single();
         if (error) throw error;
+        if (!upd) throw new Error("Update returned no row — record may not exist or RLS denied");
         productId = existingId;
+        action = "updated";
         updated++;
       } else {
         productId = `PRD-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
-        const { error } = await supabase.from("products").insert({ ...payload, id: productId } as any);
+        const { data: ins, error } = await supabase.from("products").insert({ ...payload, id: productId } as any).select("id").single();
         if (error) throw error;
+        if (!ins) throw new Error("Insert returned no row — RLS may have blocked it");
+        action = "created";
         created++;
       }
 
       // Sync product_attribute_map table
       if (attrMapEntries.length > 0) {
-        // Remove old mappings for this product
         await supabase.from("product_attribute_map").delete().eq("product_id", productId);
-        // Insert new mappings
         const mapRows = attrMapEntries.map(e => ({ product_id: productId, attribute_id: e.attribute_id }));
         await supabase.from("product_attribute_map").insert(mapRows as any);
       }
-    } catch (e: any) { errors.push({ row: i + 2, data: record, errors: [e.message] }); }
+
+      await archiveRow(uploadId, i + 2, record, "success", action, productId, null);
+    } catch (e: any) {
+      errors.push({ row: i + 2, data: record, errors: [e.message] });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, [e.message]);
+    }
   }
 
   await supabase.from("file_uploads" as any).update({
@@ -311,7 +348,11 @@ async function processCustomerUpload(rows: string[][], headers: string[], upload
       if (cleanMobile && mobileIdMap[cleanMobile]) rowErrors.push("mobile already exists in customers");
     }
 
-    if (rowErrors.length > 0) { errors.push({ row: i + 2, data: record, errors: rowErrors }); continue; }
+    if (rowErrors.length > 0) {
+      errors.push({ row: i + 2, data: record, errors: rowErrors });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, rowErrors);
+      continue;
+    }
 
     try {
       const payload: any = {
@@ -334,21 +375,31 @@ async function processCustomerUpload(rows: string[][], headers: string[], upload
         status: record.status || "active",
       };
 
+      let customerId: string;
+      let action: "created" | "updated";
       if (existingId) {
-        const { error } = await supabase.from("customers").update(payload).eq("id", existingId);
+        const { data: upd, error } = await supabase.from("customers").update(payload).eq("id", existingId).select("id").single();
         if (error) throw error;
+        if (!upd) throw new Error("Update returned no row — record may not exist or RLS denied");
+        customerId = existingId;
+        action = "updated";
         updated++;
       } else {
-        const id = `USR-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
+        customerId = `USR-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
         const refCode = record.referral_code?.trim() || `MRCP4U${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`;
-        const { error } = await supabase.from("customers").insert({ ...payload, id, referral_code: refCode });
+        const { data: ins, error } = await supabase.from("customers").insert({ ...payload, id: customerId, referral_code: refCode }).select("id").single();
         if (error) throw error;
-        // Track for dupe checks within the same upload
-        emailIdMap[payload.email] = id;
-        mobileIdMap[payload.mobile.replace(/\D/g, "")] = id;
+        if (!ins) throw new Error("Insert returned no row — RLS may have blocked it");
+        emailIdMap[payload.email] = customerId;
+        mobileIdMap[payload.mobile.replace(/\D/g, "")] = customerId;
+        action = "created";
         created++;
       }
-    } catch (e: any) { errors.push({ row: i + 2, data: record, errors: [e.message] }); }
+      await archiveRow(uploadId, i + 2, record, "success", action, customerId, null);
+    } catch (e: any) {
+      errors.push({ row: i + 2, data: record, errors: [e.message] });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, [e.message]);
+    }
   }
 
   await supabase.from("file_uploads" as any).update({
@@ -431,7 +482,11 @@ async function processVendorUpload(rows: string[][], headers: string[], uploadId
       if (cleanMobile && mobileIdMap[cleanMobile]) rowErrors.push("mobile already exists in vendors");
     }
 
-    if (rowErrors.length > 0) { errors.push({ row: i + 2, data: record, errors: rowErrors }); continue; }
+    if (rowErrors.length > 0) {
+      errors.push({ row: i + 2, data: record, errors: rowErrors });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, rowErrors);
+      continue;
+    }
 
     try {
       const payload: any = {
@@ -462,19 +517,30 @@ async function processVendorUpload(rows: string[][], headers: string[], uploadId
         status: record.status || "pending",
       };
 
+      let vendorId: string;
+      let action: "created" | "updated";
       if (existingId) {
-        const { error } = await supabase.from("vendors").update(payload).eq("id", existingId);
+        const { data: upd, error } = await supabase.from("vendors").update(payload).eq("id", existingId).select("id").single();
         if (error) throw error;
+        if (!upd) throw new Error("Update returned no row — record may not exist or RLS denied");
+        vendorId = existingId;
+        action = "updated";
         updated++;
       } else {
-        const id = `VND-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
-        const { error } = await supabase.from("vendors").insert({ ...payload, id } as any);
+        vendorId = `VND-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
+        const { data: ins, error } = await supabase.from("vendors").insert({ ...payload, id: vendorId } as any).select("id").single();
         if (error) throw error;
-        emailIdMap[payload.email] = id;
-        mobileIdMap[payload.mobile.replace(/\D/g, "")] = id;
+        if (!ins) throw new Error("Insert returned no row — RLS may have blocked it");
+        emailIdMap[payload.email] = vendorId;
+        mobileIdMap[payload.mobile.replace(/\D/g, "")] = vendorId;
+        action = "created";
         created++;
       }
-    } catch (e: any) { errors.push({ row: i + 2, data: record, errors: [e.message] }); }
+      await archiveRow(uploadId, i + 2, record, "success", action, vendorId, null);
+    } catch (e: any) {
+      errors.push({ row: i + 2, data: record, errors: [e.message] });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, [e.message]);
+    }
   }
 
   await supabase.from("file_uploads" as any).update({
@@ -513,22 +579,75 @@ export default function FileUploadsPage() {
     const { headers, rows } = parseCSV(text);
     if (rows.length === 0) { toast.error("File is empty"); setUploading(false); return; }
 
+    // 1. Create upload record
     const { data: uploadRecord, error: insertErr } = await supabase.from("file_uploads" as any).insert({
       file_name: file.name, upload_type: uploadType, status: "processing",
       total_records: rows.length, uploaded_by: user?.name || "Admin",
     }).select().single();
 
     if (insertErr || !uploadRecord) { toast.error("Failed to create upload record"); setUploading(false); return; }
+    const uploadId = (uploadRecord as any).id;
+
+    // 2. Persist original CSV to private storage so it can always be re-processed
+    const storagePath = `${uploadType}/${uploadId}/${file.name}`;
+    const { error: storageErr } = await supabase.storage.from("file-uploads").upload(storagePath, file, {
+      contentType: "text/csv", upsert: true,
+    });
+    if (storageErr) {
+      console.error("Failed to archive original CSV:", storageErr);
+      toast.warning("CSV processing started, but storage backup failed: " + storageErr.message);
+    } else {
+      await supabase.from("file_uploads" as any).update({ original_file_path: storagePath }).eq("id", uploadId);
+    }
 
     toast.success(`Processing ${rows.length} records in background...`);
     fetchUploads();
     setUploading(false);
     if (fileRef.current) fileRef.current.value = "";
 
-    const uploadId = (uploadRecord as any).id;
     if (uploadType === "product") processProductUpload(rows, headers, uploadId).then(fetchUploads);
     else if (uploadType === "customer") processCustomerUpload(rows, headers, uploadId).then(fetchUploads);
     else processVendorUpload(rows, headers, uploadId).then(fetchUploads);
+  };
+
+  const downloadOriginalCSV = async (upload: any) => {
+    if (!upload.original_file_path) { toast.error("No original CSV archived for this upload"); return; }
+    const { data, error } = await supabase.storage.from("file-uploads").download(upload.original_file_path);
+    if (error || !data) { toast.error("Failed to download: " + (error?.message || "unknown")); return; }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url; a.download = upload.file_name; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const reprocessUpload = async (upload: any) => {
+    if (!upload.original_file_path) { toast.error("No original CSV archived — cannot re-process"); return; }
+    if (!confirm(`Re-process ${upload.file_name}? This creates a new upload run from the archived CSV.`)) return;
+
+    const { data: blob, error: dlErr } = await supabase.storage.from("file-uploads").download(upload.original_file_path);
+    if (dlErr || !blob) { toast.error("Failed to download original: " + (dlErr?.message || "unknown")); return; }
+
+    const text = await blob.text();
+    const { headers, rows } = parseCSV(text);
+
+    const { data: newRec } = await supabase.from("file_uploads" as any).insert({
+      file_name: `[REPROCESS] ${upload.file_name}`,
+      upload_type: upload.upload_type,
+      status: "processing",
+      total_records: rows.length,
+      uploaded_by: user?.name || "Admin",
+      original_file_path: upload.original_file_path,
+    }).select().single();
+
+    if (!newRec) { toast.error("Failed to create re-process record"); return; }
+    const newId = (newRec as any).id;
+
+    toast.success(`Re-processing ${rows.length} rows...`);
+    fetchUploads();
+
+    if (upload.upload_type === "product") processProductUpload(rows, headers, newId).then(fetchUploads);
+    else if (upload.upload_type === "customer") processCustomerUpload(rows, headers, newId).then(fetchUploads);
+    else processVendorUpload(rows, headers, newId).then(fetchUploads);
   };
 
   const downloadErrors = (upload: any) => {
@@ -661,11 +780,23 @@ export default function FileUploadsPage() {
                       {u.created_at ? new Date(u.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      {u.error_count > 0 && (
-                        <Button variant="ghost" size="sm" onClick={() => downloadErrors(u)} className="gap-1 text-destructive">
-                          <Download className="h-3 w-3" /> Error Log
-                        </Button>
-                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {u.original_file_path && (
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => downloadOriginalCSV(u)} className="gap-1">
+                              <Download className="h-3 w-3" /> CSV
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => reprocessUpload(u)} className="gap-1 text-primary">
+                              <RefreshCw className="h-3 w-3" /> Re-process
+                            </Button>
+                          </>
+                        )}
+                        {u.error_count > 0 && (
+                          <Button variant="ghost" size="sm" onClick={() => downloadErrors(u)} className="gap-1 text-destructive">
+                            <Download className="h-3 w-3" /> Errors
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
