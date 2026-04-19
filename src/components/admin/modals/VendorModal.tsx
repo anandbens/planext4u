@@ -250,7 +250,13 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                   </div>
                   {/* Vendor Category — read-only display + admin can switch between product/service */}
                   {!isCreate && vendor && (() => {
-                    const currentType: "product" | "service" = vendor.id?.startsWith("SVN") ? "service" : "product";
+                    // Prefer the explicit vendor_category field; fall back to ID prefix only if missing.
+                    // Many service vendors carry legacy VND-* IDs, so ID prefix alone is not reliable.
+                    const vc = (vendor as any).vendor_category as string | undefined;
+                    const currentType: "product" | "service" =
+                      vc === "service" ? "service"
+                      : vc === "product" ? "product"
+                      : vendor.id?.startsWith("SVN") ? "service" : "product";
                     return (
                       <div>
                         <Label className="text-xs text-muted-foreground">Vendor Category</Label>
