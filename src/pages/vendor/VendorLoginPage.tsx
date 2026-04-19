@@ -66,7 +66,7 @@ export default function VendorLoginPage() {
         supabase.from("vendors").select("status, mobile").in("mobile", phoneVariants).maybeSingle(),
         supabase.from("service_vendors" as any).select("status, mobile").in("mobile", phoneVariants).maybeSingle(),
       ]);
-      const vendor = productVendor || serviceVendor;
+      const vendor = (productVendor || serviceVendor) as { status?: string; mobile?: string } | null;
       
       if (vendorApp && !vendor) {
         if (vendorApp.status === 'rejected') {

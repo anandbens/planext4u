@@ -407,13 +407,25 @@ Deno.serve(async (req) => {
     if (role === "vendor") {
       console.log("Vendor login attempt for phone:", normalizedPhone);
 
-      // Look up vendor by phone
-      const { data: existingVendor, error: vendorLookupErr } = await supabase
-        .from("vendors")
-        .select("id, name, email, mobile, business_name, status")
-        .or(`mobile.eq.${normalizedPhone},mobile.eq.${rawDigits},mobile.ilike.%${rawDigits}%`)
-        .limit(1)
-        .maybeSingle();
+      // Look up vendor by phone across both vendor tables
+      const vendorPhoneFilter = `mobile.eq.${normalizedPhone},mobile.eq.${rawDigits},mobile.ilike.%${rawDigits}%`;
+      const [productVendorResult, serviceVendorResult] = await Promise.all([
+        supabase
+          .from("vendors")
+          .select("id, name, email, mobile, business_name, status")
+          .or(vendorPhoneFilter)
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("service_vendors")
+          .select("id, name, email, mobile, business_name, status")
+          .or(vendorPhoneFilter)
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
+      const existingVendor = productVendorResult.data || serviceVendorResult.data;
+      const vendorLookupErr = productVendorResult.error || serviceVendorResult.error;
 
       if (vendorLookupErr) console.error("Vendor lookup error:", vendorLookupErr.message);
 
