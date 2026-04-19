@@ -478,7 +478,7 @@ const AppRoutes = () => {
         <Route path="/app/social/friends" element={<CustomerPage><SocialFriendsPage /></CustomerPage>} />
 
         {/* Admin Social */}
-        <Route path="/admin/social" element={<ProtectedPage><AdminSocialDashboardPage /></ProtectedPage>} />
+        <Route path="/admin/social" element={<AdminOnlyPage><AdminSocialDashboardPage /></AdminOnlyPage>} />
 
         {/* Property / Find Home routes */}
         <Route path="/app/find-home" element={<GuestPage><PropertyHomePage /></GuestPage>} />
