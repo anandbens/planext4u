@@ -187,10 +187,15 @@ export default function VendorsPage() {
           const { error: insertErr } = await supabase.from('vendors').insert(newVendor);
           if (insertErr) { toast.error("Failed to create vendor: " + insertErr.message); return; }
           await supabase.from('vendor_applications').update({ status: 'approved' }).eq('id', id);
-          if (a.user_id) {
-            await supabase.from('user_roles').insert({ user_id: a.user_id, role: 'vendor', vendor_id: newVendor.id } as any);
+          const linkResult = await ensureVendorUserRole(
+            { user_id: a.user_id, email: a.email, phone: a.phone },
+            newVendor.id
+          );
+          if (!linkResult.ok) {
+            toast.warning(`Vendor created but login link could not be set: ${linkResult.reason}. Vendor will not be able to add products until this is fixed.`);
+          } else {
+            toast.success("Vendor approved and created");
           }
-          toast.success("Vendor approved and created");
         }
       } else {
         // Update application fields
@@ -294,11 +299,15 @@ export default function VendorsPage() {
             const { error: insertErr } = await supabase.from('vendors').insert(newVendor as any);
             if (insertErr) { toast.error("Failed to create vendor: " + insertErr.message); return; }
             await supabase.from('vendor_applications').update({ status: 'approved' }).eq('id', vendor.id);
-            // Create user_roles entry so vendor can log in
-            if (a.user_id) {
-              await supabase.from('user_roles').insert({ user_id: a.user_id, role: 'vendor', vendor_id: newVendorId } as any);
+            const linkResult = await ensureVendorUserRole(
+              { user_id: a.user_id, email: a.email, phone: a.phone },
+              newVendorId
+            );
+            if (!linkResult.ok) {
+              toast.warning(`Vendor created but login link could not be set: ${linkResult.reason}. Vendor will not be able to add products until this is fixed.`);
+            } else {
+              toast.success("Vendor approved and added to active vendors");
             }
-            toast.success("Vendor approved and added to active vendors");
           }
         } else {
           const nextStatus: Vendor["status"] = vendor.status === "pending" ? "level1_approved"

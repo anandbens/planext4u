@@ -188,10 +188,15 @@ export default function CFVendorsPage() {
           const { error: insertErr } = await supabase.from('service_vendors' as any).insert(newVendor);
           if (insertErr) { toast.error("Failed to create service vendor: " + insertErr.message); return; }
           await supabase.from('vendor_applications').update({ status: 'approved' }).eq('id', id);
-          if (a.user_id) {
-            await supabase.from('user_roles').insert({ user_id: a.user_id, role: 'vendor', vendor_id: newVendor.id } as any);
+          const linkResult = await ensureVendorUserRole(
+            { user_id: a.user_id, email: a.email, phone: a.phone },
+            newVendor.id
+          );
+          if (!linkResult.ok) {
+            toast.warning(`Service vendor created but login link could not be set: ${linkResult.reason}.`);
+          } else {
+            toast.success("Service vendor approved and created");
           }
-          toast.success("Service vendor approved and created");
         }
       } else {
         const appUpdates: any = {};
@@ -308,10 +313,15 @@ export default function CFVendorsPage() {
             const { error: insertErr } = await supabase.from('service_vendors' as any).insert(newVendor as any);
             if (insertErr) { toast.error("Failed to create service vendor: " + insertErr.message); return; }
             await supabase.from('vendor_applications').update({ status: 'approved' }).eq('id', vendor.id);
-            if (a.user_id) {
-              await supabase.from('user_roles').insert({ user_id: a.user_id, role: 'vendor', vendor_id: newVendorId } as any);
+            const linkResult = await ensureVendorUserRole(
+              { user_id: a.user_id, email: a.email, phone: a.phone },
+              newVendorId
+            );
+            if (!linkResult.ok) {
+              toast.warning(`Service vendor created but login link could not be set: ${linkResult.reason}.`);
+            } else {
+              toast.success("Service vendor approved and added");
             }
-            toast.success("Service vendor approved and added");
           }
         } else {
           await supabase.from('service_vendors' as any).update({ status: 'verified' }).eq('id', vendor.id);
