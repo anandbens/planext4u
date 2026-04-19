@@ -344,7 +344,11 @@ async function processCustomerUpload(rows: string[][], headers: string[], upload
       if (cleanMobile && mobileIdMap[cleanMobile]) rowErrors.push("mobile already exists in customers");
     }
 
-    if (rowErrors.length > 0) { errors.push({ row: i + 2, data: record, errors: rowErrors }); continue; }
+    if (rowErrors.length > 0) {
+      errors.push({ row: i + 2, data: record, errors: rowErrors });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, rowErrors);
+      continue;
+    }
 
     try {
       const payload: any = {
@@ -367,21 +371,31 @@ async function processCustomerUpload(rows: string[][], headers: string[], upload
         status: record.status || "active",
       };
 
+      let customerId: string;
+      let action: "created" | "updated";
       if (existingId) {
-        const { error } = await supabase.from("customers").update(payload).eq("id", existingId);
+        const { data: upd, error } = await supabase.from("customers").update(payload).eq("id", existingId).select("id").single();
         if (error) throw error;
+        if (!upd) throw new Error("Update returned no row — record may not exist or RLS denied");
+        customerId = existingId;
+        action = "updated";
         updated++;
       } else {
-        const id = `USR-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
+        customerId = `USR-${String(Math.floor(Math.random() * 999) + 1).padStart(3, '0')}-${Date.now().toString(36).slice(-4)}`;
         const refCode = record.referral_code?.trim() || `MRCP4U${String(Math.floor(Math.random() * 999999)).padStart(6, '0')}`;
-        const { error } = await supabase.from("customers").insert({ ...payload, id, referral_code: refCode });
+        const { data: ins, error } = await supabase.from("customers").insert({ ...payload, id: customerId, referral_code: refCode }).select("id").single();
         if (error) throw error;
-        // Track for dupe checks within the same upload
-        emailIdMap[payload.email] = id;
-        mobileIdMap[payload.mobile.replace(/\D/g, "")] = id;
+        if (!ins) throw new Error("Insert returned no row — RLS may have blocked it");
+        emailIdMap[payload.email] = customerId;
+        mobileIdMap[payload.mobile.replace(/\D/g, "")] = customerId;
+        action = "created";
         created++;
       }
-    } catch (e: any) { errors.push({ row: i + 2, data: record, errors: [e.message] }); }
+      await archiveRow(uploadId, i + 2, record, "success", action, customerId, null);
+    } catch (e: any) {
+      errors.push({ row: i + 2, data: record, errors: [e.message] });
+      await archiveRow(uploadId, i + 2, record, "error", null, null, [e.message]);
+    }
   }
 
   await supabase.from("file_uploads" as any).update({
