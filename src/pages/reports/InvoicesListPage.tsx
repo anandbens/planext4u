@@ -82,7 +82,7 @@ export default function InvoicesListPage() {
       vendor_gstin: r.vendor_gstin || "—", pos: r.place_of_supply_code || "—",
       taxable: Number(r.taxable_value || 0), cgst: Number(r.cgst_amount || 0),
       sgst: Number(r.sgst_amount || 0), igst: Number(r.igst_amount || 0), total: Number(r.total_amount || 0),
-    }),
+    })),
     columns: [
       { key: "invoice_no", label: "Invoice No" }, { key: "date", label: "Date" }, { key: "order_id", label: "Order" },
       { key: "customer", label: "Customer" }, { key: "vendor", label: "Vendor" }, { key: "vendor_gstin", label: "Vendor GSTIN" },
