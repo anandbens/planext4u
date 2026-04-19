@@ -343,8 +343,44 @@ export const api = {
     for (const key of validFields) {
       if (key in data) filtered[key] = (data as any)[key];
     }
+
+    // Mobile: allow exactly 10 digits (strip spaces/dashes/leading country code)
+    if ('mobile' in filtered) {
+      const raw = String(filtered.mobile ?? '').trim();
+      if (raw.length > 0) {
+        let digits = raw.replace(/\D/g, '');
+        if (digits.length > 10) digits = digits.slice(-10);
+        if (!/^\d{10}$/.test(digits)) {
+          throw new Error("Mobile number must be exactly 10 digits.");
+        }
+        filtered.mobile = digits;
+      }
+    }
+    if ('email' in filtered && typeof filtered.email === 'string') {
+      filtered.email = filtered.email.trim().toLowerCase();
+    }
+
+    // Duplicate detection within the customers table (excluding this customer & soft-deleted rows)
+    if (filtered.email) {
+      const { data: dup } = await supabase
+        .from('customers').select('id').eq('email', filtered.email).neq('id', id).is('deleted_at', null).limit(1);
+      if (dup && dup.length > 0) throw new Error("This email is already used by another customer.");
+    }
+    if (filtered.mobile) {
+      const { data: dup } = await supabase
+        .from('customers').select('id').eq('mobile', filtered.mobile).neq('id', id).is('deleted_at', null).limit(1);
+      if (dup && dup.length > 0) throw new Error("This mobile number is already used by another customer.");
+    }
+
     const { error } = await supabase.from('customers').update(filtered).eq('id', id);
-    if (error) throw error;
+    if (error) {
+      const msg = (error.message || '').toLowerCase();
+      if (msg.includes('duplicate') || msg.includes('unique')) {
+        if (msg.includes('mobile')) throw new Error("This mobile number is already in use.");
+        if (msg.includes('email')) throw new Error("This email is already in use.");
+      }
+      throw error;
+    }
     return { success: true };
   },
 
