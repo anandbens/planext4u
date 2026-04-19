@@ -473,10 +473,10 @@ Deno.serve(async (req) => {
         supabaseUser = newUser.user;
       }
 
-      // Ensure vendor user_roles entry exists
+      // Ensure vendor user_roles entry exists and points to the correct vendor record
       const { data: existingVendorRole } = await supabase
         .from("user_roles")
-        .select("id")
+        .select("id, vendor_id")
         .eq("user_id", supabaseUser.id)
         .eq("role", "vendor")
         .maybeSingle();
@@ -487,6 +487,12 @@ Deno.serve(async (req) => {
           role: "vendor",
           vendor_id: existingVendor.id,
         });
+      } else if (existingVendorRole.vendor_id !== existingVendor.id) {
+        // Repair stale vendor_id (e.g., after admin migrated vendor between tables)
+        await supabase
+          .from("user_roles")
+          .update({ vendor_id: existingVendor.id })
+          .eq("id", existingVendorRole.id);
       }
 
       // Generate magic link token
