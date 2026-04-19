@@ -142,6 +142,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
 
   // Parent Items for autocomplete
   const [parentSearch, setParentSearch] = useState("");
+  const [parentFocused, setParentFocused] = useState(false);
   const { data: parentItems } = useQuery({
     queryKey: ["parentItems"],
     queryFn: async () => {
@@ -530,18 +531,26 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                     <Input
                       value={parentSearch}
                       onChange={(e) => setParentSearch(e.target.value)}
+                      onFocus={() => setParentFocused(true)}
+                      onBlur={() => setTimeout(() => setParentFocused(false), 200)}
                       className="pl-8 text-xs"
                       placeholder="Search by Parent ID or Name..."
                     />
                   </div>
-                  {parentSearch && filteredParentItems.length > 0 && (
-                    <div className="max-h-[120px] overflow-y-auto border rounded-lg bg-background">
+                  {parentFocused && filteredParentItems.length > 0 && (
+                    <div className="max-h-[160px] overflow-y-auto border rounded-lg bg-background">
                       {filteredParentItems.map((p: any) => (
-                        <button key={p.id} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted/50 border-b last:border-0"
-                          onClick={() => { setForm({ ...form, parent_item_id: p.id, parent_item_name: p.name }); setParentSearch(""); }}>
+                        <button key={p.id} type="button" className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted/50 border-b last:border-0"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => { setForm({ ...form, parent_item_id: p.id, parent_item_name: p.name }); setParentSearch(""); setParentFocused(false); }}>
                           <span className="font-mono text-muted-foreground">{p.id}</span> — <span className="font-medium">{p.name}</span>
                         </button>
                       ))}
+                    </div>
+                  )}
+                  {parentFocused && filteredParentItems.length === 0 && (
+                    <div className="text-xs text-muted-foreground p-2 border rounded-lg bg-background">
+                      No parent items found{parentSearch ? ` for "${parentSearch}"` : ""}. Add them in Admin → Parent Items.
                     </div>
                   )}
                   {form.parent_item_id && (
