@@ -17,6 +17,7 @@ interface VideoAdOverlayProps {
 
 export function VideoAdOverlay({ videoUrl, thumbnailUrl, ctaText, ctaLink, adId, onClose }: VideoAdOverlayProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const navigate = useNavigate();
   const [muted, setMuted] = useState(true);
   const [progress, setProgress] = useState(0);
   const playableVideoUrl = usePlayableVideoSource(videoUrl);
