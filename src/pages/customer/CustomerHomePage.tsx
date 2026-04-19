@@ -399,14 +399,23 @@ export default function CustomerHomePage() {
         {/* ── Store Banners (2-row grid, Zepto-style) ── */}
         {data?.storeBanners && data.storeBanners.length > 0 && (
           <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="py-3">
-            <div className="overflow-x-auto scrollbar-hide px-4">
-              <div className="grid grid-rows-2 grid-flow-col gap-2.5 auto-cols-[120px] sm:auto-cols-[140px]">
+            <div className="px-4">
+              <div
+                className={isMobile
+                  ? "grid grid-rows-2 grid-flow-col gap-2.5 auto-cols-[120px] sm:auto-cols-[140px] overflow-x-auto scrollbar-hide"
+                  : "grid gap-3"}
+                style={
+                  isMobile
+                    ? undefined
+                    : { gridTemplateColumns: `repeat(${Math.max(1, Math.ceil(data.storeBanners.length / 2))}, minmax(0, 1fr))` }
+                }
+              >
                 {data.storeBanners.map((store: any, idx: number) => (
                   <motion.div key={store.id} initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }}>
-                    <Link to={store.link || "/app/browse"} className="block group">
-                      <div className="rounded-xl overflow-hidden border border-border/20 bg-card hover:shadow-lg transition-all">
-                        <div className="h-20 sm:h-24 overflow-hidden"><img src={store.image} alt={store.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>
-                        <div className="px-2 py-1.5 text-center"><p className="text-[10px] font-semibold truncate">{store.title}</p></div>
+                    <Link to={store.link || "/app/browse"} className="block group h-full">
+                      <div className="h-full rounded-xl overflow-hidden border border-border/20 bg-card hover:shadow-lg transition-all">
+                        <div className="h-20 sm:h-24 md:h-28 overflow-hidden"><img src={store.image} alt={store.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>
+                        <div className="px-2 py-1.5 text-center"><p className="text-[10px] sm:text-xs font-semibold truncate">{store.title}</p></div>
                       </div>
                     </Link>
                   </motion.div>
