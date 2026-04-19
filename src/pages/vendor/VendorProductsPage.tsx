@@ -284,12 +284,18 @@ export default function VendorProductsPage() {
       };
       let productId = editingId;
       if (editingId) {
-        const { error } = await supabase.from("products").update(payload).eq("id", editingId);
+        const { data: updated, error } = await supabase.from("products").update(payload).eq("id", editingId).select();
         if (error) throw error;
+        if (!updated || updated.length === 0) {
+          throw new Error("Update blocked — your vendor account is not linked to this product. Contact admin.");
+        }
       } else {
         productId = `PRD-${Date.now().toString(36).toUpperCase()}`;
-        const { error } = await supabase.from("products").insert({ ...payload, id: productId });
+        const { data: inserted, error } = await supabase.from("products").insert({ ...payload, id: productId }).select();
         if (error) throw error;
+        if (!inserted || inserted.length === 0) {
+          throw new Error("Save blocked by access policy — your vendor account is not properly linked. Please contact admin to fix the login mapping before adding products.");
+        }
       }
       // Save variants for variable products
       if (formData.product_type === "variable" && productId) {
