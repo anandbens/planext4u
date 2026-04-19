@@ -31,6 +31,7 @@ export function FloatingVideoAd({
   onClose,
 }: FloatingVideoAdProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const navigate = useNavigate();
   const [playing, setPlaying] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const impressionLogged = useRef(false);
