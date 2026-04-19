@@ -50,7 +50,8 @@ export default function PopupBannersPage() {
           { key: "start_date", label: "Start Date", render: (b) => new Date(b.start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) },
           { key: "end_date", label: "End Date", render: (b) => new Date(b.end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) },
           { key: "status", label: "Status", render: (b) => <StatusBadge status={b.status} /> },
-          { key: "created_at", label: "Created", render: (b) => new Date(b.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) },
+          { key: "created_at", label: "Created", render: (b: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(b.created_at)}</span> },
+          { key: "updated_at", label: "Updated", render: (b: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(b.updated_at || b.created_at)}</span> },
         ]}
         data={data.data}
         total={data.total}

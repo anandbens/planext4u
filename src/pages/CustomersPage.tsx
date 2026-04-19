@@ -170,6 +170,8 @@ export default function CustomersPage() {
     { key: "email", label: "Email", render: (u: any) => <span className="text-xs">{u.email?.replace(/_DEL_\d+$/, '') || '—'}</span> },
     { key: "mobile", label: "Mobile", render: (u: any) => <span className="text-xs">{u.mobile?.replace(/_DEL_\d+$/, '') || '—'}</span> },
     { key: "deleted_at", label: activeTab === "deleted" ? "Deleted At" : "Deactivated", render: (u: any) => <span className="text-xs text-muted-foreground">{u.deleted_at ? new Date(u.deleted_at).toLocaleDateString() : u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</span> },
+    { key: "created_at", label: "Created", render: (u: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(u.created_at)}</span> },
+    { key: "updated_at", label: "Updated", render: (u: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(u.updated_at || u.created_at)}</span> },
     { key: "status", label: "Status", render: (u: any) => <StatusBadge status={u.status} /> },
     { key: "actions", label: "", render: (u: any) => (
       <div className="flex gap-1">
@@ -187,6 +189,8 @@ export default function CustomersPage() {
     { key: "occupation", label: "Occupation", render: (u: any) => <span className="text-sm">{u.occupation || '—'}</span> },
     { key: "wallet_points", label: "Points", render: (u: any) => <span className="font-semibold">{u.wallet_points.toLocaleString()}</span> },
     { key: "status", label: "Status", render: (u: any) => <StatusBadge status={u.status} /> },
+    { key: "created_at", label: "Created", render: (u: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(u.created_at)}</span> },
+    { key: "updated_at", label: "Updated", render: (u: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(u.updated_at || u.created_at)}</span> },
     { key: "actions", label: "", render: (u: any) => (
       <div className="flex gap-1">
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(u, "view"); }}><Eye className="h-4 w-4" /></Button>

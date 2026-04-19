@@ -97,6 +97,8 @@ export default function AdminServicesPage() {
           { key: "duration", label: "Duration" },
           { key: "rating", label: "Rating", render: (s) => <span>⭐ {s.rating}</span> },
           { key: "status", label: "Status", render: (s) => <StatusBadge status={s.status} /> },
+          { key: "created_at", label: "Created", render: (s: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(s.created_at)}</span> },
+          { key: "updated_at", label: "Updated", render: (s: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(s.updated_at || s.created_at)}</span> },
           { key: "actions", label: "", render: (s) => (
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(s, "view"); }}><Eye className="h-4 w-4" /></Button>

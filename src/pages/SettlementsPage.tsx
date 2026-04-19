@@ -177,6 +177,8 @@ export default function SettlementsPage() {
           { key: "net_amount", label: "Net Payout", render: (s: any) => <span className="font-bold text-success">₹{s.net_amount.toLocaleString()}</span> },
           { key: "transaction_reference", label: "Txn Ref", render: (s: any) => <span className="text-xs font-mono">{(s as any).transaction_reference || "—"}</span> },
           { key: "status", label: "Status", render: (s: any) => <StatusBadge status={s.status} /> },
+          { key: "created_at", label: "Created", render: (s: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(s.created_at)}</span> },
+          { key: "settled_at", label: "Settled", render: (s: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(s.settled_at)}</span> },
           { key: "actions", label: "", render: (s: any) => (
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); viewOrderDetails(s.order_id); }}><Eye className="h-4 w-4" /></Button>

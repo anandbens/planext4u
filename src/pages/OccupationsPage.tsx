@@ -67,7 +67,8 @@ export default function OccupationsPage() {
           { key: "name", label: "Occupation", render: (o) => <span className="font-medium">{o.name}</span> },
           { key: "customer_count", label: "Customers", render: (o) => <span className="font-semibold">{o.customer_count}</span> },
           { key: "status", label: "Status", render: (o) => <StatusBadge status={o.status} /> },
-          { key: "created_at", label: "Created", render: (o) => new Date(o.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) },
+          { key: "created_at", label: "Created", render: (o: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(o.created_at)}</span> },
+          { key: "updated_at", label: "Updated", render: (o: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(o.updated_at || o.created_at)}</span> },
           { key: "actions", label: "", render: (o) => (
             <div className="flex gap-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openModal(o, "edit"); }}><Pencil className="h-4 w-4" /></Button>
