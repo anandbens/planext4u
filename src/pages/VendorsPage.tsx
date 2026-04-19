@@ -227,8 +227,16 @@ export default function VendorsPage() {
 
   const handleCreate = async (data: Partial<Vendor>) => {
     try {
-      await api.createVendor(data, createVendorType);
-      toast.success(`${createVendorType === "service" ? "Service" : "Product"} vendor created`);
+      const res: any = await api.createVendor(data, createVendorType);
+      const label = createVendorType === "service" ? "Service" : "Product";
+      if (res?.temp_password) {
+        toast.success(`${label} vendor created. Temporary password: ${res.temp_password}`, {
+          description: "Share this with the vendor — they'll be asked to set their own password on first login.",
+          duration: 20000,
+        });
+      } else {
+        toast.success(`${label} vendor created`);
+      }
     } catch (err: any) {
       toast.error("Failed to create vendor: " + (err.message || "Unknown error"));
       return;

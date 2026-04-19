@@ -549,7 +549,32 @@ export const api = {
     }
     const { error } = await supabase.from(table).insert(newVendor as any);
     if (error) throw error;
-    return { success: true, vendor: newVendor };
+
+    // Create an auth account + user_roles link so this admin-registered vendor
+    // can immediately sign in to the vendor portal and pass RLS on inserts.
+    let tempPassword: string | null = null;
+    try {
+      const { data: linkData, error: linkErr } = await supabase.functions.invoke(
+        "admin-create-vendor-auth",
+        {
+          body: {
+            vendor_id: newVendor.id,
+            email: newVendor.email,
+            mobile: newVendor.mobile,
+            name: newVendor.name,
+          },
+        },
+      );
+      if (linkErr) {
+        console.warn("[createVendor] auth link failed:", linkErr);
+      } else if (linkData?.temp_password) {
+        tempPassword = linkData.temp_password as string;
+      }
+    } catch (e) {
+      console.warn("[createVendor] auth link threw:", e);
+    }
+
+    return { success: true, vendor: newVendor, temp_password: tempPassword };
   },
 
   deleteVendor: async (id: string) => {
