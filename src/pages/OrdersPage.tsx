@@ -317,12 +317,33 @@ export default function OrdersPage() {
 
         {(["product", "service", "deleted"] as TabKey[]).map((k) => (
           <TabsContent key={k} value={k} className="space-y-3">
-            {/* Vendor & product filters */}
-            <div className="flex flex-wrap gap-2">
-              <Input placeholder="Filter by vendor (name / ID)…" value={vendorFilter} onChange={(e) => { setVendorFilter(e.target.value); setPage(1); }} className="max-w-xs h-9 bg-secondary/50 border-0" />
-              <Input placeholder="Filter by product / item title…" value={productFilter} onChange={(e) => { setProductFilter(e.target.value); setPage(1); }} className="max-w-xs h-9 bg-secondary/50 border-0" />
-              {(vendorFilter || productFilter) && (
-                <Button variant="ghost" size="sm" className="h-9 text-xs" onClick={() => { setVendorFilter(""); setProductFilter(""); setPage(1); }}>Clear filters</Button>
+            {/* Filters row */}
+            <div className="flex flex-wrap gap-2 items-center">
+              {k === "deleted" && (
+                <div className="flex items-center gap-1 mr-2">
+                  {(["all", "product", "service"] as const).map((t) => (
+                    <Button
+                      key={t}
+                      variant={deletedTypeFilter === t ? "default" : "outline"}
+                      size="sm"
+                      className="h-9 text-xs capitalize"
+                      onClick={() => { setDeletedTypeFilter(t); setPage(1); }}
+                    >
+                      {t === "all" ? "All Types" : t === "product" ? <><Package className="h-3.5 w-3.5 mr-1" />Product</> : <><Wrench className="h-3.5 w-3.5 mr-1" />Service</>}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              <Input placeholder="Vendor (name / ID)…" value={vendorFilter} onChange={(e) => { setVendorFilter(e.target.value); setPage(1); }} className="w-48 h-9 bg-secondary/50 border-0" />
+              <Input placeholder="Product / item title…" value={productFilter} onChange={(e) => { setProductFilter(e.target.value); setPage(1); }} className="w-48 h-9 bg-secondary/50 border-0" />
+              <Input placeholder="Customer (name / ID)…" value={customerFilter} onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }} className="w-48 h-9 bg-secondary/50 border-0" />
+              <Input type="number" inputMode="decimal" placeholder="Min ₹" value={minAmount} onChange={(e) => { setMinAmount(e.target.value); setPage(1); }} className="w-24 h-9 bg-secondary/50 border-0" />
+              <Input type="number" inputMode="decimal" placeholder="Max ₹" value={maxAmount} onChange={(e) => { setMaxAmount(e.target.value); setPage(1); }} className="w-24 h-9 bg-secondary/50 border-0" />
+              {(vendorFilter || productFilter || customerFilter || minAmount || maxAmount) && (
+                <Button variant="ghost" size="sm" className="h-9 text-xs" onClick={() => {
+                  setVendorFilter(""); setProductFilter(""); setCustomerFilter("");
+                  setMinAmount(""); setMaxAmount(""); setPage(1);
+                }}>Clear filters</Button>
               )}
             </div>
 
