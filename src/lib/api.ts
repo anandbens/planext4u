@@ -678,6 +678,11 @@ export const api = {
     for (const key of validProductFields) {
       if (key in data && (data as any)[key] !== undefined) newProduct[key] = (data as any)[key];
     }
+    // Admin-created products are auto-approved (active) unless an explicit non-default status was chosen.
+    // Vendor-created products go through VendorProductsPage which forces 'pending_approval'.
+    if (!newProduct.status || newProduct.status === 'pending_approval' || newProduct.status === 'draft') {
+      newProduct.status = 'active';
+    }
     // Nullify empty strings for UUID/FK fields to avoid "invalid input syntax for type uuid" errors
     const uuidFields = ['category_id', 'subcategory_id', 'tax_slab_id', 'parent_item_id', 'vendor_id'];
     for (const f of uuidFields) {
