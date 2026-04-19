@@ -8,29 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { Separator } from "@/components/ui/separator";
+import { TicketChatThread } from "@/components/support/TicketChatThread";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, Filter, AlertTriangle, Clock, CheckCircle, XCircle, MessageSquare } from "lucide-react";
+import { Search, AlertTriangle, Clock, CheckCircle, MessageSquare } from "lucide-react";
 
 interface Complaint {
-  id: string;
-  user_id: string;
-  user_name: string | null;
-  entity_type: string;
-  entity_id: string | null;
-  booking_id: string | null;
-  order_id: string | null;
-  category: string;
-  subject: string;
-  description: string;
-  images: string[] | null;
-  status: string;
-  priority: string;
-  assigned_to: string | null;
-  resolution_notes: string | null;
-  resolved_at: string | null;
-  created_at: string;
+  id: string; user_id: string; user_name: string | null; entity_type: string;
+  entity_id: string | null; booking_id: string | null; order_id: string | null;
+  category: string; subject: string; description: string; images: string[] | null;
+  status: string; priority: string; assigned_to: string | null;
+  resolution_notes: string | null; resolved_at: string | null; created_at: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -53,7 +42,6 @@ const CATEGORIES = ["quality", "delay", "damage", "wrong_item", "refund", "behav
 
 export default function AdminComplaintsPage() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -61,15 +49,22 @@ export default function AdminComplaintsPage() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [resolutionNotes, setResolutionNotes] = useState("");
   const [updateStatus, setUpdateStatus] = useState("");
+  const [adminId, setAdminId] = useState("");
 
   const fetchComplaints = async () => {
-    setLoading(true);
     const { data } = await supabase.from("complaints" as any).select("*").order("created_at", { ascending: false });
     setComplaints((data || []) as any[]);
-    setLoading(false);
   };
 
   useEffect(() => { fetchComplaints(); }, []);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setAdminId(data?.user?.id || ""));
+    const ch = supabase.channel("admin-complaints-list")
+      .on("postgres_changes", { event: "*", schema: "public", table: "complaints" }, () => fetchComplaints())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   const filtered = complaints.filter(c => {
     if (filterStatus !== "all" && c.status !== filterStatus) return false;
@@ -89,7 +84,7 @@ export default function AdminComplaintsPage() {
     if (!selectedComplaint) return;
     const updates: any = {};
     if (updateStatus) updates.status = updateStatus;
-    if (resolutionNotes) updates.resolution_notes = resolutionNotes;
+    updates.resolution_notes = resolutionNotes;
     if (updateStatus === "resolved" || updateStatus === "closed") updates.resolved_at = new Date().toISOString();
 
     const { error } = await supabase.from("complaints" as any).update(updates).eq("id", selectedComplaint.id);
@@ -111,7 +106,7 @@ export default function AdminComplaintsPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Customer Complaints</h1>
-          <p className="text-sm text-muted-foreground">Manage and resolve customer complaints across all modules</p>
+          <p className="text-sm text-muted-foreground">Manage and chat with customers about complaints across all modules</p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -124,10 +119,7 @@ export default function AdminComplaintsPage() {
             <Card key={s.label} className="p-4">
               <div className="flex items-center gap-3">
                 <s.icon className={`h-5 w-5 ${s.color}`} />
-                <div>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
-                  <p className="text-xl font-bold">{s.value}</p>
-                </div>
+                <div><p className="text-xs text-muted-foreground">{s.label}</p><p className="text-xl font-bold">{s.value}</p></div>
               </div>
             </Card>
           ))}
@@ -202,10 +194,8 @@ export default function AdminComplaintsPage() {
       </div>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Complaint Details</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Complaint Details</DialogTitle></DialogHeader>
           {selectedComplaint && (
             <div className="space-y-4">
               <div>
@@ -214,7 +204,7 @@ export default function AdminComplaintsPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Description</p>
-                <p className="text-sm">{selectedComplaint.description}</p>
+                <p className="text-sm whitespace-pre-wrap">{selectedComplaint.description}</p>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">Type:</span> {selectedComplaint.entity_type}</div>
@@ -223,6 +213,15 @@ export default function AdminComplaintsPage() {
                 <div><span className="text-muted-foreground">Customer:</span> {selectedComplaint.user_name || 'N/A'}</div>
                 {selectedComplaint.order_id && <div><span className="text-muted-foreground">Order:</span> {selectedComplaint.order_id}</div>}
               </div>
+
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-1.5">Conversation with customer</p>
+                <TicketChatThread parentId={selectedComplaint.id} table="complaint_messages" parentColumn="complaint_id"
+                  senderId={adminId} senderName="Support Team" viewerRole="admin" postAsRole="admin" />
+              </div>
+
+              <Separator />
               <div>
                 <p className="text-sm font-medium mb-1">Update Status</p>
                 <Select value={updateStatus} onValueChange={setUpdateStatus}>
@@ -238,7 +237,7 @@ export default function AdminComplaintsPage() {
                 </Select>
               </div>
               <div>
-                <p className="text-sm font-medium mb-1">Resolution Notes</p>
+                <p className="text-sm font-medium mb-1">Resolution Notes (visible to customer)</p>
                 <Textarea value={resolutionNotes} onChange={e => setResolutionNotes(e.target.value)} rows={3} placeholder="Add resolution notes..." />
               </div>
             </div>
