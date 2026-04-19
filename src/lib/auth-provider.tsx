@@ -87,6 +87,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Vendor exists but is not yet allowed into the vendor portal
       if (!ACTIVE_VENDOR_STATUSES.has(vendor.status)) {
         await supabase.auth.signOut();
+        const s = (vendor.status || '').toLowerCase();
+        if (s === 'deleted') {
+          lastAuthErrorRef.current = 'Your vendor account has been deleted. Please contact support if this is a mistake.';
+        } else if (s === 'suspended') {
+          lastAuthErrorRef.current = 'Your vendor account has been suspended. Please contact support to restore access.';
+        } else if (s === 'inactive' || s === 'deactivated') {
+          lastAuthErrorRef.current = 'Your vendor account is inactive. Please contact support to reactivate.';
+        } else if (s === 'rejected') {
+          lastAuthErrorRef.current = 'Your vendor application was rejected. Please contact support.';
+        } else {
+          lastAuthErrorRef.current = 'Your vendor profile is not yet approved. You will be notified once approved.';
+        }
         return 'vendor_not_verified';
       }
 
