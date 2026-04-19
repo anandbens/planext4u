@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { isValidEmail, isValidIndianMobile } from "@/lib/admin-validation";
 
 interface CustomerModalProps {
   customer: User | null;
@@ -133,20 +134,33 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
 
   const validateForm = () => {
     const errs: Record<string, string> = {};
-    if (!form.name.trim()) errs.name = "Name is required";
-    if (!form.email.trim()) errs.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Invalid email format";
-    if (form.mobile && !/^\+?\d{10,15}$/.test(form.mobile.replace(/[\s-]/g, ""))) errs.mobile = "Invalid mobile (10-15 digits)";
+    const trimmedName = form.name.trim();
+    const trimmedEmail = form.email.trim();
+    const trimmedMobile = form.mobile.trim();
+    if (!trimmedName) errs.name = "Name is required";
+    else if (trimmedName.length < 2) errs.name = "Name must be at least 2 characters";
+    else if (trimmedName.length > 100) errs.name = "Name must be under 100 characters";
+    if (!trimmedEmail) errs.email = "Email is required";
+    else if (!isValidEmail(trimmedEmail)) errs.email = "Enter a valid email (e.g. user@example.com)";
+    else if (trimmedEmail.length > 255) errs.email = "Email is too long";
+    if (trimmedMobile && !isValidIndianMobile(trimmedMobile))
+      errs.mobile = "Enter a valid 10-digit Indian mobile (starts with 6-9)";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      const firstErr = Object.values(errors)[0] || "Please fix the highlighted fields";
+      toast.error(firstErr);
+      return;
+    }
     setSaving(true);
     try {
       if (isCreate) { await onCreate?.(form); } else if (customer) { await onSave?.(customer.id, form); }
       onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to save customer");
     } finally { setSaving(false); }
   };
 
@@ -627,7 +641,7 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
             editMode ? (
               <>
                 <Button variant="outline" onClick={() => isCreate ? onOpenChange(false) : setEditMode(false)} disabled={saving}>Cancel</Button>
-                <Button onClick={handleSave} disabled={saving || !form.name || !form.email}>
+                <Button onClick={handleSave} disabled={saving}>
                   {saving && <div className="h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin mr-2" />}
                   {isCreate ? "Create Customer" : "Save Changes"}
                 </Button>
