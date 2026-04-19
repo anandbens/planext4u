@@ -22,9 +22,14 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [vendorFilter, setVendorFilter] = useState("");
   const [productFilter, setProductFilter] = useState("");
+  const [customerFilter, setCustomerFilter] = useState("");
+  const [minAmount, setMinAmount] = useState<string>("");
+  const [maxAmount, setMaxAmount] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFrom, setDateFrom] = useState<string>();
   const [dateTo, setDateTo] = useState<string>();
+  /** Sub-filter applied to the Deleted tab to classify by Product / Service */
+  const [deletedTypeFilter, setDeletedTypeFilter] = useState<"all" | "product" | "service">("all");
 
   const [selected, setSelected] = useState<Order | null>(null);
   const [modalMode, setModalMode] = useState<"view" | "edit">("view");
