@@ -839,7 +839,7 @@ export const api = {
     return data as any;
   },
 
-  browseServices: async (params: { category?: string; search?: string; sort?: string }) => {
+  browseServices: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number }) => {
     let query = supabase.from('services').select('*').eq('status', 'active');
     if (params.category) query = query.ilike('category_name', `%${params.category}%`);
     if (params.search) query = query.ilike('title', `%${params.search}%`);
@@ -847,8 +847,67 @@ export const api = {
     else if (params.sort === 'price_high') query = query.order('price', { ascending: false });
     else if (params.sort === 'rating') query = query.order('rating', { ascending: false });
 
-    const { data } = await query;
-    return (data || []) as unknown as Service[];
+    const { data: services } = await query;
+    if (!services?.length) return [] as unknown as Service[];
+
+    // Apply service vendor plan visibility / location filtering (mirrors browseProducts)
+    const vendorIds = [...new Set(services.map((s: any) => s.vendor_id).filter(Boolean))];
+    if (!vendorIds.length) return services as unknown as Service[];
+
+    const { data: vendors } = await supabase
+      .from('service_vendors')
+      .select('id, plan_id, shop_latitude, shop_longitude, city_id, status')
+      .in('id', vendorIds)
+      .in('status', ['active', 'verified']);
+
+    if (!vendors?.length) return [] as unknown as Service[];
+
+    const verifiedVendorIds = new Set(vendors.map((v: any) => v.id));
+    const filteredServices = services.filter((s: any) => verifiedVendorIds.has(s.vendor_id));
+
+    const planIds = [...new Set(vendors.filter((v: any) => v.plan_id).map((v: any) => v.plan_id!))];
+    const plansMap: Record<string, any> = {};
+    if (planIds.length) {
+      const { data: plans } = await supabase.from('vendor_plans').select('*').in('id', planIds);
+      plans?.forEach((p: any) => { plansMap[p.id] = p; });
+    }
+
+    const vendorMap: Record<string, any> = {};
+    vendors.forEach((v: any) => { vendorMap[v.id] = v; });
+
+    const userLat = params.userLat || 0;
+    const userLng = params.userLng || 0;
+
+    const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
+    const filtered = filteredServices.filter((s: any) => {
+      const vendor = vendorMap[s.vendor_id];
+      if (!vendor) return false;
+      // No user location yet → don't hide anything
+      if (!userLat || !userLng) return true;
+      if (vendor.plan_id) {
+        const plan = plansMap[vendor.plan_id];
+        if (plan && plan.is_active) {
+          if (plan.visibility_type === 'pan_india') return true;
+          if (plan.visibility_type === 'radius_based') {
+            const dist = haversine(userLat, userLng, vendor.shop_latitude || 0, vendor.shop_longitude || 0);
+            return dist <= (plan.radius_km || 5);
+          }
+        }
+      }
+      // Default: show only if vendor shop is within 25km of user
+      if (!vendor.shop_latitude || !vendor.shop_longitude) return false;
+      const dist = haversine(userLat, userLng, vendor.shop_latitude, vendor.shop_longitude);
+      return dist <= 25;
+    });
+
+    return filtered as unknown as Service[];
   },
 
   getServiceCategories: async () => {
