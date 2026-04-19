@@ -219,6 +219,26 @@ function ProtectedPage({ children }: { children: React.ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
 }
 
+// Sales-scoped routes (admin always allowed)
+function SalesPage({ children }: { children: React.ReactNode }) {
+  return <ProtectedRoute allowedRoles={['sales']}>{children}</ProtectedRoute>;
+}
+
+// Finance-scoped routes (admin always allowed)
+function FinancePage({ children }: { children: React.ReactNode }) {
+  return <ProtectedRoute allowedRoles={['finance']}>{children}</ProtectedRoute>;
+}
+
+// Routes that finance & sales may both access (read-only ops, reports overview, etc.)
+function FinanceOrSalesPage({ children }: { children: React.ReactNode }) {
+  return <ProtectedRoute allowedRoles={['finance', 'sales']}>{children}</ProtectedRoute>;
+}
+
+// Admin-only routes (system config, integrations, master data, etc.)
+function AdminOnlyPage({ children }: { children: React.ReactNode }) {
+  return <ProtectedRoute allowedRoles={[]}>{children}</ProtectedRoute>;
+}
+
 function CustomerPage({ children }: { children: React.ReactNode }) {
   return <CustomerProtectedRoute>{children}</CustomerProtectedRoute>;
 }
