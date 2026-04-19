@@ -351,6 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     isFreshLoginRef.current = true;
+    lastAuthErrorRef.current = null;
     const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setIsLoading(false);
@@ -364,11 +365,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginResolveRef.current = resolve;
       setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 5000);
     });
+    if (lastAuthErrorRef.current) {
+      const msg = lastAuthErrorRef.current;
+      lastAuthErrorRef.current = null;
+      throw new Error(msg);
+    }
   };
 
   const customerLogin = async (email: string, password: string) => {
     setIsLoading(true);
     isFreshLoginRef.current = true;
+    lastAuthErrorRef.current = null;
     const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setIsLoading(false);
@@ -382,12 +389,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginResolveRef.current = resolve;
       setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 5000);
     });
+    if (lastAuthErrorRef.current) {
+      const msg = lastAuthErrorRef.current;
+      lastAuthErrorRef.current = null;
+      throw new Error(msg);
+    }
     logActivity('login', `Customer logged in with ${email}`);
   };
 
   const vendorLogin = async (email: string, password: string) => {
     setIsLoading(true);
     isFreshLoginRef.current = true;
+    lastAuthErrorRef.current = null;
     let signInData: any = null;
     let lastError: Error | null = null;
 
@@ -414,6 +427,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginResolveRef.current = resolve;
       setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 5000);
     });
+    if (lastAuthErrorRef.current) {
+      const msg = lastAuthErrorRef.current;
+      lastAuthErrorRef.current = null;
+      throw new Error(msg);
+    }
   };
 
   const logout = async () => {
