@@ -415,8 +415,23 @@ export const api = {
     } catch { /* keep default */ }
 
     const newId = genId('USR');
-    // If caller explicitly passed wallet_points, honour it; otherwise grant the configured welcome bonus.
     const initialPoints = (data.wallet_points != null) ? Number(data.wallet_points) : welcomePoints;
+
+    // Friendly duplicate-check before insert
+    const mobile = (data.mobile || '').trim();
+    const email = (data.email || '').trim().toLowerCase();
+    if (mobile) {
+      const { data: dupCM } = await supabase.from('customers').select('id').eq('mobile', mobile).neq('status', 'deleted').maybeSingle();
+      if (dupCM) throw new Error(`This mobile number (${mobile}) is already registered with another customer.`);
+      const { data: dupVM } = await supabase.from('vendors').select('id').eq('mobile', mobile).maybeSingle();
+      if (dupVM) throw new Error(`This mobile number (${mobile}) is already registered as a vendor.`);
+    }
+    if (email) {
+      const { data: dupCE } = await supabase.from('customers').select('id').ilike('email', email).neq('status', 'deleted').maybeSingle();
+      if (dupCE) throw new Error(`This email (${email}) is already registered with another customer.`);
+      const { data: dupVE } = await supabase.from('vendors').select('id').ilike('email', email).maybeSingle();
+      if (dupVE) throw new Error(`This email (${email}) is already registered as a vendor.`);
+    }
 
     const newCustomer = {
       id: newId,
@@ -434,7 +449,15 @@ export const api = {
       occupation: data.occupation || '',
     };
     const { error } = await supabase.from('customers').insert(newCustomer);
-    if (error) throw error;
+    if (error) {
+      if ((error as any).code === '23505') {
+        const msg = String(error.message || '').toLowerCase();
+        if (msg.includes('mobile')) throw new Error('This mobile number is already registered.');
+        if (msg.includes('email')) throw new Error('This email is already registered.');
+        throw new Error('A customer with these details already exists.');
+      }
+      throw error;
+    }
 
     // Record the welcome bonus in points_transactions so it shows under Wallet/Points history
     if (initialPoints > 0) {
