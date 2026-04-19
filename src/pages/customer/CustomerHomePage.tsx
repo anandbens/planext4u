@@ -452,7 +452,7 @@ export default function CustomerHomePage() {
                   <h2 className="text-base font-bold">{section.title}</h2>
                   {section.cta_link && <Link to={section.cta_link} className="text-xs text-primary font-medium flex items-center gap-0.5">View All <ChevronRight className="h-3 w-3" /></Link>}
                 </div>
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3">
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 md:[grid-template-columns:repeat(auto-fit,minmax(96px,1fr))]">
                   {parentCategories.map((c: any) => (
                     <Link key={c.id} to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-1.5 group">
                       <div className="h-14 w-14 rounded-full bg-secondary/50 border border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/50 transition-all">
@@ -490,7 +490,7 @@ export default function CustomerHomePage() {
             <Link to="/app/browse" className="text-xs text-primary flex items-center gap-0.5 font-medium">View All <ChevronRight className="h-3 w-3" /></Link>
           </div>
           <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
-            className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-7 gap-3">
+            className="grid grid-cols-4 sm:grid-cols-5 gap-3 md:[grid-template-columns:repeat(auto-fit,minmax(96px,1fr))]">
             {isLoading ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
               parentCategories.map((c: any) => (
                 <motion.div key={c.id} variants={itemAnim}>
