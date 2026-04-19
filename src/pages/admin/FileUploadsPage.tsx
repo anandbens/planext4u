@@ -9,6 +9,31 @@ import { Upload, Download, FileText, AlertTriangle, CheckCircle, Clock, X, Refre
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
+// ── Per-row archive helper — saves every parsed row (success or error) for recovery ──
+async function archiveRow(
+  uploadId: string,
+  rowNumber: number,
+  rawData: Record<string, any>,
+  status: "success" | "error",
+  action: "created" | "updated" | null,
+  resultingRecordId: string | null,
+  errorMessages: string[] | null,
+) {
+  try {
+    await supabase.from("file_upload_rows" as any).insert({
+      upload_id: uploadId,
+      row_number: rowNumber,
+      raw_data: rawData,
+      status,
+      action,
+      resulting_record_id: resultingRecordId,
+      error_messages: errorMessages,
+    });
+  } catch (e) {
+    console.error("Failed to archive row", rowNumber, e);
+  }
+}
+
 // ── Product CSV ──
 const PRODUCT_CSV_HEADERS = [
   "id","title","description","short_description","long_description","price","tax","discount","discount_type",
