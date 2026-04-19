@@ -60,13 +60,22 @@ export function buildInvoiceHTML(p: InvoiceData): string {
     : `<tr><td colspan="5" style="text-align:right">CGST</td><td style="text-align:right">₹${p.cgst_amount.toFixed(2)}</td></tr>
        <tr><td colspan="5" style="text-align:right">SGST</td><td style="text-align:right">₹${p.sgst_amount.toFixed(2)}</td></tr>`;
 
+  const LOGO_URL = "https://jhtddsqnpfvjvnfojeea.supabase.co/storage/v1/object/public/media-library/branding%2Fp4u-logo-invoice.png";
+
   return `<!doctype html><html><head><meta charset="utf-8"/>
-<title>${escape(p.invoice_no)}</title>
+<title>${escape(p.invoice_no)} — ${escape(p.vendor_name)}</title>
 <style>
-  *{box-sizing:border-box}body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;max-width:800px;margin:20px auto;padding:0 20px;font-size:12px}
-  .head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0f172a;padding-bottom:12px;margin-bottom:16px}
-  .doc-title{background:${isCN ? "#dc2626" : "#0f172a"};color:#fff;padding:6px 14px;border-radius:4px;font-weight:700;font-size:14px;letter-spacing:1px}
-  .badge{background:#f1f5f9;border:1px solid #e2e8f0;padding:4px 10px;border-radius:4px;font-family:monospace;font-size:11px;display:inline-block;margin-bottom:6px}
+  *{box-sizing:border-box}body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;max-width:800px;margin:20px auto;padding:0 24px;font-size:12px;background:#fff}
+  .brand-bar{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#011d33 0%,#0a4f6b 100%);color:#fff;padding:18px 22px;border-radius:8px 8px 0 0;margin-bottom:0}
+  .brand-bar .logo-wrap{display:flex;align-items:center;gap:14px}
+  .brand-bar img.logo{height:54px;width:auto;background:#fff;border-radius:6px;padding:6px 10px}
+  .brand-bar h1{margin:0;font-size:22px;letter-spacing:0.5px;font-weight:700}
+  .brand-bar .tagline{font-size:10px;opacity:0.85;margin-top:2px}
+  .brand-bar .doc-block{text-align:right}
+  .doc-title{background:${isCN ? "#dc2626" : "#fff"};color:${isCN ? "#fff" : "#011d33"};padding:6px 14px;border-radius:4px;font-weight:700;font-size:14px;letter-spacing:1.5px;display:inline-block}
+  .badge{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);padding:4px 10px;border-radius:4px;font-family:monospace;font-size:11px;display:inline-block;margin-top:8px;color:#fff}
+  .meta-light{font-size:10px;color:rgba(255,255,255,0.85);margin-top:4px}
+  .contact-strip{background:#f8fafc;border:1px solid #e2e8f0;border-top:none;padding:6px 22px;font-size:10px;color:#475569;display:flex;justify-content:space-between;border-radius:0 0 8px 8px;margin-bottom:18px}
   .meta{font-size:10px;color:#64748b}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
   .card{border:1px solid #e2e8f0;border-radius:6px;padding:10px}
@@ -76,22 +85,31 @@ export function buildInvoiceHTML(p: InvoiceData): string {
   th,td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left;font-size:11px}
   th{background:#f8fafc;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:0.3px}
   tfoot td{font-weight:600;background:#f8fafc}
-  .total-row td{font-size:13px;background:#0f172a;color:#fff;padding:8px}
+  .total-row td{font-size:13px;background:#011d33;color:#fff;padding:8px}
   .footer{margin-top:18px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:10px;color:#64748b;display:flex;justify-content:space-between}
   .words{margin-top:6px;padding:6px 10px;background:#f1f5f9;border-radius:4px;font-size:11px;font-style:italic}
+  @media print { body{margin:0;padding:0 12px} .brand-bar{border-radius:0} }
 </style></head>
 <body>
-  <div class="head">
-    <div>
-      <h1 style="margin:0;font-size:24px">P4U Marketplace</h1>
-      <p class="meta">Products for You · GST Registered E-Commerce Operator</p>
+  <div class="brand-bar">
+    <div class="logo-wrap">
+      <img class="logo" src="${LOGO_URL}" alt="P4U" onerror="this.style.display='none'"/>
+      <div>
+        <h1>P4U Marketplace</h1>
+        <p class="tagline">Products for You · GST-Registered E-Commerce Operator</p>
+      </div>
     </div>
-    <div style="text-align:right">
+    <div class="doc-block">
       <div class="doc-title">${title}</div>
-      <p class="badge" style="margin-top:8px">${escape(p.invoice_no)}</p>
-      <p class="meta">Date: ${new Date(p.invoice_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
-      <p class="meta">Order: ${escape(p.order_id)}</p>
+      <p class="badge">${escape(p.invoice_no)}</p>
+      <p class="meta-light">Date: ${new Date(p.invoice_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</p>
+      <p class="meta-light">Order: ${escape(p.order_id)}</p>
     </div>
+  </div>
+  <div class="contact-strip">
+    <span>📧 support@planext4u.com</span>
+    <span>🌐 planext4u.com</span>
+    <span>Original for Recipient</span>
   </div>
 
   <div class="grid">

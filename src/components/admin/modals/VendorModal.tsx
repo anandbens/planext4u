@@ -37,6 +37,8 @@ const emptyForm = {
   category_id: "1", city_id: "1", area_id: "1", plan_id: "",
   plan_payment_status: "unpaid", plan_transaction_id: "", shop_photo_url: "",
   max_redemption_percentage: null as number | null,
+  gstin: "" as string, pan: "" as string,
+  state_name: "" as string, state_code: "" as string, shop_address: "" as string,
 };
 
 export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate, onDelete, vendorType = "product", onRefresh }: VendorModalProps) {
@@ -98,6 +100,11 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
         plan_transaction_id: (vendor as any).plan_transaction_id || "",
         shop_photo_url: (vendor as any).shop_photo_url || "",
         max_redemption_percentage: (vendor as any).max_redemption_percentage ?? null,
+        gstin: (vendor as any).gstin || "",
+        pan: (vendor as any).pan || "",
+        state_name: (vendor as any).state_name || "",
+        state_code: (vendor as any).state_code || "",
+        shop_address: (vendor as any).shop_address || "",
       });
       setEditMode(mode === "edit");
     }
@@ -350,6 +357,79 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                   )}
                 </div>
 
+
+                {/* GST & Tax Compliance — required for invoice generation */}
+                <div className="p-4 rounded-lg bg-secondary/30 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <Label className="text-xs font-semibold uppercase tracking-wide">GST & Tax Compliance</Label>
+                    <Badge className="bg-warning/10 text-warning border-0 text-[10px]">Required for tax invoices</Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    These details appear on every customer-facing tax invoice issued under this vendor's name. CGST/SGST vs IGST split is calculated using the vendor's state code.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">GSTIN (15 chars)</Label>
+                      {editMode ? (
+                        <Input
+                          value={form.gstin}
+                          onChange={(e) => setForm({ ...form, gstin: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 15) })}
+                          className="mt-1 font-mono"
+                          placeholder="29AABCU9603R1ZM"
+                          maxLength={15}
+                        />
+                      ) : <p className="text-sm mt-1 font-mono">{form.gstin || "—"}</p>}
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">PAN (10 chars)</Label>
+                      {editMode ? (
+                        <Input
+                          value={form.pan}
+                          onChange={(e) => setForm({ ...form, pan: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) })}
+                          className="mt-1 font-mono"
+                          placeholder="AABCU9603R"
+                          maxLength={10}
+                        />
+                      ) : <p className="text-sm mt-1 font-mono">{form.pan || "—"}</p>}
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">State Name (place of supply)</Label>
+                      {editMode ? (
+                        <Input
+                          value={form.state_name}
+                          onChange={(e) => setForm({ ...form, state_name: e.target.value })}
+                          className="mt-1"
+                          placeholder="Karnataka"
+                        />
+                      ) : <p className="text-sm mt-1">{form.state_name || "—"}</p>}
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">State Code (2 digits)</Label>
+                      {editMode ? (
+                        <Input
+                          value={form.state_code}
+                          onChange={(e) => setForm({ ...form, state_code: e.target.value.replace(/\D/g, "").slice(0, 2) })}
+                          className="mt-1 font-mono"
+                          placeholder="29"
+                          maxLength={2}
+                        />
+                      ) : <p className="text-sm mt-1 font-mono">{form.state_code || "—"}</p>}
+                    </div>
+                    <div className="col-span-2">
+                      <Label className="text-xs text-muted-foreground">Registered Shop Address (printed on invoice)</Label>
+                      {editMode ? (
+                        <Textarea
+                          value={form.shop_address}
+                          onChange={(e) => setForm({ ...form, shop_address: e.target.value })}
+                          className="mt-1"
+                          rows={2}
+                          placeholder="Building, Street, Locality, City – PIN"
+                        />
+                      ) : <p className="text-sm mt-1 whitespace-pre-line">{form.shop_address || "—"}</p>}
+                    </div>
+                  </div>
+                </div>
 
                 {/* Shop Photo */}
                 <div className="p-4 rounded-lg bg-secondary/30">

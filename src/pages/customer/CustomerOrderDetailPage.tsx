@@ -224,17 +224,18 @@ export default function CustomerOrderDetailPage() {
                 <span>- {order.points_used} pts</span>
               </div>
             )}
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Platform Fee</span>
-              <span>₹{pf.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">GST on Platform Fee (18%)</span>
-              <span>₹{gstPf.toLocaleString()}</span>
-            </div>
+            {(pf > 0 || gstPf > 0) && (
+              <div className="flex justify-between">
+                <div>
+                  <span className="text-muted-foreground">Service & convenience fee</span>
+                  <p className="text-[10px] text-muted-foreground/70">Inclusive of all applicable taxes</p>
+                </div>
+                <span>₹{(pf + gstPf).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+              </div>
+            )}
             {(order.tax || 0) > 0 && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Product Tax</span>
+                <span className="text-muted-foreground">Product Tax (GST)</span>
                 <span>₹{(order.tax || 0).toLocaleString()}</span>
               </div>
             )}
