@@ -144,19 +144,23 @@ export default function VendorLoginPage() {
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
       if (verifyError) throw new Error("Session verification failed. Please try logging in again.");
       toast.success("Welcome to Vendor Portal! 🎉");
-      // Wait for auth state to propagate before navigating
+      // Wait for auth state to propagate (vendor_user written by auth-provider)
       const waitForVendor = () => new Promise<void>((resolve) => {
         let attempts = 0;
         const check = () => {
           const saved = localStorage.getItem("vendor_user");
-          if (saved || attempts >= 20) { resolve(); return; }
+          if (saved || attempts >= 24) { resolve(); return; }
           attempts++;
           setTimeout(check, 250);
         };
         check();
       });
       await waitForVendor();
-      navigate("/vendor", { replace: true });
+      // Hard redirect ensures the session cookie is fully applied and the route
+      // guards in AppRoutes see the freshly hydrated vendorUser, avoiding a
+      // race where React state lags behind localStorage and the user lands on
+      // the 404 fallback route.
+      window.location.replace("/vendor");
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP. Please check and try again.");
       else toast.error(err.message || "Verification failed. Please try again.");
