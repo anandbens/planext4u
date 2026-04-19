@@ -780,11 +780,23 @@ export default function FileUploadsPage() {
                       {u.created_at ? new Date(u.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      {u.error_count > 0 && (
-                        <Button variant="ghost" size="sm" onClick={() => downloadErrors(u)} className="gap-1 text-destructive">
-                          <Download className="h-3 w-3" /> Error Log
-                        </Button>
-                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {u.original_file_path && (
+                          <>
+                            <Button variant="ghost" size="sm" onClick={() => downloadOriginalCSV(u)} className="gap-1">
+                              <Download className="h-3 w-3" /> CSV
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => reprocessUpload(u)} className="gap-1 text-primary">
+                              <RefreshCw className="h-3 w-3" /> Re-process
+                            </Button>
+                          </>
+                        )}
+                        {u.error_count > 0 && (
+                          <Button variant="ghost" size="sm" onClick={() => downloadErrors(u)} className="gap-1 text-destructive">
+                            <Download className="h-3 w-3" /> Errors
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
