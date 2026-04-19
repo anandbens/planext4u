@@ -104,6 +104,22 @@ export default function VendorBookingsPage() {
     },
   });
 
+  const verifyOtpAndStart = async () => {
+    if (!otpModal) return;
+    const code = otpInput.trim();
+    if (code.length !== 6) { toast.error("Enter the 6-digit OTP"); return; }
+    if (code !== (otpModal.otp_code || "").trim()) { toast.error("Incorrect OTP. Ask the customer for the code shared on their booking page."); return; }
+    const { error } = await supabase.from("service_bookings").update({
+      status: "in_progress",
+      otp_verified_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    } as any).eq("id", otpModal.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("OTP verified. Service started.");
+    setOtpModal(null); setOtpInput("");
+    qc.invalidateQueries({ queryKey: ["vendorBookings"] });
+  };
+
   const pending = (bookings || []).filter((b: any) => b.status === 'pending' || b.status === 'confirmed');
   const active = (bookings || []).filter((b: any) => b.status === 'in_progress');
   const completed = (bookings || []).filter((b: any) => b.status === 'completed' || b.status === 'cancelled');
@@ -135,8 +151,8 @@ export default function VendorBookingsPage() {
               </>
             )}
             {canStart && (
-              <Button size="sm" className="h-7 text-xs" onClick={() => updateBookingStatus.mutate({ id: b.id, status: 'in_progress' })}>
-                <Clock className="h-3 w-3 mr-1" /> Start Service
+              <Button size="sm" className="h-7 text-xs" onClick={() => { setOtpModal(b); setOtpInput(""); }}>
+                <Clock className="h-3 w-3 mr-1" /> Start Service (OTP)
               </Button>
             )}
             {canComplete && (
