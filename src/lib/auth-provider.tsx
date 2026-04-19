@@ -30,6 +30,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const loginResolveRef = useRef<(() => void) | null>(null);
   const isFreshLoginRef = useRef(false);
+  // Captures the most recent role-load outcome so login() can surface a friendly
+  // message when the user was signed out due to status (deleted/suspended/etc.)
+  const lastAuthErrorRef = useRef<string | null>(null);
 
   // Helper: filter out synthetic Firebase phone-auth emails
   const cleanEmail = (email: string | null | undefined): string => {
