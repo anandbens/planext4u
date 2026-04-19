@@ -3,6 +3,23 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// ===== Email helper (SMTP via send-email edge function) =====
+function escapeForEmail(s: string): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+export async function sendEmail(payload: {
+  to: string; subject: string; html?: string; text?: string;
+  replyTo?: string; cc?: string | string[]; bcc?: string | string[];
+}): Promise<{ success: boolean }> {
+  const { data, error } = await supabase.functions.invoke('send-email', { body: payload });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return { success: true };
+}
+
 // Types
 export interface User {
   id: string; name: string; mobile: string; email: string;
@@ -1617,6 +1634,14 @@ export const api = {
   },
 
   replyToWebsiteQuery: async (id: string, reply: string, repliedBy: string) => {
+    // Fetch the original query to get visitor email + subject
+    const { data: query, error: fetchErr } = await (supabase as any)
+      .from('website_queries')
+      .select('email, name, subject, message')
+      .eq('id', id)
+      .maybeSingle();
+    if (fetchErr) throw fetchErr;
+
     const { error } = await (supabase as any).from('website_queries').update({
       admin_reply: reply,
       replied_at: new Date().toISOString(),
@@ -1624,6 +1649,30 @@ export const api = {
       status: 'resolved',
     }).eq('id', id);
     if (error) throw error;
+
+    // Send the reply via SMTP edge function (best effort — don't block save)
+    if (query?.email) {
+      try {
+        await sendEmail({
+          to: query.email,
+          subject: `Re: ${query.subject || 'Your enquiry'}`,
+          html: `
+            <p>Hi ${escapeForEmail(query.name || 'there')},</p>
+            <p>Thank you for reaching out to PlaNext4U. Here is our reply to your enquiry:</p>
+            <blockquote style="margin:12px 0;padding:12px 16px;background:#f3f4f6;border-left:3px solid #0d9488;white-space:pre-wrap;">${escapeForEmail(reply)}</blockquote>
+            <p style="margin-top:20px;color:#6b7280;font-size:12px;">
+              <strong>Your original message:</strong><br/>
+              <em>${escapeForEmail(query.message || '').slice(0, 500)}</em>
+            </p>
+            <p>Regards,<br/>The PlaNext4U Team</p>
+          `,
+          replyTo: 'support@planext4u.com',
+        });
+      } catch (e) {
+        console.error('Email send failed (reply still saved):', e);
+        throw new Error('Reply saved, but email failed to send. Check edge function logs.');
+      }
+    }
     return { success: true };
   },
 

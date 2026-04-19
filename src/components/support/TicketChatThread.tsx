@@ -85,11 +85,60 @@ export function TicketChatThread({
       sender_name: senderName,
       message: text,
     });
-    setSending(false);
     if (error) {
+      setSending(false);
       toast.error("Failed to send: " + error.message);
       return;
     }
+
+    // Notify the other party via email (best-effort, non-blocking)
+    try {
+      const isTicket = table === "support_ticket_messages";
+      const parentTable = isTicket ? "support_tickets" : "complaints";
+      const { data: parent } = await (supabase as any)
+        .from(parentTable).select("subject, user_id, customer_id").eq("id", parentId).maybeSingle();
+
+      // Determine recipient: if admin replied → email customer; if customer replied → email admin support
+      let toEmail: string | null = null;
+      let recipientName = "Customer";
+      if (postAsRole === "admin") {
+        const customerId = parent?.user_id || parent?.customer_id;
+        if (customerId) {
+          const { data: cust } = await (supabase as any)
+            .from("customers").select("email, name").eq("id", customerId).maybeSingle();
+          toEmail = cust?.email || null;
+          recipientName = cust?.name || "Customer";
+        }
+      } else {
+        toEmail = "support@planext4u.com";
+        recipientName = "Support Team";
+      }
+
+      if (toEmail) {
+        const refLabel = isTicket ? "ticket" : "complaint";
+        const subjectLine = postAsRole === "admin"
+          ? `New reply on your ${refLabel}: ${parent?.subject || parentId}`
+          : `Customer replied on ${refLabel} ${parentId}`;
+        const safeMsg = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        await supabase.functions.invoke("send-email", {
+          body: {
+            to: toEmail,
+            subject: subjectLine,
+            html: `
+              <p>Hi ${recipientName},</p>
+              <p>You have a new message on your ${refLabel} <strong>${parent?.subject || parentId}</strong>:</p>
+              <blockquote style="margin:12px 0;padding:12px 16px;background:#f3f4f6;border-left:3px solid #0d9488;white-space:pre-wrap;">${safeMsg}</blockquote>
+              <p>Login to PlaNext4U to view the full conversation and reply.</p>
+            `,
+            replyTo: "support@planext4u.com",
+          },
+        });
+      }
+    } catch (e) {
+      console.warn("Email notification failed (message saved):", e);
+    }
+
+    setSending(false);
     setDraft("");
   };
 
