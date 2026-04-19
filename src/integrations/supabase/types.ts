@@ -4747,27 +4747,50 @@ export type Database = {
         Row: {
           assigned_vendor_name: string | null
           booking_date: string
+          cgst_amount: number
+          commission_amount: number
+          commission_rate: number
           completion_notes: string | null
           completion_photo_url: string | null
           created_at: string | null
+          customer_address: string | null
           customer_id: string
+          customer_name: string | null
           customer_notes: string | null
+          customer_phone: string | null
           customer_pod_confirmed: boolean | null
           customer_pod_confirmed_at: string | null
           customer_pod_photo_url: string | null
           customer_rating: number | null
           customer_rating_comment: string | null
+          discount: number
           end_time: string
+          gst_on_platform_fee: number
+          gst_rate: number
           id: string
+          igst_amount: number
+          is_interstate: boolean
+          net_to_vendor: number
           notes: string | null
           otp_code: string | null
           otp_verified_at: string | null
           payment_status: string | null
+          place_of_supply_code: string | null
+          place_of_supply_state: string | null
+          platform_fee: number
+          points_used: number
           rated_at: string | null
+          razorpay_order_id: string | null
           razorpay_payment_id: string | null
+          sac_code: string | null
           service_id: string
+          service_title: string | null
+          settlement_id: string | null
+          sgst_amount: number
           start_time: string
           status: string
+          subtotal: number
+          taxable_value: number
           total_amount: number | null
           updated_at: string | null
           vendor_completion_confirmed: boolean | null
@@ -4777,27 +4800,50 @@ export type Database = {
         Insert: {
           assigned_vendor_name?: string | null
           booking_date: string
+          cgst_amount?: number
+          commission_amount?: number
+          commission_rate?: number
           completion_notes?: string | null
           completion_photo_url?: string | null
           created_at?: string | null
+          customer_address?: string | null
           customer_id: string
+          customer_name?: string | null
           customer_notes?: string | null
+          customer_phone?: string | null
           customer_pod_confirmed?: boolean | null
           customer_pod_confirmed_at?: string | null
           customer_pod_photo_url?: string | null
           customer_rating?: number | null
           customer_rating_comment?: string | null
+          discount?: number
           end_time: string
+          gst_on_platform_fee?: number
+          gst_rate?: number
           id?: string
+          igst_amount?: number
+          is_interstate?: boolean
+          net_to_vendor?: number
           notes?: string | null
           otp_code?: string | null
           otp_verified_at?: string | null
           payment_status?: string | null
+          place_of_supply_code?: string | null
+          place_of_supply_state?: string | null
+          platform_fee?: number
+          points_used?: number
           rated_at?: string | null
+          razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
+          sac_code?: string | null
           service_id: string
+          service_title?: string | null
+          settlement_id?: string | null
+          sgst_amount?: number
           start_time: string
           status?: string
+          subtotal?: number
+          taxable_value?: number
           total_amount?: number | null
           updated_at?: string | null
           vendor_completion_confirmed?: boolean | null
@@ -4807,27 +4853,50 @@ export type Database = {
         Update: {
           assigned_vendor_name?: string | null
           booking_date?: string
+          cgst_amount?: number
+          commission_amount?: number
+          commission_rate?: number
           completion_notes?: string | null
           completion_photo_url?: string | null
           created_at?: string | null
+          customer_address?: string | null
           customer_id?: string
+          customer_name?: string | null
           customer_notes?: string | null
+          customer_phone?: string | null
           customer_pod_confirmed?: boolean | null
           customer_pod_confirmed_at?: string | null
           customer_pod_photo_url?: string | null
           customer_rating?: number | null
           customer_rating_comment?: string | null
+          discount?: number
           end_time?: string
+          gst_on_platform_fee?: number
+          gst_rate?: number
           id?: string
+          igst_amount?: number
+          is_interstate?: boolean
+          net_to_vendor?: number
           notes?: string | null
           otp_code?: string | null
           otp_verified_at?: string | null
           payment_status?: string | null
+          place_of_supply_code?: string | null
+          place_of_supply_state?: string | null
+          platform_fee?: number
+          points_used?: number
           rated_at?: string | null
+          razorpay_order_id?: string | null
           razorpay_payment_id?: string | null
+          sac_code?: string | null
           service_id?: string
+          service_title?: string | null
+          settlement_id?: string | null
+          sgst_amount?: number
           start_time?: string
           status?: string
+          subtotal?: number
+          taxable_value?: number
           total_amount?: number | null
           updated_at?: string | null
           vendor_completion_confirmed?: boolean | null
@@ -5041,23 +5110,27 @@ export type Database = {
           booking_duration_minutes: number | null
           category_id: string | null
           category_name: string | null
+          commission_override: number | null
           created_at: string
           description: string
           discount: number
           duration: string | null
           emoji: string | null
+          gst_rate: number
           id: string
           image: string | null
           images: Json | null
           long_description: string | null
           max_bookings_per_slot: number | null
           max_points_redeemable: number
+          max_redemption_percentage: number | null
           meta_description: string | null
           meta_title: string | null
           price: number
           pricing_slots: Json | null
           rating: number | null
           reviews: number | null
+          sac_code: string | null
           service_area: string | null
           short_description: string | null
           slug: string | null
@@ -5072,23 +5145,27 @@ export type Database = {
           booking_duration_minutes?: number | null
           category_id?: string | null
           category_name?: string | null
+          commission_override?: number | null
           created_at?: string
           description?: string
           discount?: number
           duration?: string | null
           emoji?: string | null
+          gst_rate?: number
           id: string
           image?: string | null
           images?: Json | null
           long_description?: string | null
           max_bookings_per_slot?: number | null
           max_points_redeemable?: number
+          max_redemption_percentage?: number | null
           meta_description?: string | null
           meta_title?: string | null
           price?: number
           pricing_slots?: Json | null
           rating?: number | null
           reviews?: number | null
+          sac_code?: string | null
           service_area?: string | null
           short_description?: string | null
           slug?: string | null
@@ -5103,23 +5180,27 @@ export type Database = {
           booking_duration_minutes?: number | null
           category_id?: string | null
           category_name?: string | null
+          commission_override?: number | null
           created_at?: string
           description?: string
           discount?: number
           duration?: string | null
           emoji?: string | null
+          gst_rate?: number
           id?: string
           image?: string | null
           images?: Json | null
           long_description?: string | null
           max_bookings_per_slot?: number | null
           max_points_redeemable?: number
+          max_redemption_percentage?: number | null
           meta_description?: string | null
           meta_title?: string | null
           price?: number
           pricing_slots?: Json | null
           rating?: number | null
           reviews?: number | null
+          sac_code?: string | null
           service_area?: string | null
           short_description?: string | null
           slug?: string | null
