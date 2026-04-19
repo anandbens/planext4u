@@ -611,7 +611,7 @@ export default function CustomerHomePage() {
         </motion.div>
 
         {/* ── Sponsored Ad ── */}
-        <div className="px-4 py-2"><BannerAd placement="home" /></div>
+        <div className="px-3 py-1 md:px-4 md:py-2"><BannerAd placement="home" /></div>
 
         {/* ── Classifieds CTA ── */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-3">
