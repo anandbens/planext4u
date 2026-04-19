@@ -395,6 +395,17 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
                 </div>
               </div>
               <Separator />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">SAC Code</Label>
+                  {editMode ? <Input value={form.sac_code} onChange={(e) => setForm({ ...form, sac_code: e.target.value.replace(/\D/g, "").slice(0, 6) })} className="mt-1 font-mono" placeholder="e.g. 998719" maxLength={6} /> : <p className="text-sm mt-1 font-mono">{form.sac_code || "—"}</p>}
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">GST Rate (%)</Label>
+                  {editMode ? <Input type="number" min={0} max={28} value={form.gst_rate} onChange={(e) => setForm({ ...form, gst_rate: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm mt-1">{form.gst_rate}%</p>}
+                </div>
+              </div>
+              <Separator />
               <div className="flex justify-between items-center">
                 <span className="text-sm font-semibold">Final Price</span>
                 <span className="text-lg font-bold">₹{(form.price + form.tax - form.discount).toLocaleString()}</span>
