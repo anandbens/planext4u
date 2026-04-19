@@ -132,10 +132,12 @@ export function BannerAd({ placement, className = "", variant = "banner" }: Bann
           </div>
         </div>
       )}
-      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-foreground/70 to-transparent px-2 py-1 md:p-3">
-        <p className="text-card text-xs md:text-sm font-semibold leading-tight line-clamp-1">{ad.title}</p>
-        <p className="text-card/80 text-[10px] md:text-xs leading-tight line-clamp-1">{ad.advertiser} · Tap to explore</p>
-      </div>
+      {imgSrc && (
+        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-foreground/70 to-transparent px-2 py-1 md:p-3">
+          <p className="text-card text-xs md:text-sm font-semibold leading-tight line-clamp-1">{ad.title}</p>
+          <p className="text-card/80 text-[10px] md:text-xs leading-tight line-clamp-1">{ad.advertiser} · Tap to explore</p>
+        </div>
+      )}
     </div>
   );
 }
