@@ -3,6 +3,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { ImpactConfirmDialog, type ImpactRow } from "@/components/admin/ImpactConfirmDialog";
 import { api, User, PaginatedResponse } from "@/lib/api";
 import { CustomerModal } from "@/components/admin/modals/CustomerModal";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,36 @@ export default function CustomersPage() {
     try { await api.bulkDeleteCustomers(ids); toast.success(`${ids.length} customers deleted (soft)`); fetchData(); fetchStats(); }
     catch (err: any) { toast.error("Failed to delete customers: " + (err.message || "Unknown error")); }
   };
+
+  const requestHardDelete = async (user: User) => {
+    setHardTarget(user); setHardOpen(true); setHardImpact(null); setHardLoading(true);
+    try { setHardImpact(await api.getCustomerDeletionImpact(user.id)); }
+    catch (e: any) { toast.error(e?.message || "Could not load impact"); }
+    finally { setHardLoading(false); }
+  };
+
+  const handleHardDelete = async () => {
+    if (!hardTarget) return;
+    setHardSubmitting(true);
+    try {
+      await api.hardDeleteCustomer(hardTarget.id);
+      toast.success(`${hardTarget.name} permanently deleted`);
+      fetchData(); fetchStats();
+      setHardOpen(false); setHardTarget(null); setHardImpact(null);
+    } catch (e: any) { toast.error(e?.message || "Failed to permanently delete"); }
+    finally { setHardSubmitting(false); }
+  };
+
+  const hardRows: ImpactRow[] = hardImpact ? [
+    { label: "Orders", count: hardImpact.orders || 0, critical: true, note: "removed from sales reports" },
+    { label: "Food orders", count: hardImpact.food_orders || 0, critical: true, note: "removed from food revenue reports" },
+    { label: "Saved addresses", count: hardImpact.addresses || 0 },
+    { label: "Notifications", count: hardImpact.notifications || 0 },
+    { label: "KYC documents", count: hardImpact.kyc_documents || 0 },
+    { label: "Complaints", count: hardImpact.complaints || 0 },
+    { label: "Classified ads", count: hardImpact.classifieds || 0 },
+    { label: "Reviews left", count: hardImpact.reviews || 0 },
+  ] : [];
 
   const handleBulkStatus = async (ids: string[], status: string) => {
     try { await api.bulkUpdateCustomerStatus(ids, status); toast.success(`${ids.length} customers updated to ${status}`); fetchData(); fetchStats(); }
