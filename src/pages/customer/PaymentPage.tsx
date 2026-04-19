@@ -153,13 +153,15 @@ export default function PaymentPage() {
 
       // Resolve commission and tax split
       let commissionRate = 0;
+      let gstRate: number = 18;
+      let sacCode: string | null = null;
       try {
         const { data: svc } = await supabase.from('services').select('commission_override, gst_rate, sac_code').eq('id', serviceId).maybeSingle();
-        const cascade = await resolveCommissionCascade(vendorId, svc?.commission_override, undefined);
+        const cascade = await resolveCommissionCascade(vendorId, (svc as any)?.commission_override, undefined);
         commissionRate = cascade.commission;
-        var gstRate = (svc as any)?.gst_rate ?? 18;
-        var sacCode = (svc as any)?.sac_code ?? null;
-      } catch (e) { console.error('Cascade error:', e); var gstRate = 18; var sacCode: any = null; }
+        gstRate = (svc as any)?.gst_rate ?? 18;
+        sacCode = (svc as any)?.sac_code ?? null;
+      } catch (e) { console.error('Cascade error:', e); }
 
       // Customer + vendor state for interstate split
       const { data: cust } = await supabase.from('customers').select('name, mobile').eq('id', customerId).maybeSingle();
