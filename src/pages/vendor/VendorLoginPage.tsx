@@ -13,6 +13,12 @@ import p4uLogo from "@/assets/p4u-logo.png";
 
 const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
 
+const normalizePhoneVariants = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  const local = digits.length > 10 ? digits.slice(-10) : digits;
+  return Array.from(new Set([phone, digits, local].filter(Boolean)));
+};
+
 export default function VendorLoginPage() {
   const { vendorLogin } = useAuth();
   const navigate = useNavigate();
@@ -53,9 +59,14 @@ export default function VendorLoginPage() {
     if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
+      const phoneVariants = normalizePhoneVariants(cleaned);
       // Check vendor verification status before sending OTP
       const { data: vendorApp } = await supabase.from("vendor_applications").select("status, rejection_reason").eq("phone", cleaned).order("created_at", { ascending: false }).limit(1).maybeSingle();
-      const { data: vendor } = await supabase.from("vendors").select("status, mobile").eq("mobile", cleaned).maybeSingle();
+      const [{ data: productVendor }, { data: serviceVendor }] = await Promise.all([
+        supabase.from("vendors").select("status, mobile").in("mobile", phoneVariants).maybeSingle(),
+        supabase.from("service_vendors" as any).select("status, mobile").in("mobile", phoneVariants).maybeSingle(),
+      ]);
+      const vendor = (productVendor || serviceVendor) as { status?: string; mobile?: string } | null;
       
       if (vendorApp && !vendor) {
         if (vendorApp.status === 'rejected') {
