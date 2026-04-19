@@ -531,6 +531,7 @@ export const api = {
       commission_rate: Number(data.commission_rate) || 0,
       membership: data.membership || 'basic',
       status: data.status || 'verified',
+      vendor_category: type === 'service' ? 'service' : 'product',
       total_products: 0, total_orders: 0, total_revenue: 0,
     };
     if ((data as any).category_id) newVendor.category_id = (data as any).category_id;
