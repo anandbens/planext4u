@@ -89,10 +89,11 @@ export default function VendorsPage() {
         .select('*', { count: 'exact' }) as any)
         .eq('status', 'rejected')
         .eq('vendor_category', 'product');
-      let venQ = supabase
+      let venQ = (supabase
         .from('vendors')
-        .select('*', { count: 'exact' })
-        .eq('status', 'rejected');
+        .select('*', { count: 'exact' }) as any)
+        .eq('status', 'rejected')
+        .or('vendor_category.eq.product,vendor_category.is.null');
 
       if (search) {
         appQ = appQ.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
