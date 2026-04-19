@@ -1,5 +1,5 @@
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { BarChart3, TrendingUp, FileText, Users, Star, Gift, Megaphone, DollarSign, CreditCard, Receipt, FileBarChart, Package, Building2 } from "lucide-react";
+import { BarChart3, TrendingUp, FileText, Users, Star, Gift, Megaphone, DollarSign, CreditCard, Receipt, FileBarChart, Package, Building2, BookOpen, RotateCcw, Percent, ScrollText } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const operationalReports = [
@@ -15,11 +15,16 @@ const operationalReports = [
 ];
 
 const financeReports = [
+  { title: "Tax Invoices Issued", desc: "All vendor → customer GST invoices auto-generated on order delivery (statutory register)", icon: ScrollText, color: "gradient-primary", to: "/reports/invoices" },
   { title: "Tax Report", desc: "Product tax, GST on platform fee, and tax collection summary", icon: FileText, color: "gradient-warning", to: "/reports/tax" },
   { title: "GSTR-1 (Outward Supplies)", desc: "Invoice-wise B2C outward supplies with CGST/SGST/IGST + HSN summary for monthly GST filing", icon: Receipt, color: "gradient-primary", to: "/reports/gstr1" },
   { title: "GSTR-3B (Monthly Summary)", desc: "Self-declaration summary of outward supplies, tax liability, and ITC for monthly return", icon: FileBarChart, color: "gradient-info", to: "/reports/gstr3b" },
+  { title: "Credit Notes (GSTR-1 Table 9B)", desc: "Refund/cancellation credit notes auto-generated with reverse tax breakup for amendment filing", icon: RotateCcw, color: "gradient-warning", to: "/reports/credit-notes" },
   { title: "HSN-wise Summary", desc: "Aggregated supply by HSN code with quantity, taxable value, and tax breakup (GSTR-1 Table 12)", icon: Package, color: "gradient-success", to: "/reports/hsn" },
   { title: "TCS u/s 52 (GSTR-8)", desc: "Tax Collected at Source @1% per vendor — required monthly filing for e-commerce operators", icon: Building2, color: "gradient-danger", to: "/reports/tcs" },
+  { title: "TDS u/s 194-O", desc: "1% TDS deducted from vendor payouts > ₹5L/yr — quarterly statutory filing for marketplaces", icon: Percent, color: "gradient-info", to: "/reports/tds-194o" },
+  { title: "GSTR-9 (Annual Return)", desc: "Consolidated annual GST return — auto-aggregates monthly GSTR-1/3B data for FY filing", icon: FileBarChart, color: "gradient-primary", to: "/reports/gstr9" },
+  { title: "Day Book (Tally / Zoho Export)", desc: "Multi-sheet XLSX with Sales register, Credit notes, Journal entries — direct import to Tally/Zoho Books", icon: BookOpen, color: "gradient-success", to: "/reports/daybook" },
 ];
 
 export default function ReportsPage() {
