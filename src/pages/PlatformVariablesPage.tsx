@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Loader2, Save } from "lucide-react";
 
 const POINTS_KEYS = [
-  'welcome_points', 'referral_points', 'vendor_referral_points',
+  'WELCOME_BONUS', 'welcome_points', 'referral_points', 'vendor_referral_points',
   'post_like_points', 'post_share_points', 'story_liked_points',
   'order_reward_rate', 'max_points_per_order',
   'points_expiry_days', 'expiry_reminder_days',

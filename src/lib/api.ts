@@ -402,15 +402,18 @@ export const api = {
   },
 
   createCustomer: async (data: Partial<User>) => {
-    // Welcome bonus is configured via platform_variables (key: welcome_points). Default 200.
-    let welcomePoints = 200;
+    // Welcome bonus is configured via platform_variables. Canonical key is
+    // 'WELCOME_BONUS' (uppercase) — kept in sync with admin Platform Variables.
+    // We also accept the legacy lowercase 'welcome_points' as a fallback.
+    let welcomePoints = 300;
     try {
       const { data: pv } = await supabase
         .from('platform_variables')
-        .select('value')
-        .eq('key', 'welcome_points')
-        .maybeSingle();
-      const parsed = Number(pv?.value);
+        .select('key, value')
+        .in('key', ['WELCOME_BONUS', 'welcome_points']);
+      const map = new Map((pv || []).map((r: any) => [r.key, r.value]));
+      const raw = map.get('WELCOME_BONUS') ?? map.get('welcome_points');
+      const parsed = Number(raw);
       if (!Number.isNaN(parsed) && parsed > 0) welcomePoints = parsed;
     } catch { /* keep default */ }
 

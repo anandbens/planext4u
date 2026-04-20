@@ -9,6 +9,15 @@ interface CustomerAddressOwnerContext {
 
 const isNonEmptyString = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
 
+/**
+ * Resolve the customer_id that satisfies the customer_addresses RLS policy:
+ *   customer_id = auth.uid()::text  OR  customer_id = get_customer_id(auth.uid())
+ *
+ * `get_customer_id()` reads from `user_roles.customer_id`, so the DB-mapped value
+ * is always the source of truth. If the user_roles row is missing or its
+ * customer_id is null, we self-heal it from the in-memory CustomerUser before
+ * returning, so the subsequent insert passes RLS.
+ */
 export async function getCustomerAddressOwnerContext(customerUser?: CustomerUser | null): Promise<CustomerAddressOwnerContext> {
   const directCustomerId = customerUser?.customer_id;
   const directId = customerUser?.id;
@@ -31,16 +40,31 @@ export async function getCustomerAddressOwnerContext(customerUser?: CustomerUser
     mappedCustomerId = isNonEmptyString((data as { customer_id?: string } | null)?.customer_id)
       ? (data as { customer_id: string }).customer_id
       : null;
+
+    // Self-heal: if user_roles has no customer_id but we know the customer_id
+    // from the in-memory CustomerUser, write it back so RLS will pass.
+    if (!mappedCustomerId && isNonEmptyString(directCustomerId)) {
+      const { error: upsertErr } = await supabase
+        .from("user_roles")
+        .upsert(
+          { user_id: authUid, role: "customer", customer_id: directCustomerId },
+          { onConflict: "user_id,role" },
+        );
+      if (!upsertErr) mappedCustomerId = directCustomerId;
+    }
   }
 
+  // Always prefer the DB-mapped value because that is what RLS checks against.
+  const preferredId = mappedCustomerId ?? directCustomerId ?? directId ?? authUid;
+
   const ownerIds = Array.from(
-    new Set([directCustomerId, directId, mappedCustomerId, authUid].filter(isNonEmptyString)),
+    new Set([mappedCustomerId, directCustomerId, directId, authUid].filter(isNonEmptyString)),
   );
 
   return {
     authUid,
     ownerIds,
-    preferredId: mappedCustomerId ?? directCustomerId ?? directId ?? authUid,
+    preferredId,
   };
 }
 

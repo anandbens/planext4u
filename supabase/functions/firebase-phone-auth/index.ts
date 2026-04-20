@@ -251,9 +251,17 @@ Deno.serve(async (req) => {
       const referralCode = "P4U" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
       // 2.5 Fetch welcome points before creating customer
+      // Canonical key is 'WELCOME_BONUS' (uppercase, used by admin Platform Variables).
+      // Fall back to legacy 'welcome_points', then to default 300.
       let welcomePoints = 300;
-      const { data: welcomeVar } = await supabase.from("platform_variables").select("value").eq("key", "welcome_points").maybeSingle();
-      if (welcomeVar) welcomePoints = Number(welcomeVar.value) || 300;
+      const { data: welcomeVars } = await supabase
+        .from("platform_variables")
+        .select("key, value")
+        .in("key", ["WELCOME_BONUS", "welcome_points"]);
+      const wMap = new Map((welcomeVars || []).map((r: any) => [r.key, r.value]));
+      const rawWelcome = wMap.get("WELCOME_BONUS") ?? wMap.get("welcome_points");
+      const parsedWelcome = Number(rawWelcome);
+      if (!Number.isNaN(parsedWelcome) && parsedWelcome > 0) welcomePoints = parsedWelcome;
 
       // 3. Create customer record with welcome points already set
       const customerId = "CUST-" + crypto.randomUUID().substring(0, 8).toUpperCase();
