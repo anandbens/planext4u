@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { compressVideoBrowser } from "@/lib/browser-video-compress";
 import { extractVideoThumbnail } from "@/lib/media-compression";
+import { uploadToB2 } from "@/lib/b2-upload";
 
 interface VideoOptimizerUploadProps {
   /** Current video URL (if already uploaded) */
@@ -93,48 +94,45 @@ export function VideoOptimizerUpload({
         console.warn("Thumbnail extraction failed:", err);
       }
 
-      // 4. Upload both
+      // 4. Upload both to Backblaze B2 (replaces Supabase Storage)
       setStage("Uploading optimized video…");
       setPercent(85);
 
-      const baseName = `${folder}/${Date.now()}-${slug(file.name)}`;
+      const baseName = slug(file.name);
       const videoExt = optimized.type.includes("webm") ? "webm" : "mp4";
-      const videoPath = `${baseName}.${videoExt}`;
-      const thumbPath = `${baseName}.webp`;
-
       const videoMime = videoExt === "webm" ? "video/webm" : "video/mp4";
 
-      const { error: vErr } = await supabase.storage.from(bucket).upload(videoPath, optimized, {
+      const { publicUrl: videoUrl } = await uploadToB2(optimized, {
+        folder: `${bucket}/${folder}`,
+        filename: `${baseName}.${videoExt}`,
         contentType: videoMime,
-        cacheControl: "31536000",
-        upsert: true,
       });
-      if (vErr) throw vErr;
 
       let thumbnailUrl = "";
       if (thumbBlob) {
-        const { error: tErr } = await supabase.storage.from(bucket).upload(thumbPath, thumbBlob, {
-          contentType: "image/webp",
-          cacheControl: "31536000",
-          upsert: true,
-        });
-        if (!tErr) {
-          thumbnailUrl = supabase.storage.from(bucket).getPublicUrl(thumbPath).data.publicUrl;
+        try {
+          const { publicUrl: thumbUrl } = await uploadToB2(thumbBlob, {
+            folder: `${bucket}/${folder}`,
+            filename: `${baseName}.webp`,
+            contentType: "image/webp",
+          });
+          thumbnailUrl = thumbUrl;
+        } catch (thumbErr) {
+          console.warn("Thumbnail upload to B2 failed:", thumbErr);
         }
       }
-
-      const videoUrl = supabase.storage.from(bucket).getPublicUrl(videoPath).data.publicUrl;
 
       // 5. Best-effort: record in media_library (ignore failures)
       try {
         await supabase.from("media_library" as any).insert({
           file_url: videoUrl,
           folder,
-          file_name: videoPath.split("/").pop(),
+          file_name: videoUrl.split("/").pop(),
           mime_type: videoMime,
           file_size_bytes: optimized.size,
           metadata: {
             kind: "video_ad",
+            storage_provider: "b2",
             original_size_bytes: file.size,
             duration_seconds: durationSeconds,
             thumbnail_url: thumbnailUrl,
