@@ -137,7 +137,7 @@ export default function RiderDashboardPage() {
       </header>
 
       {rider.kyc_status !== 'verified' && (
-        <div className="m-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-sm">
+        <div className="m-4 p-3 rounded-lg bg-accent/20 border border-accent/40 text-foreground text-sm">
           <p className="font-semibold">Complete your KYC to start receiving orders.</p>
           <Button size="sm" variant="outline" className="mt-2" onClick={() => navigate('/rider/kyc')}>Complete KYC</Button>
         </div>

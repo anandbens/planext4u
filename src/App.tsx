@@ -195,8 +195,13 @@ import VendorFoodOrdersPage from "./pages/vendor/VendorFoodOrdersPage";
 import RiderLoginPage from "./pages/rider/RiderLoginPage";
 import RiderRegisterPage from "./pages/rider/RiderRegisterPage";
 import RiderDashboardPage from "./pages/rider/RiderDashboardPage";
+import RiderKYCPage from "./pages/rider/RiderKYCPage";
+import RiderProfilePage from "./pages/rider/RiderProfilePage";
+import RiderEarningsPage from "./pages/rider/RiderEarningsPage";
 import AdminRestaurantsPage from "./pages/admin/AdminRestaurantsPage";
 import AdminRidersPage from "./pages/admin/AdminRidersPage";
+import AdminRiderKYCPage from "./pages/admin/AdminRiderKYCPage";
+import AdminRiderSettlementsPage from "./pages/admin/AdminRiderSettlementsPage";
 import AdminFoodOrdersPage from "./pages/admin/AdminFoodOrdersPage";
 import AdminFoodCouponsPage from "./pages/admin/AdminFoodCouponsPage";
 import { RiderProtectedRoute } from "@/components/rider/RiderProtectedRoute";
@@ -531,10 +536,15 @@ const AppRoutes = () => {
         <Route path="/rider/login" element={<RiderLoginPage />} />
         <Route path="/rider/register" element={<RiderRegisterPage />} />
         <Route path="/rider" element={<RiderProtectedRoute><RiderDashboardPage /></RiderProtectedRoute>} />
+        <Route path="/rider/kyc" element={<RiderProtectedRoute><RiderKYCPage /></RiderProtectedRoute>} />
+        <Route path="/rider/profile" element={<RiderProtectedRoute><RiderProfilePage /></RiderProtectedRoute>} />
+        <Route path="/rider/earnings" element={<RiderProtectedRoute><RiderEarningsPage /></RiderProtectedRoute>} />
 
         {/* Food delivery — Admin */}
         <Route path="/admin/restaurants" element={<SalesPage><AdminRestaurantsPage /></SalesPage>} />
         <Route path="/admin/riders" element={<SalesPage><AdminRidersPage /></SalesPage>} />
+        <Route path="/admin/rider-kyc" element={<SalesPage><AdminRiderKYCPage /></SalesPage>} />
+        <Route path="/admin/rider-settlements" element={<SalesPage><AdminRiderSettlementsPage /></SalesPage>} />
         <Route path="/admin/food-orders" element={<SalesPage><AdminFoodOrdersPage /></SalesPage>} />
         <Route path="/admin/food-coupons" element={<SalesPage><AdminFoodCouponsPage /></SalesPage>} />
 
