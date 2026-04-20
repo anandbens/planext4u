@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Wallet, ArrowUpRight, Gift, ChevronLeft, ChevronRight, AlertTriangle, Share2, Heart, BookOpen, ShoppingBag, Users, Store, Clock } from "lucide-react";
+import { ArrowLeft, Wallet, ArrowUpRight, Gift, ChevronLeft, ChevronRight, AlertTriangle, Share2, Heart, BookOpen, ShoppingBag, Users, Store, Clock, RotateCcw, MinusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ const categoryConfig: Record<string, { label: string; icon: any; bg: string; tex
   order_reward: { label: "Order Rewards", icon: ShoppingBag, bg: "bg-[hsl(var(--warning)/0.08)]", text: "text-warning" },
   earned: { label: "Earned", icon: Gift, bg: "bg-[hsl(var(--primary)/0.08)]", text: "text-primary" },
   redemption: { label: "Redeemed", icon: ArrowUpRight, bg: "bg-[hsl(var(--destructive)/0.08)]", text: "text-destructive" },
+  refund: { label: "Refunds", icon: RotateCcw, bg: "bg-[hsl(var(--info)/0.08)]", text: "text-info" },
 };
 
 export default function CustomerWalletPage() {
@@ -99,7 +100,7 @@ export default function CustomerWalletPage() {
   });
 
   // Categories to show
-  const categoriesToShow = ['welcome', 'post_share', 'vendor_referral', 'referral', 'post_like', 'story_liked', 'order_reward', 'earned']
+  const categoriesToShow = ['welcome', 'post_share', 'vendor_referral', 'referral', 'post_like', 'story_liked', 'order_reward', 'refund', 'earned']
     .filter(k => (categoryTotals[k] || 0) > 0 || ['welcome', 'post_share', 'vendor_referral', 'referral', 'post_like', 'story_liked'].includes(k));
 
   const [currentPage, setCurrentPage] = useState(1);
