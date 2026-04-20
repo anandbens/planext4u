@@ -312,6 +312,20 @@ Deno.serve(async (req: Request) => {
           publicBase: B2_PUBLIC_BASE,
         };
 
+    // === DIAGNOSTIC LOGGING ===
+    console.log("[b2-presigned-upload] DIAG", JSON.stringify({
+      isPrivate,
+      accessKeyId: cfg.keyId,
+      accessKeyId_length: cfg.keyId?.length ?? 0,
+      appKey_length: cfg.appKey?.length ?? 0,
+      appKey_first4: cfg.appKey?.slice(0, 4) ?? "",
+      bucket: cfg.bucket,
+      endpoint: cfg.endpoint,
+      endpoint_host: endpointHost(cfg.endpoint),
+      sigv4_region: regionFromEndpoint(cfg.endpoint),
+      publicBase: cfg.publicBase,
+    }));
+
     if (!cfg.keyId || !cfg.appKey || !cfg.bucket || !cfg.endpoint) {
       return new Response(
         JSON.stringify({ error: `B2 ${isPrivate ? "private " : ""}bucket not configured` }),
