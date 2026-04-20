@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Wallet, ArrowUpRight, Gift, ChevronLeft, ChevronRight, AlertTriangle, Share2, Heart, BookOpen, ShoppingBag, Users, Store, Clock } from "lucide-react";
+import { ArrowLeft, Wallet, ArrowUpRight, Gift, ChevronLeft, ChevronRight, AlertTriangle, Share2, Heart, BookOpen, ShoppingBag, Users, Store, Clock, RotateCcw, MinusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
