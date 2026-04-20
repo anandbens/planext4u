@@ -41,7 +41,9 @@ export default function RiderLoginPage() {
           <div><Label>Password</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} required /></div>
           <Button type="submit" disabled={loading} className="w-full">{loading ? "Signing in…" : "Sign In"}</Button>
         </form>
-        <p className="text-center text-xs text-muted-foreground">Need a rider account? Contact P4U admin.</p>
+        <p className="text-center text-xs text-muted-foreground">
+          New to P4U? <a href="/rider/register" className="text-primary font-medium">Become a rider</a>
+        </p>
       </Card>
     </div>
   );
