@@ -193,6 +193,7 @@ import FoodOrderDetailPage from "./pages/customer/food/FoodOrderDetailPage";
 import VendorRestaurantPage from "./pages/vendor/VendorRestaurantPage";
 import VendorFoodOrdersPage from "./pages/vendor/VendorFoodOrdersPage";
 import RiderLoginPage from "./pages/rider/RiderLoginPage";
+import RiderRegisterPage from "./pages/rider/RiderRegisterPage";
 import RiderDashboardPage from "./pages/rider/RiderDashboardPage";
 import AdminRestaurantsPage from "./pages/admin/AdminRestaurantsPage";
 import AdminRidersPage from "./pages/admin/AdminRidersPage";
@@ -528,6 +529,7 @@ const AppRoutes = () => {
 
         {/* Food delivery — Rider */}
         <Route path="/rider/login" element={<RiderLoginPage />} />
+        <Route path="/rider/register" element={<RiderRegisterPage />} />
         <Route path="/rider" element={<RiderProtectedRoute><RiderDashboardPage /></RiderProtectedRoute>} />
 
         {/* Food delivery — Admin */}

@@ -4487,43 +4487,76 @@ export type Database = {
       }
       rider_assignments: {
         Row: {
+          base_payout: number
+          batch_id: string | null
           delivered_at: string | null
           distance_km: number | null
+          distance_payout: number
+          drop_address: string | null
+          drop_lat: number | null
+          drop_lng: number | null
           id: string
           offered_at: string
           order_id: string
           payout_amount: number
           picked_up_at: string | null
+          pickup_address: string | null
+          pickup_lat: number | null
+          pickup_lng: number | null
           rejection_reason: string | null
           responded_at: string | null
           rider_id: string
+          sequence_no: number
           status: string
+          tip_amount: number
         }
         Insert: {
+          base_payout?: number
+          batch_id?: string | null
           delivered_at?: string | null
           distance_km?: number | null
+          distance_payout?: number
+          drop_address?: string | null
+          drop_lat?: number | null
+          drop_lng?: number | null
           id?: string
           offered_at?: string
           order_id: string
           payout_amount?: number
           picked_up_at?: string | null
+          pickup_address?: string | null
+          pickup_lat?: number | null
+          pickup_lng?: number | null
           rejection_reason?: string | null
           responded_at?: string | null
           rider_id: string
+          sequence_no?: number
           status?: string
+          tip_amount?: number
         }
         Update: {
+          base_payout?: number
+          batch_id?: string | null
           delivered_at?: string | null
           distance_km?: number | null
+          distance_payout?: number
+          drop_address?: string | null
+          drop_lat?: number | null
+          drop_lng?: number | null
           id?: string
           offered_at?: string
           order_id?: string
           payout_amount?: number
           picked_up_at?: string | null
+          pickup_address?: string | null
+          pickup_lat?: number | null
+          pickup_lng?: number | null
           rejection_reason?: string | null
           responded_at?: string | null
           rider_id?: string
+          sequence_no?: number
           status?: string
+          tip_amount?: number
         }
         Relationships: [
           {
@@ -4586,6 +4619,135 @@ export type Database = {
           },
           {
             foreignKeyName: "rider_locations_rider_id_fkey"
+            columns: ["rider_id"]
+            isOneToOne: false
+            referencedRelation: "riders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rider_payouts: {
+        Row: {
+          assignment_id: string | null
+          base_amount: number
+          created_at: string
+          distance_amount: number
+          distance_km: number
+          earned_at: string
+          id: string
+          order_id: string
+          rider_id: string
+          settled_at: string | null
+          settlement_id: string | null
+          status: string
+          tip_amount: number
+          total_amount: number
+        }
+        Insert: {
+          assignment_id?: string | null
+          base_amount?: number
+          created_at?: string
+          distance_amount?: number
+          distance_km?: number
+          earned_at?: string
+          id?: string
+          order_id: string
+          rider_id: string
+          settled_at?: string | null
+          settlement_id?: string | null
+          status?: string
+          tip_amount?: number
+          total_amount?: number
+        }
+        Update: {
+          assignment_id?: string | null
+          base_amount?: number
+          created_at?: string
+          distance_amount?: number
+          distance_km?: number
+          earned_at?: string
+          id?: string
+          order_id?: string
+          rider_id?: string
+          settled_at?: string | null
+          settlement_id?: string | null
+          status?: string
+          tip_amount?: number
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rider_payouts_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "rider_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rider_payouts_rider_id_fkey"
+            columns: ["rider_id"]
+            isOneToOne: false
+            referencedRelation: "riders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rider_payouts_settlement_id_fkey"
+            columns: ["settlement_id"]
+            isOneToOne: false
+            referencedRelation: "rider_settlements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rider_settlements: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          id: string
+          initiated_at: string
+          initiated_by: string | null
+          method: string
+          notes: string | null
+          payout_count: number
+          reference: string | null
+          rider_id: string
+          rider_name: string | null
+          status: string
+        }
+        Insert: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          id: string
+          initiated_at?: string
+          initiated_by?: string | null
+          method?: string
+          notes?: string | null
+          payout_count?: number
+          reference?: string | null
+          rider_id: string
+          rider_name?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          initiated_at?: string
+          initiated_by?: string | null
+          method?: string
+          notes?: string | null
+          payout_count?: number
+          reference?: string | null
+          rider_id?: string
+          rider_name?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rider_settlements_rider_id_fkey"
             columns: ["rider_id"]
             isOneToOne: false
             referencedRelation: "riders"
@@ -7130,6 +7292,15 @@ export type Database = {
         Args: { _profile: string; _viewer: string }
         Returns: number
       }
+      create_rider_settlement: {
+        Args: {
+          _method?: string
+          _notes?: string
+          _reference?: string
+          _rider_id: string
+        }
+        Returns: Json
+      }
       create_social_notification: {
         Args: {
           _actor_id: string
@@ -7260,6 +7431,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      rider_pending_balance: { Args: { _rider_id: string }; Returns: number }
       save_device_token: {
         Args: { _platform?: string; _token: string; _user_id: string }
         Returns: undefined
