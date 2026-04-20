@@ -123,6 +123,66 @@ function hex(buf: ArrayBuffer): string {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+async function putToB2(opts: {
+  endpoint: string;
+  bucket: string;
+  key: string;
+  contentType: string;
+  keyId: string;
+  appKey: string;
+  body: Uint8Array;
+}): Promise<void> {
+  const { endpoint, bucket, key, contentType, keyId, appKey, body } = opts;
+  const region = regionFromEndpoint(endpoint);
+  const host = endpointHost(endpoint);
+  const service = "s3";
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
+  const dateStamp = amzDate.slice(0, 8);
+  const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const encodedKey = key.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+  const canonicalUri = `/${bucket}/${encodedKey}`;
+  const normalizedContentType = contentType.trim().toLowerCase() || "application/octet-stream";
+  const payloadHash = await sha256Hex(body);
+  const canonicalHeaders =
+    `content-type:${normalizedContentType}\nhost:${host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
+  const signedHeaders = "content-type;host;x-amz-content-sha256;x-amz-date";
+  const canonicalRequest = [
+    "PUT",
+    canonicalUri,
+    "",
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash,
+  ].join("\n");
+  const stringToSign = [
+    "AWS4-HMAC-SHA256",
+    amzDate,
+    credentialScope,
+    await sha256Hex(canonicalRequest),
+  ].join("\n");
+  const signingKey = await deriveSigningKey(appKey, dateStamp, region, service);
+  const signature = hex(await hmac(signingKey, stringToSign));
+  const authorization =
+    `AWS4-HMAC-SHA256 Credential=${keyId}/${credentialScope}, ` +
+    `SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const res = await fetch(`https://${host}${canonicalUri}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": normalizedContentType,
+      "x-amz-content-sha256": payloadHash,
+      "x-amz-date": amzDate,
+      Authorization: authorization,
+    },
+    body,
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`B2 PUT failed ${res.status}: ${txt.slice(0, 200)}`);
+  }
+}
+
 async function presignPutUrl(opts: {
   endpoint: string;
   bucket: string;
@@ -218,6 +278,7 @@ Deno.serve(async (req: Request) => {
     const filename = String(body.filename ?? "file");
     const contentType = String(body.contentType ?? "application/octet-stream");
     const isPrivate = body.private === true;
+    const fileBase64 = typeof body.fileBase64 === "string" ? body.fileBase64.trim() : "";
     const expiresSeconds = Math.min(Math.max(Number(body.expiresSeconds) || 600, 60), 3600);
 
     if (folder.length > 200 || /\.\./.test(folder)) {
@@ -255,6 +316,31 @@ Deno.serve(async (req: Request) => {
     const safeName = sanitizeFilename(filename);
     const rand = Math.random().toString(36).slice(2, 8);
     const key = `${folder}/${userId}/${Date.now()}-${rand}-${safeName}.${ext}`;
+
+    if (fileBase64) {
+      const binary = Uint8Array.from(atob(fileBase64), (char) => char.charCodeAt(0));
+      await putToB2({
+        endpoint: cfg.endpoint,
+        bucket: cfg.bucket,
+        key,
+        contentType,
+        keyId: cfg.keyId,
+        appKey: cfg.appKey,
+        body: binary,
+      });
+
+      return new Response(
+        JSON.stringify({
+          uploadUrl: "",
+          publicUrl: isPrivate ? "" : `${cfg.publicBase}/${key}`,
+          key,
+          isPrivate,
+          expiresIn: 0,
+          uploaded: true,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const uploadUrl = await presignPutUrl({
       endpoint: cfg.endpoint,
