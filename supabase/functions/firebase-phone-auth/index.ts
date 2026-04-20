@@ -549,21 +549,35 @@ Deno.serve(async (req) => {
       });
       if (createError) throw createError;
       supabaseUser = newUser.user;
+    }
 
-      const { data: existingRole } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("customer_id", existingCustomer.id)
-        .eq("role", "customer")
-        .maybeSingle();
+    // Always ensure a customer user_role exists for this auth user.
+    // Imported customers (e.g., from legacy migration) may have an auth user
+    // but no user_roles row — without this, loadUserRole signs them out and
+    // bounces them back to /app/login after a successful OTP verify.
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("id, customer_id")
+      .eq("user_id", supabaseUser!.id)
+      .eq("role", "customer")
+      .maybeSingle();
 
-      if (!existingRole) {
-        await supabase.from("user_roles").insert({
-          user_id: supabaseUser.id,
-          role: "customer",
-          customer_id: existingCustomer.id,
-        });
+    if (!existingRole) {
+      const { error: roleInsertErr } = await supabase.from("user_roles").insert({
+        user_id: supabaseUser!.id,
+        role: "customer",
+        customer_id: existingCustomer.id,
+      });
+      if (roleInsertErr) {
+        console.error("Failed to create customer user_role:", roleInsertErr.message);
+      } else {
+        console.log("Created missing customer user_role for", supabaseUser!.id, "→", existingCustomer.id);
       }
+    } else if (!existingRole.customer_id) {
+      // Role exists but missing customer_id linkage — patch it
+      await supabase.from("user_roles")
+        .update({ customer_id: existingCustomer.id })
+        .eq("id", existingRole.id);
     }
 
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
