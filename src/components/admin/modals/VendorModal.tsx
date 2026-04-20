@@ -16,6 +16,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isValidEmail, isValidIndianMobile, isValidGSTIN, isValidPAN } from "@/lib/admin-validation";
+import { resolveB2Url } from "@/lib/b2-upload";
+import { PrivateKycImage } from "@/components/admin/PrivateKycImage";
 
 interface VendorModalProps {
   vendor: Vendor | null;
@@ -207,9 +209,12 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
     }
   };
 
-  const downloadDoc = (url: string, name: string) => {
+  const downloadDoc = async (url: string, _name: string) => {
     if (!url) return;
-    window.open(url, "_blank");
+    // Private KYC values are stored as `b2-private://<key>` and need a signed URL.
+    const signed = await resolveB2Url(url, 300);
+    if (!signed) { toast.error("Could not generate document link"); return; }
+    window.open(signed, "_blank");
   };
 
   return (
@@ -627,8 +632,18 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                         </div>
                         <p className="text-[10px] text-muted-foreground font-mono">{doc.document_number}</p>
                         <div className="flex gap-2 mt-2">
-                          {doc.front_image_url && <img src={doc.front_image_url} alt="Front" className="rounded max-h-20 object-cover cursor-pointer" onClick={() => window.open(doc.front_image_url!, "_blank")} />}
-                          {doc.back_image_url && <img src={doc.back_image_url} alt="Back" className="rounded max-h-20 object-cover cursor-pointer" onClick={() => window.open(doc.back_image_url!, "_blank")} />}
+                          {doc.front_image_url && (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <PrivateKycImage value={doc.front_image_url} alt="Front" className="rounded max-h-20 h-20 w-20 object-cover border border-border/50" />
+                              <span className="text-[10px] text-muted-foreground">Front</span>
+                            </div>
+                          )}
+                          {doc.back_image_url && (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <PrivateKycImage value={doc.back_image_url} alt="Back" className="rounded max-h-20 h-20 w-20 object-cover border border-border/50" />
+                              <span className="text-[10px] text-muted-foreground">Back</span>
+                            </div>
+                          )}
                         </div>
                       </Card>
                     ))}
