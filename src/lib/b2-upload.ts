@@ -57,12 +57,12 @@ async function getPresignedUrl(opts: {
   if (error) {
     throw new Error(`Failed to get B2 upload URL: ${error.message}`);
   }
-  if (!data?.uploadUrl || typeof data?.key !== "string") {
+  if (typeof data?.key !== "string") {
     throw new Error("B2 presigned-upload returned an invalid response");
   }
   return {
-    uploadUrl: data.uploadUrl as string,
-    publicUrl: (data.publicUrl as string) ?? "",
+    uploadUrl: typeof data.uploadUrl === "string" ? data.uploadUrl : "",
+    publicUrl: typeof data.publicUrl === "string" ? data.publicUrl : "",
     key: data.key as string,
     isPrivate: data.isPrivate === true,
   };
@@ -122,13 +122,16 @@ export async function uploadToB2(
     for (let i = 0; i < bytes.length; i += chunkSize) {
       binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
     }
-    const { publicUrl: fallbackUrl, key: fallbackKey, isPrivate: fallbackPrivate } = await getPresignedUrl({
+    const { uploadUrl: fallbackUploadUrl, publicUrl: fallbackUrl, key: fallbackKey, isPrivate: fallbackPrivate } = await getPresignedUrl({
       folder,
       filename,
       contentType,
       private: options.private,
       fileBase64: btoa(binary),
     });
+    if (fallbackUploadUrl) {
+      console.warn("[uploadToB2] fallback unexpectedly returned a browser upload URL; ignoring it");
+    }
     return {
       publicUrl: fallbackPrivate ? `b2-private://${fallbackKey}` : fallbackUrl,
       key: fallbackKey,
