@@ -85,16 +85,19 @@ export default function VendorRegisterPage() {
     const isImage = file.type.startsWith('image/');
     const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
     const ext = isImage ? 'webp' : (file.name.split('.').pop() || 'pdf');
-    const folder = field === 'store_logo_url' ? 'vendor-assets/vendor-reg' : 'kyc-documents/vendor-reg';
+    const isLogo = field === 'store_logo_url';
+    const folder = isLogo ? 'vendor-assets/vendor-reg' : 'kyc-documents/vendor-reg';
     try {
       const { uploadToB2 } = await import("@/lib/b2-upload");
+      // Logos remain public; KYC documents go to the PRIVATE bucket.
       const { publicUrl } = await uploadToB2(blob, {
         folder,
         filename: `${field}.${ext}`,
         contentType,
+        private: !isLogo,
       });
       updateField(field, publicUrl);
-      toast.success(field === 'store_logo_url' ? "Uploaded ✓" : "Document uploaded ✓");
+      toast.success(isLogo ? "Uploaded ✓" : "Document uploaded ✓");
     } catch (err: any) {
       toast.error(err.message || "File upload failed. Please try again.");
     }

@@ -105,10 +105,13 @@ export default function CustomerKYCPage() {
 
     try {
       const { uploadToB2 } = await import("@/lib/b2-upload");
+      // KYC docs go to the PRIVATE B2 bucket. uploadToB2 returns a
+      // `b2-private://<key>` reference that only admins can resolve.
       const { publicUrl } = await uploadToB2(blob, {
-        folder: `kyc-documents/customer-kyc/${user.id}`,
+        folder: `kyc-documents/customer-kyc`,
         filename: `${side}.${ext}`,
         contentType,
+        private: true,
       });
       return publicUrl;
     } catch (err: any) {

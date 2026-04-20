@@ -165,10 +165,12 @@ export default function VendorRegisterPage() {
 
     try {
       const { uploadToB2 } = await import("@/lib/b2-upload");
+      // KYC documents are PRIVATE — admin-only access via signed URLs.
       const { publicUrl } = await uploadToB2(blob, {
-        folder: `kyc-documents/vendor-reg/${user.id}`,
+        folder: `kyc-documents/vendor-reg`,
         filename: `${field}.${ext}`,
         contentType,
+        private: true,
       });
       updateField(field, publicUrl);
       toast.success("Document uploaded ✓");
