@@ -206,6 +206,7 @@ import AdminRiderSettlementsPage from "./pages/admin/AdminRiderSettlementsPage";
 import AdminFoodOrdersPage from "./pages/admin/AdminFoodOrdersPage";
 import AdminFoodCouponsPage from "./pages/admin/AdminFoodCouponsPage";
 import { RiderProtectedRoute } from "@/components/rider/RiderProtectedRoute";
+import { RiderLayout } from "@/components/rider/RiderLayout";
 
 const queryClient = new QueryClient();
 const NATIVE_PORTAL_STORAGE_KEY = "p4u_native_portal";
