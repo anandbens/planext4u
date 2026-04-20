@@ -563,21 +563,47 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!existingRole) {
-      const { error: roleInsertErr } = await supabase.from("user_roles").insert({
-        user_id: supabaseUser!.id,
-        role: "customer",
-        customer_id: existingCustomer.id,
-      });
-      if (roleInsertErr) {
-        console.error("Failed to create customer user_role:", roleInsertErr.message);
+      const { data: oldRole } = await supabase
+        .from("user_roles")
+        .select("id, user_id")
+        .eq("customer_id", existingCustomer.id)
+        .eq("role", "customer")
+        .maybeSingle();
+
+      if (oldRole) {
+        const { error: roleRepairErr } = await supabase
+          .from("user_roles")
+          .update({ user_id: supabaseUser!.id })
+          .eq("id", oldRole.id);
+
+        if (roleRepairErr) {
+          console.error("Failed to repoint customer user_role:", roleRepairErr.message);
+        } else {
+          console.log("Repointed customer user_role for", existingCustomer.id, "from", oldRole.user_id, "to", supabaseUser!.id);
+        }
       } else {
-        console.log("Created missing customer user_role for", supabaseUser!.id, "→", existingCustomer.id);
+        const { error: roleInsertErr } = await supabase.from("user_roles").insert({
+          user_id: supabaseUser!.id,
+          role: "customer",
+          customer_id: existingCustomer.id,
+        });
+        if (roleInsertErr) {
+          console.error("Failed to create customer user_role:", roleInsertErr.message);
+        } else {
+          console.log("Created missing customer user_role for", supabaseUser!.id, "→", existingCustomer.id);
+        }
       }
-    } else if (!existingRole.customer_id) {
-      // Role exists but missing customer_id linkage — patch it
-      await supabase.from("user_roles")
+    } else if (!existingRole.customer_id || existingRole.customer_id !== existingCustomer.id) {
+      // Role exists but is missing or points to the wrong imported customer record.
+      const { error: roleUpdateErr } = await supabase.from("user_roles")
         .update({ customer_id: existingCustomer.id })
         .eq("id", existingRole.id);
+
+      if (roleUpdateErr) {
+        console.error("Failed to sync customer user_role linkage:", roleUpdateErr.message);
+      } else {
+        console.log("Synced customer user_role for", supabaseUser!.id, "→", existingCustomer.id, "(was", existingRole.customer_id, ")");
+      }
     }
 
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
