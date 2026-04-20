@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { StatCard } from "@/components/admin/StatCard";
-import { Star, Gift, Users, TrendingUp } from "lucide-react";
+import { Star, Gift, Users, TrendingUp, Heart, Share2, Camera, Store } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 const typeStyle: Record<string, string> = {
   welcome: "bg-primary/10 text-primary",
   referral: "bg-info/10 text-info",
+  vendor_referral: "bg-info/10 text-info",
   order_reward: "bg-success/10 text-success",
+  post_like: "bg-destructive/10 text-destructive",
+  post_share: "bg-warning/10 text-warning",
+  story_liked: "bg-destructive/10 text-destructive",
+  refund: "bg-info/10 text-info",
   redemption: "bg-destructive/10 text-destructive",
 };
 
