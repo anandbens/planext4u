@@ -22,6 +22,7 @@ const categoryConfig: Record<string, { label: string; icon: any; bg: string; tex
   order_reward: { label: "Order Rewards", icon: ShoppingBag, bg: "bg-[hsl(var(--warning)/0.08)]", text: "text-warning" },
   earned: { label: "Earned", icon: Gift, bg: "bg-[hsl(var(--primary)/0.08)]", text: "text-primary" },
   redemption: { label: "Redeemed", icon: ArrowUpRight, bg: "bg-[hsl(var(--destructive)/0.08)]", text: "text-destructive" },
+  refund: { label: "Refunds", icon: RotateCcw, bg: "bg-[hsl(var(--info)/0.08)]", text: "text-info" },
 };
 
 export default function CustomerWalletPage() {
