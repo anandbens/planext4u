@@ -7269,6 +7269,7 @@ export type Database = {
         Args: { _user_a: string; _user_b: string }
         Returns: boolean
       }
+      auto_assign_nearest_rider: { Args: { _order_id: string }; Returns: Json }
       best_food_coupon: {
         Args: {
           _customer_id: string
