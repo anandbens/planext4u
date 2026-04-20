@@ -544,11 +544,11 @@ const AppRoutes = () => {
         {/* Food delivery — Rider */}
         <Route path="/rider/login" element={<RiderLoginPage />} />
         <Route path="/rider/register" element={<RiderRegisterPage />} />
-        <Route path="/rider" element={<RiderProtectedRoute><RiderDashboardPage /></RiderProtectedRoute>} />
+        <Route path="/rider" element={<RiderProtectedRoute><RiderLayout><RiderDashboardPage /></RiderLayout></RiderProtectedRoute>} />
         <Route path="/rider/orders" element={<RiderProtectedRoute><RiderOrdersPage /></RiderProtectedRoute>} />
-        <Route path="/rider/kyc" element={<RiderProtectedRoute><RiderKYCPage /></RiderProtectedRoute>} />
-        <Route path="/rider/profile" element={<RiderProtectedRoute><RiderProfilePage /></RiderProtectedRoute>} />
-        <Route path="/rider/earnings" element={<RiderProtectedRoute><RiderEarningsPage /></RiderProtectedRoute>} />
+        <Route path="/rider/kyc" element={<RiderProtectedRoute><RiderLayout><RiderKYCPage /></RiderLayout></RiderProtectedRoute>} />
+        <Route path="/rider/profile" element={<RiderProtectedRoute><RiderLayout><RiderProfilePage /></RiderLayout></RiderProtectedRoute>} />
+        <Route path="/rider/earnings" element={<RiderProtectedRoute><RiderLayout><RiderEarningsPage /></RiderLayout></RiderProtectedRoute>} />
 
         {/* Food delivery — Admin */}
         <Route path="/admin/restaurants" element={<SalesPage><AdminRestaurantsPage /></SalesPage>} />
