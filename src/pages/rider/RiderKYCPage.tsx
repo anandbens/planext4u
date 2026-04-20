@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { foodApi, Rider } from "@/lib/food-api";
 import { uploadToB2 } from "@/lib/b2-upload";
-import { compressImageToWebp } from "@/lib/webp-compress";
+import { compressToWebP } from "@/lib/webp-compress";
 import { toast } from "sonner";
 import { ArrowLeft, ShieldCheck, Upload } from "lucide-react";
 
@@ -44,7 +44,7 @@ export default function RiderKYCPage() {
   const handleUpload = async (field: string, file: File) => {
     setUploadingField(field);
     try {
-      const blob = await compressImageToWebp(file, { maxDimension: 2048, quality: 0.7 });
+      const { blob } = await compressToWebP(file, { maxDimension: 2048, quality: 0.7 });
       const result = await uploadToB2(blob, {
         folder: 'rider-kyc',
         filename: `${field}-${Date.now()}.webp`,
