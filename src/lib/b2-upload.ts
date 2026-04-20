@@ -68,6 +68,21 @@ async function getPresignedUrl(opts: {
   };
 }
 
+const INLINE_UPLOAD_THRESHOLD_BYTES = 8 * 1024 * 1024;
+
+async function blobToBase64(file: Blob | File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = "";
+  const chunkSize = 0x8000;
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+
+  return btoa(binary);
+}
+
 /**
  * Upload a Blob/File directly to Backblaze B2 using a presigned URL.
  * Returns the public Friendly URL (public bucket) or the `b2-private://<key>`
@@ -78,6 +93,24 @@ export async function uploadToB2(
   options: B2UploadOptions,
 ): Promise<B2UploadResult> {
   const { folder, filename, contentType, onProgress } = options;
+  const shouldInlineUpload = file.size <= INLINE_UPLOAD_THRESHOLD_BYTES;
+
+  if (shouldInlineUpload) {
+    onProgress?.(0);
+    const { publicUrl, key, isPrivate } = await getPresignedUrl({
+      folder,
+      filename,
+      contentType,
+      private: options.private,
+      fileBase64: await blobToBase64(file),
+    });
+    onProgress?.(100);
+    return {
+      publicUrl: isPrivate ? `b2-private://${key}` : publicUrl,
+      key,
+      isPrivate,
+    };
+  }
 
   const { uploadUrl, publicUrl, key, isPrivate } = await getPresignedUrl({
     folder,
@@ -110,39 +143,9 @@ export async function uploadToB2(
     xhr.send(file);
   });
 
-  try {
-    if (uploadUrl) {
-      await uploadViaBrowser();
-    }
-  } catch (error) {
-    const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = "";
-    const chunkSize = 0x8000;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-    }
-    const { uploadUrl: fallbackUploadUrl, publicUrl: fallbackUrl, key: fallbackKey, isPrivate: fallbackPrivate } = await getPresignedUrl({
-      folder,
-      filename,
-      contentType,
-      private: options.private,
-      fileBase64: btoa(binary),
-    });
-    if (fallbackUploadUrl) {
-      console.warn("[uploadToB2] fallback unexpectedly returned a browser upload URL; ignoring it");
-    }
-    return {
-      publicUrl: fallbackPrivate ? `b2-private://${fallbackKey}` : fallbackUrl,
-      key: fallbackKey,
-      isPrivate: fallbackPrivate,
-    };
-  }
+  await uploadViaBrowser();
 
-  // For private uploads we return an opaque reference instead of a Friendly URL,
-  // since the file is not world-readable and must be fetched via a signed GET.
   const returnedUrl = isPrivate ? `b2-private://${key}` : publicUrl;
-
   return { publicUrl: returnedUrl, key, isPrivate };
 }
 
