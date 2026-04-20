@@ -16,7 +16,7 @@ import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedR
 import { GuestOrCustomerRoute } from "@/components/customer/GuestOrCustomerRoute";
 import { VendorProtectedRoute } from "@/components/vendor/VendorProtectedRoute";
 import { FTUXFlow } from "@/components/customer/FTUXFlow";
-import { isVendorApp, isVendorAppSync, getNativeAppId } from "@/lib/capacitor";
+import { isVendorApp, isVendorAppSync, isRiderAppSync, getNativeAppId } from "@/lib/capacitor";
 import { ForceUpdateOverlay } from "@/components/ForceUpdateOverlay";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -198,6 +198,7 @@ import RiderDashboardPage from "./pages/rider/RiderDashboardPage";
 import RiderKYCPage from "./pages/rider/RiderKYCPage";
 import RiderProfilePage from "./pages/rider/RiderProfilePage";
 import RiderEarningsPage from "./pages/rider/RiderEarningsPage";
+import RiderOrdersPage from "./pages/rider/RiderOrdersPage";
 import AdminRestaurantsPage from "./pages/admin/AdminRestaurantsPage";
 import AdminRidersPage from "./pages/admin/AdminRidersPage";
 import AdminRiderKYCPage from "./pages/admin/AdminRiderKYCPage";
@@ -209,17 +210,20 @@ import { RiderProtectedRoute } from "@/components/rider/RiderProtectedRoute";
 const queryClient = new QueryClient();
 const NATIVE_PORTAL_STORAGE_KEY = "p4u_native_portal";
 
-function detectForcedVendorPortal() {
-  if (typeof window === "undefined") return false;
-
+function detectForcedPortal(): "vendor" | "rider" | null {
+  if (typeof window === "undefined") return null;
   const portal = new URLSearchParams(window.location.search).get("portal");
-  if (portal === "vendor") {
-    sessionStorage.setItem(NATIVE_PORTAL_STORAGE_KEY, "vendor");
-    return true;
+  if (portal === "vendor" || portal === "rider") {
+    sessionStorage.setItem(NATIVE_PORTAL_STORAGE_KEY, portal);
+    return portal;
   }
-
-  return sessionStorage.getItem(NATIVE_PORTAL_STORAGE_KEY) === "vendor";
+  const stored = sessionStorage.getItem(NATIVE_PORTAL_STORAGE_KEY);
+  if (stored === "vendor" || stored === "rider") return stored;
+  return null;
 }
+
+function detectForcedVendorPortal() { return detectForcedPortal() === "vendor"; }
+function detectForcedRiderPortal() { return detectForcedPortal() === "rider"; }
 
 function ProtectedPage({ children }: { children: React.ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
@@ -260,22 +264,25 @@ function VendorPage({ children }: { children: React.ReactNode }) {
 const AppRoutes = () => {
   const { customerUser, vendorUser } = useAuth();
   const forcedVendorPortal = detectForcedVendorPortal();
+  const forcedRiderPortal = detectForcedRiderPortal();
   const [isVendorNativeApp, setIsVendorNativeApp] = useState(forcedVendorPortal);
-  const [appIdReady, setAppIdReady] = useState(!isNativePlatform() || forcedVendorPortal);
+  const [isRiderNativeApp, setIsRiderNativeApp] = useState(forcedRiderPortal);
+  const [appIdReady, setAppIdReady] = useState(!isNativePlatform() || forcedVendorPortal || forcedRiderPortal);
   usePushNotifications();
 
   // Detect native app identity on mount
   useEffect(() => {
-    if (!isNativePlatform() || forcedVendorPortal) return;
+    if (!isNativePlatform() || forcedVendorPortal || forcedRiderPortal) return;
     getNativeAppId().then((appId) => {
       const isVendor = appId === "com.p4u.p4u_vendor" || appId === "com.planext4u.vendor" || isVendorAppSync();
+      const isRider = appId === "com.planext4u.rider" || isRiderAppSync();
       setIsVendorNativeApp(isVendor);
-      if (isVendor) {
-        sessionStorage.setItem(NATIVE_PORTAL_STORAGE_KEY, "vendor");
-      }
+      setIsRiderNativeApp(isRider);
+      if (isVendor) sessionStorage.setItem(NATIVE_PORTAL_STORAGE_KEY, "vendor");
+      if (isRider) sessionStorage.setItem(NATIVE_PORTAL_STORAGE_KEY, "rider");
       setAppIdReady(true);
     });
-  }, [forcedVendorPortal]);
+  }, [forcedVendorPortal, forcedRiderPortal]);
 
   useEffect(() => {
     if (!isNativePlatform()) {
@@ -334,10 +341,11 @@ const AppRoutes = () => {
 
   // Determine portal redirects based on native app identity
   const vendorPortalMode = isVendorNativeApp || forcedVendorPortal;
-  const rootRedirect = vendorPortalMode ? "/vendor" : "/app";
-  const customerLoginRoute = vendorPortalMode ? "/vendor/login" : "/app/login";
-  const customerRegisterRoute = vendorPortalMode ? "/vendor/register" : "/app/register";
-  const customerHomeRoute = vendorPortalMode ? "/vendor" : "/app";
+  const riderPortalMode = isRiderNativeApp || forcedRiderPortal;
+  const rootRedirect = riderPortalMode ? "/rider" : vendorPortalMode ? "/vendor" : "/app";
+  const customerLoginRoute = riderPortalMode ? "/rider/login" : vendorPortalMode ? "/vendor/login" : "/app/login";
+  const customerRegisterRoute = riderPortalMode ? "/rider/register" : vendorPortalMode ? "/vendor/register" : "/app/register";
+  const customerHomeRoute = riderPortalMode ? "/rider" : vendorPortalMode ? "/vendor" : "/app";
 
   return (
     <FTUXFlow userId={customerUser?.supabase_uid}>
@@ -536,6 +544,7 @@ const AppRoutes = () => {
         <Route path="/rider/login" element={<RiderLoginPage />} />
         <Route path="/rider/register" element={<RiderRegisterPage />} />
         <Route path="/rider" element={<RiderProtectedRoute><RiderDashboardPage /></RiderProtectedRoute>} />
+        <Route path="/rider/orders" element={<RiderProtectedRoute><RiderOrdersPage /></RiderProtectedRoute>} />
         <Route path="/rider/kyc" element={<RiderProtectedRoute><RiderKYCPage /></RiderProtectedRoute>} />
         <Route path="/rider/profile" element={<RiderProtectedRoute><RiderProfilePage /></RiderProtectedRoute>} />
         <Route path="/rider/earnings" element={<RiderProtectedRoute><RiderEarningsPage /></RiderProtectedRoute>} />
