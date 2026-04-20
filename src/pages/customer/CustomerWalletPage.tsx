@@ -100,7 +100,7 @@ export default function CustomerWalletPage() {
   });
 
   // Categories to show
-  const categoriesToShow = ['welcome', 'post_share', 'vendor_referral', 'referral', 'post_like', 'story_liked', 'order_reward', 'earned']
+  const categoriesToShow = ['welcome', 'post_share', 'vendor_referral', 'referral', 'post_like', 'story_liked', 'order_reward', 'refund', 'earned']
     .filter(k => (categoryTotals[k] || 0) > 0 || ['welcome', 'post_share', 'vendor_referral', 'referral', 'post_like', 'story_liked'].includes(k));
 
   const [currentPage, setCurrentPage] = useState(1);
