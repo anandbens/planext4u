@@ -432,11 +432,6 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
                           </div>
                         )}
                       </div>
-                          <a href={doc.back_image_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline flex items-center gap-1">
-                            <Eye className="h-3 w-3" /> Back
-                          </a>
-                        )}
-                      </div>
                     </Card>
                   ))}
                 </div>
