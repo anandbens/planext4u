@@ -126,22 +126,36 @@ export default function CustomerLoginPage() {
 
       toast.success("Login successful! 🎉");
 
-      // Wait for the AuthProvider to hydrate the customerUser before navigating,
-      // otherwise CustomerProtectedRoute bounces us straight back to /app/login.
-      const waitForCustomer = () => new Promise<void>((resolve) => {
+      // Wait for the AuthProvider to finish loading the customer profile,
+      // not just the raw auth session, before entering protected routes.
+      const waitForCustomer = () => new Promise<boolean>((resolve) => {
         let attempts = 0;
-        const check = async () => {
-          const saved = localStorage.getItem("customer_user");
-          if (saved) { resolve(); return; }
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData.session?.user || attempts >= 20) { resolve(); return; }
+        const check = () => {
+          try {
+            const saved = localStorage.getItem("customer_user");
+            if (saved) {
+              JSON.parse(saved);
+              resolve(true);
+              return;
+            }
+          } catch {
+            // Ignore malformed cache and keep polling until AuthProvider rewrites it.
+          }
+
+          if (attempts >= 40) {
+            resolve(false);
+            return;
+          }
+
           attempts += 1;
-          setTimeout(() => { void check(); }, 250);
+          setTimeout(check, 200);
         };
-        void check();
+
+        check();
       });
 
-      await waitForCustomer();
+      const hydrated = await waitForCustomer();
+      if (!hydrated) throw new Error("Login is taking longer than expected. Please try once more.");
       navigate(data.has_address ? "/app" : "/app/set-location", { replace: true });
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
