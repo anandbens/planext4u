@@ -37,14 +37,26 @@ export async function getNativeAppId(): Promise<string | null> {
  */
 export async function isVendorApp(): Promise<boolean> {
   const appId = await getNativeAppId();
-  return appId === 'com.p4u.p4u_vendor';
+  return appId === 'com.p4u.p4u_vendor' || appId === 'com.planext4u.vendor';
 }
 
 /**
  * Synchronous check — only works after getNativeAppId() has resolved at least once.
  */
 export function isVendorAppSync(): boolean {
-  return _cachedAppId === 'com.p4u.p4u_vendor';
+  return _cachedAppId === 'com.p4u.p4u_vendor' || _cachedAppId === 'com.planext4u.vendor';
+}
+
+/**
+ * Returns true if running inside the rider APK
+ */
+export async function isRiderApp(): Promise<boolean> {
+  const appId = await getNativeAppId();
+  return appId === 'com.planext4u.rider';
+}
+
+export function isRiderAppSync(): boolean {
+  return _cachedAppId === 'com.planext4u.rider';
 }
 
 /**
