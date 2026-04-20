@@ -119,18 +119,30 @@ export default function CustomerLoginPage() {
       const idToken = await getFirebaseIdToken();
       const { data, error } = await supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken } });
       if (error) throw new Error(error.message || "Network error");
-      if (!data?.ok && !data?.success) throw new Error(data?.code === "NOT_REGISTERED" ? "Only registered users must be able to trigger OTP and login." : (data?.error || "Authentication failed"));
-      
+      if (!data?.success && !data?.ok) throw new Error(data?.code === "NOT_REGISTERED" ? "Only registered users must be able to trigger OTP and login." : (data?.error || "Authentication failed"));
+
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
       if (verifyError) throw new Error(verifyError.message);
-      
+
       toast.success("Login successful! 🎉");
-      
-      // If first-time (no address), redirect to set-location
-      if (!data.has_address) {
-        setTimeout(() => navigate("/app/set-location", { replace: true }), 1000);
-      }
-      // Otherwise, useEffect watching customerUser will redirect to /app
+
+      // Wait for the AuthProvider to hydrate the customerUser before navigating,
+      // otherwise CustomerProtectedRoute bounces us straight back to /app/login.
+      const waitForCustomer = () => new Promise<void>((resolve) => {
+        let attempts = 0;
+        const check = async () => {
+          const saved = localStorage.getItem("customer_user");
+          if (saved) { resolve(); return; }
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData.session?.user || attempts >= 20) { resolve(); return; }
+          attempts += 1;
+          setTimeout(() => { void check(); }, 250);
+        };
+        void check();
+      });
+
+      await waitForCustomer();
+      navigate(data.has_address ? "/app" : "/app/set-location", { replace: true });
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
       else if (err.code === "auth/code-expired") toast.error("OTP expired. Please resend.");
