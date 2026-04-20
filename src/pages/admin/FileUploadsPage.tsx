@@ -588,16 +588,18 @@ export default function FileUploadsPage() {
     if (insertErr || !uploadRecord) { toast.error("Failed to create upload record"); setUploading(false); return; }
     const uploadId = (uploadRecord as any).id;
 
-    // 2. Persist original CSV to private storage so it can always be re-processed
-    const storagePath = `${uploadType}/${uploadId}/${file.name}`;
-    const { error: storageErr } = await supabase.storage.from("file-uploads").upload(storagePath, file, {
-      contentType: "text/csv", upsert: true,
-    });
-    if (storageErr) {
+    // 2. Persist original CSV to B2 so it can always be re-processed/downloaded
+    try {
+      const { uploadToB2 } = await import("@/lib/b2-upload");
+      const { publicUrl } = await uploadToB2(file, {
+        folder: `file-uploads/${uploadType}/${uploadId}`,
+        filename: file.name,
+        contentType: "text/csv",
+      });
+      await supabase.from("file_uploads" as any).update({ original_file_path: publicUrl }).eq("id", uploadId);
+    } catch (storageErr: any) {
       console.error("Failed to archive original CSV:", storageErr);
-      toast.warning("CSV processing started, but storage backup failed: " + storageErr.message);
-    } else {
-      await supabase.from("file_uploads" as any).update({ original_file_path: storagePath }).eq("id", uploadId);
+      toast.warning("CSV processing started, but storage backup failed: " + (storageErr.message || ""));
     }
 
     toast.success(`Processing ${rows.length} records in background...`);
@@ -612,12 +614,26 @@ export default function FileUploadsPage() {
 
   const downloadOriginalCSV = async (upload: any) => {
     if (!upload.original_file_path) { toast.error("No original CSV archived for this upload"); return; }
-    const { data, error } = await supabase.storage.from("file-uploads").download(upload.original_file_path);
-    if (error || !data) { toast.error("Failed to download: " + (error?.message || "unknown")); return; }
-    const url = URL.createObjectURL(data);
-    const a = document.createElement("a");
-    a.href = url; a.download = upload.file_name; a.click();
-    URL.revokeObjectURL(url);
+    try {
+      // original_file_path is now a B2 public URL (legacy entries may still be a Supabase storage path).
+      const isUrl = /^https?:\/\//i.test(upload.original_file_path);
+      let blob: Blob;
+      if (isUrl) {
+        const res = await fetch(upload.original_file_path);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        blob = await res.blob();
+      } else {
+        const { data, error } = await supabase.storage.from("file-uploads").download(upload.original_file_path);
+        if (error || !data) throw new Error(error?.message || "download failed");
+        blob = data;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = upload.file_name; a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      toast.error("Failed to download: " + (err.message || "unknown"));
+    }
   };
 
   const reprocessUpload = async (upload: any) => {

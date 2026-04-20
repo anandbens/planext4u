@@ -151,6 +151,7 @@ export default function AdminMediaLibraryPage() {
     const MAX_VIDEO_SIZE = 5 * 1024 * 1024;
     try {
       const { compressToWebP } = await import("@/lib/webp-compress");
+      const { uploadToB2 } = await import("@/lib/b2-upload");
       for (const file of files) {
         if (file.type.startsWith("video/") && file.size > MAX_VIDEO_SIZE) {
           toast.error(`${file.name} exceeds 5MB video limit`); continue;
@@ -158,16 +159,21 @@ export default function AdminMediaLibraryPage() {
         const isImage = file.type.startsWith("image/");
         const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
         const ext = isImage ? "webp" : (file.name.split(".").pop() || "mp4");
-        const path = `${targetFolder}/${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("vendor-assets").upload(path, blob, { contentType, upsert: false });
-        if (uploadErr) { toast.error(`Failed: ${file.name}`); continue; }
-        const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(path);
-        await supabase.from("media_library").insert({
-          file_name: file.name, file_url: urlData.publicUrl, file_type: contentType,
-          file_size: blob.size, folder: targetFolder,
-          alt_text: file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
-        });
-        successCount++;
+        try {
+          const { publicUrl } = await uploadToB2(blob, {
+            folder: `media-library/${targetFolder}`,
+            filename: file.name.replace(/\.[^.]+$/, `.${ext}`),
+            contentType,
+          });
+          await supabase.from("media_library").insert({
+            file_name: file.name, file_url: publicUrl, file_type: contentType,
+            file_size: blob.size, folder: targetFolder,
+            alt_text: file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
+          });
+          successCount++;
+        } catch (uploadErr: any) {
+          toast.error(`Failed: ${file.name} — ${uploadErr.message || ""}`);
+        }
       }
       if (successCount > 0) {
         toast.success(`${successCount} file(s) uploaded to ${targetFolder}`);

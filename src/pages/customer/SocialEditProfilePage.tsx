@@ -68,13 +68,17 @@ export default function SocialEditProfilePage() {
     const file = e.target.files?.[0];
     if (!file || !currentUserId) return;
     const ext = file.name.split('.').pop() || 'jpg';
-    const path = `${currentUserId}/avatar.${ext}`;
-    const { error } = await supabase.storage.from('social-media').upload(path, file, { contentType: file.type, upsert: true });
-    if (error) { toast.error("Upload failed: " + error.message); return; }
-    const { data: signed } = await supabase.storage.from('social-media').createSignedUrl(path, 60 * 60 * 24 * 365);
-    if (signed?.signedUrl) {
-      setAvatarUrl(signed.signedUrl);
+    try {
+      const { uploadToB2 } = await import("@/lib/b2-upload");
+      const { publicUrl } = await uploadToB2(file, {
+        folder: `social-media/${currentUserId}`,
+        filename: `avatar.${ext}`,
+        contentType: file.type,
+      });
+      setAvatarUrl(publicUrl);
       toast.success("Photo uploaded!");
+    } catch (err: any) {
+      toast.error("Upload failed: " + (err.message || ""));
     }
     e.target.value = '';
   };

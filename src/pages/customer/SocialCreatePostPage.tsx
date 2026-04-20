@@ -185,37 +185,37 @@ export default function SocialCreatePostPage() {
             blurPlaceholder = result.blurPlaceholder;
           } catch (compErr) {
             console.error('Image compression failed:', compErr);
-            // Fallback: upload original file as-is
+            // Fallback: upload original file as-is to B2
             setUploadProgress({ stage: 'uploading', percent: 50, originalSize: file.size });
-            const fallbackPath = `${authUserId}/social/${postId}/${i}/original.webp`;
-            const { error: fbErr } = await supabase.storage.from('social-media').upload(fallbackPath, file, {
-              contentType: file.type,
-              upsert: true,
-            });
-            if (fbErr) {
+            try {
+              const { uploadToB2 } = await import('@/lib/b2-upload');
+              const { publicUrl } = await uploadToB2(file, {
+                folder: `social-media/${authUserId}/social/${postId}/${i}`,
+                filename: `original.${file.name.split('.').pop() || 'webp'}`,
+                contentType: file.type,
+              });
+              mediaItems.push({ type: 'photo', url: publicUrl, thumbnailUrl: publicUrl, mediumUrl: publicUrl, blurPlaceholder: '', order: i });
+              setUploadProgress({ stage: 'complete', percent: 100, originalSize: file.size, savedText: `Uploaded ✓` });
+            } catch (fbErr: any) {
               console.error('Fallback upload error:', fbErr);
-              toast.error(`Image upload failed: ${fbErr.message}`);
-              continue;
+              toast.error(`Image upload failed: ${fbErr.message || ''}`);
             }
-            const { data: fbUrl } = await supabase.storage.from('social-media').createSignedUrl(fallbackPath, 60 * 60 * 24 * 365);
-            const url = fbUrl?.signedUrl || '';
-            mediaItems.push({ type: 'photo', url, thumbnailUrl: url, mediumUrl: url, blurPlaceholder: '', order: i });
-            setUploadProgress({ stage: 'complete', percent: 100, originalSize: file.size, savedText: `Uploaded ✓` });
             continue;
           }
 
           setUploadProgress({ stage: 'uploading', percent: 50, originalSize: file.size });
 
-          const bucket = 'social-media';
-          const basePath = `${authUserId}/social/${postId}/${i}`;
+          const basePath = `social-media/${authUserId}/social/${postId}/${i}`;
+          const { uploadToB2 } = await import('@/lib/b2-upload');
 
           const uploadBlob = async (blob: Blob, sizeName: string) => {
             const ext = blob.type === 'image/jpeg' ? 'jpg' : 'webp';
-            const path = `${basePath}/${sizeName}.${ext}`;
-            const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: blob.type || 'image/webp', upsert: true });
-            if (error) throw error;
-            const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 365);
-            return data?.signedUrl || '';
+            const { publicUrl } = await uploadToB2(blob, {
+              folder: basePath,
+              filename: `${sizeName}.${ext}`,
+              contentType: blob.type || 'image/webp',
+            });
+            return publicUrl;
           };
 
           const [thumbUrl, medUrl, lgUrl] = await Promise.all([

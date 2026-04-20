@@ -838,13 +838,18 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
         } catch { /* fallback to original */ }
       }
 
-      const path = `${authUid}/stories/${storyId}.${ext}`;
-
-      const { error: uploadErr } = await supabase.storage.from('social-media').upload(path, uploadBlob, { contentType: uploadContentType, upsert: true });
-      if (uploadErr) { toast.error(`Upload failed: ${uploadErr.message}`); continue; }
-
-      const { data: signedUrl } = await supabase.storage.from('social-media').createSignedUrl(path, 60 * 60 * 24);
-      const url = signedUrl?.signedUrl || '';
+      try {
+        const { uploadToB2 } = await import("@/lib/b2-upload");
+        const { publicUrl } = await uploadToB2(uploadBlob, {
+          folder: `social-media/${authUid}/stories`,
+          filename: `${storyId}.${ext}`,
+          contentType: uploadContentType,
+        });
+        var url = publicUrl;
+      } catch (uploadErr: any) {
+        toast.error(`Upload failed: ${uploadErr.message || ""}`);
+        continue;
+      }
 
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
       const { error: insertErr } = await supabase.from('social_stories').insert({
