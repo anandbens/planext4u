@@ -12,6 +12,7 @@ import { useInitiateCall } from "@/components/social/IncomingCallProvider";
 import CallScreen from "@/components/social/CallScreen";
 import { useQuery } from "@tanstack/react-query";
 import { compressToWebP } from "@/lib/webp-compress";
+import { ensureMicrophonePermission } from "@/lib/mic-permission";
 
 interface Reaction {
   id: string;
@@ -342,9 +343,26 @@ export default function SocioDMChatPage() {
 
   // --- Voice note recording ---
   const startRecording = useCallback(async () => {
+    // 1. Ensure microphone permission (triggers Android RECORD_AUDIO prompt on first run)
+    const perm = await ensureMicrophonePermission();
+    if (!perm.granted) {
+      toast.error(perm.reason || 'Microphone access denied');
+      return;
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 } });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm' });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000 },
+      });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : MediaRecorder.isTypeSupported('audio/mp4')
+            ? 'audio/mp4'
+            : '';
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
       audioChunksRef.current = [];
       mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mediaRecorder.start(100);
@@ -352,8 +370,9 @@ export default function SocioDMChatPage() {
       setRecording(true);
       setRecordingDuration(0);
       recordingTimerRef.current = setInterval(() => setRecordingDuration(prev => prev + 1), 1000);
-    } catch {
-      toast.error('Microphone access denied');
+    } catch (err: any) {
+      console.error('Failed to start recording:', err);
+      toast.error('Could not start recording. Please try again.');
     }
   }, []);
 
