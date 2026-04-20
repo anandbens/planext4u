@@ -20,15 +20,21 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const B2_PRIVATE_KEY_ID = Deno.env.get("B2_PRIVATE_KEY_ID") ?? "";
-const B2_PRIVATE_APP_KEY = Deno.env.get("B2_PRIVATE_APPLICATION_KEY") ?? "";
-const B2_PRIVATE_BUCKET = Deno.env.get("B2_PRIVATE_BUCKET_NAME") ?? "";
-const B2_PRIVATE_ENDPOINT =
-  Deno.env.get("B2_PRIVATE_S3_ENDPOINT") ?? Deno.env.get("B2_S3_ENDPOINT") ?? "";
+function readSecret(name: string): string {
+  return (Deno.env.get(name) ?? "")
+    .trim()
+    .replace(/^["']+|["']+$/g, "")
+    .replace(/[\r\n]+/g, "");
+}
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SUPABASE_SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const B2_PRIVATE_KEY_ID = readSecret("B2_PRIVATE_KEY_ID");
+const B2_PRIVATE_APP_KEY = readSecret("B2_PRIVATE_APPLICATION_KEY");
+const B2_PRIVATE_BUCKET = readSecret("B2_PRIVATE_BUCKET_NAME");
+const B2_PRIVATE_ENDPOINT = readSecret("B2_PRIVATE_S3_ENDPOINT") || readSecret("B2_S3_ENDPOINT");
+
+const SUPABASE_URL = readSecret("SUPABASE_URL");
+const SUPABASE_ANON = readSecret("SUPABASE_ANON_KEY");
+const SUPABASE_SERVICE_ROLE = readSecret("SUPABASE_SERVICE_ROLE_KEY");
 
 function regionFromEndpoint(endpoint: string): string {
   try {

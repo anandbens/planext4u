@@ -29,21 +29,28 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+function readSecret(name: string): string {
+  return (Deno.env.get(name) ?? "")
+    .trim()
+    .replace(/^["']+|["']+$/g, "")
+    .replace(/[\r\n]+/g, "");
+}
+
 // Public bucket (existing)
-const B2_KEY_ID = Deno.env.get("B2_APPLICATION_KEY_ID") ?? "";
-const B2_APP_KEY = Deno.env.get("B2_APPLICATION_KEY") ?? "";
-const B2_BUCKET = Deno.env.get("B2_BUCKET_NAME") ?? "";
-const B2_ENDPOINT = Deno.env.get("B2_S3_ENDPOINT") ?? "";
-const B2_PUBLIC_BASE = (Deno.env.get("B2_PUBLIC_URL_BASE") ?? "").replace(/\/+$/, "");
+const B2_KEY_ID = readSecret("B2_APPLICATION_KEY_ID");
+const B2_APP_KEY = readSecret("B2_APPLICATION_KEY");
+const B2_BUCKET = readSecret("B2_BUCKET_NAME");
+const B2_ENDPOINT = readSecret("B2_S3_ENDPOINT");
+const B2_PUBLIC_BASE = readSecret("B2_PUBLIC_URL_BASE").replace(/\/+$/, "");
 
 // Private bucket (KYC documents, etc.)
-const B2_PRIVATE_KEY_ID = Deno.env.get("B2_PRIVATE_KEY_ID") ?? "";
-const B2_PRIVATE_APP_KEY = Deno.env.get("B2_PRIVATE_APPLICATION_KEY") ?? "";
-const B2_PRIVATE_BUCKET = Deno.env.get("B2_PRIVATE_BUCKET_NAME") ?? "";
-const B2_PRIVATE_ENDPOINT = Deno.env.get("B2_PRIVATE_S3_ENDPOINT") ?? B2_ENDPOINT;
+const B2_PRIVATE_KEY_ID = readSecret("B2_PRIVATE_KEY_ID");
+const B2_PRIVATE_APP_KEY = readSecret("B2_PRIVATE_APPLICATION_KEY");
+const B2_PRIVATE_BUCKET = readSecret("B2_PRIVATE_BUCKET_NAME");
+const B2_PRIVATE_ENDPOINT = readSecret("B2_PRIVATE_S3_ENDPOINT") || B2_ENDPOINT;
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SUPABASE_URL = readSecret("SUPABASE_URL");
+const SUPABASE_ANON = readSecret("SUPABASE_ANON_KEY");
 
 function regionFromEndpoint(endpoint: string): string {
   try {
