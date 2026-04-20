@@ -75,11 +75,13 @@ export function FoodReviewModal(p: Props) {
     setUploading(true);
     try {
       const { blob } = await compressToWebP(file, { maxDimension: 1200, quality: 0.7 });
-      const path = `food-reviews/${p.customerId}/${Date.now()}.webp`;
-      const { error } = await supabase.storage.from("media-library").upload(path, blob, { contentType: "image/webp", upsert: false });
-      if (error) throw error;
-      const { data } = supabase.storage.from("media-library").getPublicUrl(path);
-      setPhotos(ps => [...ps, data.publicUrl]);
+      const { uploadToB2 } = await import("@/lib/b2-upload");
+      const { publicUrl } = await uploadToB2(blob, {
+        folder: `media-library/food-reviews/${p.customerId}`,
+        filename: `review.webp`,
+        contentType: "image/webp",
+      });
+      setPhotos(ps => [...ps, publicUrl]);
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
     } finally {

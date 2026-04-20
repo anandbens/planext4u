@@ -147,11 +147,13 @@ export default function CustomerProfileEditPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error("Please log in"); return; }
       const { blob, contentType } = await compressToWebP(file);
-      const fileName = `${user.id}/profile-${Date.now()}.webp`;
-      const { error } = await supabase.storage.from('classified-images').upload(fileName, blob, { contentType, upsert: true });
-      if (error) throw error;
-      const { data: urlData } = supabase.storage.from('classified-images').getPublicUrl(fileName);
-      setProfilePhoto(urlData.publicUrl);
+      const { uploadToB2 } = await import("@/lib/b2-upload");
+      const { publicUrl } = await uploadToB2(blob, {
+        folder: `customer-profiles/${user.id}`,
+        filename: `profile.webp`,
+        contentType,
+      });
+      setProfilePhoto(publicUrl);
       toast.success("Photo uploaded!");
     } catch { toast.error("Upload failed"); }
     setPhotoUploading(false);

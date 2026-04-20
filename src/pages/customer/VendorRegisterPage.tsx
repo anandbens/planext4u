@@ -162,15 +162,18 @@ export default function VendorRegisterPage() {
     const isImage = file.type.startsWith('image/');
     const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
     const ext = isImage ? 'webp' : (file.name.split('.').pop() || 'pdf');
-    const fileName = `${user.id}/vendor-${field}-${Date.now()}.${ext}`;
 
-    const { error } = await supabase.storage.from('kyc-documents').upload(fileName, blob, { contentType });
-    if (error) { toast.error("Upload failed"); return; }
-
-    const { data: signedData } = await supabase.storage.from('kyc-documents').createSignedUrl(fileName, 365 * 24 * 3600);
-    if (signedData?.signedUrl) {
-      updateField(field, signedData.signedUrl);
+    try {
+      const { uploadToB2 } = await import("@/lib/b2-upload");
+      const { publicUrl } = await uploadToB2(blob, {
+        folder: `kyc-documents/vendor-reg/${user.id}`,
+        filename: `${field}.${ext}`,
+        contentType,
+      });
+      updateField(field, publicUrl);
       toast.success("Document uploaded ✓");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
     }
   };
 
@@ -184,11 +187,13 @@ export default function VendorRegisterPage() {
     try {
       const uid = customerId || Date.now().toString();
       const { blob, contentType } = await compressToWebP(file);
-      const fileName = `store-logos/${uid}-${Date.now()}.webp`;
-      const { error } = await supabase.storage.from('vendor-assets').upload(fileName, blob, { contentType, upsert: true });
-      if (error) throw error;
-      const { data: urlData } = supabase.storage.from('vendor-assets').getPublicUrl(fileName);
-      updateField('store_logo_url', urlData.publicUrl);
+      const { uploadToB2 } = await import("@/lib/b2-upload");
+      const { publicUrl } = await uploadToB2(blob, {
+        folder: `vendor-assets/store-logos`,
+        filename: `${uid}.webp`,
+        contentType,
+      });
+      updateField('store_logo_url', publicUrl);
       toast.success("Store logo uploaded ✓");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");

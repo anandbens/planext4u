@@ -85,25 +85,18 @@ export default function VendorRegisterPage() {
     const isImage = file.type.startsWith('image/');
     const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
     const ext = isImage ? 'webp' : (file.name.split('.').pop() || 'pdf');
-    const bucket = field === 'store_logo_url' ? 'vendor-assets' : 'kyc-documents';
-    const filePath = `vendor-reg/${Date.now()}-${field}.${ext}`;
-    const { error } = await supabase.storage.from(bucket).upload(filePath, blob, { contentType, upsert: true });
-    if (error) { toast.error("File upload failed. Please try again."); return; }
-
-    if (bucket === 'vendor-assets') {
-      // Public bucket - get public URL
-      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
-      if (urlData?.publicUrl) {
-        updateField(field, urlData.publicUrl);
-        toast.success("Uploaded ✓");
-      }
-    } else {
-      // Private bucket - get signed URL
-      const { data: signedData } = await supabase.storage.from(bucket).createSignedUrl(filePath, 365 * 24 * 3600);
-      if (signedData?.signedUrl) {
-        updateField(field, signedData.signedUrl);
-        toast.success("Document uploaded ✓");
-      }
+    const folder = field === 'store_logo_url' ? 'vendor-assets/vendor-reg' : 'kyc-documents/vendor-reg';
+    try {
+      const { uploadToB2 } = await import("@/lib/b2-upload");
+      const { publicUrl } = await uploadToB2(blob, {
+        folder,
+        filename: `${field}.${ext}`,
+        contentType,
+      });
+      updateField(field, publicUrl);
+      toast.success(field === 'store_logo_url' ? "Uploaded ✓" : "Document uploaded ✓");
+    } catch (err: any) {
+      toast.error(err.message || "File upload failed. Please try again.");
     }
   };
 

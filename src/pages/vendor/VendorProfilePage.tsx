@@ -129,12 +129,14 @@ export default function VendorProfilePage() {
     setBgUploading(true);
     try {
       const { compressToWebP } = await import("@/lib/webp-compress");
+      const { uploadToB2 } = await import("@/lib/b2-upload");
       const { blob, contentType } = await compressToWebP(file);
-      const path = `vendor-backgrounds/${vendorId}-${Date.now()}.webp`;
-      const { error: uploadErr } = await supabase.storage.from("vendor-assets").upload(path, blob, { contentType, upsert: true });
-      if (uploadErr) throw uploadErr;
-      const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(path);
-      await supabase.from("vendors").update({ background_image: urlData.publicUrl }).eq("id", vendorId);
+      const { publicUrl } = await uploadToB2(blob, {
+        folder: `vendor-assets/vendor-backgrounds`,
+        filename: `${vendorId}.webp`,
+        contentType,
+      });
+      await supabase.from("vendors").update({ background_image: publicUrl }).eq("id", vendorId);
       toast.success("Background image updated");
       queryClient.invalidateQueries({ queryKey: ["vendorProfile"] });
     } catch (err: any) {

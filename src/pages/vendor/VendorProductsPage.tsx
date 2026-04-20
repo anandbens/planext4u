@@ -208,12 +208,13 @@ export default function VendorProductsPage() {
   const uploadImage = async (file: File, target: "images" | "thumbnail" | "banner") => {
     setUploading(true);
     try {
+      const { uploadToB2 } = await import("@/lib/b2-upload");
       const { blob, contentType } = await compressToWebP(file);
-      const path = `${vendorId}/products/${Date.now()}-${target}.webp`;
-      const { error } = await supabase.storage.from("vendor-assets").upload(path, blob, { contentType, upsert: true });
-      if (error) throw error;
-      const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(path);
-      const url = urlData?.publicUrl || "";
+      const { publicUrl: url } = await uploadToB2(blob, {
+        folder: `vendor-assets/${vendorId}/products`,
+        filename: `${target}.webp`,
+        contentType,
+      });
 
       if (target === "images") {
         setForm(f => ({ ...f, images: [...f.images, url], image: f.image || url }));
