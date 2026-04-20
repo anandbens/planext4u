@@ -20,7 +20,12 @@ const typeStyle: Record<string, string> = {
 };
 
 export default function PointsPage() {
-  const [stats, setStats] = useState({ totalIssued: 0, totalRedeemed: 0, welcomePts: 0, referralPts: 0 });
+  const [stats, setStats] = useState({
+    totalIssued: 0, totalRedeemed: 0,
+    welcomePts: 0, referralPts: 0, vendorReferralPts: 0,
+    postLikePts: 0, postSharePts: 0, storyLikedPts: 0,
+    orderRewardPts: 0, refundPts: 0,
+  });
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,11 +38,21 @@ export default function PointsPage() {
       // Stats from all points
       const { data: allPts } = await supabase.from("points_transactions").select("points, type");
       const all = allPts || [];
+      const sumByType = (t: string) => all.filter(p => p.type === t).reduce((s, p) => s + p.points, 0);
       const totalIssued = all.filter(p => p.points > 0).reduce((s, p) => s + p.points, 0);
       const totalRedeemed = Math.abs(all.filter(p => p.points < 0).reduce((s, p) => s + p.points, 0));
-      const welcomePts = all.filter(p => p.type === 'welcome').reduce((s, p) => s + p.points, 0);
-      const referralPts = all.filter(p => p.type === 'referral').reduce((s, p) => s + p.points, 0);
-      setStats({ totalIssued, totalRedeemed, welcomePts, referralPts });
+      setStats({
+        totalIssued,
+        totalRedeemed,
+        welcomePts: sumByType('welcome'),
+        referralPts: sumByType('referral'),
+        vendorReferralPts: sumByType('vendor_referral'),
+        postLikePts: sumByType('post_like'),
+        postSharePts: sumByType('post_share'),
+        storyLikedPts: sumByType('story_liked'),
+        orderRewardPts: sumByType('order_reward'),
+        refundPts: sumByType('refund'),
+      });
       setLoading(false);
     };
     fetch();
@@ -47,16 +62,20 @@ export default function PointsPage() {
     <AdminLayout>
       <div className="page-header">
         <h1 className="page-title">Loyalty Points</h1>
-        <p className="page-description">Welcome, referral, and order reward points management</p>
+        <p className="page-description">Welcome, referral, social, and order reward points management</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) : (
+        {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) : (
           <>
             <StatCard title="Total Points Issued" value={stats.totalIssued.toLocaleString('en-IN')} trend={0} icon={Star} gradient="gradient-warning" />
             <StatCard title="Points Redeemed" value={stats.totalRedeemed.toLocaleString('en-IN')} trend={0} icon={TrendingUp} gradient="gradient-success" />
             <StatCard title="Welcome Points" value={stats.welcomePts.toLocaleString('en-IN')} trend={0} icon={Gift} gradient="gradient-primary" />
-            <StatCard title="Referral Points" value={stats.referralPts.toLocaleString('en-IN')} trend={0} icon={Users} gradient="gradient-info" />
+            <StatCard title="Customer Referral" value={stats.referralPts.toLocaleString('en-IN')} trend={0} icon={Users} gradient="gradient-info" />
+            <StatCard title="Vendor Referral" value={stats.vendorReferralPts.toLocaleString('en-IN')} trend={0} icon={Store} gradient="gradient-info" />
+            <StatCard title="Post Likes" value={stats.postLikePts.toLocaleString('en-IN')} trend={0} icon={Heart} gradient="gradient-destructive" />
+            <StatCard title="Post Shares" value={stats.postSharePts.toLocaleString('en-IN')} trend={0} icon={Share2} gradient="gradient-warning" />
+            <StatCard title="Story Likes" value={stats.storyLikedPts.toLocaleString('en-IN')} trend={0} icon={Camera} gradient="gradient-destructive" />
           </>
         )}
       </div>
