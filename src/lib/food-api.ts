@@ -534,4 +534,62 @@ export const foodApi = {
     if (error) throw error;
     return (data || []) as any[];
   },
+
+  // ─── Rider self-service ──────────────────────────────────────
+  getMyRider: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data, error } = await supabase.from('riders').select('*').eq('user_id', user.id).maybeSingle();
+    if (error) throw error;
+    return data as Rider | null;
+  },
+
+  updateRiderProfile: async (riderId: string, updates: Partial<Rider> & Record<string, any>) => {
+    const { error } = await supabase.from('riders').update(updates as any).eq('id', riderId);
+    if (error) throw error;
+  },
+
+  listRiderPayouts: async (riderId: string) => {
+    const { data, error } = await supabase.from('rider_payouts' as any)
+      .select('*').eq('rider_id', riderId).order('earned_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as any[];
+  },
+
+  listRiderSettlements: async (riderId: string) => {
+    const { data, error } = await supabase.from('rider_settlements' as any)
+      .select('*').eq('rider_id', riderId).order('initiated_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as any[];
+  },
+
+  riderPendingBalance: async (riderId: string) => {
+    const { data, error } = await supabase.rpc('rider_pending_balance' as any, { _rider_id: riderId });
+    if (error) throw error;
+    return Number(data || 0);
+  },
+
+  // Admin: settle pending balance for a rider
+  adminCreateRiderSettlement: async (riderId: string, method = 'bank_transfer', reference?: string, notes?: string) => {
+    const { data, error } = await supabase.rpc('create_rider_settlement' as any, {
+      _rider_id: riderId, _method: method, _reference: reference || null, _notes: notes || null,
+    });
+    if (error) throw error;
+    return data as { ok: boolean; reason?: string; settlement_id?: string; amount?: number; payout_count?: number };
+  },
+
+  // Admin: KYC review
+  adminUpdateRiderKyc: async (riderId: string, kycStatus: 'verified' | 'rejected' | 'pending', notes?: string) => {
+    const upd: any = { kyc_status: kycStatus };
+    if (notes !== undefined) upd.kyc_notes = notes;
+    const { error } = await supabase.from('riders').update(upd).eq('id', riderId);
+    if (error) throw error;
+  },
+
+  listAllRiderSettlements: async () => {
+    const { data, error } = await supabase.from('rider_settlements' as any)
+      .select('*, riders(name, mobile)').order('initiated_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as any[];
+  },
 };
