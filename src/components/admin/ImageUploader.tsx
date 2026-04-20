@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
 import { Upload, X, Loader2, ImageIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { compressToWebP } from "@/lib/webp-compress";
+import { uploadToB2 } from "@/lib/b2-upload";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -35,12 +35,12 @@ export function ImageUploader({
     setUploading(true);
     try {
       const { blob, contentType } = await compressToWebP(file);
-      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
-      const { error } = await supabase.storage.from(bucket).upload(fileName, blob, { contentType, upsert: false });
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);
-      onChange(urlData.publicUrl);
+      const { publicUrl } = await uploadToB2(blob, {
+        folder: `${bucket}/${folder}`,
+        filename: file.name.replace(/\.[^.]+$/, ".webp"),
+        contentType,
+      });
+      onChange(publicUrl);
       toast.success("Image uploaded");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
