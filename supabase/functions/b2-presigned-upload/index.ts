@@ -276,7 +276,7 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const folder = String(body.folder ?? "uploads").replace(/^\/+|\/+$/g, "") || "uploads";
     const filename = String(body.filename ?? "file");
-    const contentType = String(body.contentType ?? "application/octet-stream");
+    const contentType = String(body.contentType ?? "application/octet-stream").trim() || "application/octet-stream";
     const isPrivate = body.private === true;
     const fileBase64 = typeof body.fileBase64 === "string" ? body.fileBase64.trim() : "";
     const expiresSeconds = Math.min(Math.max(Number(body.expiresSeconds) || 600, 60), 3600);
@@ -318,7 +318,16 @@ Deno.serve(async (req: Request) => {
     const key = `${folder}/${userId}/${Date.now()}-${rand}-${safeName}.${ext}`;
 
     if (fileBase64) {
-      const binary = Uint8Array.from(atob(fileBase64), (char) => char.charCodeAt(0));
+      let binary: Uint8Array;
+      try {
+        binary = Uint8Array.from(atob(fileBase64), (char) => char.charCodeAt(0));
+      } catch {
+        return new Response(JSON.stringify({ error: "Invalid file payload" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       await putToB2({
         endpoint: cfg.endpoint,
         bucket: cfg.bucket,
