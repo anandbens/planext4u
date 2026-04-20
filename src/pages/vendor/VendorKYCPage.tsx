@@ -75,10 +75,12 @@ export default function VendorKYCPage() {
     const ext = isImage ? 'webp' : (file.name.split('.').pop()?.toLowerCase() || 'pdf');
     try {
       const { uploadToB2 } = await import("@/lib/b2-upload");
+      // KYC docs go to the PRIVATE B2 bucket — admin-only access.
       const { publicUrl } = await uploadToB2(blob, {
-        folder: `kyc-documents/vendor-kyc/${user.id}`,
+        folder: `kyc-documents/vendor-kyc`,
         filename: `${side}.${ext}`,
         contentType,
+        private: true,
       });
       return publicUrl;
     } catch (err: any) {

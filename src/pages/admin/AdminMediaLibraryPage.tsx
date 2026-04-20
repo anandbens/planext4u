@@ -19,6 +19,8 @@ import {
   CheckSquare, Square,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { resolveB2Url } from "@/lib/b2-upload";
+import { PrivateKycImage } from "@/components/admin/PrivateKycImage";
 
 const DEFAULT_FOLDERS = [
   "banners", "category-images", "category-icons", "product-images",
@@ -295,8 +297,11 @@ export default function AdminMediaLibraryPage() {
   };
 
   const copyUrl = (url: string) => { navigator.clipboard.writeText(url); toast.success("URL copied"); };
-  const downloadFile = (url: string, name: string) => {
-    const a = document.createElement("a"); a.href = url; a.download = name; a.target = "_blank"; a.click();
+  const downloadFile = async (url: string, name: string) => {
+    // Resolve `b2-private://...` references to a short-lived signed URL.
+    const signed = await resolveB2Url(url, 300);
+    if (!signed) { toast.error("Could not generate download link"); return; }
+    const a = document.createElement("a"); a.href = signed; a.download = name; a.target = "_blank"; a.click();
   };
   const formatSize = (bytes: number | null) => {
     if (!bytes) return "—";
@@ -315,12 +320,8 @@ export default function AdminMediaLibraryPage() {
 
   const renderKycPreview = (url: string | null) => {
     if (!url) return <div className="h-20 w-20 bg-secondary/50 rounded flex items-center justify-center"><FileText className="h-6 w-6 text-muted-foreground" /></div>;
-    if (url.includes(".pdf")) return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="h-20 w-20 bg-secondary/50 rounded flex flex-col items-center justify-center gap-1 hover:bg-secondary">
-        <FileText className="h-6 w-6 text-primary" /><span className="text-[9px] text-muted-foreground">PDF</span>
-      </a>
-    );
-    return <img src={url} alt="KYC" className="h-20 w-20 object-cover rounded cursor-pointer border border-border/50 hover:border-primary" onClick={() => { setSelected({ id: "", file_name: "KYC Doc", file_url: url, file_type: "image", file_size: null, folder: "kyc", alt_text: "", tags: null, created_at: "" }); setPreviewOpen(true); }} />;
+    // Render through the secure component so private B2 keys are signed first.
+    return <PrivateKycImage value={url} alt="KYC" className="h-20 w-20 object-cover rounded border border-border/50 hover:border-primary" />;
   };
 
   const renderMediaThumbnail = (item: MediaItem, className = "w-full h-full object-cover") => {

@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { isValidEmail, isValidIndianMobile } from "@/lib/admin-validation";
+import { PrivateKycImage, usePrivateKycUrl } from "@/components/admin/PrivateKycImage";
 
 interface CustomerModalProps {
   customer: User | null;
@@ -417,16 +418,18 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
                       {doc.admin_notes && (
                         <p className="mt-2 text-xs text-muted-foreground"><strong>Admin Notes:</strong> {doc.admin_notes}</p>
                       )}
-                      <div className="flex gap-2 mt-3">
+                      <div className="flex gap-2 mt-3 items-start">
                         {doc.front_image_url && (
-                          <a href={doc.front_image_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline flex items-center gap-1">
-                            <Eye className="h-3 w-3" /> Front
-                          </a>
+                          <div className="flex flex-col items-center gap-1">
+                            <PrivateKycImage value={doc.front_image_url} alt="Front" />
+                            <span className="text-[10px] text-muted-foreground">Front</span>
+                          </div>
                         )}
                         {doc.back_image_url && (
-                          <a href={doc.back_image_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline flex items-center gap-1">
-                            <Eye className="h-3 w-3" /> Back
-                          </a>
+                          <div className="flex flex-col items-center gap-1">
+                            <PrivateKycImage value={doc.back_image_url} alt="Back" />
+                            <span className="text-[10px] text-muted-foreground">Back</span>
+                          </div>
                         )}
                       </div>
                     </Card>

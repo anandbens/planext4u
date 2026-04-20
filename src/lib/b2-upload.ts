@@ -4,7 +4,8 @@
  * Flow:
  *  1. Ask the `b2-presigned-upload` edge function for a presigned PUT URL.
  *  2. PUT the file (or compressed blob) directly to Backblaze B2.
- *  3. Return the public Friendly URL so it can be saved in the database.
+ *  3. Return the public Friendly URL (public bucket) OR the storage key
+ *     prefixed with `b2-private://` (private bucket).
  *
  * No file content passes through any server we control — this is a direct
  * browser → B2 upload, which is fast and avoids edge-function payload limits.
@@ -13,8 +14,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface B2UploadResult {
+  /** For public uploads: the Friendly URL.
+   *  For private uploads: an opaque reference of the form `b2-private://<key>`
+   *  that must be persisted and later resolved via `getPrivateB2Url`. */
   publicUrl: string;
+  /** Raw object key inside the bucket. */
   key: string;
+  /** True if uploaded to the private bucket. */
+  isPrivate: boolean;
 }
 
 export interface B2UploadOptions {
@@ -26,33 +33,43 @@ export interface B2UploadOptions {
   contentType: string;
   /** Optional progress callback (0-100). */
   onProgress?: (percent: number) => void;
+  /** Upload to the PRIVATE B2 bucket. Required for KYC and other regulated docs. */
+  private?: boolean;
 }
 
 async function getPresignedUrl(opts: {
   folder: string;
   filename: string;
   contentType: string;
-}): Promise<{ uploadUrl: string; publicUrl: string; key: string }> {
+  private?: boolean;
+}): Promise<{ uploadUrl: string; publicUrl: string; key: string; isPrivate: boolean }> {
   const { data, error } = await supabase.functions.invoke("b2-presigned-upload", {
     body: {
       folder: opts.folder,
       filename: opts.filename,
       contentType: opts.contentType,
+      private: opts.private === true,
     },
   });
 
   if (error) {
     throw new Error(`Failed to get B2 upload URL: ${error.message}`);
   }
-  if (!data?.uploadUrl || !data?.publicUrl) {
+  if (!data?.uploadUrl || typeof data?.key !== "string") {
     throw new Error("B2 presigned-upload returned an invalid response");
   }
-  return data as { uploadUrl: string; publicUrl: string; key: string };
+  return {
+    uploadUrl: data.uploadUrl as string,
+    publicUrl: (data.publicUrl as string) ?? "",
+    key: data.key as string,
+    isPrivate: data.isPrivate === true,
+  };
 }
 
 /**
  * Upload a Blob/File directly to Backblaze B2 using a presigned URL.
- * Returns the public Friendly URL.
+ * Returns the public Friendly URL (public bucket) or the `b2-private://<key>`
+ * reference (private bucket).
  */
 export async function uploadToB2(
   file: Blob | File,
@@ -60,10 +77,11 @@ export async function uploadToB2(
 ): Promise<B2UploadResult> {
   const { folder, filename, contentType, onProgress } = options;
 
-  const { uploadUrl, publicUrl, key } = await getPresignedUrl({
+  const { uploadUrl, publicUrl, key, isPrivate } = await getPresignedUrl({
     folder,
     filename,
     contentType,
+    private: options.private,
   });
 
   // Use XHR so we can report upload progress.
@@ -91,5 +109,47 @@ export async function uploadToB2(
     xhr.send(file);
   });
 
-  return { publicUrl, key };
+  // For private uploads we return an opaque reference instead of a Friendly URL,
+  // since the file is not world-readable and must be fetched via a signed GET.
+  const returnedUrl = isPrivate ? `b2-private://${key}` : publicUrl;
+
+  return { publicUrl: returnedUrl, key, isPrivate };
+}
+
+/**
+ * Resolve a stored value that may be either:
+ *   - a regular public URL (legacy or public-bucket upload), OR
+ *   - a `b2-private://<key>` reference pointing to the private bucket.
+ *
+ * For the private case, calls the `b2-presigned-download` edge function
+ * (admin-only) and returns a short-lived signed GET URL.
+ *
+ * Returns null if the input is empty or signing fails.
+ */
+export async function resolveB2Url(
+  storedValue: string | null | undefined,
+  expiresSeconds = 300,
+): Promise<string | null> {
+  if (!storedValue) return null;
+  const value = storedValue.trim();
+  if (!value) return null;
+  if (!value.startsWith("b2-private://")) {
+    // Public URL or legacy URL — return as-is.
+    return value;
+  }
+
+  const key = value.slice("b2-private://".length);
+  const { data, error } = await supabase.functions.invoke("b2-presigned-download", {
+    body: { key, expiresSeconds },
+  });
+  if (error || !data?.url) {
+    console.error("[resolveB2Url] failed to sign", error);
+    return null;
+  }
+  return data.url as string;
+}
+
+/** True if the stored value points to the private B2 bucket. */
+export function isPrivateB2Ref(value: string | null | undefined): boolean {
+  return typeof value === "string" && value.startsWith("b2-private://");
 }
