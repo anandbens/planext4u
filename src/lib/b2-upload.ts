@@ -42,6 +42,7 @@ async function getPresignedUrl(opts: {
   filename: string;
   contentType: string;
   private?: boolean;
+  fileBase64?: string;
 }): Promise<{ uploadUrl: string; publicUrl: string; key: string; isPrivate: boolean }> {
   const { data, error } = await supabase.functions.invoke("b2-presigned-upload", {
     body: {
@@ -49,6 +50,7 @@ async function getPresignedUrl(opts: {
       filename: opts.filename,
       contentType: opts.contentType,
       private: opts.private === true,
+      fileBase64: opts.fileBase64,
     },
   });
 
@@ -84,8 +86,7 @@ export async function uploadToB2(
     private: options.private,
   });
 
-  // Use XHR so we can report upload progress.
-  await new Promise<void>((resolve, reject) => {
+  const uploadViaBrowser = () => new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", uploadUrl, true);
     xhr.setRequestHeader("Content-Type", contentType);
@@ -108,6 +109,32 @@ export async function uploadToB2(
     xhr.onerror = () => reject(new Error("Network error uploading to B2"));
     xhr.send(file);
   });
+
+  try {
+    if (uploadUrl) {
+      await uploadViaBrowser();
+    }
+  } catch (error) {
+    const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    const { publicUrl: fallbackUrl, key: fallbackKey, isPrivate: fallbackPrivate } = await getPresignedUrl({
+      folder,
+      filename,
+      contentType,
+      private: options.private,
+      fileBase64: btoa(binary),
+    });
+    return {
+      publicUrl: fallbackPrivate ? `b2-private://${fallbackKey}` : fallbackUrl,
+      key: fallbackKey,
+      isPrivate: fallbackPrivate,
+    };
+  }
 
   // For private uploads we return an opaque reference instead of a Friendly URL,
   // since the file is not world-readable and must be fetched via a signed GET.
