@@ -47,12 +47,17 @@ export function ServicePodPopup({ open, onOpenChange, booking, service, customer
     mutationFn: async () => {
       let photoUrl = null;
       if (photo) {
-        const ext = photo.name.split('.').pop();
-        const path = `service-pod/${booking.id}_customer_${Date.now()}.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from("vendor-assets").upload(path, photo, { contentType: photo.type });
-        if (!uploadErr) {
-          const { data } = supabase.storage.from("vendor-assets").getPublicUrl(path);
-          photoUrl = data.publicUrl;
+        const ext = photo.name.split('.').pop() || 'jpg';
+        try {
+          const { uploadToB2 } = await import("@/lib/b2-upload");
+          const { publicUrl } = await uploadToB2(photo, {
+            folder: `vendor-assets/service-pod`,
+            filename: `${booking.id}_customer.${ext}`,
+            contentType: photo.type,
+          });
+          photoUrl = publicUrl;
+        } catch (e) {
+          console.warn('Service POD photo upload failed', e);
         }
       }
 

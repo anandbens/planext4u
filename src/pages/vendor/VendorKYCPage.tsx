@@ -73,11 +73,18 @@ export default function VendorKYCPage() {
     const isImage = file.type.startsWith('image/');
     const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
     const ext = isImage ? 'webp' : (file.name.split('.').pop()?.toLowerCase() || 'pdf');
-    const fileName = `${user.id}/vendor-kyc-${Date.now()}-${side}.${ext}`;
-    const { error } = await supabase.storage.from('kyc-documents').upload(fileName, blob, { contentType });
-    if (error) { toast.error("Upload failed: " + error.message); return null; }
-    const { data: signedData } = await supabase.storage.from('kyc-documents').createSignedUrl(fileName, 365 * 24 * 3600);
-    return signedData?.signedUrl || '';
+    try {
+      const { uploadToB2 } = await import("@/lib/b2-upload");
+      const { publicUrl } = await uploadToB2(blob, {
+        folder: `kyc-documents/vendor-kyc/${user.id}`,
+        filename: `${side}.${ext}`,
+        contentType,
+      });
+      return publicUrl;
+    } catch (err: any) {
+      toast.error("Upload failed: " + (err.message || "unknown"));
+      return null;
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {

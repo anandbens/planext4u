@@ -319,13 +319,13 @@ export default function SocioDMChatPage() {
       const { blob, contentType } = await compressToWebP(file);
       const msgId = crypto.randomUUID();
       const ext = contentType === 'image/webp' ? 'webp' : 'jpg';
-      const path = `${currentUserId}/dm/${conversationId}/${msgId}.${ext}`;
 
-      const { error: uploadError } = await supabase.storage.from('social-media').upload(path, blob, { contentType, upsert: true });
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = await supabase.storage.from('social-media').createSignedUrl(path, 60 * 60 * 24 * 365);
-      const mediaUrl = urlData?.signedUrl || '';
+      const { uploadToB2 } = await import("@/lib/b2-upload");
+      const { publicUrl: mediaUrl } = await uploadToB2(blob, {
+        folder: `social-media/${currentUserId}/dm/${conversationId}`,
+        filename: `${msgId}.${ext}`,
+        contentType,
+      });
 
       const optimisticMsg: Message = { id: msgId, conversation_id: conversationId, sender_id: currentUserId, content: '📷 Photo', message_type: 'image', media_url: mediaUrl, is_read: false, created_at: new Date().toISOString() };
       setMessages(prev => [...prev, optimisticMsg]);
@@ -394,13 +394,13 @@ export default function SocioDMChatPage() {
           const compressed = await compressAudioBlob(rawBlob);
           const msgId = crypto.randomUUID();
           const ext = compressed.type === 'audio/wav' ? 'wav' : 'webm';
-          const path = `${currentUserId}/dm/${conversationId}/${msgId}.${ext}`;
 
-          const { error: uploadError } = await supabase.storage.from('social-media').upload(path, compressed, { contentType: compressed.type, upsert: true });
-          if (uploadError) throw uploadError;
-
-          const { data: urlData } = await supabase.storage.from('social-media').createSignedUrl(path, 60 * 60 * 24 * 365);
-          const mediaUrl = urlData?.signedUrl || '';
+          const { uploadToB2 } = await import("@/lib/b2-upload");
+          const { publicUrl: mediaUrl } = await uploadToB2(compressed, {
+            folder: `social-media/${currentUserId}/dm/${conversationId}`,
+            filename: `${msgId}.${ext}`,
+            contentType: compressed.type,
+          });
           const durationText = `${Math.floor(recordingDuration / 60)}:${String(recordingDuration % 60).padStart(2, '0')}`;
 
           const optimisticMsg: Message = { id: msgId, conversation_id: conversationId, sender_id: currentUserId, content: `🎤 Voice note (${durationText})`, message_type: 'audio', media_url: mediaUrl, is_read: false, created_at: new Date().toISOString() };
