@@ -7,7 +7,7 @@
  * - Storage naming convention: {userId}/{module}/{postId}/{size}.webp
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { uploadToB2 } from "@/lib/b2-upload";
 
 export interface CompressionProgress {
   stage: 'compressing' | 'uploading' | 'complete' | 'error';
@@ -211,17 +211,16 @@ export async function uploadMediaToStorage(
 
   onProgress?.({ stage: 'uploading', percent: 0, originalSize: file.size });
 
-  const bucket = 'social-media';
-  const basePath = `${userId}/${module}/${postId}`;
+  // Upload all sizes directly to Backblaze B2 (public bucket).
+  const folderBase = `social-media/${userId}/${module}/${postId}`;
 
   const uploadOne = async (blob: Blob, sizeName: string) => {
-    const path = `${basePath}/${sizeName}.webp`;
-    const { error } = await supabase.storage
-      .from(bucket)
-      .upload(path, blob, { contentType: 'image/webp', upsert: true });
-    if (error) throw error;
-    const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 365);
-    return data?.signedUrl || '';
+    const { publicUrl } = await uploadToB2(blob, {
+      folder: folderBase,
+      filename: `${sizeName}.webp`,
+      contentType: 'image/webp',
+    });
+    return publicUrl;
   };
 
   const [thumbnailUrl, mediumUrl, largeUrl, originalUrl] = await Promise.all([
