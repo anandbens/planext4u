@@ -170,30 +170,21 @@ export function MediaLibraryDialog({ open, onOpenChange, onSelect, defaultFolder
     try {
       const { file } = previewFile;
       const { compressToWebP } = await import("@/lib/webp-compress");
+      const { uploadToB2 } = await import("@/lib/b2-upload");
       const { blob, contentType } = await compressToWebP(file);
 
-      // Vendor RLS on storage.objects ('Auth upload vendor-assets other')
-      // requires the first folder NOT to be 'store-logos'. We additionally
-      // namespace vendor uploads under their vendor id to keep media tidy.
+      // Namespace vendor uploads under their vendor id to keep media tidy.
       const safeFolder = uploadFolder === 'store-logos' ? 'general' : uploadFolder;
-      const pathPrefix = !isAdmin && vendorId ? `vendor-${vendorId}/${safeFolder}` : safeFolder;
-      const fileName = `${pathPrefix}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
+      const folderPath = !isAdmin && vendorId
+        ? `media-library/vendor-${vendorId}/${safeFolder}`
+        : `media-library/${safeFolder}`;
 
-      // 1) Upload the binary to the bucket the current user can write to.
-      let usedBucket = targetBucket;
-      let uploadErr = (await supabase.storage.from(usedBucket).upload(fileName, blob, { contentType, upsert: false })).error;
-      if (uploadErr) {
-        // Try the alternate bucket (e.g. an admin whose session was demoted, or
-        // a vendor when the admin bucket happens to allow them). This keeps
-        // older flows working but never silently swallows a real error.
-        const altBucket = usedBucket === 'media-library' ? 'vendor-assets' : 'media-library';
-        const { error: err2 } = await supabase.storage.from(altBucket).upload(fileName, blob, { contentType, upsert: false });
-        if (err2) throw uploadErr; // surface the original error message
-        usedBucket = altBucket;
-      }
-
-      const { data: urlData } = supabase.storage.from(usedBucket).getPublicUrl(fileName);
-      const publicUrl = urlData?.publicUrl || '';
+      // Upload directly to Backblaze B2 (public bucket).
+      const { publicUrl } = await uploadToB2(blob, {
+        folder: folderPath,
+        filename: file.name.replace(/\.[^.]+$/, '.webp'),
+        contentType,
+      });
 
       // 2) Insert into media_library (RLS-aware: include vendor_id for vendors).
       const insertPayload: Record<string, any> = {

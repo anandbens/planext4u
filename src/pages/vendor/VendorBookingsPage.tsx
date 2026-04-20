@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VendorLayout } from "@/components/vendor/VendorLayout";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadToB2 } from "@/lib/b2-upload";
+import { compressToWebP } from "@/lib/webp-compress";
 import { toast } from "sonner";
 import { Calendar, Camera, CheckCircle, Clock, Upload } from "lucide-react";
 
@@ -61,19 +63,17 @@ export default function VendorBookingsPage() {
     }
     setUploading(true);
     try {
-      // Upload photo to storage
-      const ext = completionPhoto.name.split('.').pop();
-      const path = `service-completions/${completionModal.id}_${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("vendor-assets")
-        .upload(path, completionPhoto, { contentType: completionPhoto.type });
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(path);
+      // Compress + upload completion photo to Backblaze B2.
+      const { blob, contentType } = await compressToWebP(completionPhoto);
+      const { publicUrl } = await uploadToB2(blob, {
+        folder: `vendor-assets/service-completions`,
+        filename: `${completionModal.id}_${Date.now()}.webp`,
+        contentType,
+      });
 
       // Update booking
       await supabase.from("service_bookings").update({
-        completion_photo_url: urlData.publicUrl,
+        completion_photo_url: publicUrl,
         completion_notes: completionNotes.trim() || null,
         vendor_completion_confirmed: true,
         vendor_completion_confirmed_at: new Date().toISOString(),

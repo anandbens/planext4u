@@ -11,8 +11,8 @@ import { Card } from "@/components/ui/card";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { supabase } from "@/integrations/supabase/client";
 import { compressToWebP } from "@/lib/webp-compress";
+import { uploadToB2 } from "@/lib/b2-upload";
 import { useAuth } from "@/lib/use-auth";
 import { Camera, X, Loader2 } from "lucide-react";
 
@@ -64,23 +64,18 @@ export default function CustomerPostAdPage() {
           continue;
         }
 
-        const { blob, contentType } = await compressToWebP(file);
-        const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
-
-        const { error } = await supabase.storage
-          .from('classified-images')
-          .upload(fileName, blob, { contentType });
-
-        if (error) {
+        try {
+          const { blob, contentType } = await compressToWebP(file);
+          const { publicUrl } = await uploadToB2(blob, {
+            folder: `classified-images/${userId}`,
+            filename: file.name.replace(/\.[^.]+$/, '.webp'),
+            contentType,
+          });
+          newImages.push(publicUrl);
+        } catch {
           toast.error(`Failed to upload ${file.name}`);
           continue;
         }
-
-        const { data: urlData } = supabase.storage
-          .from('classified-images')
-          .getPublicUrl(fileName);
-
-        newImages.push(urlData.publicUrl);
       }
 
       setImages(prev => [...prev, ...newImages]);
