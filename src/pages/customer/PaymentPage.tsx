@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolveCommissionCascade } from "@/lib/commission-cascade";
 import { checkCartStock, decrementStockForCart } from "@/lib/stock-check";
 import { useAuth } from "@/lib/auth";
+import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { motion } from "framer-motion";
 import { format, addDays } from "date-fns";
 
@@ -32,17 +33,6 @@ export default function PaymentPage() {
     if (!cart || cart.length === 0) navigate('/app/cart');
   }, [cart, navigate]);
 
-  const loadRazorpayScript = (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if ((window as any).Razorpay) { resolve(true); return; }
-      const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
-    });
-  };
-
   const handlePay = async () => {
     setPaymentState('processing');
 
@@ -61,9 +51,7 @@ export default function PaymentPage() {
         console.error('Pre-payment stock check failed', e);
       }
 
-      const loaded = await loadRazorpayScript();
-      if (!loaded) { toast.error("Failed to load payment gateway"); setPaymentState('select'); return; }
-
+      // 1. Create order on Razorpay (server-side)
       const { data, error } = await supabase.functions.invoke("razorpay", {
         body: { action: "create_order", amount: total, currency: "INR" },
       });
@@ -74,56 +62,57 @@ export default function PaymentPage() {
         return;
       }
 
-      setPaymentState('select');
-
-      const options = {
-        key: data.key_id,
-        amount: data.amount,
-        currency: data.currency,
-        name: "Planext4u",
-        description: `Order - ${cart.length} item(s)`,
-        order_id: data.order_id,
-        handler: async (response: any) => {
-          setPaymentState('processing');
-          const { data: verifyData, error: verifyError } = await supabase.functions.invoke("razorpay", {
-            body: {
-              action: "verify_payment",
-              order_id: data.order_id,
-              payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            },
-          });
-
-          if (verifyError || !verifyData?.verified) {
-            setPaymentState('failure');
-            return;
-          }
-
-          if (isServiceBooking) {
-            await createBooking(response.razorpay_payment_id, data.order_id);
-          } else {
-            await createOrder(response.razorpay_payment_id, data.order_id);
-          }
-        },
-        prefill: {
-          name: customerUser?.name || "",
-          email: customerUser?.email || "",
-          contact: customerUser?.mobile || "",
-        },
-        theme: { color: "#0d9488" },
-        modal: {
-          ondismiss: () => {
-            setPaymentState('select');
-            toast.info("Payment cancelled");
+      // 2. Open checkout — uses native Razorpay SDK on Android/iOS so installed
+      //    UPI apps (GPay / PhonePe / Paytm / BHIM / CRED / Amazon Pay) appear
+      //    in the picker, and falls back to the web checkout in browsers.
+      let response;
+      try {
+        response = await openRazorpayCheckout({
+          keyId: data.key_id,
+          orderId: data.order_id,
+          amount: data.amount,
+          currency: data.currency,
+          name: "Planext4u",
+          description: `Order - ${cart.length} item(s)`,
+          method: "upi" as any, // not enforced, just metadata
+          prefill: {
+            name: customerUser?.name || "",
+            email: customerUser?.email || "",
+            contact: customerUser?.mobile || "",
           },
-        },
-      };
+        });
+      } catch (e: any) {
+        const msg = String(e?.message || e);
+        if (msg.toLowerCase().includes("cancel")) {
+          toast.info("Payment cancelled");
+          setPaymentState('select');
+        } else {
+          setPaymentState('failure');
+        }
+        return;
+      }
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on("payment.failed", () => {
-        setPaymentState('failure');
+      // 3. Verify signature server-side
+      setPaymentState('processing');
+      const { data: verifyData, error: verifyError } = await supabase.functions.invoke("razorpay", {
+        body: {
+          action: "verify_payment",
+          order_id: data.order_id,
+          payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+        },
       });
-      rzp.open();
+
+      if (verifyError || !verifyData?.verified) {
+        setPaymentState('failure');
+        return;
+      }
+
+      if (isServiceBooking) {
+        await createBooking(response.razorpay_payment_id, data.order_id);
+      } else {
+        await createOrder(response.razorpay_payment_id, data.order_id);
+      }
     } catch (err: any) {
       console.error("Payment error:", err);
       toast.error("Payment failed: " + (err.message || "Unknown error"));
