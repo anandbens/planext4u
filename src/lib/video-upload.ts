@@ -12,6 +12,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { extractVideoThumbnail } from "@/lib/media-compression";
 import { compressVideoBrowser } from "@/lib/browser-video-compress";
+import { uploadToB2 } from "@/lib/b2-upload";
 
 export type VideoUploadStage = "compressing" | "uploading" | "processing" | "completed" | "error";
 
@@ -58,39 +59,47 @@ export async function uploadVideoWithProcessing(
     compressedFile = file;
   }
 
-  // 2. Upload compressed video
+  // 2. Upload compressed video to Backblaze B2
   onProgress?.({ stage: "uploading", percent: 45, message: "Uploading compressed video…" });
 
-  const ext = compressedFile.name.endsWith(".mp4") ? "mp4" : "webm";
-  const storagePath = `${userId}/${postId}/video_${Date.now()}.${ext}`;
-  const { error: uploadErr } = await supabase.storage
-    .from("social-videos")
-    .upload(storagePath, compressedFile, {
-      contentType: compressedFile.type || "video/mp4",
-      upsert: true,
-    });
+  const ext = compressedFile.name.endsWith(".webm") ? "webm" : "mp4";
+  const videoMime = compressedFile.type || (ext === "webm" ? "video/webm" : "video/mp4");
 
-  if (uploadErr) {
-    onProgress?.({ stage: "error", percent: 0, message: uploadErr.message });
-    throw new Error(`Upload failed: ${uploadErr.message}`);
+  let videoUrl = "";
+  try {
+    const { publicUrl } = await uploadToB2(compressedFile, {
+      folder: `social-videos/${userId}/${postId}`,
+      filename: `video_${Date.now()}.${ext}`,
+      contentType: videoMime,
+      onProgress: (p) => {
+        onProgress?.({
+          stage: "uploading",
+          percent: 45 + Math.round(p * 0.25),
+          message: `Uploading… ${p}%`,
+        });
+      },
+    });
+    videoUrl = publicUrl;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    onProgress?.({ stage: "error", percent: 0, message });
+    throw new Error(`Upload failed: ${message}`);
   }
 
   onProgress?.({ stage: "uploading", percent: 70, message: "Generating thumbnail…" });
 
-  // 3. Generate client-side thumbnail from original file (better quality)
+  // 3. Generate client-side thumbnail from original file (better quality) → B2
   let thumbnailUrl = "";
   try {
     const thumbBlob = await extractVideoThumbnail(file);
-    const thumbPath = `${userId}/${postId}/video_thumb.webp`;
-    await supabase.storage
-      .from("social-media")
-      .upload(thumbPath, thumbBlob, { contentType: "image/webp", upsert: true });
-    const { data: tData } = await supabase.storage
-      .from("social-media")
-      .createSignedUrl(thumbPath, 60 * 60 * 24 * 365);
-    thumbnailUrl = tData?.signedUrl || "";
+    const { publicUrl } = await uploadToB2(thumbBlob, {
+      folder: `social-videos/${userId}/${postId}`,
+      filename: "video_thumb.webp",
+      contentType: "image/webp",
+    });
+    thumbnailUrl = publicUrl;
   } catch (err) {
-    console.warn("Thumbnail extraction failed:", err);
+    console.warn("Thumbnail extraction/upload failed:", err);
   }
 
   // 4. Queue job record (H.265 processing bypassed for now)
@@ -99,27 +108,23 @@ export async function uploadVideoWithProcessing(
   let jobId = "";
   try {
     const { data: fnData } = await supabase.functions.invoke("process-video", {
-      body: { storage_path: storagePath, post_id: postId },
+      body: { storage_path: videoUrl, post_id: postId, storage_provider: "b2" },
     });
     jobId = fnData?.job_id || "";
   } catch (err) {
     console.warn("process-video invoke skipped:", err);
   }
 
-  const { data: urlData } = supabase.storage
-    .from("social-videos")
-    .getPublicUrl(storagePath);
-
   onProgress?.({
     stage: "completed",
     percent: 100,
-    message: "Video uploaded (H.264 compressed) ✓",
+    message: "Video uploaded ✓",
     jobId,
   });
 
   return {
     jobId,
-    originalUrl: urlData?.publicUrl || "",
+    originalUrl: videoUrl,
     thumbnailUrl,
   };
 }
