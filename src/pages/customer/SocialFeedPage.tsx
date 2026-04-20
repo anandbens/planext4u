@@ -838,6 +838,7 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
         } catch { /* fallback to original */ }
       }
 
+      let url: string;
       try {
         const { uploadToB2 } = await import("@/lib/b2-upload");
         const { publicUrl } = await uploadToB2(uploadBlob, {
@@ -845,7 +846,7 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
           filename: `${storyId}.${ext}`,
           contentType: uploadContentType,
         });
-        var url = publicUrl;
+        url = publicUrl;
       } catch (uploadErr: any) {
         toast.error(`Upload failed: ${uploadErr.message || ""}`);
         continue;
