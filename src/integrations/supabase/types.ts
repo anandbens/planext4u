@@ -187,12 +187,12 @@ export type Database = {
       banners: {
         Row: {
           created_at: string
-          desktop_image: string
+          desktop_image: string | null
           end_date: string
           gradient: string | null
           id: string
           link: string
-          mobile_image: string
+          mobile_image: string | null
           priority: number
           start_date: string
           status: string
@@ -201,12 +201,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          desktop_image?: string
+          desktop_image?: string | null
           end_date?: string
           gradient?: string | null
           id: string
           link?: string
-          mobile_image?: string
+          mobile_image?: string | null
           priority?: number
           start_date?: string
           status?: string
@@ -215,12 +215,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          desktop_image?: string
+          desktop_image?: string | null
           end_date?: string
           gradient?: string | null
           id?: string
           link?: string
-          mobile_image?: string
+          mobile_image?: string | null
           priority?: number
           start_date?: string
           status?: string
@@ -312,7 +312,7 @@ export type Database = {
           description: string | null
           icon: string | null
           id: string
-          image: string
+          image: string | null
           is_emergency: boolean | null
           is_trending: boolean | null
           name: string
@@ -331,7 +331,7 @@ export type Database = {
           description?: string | null
           icon?: string | null
           id: string
-          image?: string
+          image?: string | null
           is_emergency?: boolean | null
           is_trending?: boolean | null
           name: string
@@ -350,7 +350,7 @@ export type Database = {
           description?: string | null
           icon?: string | null
           id?: string
-          image?: string
+          image?: string | null
           is_emergency?: boolean | null
           is_trending?: boolean | null
           name?: string
