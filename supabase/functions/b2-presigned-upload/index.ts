@@ -132,7 +132,7 @@ async function presignPutUrl(opts: {
   keyId: string;
   appKey: string;
 }): Promise<string> {
-  const { endpoint, bucket, key, expiresSeconds, keyId, appKey } = opts;
+  const { endpoint, bucket, key, contentType, expiresSeconds, keyId, appKey } = opts;
   const region = regionFromEndpoint(endpoint);
   const host = endpointHost(endpoint);
   const service = "s3";
@@ -147,8 +147,9 @@ async function presignPutUrl(opts: {
   const encodedKey = key.split("/").map((s) => encodeURIComponent(s)).join("/");
   const canonicalUri = `/${bucket}/${encodedKey}`;
 
-  const signedHeaders = "host";
-  const canonicalHeaders = `host:${host}\n`;
+  const normalizedContentType = contentType.trim().toLowerCase() || "application/octet-stream";
+  const signedHeaders = "content-type;host";
+  const canonicalHeaders = `content-type:${normalizedContentType}\nhost:${host}\n`;
 
   const queryParams: Record<string, string> = {
     "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
