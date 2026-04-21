@@ -275,8 +275,18 @@ export default function OrdersPage() {
 
   const columns = [
     { key: "id", label: "Order ID" },
-    { key: "customer_name", label: "Customer" },
-    { key: "vendor_name", label: "Vendor" },
+    { key: "customer_name", label: "Customer", render: (o: any) => (
+      <div className="leading-tight">
+        <p className="text-sm font-medium">{o.customer_name || <span className="text-muted-foreground italic">Unknown</span>}</p>
+        {o.customer_id && <p className="text-[10px] text-muted-foreground font-mono">{o.customer_id}</p>}
+      </div>
+    )},
+    { key: "vendor_name", label: "Vendor", render: (o: any) => (
+      <div className="leading-tight">
+        <p className="text-sm font-medium">{o.vendor_name || <span className="text-muted-foreground italic">Unknown</span>}</p>
+        {o.vendor_id && <p className="text-[10px] text-muted-foreground font-mono">{o.vendor_id}</p>}
+      </div>
+    )},
     { key: "items", label: "Items", render: (o: Order) => <span className="text-xs text-muted-foreground">{(o.items || []).slice(0, 2).map((i: any) => i.title).join(", ") || "—"}{(o.items || []).length > 2 ? ` +${(o.items || []).length - 2}` : ""}</span> },
     { key: "total", label: "Total", render: (o: Order) => <span className="font-bold">₹{Number(o.total).toLocaleString()}</span> },
     { key: "status", label: "Status", render: (o: Order) => <StatusBadge status={o.status} /> },
