@@ -472,13 +472,18 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
             {/* Booking Settings */}
             <div className="p-4 rounded-lg bg-secondary/20 border border-border/30 space-y-3">
               <h4 className="text-sm font-semibold flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> Booking Settings</h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Default Slot Duration (minutes)</Label>
+                  <Label className="text-xs text-muted-foreground">Service Duration (min) *</Label>
+                  {editMode ? <Input type="number" min={15} step={5} value={form.service_duration_minutes} onChange={(e) => setForm({ ...form, service_duration_minutes: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm mt-1">{form.service_duration_minutes} min</p>}
+                  <p className="text-[10px] text-muted-foreground mt-1">Auto-generates bookable slots</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Default Slot (min)</Label>
                   {editMode ? <Input type="number" value={form.booking_duration_minutes} onChange={(e) => setForm({ ...form, booking_duration_minutes: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm mt-1">{form.booking_duration_minutes} min</p>}
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Max Bookings Per Slot</Label>
+                  <Label className="text-xs text-muted-foreground">Max / Slot</Label>
                   {editMode ? <Input type="number" value={form.max_bookings_per_slot} onChange={(e) => setForm({ ...form, max_bookings_per_slot: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm mt-1">{form.max_bookings_per_slot}</p>}
                 </div>
               </div>

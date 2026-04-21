@@ -31,6 +31,7 @@ interface ServiceForm {
   duration: string; service_area: string; category_id: string; subcategory_id: string;
   emoji: string; status: string;
   image: string; working_days: string; workers: string;
+  service_duration_minutes: string;
 }
 
 const emptyForm: ServiceForm = {
@@ -38,6 +39,7 @@ const emptyForm: ServiceForm = {
   duration: "", service_area: "", category_id: "", subcategory_id: "",
   emoji: "🔧", status: "pending_approval",
   image: "", working_days: "Mon-Sat", workers: "1",
+  service_duration_minutes: "60",
 };
 
 export default function VendorServicesPage() {
@@ -142,6 +144,7 @@ export default function VendorServicesPage() {
         title: formData.title, description: formData.description,
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
         discount: parseFloat(formData.discount) || 0, duration: formData.duration,
+        service_duration_minutes: Math.max(15, parseInt(formData.service_duration_minutes) || 60),
         service_area: formData.service_area,
         category_id: formData.category_id || null,
         category_name: parentCat?.name || "",
@@ -187,6 +190,7 @@ export default function VendorServicesPage() {
       category_id: s.category_id || "", subcategory_id: s.subcategory_id || "",
       emoji: s.emoji || "🔧", status: s.status,
       image: s.image || "", working_days: "Mon-Sat", workers: "1",
+      service_duration_minutes: String(s.service_duration_minutes || 60),
     });
     setModalOpen(true);
   };
@@ -292,8 +296,16 @@ export default function VendorServicesPage() {
               <div><Label>Tax (₹)</Label><Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: e.target.value })} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Duration</Label><Input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} placeholder="e.g. 2 hrs" /></div>
+              <div><Label>Approx Duration (display)</Label><Input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} placeholder="e.g. 2 hrs" /></div>
               <div><Label>Service Area</Label><Input value={form.service_area} onChange={(e) => setForm({ ...form, service_area: e.target.value })} placeholder="e.g. Coimbatore" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Slot Duration (minutes) *</Label>
+                <Input type="number" min={15} step={5} value={form.service_duration_minutes} onChange={(e) => setForm({ ...form, service_duration_minutes: e.target.value })} placeholder="60" />
+                <p className="text-[10px] text-muted-foreground mt-1">Auto-generates bookable customer slots</p>
+              </div>
+              <div><Label>Discount (₹)</Label><Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Working Days</Label><Input value={form.working_days} onChange={(e) => setForm({ ...form, working_days: e.target.value })} placeholder="Mon-Sat" /></div>
