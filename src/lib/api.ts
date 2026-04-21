@@ -77,7 +77,7 @@ export interface ProductVariant {
 export interface Service {
   id: string; vendor_id: string; category_id: string; title: string; description: string;
   price: number; tax: number; discount: number; max_points_redeemable: number;
-  status: 'active' | 'inactive' | 'draft';
+  status: 'active' | 'inactive' | 'draft' | 'pending_approval' | 'rejected';
   vendor_name?: string; category_name?: string; emoji?: string; image?: string;
   rating?: number; reviews?: number; service_area?: string; duration?: string;
   created_at?: string; updated_at?: string;
@@ -85,6 +85,9 @@ export interface Service {
   meta_title?: string; meta_description?: string; slug?: string;
   pricing_slots?: { label: string; duration_minutes: number; price: number }[];
   booking_duration_minutes?: number; max_bookings_per_slot?: number;
+  subcategory_id?: string | null; subcategory_name?: string | null;
+  rejection_reason?: string | null;
+  approved_at?: string | null; approved_by?: string | null;
 }
 
 export interface Order {
@@ -1453,16 +1456,17 @@ export const api = {
 
   // Services CRUD
   updateService: async (id: string, data: Partial<Service>) => {
-    const validFields = ['vendor_id', 'category_id', 'title', 'description', 'price', 'tax', 'discount',
+    const validFields = ['vendor_id', 'category_id', 'subcategory_id', 'subcategory_name', 'title', 'description', 'price', 'tax', 'discount',
       'max_points_redeemable', 'status', 'vendor_name', 'category_name', 'emoji', 'image', 'service_area',
       'duration', 'images', 'short_description', 'long_description', 'meta_title', 'meta_description',
       'slug', 'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot',
-      'sac_code', 'gst_rate', 'commission_override', 'max_redemption_percentage', 'updated_at'];
+      'sac_code', 'gst_rate', 'commission_override', 'max_redemption_percentage',
+      'rejection_reason', 'approved_at', 'approved_by', 'updated_at'];
     const filtered: Record<string, any> = { updated_at: new Date().toISOString() };
     for (const key of validFields) {
       if (key in data) {
         let val = (data as any)[key];
-        if (key === 'category_id' && val === '') val = null;
+        if ((key === 'category_id' || key === 'subcategory_id') && val === '') val = null;
         filtered[key] = val;
       }
     }
@@ -1516,6 +1520,7 @@ export const api = {
     }
     const validFields = ['title', 'description', 'short_description', 'long_description', 'price', 'tax', 'discount',
       'max_points_redeemable', 'status', 'vendor_id', 'vendor_name', 'category_id', 'category_name',
+      'subcategory_id', 'subcategory_name',
       'emoji', 'image', 'images', 'service_area', 'duration', 'meta_title', 'meta_description', 'slug',
       'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot',
       'sac_code', 'gst_rate', 'commission_override', 'max_redemption_percentage'];
@@ -1523,11 +1528,39 @@ export const api = {
     for (const key of validFields) {
       if (key in data && (data as any)[key] !== undefined) newSrv[key] = (data as any)[key];
     }
-    // Convert empty category_id to null (FK to service_categories)
+    // Convert empty FK strings to null (FK to service_categories)
     if (newSrv.category_id === '') newSrv.category_id = null;
+    if (newSrv.subcategory_id === '') newSrv.subcategory_id = null;
+    // Admin-created services are auto-approved (active) unless an explicit non-default status was chosen.
+    // Vendor-created services go through VendorServicesPage which forces 'pending_approval'.
+    if (!newSrv.status || newSrv.status === 'draft') {
+      newSrv.status = 'active';
+    }
     const { error } = await supabase.from('services').insert(newSrv as any);
     if (error) { console.error("Service create error:", error); throw error; }
     return { success: true, service: newSrv };
+  },
+
+  // Approve a vendor-submitted service (sets status=active and stamps approval audit)
+  approveService: async (id: string) => {
+    const { error } = await supabase.from('services').update({
+      status: 'active',
+      approved_at: new Date().toISOString(),
+      rejection_reason: null,
+    } as any).eq('id', id);
+    if (error) throw error;
+    return { success: true };
+  },
+
+  // Reject a vendor-submitted service with a mandatory reason
+  rejectService: async (id: string, reason: string) => {
+    if (!reason?.trim()) throw new Error("Rejection reason is required");
+    const { error } = await supabase.from('services').update({
+      status: 'rejected',
+      rejection_reason: reason.trim(),
+    } as any).eq('id', id);
+    if (error) throw error;
+    return { success: true };
   },
 
   deleteService: async (id: string) => {
