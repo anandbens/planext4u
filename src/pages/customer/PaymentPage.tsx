@@ -40,6 +40,16 @@ export default function PaymentPage() {
   }, [cart, navigate]);
 
   const handlePay = async () => {
+    setFailureReason('');
+    // Guard: a logged-in customer is mandatory — RLS on orders/service_bookings
+    // requires customer_id to match the active session. Without it the insert
+    // silently fails and the user sees a meaningless "Payment Failed" screen.
+    if (!customerId) {
+      toast.error('Please sign in to complete your purchase');
+      navigate('/customer/login', { state: { redirectTo: '/app/cart' } });
+      return;
+    }
+
     setPaymentState('processing');
 
     try {
@@ -63,8 +73,10 @@ export default function PaymentPage() {
       });
 
       if (error || !data?.order_id) {
-        toast.error("Failed to create payment order");
-        setPaymentState('select');
+        const reason = (data as any)?.error || error?.message || 'Failed to create payment order';
+        toast.error(reason);
+        setFailureReason(reason);
+        setPaymentState('failure');
         return;
       }
 
@@ -93,6 +105,8 @@ export default function PaymentPage() {
           toast.info("Payment cancelled");
           setPaymentState('select');
         } else {
+          console.error('Razorpay checkout failed:', e);
+          setFailureReason(msg || 'Checkout could not be completed');
           setPaymentState('failure');
         }
         return;
@@ -110,6 +124,9 @@ export default function PaymentPage() {
       });
 
       if (verifyError || !verifyData?.verified) {
+        const reason = verifyError?.message || 'Payment verification failed — please contact support with your payment ID';
+        console.error('Verify failed:', verifyError, verifyData, 'payment_id:', response.razorpay_payment_id);
+        setFailureReason(`${reason} (Payment ID: ${response.razorpay_payment_id})`);
         setPaymentState('failure');
         return;
       }
@@ -121,8 +138,10 @@ export default function PaymentPage() {
       }
     } catch (err: any) {
       console.error("Payment error:", err);
-      toast.error("Payment failed: " + (err.message || "Unknown error"));
-      setPaymentState('select');
+      const msg = err?.message || "Unknown error";
+      toast.error("Payment failed: " + msg);
+      setFailureReason(msg);
+      setPaymentState('failure');
     }
   };
 
