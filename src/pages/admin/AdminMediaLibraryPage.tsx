@@ -155,6 +155,7 @@ export default function AdminMediaLibraryPage() {
     try {
       const { compressToWebP } = await import("@/lib/webp-compress");
       const { compressVideoBrowser } = await import("@/lib/browser-video-compress");
+      const { extractVideoThumbnail } = await import("@/lib/media-compression");
       const { uploadToB2 } = await import("@/lib/b2-upload");
       for (const file of files) {
         const isImage = file.type.startsWith("image/");
@@ -164,6 +165,74 @@ export default function AdminMediaLibraryPage() {
           toast.error(`${file.name} exceeds 500MB limit`); continue;
         }
 
+        // ── VIDEO: Socio-style pipeline (browser H.264 → B2 → WebP poster → queue H.265) ──
+        if (isVideo) {
+          try {
+            toast.message(`${file.name}: compressing to 480p H.264…`);
+            const optimized = await compressVideoBrowser(file).catch((e) => {
+              console.warn("Browser video compression failed, uploading original:", e);
+              return file;
+            });
+            const videoMime = optimized.type || file.type || "video/mp4";
+            const videoExt = videoMime.includes("webm") ? "webm" : "mp4";
+            const baseName = file.name.replace(/\.[^.]+$/, "");
+
+            const { publicUrl: videoUrl } = await uploadToB2(optimized, {
+              folder: `media-library/${targetFolder}`,
+              filename: `${baseName}.${videoExt}`,
+              contentType: videoMime,
+            });
+
+            // Poster thumbnail (WebP) from original frame for sharper preview
+            let thumbnailUrl = "";
+            try {
+              const thumbBlob = await extractVideoThumbnail(file);
+              const { publicUrl: thumbUrl } = await uploadToB2(thumbBlob, {
+                folder: `media-library/${targetFolder}`,
+                filename: `${baseName}_thumb.webp`,
+                contentType: "image/webp",
+              });
+              thumbnailUrl = thumbUrl;
+            } catch (thumbErr) {
+              console.warn("Video thumbnail extraction failed:", thumbErr);
+            }
+
+            await supabase.from("media_library").insert({
+              file_name: file.name,
+              file_url: videoUrl,
+              file_type: videoMime,
+              file_size: optimized.size,
+              folder: targetFolder,
+              alt_text: baseName.replace(/[-_]/g, " "),
+              metadata: {
+                kind: "video",
+                storage_provider: "b2",
+                original_size_bytes: file.size,
+                optimized_size_bytes: optimized.size,
+                thumbnail_url: thumbnailUrl,
+              },
+            } as any);
+
+            // Queue server-side H.265 re-encode (best-effort, non-blocking)
+            try {
+              await supabase.functions.invoke("process-video", {
+                body: { storage_path: videoUrl, post_id: `media-${Date.now()}`, storage_provider: "b2" },
+              });
+            } catch (procErr) {
+              console.warn("process-video queue skipped:", procErr);
+            }
+
+            toast.success(
+              `${file.name}: ${(file.size / 1048576).toFixed(1)}MB → ${(optimized.size / 1048576).toFixed(1)}MB`
+            );
+            successCount++;
+          } catch (videoErr: any) {
+            toast.error(`Failed: ${file.name} — ${videoErr.message || ""}`);
+          }
+          continue;
+        }
+
+        // ── IMAGE / OTHER ──
         let blob: Blob;
         let contentType: string;
         let ext: string;
@@ -171,18 +240,6 @@ export default function AdminMediaLibraryPage() {
         if (isImage) {
           const out = await compressToWebP(file);
           blob = out.blob; contentType = out.contentType; ext = "webp";
-        } else if (isVideo) {
-          // Re-encode to ~480p H.264 (mp4) / VP9 fallback for max storage savings.
-          try {
-            const optimized = await compressVideoBrowser(file);
-            blob = optimized;
-            contentType = optimized.type || "video/mp4";
-            ext = contentType.includes("webm") ? "webm" : "mp4";
-            toast.message(`${file.name}: ${(file.size / 1048576).toFixed(1)}MB → ${(blob.size / 1048576).toFixed(1)}MB`);
-          } catch (encErr) {
-            console.warn("Video re-encode failed, uploading original:", encErr);
-            blob = file; contentType = file.type; ext = file.name.split(".").pop() || "mp4";
-          }
         } else {
           blob = file; contentType = file.type; ext = file.name.split(".").pop() || "bin";
         }
