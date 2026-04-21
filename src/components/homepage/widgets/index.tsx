@@ -459,6 +459,7 @@ registerWidget({
   group: "Vendor & social",
   modules: ["ecommerce", "socio"],
   fields: [{ key: "limit", label: "Max posts", type: "number" }],
+  validate: limitValidator(30),
   render: (p) => <SocialPostsWidget title={p.title} config={p.config} />,
 });
 
