@@ -59,6 +59,17 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
     }
   }, []);
 
+  // Stay in sync if the location changes anywhere in the app (home page bar, other tabs, etc.)
+  useEffect(() => {
+    const sync = () => setSelectedLocation(loadSelectedLocation() || "Set your location");
+    window.addEventListener(LOCATION_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(LOCATION_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
   useEffect(() => {
     setMobileMenuOpen(false);
     window.scrollTo(0, 0);
