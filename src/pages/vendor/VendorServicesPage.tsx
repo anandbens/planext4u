@@ -19,7 +19,11 @@ import { toast } from "sonner";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 
 const statusStyle: Record<string, string> = {
-  active: "bg-success/10 text-success", inactive: "bg-destructive/10 text-destructive", draft: "bg-muted text-muted-foreground",
+  active: "bg-success/10 text-success",
+  inactive: "bg-destructive/10 text-destructive",
+  draft: "bg-muted text-muted-foreground",
+  pending_approval: "bg-warning/10 text-warning",
+  rejected: "bg-destructive/10 text-destructive",
 };
 
 interface ServiceForm {
