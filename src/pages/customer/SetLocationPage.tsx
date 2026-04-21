@@ -7,6 +7,7 @@ import { MapPin, Navigation, Loader2, ArrowLeft, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { requireCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
+import { useCountry } from "@/lib/country-context";
 
 interface GeoAddress {
   lat: number;
@@ -35,6 +36,8 @@ async function fetchMapsKey(): Promise<string> {
 export default function SetLocationPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
+  const { country } = useCountry();
+  const activeCountryCode = (country?.code || "IN").toLowerCase();
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
   const [address, setAddress] = useState<GeoAddress | null>(null);
@@ -213,7 +216,7 @@ export default function SetLocationPage() {
     const key = mapsKey || GOOGLE_MAPS_KEY_FALLBACK;
     try {
       const res = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&components=country:IN&key=${key}`
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&components=country:${activeCountryCode}&key=${key}`
       );
       const data = await res.json();
       if (data.status === "OK" && data.results.length > 0) {
