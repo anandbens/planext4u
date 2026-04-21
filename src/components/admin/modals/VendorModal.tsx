@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { isValidEmail, isValidIndianMobile, isValidGSTIN, isValidPAN } from "@/lib/admin-validation";
 import { resolveB2Url } from "@/lib/b2-upload";
 import { PrivateKycImage } from "@/components/admin/PrivateKycImage";

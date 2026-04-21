@@ -1,5 +1,6 @@
 import { Product, ProductVariant } from "@/lib/api";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -311,7 +312,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
       onOpenChange(false);
     } catch (err: any) {
       console.error("Product save error:", err);
-      toast.error(err.message || "Failed to save product");
+      toast.error(friendlyError(err, "Failed to save product. Please review your input and try again."));
     } finally { setSaving(false); }
   };
 

@@ -15,6 +15,7 @@ import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { useCountry } from "@/lib/country-context";
 
 interface ServiceModalProps {
@@ -226,7 +227,8 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
       else if (service) await onSave?.(service.id, form);
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || "Failed to save service");
+      console.error("Service save error:", err);
+      toast.error(friendlyError(err, "Failed to save service. Please review your input and try again."));
     } finally { setSaving(false); }
   };
 

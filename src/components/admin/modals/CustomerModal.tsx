@@ -14,6 +14,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { isValidEmail, isValidIndianMobile } from "@/lib/admin-validation";
 import { PrivateKycImage, usePrivateKycUrl } from "@/components/admin/PrivateKycImage";
 
@@ -161,7 +162,8 @@ export function CustomerModal({ customer, open, onOpenChange, mode, onSave, onCr
       if (isCreate) { await onCreate?.(form); } else if (customer) { await onSave?.(customer.id, form); }
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to save customer");
+      console.error("Customer save error:", err);
+      toast.error(friendlyError(err, "Failed to save customer. Please review your input and try again."));
     } finally { setSaving(false); }
   };
 

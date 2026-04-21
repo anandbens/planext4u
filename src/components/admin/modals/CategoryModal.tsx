@@ -13,6 +13,7 @@ import { Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 
 interface CategoryModalProps {
   category: Category | null;
@@ -123,7 +124,8 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
       else if (category) await onSave?.(category.id, payload);
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to save category");
+      console.error("Category save error:", err);
+      toast.error(friendlyError(err, "Failed to save category. Please review your input and try again."));
     } finally { setSaving(false); }
   };
 
