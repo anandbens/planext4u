@@ -1,12 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Heart, Grid3X3, List, ShoppingCart, ChevronRight, ChevronLeft, Zap } from "lucide-react";
+import { Star, Heart, Grid3X3, List, ShoppingCart, ChevronRight, ChevronLeft, Zap, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ProductFilterPanel } from "./CustomerListingPage";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { LoginPromptDialog } from "@/components/customer/LoginPromptDialog";
 import { api, CartItem } from "@/lib/api";
@@ -37,6 +39,9 @@ export default function CustomerBrowsePage() {
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
   const [radiusInfo, setRadiusInfo] = useState<string>("");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+  const [minRating, setMinRating] = useState(0);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Try to get customer's default address first, fallback to GPS
   useEffect(() => {
