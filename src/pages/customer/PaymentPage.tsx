@@ -23,13 +23,17 @@ export default function PaymentPage() {
   const location = useLocation();
   const { customerUser } = useAuth();
   const { format: fmt } = useCurrency();
-  const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
+  // Use the customer's CUST0000xxx id — RLS on `orders` requires it to match
+  // the value returned by get_customer_id(auth.uid()). A synthetic fallback
+  // silently fails the insert, so we surface that case instead.
+  const customerId = customerUser?.customer_id || customerUser?.id || '';
 
   const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress, itemRedemptionMap, isServiceBooking, bookingDate, bookingSlot } = location.state || {};
 
   const [paymentState, setPaymentState] = useState<PaymentState>('select');
   const [orderId, setOrderId] = useState('');
   const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [failureReason, setFailureReason] = useState<string>('');
 
   useEffect(() => {
     if (!cart || cart.length === 0) navigate('/app/cart');
