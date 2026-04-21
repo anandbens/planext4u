@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolveCommissionCascade } from "@/lib/commission-cascade";
 import { checkCartStock } from "@/lib/stock-check";
 import { getCustomerAddressOwnerContext, requireCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
+import { useCurrency } from "@/lib/country-context";
 
 const TIME_SLOTS = [
   { id: "morning", label: "Morning 9 - 11 AM" },
@@ -31,6 +32,7 @@ interface SavedAddress {
 
 export default function CustomerCartPage() {
   const navigate = useNavigate();
+  const { format: fmt, symbol: curSym } = useCurrency();
   const { customerUser } = useAuth();
   const customerId = customerUser?.customer_id || customerUser?.id || "";
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -456,15 +458,15 @@ export default function CustomerCartPage() {
                                 <p className="text-xs text-primary flex items-center gap-0.5 shrink-0 whitespace-nowrap"><Clock className="h-2.5 w-2.5" /> Delivery in 30 Mins</p>
                               </div>
                               <div className="flex items-center gap-2 mt-1.5">
-                                {item.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">₹{(item.price + item.discount).toLocaleString()}</span>}
-                                <span className="text-sm font-bold">₹{item.price.toLocaleString()}</span>
+                                {item.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">{fmt(item.price + item.discount, { decimals: 0 })}</span>}
+                                <span className="text-sm font-bold">{fmt(item.price, { decimals: 0 })}</span>
                                 {discountPct > 0 && <span className="text-[10px] text-success font-medium">{discountPct}% Off</span>}
                               </div>
                               <p className="text-[10px] text-success mt-0.5">Eligible for FREE Shipping</p>
                               {(() => {
                                 const pim = perItemMaxPoints.find(p => p.id === item.id);
                                 return pim && pim.maxRedeemable > 0 ? (
-                                  <p className="text-[10px] text-primary mt-0.5">🎁 Up to ₹{pim.maxRedeemable} redeemable via points ({pim.redemptionPct}%)</p>
+                                  <p className="text-[10px] text-primary mt-0.5">🎁 Up to {fmt(pim.maxRedeemable, { decimals: 0 })} redeemable via points ({pim.redemptionPct}%)</p>
                                 ) : null;
                               })()}
                               <div className="flex items-center gap-3 mt-2 flex-wrap">
@@ -497,7 +499,7 @@ export default function CustomerCartPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="text-sm font-semibold truncate">{item.title}</h3>
-                            <p className="text-sm font-bold mt-0.5">₹{item.price.toLocaleString()}</p>
+                            <p className="text-sm font-bold mt-0.5">{fmt(item.price, { decimals: 0 })}</p>
                           </div>
                           <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => moveToCart(item)}>Move to Cart</Button>
                         </Card>
@@ -536,12 +538,12 @@ export default function CustomerCartPage() {
                   </div>
                   {maxPoints > 0 && (
                     <p className="text-[10px] text-muted-foreground mt-2 bg-secondary/30 rounded-lg p-2">
-                      💡 You can redeem between <strong>1</strong> and <strong>{maxPoints.toLocaleString()}</strong> points (₹1 = 1 point). Max is calculated based on each product's redemption % limit.
+                      💡 You can redeem between <strong>1</strong> and <strong>{maxPoints.toLocaleString()}</strong> points (1 point = {fmt(1, { decimals: 0 })}). Max is calculated based on each product's redemption % limit.
                     </p>
                   )}
                   {pointsUsed > 0 && pointsUsed <= maxPoints && (
                     <div className="mt-2 p-2 bg-success/5 rounded-lg border border-success/20">
-                      <p className="text-[10px] text-success font-semibold">✅ {pointsUsed} points applied = ₹{pointsUsed} discount</p>
+                      <p className="text-[10px] text-success font-semibold">✅ {pointsUsed} points applied = {fmt(pointsUsed, { decimals: 0 })} discount</p>
                     </div>
                   )}
                   {pointsUsed > maxPoints && (
@@ -555,7 +557,7 @@ export default function CustomerCartPage() {
                         {perItemMaxPoints.map(p => (
                           <div key={p.id} className="flex justify-between text-[10px]">
                             <span className="text-muted-foreground truncate max-w-[60%]">{p.title}</span>
-                            <span>₹{p.maxRedeemable} ({p.redemptionPct}%)</span>
+                            <span>{fmt(p.maxRedeemable, { decimals: 0 })} ({p.redemptionPct}%)</span>
                           </div>
                         ))}
                       </div>
@@ -572,14 +574,14 @@ export default function CustomerCartPage() {
                 <Card className="p-4">
                   <h3 className="text-sm font-semibold mb-3">Bill Details</h3>
                   <div className="space-y-2.5 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>₹{mrpTotal.toLocaleString()}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>{fmt(mrpTotal, { decimals: 0 })}</span></div>
                     {totalDiscount > 0 && (
                       <div className="flex justify-between pl-3 border-l-2 border-success/30 text-success">
-                        <span>Product Discount</span><span>- ₹{totalDiscount.toLocaleString()}</span>
+                        <span>Product Discount</span><span>- {fmt(totalDiscount, { decimals: 0 })}</span>
                       </div>
                     )}
                     <div className="flex justify-between pl-3 border-l-2 border-border/50">
-                      <span className="text-muted-foreground font-medium">Subtotal</span><span className="font-medium">₹{subtotal.toLocaleString()}</span>
+                      <span className="text-muted-foreground font-medium">Subtotal</span><span className="font-medium">{fmt(subtotal, { decimals: 0 })}</span>
                     </div>
                     {(platformFee > 0 || referralCountThisMonth >= 4) && (
                       <div className="flex justify-between pl-3 border-l-2 border-border/50">
@@ -591,8 +593,8 @@ export default function CustomerCartPage() {
                         </div>
                         <span>
                           {referralCountThisMonth >= 4
-                            ? <span className="line-through text-muted-foreground">₹{(platformFeeValue + Math.round(platformFeeValue * platformFeeGst) / 100).toFixed(0)}</span>
-                            : `+ ₹${(platformFee + gstOnPlatformFee).toFixed(2)}`}
+                            ? <span className="line-through text-muted-foreground">{fmt(platformFeeValue + Math.round(platformFeeValue * platformFeeGst) / 100, { decimals: 0 })}</span>
+                            : `+ ${fmt(platformFee + gstOnPlatformFee)}`}
                         </span>
                       </div>
                     )}
@@ -600,18 +602,18 @@ export default function CustomerCartPage() {
                       <div className="flex justify-between pl-3 border-l-2 border-success/30 text-success">
                         <div>
                           <span>Wallet Points Redeemed</span>
-                          <p className="text-[10px] text-success/70">{pointsUsed} pts × ₹1 = ₹{pointsUsed}</p>
+                          <p className="text-[10px] text-success/70">{pointsUsed} pts × 1 = {fmt(pointsUsed, { decimals: 0 })}</p>
                         </div>
-                        <span>- ₹{pointsUsed.toLocaleString()}</span>
+                        <span>- {fmt(pointsUsed, { decimals: 0 })}</span>
                       </div>
                     )}
-                    {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>- ₹{discount.toLocaleString()}</span></div>}
+                    {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>- {fmt(discount, { decimals: 0 })}</span></div>}
                     <div className="border-t-2 border-dashed border-border/50 my-1" />
-                    <div className="flex justify-between font-bold bg-success/5 rounded-lg px-3 py-2 -mx-1"><span>Total Amount</span><span className="text-success">₹{total.toLocaleString()}</span></div>
+                    <div className="flex justify-between font-bold bg-success/5 rounded-lg px-3 py-2 -mx-1"><span>Total Amount</span><span className="text-success">{fmt(total, { decimals: 0 })}</span></div>
                   </div>
                   {savings > 0 && (
                     <div className="mt-2 p-2 bg-success/5 rounded-lg border border-success/20">
-                      <p className="text-xs text-success font-semibold text-center">🎉 You save ₹{savings.toLocaleString()} on this order!</p>
+                      <p className="text-xs text-success font-semibold text-center">🎉 You save {fmt(savings, { decimals: 0 })} on this order!</p>
                     </div>
                   )}
 
@@ -633,7 +635,7 @@ export default function CustomerCartPage() {
         <div className="fixed left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 3.5rem)' }}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs text-muted-foreground">{cart.reduce((s, i) => s + i.qty, 0)} item(s)</span>
-            <span className="text-sm font-bold">₹{total.toLocaleString()}</span>
+            <span className="text-sm font-bold">{fmt(total, { decimals: 0 })}</span>
           </div>
           <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={placeOrder} disabled={placing}>
             {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed To Checkout"}

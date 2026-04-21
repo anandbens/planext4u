@@ -17,11 +17,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { BannerAd } from "@/components/customer/BannerAd";
 import DOMPurify from "dompurify";
 import { useAuth } from "@/lib/auth";
+import { useCurrency } from "@/lib/country-context";
 
 
 export default function CustomerProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { format: fmt } = useCurrency();
   const { customerUser } = useAuth();
   const isGuest = !customerUser;
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
@@ -198,7 +200,7 @@ export default function CustomerProductPage() {
     if (!product) return;
     const ogImage = (product as any).thumbnail_image || product.image || '';
     const ogDesc = (product as any).short_description || product.description?.slice(0, 160) || '';
-    const ogTitle = `${product.title} - ₹${(product.price + (product.tax || 0)).toLocaleString()} | P4U`;
+    const ogTitle = `${product.title} - ${fmt(product.price + (product.tax || 0), { decimals: 0 })} | P4U`;
     const ogUrl = `${window.location.origin}/app/product/${id}`;
 
     const setMeta = (property: string, content: string) => {
@@ -314,13 +316,13 @@ export default function CustomerProductPage() {
             </div>
 
             {discountPct > 0 && (
-              <p className="text-sm text-success font-semibold mt-2">Extra ₹{discountAmount.toLocaleString()} off</p>
+              <p className="text-sm text-success font-semibold mt-2">Extra {fmt(discountAmount, { decimals: 0 })} off</p>
             )}
 
             <div className="flex items-baseline gap-3 mt-2">
-              <span className="text-2xl md:text-3xl font-bold">₹{displayPrice.toLocaleString()}</span>
+              <span className="text-2xl md:text-3xl font-bold">{fmt(displayPrice, { decimals: 0 })}</span>
               {discountPct > 0 && <>
-                <span className="text-base text-muted-foreground line-through">MRP ₹{originalPrice.toLocaleString()}</span>
+                <span className="text-base text-muted-foreground line-through">MRP {fmt(originalPrice, { decimals: 0 })}</span>
                 <Badge className="bg-success/10 text-success border-0 text-xs font-bold">{discountPct}% OFF</Badge>
               </>}
             </div>
@@ -433,7 +435,7 @@ export default function CustomerProductPage() {
               <Button variant="outline" size="sm" className="gap-2" onClick={async () => {
                 const displayUrl = `https://www.planext4u.net/app/product/${id}`;
                 const ogUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=product&id=${id}`;
-                const text = `Check out ${product.title} - ₹${(product.price + (product.tax || 0)).toLocaleString()} on P4U!`;
+                const text = `Check out ${product.title} - ${fmt(product.price + (product.tax || 0), { decimals: 0 })} on P4U!`;
                 if (navigator.share) {
                   try {
                     const imgUrl = product.thumbnail_image || product.image;

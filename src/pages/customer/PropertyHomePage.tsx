@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { formatPropertyPrice } from "@/lib/property-price";
 
 const PROPERTY_IMAGES = [
   "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&h=400&fit=crop",
@@ -38,10 +39,7 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
 const TRANSACTION_LABELS: Record<string, string> = { rent: "Rent", sale: "Buy", lease: "Lease", pg: "PG" };
 
 function formatPrice(price: number): string {
-  if (price >= 10000000) return `₹${(price / 10000000).toFixed(1)} Cr`;
-  if (price >= 100000) return `₹${(price / 100000).toFixed(1)} L`;
-  if (price >= 1000) return `₹${(price / 1000).toFixed(0)}K`;
-  return `₹${price.toLocaleString("en-IN")}`;
+  return formatPropertyPrice(price);
 }
 
 function getPropertyImages(property: any, index: number = 0): string[] {
