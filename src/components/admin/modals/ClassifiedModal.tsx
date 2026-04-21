@@ -7,7 +7,8 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ClassifiedAd } from "@/lib/api";
-import { Trash2, Plus, X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 
 interface ClassifiedModalProps {
   ad: ClassifiedAd | null;
@@ -22,7 +23,6 @@ interface ClassifiedModalProps {
 export function ClassifiedModal({ ad, open, onOpenChange, mode, onSave, onDelete, onModeChange }: ClassifiedModalProps) {
   const [form, setForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
-  const [newImageUrl, setNewImageUrl] = useState("");
 
   useEffect(() => {
     if (ad) {
@@ -61,10 +61,9 @@ export function ClassifiedModal({ ad, open, onOpenChange, mode, onSave, onDelete
     }
   };
 
-  const addImage = () => {
-    if (!newImageUrl.trim()) return;
-    setForm((f: any) => ({ ...f, images: [...(f.images || []), newImageUrl.trim()] }));
-    setNewImageUrl("");
+  const addImage = (url: string) => {
+    if (!url) return;
+    setForm((f: any) => ({ ...f, images: [...(f.images || []), url] }));
   };
 
   const removeImage = (idx: number) => {
@@ -98,9 +97,13 @@ export function ClassifiedModal({ ad, open, onOpenChange, mode, onSave, onDelete
               ))}
             </div>
             {isEdit && (
-              <div className="flex gap-2 mt-2">
-                <Input placeholder="Paste image URL" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} className="flex-1" />
-                <Button type="button" size="sm" onClick={addImage} variant="outline"><Plus className="h-4 w-4" /></Button>
+              <div className="mt-2">
+                <MediaLibraryPicker
+                  value=""
+                  onChange={(url) => addImage(url)}
+                  folder="classifieds"
+                  label="Add Image from Media Library"
+                />
               </div>
             )}
           </div>

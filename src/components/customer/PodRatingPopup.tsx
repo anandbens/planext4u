@@ -43,7 +43,8 @@ export function PodRatingPopup({ open, onOpenChange, order, customerId, customer
       // Save to delivery_proofs
       const { error } = await supabase.from("delivery_proofs" as any).insert({
         order_id: order.id,
-        customer_id: customerId,
+        // RLS requires customer_id to match auth.uid()::text
+        customer_id: supabaseUid,
         confirmation_type: podForm.confirmation_type,
         recipient_name: podForm.recipient_name || null,
         notes: podForm.notes || null,
