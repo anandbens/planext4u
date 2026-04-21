@@ -228,6 +228,94 @@ const CAROUSEL_BANNERS: Array<{
 
 // ───────────────────── Main handler ─────────────────────
 
+async function runSeed(
+  admin: ReturnType<typeof createClient>,
+  mode: "all" | "carousel" | "products" | "services",
+  limit: number,
+): Promise<{ carousel_added: number; products_updated: number; services_updated: number; errors: string[] }> {
+  const errors: string[] = [];
+  let carousel_added = 0;
+  let products_updated = 0;
+  let services_updated = 0;
+
+  // 1) CAROUSEL — only seed if there are no active banners yet (idempotent)
+  if (mode === "all" || mode === "carousel") {
+    const { count } = await admin
+      .from("homepage_banners")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true);
+    if ((count || 0) === 0) {
+      for (let i = 0; i < CAROUSEL_BANNERS.length; i++) {
+        const b = CAROUSEL_BANNERS[i];
+        try {
+          const url = await generateAndUpload(b.prompt, "homepage-carousel", b.title);
+          const { error } = await admin.from("homepage_banners").insert({
+            title: b.title,
+            subtitle: b.subtitle,
+            media_type: "image",
+            media_url: url,
+            mobile_media_url: url,
+            cta_text: b.cta_text,
+            cta_link: b.cta_link,
+            redirect_type: b.redirect_type,
+            background_gradient: b.bg,
+            display_order: i,
+            is_active: true,
+          } as any);
+          if (error) errors.push(`carousel ${b.title}: ${error.message}`);
+          else carousel_added++;
+        } catch (e: any) {
+          errors.push(`carousel ${b.title}: ${e.message || e}`);
+        }
+      }
+    }
+  }
+
+  // 2) PRODUCTS — fill missing images
+  if (mode === "all" || mode === "products") {
+    const { data: products } = await admin
+      .from("products")
+      .select("id, title, category_name")
+      .or("image.is.null,image.eq.")
+      .eq("status", "active")
+      .limit(limit);
+    for (const p of products || []) {
+      try {
+        const prompt = `Photorealistic e-commerce product photo of "${p.title}"${p.category_name ? ` (${p.category_name})` : ""} on a clean white seamless background, soft studio lighting, sharp focus, centered composition, premium commercial product photography, no text, no watermark, square crop.`;
+        const url = await generateAndUpload(prompt, "homepage-products", p.title);
+        const { error } = await admin.from("products").update({ image: url } as any).eq("id", p.id);
+        if (error) errors.push(`product ${p.id}: ${error.message}`);
+        else products_updated++;
+      } catch (e: any) {
+        errors.push(`product ${p.id}: ${e.message || e}`);
+      }
+    }
+  }
+
+  // 3) SERVICES — fill missing images
+  if (mode === "all" || mode === "services") {
+    const { data: services } = await admin
+      .from("services")
+      .select("id, title, category_name")
+      .or("image.is.null,image.eq.")
+      .eq("status", "active")
+      .limit(limit);
+    for (const s of services || []) {
+      try {
+        const prompt = `Photorealistic lifestyle photograph of a professional providing "${s.title}"${s.category_name ? ` (${s.category_name})` : ""} service in a real Indian home or workspace setting, the professional in clean uniform, warm natural daylight, friendly customer in the background, premium commercial editorial photography, sharp focus, no text, no watermark, square crop.`;
+        const url = await generateAndUpload(prompt, "homepage-services", s.title);
+        const { error } = await admin.from("services").update({ image: url } as any).eq("id", s.id);
+        if (error) errors.push(`service ${s.id}: ${error.message}`);
+        else services_updated++;
+      } catch (e: any) {
+        errors.push(`service ${s.id}: ${e.message || e}`);
+      }
+    }
+  }
+
+  return { carousel_added, products_updated, services_updated, errors };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -264,90 +352,44 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const mode: "all" | "carousel" | "products" | "services" = body.mode || "all";
     const limit: number = Math.max(1, Math.min(20, Number(body.limit) || 8));
+    const background: boolean = body.background !== false; // default true
 
-    const errors: string[] = [];
-    let carousel_added = 0;
-    let products_updated = 0;
-    let services_updated = 0;
-
-    // 1) CAROUSEL — only seed if there are no active banners yet (idempotent)
-    if (mode === "all" || mode === "carousel") {
-      const { count } = await admin
-        .from("homepage_banners")
-        .select("id", { count: "exact", head: true })
-        .eq("is_active", true);
-      if ((count || 0) === 0) {
-        for (let i = 0; i < CAROUSEL_BANNERS.length; i++) {
-          const b = CAROUSEL_BANNERS[i];
-          try {
-            const url = await generateAndUpload(b.prompt, "homepage-carousel", b.title);
-            const { error } = await admin.from("homepage_banners").insert({
-              title: b.title,
-              subtitle: b.subtitle,
-              media_type: "image",
-              media_url: url,
-              mobile_media_url: url,
-              cta_text: b.cta_text,
-              cta_link: b.cta_link,
-              redirect_type: b.redirect_type,
-              background_gradient: b.bg,
-              display_order: i,
-              is_active: true,
-            } as any);
-            if (error) errors.push(`carousel ${b.title}: ${error.message}`);
-            else carousel_added++;
-          } catch (e: any) {
-            errors.push(`carousel ${b.title}: ${e.message || e}`);
-          }
-        }
-      }
+    // Synchronous mode (small jobs): keep old behaviour.
+    // For "all" or carousel-with-many-items the work easily exceeds the
+    // edge function wall-time, so we run it in the background using
+    // EdgeRuntime.waitUntil and return immediately.
+    if (!background && mode !== "all") {
+      const result = await runSeed(admin, mode, limit);
+      return new Response(JSON.stringify(result), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // 2) PRODUCTS — fill missing images
-    if (mode === "all" || mode === "products") {
-      const { data: products } = await admin
-        .from("products")
-        .select("id, title, category_name")
-        .or("image.is.null,image.eq.")
-        .eq("status", "active")
-        .limit(limit);
-      for (const p of products || []) {
-        try {
-          const prompt = `Photorealistic e-commerce product photo of "${p.title}"${p.category_name ? ` (${p.category_name})` : ""} on a clean white seamless background, soft studio lighting, sharp focus, centered composition, premium commercial product photography, no text, no watermark, square crop.`;
-          const url = await generateAndUpload(prompt, "homepage-products", p.title);
-          const { error } = await admin.from("products").update({ image: url } as any).eq("id", p.id);
-          if (error) errors.push(`product ${p.id}: ${error.message}`);
-          else products_updated++;
-        } catch (e: any) {
-          errors.push(`product ${p.id}: ${e.message || e}`);
-        }
+    // Fire-and-forget — keeps the worker alive past the response.
+    const task = (async () => {
+      try {
+        const r = await runSeed(admin, mode, limit);
+        console.log("[seed-homepage-media] done", JSON.stringify(r));
+      } catch (e: any) {
+        console.error("[seed-homepage-media] background error", e?.message || e);
       }
-    }
+    })();
 
-    // 3) SERVICES — fill missing images
-    if (mode === "all" || mode === "services") {
-      const { data: services } = await admin
-        .from("services")
-        .select("id, title, category_name")
-        .or("image.is.null,image.eq.")
-        .eq("status", "active")
-        .limit(limit);
-      for (const s of services || []) {
-        try {
-          const prompt = `Photorealistic lifestyle photograph of a professional providing "${s.title}"${s.category_name ? ` (${s.category_name})` : ""} service in a real Indian home or workspace setting, the professional in clean uniform, warm natural daylight, friendly customer in the background, premium commercial editorial photography, sharp focus, no text, no watermark, square crop.`;
-          const url = await generateAndUpload(prompt, "homepage-services", s.title);
-          const { error } = await admin.from("services").update({ image: url } as any).eq("id", s.id);
-          if (error) errors.push(`service ${s.id}: ${error.message}`);
-          else services_updated++;
-        } catch (e: any) {
-          errors.push(`service ${s.id}: ${e.message || e}`);
-        }
-      }
+    // @ts-ignore — EdgeRuntime is available in Supabase Edge Functions
+    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(task);
     }
 
     return new Response(
-      JSON.stringify({ carousel_added, products_updated, services_updated, errors }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        accepted: true,
+        mode,
+        limit,
+        message:
+          "Image generation started in the background. This typically takes 1–3 minutes. Refresh the homepage shortly to see new images.",
+      }),
+      { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e: any) {
     console.error("[seed-homepage-media]", e);
