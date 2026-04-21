@@ -53,7 +53,7 @@ export default function AdminRiderSettlementsPage() {
       setSettleRider(null); setForm({ method: 'bank_transfer', reference: '', notes: '' });
       load();
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(friendlyError(err, "Failed"));
     } finally { setSaving(false); }
   };
 

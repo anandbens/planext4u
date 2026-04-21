@@ -45,7 +45,7 @@ export default function WebsiteQueriesPage() {
       toast.success(`Reply sent to ${selected.email}`);
       setSelected(null); setReplyText(""); fetchData();
     } catch (e: any) {
-      toast.error(e.message || "Failed to save reply");
+      toast.error(friendlyError(e, "Failed to save reply"));
     }
     setSubmitting(false);
   };

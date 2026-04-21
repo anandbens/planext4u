@@ -70,7 +70,7 @@ export default function AdminNotificationsPage() {
       setBody("");
       setDeepLink("");
     } catch (err: any) {
-      toast.error(err.message || "Failed to send notification");
+      toast.error(friendlyError(err, "Failed to send notification"));
     } finally {
       setSending(false);
     }

@@ -77,7 +77,7 @@ export default function ParentItemsPage() {
       setModalOpen(false);
       fetch();
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(friendlyError(e));
     } finally { setSaving(false); }
   };
 

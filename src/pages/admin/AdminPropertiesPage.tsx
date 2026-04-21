@@ -38,7 +38,7 @@ export default function AdminPropertiesPage() {
 
   const handleApprove = async (id: string) => {
     const { error } = await supabase.from("properties" as any).update({ status: "active" } as any).eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Property approved!");
     queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
     setSelectedProperty(null);
@@ -47,7 +47,7 @@ export default function AdminPropertiesPage() {
   const handleReject = async () => {
     if (!selectedProperty) return;
     const { error } = await supabase.from("properties" as any).update({ status: "rejected", rejection_reason: rejectReason } as any).eq("id", selectedProperty.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Property rejected");
     queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
     setShowRejectDialog(false);

@@ -196,7 +196,7 @@ export default function VendorsPage() {
             max_redemption_percentage: (updates as any).max_redemption_percentage || null,
           };
           const { error: insertErr } = await supabase.from('vendors').insert(newVendor);
-          if (insertErr) { toast.error("Failed to create vendor: " + insertErr.message); return; }
+          if (insertErr) { toast.error(friendlyError(insertErr, "Failed to create vendor")); return; }
           await supabase.from('vendor_applications').update({ status: 'approved' }).eq('id', id);
           const linkResult = await ensureVendorUserRole(
             { user_id: a.user_id, email: a.email, phone: a.phone },
@@ -227,7 +227,7 @@ export default function VendorsPage() {
         await api.updateVendor(id, updates);
         toast.success("Vendor updated");
       } catch (err: any) {
-        toast.error("Failed to update vendor: " + (err.message || "Unknown error"));
+        toast.error(friendlyError(err, "Failed to update vendor"));
         return;
       }
     }
@@ -248,7 +248,7 @@ export default function VendorsPage() {
         toast.success(`${label} vendor created`);
       }
     } catch (err: any) {
-      toast.error("Failed to create vendor: " + (err.message || "Unknown error"));
+      toast.error(friendlyError(err, "Failed to create vendor"));
       return;
     }
     // Jump to the "All" tab so the newly created (verified) vendor is visible right away.
@@ -258,23 +258,23 @@ export default function VendorsPage() {
   };
   const handleDelete = async (id: string) => {
     try { await api.deleteVendor(id); toast.success("Vendor deleted"); fetchData(); fetchStats(); }
-    catch (err: any) { toast.error("Failed to delete vendor: " + (err.message || "Unknown error")); throw err; }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to delete vendor")); throw err; }
   };
 
   const handleBulkDelete = async (ids: string[]) => {
     try { await api.bulkDeleteVendors(ids); toast.success(`${ids.length} vendors deleted`); fetchData(); fetchStats(); }
-    catch (err: any) { toast.error("Failed to delete vendors: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to delete vendors")); }
   };
 
   const handleBulkStatus = async (ids: string[], status: string) => {
     try { await api.bulkUpdateVendorStatus(ids, status); toast.success(`${ids.length} vendors updated to ${status}`); fetchData(); fetchStats(); }
-    catch (err: any) { toast.error("Failed to update vendors: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to update vendors")); }
   };
 
   const requestHardDelete = async (vendor: Vendor) => {
     setHardTarget(vendor); setHardOpen(true); setHardImpact(null); setHardLoading(true);
     try { setHardImpact(await api.getVendorDeletionImpact(vendor.id)); }
-    catch (e: any) { toast.error(e?.message || "Could not load impact"); }
+    catch (e: any) { toast.error(friendlyError(e, "Could not load impact")); }
     finally { setHardLoading(false); }
   };
 
@@ -286,7 +286,7 @@ export default function VendorsPage() {
       toast.success(`${hardTarget.business_name} permanently deleted (${res.cascaded_products} product${res.cascaded_products === 1 ? "" : "s"} cascaded)`);
       fetchData(); fetchStats();
       setHardOpen(false); setHardTarget(null); setHardImpact(null);
-    } catch (e: any) { toast.error(e?.message || "Failed to permanently delete"); }
+    } catch (e: any) { toast.error(friendlyError(e, "Failed to permanently delete")); }
     finally { setHardSubmitting(false); }
   };
 
@@ -345,7 +345,7 @@ export default function VendorsPage() {
               shop_photo_url: a.shop_photo_url || '',
             };
             const { error: insertErr } = await supabase.from('vendors').insert(newVendor as any);
-            if (insertErr) { toast.error("Failed to create vendor: " + insertErr.message); return; }
+            if (insertErr) { toast.error(friendlyError(insertErr, "Failed to create vendor")); return; }
             await supabase.from('vendor_applications').update({ status: 'approved' }).eq('id', vendor.id);
             const linkResult = await ensureVendorUserRole(
               { user_id: a.user_id, email: a.email, phone: a.phone },

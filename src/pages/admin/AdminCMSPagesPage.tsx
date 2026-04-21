@@ -63,7 +63,7 @@ export default function AdminCMSPagesPage() {
       setCreating(false);
       toast.success("Page saved");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(friendlyError(e)),
   });
 
   const openEdit = (page: CMSPage) => {

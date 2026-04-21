@@ -265,7 +265,7 @@ export default function AdminMediaLibraryPage() {
         toast.success(`${successCount} file(s) uploaded to ${targetFolder}`);
         qc.invalidateQueries({ queryKey: ["adminMediaLibrary"] });
       }
-    } catch (err: any) { toast.error(err.message || "Upload failed"); }
+    } catch (err: any) { toast.error(friendlyError(err, "Upload failed")); }
     finally { setUploading(false); }
   };
 
@@ -302,7 +302,7 @@ export default function AdminMediaLibraryPage() {
       if (entries.length === 0) { toast.error("No valid files found in ZIP"); return; }
       await uploadFiles(entries, folderName);
       toast.success(`Extracted ${entries.length} files into folder "${folderName}"`);
-    } catch (err: any) { toast.error("Failed to process ZIP: " + (err.message || "")); }
+    } catch (err: any) { toast.error(friendlyError(err, "Failed to process ZIP")); }
     finally { setZipUploading(false); e.target.value = ""; }
   };
 

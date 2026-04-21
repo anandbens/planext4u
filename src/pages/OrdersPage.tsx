@@ -124,7 +124,7 @@ export default function OrdersPage() {
       toast.success(`${deleteIds.length} order${deleteIds.length > 1 ? 's' : ''} moved to Deleted`);
       fetchData();
     } catch (e: any) {
-      toast.error(e?.message || "Failed to delete");
+      toast.error(friendlyError(e, "Failed to delete"));
     } finally {
       setDeleteLoading(false); setDeleteConfirmOpen(false); setDeleteIds([]);
     }
@@ -135,7 +135,7 @@ export default function OrdersPage() {
       await api.restoreOrders(ids);
       toast.success(`${ids.length} order${ids.length > 1 ? 's' : ''} restored`);
       fetchData();
-    } catch (e: any) { toast.error(e?.message || "Failed to restore"); }
+    } catch (e: any) { toast.error(friendlyError(e, "Failed to restore")); }
   };
 
   const requestHardDelete = async (ids: string[]) => {
@@ -143,7 +143,7 @@ export default function OrdersPage() {
     try {
       const impact = await api.getOrdersDeletionImpact(ids);
       setHardImpact(impact);
-    } catch (e: any) { toast.error(e?.message || "Could not check impact"); }
+    } catch (e: any) { toast.error(friendlyError(e, "Could not check impact")); }
     finally { setHardImpactLoading(false); }
   };
 
@@ -156,7 +156,7 @@ export default function OrdersPage() {
       fetchData();
       setHardOpen(false); setHardIds([]); setHardImpact(null);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to permanently delete orders");
+      toast.error(friendlyError(e, "Failed to permanently delete orders"));
     } finally { setHardSubmitting(false); }
   };
 

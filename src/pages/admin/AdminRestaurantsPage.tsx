@@ -42,7 +42,7 @@ export default function AdminRestaurantsPage() {
 
   const load = async () => {
     const { data, error } = await supabase.from('restaurants').select('*').order('created_at', { ascending: false });
-    if (error) toast.error(error.message);
+    if (error) toast.error(friendlyError(error));
     setList((data as Restaurant[]) || []); setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -68,7 +68,7 @@ export default function AdminRestaurantsPage() {
       cuisine: cuisineInput.split(",").map(s => s.trim()).filter(Boolean),
     };
     const { error } = await supabase.from('restaurants').upsert(payload);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Saved");
     setEditing(null); load();
   };

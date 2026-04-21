@@ -242,7 +242,7 @@ function ModulePanel({ module }: { module: WidgetModule }) {
       qc.invalidateQueries({ queryKey: ["admin_layout", module] });
       qc.invalidateQueries({ queryKey: ["homepage_layout", module] });
     } catch (e: any) {
-      toast.error(e?.message || "Failed to publish");
+      toast.error(friendlyError(e, "Failed to publish"));
     } finally {
       setPublishing(false);
     }
@@ -273,7 +273,7 @@ function ModulePanel({ module }: { module: WidgetModule }) {
       toast.success("Draft restored to published version");
       qc.invalidateQueries({ queryKey: ["admin_layout", module] });
     } catch (e: any) {
-      toast.error(e?.message || "Failed to discard");
+      toast.error(friendlyError(e, "Failed to discard"));
     } finally {
       setDiscarding(false);
     }
@@ -342,7 +342,7 @@ function ModulePanel({ module }: { module: WidgetModule }) {
       is_visible: spec?.requiresConfig ? false : true,
       config: {},
     } as any).select("*").maybeSingle();
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     qc.invalidateQueries({ queryKey: ["admin_layout", module] });
     if (spec?.requiresConfig && inserted) {
       toast.message("Configure this widget before publishing", { description: "It's hidden until you save valid settings." });

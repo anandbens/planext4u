@@ -43,15 +43,15 @@ export default function ProductsPage() {
 
   const handleSave = async (id: string, updates: Partial<Product>) => {
     try { await api.updateProduct(id, updates); toast.success("Product updated"); fetchData(); }
-    catch (err: any) { toast.error("Failed to update product: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to update product")); }
   };
   const handleCreate = async (data: Partial<Product>) => {
     try { await api.createProduct(data); toast.success("Product created"); fetchData(); }
-    catch (err: any) { toast.error("Failed to create product: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to create product")); }
   };
   const handleDelete = async (id: string) => {
     try { await api.deleteProduct(id); toast.success("Product deleted"); fetchData(); }
-    catch (err: any) { toast.error("Failed to delete product: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to delete product")); }
   };
 
   const handleBulkDelete = async (ids: string[]) => {
