@@ -1809,9 +1809,13 @@ export const api = {
       supabase.from('platform_variables').select('key, value').or('key.ilike.homepage_image_%,key.eq.homepage_categories_max,key.eq.homepage_subcategories_per_parent'),
     ]);
 
-    // Build assets map from platform variables
+    // Build assets map from platform variables (image keys) and config keys
     const assets: Record<string, string> = {};
-    (platformVars || []).forEach((v: any) => { assets[v.key] = v.value; });
+    const platformConfig: Record<string, string> = {};
+    (platformVars || []).forEach((v: any) => {
+      if (v.key?.startsWith('homepage_image_')) assets[v.key] = v.value;
+      else platformConfig[v.key] = v.value;
+    });
 
     // Filter products by verified/active vendors only
     let verifiedProducts = featuredProducts || [];
