@@ -397,17 +397,19 @@ export default function CustomerHomePage() {
 
         {/* Location bar only on desktop (mobile header already has it) */}
         <div className="px-4 pt-3 pb-1 hidden md:flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
+          <button type="button" onClick={() => setLocationModalOpen(true)} className="flex items-center gap-1.5 text-left hover:opacity-80 transition-opacity">
             <MapPin className="h-4 w-4 text-primary" />
             <div>
               <p className="text-[10px] text-muted-foreground leading-none">Deliver to</p>
               <p className="text-sm font-bold leading-tight">{detectedLocation || "Set Location"}</p>
             </div>
-          </div>
+          </button>
           <Link to="/app/profile" className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
             <span className="text-sm font-bold">{customerUser?.name?.[0] || "👤"}</span>
           </Link>
         </div>
+
+        <LocationModal open={locationModalOpen} onOpenChange={setLocationModalOpen} onSelect={(loc) => setDetectedLocation(loc)} />
 
         {/* Search is already in CustomerLayout header — no duplicate here */}
 
