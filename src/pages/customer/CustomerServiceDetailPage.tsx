@@ -102,6 +102,44 @@ export default function CustomerServiceDetailPage() {
     enabled: !!id,
   });
 
+  const { data: service, isLoading } = useQuery({
+    queryKey: ["service", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const res = await api.getServices({ per_page: 1000 });
+      const all = (res as any).data || res;
+      return all.find((s: any) => s.id === id) || null;
+    },
+    enabled: !!id,
+  });
+
+  const { data: vendorAvailability } = useQuery({
+    queryKey: ["vendorAvailability", service?.vendor_id, selectedDate],
+    queryFn: async () => {
+      if (!service?.vendor_id || !selectedDate) return null;
+      const dayOfWeek = new Date(selectedDate).getDay();
+      const { data } = await supabase
+        .from("vendor_availability" as any)
+        .select("*")
+        .eq("vendor_id", service.vendor_id)
+        .eq("day_of_week", dayOfWeek)
+        .maybeSingle();
+      return data as any;
+    },
+    enabled: !!service?.vendor_id && !!selectedDate,
+  });
+
+  const toggleServiceWishlist = () => {
+    if (!id) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]');
+      const next = saved.includes(id) ? saved.filter((x: string) => x !== id) : [...saved, id];
+      localStorage.setItem('app_db_service_wishlist', JSON.stringify(next));
+      setIsWishlisted(next.includes(id));
+      toast.success(next.includes(id) ? "Added to wishlist" : "Removed from wishlist");
+    } catch {}
+  };
+
   if (isLoading) return <CustomerLayout><div className="p-8"><Skeleton className="h-96 rounded-2xl" /></div></CustomerLayout>;
   if (!service) return <CustomerLayout><div className="p-8 text-center">Service not found</div></CustomerLayout>;
 
