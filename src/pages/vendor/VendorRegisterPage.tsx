@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { compressToWebP } from "@/lib/webp-compress";
 import { api } from "@/lib/api";
 import { checkVendorPhoneUnique, checkVendorEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
+import { useCountry } from "@/lib/country-context";
 import p4uLogo from "@/assets/p4u-logo.png";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
@@ -20,6 +21,9 @@ const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 export default function VendorRegisterPage() {
   const navigate = useNavigate();
+  const { country } = useCountry();
+  const isIndia = country.code === "IN";
+  const regionLabel = isIndia ? "District" : "City";
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -27,7 +31,7 @@ export default function VendorRegisterPage() {
 
   const [form, setForm] = useState({
     name: '', phone: '', secondary_phone: '',
-    email: '', state: '', district: '',
+    email: '', state: '', district: '', postal_code: '',
     fb_link: '', instagram_link: '',
     business_name: '', business_type: 'proprietorship', store_name: '', category: 'product',
     subcategory: '', business_description: '',
@@ -63,18 +67,21 @@ export default function VendorRegisterPage() {
   };
 
   useEffect(() => {
-    api.getStates().then(setStates);
-  }, []);
+    api.getStates(country.code).then(setStates);
+  }, [country.code]);
 
   useEffect(() => {
-    if (form.state) {
+    if (!form.state) { setDistricts([]); return; }
+    if (isIndia) {
       const st = states.find(s => s.name === form.state);
       if (st) api.getDistricts(st.id).then(setDistricts);
       else setDistricts([]);
     } else {
-      setDistricts([]);
+      api.getCitiesByCountry(country.code, form.state).then((cities) =>
+        setDistricts(cities.map((c) => ({ id: c.id, name: c.name })))
+      );
     }
-  }, [form.state, states]);
+  }, [form.state, states, isIndia, country.code]);
 
   const updateField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
 
@@ -172,7 +179,7 @@ export default function VendorRegisterPage() {
       const payload = {
         user_id: form.email,
         name: form.name, phone: form.phone, secondary_phone: form.secondary_phone,
-        email: form.email, state: form.state, city: form.district, district: form.district,
+        email: form.email, state: form.state, city: form.district, district: form.district, postal_code: form.postal_code || null,
         fb_link: form.fb_link, instagram_link: form.instagram_link,
         business_name: form.business_name, business_type: form.business_type,
         store_name: form.store_name, category: form.category,
@@ -287,13 +294,15 @@ export default function VendorRegisterPage() {
                     {states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select></div>
-              <div><label className="text-xs font-medium text-muted-foreground">District *</label>
+              <div><label className="text-xs font-medium text-muted-foreground">{regionLabel} *</label>
                 <Select value={form.district} onValueChange={v => updateField('district', v)} disabled={!form.state}>
-                  <SelectTrigger><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={form.state ? `Select ${regionLabel}` : "Select state first"} /></SelectTrigger>
                   <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
                     {districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}
                   </SelectContent>
                 </Select></div>
+              <div><label className="text-xs font-medium text-muted-foreground">{isIndia ? "Pincode (optional)" : "Postal code (optional)"}</label>
+                <Input value={form.postal_code} onChange={e => updateField('postal_code', e.target.value)} maxLength={10} /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Facebook</label>
                 <Input value={form.fb_link} onChange={e => updateField('fb_link', e.target.value)} placeholder="https://..." /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Instagram</label>
