@@ -306,6 +306,7 @@ export default function CustomerCartPage() {
     navigate('/app/payment', {
       state: {
         cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings,
+        appliedCartRules, cartRuleDiscount,
         selectedAddress: addresses.find(a => a.id === selectedAddressId),
         deliveryMode,
         deliveryDate: deliveryMode === "scheduled" ? selectedDate?.toISOString() : null,
@@ -643,6 +644,15 @@ export default function CustomerCartPage() {
                       </div>
                     )}
                     {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>- {fmt(discount, { decimals: 0 })}</span></div>}
+                    {appliedCartRules.length > 0 && (
+                      <div className="pt-1">
+                        <CartRuleBreakup
+                          rules={appliedCartRules}
+                          totalDiscount={cartRuleDiscount}
+                          audience="customer"
+                        />
+                      </div>
+                    )}
                     <div className="border-t-2 border-dashed border-border/50 my-1" />
                     <div className="flex justify-between font-bold bg-success/5 rounded-lg px-3 py-2 -mx-1"><span>Total Amount</span><span className="text-success">{fmt(total, { decimals: 0 })}</span></div>
                   </div>
