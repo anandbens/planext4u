@@ -19,6 +19,7 @@ import { resolveCommissionCascade } from "@/lib/commission-cascade";
 import { checkCartStock } from "@/lib/stock-check";
 import { getCustomerAddressOwnerContext, requireCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { useCurrency } from "@/lib/country-context";
+import { CartRuleBreakup, type AppliedCartRule } from "@/components/cart/CartRuleBreakup";
 
 const TIME_SLOTS = [
   { id: "morning", label: "Morning 9 - 11 AM" },
