@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { CountryProvider } from "@/lib/country-context";
 import { useEffect, useState } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { supabase } from "@/integrations/supabase/client";
@@ -574,15 +575,17 @@ const App = () => (
   <ErrorBoundary>
     <ForceUpdateOverlay>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
+        <CountryProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuthProvider>
+        </CountryProvider>
       </QueryClientProvider>
     </ForceUpdateOverlay>
   </ErrorBoundary>
