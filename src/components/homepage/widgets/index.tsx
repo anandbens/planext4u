@@ -81,6 +81,7 @@ registerWidget({
   description: "Wide gradient banner with a headline and CTA button.",
   group: "Banners & promos",
   modules: ["ecommerce", "food", "homes", "socio"],
+  requiresConfig: true,
   fields: [
     {
       key: "variant", label: "Gradient", type: "select", options: [
@@ -96,6 +97,23 @@ registerWidget({
     { key: "cta_text", label: "Button label", type: "text" },
     { key: "cta_link", label: "Button link", type: "url" },
   ],
+  validate: ({ config }) => {
+    const title = String(config.title || "").trim();
+    if (!title) return "Headline is required.";
+    if (title.length > 80) return "Headline must be 80 characters or fewer.";
+    const sub = String(config.subtitle || "").trim();
+    if (sub.length > 160) return "Subtitle must be 160 characters or fewer.";
+    const ctaText = String(config.cta_text || "").trim();
+    const ctaLink = String(config.cta_link || "").trim();
+    if ((ctaText && !ctaLink) || (ctaLink && !ctaText)) {
+      return "Button label and link must both be filled, or both empty.";
+    }
+    if (ctaLink) {
+      const ok = ctaLink.startsWith("/") || /^https?:\/\//i.test(ctaLink);
+      if (!ok) return "Button link must start with / or http(s)://.";
+    }
+    return null;
+  },
   render: ({ config }) => {
     const variant = config.variant || "aurora";
     const cls =
@@ -197,6 +215,15 @@ function CategoryGridWidget({ title, config }: { title?: string; config: Record<
     </section>
   );
 }
+const limitValidator = (max: number) => ({ config }: { config: Record<string, any> }) => {
+  if (config.limit === undefined || config.limit === null || config.limit === "") return null;
+  const n = Number(config.limit);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) return "Limit must be a whole number.";
+  if (n < 1) return "Limit must be at least 1.";
+  if (n > max) return `Limit must be ${max} or fewer.`;
+  return null;
+};
+
 registerWidget({
   type: "category_grid",
   label: "Category grid",
@@ -204,6 +231,7 @@ registerWidget({
   group: "Catalog",
   modules: ["ecommerce"],
   fields: [{ key: "limit", label: "Max categories", type: "number" }],
+  validate: limitValidator(24),
   render: (p) => <CategoryGridWidget title={p.title} config={p.config} />,
 });
 
@@ -247,6 +275,7 @@ registerWidget({
   group: "Catalog",
   modules: ["ecommerce"],
   fields: [{ key: "limit", label: "Max items", type: "number" }],
+  validate: limitValidator(50),
   render: (p) => <ProductRowWidget title={p.title} config={{ ...p.config, filter: "deal" }} viewAllLink="/app/deals" />,
 });
 registerWidget({
@@ -256,6 +285,7 @@ registerWidget({
   group: "Catalog",
   modules: ["ecommerce"],
   fields: [{ key: "limit", label: "Max items", type: "number" }],
+  validate: limitValidator(50),
   render: (p) => <ProductRowWidget title={p.title} config={{ ...p.config, filter: "trending" }} viewAllLink="/app/trending" />,
 });
 registerWidget({
@@ -264,10 +294,17 @@ registerWidget({
   description: "Horizontal product row, optionally filtered by category name.",
   group: "Catalog",
   modules: ["ecommerce"],
+  requiresConfig: true,
   fields: [
     { key: "limit", label: "Max items", type: "number" },
-    { key: "category_name", label: "Category name (optional)", type: "text" },
+    { key: "category_name", label: "Category name", type: "text" },
   ],
+  validate: ({ config }) => {
+    const cat = String(config.category_name || "").trim();
+    if (!cat) return "Category name is required for this row.";
+    if (cat.length > 80) return "Category name must be 80 characters or fewer.";
+    return limitValidator(50)({ config });
+  },
   render: (p) => <ProductRowWidget title={p.title} config={p.config} viewAllLink="/app/browse" />,
 });
 
@@ -325,6 +362,7 @@ registerWidget({
   group: "Vendor & social",
   modules: ["ecommerce"],
   fields: [{ key: "limit", label: "Max vendors", type: "number" }],
+  validate: limitValidator(30),
   render: (p) => <FeaturedVendorsWidget title={p.title} config={p.config} />,
 });
 
@@ -374,6 +412,7 @@ registerWidget({
   group: "Vendor & social",
   modules: ["ecommerce", "homes"],
   fields: [{ key: "limit", label: "Max ads", type: "number" }],
+  validate: limitValidator(30),
   render: (p) => <ClassifiedsStripWidget title={p.title} config={p.config} />,
 });
 
@@ -420,6 +459,7 @@ registerWidget({
   group: "Vendor & social",
   modules: ["ecommerce", "socio"],
   fields: [{ key: "limit", label: "Max posts", type: "number" }],
+  validate: limitValidator(30),
   render: (p) => <SocialPostsWidget title={p.title} config={p.config} />,
 });
 
@@ -432,9 +472,18 @@ registerWidget({
   description: "A simple text/HTML block (use sparingly).",
   group: "Content",
   modules: ["ecommerce", "food", "homes", "socio"],
+  requiresConfig: true,
   fields: [
     { key: "html", label: "HTML content", type: "text" },
   ],
+  validate: ({ config }) => {
+    const html = String(config.html || "").trim();
+    if (!html) return "Content cannot be empty.";
+    if (html.length > 5000) return "Content must be 5000 characters or fewer.";
+    if (/<script\b/i.test(html)) return "Inline <script> tags are not allowed.";
+    if (/\son\w+\s*=/i.test(html)) return "Inline event handlers (onclick, onerror, …) are not allowed.";
+    return null;
+  },
   render: ({ title, config }) => (
     <section className="px-4 py-3">
       {title && <h2 className="text-base font-bold mb-2">{title}</h2>}
@@ -517,6 +566,7 @@ registerWidget({
   group: "Module specific",
   modules: ["food"],
   fields: [{ key: "limit", label: "Max restaurants", type: "number" }],
+  validate: limitValidator(30),
   render: (p) => <FoodTopRestaurantsWidget title={p.title} config={p.config} />,
 });
 
@@ -607,6 +657,7 @@ registerWidget({
   group: "Module specific",
   modules: ["homes"],
   fields: [{ key: "limit", label: "Max properties", type: "number" }],
+  validate: limitValidator(30),
   render: (p) => <HomesFeaturedWidget title={p.title} config={p.config} />,
 });
 
