@@ -37,7 +37,9 @@ const emptyForm = {
   title: "", description: "", short_description: "", long_description: "",
   price: 0, tax: 0, discount: 0,
   max_points_redeemable: 0, status: "draft" as Service["status"],
-  vendor_id: "", vendor_name: "", category_id: "", category_name: "",
+  vendor_id: "", vendor_name: "",
+  category_id: "", category_name: "",
+  subcategory_id: "", subcategory_name: "",
   emoji: "🔧", service_area: "", duration: "1-2 hours",
   image: "",
   meta_title: "", meta_description: "", slug: "",
@@ -81,17 +83,19 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
     enabled: !!vendorState,
   });
 
-  // Vendors filtered to active country via city.country_code
+  // Vendors filtered to active country via city.country_code — SERVICE VENDORS ONLY.
+  // Product-only vendors (those listed in `vendors` but not in `service_vendors`) are excluded.
   const { data: allVendors } = useQuery({
-    queryKey: ["allVendorsForService", activeCountry.code],
+    queryKey: ["serviceVendorsForServiceModal", activeCountry.code],
     queryFn: async () => {
-      const { data: pv } = await supabase.from("vendors").select("id, business_name, mobile, city_id, status").in("status", ["active", "verified"]).order("business_name");
-      const { data: sv } = await supabase.from("service_vendors" as any).select("id, business_name, mobile, city_id, status").eq("status", "active").order("business_name");
-      const combined = [...(pv || []), ...(sv || [])];
-      const seen = new Set();
-      const unique = combined.filter((v: any) => { if (seen.has(v.id)) return false; seen.add(v.id); return true; });
-      const cityIds = [...new Set(unique.map((v: any) => v.city_id).filter(Boolean))];
-      let cityMap: Record<string, { name: string; state: string; state_id?: string }> = {};
+      const { data: sv } = await supabase
+        .from("service_vendors" as any)
+        .select("id, business_name, mobile, city_id, status, vendor_category")
+        .in("status", ["active", "verified", "level1_approved", "level2_approved"])
+        .order("business_name");
+      const list = (sv || []) as any[];
+      const cityIds = [...new Set(list.map((v) => v.city_id).filter(Boolean))];
+      let cityMap: Record<string, { name: string; state: string }> = {};
       if (cityIds.length > 0) {
         const { data: cities } = await supabase
           .from("cities")
@@ -100,9 +104,9 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
           .eq("country_code", activeCountry.code);
         (cities || []).forEach((c: any) => { cityMap[c.id] = { name: c.name, state: c.state }; });
       }
-      return unique
-        .filter((v: any) => !v.city_id || cityMap[v.city_id])
-        .map((v: any) => ({
+      return list
+        .filter((v) => !v.city_id || cityMap[v.city_id])
+        .map((v) => ({
           ...v,
           city_name: cityMap[v.city_id]?.name || "",
           state_name: cityMap[v.city_id]?.state || "",
@@ -133,12 +137,32 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
     return list;
   }, [allVendors, vendorState, vendorDistrict, vendorSearch, states, districts]);
 
+  // Parent service categories (top-level only)
   const { data: dbCategories } = useQuery({
-    queryKey: ["serviceCategoriesForModal"],
+    queryKey: ["serviceParentCategoriesForModal"],
     queryFn: async () => {
-      const { data } = await supabase.from("service_categories" as any).select("id, name").eq("status", "active").order("name");
+      const { data } = await supabase.from("service_categories" as any)
+        .select("id, name, parent_id")
+        .eq("status", "active")
+        .is("parent_id", null)
+        .order("name");
       return (data || []) as any[];
     },
+  });
+
+  // Subcategories for the selected parent
+  const { data: dbSubcategories } = useQuery({
+    queryKey: ["serviceSubcategoriesForModal", form.category_id],
+    queryFn: async () => {
+      if (!form.category_id) return [];
+      const { data } = await supabase.from("service_categories" as any)
+        .select("id, name, parent_id")
+        .eq("status", "active")
+        .eq("parent_id", form.category_id)
+        .order("name");
+      return (data || []) as any[];
+    },
+    enabled: !!form.category_id,
   });
 
   useEffect(() => {
