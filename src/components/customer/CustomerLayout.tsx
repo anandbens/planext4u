@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
-import { LocationModal, loadSelectedLocation } from "@/components/customer/LocationModal";
+import { LocationModal, loadSelectedLocation, LOCATION_CHANGED_EVENT } from "@/components/customer/LocationModal";
 import { SearchAutocomplete } from "@/components/customer/SearchAutocomplete";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
