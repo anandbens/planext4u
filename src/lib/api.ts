@@ -2027,32 +2027,67 @@ export const api = {
     const desiredQty = (existing?.qty || 0) + qty;
 
     // Live stock cross-check before adding/incrementing.
+    //
+    // IMPORTANT: Many vendors run inventory-untracked catalogs (manage_stock = false,
+    // stock_status = 'in_stock') where the `stock` integer is meaningless / always 0.
+    // Treating those as "out of stock" silently breaks the entire add-to-cart flow
+    // (this happened: 993/995 active products were untracked but stock=0, blocking
+    // every customer). Variants always track stock so they remain strictly checked.
     let availableStock: number | null = null;
+    let manageStock = true;
+    let stockStatus: string | null = null;
     try {
       if (variantId) {
-        const { data: v } = await supabase.from('product_variants').select('stock_quantity').eq('id', variantId).maybeSingle();
+        const { data: v } = await supabase
+          .from('product_variants')
+          .select('stock_quantity, stock_status')
+          .eq('id', variantId)
+          .maybeSingle();
         availableStock = (v as any)?.stock_quantity ?? 0;
+        stockStatus = (v as any)?.stock_status ?? null;
+        // Variants always honour stock_quantity — keep manageStock = true.
       } else {
-        const { data: p } = await supabase.from('products').select('stock').eq('id', product.id).maybeSingle();
+        const { data: p } = await supabase
+          .from('products')
+          .select('stock, manage_stock, stock_status')
+          .eq('id', product.id)
+          .maybeSingle();
         availableStock = (p as any)?.stock ?? null;
+        manageStock = (p as any)?.manage_stock ?? true;
+        stockStatus = (p as any)?.stock_status ?? null;
       }
-    } catch { availableStock = null; }
-
-    if (availableStock !== null && availableStock <= 0) {
-      return {
-        success: false,
-        blocked: true,
-        message: `${product.title} is out of stock.`,
-        cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
-      };
+    } catch {
+      availableStock = null;
     }
-    if (availableStock !== null && desiredQty > availableStock) {
-      return {
-        success: false,
-        blocked: true,
-        message: `Only ${availableStock} unit(s) of ${product.title} available.`,
-        cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
-      };
+
+    // Untracked products: only block when explicitly marked out_of_stock.
+    if (!manageStock) {
+      if (stockStatus === 'out_of_stock') {
+        return {
+          success: false,
+          blocked: true,
+          message: `${product.title} is out of stock.`,
+          cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
+        };
+      }
+    } else {
+      // Tracked products: enforce numeric stock.
+      if (availableStock !== null && availableStock <= 0) {
+        return {
+          success: false,
+          blocked: true,
+          message: `${product.title} is out of stock.`,
+          cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
+        };
+      }
+      if (availableStock !== null && desiredQty > availableStock) {
+        return {
+          success: false,
+          blocked: true,
+          message: `Only ${availableStock} unit(s) of ${product.title} available.`,
+          cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
+        };
+      }
     }
 
     if (existing) {
