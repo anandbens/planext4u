@@ -44,6 +44,7 @@ export default function CustomerBrowsePage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [minRating, setMinRating] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string[]>>({});
 
   // Try to get customer's default address first, fallback to GPS
   useEffect(() => {
@@ -82,6 +83,49 @@ export default function CustomerBrowsePage() {
     queryKey: ["browseProducts", categoryFilter, sortBy, searchFilter, userLocation.lat],
     queryFn: () => api.browseProducts({ category: categoryFilter, sort: sortBy, search: searchFilter, userLat: userLocation.lat, userLng: userLocation.lng }),
   });
+
+  // Derive max price + available attribute facets from current product set.
+  const maxPrice = useMemo(() => {
+    const m = Math.max(0, ...((products || []).map((p: any) => Number(p.price) || 0)));
+    return Math.max(1000, Math.ceil(m / 100) * 100);
+  }, [products]);
+
+  const availableAttrs = useMemo(() => {
+    const map = new Map<string, { name: string; values: Set<string> }>();
+    for (const p of (products || []) as any[]) {
+      const attrs = Array.isArray(p.product_attributes) ? p.product_attributes : [];
+      for (const a of attrs) {
+        if (!a?.attribute_id || !Array.isArray(a.values)) continue;
+        const entry = map.get(a.attribute_id) || { name: a.attribute_name || a.attribute_id, values: new Set<string>() };
+        for (const v of a.values) if (v) entry.values.add(String(v));
+        map.set(a.attribute_id, entry);
+      }
+    }
+    return Array.from(map.entries()).map(([id, v]) => ({ id, name: v.name, values: Array.from(v.values).sort() }));
+  }, [products]);
+
+  // Apply local price/rating/attribute filters on top of the server-fetched list.
+  const filteredProducts = useMemo(() => {
+    const activeAttrIds = Object.keys(selectedAttrs).filter((k) => (selectedAttrs[k] || []).length > 0);
+    return (products || []).filter((p: any) => {
+      const price = Number(p.price) || 0;
+      if (price < priceRange[0] || price > priceRange[1]) return false;
+      if ((Number(p.rating) || 0) < minRating) return false;
+      if (activeAttrIds.length > 0) {
+        const productAttrs: any[] = Array.isArray(p.product_attributes) ? p.product_attributes : [];
+        for (const aid of activeAttrIds) {
+          const wanted = selectedAttrs[aid];
+          const found = productAttrs.find((a) => a?.attribute_id === aid);
+          const vals: string[] = found?.values || [];
+          if (!wanted.some((w) => vals.includes(w))) return false;
+        }
+      }
+      return true;
+    });
+  }, [products, priceRange, minRating, selectedAttrs]);
+
+  const activeAttrCount = Object.values(selectedAttrs).reduce((s, v) => s + (v?.length ? 1 : 0), 0);
+  const activeFilterCount = (priceRange[0] > 0 ? 1 : 0) + (priceRange[1] < maxPrice ? 1 : 0) + (minRating > 0 ? 1 : 0) + activeAttrCount;
 
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
 
@@ -181,9 +225,37 @@ export default function CustomerBrowsePage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold">{categoryFilter || searchFilter || "All Products"}</h1>
-            <p className="text-sm text-muted-foreground">{products?.length || 0} products{radiusInfo && ` · ${radiusInfo}`}</p>
+            <p className="text-sm text-muted-foreground">{filteredProducts.length} products{radiusInfo && ` · ${radiusInfo}`}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
+                  <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
+                  {activeFilterCount > 0 && (
+                    <span className="ml-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+                <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
+                <ProductFilterPanel
+                  priceRange={priceRange} setPriceRange={setPriceRange}
+                  minRating={minRating} setMinRating={setMinRating}
+                  maxPrice={maxPrice}
+                  availableAttrs={availableAttrs}
+                  selectedAttrs={selectedAttrs} setSelectedAttrs={setSelectedAttrs}
+                />
+                <SheetFooter className="mt-4 flex-row gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => {
+                    setPriceRange([0, maxPrice]); setMinRating(0); setSelectedAttrs({}); setCurrentPage(1);
+                  }}>Reset</Button>
+                  <Button className="flex-1" onClick={() => { setCurrentPage(1); setFiltersOpen(false); }}>Apply</Button>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-36 h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -289,8 +361,8 @@ export default function CustomerBrowsePage() {
             {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />)}
           </div>
         ) : (() => {
-          const totalPages = Math.ceil((products?.length || 0) / ITEMS_PER_PAGE);
-          const paginated = products?.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE) || [];
+          const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+          const paginated = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
           return (
             <>
               {paginated.length === 0 ? (
