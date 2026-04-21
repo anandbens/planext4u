@@ -15,8 +15,10 @@ import { CheckCircle, Wallet, IndianRupee, Clock, Banknote, XCircle, Eye, Packag
 import { toast } from "sonner";
 import { exportToCSV } from "@/lib/csv";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrency } from "@/lib/country-context";
 
 export default function SettlementsPage() {
+  const { format: fmt } = useCurrency();
   const [data, setData] = useState<PaginatedResponse<Settlement> | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -153,8 +155,8 @@ export default function SettlementsPage() {
 
   const summaryWidgets: SummaryWidget[] = [
     { label: "Total Settlements", value: data.total, icon: <Wallet className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
-    { label: "Order Amount (page)", value: `₹${totalAmount.toLocaleString()}`, icon: <IndianRupee className="h-5 w-5 text-info" />, color: "bg-info/5", textColor: "text-info" },
-    { label: "Commission (page)", value: `₹${totalCommission.toLocaleString()}`, icon: <Banknote className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
+    { label: "Order Amount (page)", value: fmt(totalAmount, { decimals: 0 }), icon: <IndianRupee className="h-5 w-5 text-info" />, color: "bg-info/5", textColor: "text-info" },
+    { label: "Commission (page)", value: fmt(totalCommission, { decimals: 0 }), icon: <Banknote className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
     { label: "Pending/Eligible", value: pendingCount, icon: <Clock className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
   ];
 
@@ -173,9 +175,9 @@ export default function SettlementsPage() {
               {s.order_id}
             </Button>
           )},
-          { key: "amount", label: "Order Amount", render: (s: any) => `₹${s.amount.toLocaleString()}` },
-          { key: "commission", label: "Commission", render: (s: any) => <span className="text-destructive">-₹{s.commission.toLocaleString()}</span> },
-          { key: "net_amount", label: "Net Payout", render: (s: any) => <span className="font-bold text-success">₹{s.net_amount.toLocaleString()}</span> },
+          { key: "amount", label: "Order Amount", render: (s: any) => fmt(s.amount, { decimals: 0 }) },
+          { key: "commission", label: "Commission", render: (s: any) => <span className="text-destructive">-{fmt(s.commission, { decimals: 0 })}</span> },
+          { key: "net_amount", label: "Net Payout", render: (s: any) => <span className="font-bold text-success">{fmt(s.net_amount, { decimals: 0 })}</span> },
           { key: "transaction_reference", label: "Txn Ref", render: (s: any) => <span className="text-xs font-mono">{(s as any).transaction_reference || "—"}</span> },
           { key: "status", label: "Status", render: (s: any) => <StatusBadge status={s.status} /> },
           { key: "created_at", label: "Created", render: (s: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(s.created_at)}</span> },
@@ -232,7 +234,7 @@ export default function SettlementsPage() {
             <div className="p-3 rounded-lg bg-secondary/30 text-sm">
               <p><strong>Settlement:</strong> {settleTarget?.id}</p>
               <p><strong>Vendor:</strong> {settleTarget?.vendor_name}</p>
-              <p><strong>Net Payout:</strong> <span className="text-success font-bold">₹{settleTarget?.net_amount.toLocaleString()}</span></p>
+              <p><strong>Net Payout:</strong> <span className="text-success font-bold">{settleTarget ? fmt(settleTarget.net_amount, { decimals: 0 }) : ""}</span></p>
             </div>
             <div>
               <Label className="text-xs font-semibold">Transaction Reference Number *</Label>
@@ -257,7 +259,7 @@ export default function SettlementsPage() {
             <div className="p-3 rounded-lg bg-destructive/5 text-sm">
               <p><strong>Settlement:</strong> {rejectTarget?.id}</p>
               <p><strong>Vendor:</strong> {rejectTarget?.vendor_name}</p>
-              <p><strong>Amount:</strong> ₹{rejectTarget?.net_amount.toLocaleString()}</p>
+              <p><strong>Amount:</strong> {rejectTarget ? fmt(rejectTarget.net_amount, { decimals: 0 }) : ""}</p>
             </div>
             <div>
               <Label className="text-xs font-semibold text-destructive">Rejection Reason *</Label>
@@ -304,11 +306,11 @@ export default function SettlementsPage() {
                           <div className="flex-1">
                             <p className="text-sm font-medium">{item.emoji || ""} {item.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              Qty: {item.qty} × ₹{item.price?.toLocaleString()}
+                              Qty: {item.qty} × {fmt(item.price || 0, { decimals: 0 })}
                               {item.id && <span className="ml-2 font-mono text-[10px]">({orderDetail.id}-{idx + 1})</span>}
                             </p>
                           </div>
-                          <p className="text-sm font-bold">₹{((item.qty || 1) * (item.price || 0)).toLocaleString()}</p>
+                          <p className="text-sm font-bold">{fmt((item.qty || 1) * (item.price || 0), { decimals: 0 })}</p>
                         </div>
                       </Card>
                     ))}

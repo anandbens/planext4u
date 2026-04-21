@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCurrency } from "@/lib/country-context";
 
 const typeStyle: Record<string, string> = {
   welcome: "bg-primary/10 text-primary",
@@ -20,6 +21,7 @@ const typeStyle: Record<string, string> = {
 };
 
 export default function PointsPage() {
+  const { country } = useCurrency();
   const [stats, setStats] = useState({
     totalIssued: 0, totalRedeemed: 0,
     welcomePts: 0, referralPts: 0, vendorReferralPts: 0,
@@ -68,14 +70,14 @@ export default function PointsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {loading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />) : (
           <>
-            <StatCard title="Total Points Issued" value={stats.totalIssued.toLocaleString('en-IN')} trend={0} icon={Star} gradient="gradient-warning" />
-            <StatCard title="Points Redeemed" value={stats.totalRedeemed.toLocaleString('en-IN')} trend={0} icon={TrendingUp} gradient="gradient-success" />
-            <StatCard title="Welcome Points" value={stats.welcomePts.toLocaleString('en-IN')} trend={0} icon={Gift} gradient="gradient-primary" />
-            <StatCard title="Customer Referral" value={stats.referralPts.toLocaleString('en-IN')} trend={0} icon={Users} gradient="gradient-info" />
-            <StatCard title="Vendor Referral" value={stats.vendorReferralPts.toLocaleString('en-IN')} trend={0} icon={Store} gradient="gradient-info" />
-            <StatCard title="Post Likes" value={stats.postLikePts.toLocaleString('en-IN')} trend={0} icon={Heart} gradient="gradient-destructive" />
-            <StatCard title="Post Shares" value={stats.postSharePts.toLocaleString('en-IN')} trend={0} icon={Share2} gradient="gradient-warning" />
-            <StatCard title="Story Likes" value={stats.storyLikedPts.toLocaleString('en-IN')} trend={0} icon={Camera} gradient="gradient-destructive" />
+            <StatCard title="Total Points Issued" value={stats.totalIssued.toLocaleString(country.locale_code)} trend={0} icon={Star} gradient="gradient-warning" />
+            <StatCard title="Points Redeemed" value={stats.totalRedeemed.toLocaleString(country.locale_code)} trend={0} icon={TrendingUp} gradient="gradient-success" />
+            <StatCard title="Welcome Points" value={stats.welcomePts.toLocaleString(country.locale_code)} trend={0} icon={Gift} gradient="gradient-primary" />
+            <StatCard title="Customer Referral" value={stats.referralPts.toLocaleString(country.locale_code)} trend={0} icon={Users} gradient="gradient-info" />
+            <StatCard title="Vendor Referral" value={stats.vendorReferralPts.toLocaleString(country.locale_code)} trend={0} icon={Store} gradient="gradient-info" />
+            <StatCard title="Post Likes" value={stats.postLikePts.toLocaleString(country.locale_code)} trend={0} icon={Heart} gradient="gradient-destructive" />
+            <StatCard title="Post Shares" value={stats.postSharePts.toLocaleString(country.locale_code)} trend={0} icon={Share2} gradient="gradient-warning" />
+            <StatCard title="Story Likes" value={stats.storyLikedPts.toLocaleString(country.locale_code)} trend={0} icon={Camera} gradient="gradient-destructive" />
           </>
         )}
       </div>
@@ -115,7 +117,7 @@ export default function PointsPage() {
                     <p className={`text-sm font-bold ${t.points >= 0 ? 'text-success' : 'text-destructive'}`}>
                       {t.points >= 0 ? '+' : ''}{t.points}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}</p>
+                    <p className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString(country.locale_code, { month: 'short', day: 'numeric' })}</p>
                   </div>
                 </div>
               ))}

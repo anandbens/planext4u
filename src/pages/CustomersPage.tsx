@@ -190,7 +190,7 @@ export default function CustomersPage() {
     { key: "email", label: "Email" },
     { key: "mobile", label: "Mobile" },
     { key: "occupation", label: "Occupation", render: (u: any) => <span className="text-sm">{u.occupation || '—'}</span> },
-    { key: "wallet_points", label: "Points", render: (u: any) => <span className="font-semibold">{u.wallet_points.toLocaleString()}</span> },
+    { key: "wallet_points", label: "Points", render: (u: any) => <span className="font-semibold">{Number(u.wallet_points || 0).toLocaleString(country.locale_code)}</span> },
     { key: "status", label: "Status", render: (u: any) => <StatusBadge status={u.status} /> },
     { key: "created_at", label: "Created", render: (u: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(u.created_at)}</span> },
     { key: "updated_at", label: "Updated", render: (u: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(u.updated_at || u.created_at)}</span> },
