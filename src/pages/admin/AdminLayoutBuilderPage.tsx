@@ -242,10 +242,17 @@ function ModulePanel({ module }: { module: WidgetModule }) {
   };
 
   const save = async (s: any) => {
+    const spec = getWidget(s.widget_type);
+    const title = String(s.title || "").trim();
+    if (title.length > 80) throw new Error("Title must be 80 characters or fewer.");
+    if (spec?.validate) {
+      const msg = spec.validate({ title, config: s.config || {} });
+      if (msg) throw new Error(msg);
+    }
     const { error } = await supabase.from("homepage_layout_sections" as any).update({
-      title: s.title, config: s.config || {},
+      title, config: s.config || {},
     }).eq("id", s.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) throw new Error(error.message);
     qc.invalidateQueries({ queryKey: ["admin_layout", module] });
     toast.success("Saved");
   };
@@ -254,17 +261,22 @@ function ModulePanel({ module }: { module: WidgetModule }) {
     if (!layout) return;
     const spec = getWidget(widget_type);
     const max = layout.sections.reduce((m, s) => Math.max(m, s.display_order || 0), 0);
-    const { error } = await supabase.from("homepage_layout_sections" as any).insert({
+    const { data: inserted, error } = await supabase.from("homepage_layout_sections" as any).insert({
       layout_id: layout.layout.id,
       widget_type,
       title: spec?.label || widget_type,
       display_order: max + 10,
-      is_visible: true,
+      is_visible: spec?.requiresConfig ? false : true,
       config: {},
-    } as any);
+    } as any).select("*").maybeSingle();
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["admin_layout", module] });
-    toast.success("Widget added");
+    if (spec?.requiresConfig && inserted) {
+      toast.message("Configure this widget before publishing", { description: "It's hidden until you save valid settings." });
+      setEditing(inserted as any);
+    } else {
+      toast.success("Widget added");
+    }
   };
 
   return (
