@@ -56,11 +56,36 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
     return Math.max(1000, Math.ceil(m / 100) * 100);
   }, [products]);
 
+  // Aggregate available attributes across all products in the current set
+  const availableAttrs = useMemo(() => {
+    const map = new Map<string, { name: string; values: Set<string> }>();
+    for (const p of products as any[]) {
+      const attrs = Array.isArray(p.product_attributes) ? p.product_attributes : [];
+      for (const a of attrs) {
+        if (!a?.attribute_id || !Array.isArray(a.values)) continue;
+        const entry = map.get(a.attribute_id) || { name: a.attribute_name || a.attribute_id, values: new Set<string>() };
+        for (const v of a.values) if (v) entry.values.add(String(v));
+        map.set(a.attribute_id, entry);
+      }
+    }
+    return Array.from(map.entries()).map(([id, v]) => ({ id, name: v.name, values: Array.from(v.values).sort() }));
+  }, [products]);
+
   const filtered = useMemo(() => {
+    const activeAttrIds = Object.keys(selectedAttrs).filter((k) => (selectedAttrs[k] || []).length > 0);
     let list = products.filter((p: any) => {
       const price = Number(p.price) || 0;
       if (price < priceRange[0] || price > priceRange[1]) return false;
       if ((Number(p.rating) || 0) < minRating) return false;
+      if (activeAttrIds.length > 0) {
+        const productAttrs: any[] = Array.isArray(p.product_attributes) ? p.product_attributes : [];
+        for (const aid of activeAttrIds) {
+          const wanted = selectedAttrs[aid];
+          const found = productAttrs.find((a) => a?.attribute_id === aid);
+          const vals: string[] = found?.values || [];
+          if (!wanted.some((w) => vals.includes(w))) return false;
+        }
+      }
       return true;
     });
     if (sortBy === "price_low") list = [...list].sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -68,7 +93,7 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
     else if (sortBy === "rating") list = [...list].sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
     else if (sortBy === "discount") list = [...list].sort((a, b) => (Number(b.discount) || 0) - (Number(a.discount) || 0));
     return list;
-  }, [products, priceRange, minRating, sortBy]);
+  }, [products, priceRange, minRating, sortBy, selectedAttrs]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
