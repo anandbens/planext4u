@@ -136,9 +136,11 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
                   priceRange={priceRange} setPriceRange={setPriceRange}
                   minRating={minRating} setMinRating={setMinRating}
                   maxPrice={maxPrice}
+                  availableAttrs={availableAttrs}
+                  selectedAttrs={selectedAttrs} setSelectedAttrs={setSelectedAttrs}
                 />
                 <SheetFooter className="mt-4 flex-row gap-2">
-                  <Button variant="outline" className="flex-1" onClick={() => { setPriceRange([0, maxPrice]); setMinRating(0); setPage(1); }}>Reset</Button>
+                  <Button variant="outline" className="flex-1" onClick={() => { setPriceRange([0, maxPrice]); setMinRating(0); setSelectedAttrs({}); setPage(1); }}>Reset</Button>
                   <Button className="flex-1" onClick={() => { setPage(1); setFiltersOpen(false); }}>Apply</Button>
                 </SheetFooter>
               </SheetContent>
