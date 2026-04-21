@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
-import { LocationModal, loadSelectedLocation } from "@/components/customer/LocationModal";
+import { LocationModal, loadSelectedLocation, LOCATION_CHANGED_EVENT } from "@/components/customer/LocationModal";
 import { SearchAutocomplete } from "@/components/customer/SearchAutocomplete";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -57,6 +57,17 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
       const timer = setTimeout(() => setLocationModalOpen(true), 1000);
       return () => clearTimeout(timer);
     }
+  }, []);
+
+  // Stay in sync if the location changes anywhere in the app (home page bar, other tabs, etc.)
+  useEffect(() => {
+    const sync = () => setSelectedLocation(loadSelectedLocation() || "Set your location");
+    window.addEventListener(LOCATION_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(LOCATION_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   useEffect(() => {

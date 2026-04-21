@@ -11,7 +11,7 @@ import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { SplashScreen } from "@/components/customer/SplashScreen";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
-import { loadSelectedLocation } from "@/components/customer/LocationModal";
+import { LocationModal, loadSelectedLocation, LOCATION_CHANGED_EVENT } from "@/components/customer/LocationModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -272,7 +272,8 @@ export default function CustomerHomePage() {
   const { data, isLoading } = useQuery({ queryKey: ["customerHome"], queryFn: api.getCustomerHome });
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem("p4u_splash_shown"));
   const [showNotifConsent, setShowNotifConsent] = useState(false);
-  const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
+  const [detectedLocation, setDetectedLocation] = useState<string | null>(loadSelectedLocation() || null);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [videoAd, setVideoAd] = useState<any>(null);
   const [searchFocused, setSearchFocused] = useState(false);
 
@@ -355,6 +356,17 @@ export default function CustomerHomePage() {
     });
   }, []);
 
+  // Keep displayed location in sync when changed from header / other tabs
+  useEffect(() => {
+    const sync = () => setDetectedLocation(loadSelectedLocation() || null);
+    window.addEventListener(LOCATION_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(LOCATION_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
   const handleSplashComplete = useCallback(() => { setShowSplash(false); sessionStorage.setItem("p4u_splash_shown", "1"); }, []);
 
   const allCategories = (data?.categories || []) as any[];
@@ -385,17 +397,19 @@ export default function CustomerHomePage() {
 
         {/* Location bar only on desktop (mobile header already has it) */}
         <div className="px-4 pt-3 pb-1 hidden md:flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
+          <button type="button" onClick={() => setLocationModalOpen(true)} className="flex items-center gap-1.5 text-left hover:opacity-80 transition-opacity">
             <MapPin className="h-4 w-4 text-primary" />
             <div>
               <p className="text-[10px] text-muted-foreground leading-none">Deliver to</p>
               <p className="text-sm font-bold leading-tight">{detectedLocation || "Set Location"}</p>
             </div>
-          </div>
+          </button>
           <Link to="/app/profile" className="h-9 w-9 rounded-full bg-secondary flex items-center justify-center">
             <span className="text-sm font-bold">{customerUser?.name?.[0] || "👤"}</span>
           </Link>
         </div>
+
+        <LocationModal open={locationModalOpen} onOpenChange={setLocationModalOpen} onSelect={(loc) => setDetectedLocation(loc)} />
 
         {/* Search is already in CustomerLayout header — no duplicate here */}
 
