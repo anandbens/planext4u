@@ -272,7 +272,8 @@ export default function CustomerHomePage() {
   const { data, isLoading } = useQuery({ queryKey: ["customerHome"], queryFn: api.getCustomerHome });
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem("p4u_splash_shown"));
   const [showNotifConsent, setShowNotifConsent] = useState(false);
-  const [detectedLocation, setDetectedLocation] = useState<string | null>(null);
+  const [detectedLocation, setDetectedLocation] = useState<string | null>(loadSelectedLocation() || null);
+  const [locationModalOpen, setLocationModalOpen] = useState(false);
   const [videoAd, setVideoAd] = useState<any>(null);
   const [searchFocused, setSearchFocused] = useState(false);
 
