@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getLocation } from "@/lib/device-service";
 import { toast } from "sonner";
 import { Search, Navigation, Loader2 } from "lucide-react";
+import { useCountry } from "@/lib/country-context";
 
 const GOOGLE_MAPS_KEY_FALLBACK = "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
 
@@ -45,6 +46,7 @@ interface LocationModalProps {
 }
 
 export function LocationModal({ open, onOpenChange, onSelect }: LocationModalProps) {
+  const { country } = useCountry();
   const [searchQuery, setSearchQuery] = useState("");
   const [locating, setLocating] = useState(false);
   const [suggestions, setSuggestions] = useState<Array<{ description: string; place_id: string }>>([]);
@@ -99,7 +101,9 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
     setSearching(true);
     try {
       const apiKey = await getGoogleMapsKey();
-      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&components=country:IN&key=${apiKey}`);
+      // Bias search results to active country (IN, NG, US, ...)
+      const countryFilter = country?.code ? `&components=country:${country.code}` : "";
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}${countryFilter}&key=${apiKey}`);
       const data = await res.json();
       if (data.status === "OK") {
         setSuggestions(data.results.slice(0, 5).map((r: any) => ({
@@ -111,7 +115,7 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
       }
     } catch {}
     setSearching(false);
-  }, []);
+  }, [country?.code]);
 
   const handleSelectSuggestion = (s: any) => {
     if (s.lat && s.lng) saveSelectedCoords(s.lat, s.lng);

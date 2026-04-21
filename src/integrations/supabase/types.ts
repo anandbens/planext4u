@@ -111,6 +111,7 @@ export type Database = {
         Row: {
           city_id: string
           city_name: string
+          country_code: string
           created_at: string
           id: string
           name: string
@@ -120,6 +121,7 @@ export type Database = {
         Insert: {
           city_id: string
           city_name?: string
+          country_code?: string
           created_at?: string
           id: string
           name: string
@@ -129,6 +131,7 @@ export type Database = {
         Update: {
           city_id?: string
           city_name?: string
+          country_code?: string
           created_at?: string
           id?: string
           name?: string
@@ -142,6 +145,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "areas_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -303,6 +313,145 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_rule_applications: {
+        Row: {
+          applied_at: string
+          bearer_breakup: Json
+          customer_id: string
+          discount_amount: number
+          discount_bearer: string
+          food_order_id: string | null
+          id: string
+          order_id: string | null
+          rule_id: string
+          rule_name: string
+          rule_snapshot: Json | null
+          vendor_id: string | null
+        }
+        Insert: {
+          applied_at?: string
+          bearer_breakup?: Json
+          customer_id: string
+          discount_amount?: number
+          discount_bearer?: string
+          food_order_id?: string | null
+          id?: string
+          order_id?: string | null
+          rule_id: string
+          rule_name: string
+          rule_snapshot?: Json | null
+          vendor_id?: string | null
+        }
+        Update: {
+          applied_at?: string
+          bearer_breakup?: Json
+          customer_id?: string
+          discount_amount?: number
+          discount_bearer?: string
+          food_order_id?: string | null
+          id?: string
+          order_id?: string | null
+          rule_id?: string
+          rule_name?: string
+          rule_snapshot?: Json | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_rule_applications_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "cart_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cart_rules: {
+        Row: {
+          actions: Json
+          bearer_split: Json | null
+          conditions: Json
+          country_code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          discount_bearer: string
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          max_cart_value: number | null
+          max_total_uses: number | null
+          max_uses_per_customer: number
+          min_cart_value: number
+          module: string
+          name: string
+          priority: number
+          scope: string
+          stackable: boolean
+          starts_at: string
+          total_uses: number
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          bearer_split?: Json | null
+          conditions?: Json
+          country_code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_bearer?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_cart_value?: number | null
+          max_total_uses?: number | null
+          max_uses_per_customer?: number
+          min_cart_value?: number
+          module?: string
+          name: string
+          priority?: number
+          scope?: string
+          stackable?: boolean
+          starts_at?: string
+          total_uses?: number
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          bearer_split?: Json | null
+          conditions?: Json
+          country_code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_bearer?: string
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_cart_value?: number | null
+          max_total_uses?: number | null
+          max_uses_per_customer?: number
+          min_cart_value?: number
+          module?: string
+          name?: string
+          priority?: number
+          scope?: string
+          stackable?: boolean
+          starts_at?: string
+          total_uses?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_rules_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       categories: {
         Row: {
           banner_image: string | null
@@ -372,6 +521,7 @@ export type Database = {
       cities: {
         Row: {
           area_count: number
+          country_code: string
           created_at: string
           id: string
           name: string
@@ -380,6 +530,7 @@ export type Database = {
         }
         Insert: {
           area_count?: number
+          country_code?: string
           created_at?: string
           id: string
           name: string
@@ -388,13 +539,22 @@ export type Database = {
         }
         Update: {
           area_count?: number
+          country_code?: string
           created_at?: string
           id?: string
           name?: string
           state?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cities_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       classified_ads: {
         Row: {
@@ -969,6 +1129,7 @@ export type Database = {
         Row: {
           address_line: string
           city: string
+          country_code: string
           created_at: string | null
           customer_id: string
           id: string
@@ -977,12 +1138,14 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           pincode: string
+          postal_code: string | null
           type: string
           updated_at: string | null
         }
         Insert: {
           address_line: string
           city?: string
+          country_code?: string
           created_at?: string | null
           customer_id: string
           id?: string
@@ -991,12 +1154,14 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           pincode?: string
+          postal_code?: string | null
           type?: string
           updated_at?: string | null
         }
         Update: {
           address_line?: string
           city?: string
+          country_code?: string
           created_at?: string | null
           customer_id?: string
           id?: string
@@ -1005,6 +1170,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           pincode?: string
+          postal_code?: string | null
           type?: string
           updated_at?: string | null
         }
@@ -1189,6 +1355,7 @@ export type Database = {
       }
       districts: {
         Row: {
+          country_code: string
           created_at: string
           id: string
           name: string
@@ -1196,6 +1363,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          country_code?: string
           created_at?: string
           id?: string
           name: string
@@ -1203,6 +1371,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          country_code?: string
           created_at?: string
           id?: string
           name?: string
@@ -1210,6 +1379,13 @@ export type Database = {
           status?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "districts_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
           {
             foreignKeyName: "districts_state_id_fkey"
             columns: ["state_id"]
@@ -1919,7 +2095,9 @@ export type Database = {
       food_orders: {
         Row: {
           accepted_at: string | null
+          applied_cart_rules: Json
           cancellation_reason: string | null
+          cart_rule_discount: number
           country_code: string
           coupon_code: string | null
           created_at: string
@@ -1972,7 +2150,9 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string | null
+          applied_cart_rules?: Json
           cancellation_reason?: string | null
+          cart_rule_discount?: number
           country_code?: string
           coupon_code?: string | null
           created_at?: string
@@ -2025,7 +2205,9 @@ export type Database = {
         }
         Update: {
           accepted_at?: string | null
+          applied_cart_rules?: Json
           cancellation_reason?: string | null
+          cart_rule_discount?: number
           country_code?: string
           coupon_code?: string | null
           created_at?: string
@@ -3557,6 +3739,8 @@ export type Database = {
       }
       orders: {
         Row: {
+          applied_cart_rules: Json
+          cart_rule_discount: number
           cgst_amount: number | null
           commission_source: string | null
           country_code: string
@@ -3608,6 +3792,8 @@ export type Database = {
           vendor_state: string | null
         }
         Insert: {
+          applied_cart_rules?: Json
+          cart_rule_discount?: number
           cgst_amount?: number | null
           commission_source?: string | null
           country_code?: string
@@ -3659,6 +3845,8 @@ export type Database = {
           vendor_state?: string | null
         }
         Update: {
+          applied_cart_rules?: Json
+          cart_rule_discount?: number
           cgst_amount?: number | null
           commission_source?: string | null
           country_code?: string
@@ -7064,6 +7252,7 @@ export type Database = {
       states: {
         Row: {
           code: string
+          country_code: string
           created_at: string
           id: string
           name: string
@@ -7071,6 +7260,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          country_code?: string
           created_at?: string
           id?: string
           name: string
@@ -7078,12 +7268,21 @@ export type Database = {
         }
         Update: {
           code?: string
+          country_code?: string
           created_at?: string
           id?: string
           name?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "states_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       support_ticket_messages: {
         Row: {
@@ -8148,6 +8347,16 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      evaluate_cart_rules: {
+        Args: {
+          _country_code?: string
+          _customer_id: string
+          _items: Json
+          _module?: string
+          _subtotal: number
+        }
+        Returns: Json
       }
       fire_push_to_user: {
         Args: {
