@@ -60,16 +60,17 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
   const [vendorDistrict, setVendorDistrict] = useState("");
   const [vendorSearch, setVendorSearch] = useState("");
 
-  // Fetch states
+  const { country: activeCountry } = useCountry();
+
+  // Fetch states (country-aware)
   const { data: states } = useQuery({
-    queryKey: ["statesForServiceVendor"],
+    queryKey: ["statesForServiceVendor", activeCountry.code],
     queryFn: async () => {
-      const { data } = await supabase.from("states" as any).select("id, name").eq("status", "active").order("name");
+      const { data } = await supabase.from("states" as any).select("id, name").eq("status", "active").eq("country_code", activeCountry.code).order("name");
       return (data || []) as any[];
     },
   });
 
-  // Fetch districts based on state
   const { data: districts } = useQuery({
     queryKey: ["districtsForServiceVendor", vendorState],
     queryFn: async () => {
@@ -80,32 +81,32 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
     enabled: !!vendorState,
   });
 
-  // Fetch vendors — use both product vendors and service vendors
+  // Vendors filtered to active country via city.country_code
   const { data: allVendors } = useQuery({
-    queryKey: ["allVendorsForService"],
+    queryKey: ["allVendorsForService", activeCountry.code],
     queryFn: async () => {
-      // Fetch product vendors
       const { data: pv } = await supabase.from("vendors").select("id, business_name, mobile, city_id, status").in("status", ["active", "verified"]).order("business_name");
-      // Fetch service vendors
       const { data: sv } = await supabase.from("service_vendors" as any).select("id, business_name, mobile, city_id, status").eq("status", "active").order("business_name");
-
       const combined = [...(pv || []), ...(sv || [])];
-      // Deduplicate by id
       const seen = new Set();
       const unique = combined.filter((v: any) => { if (seen.has(v.id)) return false; seen.add(v.id); return true; });
-
-      // Get city info
       const cityIds = [...new Set(unique.map((v: any) => v.city_id).filter(Boolean))];
       let cityMap: Record<string, { name: string; state: string; state_id?: string }> = {};
       if (cityIds.length > 0) {
-        const { data: cities } = await supabase.from("cities").select("id, name, state").in("id", cityIds);
+        const { data: cities } = await supabase
+          .from("cities")
+          .select("id, name, state, country_code")
+          .in("id", cityIds)
+          .eq("country_code", activeCountry.code);
         (cities || []).forEach((c: any) => { cityMap[c.id] = { name: c.name, state: c.state }; });
       }
-      return unique.map((v: any) => ({
-        ...v,
-        city_name: cityMap[v.city_id]?.name || "",
-        state_name: cityMap[v.city_id]?.state || "",
-      }));
+      return unique
+        .filter((v: any) => !v.city_id || cityMap[v.city_id])
+        .map((v: any) => ({
+          ...v,
+          city_name: cityMap[v.city_id]?.name || "",
+          state_name: cityMap[v.city_id]?.state || "",
+        }));
     },
   });
 
