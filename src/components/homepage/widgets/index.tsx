@@ -648,6 +648,7 @@ registerWidget({
   group: "Module specific",
   modules: ["homes"],
   fields: [{ key: "limit", label: "Max properties", type: "number" }],
+  validate: limitValidator(30),
   render: (p) => <HomesFeaturedWidget title={p.title} config={p.config} />,
 });
 
