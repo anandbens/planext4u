@@ -225,9 +225,37 @@ export default function CustomerBrowsePage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold">{categoryFilter || searchFilter || "All Products"}</h1>
-            <p className="text-sm text-muted-foreground">{products?.length || 0} products{radiusInfo && ` · ${radiusInfo}`}</p>
+            <p className="text-sm text-muted-foreground">{filteredProducts.length} products{radiusInfo && ` · ${radiusInfo}`}</p>
           </div>
           <div className="flex items-center gap-2">
+            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
+                  <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
+                  {activeFilterCount > 0 && (
+                    <span className="ml-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+                <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
+                <ProductFilterPanel
+                  priceRange={priceRange} setPriceRange={setPriceRange}
+                  minRating={minRating} setMinRating={setMinRating}
+                  maxPrice={maxPrice}
+                  availableAttrs={availableAttrs}
+                  selectedAttrs={selectedAttrs} setSelectedAttrs={setSelectedAttrs}
+                />
+                <SheetFooter className="mt-4 flex-row gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => {
+                    setPriceRange([0, maxPrice]); setMinRating(0); setSelectedAttrs({}); setCurrentPage(1);
+                  }}>Reset</Button>
+                  <Button className="flex-1" onClick={() => { setCurrentPage(1); setFiltersOpen(false); }}>Apply</Button>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-36 h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
