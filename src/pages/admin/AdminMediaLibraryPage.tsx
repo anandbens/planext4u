@@ -21,6 +21,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { resolveB2Url } from "@/lib/b2-upload";
 import { PrivateKycImage } from "@/components/admin/PrivateKycImage";
+import StorageMigrationPanel from "@/components/admin/StorageMigrationPanel";
 
 const DEFAULT_FOLDERS = [
   "banners", "category-images", "category-icons", "product-images",
@@ -360,6 +361,7 @@ export default function AdminMediaLibraryPage() {
         <TabsList className="bg-secondary/50">
           <TabsTrigger value="library" className="gap-2"><Image className="h-4 w-4" /> Media Files</TabsTrigger>
           <TabsTrigger value="kyc" className="gap-2"><Shield className="h-4 w-4" /> KYC Documents</TabsTrigger>
+          <TabsTrigger value="migration" className="gap-2"><CloudUpload className="h-4 w-4" /> Migrate to B2</TabsTrigger>
         </TabsList>
 
         <TabsContent value="library" className="space-y-4">
@@ -579,6 +581,10 @@ export default function AdminMediaLibraryPage() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="migration" className="space-y-4">
+          <StorageMigrationPanel />
         </TabsContent>
       </Tabs>
 
