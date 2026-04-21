@@ -401,7 +401,9 @@ export type Database = {
           area: string
           category: string
           city: string
+          country_code: string
           created_at: string
+          currency_code: string
           description: string
           id: string
           images: Json | null
@@ -415,7 +417,9 @@ export type Database = {
           area?: string
           category?: string
           city?: string
+          country_code?: string
           created_at?: string
+          currency_code?: string
           description?: string
           id: string
           images?: Json | null
@@ -429,7 +433,9 @@ export type Database = {
           area?: string
           category?: string
           city?: string
+          country_code?: string
           created_at?: string
+          currency_code?: string
           description?: string
           id?: string
           images?: Json | null
@@ -598,6 +604,276 @@ export type Database = {
           user_name?: string | null
         }
         Relationships: []
+      }
+      countries: {
+        Row: {
+          code: string
+          created_at: string
+          currency_code: string
+          currency_position: string
+          currency_symbol: string
+          decimal_places: number
+          decimal_separator: string
+          default_tax_rate: number
+          display_order: number
+          flag_emoji: string | null
+          is_active: boolean
+          is_default: boolean
+          locale_code: string
+          name: string
+          phone_prefix: string
+          tax_inclusive: boolean
+          tax_label: string
+          thousands_separator: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          currency_code: string
+          currency_position?: string
+          currency_symbol: string
+          decimal_places?: number
+          decimal_separator?: string
+          default_tax_rate?: number
+          display_order?: number
+          flag_emoji?: string | null
+          is_active?: boolean
+          is_default?: boolean
+          locale_code?: string
+          name: string
+          phone_prefix?: string
+          tax_inclusive?: boolean
+          tax_label?: string
+          thousands_separator?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          currency_code?: string
+          currency_position?: string
+          currency_symbol?: string
+          decimal_places?: number
+          decimal_separator?: string
+          default_tax_rate?: number
+          display_order?: number
+          flag_emoji?: string | null
+          is_active?: boolean
+          is_default?: boolean
+          locale_code?: string
+          name?: string
+          phone_prefix?: string
+          tax_inclusive?: boolean
+          tax_label?: string
+          thousands_separator?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      country_invoice_config: {
+        Row: {
+          compliance_fields: Json
+          country_code: string
+          created_at: string
+          credit_note_prefix: string
+          einvoice_enabled: boolean
+          einvoice_provider: string | null
+          hsn_label: string | null
+          invoice_format: string
+          invoice_prefix: string
+          legal_footer: string | null
+          show_place_of_supply: boolean
+          tax_id_label: string
+          tax_id_required_for_b2b: boolean
+          updated_at: string
+        }
+        Insert: {
+          compliance_fields?: Json
+          country_code: string
+          created_at?: string
+          credit_note_prefix?: string
+          einvoice_enabled?: boolean
+          einvoice_provider?: string | null
+          hsn_label?: string | null
+          invoice_format?: string
+          invoice_prefix?: string
+          legal_footer?: string | null
+          show_place_of_supply?: boolean
+          tax_id_label?: string
+          tax_id_required_for_b2b?: boolean
+          updated_at?: string
+        }
+        Update: {
+          compliance_fields?: Json
+          country_code?: string
+          created_at?: string
+          credit_note_prefix?: string
+          einvoice_enabled?: boolean
+          einvoice_provider?: string | null
+          hsn_label?: string | null
+          invoice_format?: string
+          invoice_prefix?: string
+          legal_footer?: string | null
+          show_place_of_supply?: boolean
+          tax_id_label?: string
+          tax_id_required_for_b2b?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "country_invoice_config_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: true
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      country_payment_gateways: {
+        Row: {
+          config: Json
+          country_code: string
+          created_at: string
+          display_name: string
+          display_order: number
+          gateway: string
+          id: string
+          is_default: boolean
+          is_enabled: boolean
+          mode: string
+          public_key: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          config?: Json
+          country_code: string
+          created_at?: string
+          display_name: string
+          display_order?: number
+          gateway: string
+          id?: string
+          is_default?: boolean
+          is_enabled?: boolean
+          mode?: string
+          public_key?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          config?: Json
+          country_code?: string
+          created_at?: string
+          display_name?: string
+          display_order?: number
+          gateway?: string
+          id?: string
+          is_default?: boolean
+          is_enabled?: boolean
+          mode?: string
+          public_key?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "country_payment_gateways_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      country_switch_log: {
+        Row: {
+          created_at: string
+          from_country_code: string | null
+          id: string
+          metadata: Json
+          reason: string | null
+          switched_by: string | null
+          switched_by_name: string | null
+          to_country_code: string
+        }
+        Insert: {
+          created_at?: string
+          from_country_code?: string | null
+          id?: string
+          metadata?: Json
+          reason?: string | null
+          switched_by?: string | null
+          switched_by_name?: string | null
+          to_country_code: string
+        }
+        Update: {
+          created_at?: string
+          from_country_code?: string | null
+          id?: string
+          metadata?: Json
+          reason?: string | null
+          switched_by?: string | null
+          switched_by_name?: string | null
+          to_country_code?: string
+        }
+        Relationships: []
+      }
+      country_tax_rules: {
+        Row: {
+          applies_to: string
+          country_code: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          is_inclusive: boolean
+          notes: string | null
+          rate: number
+          state_code: string | null
+          tax_name: string
+          tax_type: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string
+          country_code: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_inclusive?: boolean
+          notes?: string | null
+          rate?: number
+          state_code?: string | null
+          tax_name: string
+          tax_type?: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string
+          country_code?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_inclusive?: boolean
+          notes?: string | null
+          rate?: number
+          state_code?: string | null
+          tax_name?: string
+          tax_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "country_tax_rules_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       credit_notes: {
         Row: {
@@ -778,7 +1054,9 @@ export type Database = {
           about: string | null
           area_id: string | null
           city_id: string | null
+          country_code: string
           created_at: string
+          currency_code: string
           deleted_at: string | null
           deletion_reason: string | null
           dob: string | null
@@ -796,13 +1074,17 @@ export type Database = {
           referral_code: string
           referred_by: string | null
           status: string
+          tax_id: string | null
+          tax_id_type: string | null
           wallet_points: number
         }
         Insert: {
           about?: string | null
           area_id?: string | null
           city_id?: string | null
+          country_code?: string
           created_at?: string
+          currency_code?: string
           deleted_at?: string | null
           deletion_reason?: string | null
           dob?: string | null
@@ -820,13 +1102,17 @@ export type Database = {
           referral_code?: string
           referred_by?: string | null
           status?: string
+          tax_id?: string | null
+          tax_id_type?: string | null
           wallet_points?: number
         }
         Update: {
           about?: string | null
           area_id?: string | null
           city_id?: string | null
+          country_code?: string
           created_at?: string
+          currency_code?: string
           deleted_at?: string | null
           deletion_reason?: string | null
           dob?: string | null
@@ -844,6 +1130,8 @@ export type Database = {
           referral_code?: string
           referred_by?: string | null
           status?: string
+          tax_id?: string | null
+          tax_id_type?: string | null
           wallet_points?: number
         }
         Relationships: [
@@ -1428,8 +1716,10 @@ export type Database = {
         Row: {
           accepted_at: string | null
           cancellation_reason: string | null
+          country_code: string
           coupon_code: string | null
           created_at: string
+          currency_code: string
           customer_id: string
           customer_name: string | null
           customer_notes: string | null
@@ -1479,8 +1769,10 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           cancellation_reason?: string | null
+          country_code?: string
           coupon_code?: string | null
           created_at?: string
+          currency_code?: string
           customer_id: string
           customer_name?: string | null
           customer_notes?: string | null
@@ -1530,8 +1822,10 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           cancellation_reason?: string | null
+          country_code?: string
           coupon_code?: string | null
           created_at?: string
+          currency_code?: string
           customer_id?: string
           customer_name?: string | null
           customer_notes?: string | null
@@ -2965,8 +3259,10 @@ export type Database = {
         Row: {
           cgst_amount: number | null
           commission_source: string | null
+          country_code: string
           courier_name: string | null
           created_at: string
+          currency_code: string
           customer_id: string
           customer_name: string | null
           customer_notes: string | null
@@ -3014,8 +3310,10 @@ export type Database = {
         Insert: {
           cgst_amount?: number | null
           commission_source?: string | null
+          country_code?: string
           courier_name?: string | null
           created_at?: string
+          currency_code?: string
           customer_id: string
           customer_name?: string | null
           customer_notes?: string | null
@@ -3063,8 +3361,10 @@ export type Database = {
         Update: {
           cgst_amount?: number | null
           commission_source?: string | null
+          country_code?: string
           courier_name?: string | null
           created_at?: string
+          currency_code?: string
           customer_id?: string
           customer_name?: string | null
           customer_notes?: string | null
@@ -3252,6 +3552,50 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "orders"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_settings: {
+        Row: {
+          active_country_code: string
+          config: Json
+          dropshipping_enabled: boolean
+          id: number
+          last_country_switched_at: string | null
+          last_country_switched_by: string | null
+          multi_currency_display: boolean
+          odoo_integration_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          active_country_code?: string
+          config?: Json
+          dropshipping_enabled?: boolean
+          id?: number
+          last_country_switched_at?: string | null
+          last_country_switched_by?: string | null
+          multi_currency_display?: boolean
+          odoo_integration_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active_country_code?: string
+          config?: Json
+          dropshipping_enabled?: boolean
+          id?: number
+          last_country_switched_at?: string | null
+          last_country_switched_by?: string | null
+          multi_currency_display?: boolean
+          odoo_integration_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_settings_active_country_code_fkey"
+            columns: ["active_country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -3558,7 +3902,9 @@ export type Database = {
           category_id: string | null
           category_name: string | null
           commission_override: number | null
+          country_code: string
           created_at: string
+          currency_code: string
           description: string
           dimensions: Json | null
           discount: number
@@ -3619,7 +3965,9 @@ export type Database = {
           category_id?: string | null
           category_name?: string | null
           commission_override?: number | null
+          country_code?: string
           created_at?: string
+          currency_code?: string
           description?: string
           dimensions?: Json | null
           discount?: number
@@ -3680,7 +4028,9 @@ export type Database = {
           category_id?: string | null
           category_name?: string | null
           commission_override?: number | null
+          country_code?: string
           created_at?: string
+          currency_code?: string
           description?: string
           dimensions?: Json | null
           discount?: number
@@ -5000,7 +5350,9 @@ export type Database = {
           commission_rate: number
           completion_notes: string | null
           completion_photo_url: string | null
+          country_code: string
           created_at: string | null
+          currency_code: string
           customer_address: string | null
           customer_id: string
           customer_name: string | null
@@ -5053,7 +5405,9 @@ export type Database = {
           commission_rate?: number
           completion_notes?: string | null
           completion_photo_url?: string | null
+          country_code?: string
           created_at?: string | null
+          currency_code?: string
           customer_address?: string | null
           customer_id: string
           customer_name?: string | null
@@ -5106,7 +5460,9 @@ export type Database = {
           commission_rate?: number
           completion_notes?: string | null
           completion_photo_url?: string | null
+          country_code?: string
           created_at?: string | null
+          currency_code?: string
           customer_address?: string | null
           customer_id?: string
           customer_name?: string | null
@@ -5229,7 +5585,9 @@ export type Database = {
           category_id: string | null
           city_id: string | null
           commission_rate: number
+          country_code: string
           created_at: string
+          currency_code: string
           deleted_at: string | null
           deletion_reason: string | null
           email: string
@@ -5255,6 +5613,8 @@ export type Database = {
           state_code: string | null
           state_name: string | null
           status: string
+          tax_id: string | null
+          tax_id_type: string | null
           total_orders: number | null
           total_products: number | null
           total_revenue: number | null
@@ -5267,7 +5627,9 @@ export type Database = {
           category_id?: string | null
           city_id?: string | null
           commission_rate?: number
+          country_code?: string
           created_at?: string
+          currency_code?: string
           deleted_at?: string | null
           deletion_reason?: string | null
           email?: string
@@ -5293,6 +5655,8 @@ export type Database = {
           state_code?: string | null
           state_name?: string | null
           status?: string
+          tax_id?: string | null
+          tax_id_type?: string | null
           total_orders?: number | null
           total_products?: number | null
           total_revenue?: number | null
@@ -5305,7 +5669,9 @@ export type Database = {
           category_id?: string | null
           city_id?: string | null
           commission_rate?: number
+          country_code?: string
           created_at?: string
+          currency_code?: string
           deleted_at?: string | null
           deletion_reason?: string | null
           email?: string
@@ -5331,6 +5697,8 @@ export type Database = {
           state_code?: string | null
           state_name?: string | null
           status?: string
+          tax_id?: string | null
+          tax_id_type?: string | null
           total_orders?: number | null
           total_products?: number | null
           total_revenue?: number | null
@@ -5359,7 +5727,9 @@ export type Database = {
           category_id: string | null
           category_name: string | null
           commission_override: number | null
+          country_code: string
           created_at: string
+          currency_code: string
           description: string
           discount: number
           duration: string | null
@@ -5394,7 +5764,9 @@ export type Database = {
           category_id?: string | null
           category_name?: string | null
           commission_override?: number | null
+          country_code?: string
           created_at?: string
+          currency_code?: string
           description?: string
           discount?: number
           duration?: string | null
@@ -5429,7 +5801,9 @@ export type Database = {
           category_id?: string | null
           category_name?: string | null
           commission_override?: number | null
+          country_code?: string
           created_at?: string
+          currency_code?: string
           description?: string
           discount?: number
           duration?: string | null
@@ -7045,7 +7419,9 @@ export type Database = {
           category_id: string | null
           city_id: string | null
           commission_rate: number
+          country_code: string
           created_at: string
+          currency_code: string
           deleted_at: string | null
           deletion_reason: string | null
           email: string
@@ -7071,6 +7447,8 @@ export type Database = {
           state_code: string | null
           state_name: string | null
           status: string
+          tax_id: string | null
+          tax_id_type: string | null
           total_orders: number | null
           total_products: number | null
           total_revenue: number | null
@@ -7083,7 +7461,9 @@ export type Database = {
           category_id?: string | null
           city_id?: string | null
           commission_rate?: number
+          country_code?: string
           created_at?: string
+          currency_code?: string
           deleted_at?: string | null
           deletion_reason?: string | null
           email?: string
@@ -7109,6 +7489,8 @@ export type Database = {
           state_code?: string | null
           state_name?: string | null
           status?: string
+          tax_id?: string | null
+          tax_id_type?: string | null
           total_orders?: number | null
           total_products?: number | null
           total_revenue?: number | null
@@ -7121,7 +7503,9 @@ export type Database = {
           category_id?: string | null
           city_id?: string | null
           commission_rate?: number
+          country_code?: string
           created_at?: string
+          currency_code?: string
           deleted_at?: string | null
           deletion_reason?: string | null
           email?: string
@@ -7147,6 +7531,8 @@ export type Database = {
           state_code?: string | null
           state_name?: string | null
           status?: string
+          tax_id?: string | null
+          tax_id_type?: string | null
           total_orders?: number | null
           total_products?: number | null
           total_revenue?: number | null
@@ -7428,6 +7814,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_active_country: { Args: never; Returns: Json }
+      get_active_country_code: { Args: never; Returns: string }
       get_customer_id: { Args: { _user_id: string }; Returns: string }
       get_friends_of_friends: {
         Args: { _limit?: number; _user: string }
@@ -7522,6 +7910,10 @@ export type Database = {
       save_device_token: {
         Args: { _platform?: string; _token: string; _user_id: string }
         Returns: undefined
+      }
+      switch_active_country: {
+        Args: { _reason?: string; _to_code: string }
+        Returns: Json
       }
       toggle_food_review_helpful: {
         Args: { _review_id: string }
