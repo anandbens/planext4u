@@ -123,15 +123,26 @@ export default function StorageMigrationPanel() {
         body: { mode, limit },
       });
       if (error) throw error;
-      const r = data as { carousel_added: number; products_updated: number; services_updated: number; errors: string[] };
-      const parts = [];
-      if (r.carousel_added) parts.push(`${r.carousel_added} carousel banners`);
-      if (r.products_updated) parts.push(`${r.products_updated} product images`);
-      if (r.services_updated) parts.push(`${r.services_updated} service images`);
-      toast.success(parts.length ? `Added ${parts.join(", ")}` : "Nothing to seed (already populated)");
-      if (r.errors?.length) {
-        console.warn("[seed-homepage-media] errors", r.errors);
-        toast.warning(`${r.errors.length} item(s) failed — see console`);
+      const r = data as {
+        accepted?: boolean;
+        message?: string;
+        carousel_added?: number;
+        products_updated?: number;
+        services_updated?: number;
+        errors?: string[];
+      };
+      if (r.accepted) {
+        toast.success(r.message || "Generation started in background. Refresh homepage in 1–3 minutes.");
+      } else {
+        const parts = [];
+        if (r.carousel_added) parts.push(`${r.carousel_added} carousel banners`);
+        if (r.products_updated) parts.push(`${r.products_updated} product images`);
+        if (r.services_updated) parts.push(`${r.services_updated} service images`);
+        toast.success(parts.length ? `Added ${parts.join(", ")}` : "Nothing to seed (already populated)");
+        if (r.errors?.length) {
+          console.warn("[seed-homepage-media] errors", r.errors);
+          toast.warning(`${r.errors.length} item(s) failed — see console`);
+        }
       }
     } catch (e: any) {
       toast.error(`Seed failed: ${e.message || e}`);
