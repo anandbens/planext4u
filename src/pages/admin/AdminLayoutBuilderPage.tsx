@@ -438,7 +438,7 @@ export default function AdminLayoutBuilderPage() {
     <AdminLayout>
       <div className="page-header">
         <h1 className="page-title">Homepage Layout Builder</h1>
-        <p className="page-description">Drag-and-drop widgets to design each module's homepage. Changes go live instantly.</p>
+        <p className="page-description">Drag-and-drop widgets to design each module's homepage. Edits stay in draft — click <strong>Publish</strong> to make them live.</p>
       </div>
       <Tabs value={tab} onValueChange={(v) => setTab(v as WidgetModule)}>
         <TabsList>
