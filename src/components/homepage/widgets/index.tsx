@@ -472,9 +472,18 @@ registerWidget({
   description: "A simple text/HTML block (use sparingly).",
   group: "Content",
   modules: ["ecommerce", "food", "homes", "socio"],
+  requiresConfig: true,
   fields: [
     { key: "html", label: "HTML content", type: "text" },
   ],
+  validate: ({ config }) => {
+    const html = String(config.html || "").trim();
+    if (!html) return "Content cannot be empty.";
+    if (html.length > 5000) return "Content must be 5000 characters or fewer.";
+    if (/<script\b/i.test(html)) return "Inline <script> tags are not allowed.";
+    if (/\son\w+\s*=/i.test(html)) return "Inline event handlers (onclick, onerror, …) are not allowed.";
+    return null;
+  },
   render: ({ title, config }) => (
     <section className="px-4 py-3">
       {title && <h2 className="text-base font-bold mb-2">{title}</h2>}
