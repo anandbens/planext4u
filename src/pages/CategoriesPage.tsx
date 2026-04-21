@@ -79,6 +79,8 @@ export default function CategoriesPage() {
     exportToCSV(allData, [
       { key: "id", label: "ID" }, { key: "name", label: "Name" },
       { key: "parent_id", label: "Parent ID" },
+      { key: "display_order", label: "Display Order" },
+      { key: "show_on_homepage", label: "Show on Homepage" },
       { key: "count", label: "Products" }, { key: "status", label: "Status" },
       { key: "is_trending", label: "Trending" },
       { key: "verification_status", label: "Verification Status" },
@@ -144,6 +146,14 @@ export default function CategoriesPage() {
             const idx = filtered.indexOf(_c);
             return <span className="text-sm font-medium">{idx + 1}</span>;
           }},
+          { key: "display_order", label: "Order", render: (c) => (
+            <span className="text-xs font-mono px-2 py-0.5 rounded bg-muted">{(c as any).display_order ?? 999}</span>
+          )},
+          { key: "show_on_homepage", label: "On Home", render: (c) => (
+            <Badge className={`text-[10px] border-0 ${(c as any).show_on_homepage !== false ? "bg-success text-white" : "bg-muted text-muted-foreground"}`}>
+              {(c as any).show_on_homepage !== false ? "Yes" : "No"}
+            </Badge>
+          )},
           { key: "name", label: "Name", render: (c) => <span className="font-medium">{c.name}</span> },
           { key: "image", label: "Image", render: (c) => {
             const imgSrc = c.image;
