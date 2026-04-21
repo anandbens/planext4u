@@ -282,7 +282,7 @@ export default function VendorRegisterPage() {
       const payload: any = {
         user_id: customerId,
         name: form.name, phone: form.phone, secondary_phone: form.secondary_phone,
-        email: form.email, state: form.state, city: form.district, district: form.district,
+        email: form.email, state: form.state, city: form.district, district: form.district, postal_code: form.postal_code || null,
         fb_link: form.fb_link, instagram_link: form.instagram_link,
         business_name: form.business_name, business_type: form.business_type,
         store_name: form.store_name, category: form.category,
