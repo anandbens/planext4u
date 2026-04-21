@@ -1219,6 +1219,210 @@ export type Database = {
           },
         ]
       }
+      dropshipping_orders: {
+        Row: {
+          carrier: string | null
+          cost_total: number
+          created_at: string
+          currency_code: string
+          delivered_at: string | null
+          error_message: string | null
+          expected_delivery_date: string | null
+          forwarded_at: string | null
+          id: string
+          items: Json
+          margin_amount: number
+          notes: string | null
+          order_id: string
+          status: string
+          supplier_id: string
+          supplier_order_ref: string | null
+          tracking_number: string | null
+          tracking_url: string | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          carrier?: string | null
+          cost_total?: number
+          created_at?: string
+          currency_code?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          expected_delivery_date?: string | null
+          forwarded_at?: string | null
+          id?: string
+          items?: Json
+          margin_amount?: number
+          notes?: string | null
+          order_id: string
+          status?: string
+          supplier_id: string
+          supplier_order_ref?: string | null
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          carrier?: string | null
+          cost_total?: number
+          created_at?: string
+          currency_code?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          expected_delivery_date?: string | null
+          forwarded_at?: string | null
+          id?: string
+          items?: Json
+          margin_amount?: number
+          notes?: string | null
+          order_id?: string
+          status?: string
+          supplier_id?: string
+          supplier_order_ref?: string | null
+          tracking_number?: string | null
+          tracking_url?: string | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropshipping_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "dropshipping_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dropshipping_supplier_products: {
+        Row: {
+          available_stock: number | null
+          cost_price: number
+          created_at: string
+          currency_code: string
+          id: string
+          is_active: boolean
+          last_synced_at: string | null
+          moq: number
+          product_id: string | null
+          stock_buffer: number
+          supplier_id: string
+          supplier_product_name: string | null
+          supplier_sku: string
+          updated_at: string
+        }
+        Insert: {
+          available_stock?: number | null
+          cost_price?: number
+          created_at?: string
+          currency_code?: string
+          id?: string
+          is_active?: boolean
+          last_synced_at?: string | null
+          moq?: number
+          product_id?: string | null
+          stock_buffer?: number
+          supplier_id: string
+          supplier_product_name?: string | null
+          supplier_sku: string
+          updated_at?: string
+        }
+        Update: {
+          available_stock?: number | null
+          cost_price?: number
+          created_at?: string
+          currency_code?: string
+          id?: string
+          is_active?: boolean
+          last_synced_at?: string | null
+          moq?: number
+          product_id?: string | null
+          stock_buffer?: number
+          supplier_id?: string
+          supplier_product_name?: string | null
+          supplier_sku?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropshipping_supplier_products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "dropshipping_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dropshipping_suppliers: {
+        Row: {
+          api_endpoint: string | null
+          api_key_secret_name: string | null
+          commission_percent: number
+          contact_email: string | null
+          contact_phone: string | null
+          country_code: string | null
+          created_at: string
+          currency_code: string
+          default_lead_time_days: number
+          default_markup_percent: number
+          id: string
+          name: string
+          notes: string | null
+          shipping_methods: Json
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          api_endpoint?: string | null
+          api_key_secret_name?: string | null
+          commission_percent?: number
+          contact_email?: string | null
+          contact_phone?: string | null
+          country_code?: string | null
+          created_at?: string
+          currency_code?: string
+          default_lead_time_days?: number
+          default_markup_percent?: number
+          id?: string
+          name: string
+          notes?: string | null
+          shipping_methods?: Json
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          api_endpoint?: string | null
+          api_key_secret_name?: string | null
+          commission_percent?: number
+          contact_email?: string | null
+          contact_phone?: string | null
+          country_code?: string | null
+          created_at?: string
+          currency_code?: string
+          default_lead_time_days?: number
+          default_markup_percent?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          shipping_methods?: Json
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dropshipping_suppliers_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -2951,6 +3155,102 @@ export type Database = {
         }
         Relationships: []
       }
+      odoo_config: {
+        Row: {
+          api_key_secret_name: string | null
+          base_url: string | null
+          created_at: string
+          database_name: string | null
+          default_warehouse_id: string | null
+          id: number
+          last_sync_at: string | null
+          last_sync_status: string | null
+          sync_customers: boolean
+          sync_inventory: boolean
+          sync_orders: boolean
+          sync_shipments: boolean
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          api_key_secret_name?: string | null
+          base_url?: string | null
+          created_at?: string
+          database_name?: string | null
+          default_warehouse_id?: string | null
+          id?: number
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          sync_customers?: boolean
+          sync_inventory?: boolean
+          sync_orders?: boolean
+          sync_shipments?: boolean
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          api_key_secret_name?: string | null
+          base_url?: string | null
+          created_at?: string
+          database_name?: string | null
+          default_warehouse_id?: string | null
+          id?: number
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          sync_customers?: boolean
+          sync_inventory?: boolean
+          sync_orders?: boolean
+          sync_shipments?: boolean
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      odoo_sync_log: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          direction: string
+          entity_id: string
+          entity_type: string
+          error_message: string | null
+          id: string
+          odoo_record_id: string | null
+          payload: Json | null
+          response: Json | null
+          retry_count: number
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          direction?: string
+          entity_id: string
+          entity_type: string
+          error_message?: string | null
+          id?: string
+          odoo_record_id?: string | null
+          payload?: Json | null
+          response?: Json | null
+          retry_count?: number
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          direction?: string
+          entity_id?: string
+          entity_type?: string
+          error_message?: string | null
+          id?: string
+          odoo_record_id?: string | null
+          payload?: Json | null
+          response?: Json | null
+          retry_count?: number
+          status?: string
+        }
+        Relationships: []
+      }
       onboarding_screens: {
         Row: {
           created_at: string
@@ -3564,6 +3864,7 @@ export type Database = {
           last_country_switched_at: string | null
           last_country_switched_by: string | null
           multi_currency_display: boolean
+          odoo_enabled: boolean
           odoo_integration_enabled: boolean
           updated_at: string
         }
@@ -3575,6 +3876,7 @@ export type Database = {
           last_country_switched_at?: string | null
           last_country_switched_by?: string | null
           multi_currency_display?: boolean
+          odoo_enabled?: boolean
           odoo_integration_enabled?: boolean
           updated_at?: string
         }
@@ -3586,6 +3888,7 @@ export type Database = {
           last_country_switched_at?: string | null
           last_country_switched_by?: string | null
           multi_currency_display?: boolean
+          odoo_enabled?: boolean
           odoo_integration_enabled?: boolean
           updated_at?: string
         }
@@ -7221,6 +7524,47 @@ export type Database = {
           vendor_id?: string
         }
         Relationships: []
+      }
+      vendor_dropshipping_settings: {
+        Row: {
+          auto_forward_orders: boolean
+          created_at: string
+          default_margin_percent: number
+          default_supplier_id: string | null
+          enabled: boolean
+          notify_on_status_change: boolean
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          auto_forward_orders?: boolean
+          created_at?: string
+          default_margin_percent?: number
+          default_supplier_id?: string | null
+          enabled?: boolean
+          notify_on_status_change?: boolean
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          auto_forward_orders?: boolean
+          created_at?: string
+          default_margin_percent?: number
+          default_supplier_id?: string | null
+          enabled?: boolean
+          notify_on_status_change?: boolean
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_dropshipping_settings_default_supplier_id_fkey"
+            columns: ["default_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "dropshipping_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendor_notifications: {
         Row: {
