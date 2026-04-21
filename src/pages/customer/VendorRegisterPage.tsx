@@ -17,6 +17,7 @@ import { compressToWebP } from "@/lib/webp-compress";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { checkVendorPhoneUnique, checkVendorEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
+import { useCountry } from "@/lib/country-context";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -34,6 +35,9 @@ const STATUS_STEPS = [
 export default function VendorRegisterPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
+  const { country } = useCountry();
+  const isIndia = country.code === "IN";
+  const regionLabel = isIndia ? "District" : "City";
   const customerId = customerUser?.customer_id || customerUser?.id || '';
   const [loading, setLoading] = useState(false);
   const [existingApp, setExistingApp] = useState<any>(null);
@@ -54,7 +58,7 @@ export default function VendorRegisterPage() {
 
   const [form, setForm] = useState({
     name: customerUser?.name || '', phone: customerUser?.mobile || '', secondary_phone: '',
-    email: customerUser?.email || '', state: '', district: '',
+    email: customerUser?.email || '', state: '', district: '', postal_code: '',
     fb_link: '', instagram_link: '',
     business_name: '', business_type: 'proprietorship', store_name: '', category: 'product',
     subcategory: '', business_description: '',
@@ -112,18 +116,21 @@ export default function VendorRegisterPage() {
 
   useEffect(() => {
     if (customerId) loadExistingApp();
-    api.getStates().then(setStates);
-  }, [customerId]);
+    api.getStates(country.code).then(setStates);
+  }, [customerId, country.code]);
 
   useEffect(() => {
-    if (form.state) {
+    if (!form.state) { setDistricts([]); return; }
+    if (isIndia) {
       const st = states.find(s => s.name === form.state);
       if (st) api.getDistricts(st.id).then(setDistricts);
       else setDistricts([]);
     } else {
-      setDistricts([]);
+      api.getCitiesByCountry(country.code, form.state).then((cities) =>
+        setDistricts(cities.map((c) => ({ id: c.id, name: c.name })))
+      );
     }
-  }, [form.state, states]);
+  }, [form.state, states, isIndia, country.code]);
 
   const loadExistingApp = async () => {
     setAppLoading(true);
