@@ -3,8 +3,8 @@
  * Converts any image file to WebP with maximum compression.
  */
 
-const WEBP_QUALITY = 0.70; // Aggressive compression
-const MAX_DIMENSION = 2048;
+const WEBP_QUALITY = 0.55; // Maximum compression while keeping acceptable quality
+const MAX_DIMENSION = 1600;
 
 function loadImage(file: File | Blob): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
