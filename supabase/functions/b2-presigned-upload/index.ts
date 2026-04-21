@@ -43,6 +43,15 @@ const B2_BUCKET = readSecret("B2_BUCKET_NAME");
 const B2_ENDPOINT = readSecret("B2_S3_ENDPOINT");
 const B2_PUBLIC_BASE = readSecret("B2_PUBLIC_URL_BASE").replace(/\/+$/, "");
 
+// Cloudflare CDN in front of B2 (Bandwidth Alliance — zero egress cost).
+// When set, the returned `publicUrl` uses this hostname instead of the raw
+// Backblaze Friendly URL, e.g. https://cdn.planext4u.com/<key>. The CDN must
+// be configured in Cloudflare to CNAME → f005.backblazeb2.com (or your bucket's
+// regional hostname) with an ingress rule that rewrites to /file/<bucket>/<key>.
+// Falls back to B2_PUBLIC_BASE if not configured — zero-downtime swap.
+const CDN_PUBLIC_BASE = readSecret("CDN_PUBLIC_URL_BASE").replace(/\/+$/, "");
+const PUBLIC_URL_BASE = CDN_PUBLIC_BASE || B2_PUBLIC_BASE;
+
 // Private bucket (KYC documents, etc.)
 const B2_PRIVATE_KEY_ID = readSecret("B2_PRIVATE_KEY_ID");
 const B2_PRIVATE_APP_KEY = readSecret("B2_PRIVATE_APPLICATION_KEY");
@@ -309,7 +318,8 @@ Deno.serve(async (req: Request) => {
           appKey: B2_APP_KEY,
           bucket: B2_BUCKET,
           endpoint: B2_ENDPOINT,
-          publicBase: B2_PUBLIC_BASE,
+          // Use Cloudflare CDN base when configured, otherwise raw B2 Friendly URL
+          publicBase: PUBLIC_URL_BASE,
         };
 
     // === DIAGNOSTIC LOGGING ===

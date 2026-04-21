@@ -54,9 +54,17 @@ export function useWebRTC({
     iceChannelRef.current = null;
   }, []);
 
-  // Get media stream
+  // Get media stream — probes mic permission first (RECORD_AUDIO on Android,
+  // browser prompt on web) so we surface a clear error instead of an opaque
+  // NotAllowedError when permission was previously denied.
   const getMedia = useCallback(async () => {
     try {
+      const { ensureMicrophonePermission } = await import("@/lib/mic-permission");
+      const perm = await ensureMicrophonePermission();
+      if (!perm.granted) {
+        setError(perm.reason || "Microphone access denied. Please grant permissions.");
+        throw new Error(perm.reason || "Microphone access denied");
+      }
       const constraints: MediaStreamConstraints = {
         audio: true,
         video: callType === "video" ? { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } : false,
@@ -68,7 +76,9 @@ export function useWebRTC({
       }
       return stream;
     } catch (err: any) {
-      setError("Camera/microphone access denied. Please grant permissions.");
+      if (!err?.message?.includes("Microphone")) {
+        setError("Camera/microphone access denied. Please grant permissions.");
+      }
       throw err;
     }
   }, [callType]);
