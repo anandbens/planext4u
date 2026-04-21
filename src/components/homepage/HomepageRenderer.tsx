@@ -17,7 +17,7 @@ import { getWidget, WidgetModule } from "./widget-registry";
 // Side-effect import: registers every widget at module load time
 import "./widgets";
 
-const ADMIN_ROLES = ["admin", "finance", "sales"];
+const ADMIN_ROLES = ["admin", "finance", "sales"] as const;
 
 function useIsPreviewAdmin() {
   const wantsPreview = typeof window !== "undefined" &&
@@ -71,7 +71,7 @@ export function HomepageRenderer({ module, layoutName = "default" }: { module: W
   return (
     <>
       {previewDraft && (
-        <div className="sticky top-0 z-50 bg-amber-500 text-amber-950 text-xs font-semibold text-center py-1.5 px-3 shadow-md">
+        <div className="sticky top-0 z-50 bg-warning text-warning-foreground text-xs font-semibold text-center py-1.5 px-3 shadow-md">
           Preview mode — viewing unpublished draft
         </div>
       )}
