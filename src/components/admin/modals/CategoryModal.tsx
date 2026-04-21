@@ -159,7 +159,40 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
             </div>
           )}
 
-          {/* Image & Icon from Media Library */}
+          {/* Display Order & Homepage visibility */}
+          <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-border/50 bg-muted/20">
+            <div>
+              <Label className="text-xs text-muted-foreground">Display Order</Label>
+              {editMode ? (
+                <Input
+                  type="number"
+                  min="0"
+                  max="9999"
+                  value={form.display_order}
+                  onChange={(e) => setForm({ ...form, display_order: e.target.value })}
+                  className="mt-1"
+                  placeholder="e.g., 10"
+                />
+              ) : (
+                <p className="text-sm mt-1 font-medium">{(category as any)?.display_order ?? 999}</p>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">Lower number shows first</p>
+            </div>
+            <div className="flex flex-col">
+              <Label className="text-xs text-muted-foreground">Show on Homepage</Label>
+              <div className="mt-2">
+                {editMode ? (
+                  <Switch checked={form.show_on_homepage} onCheckedChange={(v) => setForm({ ...form, show_on_homepage: v })} />
+                ) : (
+                  <span className={`text-xs font-semibold ${(category as any)?.show_on_homepage !== false ? 'text-success' : 'text-muted-foreground'}`}>
+                    {(category as any)?.show_on_homepage !== false ? 'Visible' : 'Hidden'}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Controls homepage visibility</p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground">Image</Label>
