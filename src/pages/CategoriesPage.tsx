@@ -139,6 +139,15 @@ export default function CategoriesPage() {
           </SelectContent>
         </Select>
 
+        <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v as TypeFilter); setPage(1); }}>
+          <SelectTrigger className="w-[160px] h-9 text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="product">Product Categories</SelectItem>
+            <SelectItem value="service">Service Categories</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Button variant="outline" size="sm" className="h-9 text-xs gap-1"
           onClick={() => { setCreateAsSubcategory(true); setSelected(null); setModalMode("create"); setModalOpen(true); }}>
           <Plus className="h-3.5 w-3.5" /> Add Subcategory
@@ -160,6 +169,14 @@ export default function CategoriesPage() {
             </Badge>
           )},
           { key: "name", label: "Name", render: (c) => <span className="font-medium">{c.name}</span> },
+          { key: "category_type", label: "Type", render: (c) => {
+            const ct = (c as any).category_type || "product";
+            return (
+              <Badge className={`text-[10px] border-0 ${ct === 'service' ? 'bg-info text-white' : 'bg-primary text-white'}`}>
+                {ct === 'service' ? 'SERVICE' : 'PRODUCT'}
+              </Badge>
+            );
+          }},
           { key: "image", label: "Image", render: (c) => {
             const imgSrc = c.image;
             return imgSrc?.startsWith("/") || imgSrc?.startsWith("http")
