@@ -151,17 +151,42 @@ export default function AdminMediaLibraryPage() {
   const uploadFiles = async (files: File[], targetFolder: string) => {
     setUploading(true);
     let successCount = 0;
-    const MAX_VIDEO_SIZE = 5 * 1024 * 1024;
+    const MAX_VIDEO_SIZE = 500 * 1024 * 1024; // 500MB raw input; we re-encode to 480p H.264
     try {
       const { compressToWebP } = await import("@/lib/webp-compress");
+      const { compressVideoBrowser } = await import("@/lib/browser-video-compress");
       const { uploadToB2 } = await import("@/lib/b2-upload");
       for (const file of files) {
-        if (file.type.startsWith("video/") && file.size > MAX_VIDEO_SIZE) {
-          toast.error(`${file.name} exceeds 5MB video limit`); continue;
-        }
         const isImage = file.type.startsWith("image/");
-        const { blob, contentType } = isImage ? await compressToWebP(file) : { blob: file as Blob, contentType: file.type };
-        const ext = isImage ? "webp" : (file.name.split(".").pop() || "mp4");
+        const isVideo = file.type.startsWith("video/");
+
+        if (isVideo && file.size > MAX_VIDEO_SIZE) {
+          toast.error(`${file.name} exceeds 500MB limit`); continue;
+        }
+
+        let blob: Blob;
+        let contentType: string;
+        let ext: string;
+
+        if (isImage) {
+          const out = await compressToWebP(file);
+          blob = out.blob; contentType = out.contentType; ext = "webp";
+        } else if (isVideo) {
+          // Re-encode to ~480p H.264 (mp4) / VP9 fallback for max storage savings.
+          try {
+            const optimized = await compressVideoBrowser(file);
+            blob = optimized;
+            contentType = optimized.type || "video/mp4";
+            ext = contentType.includes("webm") ? "webm" : "mp4";
+            toast.message(`${file.name}: ${(file.size / 1048576).toFixed(1)}MB → ${(blob.size / 1048576).toFixed(1)}MB`);
+          } catch (encErr) {
+            console.warn("Video re-encode failed, uploading original:", encErr);
+            blob = file; contentType = file.type; ext = file.name.split(".").pop() || "mp4";
+          }
+        } else {
+          blob = file; contentType = file.type; ext = file.name.split(".").pop() || "bin";
+        }
+
         try {
           const { publicUrl } = await uploadToB2(blob, {
             folder: `media-library/${targetFolder}`,
