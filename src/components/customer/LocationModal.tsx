@@ -60,7 +60,7 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
     try {
       const coords = await getLocation();
       if (!coords) {
-        toast.error("Enable location permission to use your current location.");
+        toast.error("Couldn't read your current location. Please try again.");
         return;
       }
 
@@ -91,8 +91,13 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
       onSelect(label);
       saveSelectedLocation(label);
       onOpenChange(false);
-    } catch {
-      toast.error("Could not fetch your current location. Please try again.");
+    } catch (err: any) {
+      // Surface the specific reason instead of a generic "permission denied"
+      // toast — the underlying cause is often GPS off, timeout, or an
+      // insecure origin, NOT a denied permission.
+      const reason = err?.message || "Could not fetch your current location. Please try again.";
+      console.error("[LocationModal] getLocation failed:", err);
+      toast.error(reason, { duration: 6000 });
     } finally {
       setLocating(false);
     }

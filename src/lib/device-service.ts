@@ -63,27 +63,77 @@ export interface DeviceLocation {
 }
 
 export async function getLocation(): Promise<DeviceLocation | null> {
-  try {
-    if (isNativePlatform()) {
-      const { Geolocation } = await import("@capacitor/geolocation");
-      const perm = await Geolocation.requestPermissions();
-      if (perm.location !== "granted" && perm.coarseLocation !== "granted") return null;
-      const pos = await Geolocation.getCurrentPosition({ timeout: 10000 });
-      return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+  if (isNativePlatform()) {
+    const { Geolocation } = await import("@capacitor/geolocation");
+    const perm = await Geolocation.requestPermissions();
+    if (perm.location !== "granted" && perm.coarseLocation !== "granted") {
+      const err: any = new Error("Location permission was denied. Please enable it in your phone's app settings, then retry.");
+      err.code = "PERMISSION_DENIED";
+      throw err;
     }
-
-    // Web fallback
-    return new Promise((resolve) => {
-      if (!navigator.geolocation) { resolve(null); return; }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => resolve(null),
-        { timeout: 10000 }
-      );
-    });
-  } catch {
-    return null;
+    try {
+      // Try high-accuracy GPS first; fall back to a low-accuracy / cached
+      // last-known position when GPS isn't ready (very common indoors).
+      const pos = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60_000,
+      });
+      return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    } catch (e: any) {
+      try {
+        const pos = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: false,
+          timeout: 15000,
+          maximumAge: 5 * 60_000,
+        });
+        return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      } catch (e2: any) {
+        const raw = String(e2?.message || e?.message || "").toLowerCase();
+        const friendly =
+          raw.includes("location services") || raw.includes("disabled") || raw.includes("kclerror")
+            ? "Location services (GPS) are turned off on your phone. Open your phone's Settings → Location and turn it ON, then retry."
+            : raw.includes("timeout")
+              ? "Couldn't get a GPS fix in time. Move closer to a window or step outside and retry."
+              : `Unable to read your location (${e2?.message || e?.message || "unknown error"}).`;
+        const err: any = new Error(friendly);
+        err.code = "POSITION_UNAVAILABLE";
+        throw err;
+      }
+    }
   }
+
+  // Web fallback — surface the actual browser error reason.
+  return await new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      const err: any = new Error("This browser does not support location services.");
+      err.code = "UNSUPPORTED";
+      reject(err);
+      return;
+    }
+    const isSecure = window.isSecureContext || window.location.hostname === "localhost";
+    if (!isSecure) {
+      const err: any = new Error("Location requires a secure (https) connection.");
+      err.code = "INSECURE_ORIGIN";
+      reject(err);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (geoErr) => {
+        const map: Record<number, { code: string; msg: string }> = {
+          1: { code: "PERMISSION_DENIED", msg: "Location permission was blocked by the browser. Tap the lock icon in the address bar, allow Location, then retry." },
+          2: { code: "POSITION_UNAVAILABLE", msg: "Your device couldn't determine its position. Check that GPS / Location services are enabled." },
+          3: { code: "TIMEOUT", msg: "Getting your location took too long. Move to a spot with better signal and retry." },
+        };
+        const info = map[geoErr.code] || { code: "UNKNOWN", msg: geoErr.message || "Could not read your location." };
+        const err: any = new Error(info.msg);
+        err.code = info.code;
+        reject(err);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60_000 },
+    );
+  });
 }
 
 // ─── PUSH NOTIFICATIONS ─────────────────────────────────

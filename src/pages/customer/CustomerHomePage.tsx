@@ -353,7 +353,7 @@ export default function CustomerHomePage() {
           if (city) setDetectedLocation(`${city}${state ? `, ${state}` : ""}`);
         }
       } catch { /* silent */ }
-    });
+    }).catch(() => { /* background detect — ignore errors */ });
   }, []);
 
   // Keep displayed location in sync when changed from header / other tabs
