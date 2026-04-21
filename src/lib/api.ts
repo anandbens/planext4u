@@ -1169,6 +1169,12 @@ export const api = {
       await supabase.from('customers').update({ wallet_points: customer.wallet_points - pointsUsed }).eq('id', customer.id);
     }
 
+    // Optional Odoo ERP sync (no-op if disabled)
+    try {
+      const { maybePushOrderToOdoo } = await import('@/lib/odoo-sync');
+      orders.forEach(o => { void maybePushOrderToOdoo(o.id); });
+    } catch {}
+
     return { success: true, orders };
   },
 
