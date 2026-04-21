@@ -19,12 +19,15 @@ async function getGoogleMapsKey(): Promise<string> {
   }
 }
 
+export const LOCATION_CHANGED_EVENT = "p4u:location-changed";
+
 export function loadSelectedLocation(): string {
   return localStorage.getItem("app_db_selected_location") || "";
 }
 
 export function saveSelectedLocation(loc: string) {
   localStorage.setItem("app_db_selected_location", loc);
+  try { window.dispatchEvent(new CustomEvent(LOCATION_CHANGED_EVENT, { detail: { location: loc } })); } catch {}
 }
 
 export function loadSelectedCoords(): { lat: number; lng: number } | null {
