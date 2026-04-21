@@ -84,6 +84,49 @@ export default function CustomerBrowsePage() {
     queryFn: () => api.browseProducts({ category: categoryFilter, sort: sortBy, search: searchFilter, userLat: userLocation.lat, userLng: userLocation.lng }),
   });
 
+  // Derive max price + available attribute facets from current product set.
+  const maxPrice = useMemo(() => {
+    const m = Math.max(0, ...((products || []).map((p: any) => Number(p.price) || 0)));
+    return Math.max(1000, Math.ceil(m / 100) * 100);
+  }, [products]);
+
+  const availableAttrs = useMemo(() => {
+    const map = new Map<string, { name: string; values: Set<string> }>();
+    for (const p of (products || []) as any[]) {
+      const attrs = Array.isArray(p.product_attributes) ? p.product_attributes : [];
+      for (const a of attrs) {
+        if (!a?.attribute_id || !Array.isArray(a.values)) continue;
+        const entry = map.get(a.attribute_id) || { name: a.attribute_name || a.attribute_id, values: new Set<string>() };
+        for (const v of a.values) if (v) entry.values.add(String(v));
+        map.set(a.attribute_id, entry);
+      }
+    }
+    return Array.from(map.entries()).map(([id, v]) => ({ id, name: v.name, values: Array.from(v.values).sort() }));
+  }, [products]);
+
+  // Apply local price/rating/attribute filters on top of the server-fetched list.
+  const filteredProducts = useMemo(() => {
+    const activeAttrIds = Object.keys(selectedAttrs).filter((k) => (selectedAttrs[k] || []).length > 0);
+    return (products || []).filter((p: any) => {
+      const price = Number(p.price) || 0;
+      if (price < priceRange[0] || price > priceRange[1]) return false;
+      if ((Number(p.rating) || 0) < minRating) return false;
+      if (activeAttrIds.length > 0) {
+        const productAttrs: any[] = Array.isArray(p.product_attributes) ? p.product_attributes : [];
+        for (const aid of activeAttrIds) {
+          const wanted = selectedAttrs[aid];
+          const found = productAttrs.find((a) => a?.attribute_id === aid);
+          const vals: string[] = found?.values || [];
+          if (!wanted.some((w) => vals.includes(w))) return false;
+        }
+      }
+      return true;
+    });
+  }, [products, priceRange, minRating, selectedAttrs]);
+
+  const activeAttrCount = Object.values(selectedAttrs).reduce((s, v) => s + (v?.length ? 1 : 0), 0);
+  const activeFilterCount = (priceRange[0] > 0 ? 1 : 0) + (priceRange[1] < maxPrice ? 1 : 0) + (minRating > 0 ? 1 : 0) + activeAttrCount;
+
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
 
   // Detect category & subcategories for sectioned layout
