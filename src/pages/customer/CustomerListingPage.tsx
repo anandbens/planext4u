@@ -29,6 +29,7 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [minRating, setMinRating] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string[]>>({});
 
   const title = mode === "deals" ? "Deals of the Day" : "Trending Products";
   const subtitle = mode === "deals" ? "Hand-picked deals you can't miss" : "Top-rated favourites loved by customers";
