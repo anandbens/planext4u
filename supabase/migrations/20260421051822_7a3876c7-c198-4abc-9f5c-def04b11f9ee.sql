@@ -1,0 +1,2 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_deal_of_day boolean NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS idx_products_is_deal_of_day ON public.products(is_deal_of_day) WHERE is_deal_of_day = true;

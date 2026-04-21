@@ -3497,6 +3497,7 @@ export type Database = {
           images: Json | null
           inactivation_reason: string | null
           is_available: boolean | null
+          is_deal_of_day: boolean
           long_description: string | null
           manage_stock: boolean | null
           max_points_redeemable: number
@@ -3557,6 +3558,7 @@ export type Database = {
           images?: Json | null
           inactivation_reason?: string | null
           is_available?: boolean | null
+          is_deal_of_day?: boolean
           long_description?: string | null
           manage_stock?: boolean | null
           max_points_redeemable?: number
@@ -3617,6 +3619,7 @@ export type Database = {
           images?: Json | null
           inactivation_reason?: string | null
           is_available?: boolean | null
+          is_deal_of_day?: boolean
           long_description?: string | null
           manage_stock?: boolean | null
           max_points_redeemable?: number
