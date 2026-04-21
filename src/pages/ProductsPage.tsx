@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Eye, Pencil, Trash2, Package, IndianRupee, Tag, TrendingUp, CheckCircle, XCircle, Sparkles } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 
 export default function ProductsPage() {
   const [activeTab, setActiveTab] = useState("all");

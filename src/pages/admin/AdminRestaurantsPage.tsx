@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { Restaurant, MenuCategory, MenuItem, foodApi } from "@/lib/food-api";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { Plus, Pencil, Utensils, Trash2 } from "lucide-react";
 
 const empty: Partial<Restaurant> = {

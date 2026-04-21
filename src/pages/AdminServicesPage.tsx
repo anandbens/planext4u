@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Eye, Pencil, Trash2, Wrench, Star, IndianRupee, CheckCircle, Check, X as XIcon, Clock as ClockIcon } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 
 type TabKey = "all" | "pending_approval" | "active" | "rejected" | "draft";

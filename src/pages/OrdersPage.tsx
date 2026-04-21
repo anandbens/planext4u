@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, Pencil, Ban, ShoppingCart, IndianRupee, Clock, CheckCircle, Trash2, RotateCcw, Wrench, Package } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { useCurrency } from "@/lib/country-context";
 
 type TabKey = "product" | "service" | "deleted";

@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdvertisementModal } from "@/components/admin/modals/AdvertisementModal";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";

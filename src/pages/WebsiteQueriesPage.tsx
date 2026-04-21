@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Reply, CheckCircle, Clock, Mail } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function WebsiteQueriesPage() {

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { foodApi } from "@/lib/food-api";
 import { PrivateKycImage } from "@/components/admin/PrivateKycImage";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 export default function AdminRiderKYCPage() {
