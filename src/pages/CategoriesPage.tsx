@@ -15,6 +15,7 @@ import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 type StatusFilter = "all" | "active" | "inactive";
 type TrendingFilter = "all" | "yes" | "no";
 type VerificationFilter = "all" | "verified" | "unverified";
+type TypeFilter = "all" | "product" | "service";
 
 export default function CategoriesPage() {
   const [allData, setAllData] = useState<Category[]>([]);
@@ -28,6 +29,7 @@ export default function CategoriesPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [trendingFilter, setTrendingFilter] = useState<TrendingFilter>("all");
   const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [createAsSubcategory, setCreateAsSubcategory] = useState(false);
 
   const fetchData = useCallback(() => {
@@ -53,6 +55,8 @@ export default function CategoriesPage() {
     if (trendingFilter === "no" && c.is_trending) return false;
     const vs = (c as any).verification_status || "unverified";
     if (verificationFilter !== "all" && vs !== verificationFilter) return false;
+    const ct = (c as any).category_type || "product";
+    if (typeFilter !== "all" && ct !== typeFilter) return false;
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     if (c.name.toLowerCase().includes(q)) return true;
@@ -79,6 +83,7 @@ export default function CategoriesPage() {
     exportToCSV(allData, [
       { key: "id", label: "ID" }, { key: "name", label: "Name" },
       { key: "parent_id", label: "Parent ID" },
+      { key: "category_type", label: "Category Type" },
       { key: "display_order", label: "Display Order" },
       { key: "show_on_homepage", label: "Show on Homepage" },
       { key: "count", label: "Products" }, { key: "status", label: "Status" },
@@ -134,6 +139,15 @@ export default function CategoriesPage() {
           </SelectContent>
         </Select>
 
+        <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v as TypeFilter); setPage(1); }}>
+          <SelectTrigger className="w-[160px] h-9 text-xs"><SelectValue placeholder="Type" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="product">Product Categories</SelectItem>
+            <SelectItem value="service">Service Categories</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Button variant="outline" size="sm" className="h-9 text-xs gap-1"
           onClick={() => { setCreateAsSubcategory(true); setSelected(null); setModalMode("create"); setModalOpen(true); }}>
           <Plus className="h-3.5 w-3.5" /> Add Subcategory
@@ -155,6 +169,14 @@ export default function CategoriesPage() {
             </Badge>
           )},
           { key: "name", label: "Name", render: (c) => <span className="font-medium">{c.name}</span> },
+          { key: "category_type", label: "Type", render: (c) => {
+            const ct = (c as any).category_type || "product";
+            return (
+              <Badge className={`text-[10px] border-0 ${ct === 'service' ? 'bg-info text-white' : 'bg-primary text-white'}`}>
+                {ct === 'service' ? 'SERVICE' : 'PRODUCT'}
+              </Badge>
+            );
+          }},
           { key: "image", label: "Image", render: (c) => {
             const imgSrc = c.image;
             return imgSrc?.startsWith("/") || imgSrc?.startsWith("http")

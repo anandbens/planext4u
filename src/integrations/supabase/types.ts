@@ -455,6 +455,7 @@ export type Database = {
       categories: {
         Row: {
           banner_image: string | null
+          category_type: string
           commission_rate: number | null
           count: number
           created_at: string
@@ -476,6 +477,7 @@ export type Database = {
         }
         Insert: {
           banner_image?: string | null
+          category_type?: string
           commission_rate?: number | null
           count?: number
           created_at?: string
@@ -497,6 +499,7 @@ export type Database = {
         }
         Update: {
           banner_image?: string | null
+          category_type?: string
           commission_rate?: number | null
           count?: number
           created_at?: string

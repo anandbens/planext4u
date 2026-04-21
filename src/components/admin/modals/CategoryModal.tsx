@@ -33,6 +33,7 @@ const emptyForm = {
   promotion_banner_url: "", promotion_title: "", promotion_active: false,
   is_emergency: false, verification_status: "unverified" as string,
   display_order: "" as string, show_on_homepage: true,
+  category_type: "product" as "product" | "service",
 };
 
 export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories, defaultAsSubcategory }: CategoryModalProps) {
@@ -47,6 +48,9 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
       // If creating as subcategory and category has parent_id preset
       if (defaultAsSubcategory && category?.parent_id) {
         initialForm.parent_id = category.parent_id;
+        // Inherit parent's category_type
+        const parent = (parentCategories || []).find(p => p.id === category.parent_id);
+        if (parent?.category_type) initialForm.category_type = parent.category_type;
       }
       setForm(initialForm);
       setEditMode(true);
@@ -64,10 +68,11 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         verification_status: (category as any).verification_status || "unverified",
         display_order: (category as any).display_order != null ? String((category as any).display_order) : "",
         show_on_homepage: (category as any).show_on_homepage !== false,
+        category_type: (category.category_type as any) || "product",
       });
       setEditMode(mode === "edit");
     }
-  }, [category, mode, defaultAsSubcategory]);
+  }, [category, mode, defaultAsSubcategory, parentCategories]);
 
   const handleSave = async () => {
     // Validation
@@ -94,6 +99,12 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         setSaving(false);
         return;
       }
+      // If creating/editing a subcategory, force category_type to inherit from parent
+      let finalType = form.category_type;
+      if (form.parent_id) {
+        const parent = (parentCategories || []).find(p => p.id === form.parent_id);
+        if (parent?.category_type) finalType = parent.category_type;
+      }
       const payload: any = {
         ...form,
         name: form.name.trim(),
@@ -106,6 +117,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         verification_status: form.verification_status,
         display_order: orderNum,
         show_on_homepage: form.show_on_homepage,
+        category_type: finalType,
       };
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
@@ -145,15 +157,51 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
               : <p className="text-sm font-medium mt-1">{category?.name}</p>}
           </div>
 
+          {/* Category Type — only editable on top-level. Subcategories inherit. */}
+          <div>
+            <Label className="text-xs text-muted-foreground">Category Type *</Label>
+            {editMode && !isSubcategory ? (
+              <Select value={form.category_type} onValueChange={(v) => setForm({ ...form, category_type: v as "product" | "service" })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="product">Product Category</SelectItem>
+                  <SelectItem value="service">Service Category</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="mt-1">
+                <Badge className={`text-[10px] border-0 ${form.category_type === 'service' ? 'bg-info/10 text-info' : 'bg-primary/10 text-primary'}`}>
+                  {form.category_type === 'service' ? 'SERVICE' : 'PRODUCT'}
+                </Badge>
+                {isSubcategory && editMode && (
+                  <p className="text-[10px] text-muted-foreground mt-1">Inherited from parent category</p>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Parent Category */}
           {editMode && parentOptions.length > 0 && (
             <div>
               <Label className="text-xs text-muted-foreground">Parent Category (leave empty for top-level)</Label>
-              <Select value={form.parent_id || "none"} onValueChange={(v) => setForm({ ...form, parent_id: v === "none" ? null : v })}>
+              <Select value={form.parent_id || "none"} onValueChange={(v) => {
+                const newParentId = v === "none" ? null : v;
+                const updates: any = { parent_id: newParentId };
+                // When attaching to a parent, inherit its type
+                if (newParentId) {
+                  const parent = parentOptions.find(p => p.id === newParentId);
+                  if (parent?.category_type) updates.category_type = parent.category_type;
+                }
+                setForm({ ...form, ...updates });
+              }}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="None (top-level)" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None (top-level)</SelectItem>
-                  {parentOptions.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  {parentOptions.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} <span className="text-[10px] text-muted-foreground ml-1">({p.category_type === 'service' ? 'Service' : 'Product'})</span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
