@@ -3,6 +3,7 @@ import { ChevronRight, Star, Heart, ShoppingCart, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isProductOutOfStock } from "@/lib/stock-display";
 
 type RowProduct = {
   id: string;
@@ -15,6 +16,8 @@ type RowProduct = {
   emoji?: string;
   vendor_name?: string;
   stock?: number | null;
+  manage_stock?: boolean | null;
+  stock_status?: string | null;
 };
 
 interface CategoryProductRowProps {
@@ -67,7 +70,7 @@ export function CategoryProductRow({
           {products.map((p) => {
             const discountPct = p.discount ? Math.round((p.discount / p.price) * 100) : 0;
             const isWished = wishlist.includes(p.id);
-            const isOutOfStock = p.stock !== undefined && p.stock !== null && p.stock <= 0;
+            const isOutOfStock = isProductOutOfStock(p);
             return (
               <Card
                 key={p.id}

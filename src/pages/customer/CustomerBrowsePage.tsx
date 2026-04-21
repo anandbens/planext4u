@@ -20,6 +20,7 @@ import { useCurrency } from "@/lib/country-context";
 import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";
 import { CategoryProductRow } from "@/components/customer/CategoryProductRow";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
+import { isProductOutOfStock } from "@/lib/stock-display";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
@@ -384,7 +385,7 @@ export default function CustomerBrowsePage() {
                 {paginated.map((p) => {
                   const discountPct = p.discount ? Math.round((p.discount / p.price) * 100) : 0;
                   const isWished = wishlist.includes(p.id);
-                  const isOutOfStock = (p as any).stock !== undefined && (p as any).stock !== null && (p as any).stock <= 0;
+                  const isOutOfStock = isProductOutOfStock(p as any);
                   return (
                     <Card key={p.id} className={`overflow-hidden hover:shadow-md transition-shadow group flex flex-col ${viewMode === "list" ? "flex-row" : ""}`}>
                       <Link to={`/app/product/${p.id}`} className={`flex-1 flex ${viewMode === "list" ? "flex-row" : "flex-col"}`}>
