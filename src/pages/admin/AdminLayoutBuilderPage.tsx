@@ -173,14 +173,14 @@ function ModulePanel({ module }: { module: WidgetModule }) {
   const { data: layout } = useQuery({
     queryKey: ["admin_layout", module],
     queryFn: async () => {
-      let { data: l } = await supabase.from("homepage_layouts" as any)
-        .select("*").eq("module", module).eq("name", "default").maybeSingle();
+      let l: any = (await supabase.from("homepage_layouts" as any)
+        .select("*").eq("module", module).eq("name", "default").maybeSingle()).data;
       if (!l) {
         const ins = await supabase.from("homepage_layouts" as any).insert({ module, name: "default", is_active: true } as any).select("*").maybeSingle();
         l = ins.data;
       }
       const { data: secs } = await supabase.from("homepage_layout_sections" as any)
-        .select("*").eq("layout_id", (l as any).id).order("display_order");
+        .select("*").eq("layout_id", l.id).order("display_order");
       return { layout: l, sections: (secs || []) as any[] };
     },
   });
