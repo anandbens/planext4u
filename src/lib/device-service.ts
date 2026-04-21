@@ -129,21 +129,52 @@ export async function getLocation(): Promise<DeviceLocation | null> {
       reject(err);
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      (geoErr) => {
-        const map: Record<number, { code: string; msg: string }> = {
-          1: { code: "PERMISSION_DENIED", msg: "Location permission was blocked by the browser. Tap the lock icon in the address bar, allow Location, then retry." },
-          2: { code: "POSITION_UNAVAILABLE", msg: "Your device couldn't determine its position. Check that GPS / Location services are enabled." },
-          3: { code: "TIMEOUT", msg: "Getting your location took too long. Move to a spot with better signal and retry." },
-        };
-        const info = map[geoErr.code] || { code: "UNKNOWN", msg: geoErr.message || "Could not read your location." };
-        const err: any = new Error(info.msg);
-        err.code = info.code;
-        reject(err);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60_000 },
-    );
+
+    const inIframe = (() => { try { return window.self !== window.top; } catch { return true; } })();
+
+    // Try high-accuracy first, then fall back to low-accuracy on timeout/unavailable.
+    const tryGet = (highAccuracy: boolean): Promise<DeviceLocation> => new Promise((res, rej) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          console.log(`[device-service] Web GPS success (highAccuracy=${highAccuracy}):`, {
+            lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy,
+          });
+          res({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        (geoErr) => rej(geoErr),
+        { enableHighAccuracy: highAccuracy, timeout: highAccuracy ? 12000 : 8000, maximumAge: highAccuracy ? 60_000 : 5 * 60_000 },
+      );
+    });
+
+    tryGet(true)
+      .then(resolve)
+      .catch((e1: GeolocationPositionError) => {
+        console.warn("[device-service] Web GPS high-accuracy failed:", e1?.code, e1?.message);
+        // Retry once with low-accuracy unless permission was outright denied.
+        if (e1?.code === 1) {
+          const msg = inIframe
+            ? "This preview window blocks location access. Open the published app on your phone, or open this URL in a new browser tab and allow Location."
+            : "Location permission was blocked by the browser. Tap the lock icon in the address bar, allow Location, then retry.";
+          const err: any = new Error(msg);
+          err.code = "PERMISSION_DENIED";
+          reject(err);
+          return;
+        }
+        tryGet(false)
+          .then(resolve)
+          .catch((e2: GeolocationPositionError) => {
+            console.warn("[device-service] Web GPS low-accuracy failed:", e2?.code, e2?.message);
+            const map: Record<number, { code: string; msg: string }> = {
+              1: { code: "PERMISSION_DENIED", msg: "Location permission was blocked by the browser. Tap the lock icon in the address bar, allow Location, then retry." },
+              2: { code: "POSITION_UNAVAILABLE", msg: "Your device couldn't determine its position. Check that GPS / Location services are enabled and retry." },
+              3: { code: "TIMEOUT", msg: "Getting your location took too long. Move to a spot with better signal and retry, or pick the location manually from the search box." },
+            };
+            const info = map[e2?.code] || { code: "UNKNOWN", msg: e2?.message || "Could not read your location." };
+            const err: any = new Error(info.msg);
+            err.code = info.code;
+            reject(err);
+          });
+      });
   });
 }
 
