@@ -17,6 +17,7 @@ import { useState, useEffect, useMemo } from "react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCountry } from "@/lib/country-context";
 
 interface ProductModalProps {
   product: Product | null;
