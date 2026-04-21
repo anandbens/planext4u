@@ -73,8 +73,8 @@ export async function openPaystackCheckout(opts: PaystackOpenOpts): Promise<Pays
       const { Browser } = await import("@capacitor/browser");
       await Browser.open({ url: init.authorization_url, presentationStyle: "popover" });
       // Wait for user to close the in-app browser, then verify
-      await new Promise<void>((resolve) => {
-        const sub = Browser.addListener("browserFinished", () => {
+      await new Promise<void>(async (resolve) => {
+        const sub = await Browser.addListener("browserFinished", () => {
           sub.remove();
           resolve();
         });
