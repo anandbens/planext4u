@@ -132,6 +132,7 @@ export interface Category {
   status: 'active' | 'inactive'; count?: number; created_at?: string;
   banner_image?: string; icon?: string; is_trending?: boolean; description?: string;
   display_order?: number; show_on_homepage?: boolean;
+  category_type?: 'product' | 'service';
 }
 
 export interface Banner {
@@ -1427,7 +1428,7 @@ export const api = {
     const validFields = ['name', 'parent_id', 'image', 'status', 'count', 'banner_image', 'icon',
       'is_trending', 'description', 'is_emergency', 'commission_rate', 'verification_status',
       'promotion_banner_url', 'promotion_title', 'promotion_active',
-      'display_order', 'show_on_homepage'];
+      'display_order', 'show_on_homepage', 'category_type'];
     const filtered: Record<string, any> = {};
     for (const key of validFields) {
       if (key in data) filtered[key] = (data as any)[key];

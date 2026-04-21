@@ -33,6 +33,7 @@ const emptyForm = {
   promotion_banner_url: "", promotion_title: "", promotion_active: false,
   is_emergency: false, verification_status: "unverified" as string,
   display_order: "" as string, show_on_homepage: true,
+  category_type: "product" as "product" | "service",
 };
 
 export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories, defaultAsSubcategory }: CategoryModalProps) {
@@ -47,6 +48,9 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
       // If creating as subcategory and category has parent_id preset
       if (defaultAsSubcategory && category?.parent_id) {
         initialForm.parent_id = category.parent_id;
+        // Inherit parent's category_type
+        const parent = (parentCategories || []).find(p => p.id === category.parent_id);
+        if (parent?.category_type) initialForm.category_type = parent.category_type;
       }
       setForm(initialForm);
       setEditMode(true);
@@ -64,10 +68,11 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         verification_status: (category as any).verification_status || "unverified",
         display_order: (category as any).display_order != null ? String((category as any).display_order) : "",
         show_on_homepage: (category as any).show_on_homepage !== false,
+        category_type: (category.category_type as any) || "product",
       });
       setEditMode(mode === "edit");
     }
-  }, [category, mode, defaultAsSubcategory]);
+  }, [category, mode, defaultAsSubcategory, parentCategories]);
 
   const handleSave = async () => {
     // Validation
@@ -94,6 +99,12 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         setSaving(false);
         return;
       }
+      // If creating/editing a subcategory, force category_type to inherit from parent
+      let finalType = form.category_type;
+      if (form.parent_id) {
+        const parent = (parentCategories || []).find(p => p.id === form.parent_id);
+        if (parent?.category_type) finalType = parent.category_type;
+      }
       const payload: any = {
         ...form,
         name: form.name.trim(),
@@ -106,6 +117,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         verification_status: form.verification_status,
         display_order: orderNum,
         show_on_homepage: form.show_on_homepage,
+        category_type: finalType,
       };
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
