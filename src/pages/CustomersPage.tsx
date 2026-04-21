@@ -14,8 +14,10 @@ import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useCurrency } from "@/lib/country-context";
 
 export default function CustomersPage() {
+  const { country } = useCountry();
   const [activeTab, setActiveTab] = useState("active");
   const [data, setData] = useState<PaginatedResponse<User> | null>(null);
   const [page, setPage] = useState(1);
