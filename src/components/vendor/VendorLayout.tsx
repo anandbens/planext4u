@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, DollarSign, User, Wrench,
   Bell, Menu, X, LogOut, CreditCard, History, ChevronRight, Store,
   ArrowLeft, Settings, HelpCircle, Shield, MapPin, TrendingUp, BarChart3,
-  ImageIcon, CalendarClock, ShieldCheck, UtensilsCrossed
+  ImageIcon, CalendarClock, ShieldCheck, UtensilsCrossed, Truck
 } from "lucide-react";
 import { VendorNotificationBell } from "@/components/vendor/VendorNotificationBell";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +44,7 @@ function buildSidebarItems(flags: VendorMenuFlags) {
     { label: "Media Library", to: "/vendor/media", icon: ImageIcon },
     { label: "KYC Verification", to: "/vendor/kyc", icon: ShieldCheck },
   );
+  if (flags.isProduct) items.push({ label: "Dropshipping", to: "/vendor/dropshipping", icon: Truck });
   return items;
 }
 
