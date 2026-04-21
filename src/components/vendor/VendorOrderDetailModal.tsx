@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Order } from "@/lib/api";
 import { Clock, MapPin, Phone, User, Package, CreditCard, Truck, MessageSquare, IndianRupee } from "lucide-react";
 import { format } from "date-fns";
+import { CartRuleBreakup, type AppliedCartRule } from "@/components/cart/CartRuleBreakup";
 
 interface Props {
   order: (Order & { customer_notes?: string | null }) | null;
@@ -118,6 +119,14 @@ export function VendorOrderDetailModal({ order, onClose }: Props) {
                     <span>Discount</span>
                     <span>-₹{Number(o.discount).toLocaleString()}</span>
                   </div>
+                )}
+                {Array.isArray(o.applied_cart_rules) && o.applied_cart_rules.length > 0 && (
+                  <CartRuleBreakup
+                    rules={o.applied_cart_rules as AppliedCartRule[]}
+                    audience="vendor"
+                    vendorId={o.vendor_id}
+                    className="mt-1"
+                  />
                 )}
                 {o.points_used > 0 && (
                   <div className="flex justify-between text-success">
