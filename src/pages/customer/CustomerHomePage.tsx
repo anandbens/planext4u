@@ -398,7 +398,7 @@ export default function CustomerHomePage() {
         {/* ── Category Pill Row (Zepto-style horizontal scroll) ── */}
         <div className="px-4 pt-1 pb-2">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-            <Link to="/app/browse" className="shrink-0">
+            <Link to="/app/categories" className="shrink-0">
               <div className="flex flex-col items-center gap-1 min-w-[56px]">
                 <div className="h-14 w-14 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center shadow-sm">
                   <ShoppingBag className="h-6 w-6 text-primary" />
@@ -524,7 +524,7 @@ export default function CustomerHomePage() {
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base md:text-lg font-bold">Shop by Category</h2>
-            <Link to="/app/browse" className="text-xs text-primary flex items-center gap-0.5 font-medium">View All <ChevronRight className="h-3 w-3" /></Link>
+            <Link to="/app/categories" className="text-xs text-primary flex items-center gap-0.5 font-medium">View All <ChevronRight className="h-3 w-3" /></Link>
           </div>
           <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
             className="grid grid-cols-4 sm:grid-cols-5 gap-3 md:[grid-template-columns:repeat(auto-fit,minmax(96px,1fr))]">
