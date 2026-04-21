@@ -213,6 +213,7 @@ import AdminDropshippingPage from "./pages/admin/AdminDropshippingPage";
 import VendorDropshippingPage from "./pages/vendor/VendorDropshippingPage";
 import { RiderProtectedRoute } from "@/components/rider/RiderProtectedRoute";
 import { RiderLayout } from "@/components/rider/RiderLayout";
+import CallsPage from "./pages/customer/CallsPage";
 
 const queryClient = new QueryClient();
 const NATIVE_PORTAL_STORAGE_KEY = "p4u_native_portal";
@@ -500,6 +501,7 @@ const AppRoutes = () => {
         <Route path="/app/social/shop" element={<CustomerPage><SocialShopPage /></CustomerPage>} />
         <Route path="/app/social/suggestions" element={<CustomerPage><SocialSuggestionsPage /></CustomerPage>} />
         <Route path="/app/social/friends" element={<CustomerPage><SocialFriendsPage /></CustomerPage>} />
+        <Route path="/app/calls" element={<CustomerPage><CallsPage /></CustomerPage>} />
 
         {/* Admin Social */}
         <Route path="/admin/social" element={<AdminOnlyPage><AdminSocialDashboardPage /></AdminOnlyPage>} />
