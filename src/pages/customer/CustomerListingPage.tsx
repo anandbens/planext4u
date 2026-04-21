@@ -239,13 +239,28 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
   );
 }
 
-export function ProductFilterPanel({ priceRange, setPriceRange, minRating, setMinRating, maxPrice }: {
+export type AttrOption = { id: string; name: string; values: string[] };
+
+export function ProductFilterPanel({
+  priceRange, setPriceRange, minRating, setMinRating, maxPrice,
+  availableAttrs = [], selectedAttrs = {}, setSelectedAttrs,
+}: {
   priceRange: [number, number];
   setPriceRange: (v: [number, number]) => void;
   minRating: number;
   setMinRating: (v: number) => void;
   maxPrice: number;
+  availableAttrs?: AttrOption[];
+  selectedAttrs?: Record<string, string[]>;
+  setSelectedAttrs?: (v: Record<string, string[]>) => void;
 }) {
+  const toggleVal = (attrId: string, val: string) => {
+    if (!setSelectedAttrs) return;
+    const cur = selectedAttrs[attrId] || [];
+    const next = cur.includes(val) ? cur.filter((v) => v !== val) : [...cur, val];
+    setSelectedAttrs({ ...selectedAttrs, [attrId]: next });
+  };
+
   return (
     <div className="space-y-6 mt-4">
       <div>
@@ -284,6 +299,42 @@ export function ProductFilterPanel({ priceRange, setPriceRange, minRating, setMi
           ))}
         </div>
       </div>
+
+      {availableAttrs.length > 0 && setSelectedAttrs && (
+        <div className="space-y-5">
+          {availableAttrs.map((attr) => {
+            const sel = selectedAttrs[attr.id] || [];
+            return (
+              <div key={attr.id}>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold">{attr.name}</label>
+                  {sel.length > 0 && (
+                    <button type="button" className="text-[10px] text-muted-foreground hover:text-primary" onClick={() => setSelectedAttrs({ ...selectedAttrs, [attr.id]: [] })}>
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {attr.values.map((v) => {
+                    const active = sel.includes(v);
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => toggleVal(attr.id, v)}
+                        className={`px-2.5 py-1 rounded-full border text-xs font-medium transition-colors
+                          ${active ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:border-primary/40'}`}
+                      >
+                        {v}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
