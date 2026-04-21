@@ -351,10 +351,59 @@ function ModulePanel({ module }: { module: WidgetModule }) {
     }
   };
 
+  const isDirty = !!layout?.layout?.has_unpublished_changes;
+  const publishedAt = layout?.layout?.published_at as string | undefined;
+
   return (
     <div className="space-y-3">
+      {/* Publish bar */}
+      <Card className={`p-3 flex flex-wrap items-center gap-3 border-l-4 ${isDirty ? "border-l-warning bg-warning/5" : "border-l-success bg-success/5"}`}>
+        <div className="flex items-center gap-2 flex-1 min-w-[220px]">
+          {isDirty ? (
+            <AlertCircle className="h-5 w-5 text-warning shrink-0" />
+          ) : (
+            <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">
+              {isDirty ? "Unpublished changes" : "All changes published"}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {publishedAt
+                ? `Last published ${formatDistanceToNow(new Date(publishedAt), { addSuffix: true })}`
+                : "Never published yet"}
+            </p>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          asChild
+          disabled={!layout}
+        >
+          <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="h-4 w-4 mr-1" /> Preview draft
+          </a>
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDiscard}
+          disabled={!isDirty || discarding || publishing}
+        >
+          <Undo2 className="h-4 w-4 mr-1" /> {discarding ? "Discarding…" : "Discard draft"}
+        </Button>
+        <Button
+          size="sm"
+          onClick={handlePublish}
+          disabled={!isDirty || publishing || discarding}
+        >
+          <Rocket className="h-4 w-4 mr-1" /> {publishing ? "Publishing…" : "Publish"}
+        </Button>
+      </Card>
+
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Drag to reorder. Click pencil to edit settings.</p>
+        <p className="text-sm text-muted-foreground">Drag to reorder. Click pencil to edit settings. Changes stay in draft until you publish.</p>
         <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add widget</Button>
       </div>
 
