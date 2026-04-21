@@ -14,6 +14,7 @@ import { logActivity } from "@/lib/auth";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, resetPhoneAuth, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { checkCustomerPhoneUnique, checkCustomerEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
+import { useCountry } from "@/lib/country-context";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 function TermsContent() {
@@ -88,9 +89,13 @@ function PrivacyContent() {
 
 export default function CustomerRegisterPage() {
   const navigate = useNavigate();
+  const { country } = useCountry();
+  const isIndia = country.code === "IN";
+  const phonePrefix = country.phone_prefix || "+91";
+  const regionLabel = isIndia ? "District" : "City";
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", mobile: "", email: "", state: "", district: "", area: "", referral_code: "", occupation: "" });
+  const [form, setForm] = useState({ name: "", mobile: "", email: "", state: "", district: "", area: "", postal_code: "", referral_code: "", occupation: "" });
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [occupations, setOccupations] = useState<{ id: string; name: string }[]>([]);
   const [states, setStates] = useState<{ id: string; name: string; code: string }[]>([]);
