@@ -46,6 +46,7 @@ const emptyForm = {
   pricing_slots: [] as PricingSlot[],
   booking_duration_minutes: 60,
   max_bookings_per_slot: 1,
+  service_duration_minutes: 60,
   sac_code: "",
   gst_rate: 18,
 };
@@ -187,6 +188,7 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
         pricing_slots: (service.pricing_slots || []) as PricingSlot[],
         booking_duration_minutes: service.booking_duration_minutes || 60,
         max_bookings_per_slot: service.max_bookings_per_slot || 1,
+        service_duration_minutes: (service as any).service_duration_minutes || 60,
         sac_code: (service as any).sac_code || "",
         gst_rate: (service as any).gst_rate ?? 18,
       });
@@ -216,6 +218,7 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
     if (form.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) errors.push("Slug must be lowercase letters/numbers/hyphens only");
     if (form.booking_duration_minutes < 5 || form.booking_duration_minutes > 1440) errors.push("Booking duration must be 5-1440 minutes");
     if (form.max_bookings_per_slot < 1) errors.push("Max bookings per slot must be at least 1");
+    if (!form.service_duration_minutes || form.service_duration_minutes < 15) errors.push("Service duration must be at least 15 minutes");
     if (errors.length > 0) { toast.error(errors[0]); return; }
     setSaving(true);
     try {
