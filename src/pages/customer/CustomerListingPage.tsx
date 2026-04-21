@@ -29,6 +29,7 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [minRating, setMinRating] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string[]>>({});
 
   const title = mode === "deals" ? "Deals of the Day" : "Trending Products";
   const subtitle = mode === "deals" ? "Hand-picked deals you can't miss" : "Top-rated favourites loved by customers";
@@ -55,11 +56,36 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
     return Math.max(1000, Math.ceil(m / 100) * 100);
   }, [products]);
 
+  // Aggregate available attributes across all products in the current set
+  const availableAttrs = useMemo(() => {
+    const map = new Map<string, { name: string; values: Set<string> }>();
+    for (const p of products as any[]) {
+      const attrs = Array.isArray(p.product_attributes) ? p.product_attributes : [];
+      for (const a of attrs) {
+        if (!a?.attribute_id || !Array.isArray(a.values)) continue;
+        const entry = map.get(a.attribute_id) || { name: a.attribute_name || a.attribute_id, values: new Set<string>() };
+        for (const v of a.values) if (v) entry.values.add(String(v));
+        map.set(a.attribute_id, entry);
+      }
+    }
+    return Array.from(map.entries()).map(([id, v]) => ({ id, name: v.name, values: Array.from(v.values).sort() }));
+  }, [products]);
+
   const filtered = useMemo(() => {
+    const activeAttrIds = Object.keys(selectedAttrs).filter((k) => (selectedAttrs[k] || []).length > 0);
     let list = products.filter((p: any) => {
       const price = Number(p.price) || 0;
       if (price < priceRange[0] || price > priceRange[1]) return false;
       if ((Number(p.rating) || 0) < minRating) return false;
+      if (activeAttrIds.length > 0) {
+        const productAttrs: any[] = Array.isArray(p.product_attributes) ? p.product_attributes : [];
+        for (const aid of activeAttrIds) {
+          const wanted = selectedAttrs[aid];
+          const found = productAttrs.find((a) => a?.attribute_id === aid);
+          const vals: string[] = found?.values || [];
+          if (!wanted.some((w) => vals.includes(w))) return false;
+        }
+      }
       return true;
     });
     if (sortBy === "price_low") list = [...list].sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -67,7 +93,7 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
     else if (sortBy === "rating") list = [...list].sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
     else if (sortBy === "discount") list = [...list].sort((a, b) => (Number(b.discount) || 0) - (Number(a.discount) || 0));
     return list;
-  }, [products, priceRange, minRating, sortBy]);
+  }, [products, priceRange, minRating, sortBy, selectedAttrs]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -86,7 +112,8 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
     navigate("/app/cart");
   };
 
-  const activeFilters = (priceRange[0] > 0 ? 1 : 0) + (priceRange[1] < maxPrice ? 1 : 0) + (minRating > 0 ? 1 : 0);
+  const activeAttrCount = Object.values(selectedAttrs).reduce((s, v) => s + (v?.length ? 1 : 0), 0);
+  const activeFilters = (priceRange[0] > 0 ? 1 : 0) + (priceRange[1] < maxPrice ? 1 : 0) + (minRating > 0 ? 1 : 0) + activeAttrCount;
 
   return (
     <CustomerLayout>
@@ -110,9 +137,11 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
                   priceRange={priceRange} setPriceRange={setPriceRange}
                   minRating={minRating} setMinRating={setMinRating}
                   maxPrice={maxPrice}
+                  availableAttrs={availableAttrs}
+                  selectedAttrs={selectedAttrs} setSelectedAttrs={setSelectedAttrs}
                 />
                 <SheetFooter className="mt-4 flex-row gap-2">
-                  <Button variant="outline" className="flex-1" onClick={() => { setPriceRange([0, maxPrice]); setMinRating(0); setPage(1); }}>Reset</Button>
+                  <Button variant="outline" className="flex-1" onClick={() => { setPriceRange([0, maxPrice]); setMinRating(0); setSelectedAttrs({}); setPage(1); }}>Reset</Button>
                   <Button className="flex-1" onClick={() => { setPage(1); setFiltersOpen(false); }}>Apply</Button>
                 </SheetFooter>
               </SheetContent>
@@ -210,13 +239,28 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
   );
 }
 
-export function ProductFilterPanel({ priceRange, setPriceRange, minRating, setMinRating, maxPrice }: {
+export type AttrOption = { id: string; name: string; values: string[] };
+
+export function ProductFilterPanel({
+  priceRange, setPriceRange, minRating, setMinRating, maxPrice,
+  availableAttrs = [], selectedAttrs = {}, setSelectedAttrs,
+}: {
   priceRange: [number, number];
   setPriceRange: (v: [number, number]) => void;
   minRating: number;
   setMinRating: (v: number) => void;
   maxPrice: number;
+  availableAttrs?: AttrOption[];
+  selectedAttrs?: Record<string, string[]>;
+  setSelectedAttrs?: (v: Record<string, string[]>) => void;
 }) {
+  const toggleVal = (attrId: string, val: string) => {
+    if (!setSelectedAttrs) return;
+    const cur = selectedAttrs[attrId] || [];
+    const next = cur.includes(val) ? cur.filter((v) => v !== val) : [...cur, val];
+    setSelectedAttrs({ ...selectedAttrs, [attrId]: next });
+  };
+
   return (
     <div className="space-y-6 mt-4">
       <div>
@@ -255,6 +299,42 @@ export function ProductFilterPanel({ priceRange, setPriceRange, minRating, setMi
           ))}
         </div>
       </div>
+
+      {availableAttrs.length > 0 && setSelectedAttrs && (
+        <div className="space-y-5">
+          {availableAttrs.map((attr) => {
+            const sel = selectedAttrs[attr.id] || [];
+            return (
+              <div key={attr.id}>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold">{attr.name}</label>
+                  {sel.length > 0 && (
+                    <button type="button" className="text-[10px] text-muted-foreground hover:text-primary" onClick={() => setSelectedAttrs({ ...selectedAttrs, [attr.id]: [] })}>
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {attr.values.map((v) => {
+                    const active = sel.includes(v);
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => toggleVal(attr.id, v)}
+                        className={`px-2.5 py-1 rounded-full border text-xs font-medium transition-colors
+                          ${active ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:border-primary/40'}`}
+                      >
+                        {v}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
