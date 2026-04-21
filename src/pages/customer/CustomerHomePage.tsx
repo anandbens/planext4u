@@ -11,7 +11,7 @@ import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { SplashScreen } from "@/components/customer/SplashScreen";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
-import { loadSelectedLocation } from "@/components/customer/LocationModal";
+import { LocationModal, loadSelectedLocation, LOCATION_CHANGED_EVENT } from "@/components/customer/LocationModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
