@@ -49,6 +49,7 @@ const emptyForm = {
   parent_item_id: "" as string, parent_item_name: "" as string,
   replacement_time: "12 Hours" as string,
   hsn_code: "" as string, sac_code: "" as string,
+  is_deal_of_day: false as boolean,
 };
 
 export function ProductModal({ product, open, onOpenChange, mode, onSave, onCreate, onDelete, isVendor, preselectedVendorId }: ProductModalProps) {
@@ -237,6 +238,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         replacement_time: (product as any).replacement_time || "12 Hours",
         hsn_code: (product as any).hsn_code || "",
         sac_code: (product as any).sac_code || "",
+        is_deal_of_day: (product as any).is_deal_of_day === true,
       });
       setEditMode(mode === "edit");
       setActiveTab("general");
@@ -530,6 +532,17 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                   <Switch checked={form.is_available} onCheckedChange={(v) => setForm({ ...form, is_available: v })} />
                 ) : (
                   <Badge variant={form.is_available ? "default" : "secondary"}>{form.is_available ? "Available" : "Unavailable"}</Badge>
+                )}
+              </div>
+              <div className="col-span-2 flex items-center justify-between p-3 rounded-lg bg-warning/5 border border-warning/30">
+                <div>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Star className="h-3 w-3" /> Deal of the Day</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Featured in the homepage "Deals of the Day" section</p>
+                </div>
+                {editMode && !vendorRestricted ? (
+                  <Switch checked={form.is_deal_of_day} onCheckedChange={(v) => setForm({ ...form, is_deal_of_day: v })} />
+                ) : (
+                  <Badge variant={form.is_deal_of_day ? "default" : "secondary"}>{form.is_deal_of_day ? "Yes" : "No"}</Badge>
                 )}
               </div>
               <div className="col-span-2">

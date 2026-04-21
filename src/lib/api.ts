@@ -61,6 +61,7 @@ export interface Product {
   weight?: number; dimensions?: any;
   parent_item_id?: string | null; parent_item_name?: string | null;
   replacement_time?: string;
+  is_deal_of_day?: boolean;
 }
 
 export interface ProductVariant {
@@ -769,7 +770,7 @@ export const api = {
       'youtube_video_url', 'max_redemption_percentage', 'commission_override', 'tax_slab_id', 'product_attributes',
       'is_available', 'duration_hours', 'duration_minutes', 'promise_p4u', 'helpline_number', 'thumbnail_image',
       'banner_image', 'socio_shopping_icon', 'product_type', 'sku', 'slug', 'meta_title', 'meta_description',
-      'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name', 'replacement_time'];
+      'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name', 'replacement_time', 'is_deal_of_day'];
     const uuidFields = ['category_id', 'subcategory_id', 'vendor_id', 'tax_slab_id', 'parent_item_id'];
     const filtered: Record<string, any> = { updated_at: new Date().toISOString() };
     for (const key of validProductFields) {
@@ -800,7 +801,7 @@ export const api = {
       'youtube_video_url', 'max_redemption_percentage', 'commission_override', 'tax_slab_id', 'product_attributes',
       'is_available', 'duration_hours', 'duration_minutes', 'promise_p4u', 'helpline_number', 'thumbnail_image',
       'banner_image', 'socio_shopping_icon', 'product_type', 'sku', 'slug', 'meta_title', 'meta_description',
-      'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name', 'replacement_time'];
+      'manage_stock', 'stock_status', 'weight', 'dimensions', 'parent_item_id', 'parent_item_name', 'replacement_time', 'is_deal_of_day'];
     const newProduct: Record<string, any> = {
       id: genId('PRD'),
       rating: 0, reviews: 0, stock: data.stock || 0, sales: 0,
@@ -1803,7 +1804,7 @@ export const api = {
       supabase.from('banners').select('*').eq('status', 'active').order('priority', { ascending: false }),
       supabase.from('categories').select('*'),
       supabase.from('service_categories').select('*'),
-      supabase.from('products').select('*').eq('status', 'active').limit(50),
+      supabase.from('products').select('*').eq('status', 'active').limit(100),
       supabase.from('services').select('*').eq('status', 'active').limit(4),
       supabase.from('popup_banners').select('*').eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('platform_variables').select('key, value').or('key.ilike.homepage_image_%,key.eq.homepage_categories_max,key.eq.homepage_subcategories_per_parent'),
@@ -1830,11 +1831,19 @@ export const api = {
       }
     }
 
+    // Deals = explicitly flagged products; Trending = highest rated
+    const dealProducts = verifiedProducts.filter((p: any) => p.is_deal_of_day === true).slice(0, 8);
+    const trendingProducts = [...verifiedProducts]
+      .sort((a: any, b: any) => (Number(b.rating) || 0) - (Number(a.rating) || 0) || (Number(b.reviews) || 0) - (Number(a.reviews) || 0))
+      .slice(0, 8);
+
     return {
       banners: banners || [],
       categories: categories || [],
       serviceCategories: serviceCategories || [],
       featuredProducts: verifiedProducts.slice(0, 8),
+      dealProducts,
+      trendingProducts,
       featuredServices: featuredServices || [],
       storeBanners: storeBanners || [],
       assets,

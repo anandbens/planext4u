@@ -582,8 +582,8 @@ export default function CustomerHomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {[
               { title: "Pick up where you left off", items: data?.featuredProducts?.slice(0, 4) || [] },
-              { title: "Trending Now", items: data?.featuredProducts?.slice(4, 8) || [] },
-              { title: "Deals of the Day", items: data?.featuredProducts?.slice(8, 12) || data?.featuredProducts?.slice(0, 4) || [] },
+              { title: "Trending Now", items: (data?.trendingProducts || []).slice(0, 4) },
+              { title: "Deals of the Day", items: (data?.dealProducts || []).slice(0, 4) },
             ].map((section, sIdx) => (
               <Card key={sIdx} className="p-3 hover:shadow-lg transition-shadow">
                 <h3 className="text-xs font-bold mb-2">{section.title}</h3>
