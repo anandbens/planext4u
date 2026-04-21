@@ -287,11 +287,11 @@ export default function SettlementsPage() {
                 <div><span className="text-muted-foreground">Status:</span> <StatusBadge status={orderDetail.status} /></div>
                 <div><span className="text-muted-foreground">Customer:</span> {orderDetail.customer_name || orderDetail.customer_id}</div>
                 <div><span className="text-muted-foreground">Vendor:</span> {orderDetail.vendor_name || orderDetail.vendor_id}</div>
-                <div><span className="text-muted-foreground">Subtotal:</span> ₹{orderDetail.subtotal?.toLocaleString()}</div>
-                <div><span className="text-muted-foreground">Tax:</span> ₹{orderDetail.tax?.toLocaleString()}</div>
-                <div><span className="text-muted-foreground">Discount:</span> ₹{orderDetail.discount?.toLocaleString()}</div>
-                <div><span className="text-muted-foreground">Total:</span> <span className="font-bold">₹{orderDetail.total?.toLocaleString()}</span></div>
-                <div><span className="text-muted-foreground">Platform Fee:</span> ₹{orderDetail.platform_fee?.toLocaleString() || 0}</div>
+                <div><span className="text-muted-foreground">Subtotal:</span> {fmt(orderDetail.subtotal || 0, { decimals: 0 })}</div>
+                <div><span className="text-muted-foreground">Tax:</span> {fmt(orderDetail.tax || 0, { decimals: 0 })}</div>
+                <div><span className="text-muted-foreground">Discount:</span> {fmt(orderDetail.discount || 0, { decimals: 0 })}</div>
+                <div><span className="text-muted-foreground">Total:</span> <span className="font-bold">{fmt(orderDetail.total || 0, { decimals: 0 })}</span></div>
+                <div><span className="text-muted-foreground">Platform Fee:</span> {fmt(orderDetail.platform_fee || 0, { decimals: 0 })}</div>
                 <div><span className="text-muted-foreground">Points Used:</span> {orderDetail.points_used || 0}</div>
               </div>
 
