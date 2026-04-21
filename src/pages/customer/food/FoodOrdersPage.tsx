@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw, X, Eye } from "lucide-react";
 import { CancelOrderDialog } from "@/components/food/CancelOrderDialog";
 import { toast } from "sonner";
+import { useCurrency } from "@/lib/country-context";
 
 const STATUS_LABEL: Record<string, string> = {
   placed: "Placed", accepted: "Accepted", preparing: "Preparing",
@@ -19,6 +20,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function FoodOrdersPage() {
   const { customerUser } = useAuth();
+  const { format: fmt } = useCurrency();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<FoodOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +73,7 @@ export default function FoodOrdersPage() {
                 {STATUS_LABEL[o.status] || o.status}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground">{(o.items as any[]).length} items • ₹{o.total}</p>
+            <p className="text-xs text-muted-foreground">{(o.items as any[]).length} items • {fmt(o.total, { decimals: 0 })}</p>
 
             <div className="flex gap-2 pt-1">
               <Button size="sm" variant="outline" className="flex-1 gap-1" onClick={(e) => { e.stopPropagation(); navigate(`/app/food/order/${o.id}`); }}>

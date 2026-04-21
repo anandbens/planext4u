@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 import { Search, Calendar, ChevronLeft, ChevronRight, Package, Truck, MapPin, RefreshCcw, ArrowLeft, Star, Wrench, Copy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrency } from "@/lib/country-context";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
@@ -27,6 +28,7 @@ const ITEMS_PER_PAGE = 5;
 
 export default function CustomerOrdersPage() {
   const { customerUser } = useAuth();
+  const { format: fmt } = useCurrency();
   const customerId = customerUser?.customer_id || customerUser?.id || '';
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -134,12 +136,12 @@ export default function CustomerOrdersPage() {
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-medium">{item.title}</p>
-                            <p className="text-xs text-muted-foreground">Qty: {item.qty} × ₹{(item.price || 0).toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground">Qty: {item.qty} × {fmt(item.price || 0, { decimals: 0 })}</p>
                           </div>
                         </div>
                       ))}
                       <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/30">
-                        <p className="text-sm font-bold">₹{o.total.toLocaleString()}</p>
+                        <p className="text-sm font-bold">{fmt(o.total, { decimals: 0 })}</p>
                         <div className="flex gap-2 items-center">
                           {(o as any).delivery_rating ? (
                             <span className="flex items-center gap-1 text-xs text-warning">
@@ -184,7 +186,7 @@ export default function CustomerOrdersPage() {
                       </div>
                     )}
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/30">
-                      <p className="text-sm font-bold">₹{Number(b.total_amount || 0).toLocaleString()}</p>
+                      <p className="text-sm font-bold">{fmt(Number(b.total_amount || 0), { decimals: 0 })}</p>
                       {b.completion_photo_url && <span className="text-xs text-success">✓ Service completed</span>}
                     </div>
                   </Card>
@@ -249,7 +251,7 @@ export default function CustomerOrdersPage() {
           {refundOrder && (
             <div className="space-y-4 pt-2">
               <p className="text-sm">Order: <strong>{refundOrder.id}</strong></p>
-              <p className="text-sm">Amount: <strong>₹{refundOrder.total.toLocaleString()}</strong></p>
+              <p className="text-sm">Amount: <strong>{fmt(refundOrder.total, { decimals: 0 })}</strong></p>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Reason for refund</label>
                 <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">

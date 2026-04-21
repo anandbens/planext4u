@@ -11,10 +11,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCurrency } from "@/lib/country-context";
 
 export default function CustomerClassifiedDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { format: fmt } = useCurrency();
   const [currentImage, setCurrentImage] = useState(0);
   const [liked, setLiked] = useState(false);
 
@@ -68,7 +70,7 @@ export default function CustomerClassifiedDetailPage() {
   const handleWhatsApp = () => {
     const shareUrl = `https://www.planext4u.net/app/classifieds/${id}`;
     const msg = encodeURIComponent(
-      `Hi, I'm interested in your listing "${ad.title}" priced at ₹${ad.price.toLocaleString()} on planext4u.\n${shareUrl}`
+      `Hi, I'm interested in your listing "${ad.title}" priced at ${fmt(ad.price, { decimals: 0 })} on planext4u.\n${shareUrl}`
     );
     window.open(`https://wa.me/?text=${msg}`, "_blank");
   };
@@ -76,7 +78,7 @@ export default function CustomerClassifiedDetailPage() {
   const handleShare = async () => {
     const displayUrl = `https://www.planext4u.net/app/classifieds/${id}`;
     const ogUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=classified&id=${id}`;
-    const text = `Check out: ${ad.title} - ₹${ad.price.toLocaleString()}`;
+    const text = `Check out: ${ad.title} - ${fmt(ad.price, { decimals: 0 })}`;
     if (navigator.share) {
       try {
         const imgs = Array.isArray(ad.images) ? ad.images as string[] : [];
@@ -194,7 +196,7 @@ export default function CustomerClassifiedDetailPage() {
                 <Heart className={`h-6 w-6 transition-colors ${liked ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
               </button>
             </div>
-            <p className="text-2xl font-bold text-primary mt-1">₹{ad.price.toLocaleString()}</p>
+            <p className="text-2xl font-bold text-primary mt-1">{fmt(ad.price, { decimals: 0 })}</p>
           </div>
 
           {/* Meta */}
