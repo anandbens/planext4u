@@ -227,10 +227,10 @@ export default function CustomerRegisterPage() {
       const isUnique = await checkMobileUnique();
       if (!isUnique) { setOtpLoading(false); return; }
       // Don't reset recaptcha before sending - reuse the pre-rendered one
-      await sendOTP(`+91${form.mobile}`);
+      await sendOTP(`${phonePrefix}${form.mobile}`);
       setOtpStep("otp");
       setTimer(45);
-      toast.success("OTP sent to +91 " + form.mobile);
+      toast.success(`OTP sent to ${phonePrefix} ${form.mobile}`);
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
       console.error("Registration OTP error:", err?.code, err?.message);
@@ -266,7 +266,7 @@ export default function CustomerRegisterPage() {
           register_data: {
             name: form.name,
             email: form.email,
-            mobile: `+91${form.mobile}`,
+            mobile: `${phonePrefix}${form.mobile}`,
             occupation: form.occupation || null,
             referral_code: form.referral_code || null,
           },
@@ -435,7 +435,7 @@ export default function CustomerRegisterPage() {
           ) : otpStep === "otp" ? (
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-center">Verify Your Phone</h3>
-              <p className="text-sm text-muted-foreground text-center">Enter the 6-digit OTP sent to +91 {form.mobile}</p>
+              <p className="text-sm text-muted-foreground text-center">Enter the 6-digit OTP sent to {phonePrefix} {form.mobile}</p>
 
               <div className="flex justify-center">
                 <input
