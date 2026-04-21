@@ -3,12 +3,16 @@ package com.p4u.p4u_vendor;
 import android.os.Bundle;
 
 import com.getcapacitor.BridgeActivity;
+import com.razorpay.RzpCheckout;
 
 public class MainActivity extends BridgeActivity {
     private static final String VENDOR_LAUNCH_URL = "https://www.planext4u.net/vendor/login?portal=vendor";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // Explicit Razorpay plugin registration (capacitor-razorpay@1.0.4 is pre-Capacitor-5 spec).
+        // Without this the Razorpay checkout silently fails / shows a blank screen on APK.
+        registerPlugin(RzpCheckout.class);
         super.onCreate(savedInstanceState);
 
         // Only force the initial vendor URL on the very first launch of this Activity
