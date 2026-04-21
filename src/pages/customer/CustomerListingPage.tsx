@@ -112,7 +112,8 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
     navigate("/app/cart");
   };
 
-  const activeFilters = (priceRange[0] > 0 ? 1 : 0) + (priceRange[1] < maxPrice ? 1 : 0) + (minRating > 0 ? 1 : 0);
+  const activeAttrCount = Object.values(selectedAttrs).reduce((s, v) => s + (v?.length ? 1 : 0), 0);
+  const activeFilters = (priceRange[0] > 0 ? 1 : 0) + (priceRange[1] < maxPrice ? 1 : 0) + (minRating > 0 ? 1 : 0) + activeAttrCount;
 
   return (
     <CustomerLayout>
