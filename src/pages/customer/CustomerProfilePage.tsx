@@ -30,17 +30,39 @@ export default function CustomerProfilePage() {
     staleTime: 30_000,
   });
 
+  // Wishlist is stored in localStorage (see CustomerWishlistPage). Mirror that
+  // count here so the profile menu matches what the user actually sees on the
+  // wishlist screen — products + services + saved sellers.
+  const readWishlistCount = () => {
+    const safeLen = (key: string) => {
+      try {
+        const arr = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(arr) ? arr.length : 0;
+      } catch { return 0; }
+    };
+    return safeLen('app_db_wishlist') + safeLen('app_db_service_wishlist') + safeLen('app_db_seller_wishlist');
+  };
+  const [wishlistCount, setWishlistCount] = useState<number>(() => readWishlistCount());
+  useEffect(() => {
+    const refresh = () => setWishlistCount(readWishlistCount());
+    refresh();
+    window.addEventListener('storage', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener('storage', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, []);
+
   const { data: counts } = useQuery({
     queryKey: ["profileCounts", customerId, supabaseUid],
     queryFn: async () => {
-      const [wishlist, classifieds, addresses, orders] = await Promise.all([
-        supabase.from("property_bookmarks").select("id", { count: "exact", head: true }).eq("user_id", customerId),
+      const [classifieds, addresses, orders] = await Promise.all([
         supabase.from("classified_ads").select("id", { count: "exact", head: true }).eq("user_id", customerId),
         supabase.from("customer_addresses").select("id", { count: "exact", head: true }).eq("customer_id", customerId),
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("customer_id", customerId),
       ]);
       return {
-        wishlist: wishlist.count || 0,
         classifieds: classifieds.count || 0,
         addresses: addresses.count || 0,
         orders: orders.count || 0,
@@ -59,7 +81,7 @@ export default function CustomerProfilePage() {
   const menuItems = [
     { icon: Edit, label: "Edit Profile", to: "/app/profile/edit" },
     { icon: Package, label: "My Orders", to: "/app/orders", count: String(counts?.orders || 0) },
-    { icon: Heart, label: "Wishlist", to: "/app/wishlist", count: String(counts?.wishlist || 0) },
+    { icon: Heart, label: "Wishlist", to: "/app/wishlist", count: String(wishlistCount) },
     { icon: Wallet, label: "Wallet & Points", to: "/app/wallet", info: `${profile?.wallet_points?.toLocaleString() || 0} pts` },
     { icon: Shield, label: "KYC Verification", to: "/app/kyc" },
     { icon: MapPin, label: "Saved Addresses", to: "/app/profile/edit", count: String(counts?.addresses || 0) },
