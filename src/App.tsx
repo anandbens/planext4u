@@ -501,6 +501,7 @@ const AppRoutes = () => {
         <Route path="/app/social/shop" element={<CustomerPage><SocialShopPage /></CustomerPage>} />
         <Route path="/app/social/suggestions" element={<CustomerPage><SocialSuggestionsPage /></CustomerPage>} />
         <Route path="/app/social/friends" element={<CustomerPage><SocialFriendsPage /></CustomerPage>} />
+        <Route path="/app/calls" element={<CustomerPage><CallsPage /></CustomerPage>} />
 
         {/* Admin Social */}
         <Route path="/admin/social" element={<AdminOnlyPage><AdminSocialDashboardPage /></AdminOnlyPage>} />
