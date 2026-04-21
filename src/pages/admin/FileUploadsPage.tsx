@@ -156,6 +156,12 @@ async function processProductUpload(rows: string[][], headers: string[], uploadI
   const catMap: Record<string, any> = {};
   (dbCategories || []).forEach((c: any) => { catMap[c.name.toLowerCase()] = c; });
 
+  // Pre-fetch vendors so we can validate vendor_id and resolve by name.
+  const { data: dbVendors } = await supabase.from("vendors").select("id, name");
+  const vendorIdSet = new Set((dbVendors || []).map((v: any) => v.id));
+  const vendorByName: Record<string, { id: string; name: string }> = {};
+  (dbVendors || []).forEach((v: any) => { if (v.name) vendorByName[v.name.trim().toLowerCase()] = v; });
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const record: Record<string, any> = {};
@@ -164,7 +170,24 @@ async function processProductUpload(rows: string[][], headers: string[], uploadI
 
     if (!record.title) rowErrors.push("title is required");
     if (!record.price || isNaN(Number(record.price)) || Number(record.price) <= 0) rowErrors.push("price must be a valid positive number");
-    if (!record.vendor_id) rowErrors.push("vendor_id is required");
+
+    // Resolve vendor: accept a valid vendor_id, otherwise try to match by vendor_name.
+    if (!record.vendor_id && !record.vendor_name) {
+      rowErrors.push("vendor_id or vendor_name is required");
+    } else if (record.vendor_id && !vendorIdSet.has(record.vendor_id)) {
+      const fallback = record.vendor_name ? vendorByName[record.vendor_name.trim().toLowerCase()] : null;
+      if (fallback) {
+        record.vendor_id = fallback.id;
+        record.vendor_name = fallback.name;
+      } else {
+        rowErrors.push(`vendor_id '${record.vendor_id}' does not exist${record.vendor_name ? ` and vendor_name '${record.vendor_name}' was not found` : ''} — check the Vendors list for valid IDs (e.g. VEND0000xxx)`);
+      }
+    } else if (!record.vendor_id && record.vendor_name) {
+      const match = vendorByName[record.vendor_name.trim().toLowerCase()];
+      if (match) { record.vendor_id = match.id; record.vendor_name = match.name; }
+      else rowErrors.push(`vendor_name '${record.vendor_name}' not found in vendors`);
+    }
+
     if (!record.sku) rowErrors.push("sku is required");
     if (record.tax && isNaN(Number(record.tax))) rowErrors.push("tax must be a number");
     if (record.discount && isNaN(Number(record.discount))) rowErrors.push("discount must be a number");
