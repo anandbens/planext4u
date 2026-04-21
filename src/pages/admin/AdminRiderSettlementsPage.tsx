@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { foodApi } from "@/lib/food-api";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { format } from "date-fns";
 import { Wallet } from "lucide-react";
 
@@ -52,7 +53,7 @@ export default function AdminRiderSettlementsPage() {
       setSettleRider(null); setForm({ method: 'bank_transfer', reference: '', notes: '' });
       load();
     } catch (err: any) {
-      toast.error(err.message || "Failed");
+      toast.error(friendlyError(err, "Failed"));
     } finally { setSaving(false); }
   };
 

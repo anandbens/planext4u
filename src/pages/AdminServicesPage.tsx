@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Eye, Pencil, Trash2, Wrench, Star, IndianRupee, CheckCircle, Check, X as XIcon, Clock as ClockIcon } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 
 type TabKey = "all" | "pending_approval" | "active" | "rejected" | "draft";
@@ -76,7 +77,7 @@ export default function AdminServicesPage() {
       toast.success("Service approved & published");
       setReviewOpen(false);
       fetchData();
-    } catch (err: any) { toast.error("Approve failed: " + (err.message || "Unknown error")); }
+    } catch (err: any) { toast.error(friendlyError(err, "Approve failed")); }
     finally { setReviewing(false); }
   };
 
@@ -89,21 +90,21 @@ export default function AdminServicesPage() {
       toast.success("Service rejected — vendor will be notified");
       setReviewOpen(false);
       fetchData();
-    } catch (err: any) { toast.error("Reject failed: " + (err.message || "Unknown error")); }
+    } catch (err: any) { toast.error(friendlyError(err, "Reject failed")); }
     finally { setReviewing(false); }
   };
 
   const handleSave = async (id: string, updates: Partial<Service>) => {
     try { await api.updateService(id, updates); toast.success("Service updated"); fetchData(); }
-    catch (err: any) { toast.error("Failed to update service: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to update service")); }
   };
   const handleCreate = async (data: Partial<Service>) => {
     try { await api.createService(data); toast.success("Service created"); fetchData(); }
-    catch (err: any) { toast.error("Failed to create service: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to create service")); }
   };
   const handleDelete = async (id: string) => {
     try { await api.deleteService(id); toast.success("Service deleted"); fetchData(); }
-    catch (err: any) { toast.error("Failed to delete service: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to delete service")); }
   };
 
   const handleBulkDelete = async (ids: string[]) => {

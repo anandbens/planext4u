@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Reply, CheckCircle, Clock, Mail } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function WebsiteQueriesPage() {
@@ -44,7 +45,7 @@ export default function WebsiteQueriesPage() {
       toast.success(`Reply sent to ${selected.email}`);
       setSelected(null); setReplyText(""); fetchData();
     } catch (e: any) {
-      toast.error(e.message || "Failed to save reply");
+      toast.error(friendlyError(e, "Failed to save reply"));
     }
     setSubmitting(false);
   };

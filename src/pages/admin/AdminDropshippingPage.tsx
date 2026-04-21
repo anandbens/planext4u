@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Truck, Plus, Pencil, Trash2, Boxes, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Supplier {
@@ -68,14 +69,14 @@ export default function AdminDropshippingPage() {
       toast.success("Supplier saved");
       setEditing(null);
       load();
-    } catch (e: any) { toast.error(e.message || "Save failed"); }
+    } catch (e: any) { toast.error(friendlyError(e, "Save failed")); }
     finally { setSaving(false); }
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this supplier? Linked products will be unmapped.")) return;
     const { error } = await supabase.from("dropshipping_suppliers").delete().eq("id", id);
-    if (error) toast.error(error.message); else { toast.success("Supplier deleted"); load(); }
+    if (error) toast.error(friendlyError(error)); else { toast.success("Supplier deleted"); load(); }
   };
 
   const toggleStatus = async (s: Supplier) => {

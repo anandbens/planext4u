@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, Pencil, Trash2, Users, UserCheck, UserX, Star, UserMinus, Clock } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrency } from "@/lib/country-context";
@@ -93,22 +94,22 @@ export default function CustomersPage() {
     setSelected(user); setModalMode(mode); setModalOpen(true);
   };
 
-  const handleSave = async (id: string, updates: Partial<User>) => { try { await api.updateCustomer(id, updates); toast.success("Customer updated"); fetchData(); fetchStats(); } catch (err: any) { toast.error("Failed to update customer: " + (err.message || "Unknown error")); } };
-  const handleCreate = async (data: Partial<User>) => { try { await api.createCustomer(data); toast.success("Customer created"); fetchData(); fetchStats(); } catch (err: any) { toast.error("Failed to create customer: " + (err.message || "Unknown error")); } };
+  const handleSave = async (id: string, updates: Partial<User>) => { try { await api.updateCustomer(id, updates); toast.success("Customer updated"); fetchData(); fetchStats(); } catch (err: any) { toast.error(friendlyError(err, "Failed to update customer")); } };
+  const handleCreate = async (data: Partial<User>) => { try { await api.createCustomer(data); toast.success("Customer created"); fetchData(); fetchStats(); } catch (err: any) { toast.error(friendlyError(err, "Failed to create customer")); } };
   const handleDelete = async (id: string) => {
     try { await api.deleteCustomer(id); toast.success("Customer deleted (soft)"); fetchData(); fetchStats(); }
-    catch (err: any) { toast.error("Failed to delete customer: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to delete customer")); }
   };
 
   const handleBulkDelete = async (ids: string[]) => {
     try { await api.bulkDeleteCustomers(ids); toast.success(`${ids.length} customers deleted (soft)`); fetchData(); fetchStats(); }
-    catch (err: any) { toast.error("Failed to delete customers: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to delete customers")); }
   };
 
   const requestHardDelete = async (user: User) => {
     setHardTarget(user); setHardOpen(true); setHardImpact(null); setHardLoading(true);
     try { setHardImpact(await api.getCustomerDeletionImpact(user.id)); }
-    catch (e: any) { toast.error(e?.message || "Could not load impact"); }
+    catch (e: any) { toast.error(friendlyError(e, "Could not load impact")); }
     finally { setHardLoading(false); }
   };
 
@@ -120,7 +121,7 @@ export default function CustomersPage() {
       toast.success(`${hardTarget.name} permanently deleted`);
       fetchData(); fetchStats();
       setHardOpen(false); setHardTarget(null); setHardImpact(null);
-    } catch (e: any) { toast.error(e?.message || "Failed to permanently delete"); }
+    } catch (e: any) { toast.error(friendlyError(e, "Failed to permanently delete")); }
     finally { setHardSubmitting(false); }
   };
 
@@ -137,7 +138,7 @@ export default function CustomersPage() {
 
   const handleBulkStatus = async (ids: string[], status: string) => {
     try { await api.bulkUpdateCustomerStatus(ids, status); toast.success(`${ids.length} customers updated to ${status}`); fetchData(); fetchStats(); }
-    catch (err: any) { toast.error("Failed to update customers: " + (err.message || "Unknown error")); }
+    catch (err: any) { toast.error(friendlyError(err, "Failed to update customers")); }
   };
 
   const handleExport = () => {

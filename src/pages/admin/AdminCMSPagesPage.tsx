@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { Plus, Edit, FileText, Eye } from "lucide-react";
 
 interface CMSPage {
@@ -62,7 +63,7 @@ export default function AdminCMSPagesPage() {
       setCreating(false);
       toast.success("Page saved");
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toast.error(friendlyError(e)),
   });
 
   const openEdit = (page: CMSPage) => {

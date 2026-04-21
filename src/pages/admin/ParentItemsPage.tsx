@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { exportToCSV } from "@/lib/csv";
@@ -76,7 +77,7 @@ export default function ParentItemsPage() {
       setModalOpen(false);
       fetch();
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(friendlyError(e));
     } finally { setSaving(false); }
   };
 

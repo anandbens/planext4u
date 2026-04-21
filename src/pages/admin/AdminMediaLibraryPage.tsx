@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -227,7 +228,7 @@ export default function AdminMediaLibraryPage() {
             );
             successCount++;
           } catch (videoErr: any) {
-            toast.error(`Failed: ${file.name} — ${videoErr.message || ""}`);
+            toast.error(`Failed: ${file.name} — ${friendlyError(videoErr, "video upload error")}`);
           }
           continue;
         }
@@ -257,14 +258,14 @@ export default function AdminMediaLibraryPage() {
           });
           successCount++;
         } catch (uploadErr: any) {
-          toast.error(`Failed: ${file.name} — ${uploadErr.message || ""}`);
+          toast.error(`Failed: ${file.name} — ${friendlyError(uploadErr, "upload error")}`);
         }
       }
       if (successCount > 0) {
         toast.success(`${successCount} file(s) uploaded to ${targetFolder}`);
         qc.invalidateQueries({ queryKey: ["adminMediaLibrary"] });
       }
-    } catch (err: any) { toast.error(err.message || "Upload failed"); }
+    } catch (err: any) { toast.error(friendlyError(err, "Upload failed")); }
     finally { setUploading(false); }
   };
 
@@ -301,7 +302,7 @@ export default function AdminMediaLibraryPage() {
       if (entries.length === 0) { toast.error("No valid files found in ZIP"); return; }
       await uploadFiles(entries, folderName);
       toast.success(`Extracted ${entries.length} files into folder "${folderName}"`);
-    } catch (err: any) { toast.error("Failed to process ZIP: " + (err.message || "")); }
+    } catch (err: any) { toast.error(friendlyError(err, "Failed to process ZIP")); }
     finally { setZipUploading(false); e.target.value = ""; }
   };
 

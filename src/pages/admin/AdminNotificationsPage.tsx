@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { Bell, Send, Users, Store, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -69,7 +70,7 @@ export default function AdminNotificationsPage() {
       setBody("");
       setDeepLink("");
     } catch (err: any) {
-      toast.error(err.message || "Failed to send notification");
+      toast.error(friendlyError(err, "Failed to send notification"));
     } finally {
       setSending(false);
     }

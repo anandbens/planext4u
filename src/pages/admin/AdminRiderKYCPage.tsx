@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { foodApi } from "@/lib/food-api";
 import { PrivateKycImage } from "@/components/admin/PrivateKycImage";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 export default function AdminRiderKYCPage() {
@@ -28,7 +29,7 @@ export default function AdminRiderKYCPage() {
       await foodApi.adminUpdateRiderKyc(riderId, status);
       toast.success(status === 'verified' ? "Rider approved" : "Rider rejected");
       setView(null); load();
-    } catch (err: any) { toast.error(err.message || "Failed"); }
+    } catch (err: any) { toast.error(friendlyError(err, "Failed")); }
   };
 
   if (loading) return <AdminLayout><div className="flex justify-center py-12"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div></AdminLayout>;

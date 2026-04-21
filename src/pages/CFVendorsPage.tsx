@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Eye, Pencil, Trash2, Store, ShieldCheck, Clock, Ban, CreditCard, UserX } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureVendorUserRole } from "@/lib/vendor-auth-link";
 
@@ -188,7 +189,7 @@ export default function CFVendorsPage() {
             plan_id: (updates as any).plan_id || null,
           };
           const { error: insertErr } = await supabase.from('service_vendors' as any).insert(newVendor);
-          if (insertErr) { toast.error("Failed to create service vendor: " + insertErr.message); return; }
+          if (insertErr) { toast.error(friendlyError(insertErr, "Failed to create service vendor")); return; }
           await supabase.from('vendor_applications').update({ status: 'approved' }).eq('id', id);
           const linkResult = await ensureVendorUserRole(
             { user_id: a.user_id, email: a.email, phone: a.phone },
@@ -231,7 +232,7 @@ export default function CFVendorsPage() {
       const { data: updated, error } = await supabase.from('service_vendors' as any)
         .update(svcUpdates).eq('id', id).select();
       if (error) {
-        toast.error("Failed to update: " + error.message);
+        toast.error(friendlyError(error, "Failed to update"));
         return;
       }
       if (!updated || updated.length === 0) {
@@ -248,7 +249,7 @@ export default function CFVendorsPage() {
       await api.createVendor(data, "service");
       toast.success("Service vendor created");
     } catch (err: any) {
-      toast.error("Failed to create vendor: " + (err.message || "Unknown error"));
+      toast.error(friendlyError(err, "Failed to create vendor"));
       return;
     }
     fetchData(); fetchStats();
@@ -313,7 +314,7 @@ export default function CFVendorsPage() {
               shop_photo_url: a.shop_photo_url || '',
             };
             const { error: insertErr } = await supabase.from('service_vendors' as any).insert(newVendor as any);
-            if (insertErr) { toast.error("Failed to create service vendor: " + insertErr.message); return; }
+            if (insertErr) { toast.error(friendlyError(insertErr, "Failed to create service vendor")); return; }
             await supabase.from('vendor_applications').update({ status: 'approved' }).eq('id', vendor.id);
             const linkResult = await ensureVendorUserRole(
               { user_id: a.user_id, email: a.email, phone: a.phone },

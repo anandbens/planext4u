@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { Plus, Pencil, Trash2, Tag } from "lucide-react";
 
 interface Coupon {
@@ -62,14 +63,14 @@ export default function AdminFoodCouponsPage() {
     if (!payload.restaurant_id) payload.restaurant_id = null;
     if (!payload.expires_at) payload.expires_at = null;
     const { error } = await supabase.from("food_coupons" as any).upsert(payload);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Saved"); setEditing(null); load();
   };
 
   const del = async (id: string) => {
     if (!confirm("Delete this coupon?")) return;
     const { error } = await supabase.from("food_coupons" as any).delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     load();
   };
 

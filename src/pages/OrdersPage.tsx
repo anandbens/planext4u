@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, Pencil, Ban, ShoppingCart, IndianRupee, Clock, CheckCircle, Trash2, RotateCcw, Wrench, Package } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { useCurrency } from "@/lib/country-context";
 
 type TabKey = "product" | "service" | "deleted";
@@ -123,7 +124,7 @@ export default function OrdersPage() {
       toast.success(`${deleteIds.length} order${deleteIds.length > 1 ? 's' : ''} moved to Deleted`);
       fetchData();
     } catch (e: any) {
-      toast.error(e?.message || "Failed to delete");
+      toast.error(friendlyError(e, "Failed to delete"));
     } finally {
       setDeleteLoading(false); setDeleteConfirmOpen(false); setDeleteIds([]);
     }
@@ -134,7 +135,7 @@ export default function OrdersPage() {
       await api.restoreOrders(ids);
       toast.success(`${ids.length} order${ids.length > 1 ? 's' : ''} restored`);
       fetchData();
-    } catch (e: any) { toast.error(e?.message || "Failed to restore"); }
+    } catch (e: any) { toast.error(friendlyError(e, "Failed to restore")); }
   };
 
   const requestHardDelete = async (ids: string[]) => {
@@ -142,7 +143,7 @@ export default function OrdersPage() {
     try {
       const impact = await api.getOrdersDeletionImpact(ids);
       setHardImpact(impact);
-    } catch (e: any) { toast.error(e?.message || "Could not check impact"); }
+    } catch (e: any) { toast.error(friendlyError(e, "Could not check impact")); }
     finally { setHardImpactLoading(false); }
   };
 
@@ -155,7 +156,7 @@ export default function OrdersPage() {
       fetchData();
       setHardOpen(false); setHardIds([]); setHardImpact(null);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to permanently delete orders");
+      toast.error(friendlyError(e, "Failed to permanently delete orders"));
     } finally { setHardSubmitting(false); }
   };
 
@@ -257,7 +258,7 @@ export default function OrdersPage() {
       ], `orders-${tab}${tab === "deleted" && deletedTypeFilter !== "all" ? "-" + deletedTypeFilter : ""}`);
       toast.success(`Exported ${rows.length} line items from ${orders.length} orders`, { id: "orders-export" });
     } catch (e: any) {
-      toast.error(e?.message || "Export failed", { id: "orders-export" });
+      toast.error(friendlyError(e, "Export failed"), { id: "orders-export" });
     }
   };
 

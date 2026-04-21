@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 import { AdvertisementModal } from "@/components/admin/modals/AdvertisementModal";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -51,14 +52,14 @@ export default function AdvertisementsPage() {
   const handleCreate = async (payload: any) => {
     const id = crypto.randomUUID();
     const { error } = await supabase.from("advertisements").insert({ id, ...payload } as any);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Advertisement created");
     fetchData();
   };
 
   const handleSave = async (id: string, payload: any) => {
     const { error } = await supabase.from("advertisements").update(payload as any).eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Advertisement updated");
     fetchData();
   };
@@ -66,7 +67,7 @@ export default function AdvertisementsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this advertisement?")) return;
     const { error } = await supabase.from("advertisements").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Advertisement deleted");
     fetchData();
   };
