@@ -763,7 +763,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground">MRP (₹)</Label>
-                  {editMode ? <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-bold mt-1">₹{product?.price.toLocaleString()}</p>}
+                  {editMode ? <Input type="number" min="0" step="0.01" value={form.price === 0 ? "" : form.price} onChange={(e) => { const v = e.target.value; setForm({ ...form, price: v === "" ? 0 : Number(v) }); }} placeholder="0" className="mt-1" /> : <p className="text-sm font-bold mt-1">₹{product?.price.toLocaleString()}</p>}
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Tax Slab</Label>
@@ -817,7 +817,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Discount {form.discount_type === "percentage" ? "(%)" : "(₹)"}</Label>
-                  {editMode ? <Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} className="mt-1" /> : <p className="text-sm font-medium mt-1 text-success">{form.discount > 0 ? (form.discount_type === "percentage" ? `${form.discount}%` : `₹${form.discount}`) : "—"}</p>}
+                  {editMode ? <Input type="number" min="0" step="0.01" value={form.discount === 0 ? "" : form.discount} onChange={(e) => { const v = e.target.value; setForm({ ...form, discount: v === "" ? 0 : Number(v) }); }} placeholder="0" className="mt-1" /> : <p className="text-sm font-medium mt-1 text-success">{form.discount > 0 ? (form.discount_type === "percentage" ? `${form.discount}%` : `₹${form.discount}`) : "—"}</p>}
                 </div>
               </div>
               <Separator />
