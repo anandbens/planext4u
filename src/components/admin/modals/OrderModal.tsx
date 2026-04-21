@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingCart, User, Store, Package, Truck } from "lucide-react";
+import { CartRuleBreakup, type AppliedCartRule } from "@/components/cart/CartRuleBreakup";
 import { useState, useEffect } from "react";
 
 interface OrderModalProps {
@@ -176,6 +177,13 @@ export function OrderModal({ order, open, onOpenChange, mode, onSave }: OrderMod
               <span className="text-muted-foreground">Discount</span>
               <span className="text-success">-₹{order.discount.toLocaleString()}</span>
             </div>
+          )}
+          {Array.isArray((order as any).applied_cart_rules) && (order as any).applied_cart_rules.length > 0 && (
+            <CartRuleBreakup
+              rules={(order as any).applied_cart_rules as AppliedCartRule[]}
+              totalDiscount={Number((order as any).cart_rule_discount || 0)}
+              audience="admin"
+            />
           )}
           {order.points_used > 0 && (
             <div className="flex justify-between text-sm">
