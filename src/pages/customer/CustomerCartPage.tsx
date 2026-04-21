@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolveCommissionCascade } from "@/lib/commission-cascade";
 import { checkCartStock } from "@/lib/stock-check";
 import { getCustomerAddressOwnerContext, requireCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
+import { useCurrency } from "@/lib/country-context";
 
 const TIME_SLOTS = [
   { id: "morning", label: "Morning 9 - 11 AM" },
@@ -31,6 +32,7 @@ interface SavedAddress {
 
 export default function CustomerCartPage() {
   const navigate = useNavigate();
+  const { format: fmt, symbol: curSym } = useCurrency();
   const { customerUser } = useAuth();
   const customerId = customerUser?.customer_id || customerUser?.id || "";
   const [cart, setCart] = useState<CartItem[]>([]);
