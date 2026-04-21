@@ -157,10 +157,6 @@ export default function StorageMigrationPanel() {
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-lg font-semibold">Generate Homepage Images (AI → B2)</h2>
-            <p className="text-sm text-muted-foreground">
-              Generates photorealistic images via Lovable AI and uploads them to Backblaze B2.
-              Carousel seed runs only when no active banners exist; product/service runs fill missing images in batches of 8.
-            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => seedMedia("carousel")} disabled={!!seeding} variant="outline" className="gap-2">
