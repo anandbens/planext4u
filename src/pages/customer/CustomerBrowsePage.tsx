@@ -361,8 +361,8 @@ export default function CustomerBrowsePage() {
             {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />)}
           </div>
         ) : (() => {
-          const totalPages = Math.ceil((products?.length || 0) / ITEMS_PER_PAGE);
-          const paginated = products?.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE) || [];
+          const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+          const paginated = filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
           return (
             <>
               {paginated.length === 0 ? (
