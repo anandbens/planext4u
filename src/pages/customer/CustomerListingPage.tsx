@@ -175,7 +175,7 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {paginated.map((p: any) => {
                 const discountPct = p.discount ? Math.round((p.discount / p.price) * 100) : 0;
-                const isOutOfStock = p.stock !== undefined && p.stock !== null && p.stock <= 0;
+                const isOutOfStock = isProductOutOfStock(p);
                 return (
                   <Card key={p.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
                     <Link to={`/app/product/${p.id}`} className="flex-1 flex flex-col">

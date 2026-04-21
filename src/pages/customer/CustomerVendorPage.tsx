@@ -220,7 +220,7 @@ export default function CustomerVendorPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {filteredProducts.map((p: any) => {
                 const discountPct = p.discount ? Math.round((p.discount / p.price) * 100) : 0;
-                const isOutOfStock = p.stock !== undefined && p.stock !== null && p.stock <= 0;
+                const isOutOfStock = isProductOutOfStock(p);
                 return (
                   <Link to={`/app/product/${p.id}`} key={p.id}>
                     <Card className="overflow-hidden hover:shadow-lg transition-all group">

@@ -234,7 +234,7 @@ export default function CustomerProductPage() {
   const originalPrice = comparePrice || product.price + discountAmount;
   const displayPrice = basePrice + (product.tax || 0);
   const stockInfo = selectedVariant ? `${selectedVariant.stock_quantity} in stock` : product.stock ? `${product.stock} in stock` : '';
-  const outOfStock = selectedVariant ? selectedVariant.stock_quantity <= 0 : (product.stock !== undefined && product.stock <= 0);
+  const outOfStock = selectedVariant ? selectedVariant.stock_quantity <= 0 : isProductOutOfStock(product as any);
 
   return (
     <CustomerLayout>
