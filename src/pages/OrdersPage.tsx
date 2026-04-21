@@ -13,10 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Eye, Pencil, Ban, ShoppingCart, IndianRupee, Clock, CheckCircle, Trash2, RotateCcw, Wrench, Package } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { useCurrency } from "@/lib/country-context";
 
 type TabKey = "product" | "service" | "deleted";
 
 export default function OrdersPage() {
+  const { format: fmt, symbol } = useCurrency();
   const [tab, setTab] = useState<TabKey>("product");
   const [data, setData] = useState<PaginatedResponse<Order> | null>(null);
   const [page, setPage] = useState(1);
@@ -265,10 +267,10 @@ export default function OrdersPage() {
 
   const summaryWidgets: SummaryWidget[] = tab === "deleted" ? [
     { label: "Deleted Orders", value: data?.total || 0, icon: <Trash2 className="h-5 w-5 text-destructive" />, color: "bg-destructive/5", textColor: "text-destructive" },
-    { label: "Revenue (page)", value: `₹${totalRevenue.toLocaleString()}`, icon: <IndianRupee className="h-5 w-5 text-muted-foreground" />, color: "bg-muted/30" },
+    { label: "Revenue (page)", value: fmt(totalRevenue, { decimals: 0 }), icon: <IndianRupee className="h-5 w-5 text-muted-foreground" />, color: "bg-muted/30" },
   ] : [
     { label: tab === "product" ? "Product Orders" : "Service Orders", value: data?.total || 0, icon: tab === "product" ? <Package className="h-5 w-5 text-primary" /> : <Wrench className="h-5 w-5 text-primary" />, color: "bg-primary/5" },
-    { label: "Revenue (page)", value: `₹${totalRevenue.toLocaleString()}`, icon: <IndianRupee className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
+    { label: "Revenue (page)", value: fmt(totalRevenue, { decimals: 0 }), icon: <IndianRupee className="h-5 w-5 text-success" />, color: "bg-success/5", textColor: "text-success" },
     { label: "Active", value: activeOrders, icon: <Clock className="h-5 w-5 text-warning" />, color: "bg-warning/5", textColor: "text-warning" },
     { label: "Completed", value: completed, icon: <CheckCircle className="h-5 w-5 text-info" />, color: "bg-info/5", textColor: "text-info" },
   ];
@@ -288,7 +290,7 @@ export default function OrdersPage() {
       </div>
     )},
     { key: "items", label: "Items", render: (o: Order) => <span className="text-xs text-muted-foreground">{(o.items || []).slice(0, 2).map((i: any) => i.title).join(", ") || "—"}{(o.items || []).length > 2 ? ` +${(o.items || []).length - 2}` : ""}</span> },
-    { key: "total", label: "Total", render: (o: Order) => <span className="font-bold">₹{Number(o.total).toLocaleString()}</span> },
+    { key: "total", label: "Total", render: (o: Order) => <span className="font-bold">{fmt(o.total, { decimals: 0 })}</span> },
     { key: "status", label: "Status", render: (o: Order) => <StatusBadge status={o.status} /> },
     { key: "created_at", label: "Created", render: (o: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(o.created_at)}</span> },
     { key: "updated_at", label: "Updated", render: (o: any) => <span className="text-xs text-muted-foreground whitespace-nowrap">{fmtTs(o.updated_at || o.created_at)}</span> },
@@ -350,8 +352,8 @@ export default function OrdersPage() {
               <Input placeholder="Vendor (name / ID)…" value={vendorFilter} onChange={(e) => { setVendorFilter(e.target.value); setPage(1); }} className="w-48 h-9 bg-secondary/50 border-0" />
               <Input placeholder="Product / item title…" value={productFilter} onChange={(e) => { setProductFilter(e.target.value); setPage(1); }} className="w-48 h-9 bg-secondary/50 border-0" />
               <Input placeholder="Customer (name / ID)…" value={customerFilter} onChange={(e) => { setCustomerFilter(e.target.value); setPage(1); }} className="w-48 h-9 bg-secondary/50 border-0" />
-              <Input type="number" inputMode="decimal" placeholder="Min ₹" value={minAmount} onChange={(e) => { setMinAmount(e.target.value); setPage(1); }} className="w-24 h-9 bg-secondary/50 border-0" />
-              <Input type="number" inputMode="decimal" placeholder="Max ₹" value={maxAmount} onChange={(e) => { setMaxAmount(e.target.value); setPage(1); }} className="w-24 h-9 bg-secondary/50 border-0" />
+              <Input type="number" inputMode="decimal" placeholder={`Min ${symbol}`} value={minAmount} onChange={(e) => { setMinAmount(e.target.value); setPage(1); }} className="w-24 h-9 bg-secondary/50 border-0" />
+              <Input type="number" inputMode="decimal" placeholder={`Max ${symbol}`} value={maxAmount} onChange={(e) => { setMaxAmount(e.target.value); setPage(1); }} className="w-24 h-9 bg-secondary/50 border-0" />
               {(vendorFilter || productFilter || customerFilter || minAmount || maxAmount) && (
                 <Button variant="ghost" size="sm" className="h-9 text-xs" onClick={() => {
                   setVendorFilter(""); setProductFilter(""); setCustomerFilter("");

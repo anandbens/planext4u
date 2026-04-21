@@ -4,6 +4,7 @@ import { StatCard } from "@/components/admin/StatCard";
 import { Gift, Users, CheckCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
+import { useCurrency } from "@/lib/country-context";
 
 const statusStyle: Record<string, string> = {
   completed: "bg-success/10 text-success",
@@ -11,6 +12,7 @@ const statusStyle: Record<string, string> = {
 };
 
 export default function ReferralsPage() {
+  const { country } = useCurrency();
   const { data } = useQuery({
     queryKey: ["referrals"],
     queryFn: () => api.getReferrals({ page: 1, per_page: 20 }),
@@ -32,7 +34,7 @@ export default function ReferralsPage() {
         <StatCard title="Total Referrals" value={String(referrals.length)} trend={14.2} icon={Users} gradient="gradient-primary" />
         <StatCard title="Successful" value={String(completed.length)} trend={11.8} icon={CheckCircle} gradient="gradient-success" />
         <StatCard title="Pending" value={String(pending.length)} trend={5.3} icon={Clock} gradient="gradient-warning" />
-        <StatCard title="Points Awarded" value={totalPoints.toLocaleString()} trend={18.9} icon={Gift} gradient="gradient-info" />
+        <StatCard title="Points Awarded" value={totalPoints.toLocaleString(country.locale_code)} trend={18.9} icon={Gift} gradient="gradient-info" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -71,7 +73,7 @@ export default function ReferralsPage() {
                     <span className="text-xs text-muted-foreground">→</span>
                     <p className="text-sm font-medium">{r.referee_name}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{new Date(r.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{new Date(r.created_at).toLocaleDateString(country.locale_code, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
                 </div>
                 <div className="text-right flex items-center gap-2">
                   <Badge className={`${statusStyle[r.status] || ''} border-0 text-[10px]`}>{r.status}</Badge>
