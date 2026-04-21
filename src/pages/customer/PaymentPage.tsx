@@ -23,19 +23,33 @@ export default function PaymentPage() {
   const location = useLocation();
   const { customerUser } = useAuth();
   const { format: fmt } = useCurrency();
-  const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
+  // Use the customer's CUST0000xxx id — RLS on `orders` requires it to match
+  // the value returned by get_customer_id(auth.uid()). A synthetic fallback
+  // silently fails the insert, so we surface that case instead.
+  const customerId = customerUser?.customer_id || customerUser?.id || '';
 
   const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress, itemRedemptionMap, isServiceBooking, bookingDate, bookingSlot } = location.state || {};
 
   const [paymentState, setPaymentState] = useState<PaymentState>('select');
   const [orderId, setOrderId] = useState('');
   const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [failureReason, setFailureReason] = useState<string>('');
 
   useEffect(() => {
     if (!cart || cart.length === 0) navigate('/app/cart');
   }, [cart, navigate]);
 
   const handlePay = async () => {
+    setFailureReason('');
+    // Guard: a logged-in customer is mandatory — RLS on orders/service_bookings
+    // requires customer_id to match the active session. Without it the insert
+    // silently fails and the user sees a meaningless "Payment Failed" screen.
+    if (!customerId) {
+      toast.error('Please sign in to complete your purchase');
+      navigate('/customer/login', { state: { redirectTo: '/app/cart' } });
+      return;
+    }
+
     setPaymentState('processing');
 
     try {
@@ -59,8 +73,10 @@ export default function PaymentPage() {
       });
 
       if (error || !data?.order_id) {
-        toast.error("Failed to create payment order");
-        setPaymentState('select');
+        const reason = (data as any)?.error || error?.message || 'Failed to create payment order';
+        toast.error(reason);
+        setFailureReason(reason);
+        setPaymentState('failure');
         return;
       }
 
@@ -89,6 +105,8 @@ export default function PaymentPage() {
           toast.info("Payment cancelled");
           setPaymentState('select');
         } else {
+          console.error('Razorpay checkout failed:', e);
+          setFailureReason(msg || 'Checkout could not be completed');
           setPaymentState('failure');
         }
         return;
@@ -106,6 +124,9 @@ export default function PaymentPage() {
       });
 
       if (verifyError || !verifyData?.verified) {
+        const reason = verifyError?.message || 'Payment verification failed — please contact support with your payment ID';
+        console.error('Verify failed:', verifyError, verifyData, 'payment_id:', response.razorpay_payment_id);
+        setFailureReason(`${reason} (Payment ID: ${response.razorpay_payment_id})`);
         setPaymentState('failure');
         return;
       }
@@ -117,8 +138,10 @@ export default function PaymentPage() {
       }
     } catch (err: any) {
       console.error("Payment error:", err);
-      toast.error("Payment failed: " + (err.message || "Unknown error"));
-      setPaymentState('select');
+      const msg = err?.message || "Unknown error";
+      toast.error("Payment failed: " + msg);
+      setFailureReason(msg);
+      setPaymentState('failure');
     }
   };
 
@@ -305,7 +328,7 @@ export default function PaymentPage() {
         const { error: insertErr } = await supabase.from('orders').insert(orderData as any);
         if (insertErr) {
           console.error('Order insert error:', insertErr);
-          throw new Error(insertErr.message);
+          throw new Error(insertErr.message || 'Could not save your order');
         }
         return orderData;
       });
@@ -356,8 +379,9 @@ export default function PaymentPage() {
       setOrderId(newOrderId);
       setOrderItems(cart || []);
       setPaymentState('success');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Order creation failed:', err);
+      setFailureReason(err?.message || 'Order could not be saved. If you were charged, please contact support.');
       setPaymentState('failure');
     }
   };
@@ -448,9 +472,15 @@ export default function PaymentPage() {
             <XCircle className="h-14 w-14 text-destructive" />
           </motion.div>
           <h2 className="text-2xl font-bold mb-2">Payment Failed</h2>
-          <p className="text-sm text-muted-foreground mb-8">Your payment could not be processed. Please try again.</p>
+          <p className="text-sm text-muted-foreground mb-2">Your payment could not be processed. Please try again.</p>
+          {failureReason && (
+            <p className="text-xs text-destructive/80 bg-destructive/5 border border-destructive/20 rounded-md p-2 mb-6 break-words">
+              {failureReason}
+            </p>
+          )}
           <div className="flex flex-col gap-3">
-            <Button className="w-full h-12" onClick={() => setPaymentState('select')}>Retry Payment</Button>
+            <Button className="w-full h-12" onClick={() => { setFailureReason(''); setPaymentState('select'); }}>Retry Payment</Button>
+            <Button variant="outline" className="w-full h-11" onClick={() => navigate('/app/cart')}>Back to Cart</Button>
           </div>
         </div>
       </CustomerLayout>
