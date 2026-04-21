@@ -487,11 +487,10 @@ export default function PaymentPage() {
           </motion.div>
           <h2 className="text-2xl font-bold mb-2">Payment Failed</h2>
           <p className="text-sm text-muted-foreground mb-2">Your payment could not be processed. Please try again.</p>
-          {failureReason && (
-            <p className="text-xs text-destructive/80 bg-destructive/5 border border-destructive/20 rounded-md p-2 mb-6 break-words">
-              {failureReason}
-            </p>
-          )}
+          <p className="text-xs text-destructive/80 bg-destructive/5 border border-destructive/20 rounded-md p-3 mb-6 break-words text-left">
+            <span className="font-semibold block mb-1">Reason:</span>
+            {failureReason || 'No specific error was reported by the payment gateway. This usually means the checkout window was closed before completing payment, or your device blocked the gateway. Please retry — if the problem persists, try a different network or contact support.'}
+          </p>
           <div className="flex flex-col gap-3">
             <Button className="w-full h-12" onClick={() => { setFailureReason(''); setPaymentState('select'); }}>Retry Payment</Button>
             <Button variant="outline" className="w-full h-11" onClick={() => navigate('/app/cart')}>Back to Cart</Button>
