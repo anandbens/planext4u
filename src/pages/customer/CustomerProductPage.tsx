@@ -18,6 +18,7 @@ import { BannerAd } from "@/components/customer/BannerAd";
 import DOMPurify from "dompurify";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
+import { isProductOutOfStock } from "@/lib/stock-display";
 
 
 export default function CustomerProductPage() {

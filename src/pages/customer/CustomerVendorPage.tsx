@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 import { useCurrency } from "@/lib/country-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isProductOutOfStock } from "@/lib/stock-display";
 
 export default function CustomerVendorPage() {
   const { id } = useParams();
