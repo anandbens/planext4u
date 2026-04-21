@@ -13,6 +13,7 @@ import { CancelOrderDialog } from "@/components/food/CancelOrderDialog";
 import { downloadInvoice } from "@/lib/food-invoice";
 import { FoodReviewModal } from "@/components/food/FoodReviewModal";
 import { toast } from "sonner";
+import { useCurrency } from "@/lib/country-context";
 
 const STATUS_STEPS = ['placed', 'accepted', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'];
 const STATUS_LABEL: Record<string, string> = {
@@ -38,6 +39,7 @@ export default function FoodOrderDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { customerUser, user } = useAuth();
+  const { format: fmt } = useCurrency();
   const [order, setOrder] = useState<FoodOrder | null>(null);
   const [restaurantCoords, setRestaurantCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [restaurantPhone, setRestaurantPhone] = useState<string | null>(null);
@@ -283,18 +285,18 @@ export default function FoodOrderDetailPage() {
           {(order.items as any[]).map((it, i) => (
             <div key={i} className="flex justify-between text-sm">
               <span>{it.qty} × {it.name}</span>
-              <span>₹{it.qty * it.price}</span>
+              <span>{fmt(it.qty * it.price, { decimals: 0 })}</span>
             </div>
           ))}
           <div className="border-t border-border/50 my-2" />
-          <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>₹{order.subtotal}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-muted-foreground">Delivery</span><span>₹{order.delivery_fee}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-muted-foreground">Packaging</span><span>₹{order.packaging_fee}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-muted-foreground">GST</span><span>₹{order.gst}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span>{fmt(order.subtotal, { decimals: 0 })}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-muted-foreground">Delivery</span><span>{fmt(order.delivery_fee, { decimals: 0 })}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-muted-foreground">Packaging</span><span>{fmt(order.packaging_fee, { decimals: 0 })}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-muted-foreground">GST</span><span>{fmt(order.gst, { decimals: 0 })}</span></div>
           {order.discount > 0 && (
-            <div className="flex justify-between text-sm text-success"><span>Discount</span><span>-₹{order.discount}</span></div>
+            <div className="flex justify-between text-sm text-success"><span>Discount</span><span>-{fmt(order.discount, { decimals: 0 })}</span></div>
           )}
-          <div className="flex justify-between text-base font-bold mt-1"><span>Total</span><span>₹{order.total}</span></div>
+          <div className="flex justify-between text-base font-bold mt-1"><span>Total</span><span>{fmt(order.total, { decimals: 0 })}</span></div>
           <div className="flex justify-between text-xs text-muted-foreground mt-2">
             <span className="flex items-center gap-1"><Receipt className="h-3 w-3" /> Paid via {(order.payment_method || '').toUpperCase()}</span>
             <span>{order.payment_status === 'paid' ? '✓ Paid' : order.payment_status === 'refunded' ? 'Refunded' : 'Pending'}</span>

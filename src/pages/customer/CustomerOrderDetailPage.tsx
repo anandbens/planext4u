@@ -11,6 +11,7 @@ import { PodRatingPopup } from "@/components/customer/PodRatingPopup";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { useCurrency } from "@/lib/country-context";
 
 const statusColor: Record<string, string> = {
   placed: "bg-primary/10 text-primary", paid: "bg-info/10 text-info", accepted: "bg-info/10 text-info",
@@ -31,6 +32,7 @@ const trackingSteps = [
 export default function CustomerOrderDetailPage() {
   const { orderId } = useParams();
   const { customerUser } = useAuth();
+  const { format: fmt } = useCurrency();
   const qc = useQueryClient();
   const [showPodPopup, setShowPodPopup] = useState(false);
 
@@ -194,9 +196,9 @@ export default function CustomerOrderDetailPage() {
                   {item.selected_attributes && Object.keys(item.selected_attributes).length > 0 && (
                     <p className="text-[10px] text-primary/70">{Object.entries(item.selected_attributes).map(([k, v]: [string, any]) => `${k}: ${v}`).join(' · ')}</p>
                   )}
-                  <p className="text-xs text-muted-foreground">Qty: {item.qty} × ₹{(item.price || 0).toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Qty: {item.qty} × {fmt(item.price || 0, { decimals: 0 })}</p>
                 </div>
-                <p className="text-sm font-semibold whitespace-nowrap">₹{((item.price || 0) * (item.qty || 1)).toLocaleString()}</p>
+                <p className="text-sm font-semibold whitespace-nowrap">{fmt((item.price || 0) * (item.qty || 1), { decimals: 0 })}</p>
               </Link>
             ))}
           </div>
@@ -210,12 +212,12 @@ export default function CustomerOrderDetailPage() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Item Total (MRP)</span>
-              <span>₹{(order.subtotal || 0).toLocaleString()}</span>
+              <span>{fmt(order.subtotal || 0, { decimals: 0 })}</span>
             </div>
             {order.discount > 0 && (
               <div className="flex justify-between text-success">
                 <span>Discount</span>
-                <span>- ₹{order.discount.toLocaleString()}</span>
+                <span>- {fmt(order.discount, { decimals: 0 })}</span>
               </div>
             )}
             {order.points_used > 0 && (
@@ -230,13 +232,13 @@ export default function CustomerOrderDetailPage() {
                   <span className="text-muted-foreground">Service & convenience fee</span>
                   <p className="text-[10px] text-muted-foreground/70">Inclusive of all applicable taxes</p>
                 </div>
-                <span>₹{(pf + gstPf).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                <span>{fmt(pf + gstPf, { decimals: 2 })}</span>
               </div>
             )}
             {(order.tax || 0) > 0 && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Product Tax (GST)</span>
-                <span>₹{(order.tax || 0).toLocaleString()}</span>
+                <span>{fmt(order.tax || 0, { decimals: 0 })}</span>
               </div>
             )}
             <div className="flex justify-between">
@@ -245,7 +247,7 @@ export default function CustomerOrderDetailPage() {
             </div>
             <div className="border-t border-border/50 pt-2 flex justify-between font-bold">
               <span>Grand Total</span>
-              <span>₹{(order.total || 0).toLocaleString()}</span>
+              <span>{fmt(order.total || 0, { decimals: 0 })}</span>
             </div>
           </div>
         </Card>

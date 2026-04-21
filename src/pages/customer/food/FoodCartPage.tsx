@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PaymentMethodPicker, FoodPaymentMethod } from "@/components/food/PaymentMethodPicker";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
+import { useCurrency } from "@/lib/country-context";
 
 const CART_KEY = "p4u_food_cart";
 const DONATION_OPTIONS = [0, 2, 5, 10];
@@ -47,6 +48,7 @@ function generateSlots(): { value: string; label: string }[] {
 export default function FoodCartPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
+  const { format: fmt } = useCurrency();
   const [cart, setCart] = useState<CartLine[]>(loadCart());
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [placing, setPlacing] = useState(false);
@@ -150,7 +152,7 @@ export default function FoodCartPage() {
     setCoupon({ code: result.code!, title: result.title!, discount: result.discount!, coupon_id: result.coupon_id! });
     setCouponInput("");
     setShowCouponList(false);
-    toast.success(`Coupon applied — saved ₹${result.discount}`);
+    toast.success(`Coupon applied — saved ${fmt(result.discount, { decimals: 0 })}`);
   };
 
   const autoApplyBest = async () => {
@@ -158,7 +160,7 @@ export default function FoodCartPage() {
     const result = await foodApi.bestCoupon(customerUser.customer_id, restaurant.id, subtotal);
     if (result.valid && result.code) {
       setCoupon({ code: result.code, title: result.title!, discount: result.discount!, coupon_id: result.coupon_id! });
-      toast.success(`Best deal applied: ${result.code} — saved ₹${result.discount}`);
+      toast.success(`Best deal applied: ${result.code} — saved ${fmt(result.discount, { decimals: 0 })}`);
     } else {
       toast("No applicable coupons right now");
     }
@@ -169,7 +171,7 @@ export default function FoodCartPage() {
       toast.error("Please log in"); navigate('/app/login'); return;
     }
     if (subtotal < (restaurant.min_order_amount || 0)) {
-      toast.error(`Minimum order is ₹${restaurant.min_order_amount}`); return;
+      toast.error(`Minimum order is ${fmt(restaurant.min_order_amount, { decimals: 0 })}`); return;
     }
     setPlacing(true);
     try {
@@ -303,14 +305,14 @@ export default function FoodCartPage() {
             <div key={l.item_id} className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{l.name}</p>
-                <p className="text-xs text-muted-foreground">₹{l.price} × {l.qty}</p>
+                <p className="text-xs text-muted-foreground">{fmt(l.price, { decimals: 0 })} × {l.qty}</p>
               </div>
               <div className="flex items-center gap-2 bg-card border border-primary rounded-lg px-2 py-1">
                 <button onClick={() => decQty(l.item_id)}><Minus className="h-3.5 w-3.5 text-primary" /></button>
                 <span className="text-sm font-bold text-primary min-w-[1ch] text-center">{l.qty}</span>
                 <button onClick={() => incQty(l.item_id)}><Plus className="h-3.5 w-3.5 text-primary" /></button>
               </div>
-              <p className="text-sm font-semibold w-16 text-right">₹{l.qty * l.price}</p>
+              <p className="text-sm font-semibold w-16 text-right">{fmt(l.qty * l.price, { decimals: 0 })}</p>
             </div>
           ))}
         </Card>
@@ -342,7 +344,7 @@ export default function FoodCartPage() {
             <div className="flex items-center justify-between bg-success/10 border border-success/30 rounded-lg px-3 py-2">
               <div>
                 <p className="text-xs font-bold text-success">{coupon.code} applied</p>
-                <p className="text-xs text-muted-foreground">{coupon.title} — saved ₹{coupon.discount}</p>
+                <p className="text-xs text-muted-foreground">{coupon.title} — saved {fmt(coupon.discount, { decimals: 0 })}</p>
               </div>
               <button onClick={() => setCoupon(null)} aria-label="Remove coupon"><X className="h-4 w-4 text-destructive" /></button>
             </div>
@@ -365,7 +367,7 @@ export default function FoodCartPage() {
           <div className="flex gap-2 flex-wrap">
             {TIP_OPTIONS.map(t => (
               <button key={t} onClick={() => setTip(t)} className={`px-3 py-1.5 rounded-full border text-xs font-medium ${tip === t ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border'}`}>
-                {t === 0 ? 'No tip' : `₹${t}`}
+                {t === 0 ? 'No tip' : fmt(t, { decimals: 0 })}
               </button>
             ))}
           </div>
@@ -378,7 +380,7 @@ export default function FoodCartPage() {
           <div className="flex gap-2 flex-wrap">
             {DONATION_OPTIONS.map(d => (
               <button key={d} onClick={() => setDonation(d)} className={`px-3 py-1.5 rounded-full border text-xs font-medium ${donation === d ? 'bg-destructive text-destructive-foreground border-destructive' : 'bg-background border-border'}`}>
-                {d === 0 ? 'Skip' : `₹${d}`}
+                {d === 0 ? 'Skip' : fmt(d, { decimals: 0 })}
               </button>
             ))}
           </div>
@@ -392,7 +394,7 @@ export default function FoodCartPage() {
                 <Wallet className="h-4 w-4 text-primary" />
                 <div>
                   <p className="font-semibold">P4U Wallet</p>
-                  <p className="text-xs text-muted-foreground">Balance ₹{walletBalance} • Use up to ₹{maxWalletUse}</p>
+                  <p className="text-xs text-muted-foreground">Balance {fmt(walletBalance, { decimals: 0 })} • Use up to {fmt(maxWalletUse, { decimals: 0 })}</p>
                 </div>
               </div>
               <Switch checked={useWallet} onCheckedChange={setUseWallet} />
@@ -434,17 +436,17 @@ export default function FoodCartPage() {
         {/* Bill */}
         <Card className="p-3 space-y-1.5 text-sm">
           <h3 className="font-semibold text-xs uppercase text-muted-foreground mb-2">Bill Details</h3>
-          <Row label="Item Total" value={`₹${subtotal}`} />
-          <Row label={`Delivery (${distanceKm.toFixed(1)} km)`} value={`₹${deliveryFee}`} />
-          <Row label="Packaging" value={`₹${packagingFee}`} />
-          <Row label="Platform Fee" value={`₹${platformFee}`} />
-          <Row label="GST" value={`₹${gst}`} />
-          {tip > 0 && <Row label="Tip for rider" value={`₹${tip}`} />}
-          {donation > 0 && <Row label="Donation" value={`₹${donation}`} />}
-          {couponDiscount > 0 && <Row label={`Coupon (${coupon?.code})`} value={`-₹${couponDiscount}`} />}
-          {walletApplied > 0 && <Row label="Wallet" value={`-₹${walletApplied}`} />}
+          <Row label="Item Total" value={fmt(subtotal, { decimals: 0 })} />
+          <Row label={`Delivery (${distanceKm.toFixed(1)} km)`} value={fmt(deliveryFee, { decimals: 0 })} />
+          <Row label="Packaging" value={fmt(packagingFee, { decimals: 0 })} />
+          <Row label="Platform Fee" value={fmt(platformFee, { decimals: 0 })} />
+          <Row label="GST" value={fmt(gst, { decimals: 0 })} />
+          {tip > 0 && <Row label="Tip for rider" value={fmt(tip, { decimals: 0 })} />}
+          {donation > 0 && <Row label="Donation" value={fmt(donation, { decimals: 0 })} />}
+          {couponDiscount > 0 && <Row label={`Coupon (${coupon?.code})`} value={`-${fmt(couponDiscount, { decimals: 0 })}`} />}
+          {walletApplied > 0 && <Row label="Wallet" value={`-${fmt(walletApplied, { decimals: 0 })}`} />}
           <div className="border-t border-border/50 my-2" />
-          <Row label="To Pay" value={`₹${total}`} bold />
+          <Row label="To Pay" value={fmt(total, { decimals: 0 })} bold />
         </Card>
       </div>
 
@@ -472,7 +474,7 @@ export default function FoodCartPage() {
         <Button onClick={placeOrder} disabled={placing} className="w-full h-12 text-base font-semibold">
           {placing
             ? (paymentMethod === 'cod' ? "Placing..." : "Processing payment...")
-            : (paymentMethod === 'cod' ? `Place Order • ₹${total}` : `Pay ₹${total}`)}
+            : (paymentMethod === 'cod' ? `Place Order • ${fmt(total, { decimals: 0 })}` : `Pay ${fmt(total, { decimals: 0 })}`)}
         </Button>
       </div>
     </div>

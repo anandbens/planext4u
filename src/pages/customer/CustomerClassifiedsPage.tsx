@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api, ClassifiedAd } from "@/lib/api";
 import { BannerAd } from "@/components/customer/BannerAd";
+import { useCurrency } from "@/lib/country-context";
 
 function AdImageCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
@@ -45,6 +46,7 @@ function AdImageCarousel({ images }: { images: string[] }) {
 }
 
 export default function CustomerClassifiedsPage() {
+  const { format: fmt } = useCurrency();
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const categoryFilter = searchParams.get("category") || undefined;
@@ -107,7 +109,7 @@ export default function CustomerClassifiedsPage() {
                     <div className="p-4">
                       <div className="flex items-start justify-between">
                         <h3 className="text-sm font-semibold">{ad.title}</h3>
-                        <span className="text-base font-bold text-primary">₹{ad.price.toLocaleString()}</span>
+                        <span className="text-base font-bold text-primary">{fmt(ad.price, { decimals: 0 })}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{ad.description}</p>
                       <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">

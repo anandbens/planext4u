@@ -8,8 +8,10 @@ import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useCurrency } from "@/lib/country-context";
 
 export default function CustomerWishlistPage() {
+  const { format: fmt } = useCurrency();
   const [tab, setTab] = useState("products");
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [serviceWishlist, setServiceWishlist] = useState<string[]>([]);
@@ -112,8 +114,8 @@ export default function CustomerWishlistPage() {
                       <div className="p-3">
                         <h3 className="text-xs font-semibold truncate">{p.title}</h3>
                         <div className="flex items-center gap-1 mt-1">
-                          <span className="text-sm font-bold text-primary">₹{(Number(p.price) - Number(p.discount || 0)).toLocaleString()}</span>
-                          {Number(p.discount) > 0 && <span className="text-[10px] text-muted-foreground line-through">₹{Number(p.price).toLocaleString()}</span>}
+                          <span className="text-sm font-bold text-primary">{fmt(Number(p.price) - Number(p.discount || 0), { decimals: 0 })}</span>
+                          {Number(p.discount) > 0 && <span className="text-[10px] text-muted-foreground line-through">{fmt(Number(p.price), { decimals: 0 })}</span>}
                         </div>
                         <Button size="sm" className="w-full mt-2 h-8 text-xs gap-1" onClick={() => addToCart(p)}>
                           <ShoppingCart className="h-3 w-3" /> Add to Cart
@@ -137,7 +139,7 @@ export default function CustomerWishlistPage() {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold truncate">{s.title || s.name}</h3>
                         <p className="text-xs text-muted-foreground">{s.vendor_name || 'Vendor'}</p>
-                        <p className="text-sm font-bold text-primary mt-1">₹{Number(s.price || 0).toLocaleString()}</p>
+                        <p className="text-sm font-bold text-primary mt-1">{fmt(Number(s.price || 0), { decimals: 0 })}</p>
                       </div>
                       <button onClick={() => removeItem(s.id, 'services')} className="shrink-0">
                         <Trash2 className="h-4 w-4 text-destructive" />
