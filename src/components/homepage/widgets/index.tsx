@@ -215,6 +215,15 @@ function CategoryGridWidget({ title, config }: { title?: string; config: Record<
     </section>
   );
 }
+const limitValidator = (max: number) => ({ config }: { config: Record<string, any> }) => {
+  if (config.limit === undefined || config.limit === null || config.limit === "") return null;
+  const n = Number(config.limit);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) return "Limit must be a whole number.";
+  if (n < 1) return "Limit must be at least 1.";
+  if (n > max) return `Limit must be ${max} or fewer.`;
+  return null;
+};
+
 registerWidget({
   type: "category_grid",
   label: "Category grid",
@@ -222,6 +231,7 @@ registerWidget({
   group: "Catalog",
   modules: ["ecommerce"],
   fields: [{ key: "limit", label: "Max categories", type: "number" }],
+  validate: limitValidator(24),
   render: (p) => <CategoryGridWidget title={p.title} config={p.config} />,
 });
 
