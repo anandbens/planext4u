@@ -140,7 +140,7 @@ export default function VendorRegisterPage() {
       setExistingApp(app);
       setForm({
         name: app.name || '', phone: app.phone || '', secondary_phone: app.secondary_phone || '',
-        email: app.email || '', state: app.state || '', district: app.district || app.city || '',
+        email: app.email || '', state: app.state || '', district: app.district || app.city || '', postal_code: (app as any).postal_code || '',
         fb_link: app.fb_link || '', instagram_link: app.instagram_link || '',
         business_name: app.business_name || '', business_type: app.business_type || 'proprietorship',
         store_name: app.store_name || '', category: app.category || 'product',
