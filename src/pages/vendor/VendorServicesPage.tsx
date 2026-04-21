@@ -211,7 +211,9 @@ export default function VendorServicesPage() {
             <SelectTrigger className="w-[120px]"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending_approval">Pending Approval</SelectItem>
               <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
@@ -232,15 +234,20 @@ export default function VendorServicesPage() {
                   {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" /> : <span>{s.emoji || "🔧"}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-medium truncate">{s.title}</h3>
-                    <Badge className={`${statusStyle[s.status] || ''} border-0 text-[10px]`}>{s.status}</Badge>
+                    <Badge className={`${statusStyle[s.status] || ''} border-0 text-[10px]`}>{String(s.status).replace(/_/g, ' ')}</Badge>
                   </div>
                   <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                     <span>₹{Number(s.price).toLocaleString()}</span>
                     {s.duration && <span>{s.duration}</span>}
                     {s.service_area && <span>{s.service_area}</span>}
                   </div>
+                  {s.status === 'rejected' && s.rejection_reason && (
+                    <p className="text-[11px] text-destructive mt-1 line-clamp-2">
+                      <span className="font-semibold">Rejection reason:</span> {s.rejection_reason}
+                    </p>
+                  )}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
