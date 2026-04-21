@@ -22,8 +22,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GripVertical, Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { GripVertical, Plus, Pencil, Trash2, Eye, EyeOff, Rocket, Undo2, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 import { listWidgetsForModule, getWidget, WidgetModule } from "@/components/homepage/widget-registry";
 import "@/components/homepage/widgets"; // register
 import {
