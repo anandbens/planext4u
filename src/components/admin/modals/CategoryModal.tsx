@@ -32,6 +32,7 @@ const emptyForm = {
   parent_id: "" as string | null, commission_rate: "" as string,
   promotion_banner_url: "", promotion_title: "", promotion_active: false,
   is_emergency: false, verification_status: "unverified" as string,
+  display_order: "" as string, show_on_homepage: true,
 };
 
 export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories, defaultAsSubcategory }: CategoryModalProps) {
@@ -61,6 +62,8 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         promotion_active: (category as any).promotion_active || false,
         is_emergency: (category as any).is_emergency || false,
         verification_status: (category as any).verification_status || "unverified",
+        display_order: (category as any).display_order != null ? String((category as any).display_order) : "",
+        show_on_homepage: (category as any).show_on_homepage !== false,
       });
       setEditMode(mode === "edit");
     }
@@ -84,6 +87,13 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
     }
     setSaving(true);
     try {
+      const orderVal = form.display_order?.trim();
+      const orderNum = orderVal === "" ? 999 : parseInt(orderVal, 10);
+      if (orderVal !== "" && (isNaN(orderNum) || orderNum < 0 || orderNum > 9999)) {
+        toast.error("Display order must be a number 0-9999");
+        setSaving(false);
+        return;
+      }
       const payload: any = {
         ...form,
         name: form.name.trim(),
@@ -94,6 +104,8 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         promotion_active: form.promotion_active,
         is_emergency: form.is_emergency,
         verification_status: form.verification_status,
+        display_order: orderNum,
+        show_on_homepage: form.show_on_homepage,
       };
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
