@@ -275,6 +275,7 @@ registerWidget({
   group: "Catalog",
   modules: ["ecommerce"],
   fields: [{ key: "limit", label: "Max items", type: "number" }],
+  validate: limitValidator(50),
   render: (p) => <ProductRowWidget title={p.title} config={{ ...p.config, filter: "deal" }} viewAllLink="/app/deals" />,
 });
 registerWidget({
@@ -284,6 +285,7 @@ registerWidget({
   group: "Catalog",
   modules: ["ecommerce"],
   fields: [{ key: "limit", label: "Max items", type: "number" }],
+  validate: limitValidator(50),
   render: (p) => <ProductRowWidget title={p.title} config={{ ...p.config, filter: "trending" }} viewAllLink="/app/trending" />,
 });
 registerWidget({
@@ -292,10 +294,17 @@ registerWidget({
   description: "Horizontal product row, optionally filtered by category name.",
   group: "Catalog",
   modules: ["ecommerce"],
+  requiresConfig: true,
   fields: [
     { key: "limit", label: "Max items", type: "number" },
-    { key: "category_name", label: "Category name (optional)", type: "text" },
+    { key: "category_name", label: "Category name", type: "text" },
   ],
+  validate: ({ config }) => {
+    const cat = String(config.category_name || "").trim();
+    if (!cat) return "Category name is required for this row.";
+    if (cat.length > 80) return "Category name must be 80 characters or fewer.";
+    return limitValidator(50)({ config });
+  },
   render: (p) => <ProductRowWidget title={p.title} config={p.config} viewAllLink="/app/browse" />,
 });
 
