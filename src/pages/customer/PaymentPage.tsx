@@ -379,8 +379,9 @@ export default function PaymentPage() {
       setOrderId(newOrderId);
       setOrderItems(cart || []);
       setPaymentState('success');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Order creation failed:', err);
+      setFailureReason(err?.message || 'Order could not be saved. If you were charged, please contact support.');
       setPaymentState('failure');
     }
   };
@@ -471,9 +472,15 @@ export default function PaymentPage() {
             <XCircle className="h-14 w-14 text-destructive" />
           </motion.div>
           <h2 className="text-2xl font-bold mb-2">Payment Failed</h2>
-          <p className="text-sm text-muted-foreground mb-8">Your payment could not be processed. Please try again.</p>
+          <p className="text-sm text-muted-foreground mb-2">Your payment could not be processed. Please try again.</p>
+          {failureReason && (
+            <p className="text-xs text-destructive/80 bg-destructive/5 border border-destructive/20 rounded-md p-2 mb-6 break-words">
+              {failureReason}
+            </p>
+          )}
           <div className="flex flex-col gap-3">
-            <Button className="w-full h-12" onClick={() => setPaymentState('select')}>Retry Payment</Button>
+            <Button className="w-full h-12" onClick={() => { setFailureReason(''); setPaymentState('select'); }}>Retry Payment</Button>
+            <Button variant="outline" className="w-full h-11" onClick={() => navigate('/app/cart')}>Back to Cart</Button>
           </div>
         </div>
       </CustomerLayout>
