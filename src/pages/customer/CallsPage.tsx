@@ -97,7 +97,7 @@ export default function CallsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{u.displayName || u.userId}</p>
-                    <p className="text-xs text-green-600">● Online</p>
+                    <p className="text-xs text-primary">● Online</p>
                   </div>
                   <button
                     onClick={() => initiateCall(u.userId, "audio", { displayName: u.displayName, avatarUrl: u.avatarUrl })}
