@@ -137,7 +137,7 @@ export default function CustomerRegisterPage() {
 
   useEffect(() => {
     api.getActiveOccupations().then(setOccupations);
-    api.getStates().then(setStates);
+    api.getStates(country.code).then(setStates);
     // Auto-capture location on load
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -146,17 +146,21 @@ export default function CustomerRegisterPage() {
         { enableHighAccuracy: true }
       );
     }
-  }, []);
+  }, [country.code]);
 
   useEffect(() => {
-    if (form.state) {
+    if (!form.state) { setDistricts([]); return; }
+    if (isIndia) {
       const st = states.find((s) => s.name === form.state);
       if (st) api.getDistricts(st.id).then(setDistricts);
       else setDistricts([]);
     } else {
-      setDistricts([]);
+      // For non-IN countries, load cities filtered by state
+      api.getCitiesByCountry(country.code, form.state).then((cities) =>
+        setDistricts(cities.map((c) => ({ id: c.id, name: c.name })))
+      );
     }
-  }, [form.state, states]);
+  }, [form.state, states, isIndia, country.code]);
 
   useEffect(() => {
     if (timer > 0) {
