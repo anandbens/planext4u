@@ -177,6 +177,7 @@ function HeroBannerCarousel({ banners, cmsBanners }: { banners: any[]; cmsBanner
 
 /* ── Horizontal Product Slider (Zepto-style) ── */
 function ProductSlider({ title, products, bgClass }: { title: string; products: any[]; bgClass?: string }) {
+  const { format: fmt } = useCurrency();
   const scrollRef = useRef<HTMLDivElement>(null);
   if (!products?.length) return null;
   return (
@@ -217,6 +218,7 @@ function ProductSlider({ title, products, bgClass }: { title: string; products: 
 
 /* ── Horizontal Service Slider ── */
 function ServiceSlider({ title, services }: { title: string; services: any[] }) {
+  const { format: fmt } = useCurrency();
   const scrollRef = useRef<HTMLDivElement>(null);
   if (!services?.length) return null;
   return (

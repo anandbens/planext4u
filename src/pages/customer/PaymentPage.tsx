@@ -405,13 +405,13 @@ export default function PaymentPage() {
                   <p className="text-xs font-medium truncate">{item.title}</p>
                   <p className="text-[10px] text-muted-foreground">Qty: {item.qty}</p>
                 </div>
-                <p className="text-xs font-bold">₹{(item.price * item.qty).toLocaleString()}</p>
+                <p className="text-xs font-bold">{fmt(item.price * item.qty, { decimals: 0 })}</p>
               </div>
             ))}
             <Separator className="my-3" />
             <div className="flex justify-between text-sm font-bold">
               <span>Total Paid</span>
-              <span>₹{total?.toLocaleString()}</span>
+              <span>{fmt(total, { decimals: 0 })}</span>
             </div>
           </Card>
 
@@ -480,14 +480,14 @@ export default function PaymentPage() {
                       <p className="text-xs font-semibold truncate">{item.title}</p>
                       <p className="text-[10px] text-muted-foreground">Vendor: {item.vendor} · Qty: {item.qty}</p>
                     </div>
-                    <p className="text-xs font-bold shrink-0">₹{(item.price * item.qty).toLocaleString()}</p>
+                    <p className="text-xs font-bold shrink-0">{fmt(item.price * item.qty, { decimals: 0 })}</p>
                   </div>
                 ))}
               </div>
               <Separator className="my-3" />
               <div className="flex justify-between text-sm font-bold">
                 <span>Total</span>
-                <span>₹{total?.toLocaleString()}</span>
+                <span>{fmt(total, { decimals: 0 })}</span>
               </div>
             </Card>
 
@@ -506,41 +506,41 @@ export default function PaymentPage() {
             <Card className="p-4 sticky top-24">
               <h3 className="text-sm font-semibold mb-3">Price Details</h3>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>₹{(mrpTotal || subtotal)?.toLocaleString()}</span></div>
-                {(totalDiscount || 0) > 0 && <div className="flex justify-between text-success"><span>Product Discount</span><span>-₹{totalDiscount?.toLocaleString()}</span></div>}
-                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>₹{subtotal?.toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>{fmt(mrpTotal || subtotal, { decimals: 0 })}</span></div>
+                {(totalDiscount || 0) > 0 && <div className="flex justify-between text-success"><span>Product Discount</span><span>-{fmt(totalDiscount, { decimals: 0 })}</span></div>}
+                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{fmt(subtotal, { decimals: 0 })}</span></div>
                 {(platformFee > 0 || (gstOnPlatformFee || 0) > 0) && (
                   <div className="flex justify-between">
                     <div>
                       <span className="text-muted-foreground">Service & convenience fee</span>
                       <p className="text-[10px] text-muted-foreground/70">Inclusive of all applicable taxes</p>
                     </div>
-                    <span>{platformFee === 0 && (gstOnPlatformFee || 0) === 0 ? <span className="text-success">FREE</span> : `₹${(platformFee + (gstOnPlatformFee || 0)).toFixed(2)}`}</span>
+                    <span>{platformFee === 0 && (gstOnPlatformFee || 0) === 0 ? <span className="text-success">FREE</span> : fmt(platformFee + (gstOnPlatformFee || 0))}</span>
                   </div>
                 )}
-                {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>-₹{discount}</span></div>}
+                {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>-{fmt(discount, { decimals: 0 })}</span></div>}
                 {pointsUsed > 0 && (
                   <div className="flex justify-between pl-3 border-l-2 border-success/30 text-success">
                     <div>
                       <span>Wallet Points Redeemed</span>
-                      <p className="text-[10px] text-success/70">{pointsUsed} pts × ₹1 = ₹{pointsUsed}</p>
+                      <p className="text-[10px] text-success/70">{pointsUsed} pts × {fmt(1, { decimals: 0 })} = {fmt(pointsUsed, { decimals: 0 })}</p>
                     </div>
-                    <span>-₹{pointsUsed}</span>
+                    <span>-{fmt(pointsUsed, { decimals: 0 })}</span>
                   </div>
                 )}
                 <Separator />
                 <div className="flex justify-between font-bold text-base">
                   <span>Total Payable</span>
-                  <span>₹{total?.toLocaleString()}</span>
+                  <span>{fmt(total, { decimals: 0 })}</span>
                 </div>
                 {(savings || 0) > 0 && (
                   <div className="p-2 bg-success/5 rounded-lg border border-success/20">
-                    <p className="text-xs text-success font-semibold text-center">🎉 You save ₹{savings?.toLocaleString()} on this order!</p>
+                    <p className="text-xs text-success font-semibold text-center">🎉 You save {fmt(savings, { decimals: 0 })} on this order!</p>
                   </div>
                 )}
               </div>
               <Button className="w-full h-12 mt-4 text-base font-semibold" onClick={handlePay}>
-                Pay ₹{total?.toLocaleString()}
+                Pay {fmt(total, { decimals: 0 })}
               </Button>
               <p className="text-[10px] text-muted-foreground text-center mt-2">🔒 100% Secure Payment</p>
             </Card>
