@@ -176,6 +176,8 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
         max_points_redeemable: service.max_points_redeemable, status: service.status,
         vendor_id: service.vendor_id, vendor_name: service.vendor_name || "",
         category_id: service.category_id, category_name: service.category_name || "",
+        subcategory_id: (service as any).subcategory_id || "",
+        subcategory_name: (service as any).subcategory_name || "",
         emoji: service.emoji || "🔧", service_area: service.service_area || "",
         duration: service.duration || "1-2 hours",
         image: (service as any).image || "",
@@ -357,11 +359,28 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
                   </div>
 
                   <div>
-                    <Label className="text-xs text-muted-foreground">Category *</Label>
-                    <Select value={form.category_id || undefined} onValueChange={handleCategoryChange}>
+                    <Label className="text-xs text-muted-foreground">Service Category *</Label>
+                    <Select value={form.category_id || undefined} onValueChange={(v) => {
+                      const c = (dbCategories || []).find((x: any) => x.id === v);
+                      setForm({ ...form, category_id: v, category_name: c?.name || "", subcategory_id: "", subcategory_name: "" });
+                    }}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder="Select category" /></SelectTrigger>
                       <SelectContent>
                         {(dbCategories || []).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Subcategory</Label>
+                    <Select value={form.subcategory_id || undefined} onValueChange={(v) => {
+                      const sc = (dbSubcategories || []).find((x: any) => x.id === v);
+                      setForm({ ...form, subcategory_id: v, subcategory_name: sc?.name || "" });
+                    }} disabled={!form.category_id || (dbSubcategories || []).length === 0}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder={!form.category_id ? "Select category first" : ((dbSubcategories || []).length ? "Select subcategory" : "No subcategories")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(dbSubcategories || []).map((s: any) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
