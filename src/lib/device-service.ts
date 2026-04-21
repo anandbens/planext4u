@@ -71,36 +71,47 @@ export async function getLocation(): Promise<DeviceLocation | null> {
       err.code = "PERMISSION_DENIED";
       throw err;
     }
-    try {
-      // Try high-accuracy GPS first; fall back to a low-accuracy / cached
-      // last-known position when GPS isn't ready (very common indoors).
-      const pos = await Geolocation.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 60_000,
-      });
-      return { lat: pos.coords.latitude, lng: pos.coords.longitude };
-    } catch (e: any) {
+
+    // Strategy: race a high-accuracy GPS read against progressively relaxed
+    // fallbacks so we always return real GPS coords when GPS is on, even
+    // when the first fix takes a while. We try up to 3 strategies in order.
+    const strategies: Array<{ enableHighAccuracy: boolean; timeout: number; maximumAge: number; label: string }> = [
+      { enableHighAccuracy: true,  timeout: 20000, maximumAge: 0,           label: "fresh-gps" },
+      { enableHighAccuracy: true,  timeout: 25000, maximumAge: 60_000,      label: "recent-gps" },
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 5 * 60_000,  label: "network-or-cached" },
+    ];
+
+    let lastError: any = null;
+    for (const s of strategies) {
       try {
+        console.log(`[device-service] GPS attempt: ${s.label}`);
         const pos = await Geolocation.getCurrentPosition({
-          enableHighAccuracy: false,
-          timeout: 15000,
-          maximumAge: 5 * 60_000,
+          enableHighAccuracy: s.enableHighAccuracy,
+          timeout: s.timeout,
+          maximumAge: s.maximumAge,
+        });
+        console.log(`[device-service] GPS success (${s.label}):`, {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
         });
         return { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      } catch (e2: any) {
-        const raw = String(e2?.message || e?.message || "").toLowerCase();
-        const friendly =
-          raw.includes("location services") || raw.includes("disabled") || raw.includes("kclerror")
-            ? "Location services (GPS) are turned off on your phone. Open your phone's Settings → Location and turn it ON, then retry."
-            : raw.includes("timeout")
-              ? "Couldn't get a GPS fix in time. Move closer to a window or step outside and retry."
-              : `Unable to read your location (${e2?.message || e?.message || "unknown error"}).`;
-        const err: any = new Error(friendly);
-        err.code = "POSITION_UNAVAILABLE";
-        throw err;
+      } catch (e: any) {
+        console.warn(`[device-service] GPS attempt failed (${s.label}):`, e?.message || e);
+        lastError = e;
       }
     }
+
+    const raw = String(lastError?.message || "").toLowerCase();
+    const friendly =
+      raw.includes("location services") || raw.includes("disabled") || raw.includes("kclerror")
+        ? "Location services (GPS) are turned off on your phone. Open your phone's Settings → Location and turn it ON, then retry."
+        : raw.includes("timeout")
+          ? "Couldn't get a GPS fix in time. Step near a window or outside, wait a few seconds, then retry."
+          : `Unable to read your location (${lastError?.message || "unknown error"}).`;
+    const err: any = new Error(friendly);
+    err.code = "POSITION_UNAVAILABLE";
+    throw err;
   }
 
   // Web fallback — surface the actual browser error reason.
