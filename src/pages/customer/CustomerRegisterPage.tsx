@@ -201,14 +201,15 @@ export default function CustomerRegisterPage() {
     if (fieldErrors.phone) { toast.error(fieldErrors.phone); return false; }
     if (fieldErrors.email) { toast.error(fieldErrors.email); return false; }
     if (!form.state) { toast.error("Please select a state"); return false; }
-    if (!form.district) { toast.error("Please select a district"); return false; }
+    if (!form.district) { toast.error(`Please select a ${regionLabel.toLowerCase()}`); return false; }
     if (!acceptedTerms) { toast.error("Please accept the Terms & Conditions and Privacy Policy"); return false; }
     return true;
   };
 
   const checkMobileUnique = async (): Promise<boolean> => {
-    // Check mobile uniqueness
-    const { data } = await supabase.from("customers").select("id").eq("mobile", `+91${form.mobile}`).maybeSingle();
+    // Check mobile uniqueness (full + raw)
+    const fullMobile = `${phonePrefix}${form.mobile}`;
+    const { data } = await supabase.from("customers").select("id").eq("mobile", fullMobile).maybeSingle();
     if (data) { toast.error("This mobile number is already registered. Please login instead."); return false; }
     const { data: data2 } = await supabase.from("customers").select("id").eq("mobile", form.mobile).maybeSingle();
     if (data2) { toast.error("This mobile number is already registered. Please login instead."); return false; }
