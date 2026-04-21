@@ -19,18 +19,24 @@ import { toast } from "sonner";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 
 const statusStyle: Record<string, string> = {
-  active: "bg-success/10 text-success", inactive: "bg-destructive/10 text-destructive", draft: "bg-muted text-muted-foreground",
+  active: "bg-success/10 text-success",
+  inactive: "bg-destructive/10 text-destructive",
+  draft: "bg-muted text-muted-foreground",
+  pending_approval: "bg-warning/10 text-warning",
+  rejected: "bg-destructive/10 text-destructive",
 };
 
 interface ServiceForm {
   title: string; description: string; price: string; tax: string; discount: string;
-  duration: string; service_area: string; category_id: string; emoji: string; status: string;
+  duration: string; service_area: string; category_id: string; subcategory_id: string;
+  emoji: string; status: string;
   image: string; working_days: string; workers: string;
 }
 
 const emptyForm: ServiceForm = {
   title: "", description: "", price: "", tax: "", discount: "0",
-  duration: "", service_area: "", category_id: "", emoji: "🔧", status: "pending_approval",
+  duration: "", service_area: "", category_id: "", subcategory_id: "",
+  emoji: "🔧", status: "pending_approval",
   image: "", working_days: "Mon-Sat", workers: "1",
 };
 
@@ -52,10 +58,39 @@ export default function VendorServicesPage() {
     },
   });
 
-  const { data: categories } = useQuery({
-    queryKey: ["serviceCategories"],
+  // Parent service categories (top-level only)
+  const { data: parentCategories } = useQuery({
+    queryKey: ["serviceParentCategories"],
     queryFn: async () => {
-      const { data } = await supabase.from("service_categories").select("*").eq("status", "active");
+      const { data } = await supabase.from("service_categories")
+        .select("id, name, parent_id")
+        .eq("status", "active")
+        .is("parent_id", null)
+        .order("name");
+      return data || [];
+    },
+  });
+
+  // Subcategories for the currently selected parent category
+  const { data: subcategories } = useQuery({
+    queryKey: ["serviceSubcategories", form.category_id],
+    queryFn: async () => {
+      if (!form.category_id) return [];
+      const { data } = await supabase.from("service_categories")
+        .select("id, name, parent_id")
+        .eq("status", "active")
+        .eq("parent_id", form.category_id)
+        .order("name");
+      return data || [];
+    },
+    enabled: !!form.category_id,
+  });
+
+  // For backwards compatibility — flat list used to look up names from existing service rows
+  const { data: allCategoriesFlat } = useQuery({
+    queryKey: ["serviceAllCategoriesFlat"],
+    queryFn: async () => {
+      const { data } = await supabase.from("service_categories").select("id, name, parent_id");
       return data || [];
     },
   });
@@ -94,18 +129,31 @@ export default function VendorServicesPage() {
       if (err) throw new Error(err);
       // Ensure vendor exists in service_vendors table first
       await ensureServiceVendor();
-      
-      const payload = {
+
+      const parentCat = (allCategoriesFlat || []).find(c => c.id === formData.category_id);
+      const subCat = (allCategoriesFlat || []).find(c => c.id === formData.subcategory_id);
+
+      // For NEW submissions or edits to a rejected service: force pending_approval (re-submit for review).
+      // For edits to already-approved (active/inactive) services: keep current status.
+      const isResubmit = editingId && (formData.status === 'rejected' || formData.status === 'pending_approval');
+      const finalStatus = !editingId ? 'pending_approval' : (isResubmit ? 'pending_approval' : formData.status);
+
+      const payload: any = {
         title: formData.title, description: formData.description,
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
         discount: parseFloat(formData.discount) || 0, duration: formData.duration,
         service_area: formData.service_area,
         category_id: formData.category_id || null,
-        category_name: categories?.find(c => c.id === formData.category_id)?.name || "",
-        emoji: formData.emoji, status: formData.status,
+        category_name: parentCat?.name || "",
+        subcategory_id: formData.subcategory_id || null,
+        subcategory_name: subCat?.name || null,
+        emoji: formData.emoji, status: finalStatus,
         vendor_id: vendorId, vendor_name: vendorUser?.name || "",
         image: formData.image || null,
       };
+      // Clear stale rejection reason on re-submit
+      if (isResubmit) payload.rejection_reason = null;
+
       if (editingId) {
         const { error } = await supabase.from("services").update(payload).eq("id", editingId);
         if (error) throw error;
@@ -118,7 +166,7 @@ export default function VendorServicesPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["vendorServices"] });
       setModalOpen(false); setEditingId(null); setForm(emptyForm);
-      toast.success(editingId ? "Service updated" : "Service submitted for approval");
+      toast.success(editingId ? "Service updated and re-submitted for approval" : "Service submitted for approval");
     },
     onError: (err: any) => toast.error(err.message),
   });
@@ -136,7 +184,8 @@ export default function VendorServicesPage() {
     setForm({
       title: s.title, description: s.description, price: String(s.price), tax: String(s.tax),
       discount: String(s.discount), duration: s.duration || "", service_area: s.service_area || "",
-      category_id: s.category_id || "", emoji: s.emoji || "🔧", status: s.status,
+      category_id: s.category_id || "", subcategory_id: s.subcategory_id || "",
+      emoji: s.emoji || "🔧", status: s.status,
       image: s.image || "", working_days: "Mon-Sat", workers: "1",
     });
     setModalOpen(true);
@@ -162,7 +211,9 @@ export default function VendorServicesPage() {
             <SelectTrigger className="w-[120px]"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending_approval">Pending Approval</SelectItem>
               <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
@@ -183,15 +234,20 @@ export default function VendorServicesPage() {
                   {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" /> : <span>{s.emoji || "🔧"}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-medium truncate">{s.title}</h3>
-                    <Badge className={`${statusStyle[s.status] || ''} border-0 text-[10px]`}>{s.status}</Badge>
+                    <Badge className={`${statusStyle[s.status] || ''} border-0 text-[10px]`}>{String(s.status).replace(/_/g, ' ')}</Badge>
                   </div>
                   <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                     <span>₹{Number(s.price).toLocaleString()}</span>
                     {s.duration && <span>{s.duration}</span>}
                     {s.service_area && <span>{s.service_area}</span>}
                   </div>
+                  {s.status === 'rejected' && s.rejection_reason && (
+                    <p className="text-[11px] text-destructive mt-1 line-clamp-2">
+                      <span className="font-semibold">Rejection reason:</span> {s.rejection_reason}
+                    </p>
+                  )}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
@@ -243,11 +299,27 @@ export default function VendorServicesPage() {
               <div><Label>Working Days</Label><Input value={form.working_days} onChange={(e) => setForm({ ...form, working_days: e.target.value })} placeholder="Mon-Sat" /></div>
               <div><Label>No. of Workers</Label><Input type="number" value={form.workers} onChange={(e) => setForm({ ...form, workers: e.target.value })} placeholder="1" /></div>
             </div>
-            <div><Label>Category</Label>
-              <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                <SelectContent>{categories?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Service Category *</Label>
+                <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v, subcategory_id: "" })}>
+                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                  <SelectContent>
+                    {parentCategories?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Subcategory</Label>
+                <Select value={form.subcategory_id || undefined} onValueChange={(v) => setForm({ ...form, subcategory_id: v })} disabled={!form.category_id || (subcategories || []).length === 0}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={!form.category_id ? "Select category first" : (subcategories?.length ? "Select subcategory" : "No subcategories")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subcategories?.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div><Label>Emoji Icon</Label><Input value={form.emoji} onChange={(e) => setForm({ ...form, emoji: e.target.value })} placeholder="🔧" /></div>
             <Button type="submit" className="w-full" disabled={saveMutation.isPending}>

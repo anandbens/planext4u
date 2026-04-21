@@ -6217,6 +6217,8 @@ export type Database = {
       }
       services: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           booking_duration_minutes: number | null
           category_id: string | null
           category_name: string | null
@@ -6241,12 +6243,15 @@ export type Database = {
           price: number
           pricing_slots: Json | null
           rating: number | null
+          rejection_reason: string | null
           reviews: number | null
           sac_code: string | null
           service_area: string | null
           short_description: string | null
           slug: string | null
           status: string
+          subcategory_id: string | null
+          subcategory_name: string | null
           tax: number
           title: string
           updated_at: string | null
@@ -6254,6 +6259,8 @@ export type Database = {
           vendor_name: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           booking_duration_minutes?: number | null
           category_id?: string | null
           category_name?: string | null
@@ -6278,12 +6285,15 @@ export type Database = {
           price?: number
           pricing_slots?: Json | null
           rating?: number | null
+          rejection_reason?: string | null
           reviews?: number | null
           sac_code?: string | null
           service_area?: string | null
           short_description?: string | null
           slug?: string | null
           status?: string
+          subcategory_id?: string | null
+          subcategory_name?: string | null
           tax?: number
           title: string
           updated_at?: string | null
@@ -6291,6 +6301,8 @@ export type Database = {
           vendor_name?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           booking_duration_minutes?: number | null
           category_id?: string | null
           category_name?: string | null
@@ -6315,12 +6327,15 @@ export type Database = {
           price?: number
           pricing_slots?: Json | null
           rating?: number | null
+          rejection_reason?: string | null
           reviews?: number | null
           sac_code?: string | null
           service_area?: string | null
           short_description?: string | null
           slug?: string | null
           status?: string
+          subcategory_id?: string | null
+          subcategory_name?: string | null
           tax?: number
           title?: string
           updated_at?: string | null
