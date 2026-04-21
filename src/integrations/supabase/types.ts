@@ -1954,6 +1954,83 @@ export type Database = {
         }
         Relationships: []
       }
+      homepage_layout_sections: {
+        Row: {
+          config: Json
+          created_at: string
+          display_order: number
+          id: string
+          is_visible: boolean
+          layout_id: string
+          title: string | null
+          updated_at: string
+          widget_type: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_visible?: boolean
+          layout_id: string
+          title?: string | null
+          updated_at?: string
+          widget_type: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_visible?: boolean
+          layout_id?: string
+          title?: string | null
+          updated_at?: string
+          widget_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_layout_sections_layout_id_fkey"
+            columns: ["layout_id"]
+            isOneToOne: false
+            referencedRelation: "homepage_layouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_layouts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          module: string
+          name: string
+          notes: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          module: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          module?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       homepage_section_items: {
         Row: {
           badge_text: string | null
