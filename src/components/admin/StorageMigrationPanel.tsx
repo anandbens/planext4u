@@ -77,17 +77,24 @@ export default function StorageMigrationPanel() {
     try {
       do {
         const { data, error } = await supabase.functions.invoke("backfill-supabase-to-b2", {
-          body: { scope, limit: 50 },
+          body: { scope, limit: 10 },
         });
         if (error) throw error;
         const r = data as { migrated: number; remaining: number; error_count: number; errors?: any[] };
-        totalMigrated += r.migrated;
+        if (r.errors && r.errors.length) {
+          console.warn(`[migrate ${scope}]`, r.errors);
+        }
+        totalMigrated += r.migrated || 0;
         totalErrors += r.error_count || 0;
         remaining = r.remaining ?? 0;
         setState((s) => ({ ...s, [scope]: { running: true, remaining, migrated: totalMigrated, errors: totalErrors, done: false } }));
         if (!runUntilZero) break;
+        // Stop early if we're stuck (no progress and errors reported)
+        if (r.migrated === 0 && r.error_count > 0 && remaining > 0) {
+          throw new Error(`No progress — ${r.error_count} errors. Check edge logs.`);
+        }
         safety++;
-        if (safety > 200) throw new Error("Safety stop after 200 batches");
+        if (safety > 500) throw new Error("Safety stop after 500 batches");
       } while (remaining > 0);
 
       setState((s) => ({ ...s, [scope]: { running: false, remaining, migrated: totalMigrated, errors: totalErrors, done: true } }));
