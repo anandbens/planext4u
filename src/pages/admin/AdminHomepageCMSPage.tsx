@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { GripVertical, Plus, Pencil, Trash2, Eye, EyeOff, Image, Video, Layout, Play, ChevronUp, ChevronDown, Calendar } from "lucide-react";
 import { VideoOptimizerUpload } from "@/components/admin/VideoOptimizerUpload";
+import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 
 /* ── Banner Modal ── */
 function BannerModal({ open, onClose, banner, onSave }: any) {
@@ -53,8 +54,45 @@ function BannerModal({ open, onClose, banner, onSave }: any) {
             </Select>
           </div>
           <div><Label>Display Order</Label><Input type="number" value={form.display_order} onChange={e => setForm({ ...form, display_order: +e.target.value })} /></div>
-          <div className="col-span-2"><Label>Desktop Media URL</Label><Input value={form.media_url || ""} onChange={e => setForm({ ...form, media_url: e.target.value })} /></div>
-          <div className="col-span-2"><Label>Mobile Media URL</Label><Input value={form.mobile_media_url || ""} onChange={e => setForm({ ...form, mobile_media_url: e.target.value })} /></div>
+          {form.media_type === "video" ? (
+            <>
+              <div className="col-span-2 space-y-1">
+                <Label>Desktop Video (optimized)</Label>
+                <p className="text-[11px] text-muted-foreground">Re-encoded to 480p H.264 MP4 and saved to the Media Library.</p>
+                <VideoOptimizerUpload
+                  value={form.media_url}
+                  folder="homepage-banners"
+                  onUploaded={(r) => setForm({ ...form, media_url: r.videoUrl })}
+                  onClear={() => setForm({ ...form, media_url: "" })}
+                />
+              </div>
+              <div className="col-span-2 space-y-1">
+                <Label>Mobile Video (optional, optimized)</Label>
+                <VideoOptimizerUpload
+                  value={form.mobile_media_url}
+                  folder="homepage-banners"
+                  onUploaded={(r) => setForm({ ...form, mobile_media_url: r.videoUrl })}
+                  onClear={() => setForm({ ...form, mobile_media_url: "" })}
+                />
+              </div>
+            </>
+          ) : form.media_type === "lottie" ? (
+            <>
+              <div className="col-span-2"><Label>Desktop Lottie JSON URL</Label><Input value={form.media_url || ""} onChange={e => setForm({ ...form, media_url: e.target.value })} placeholder="https://… .json" /></div>
+              <div className="col-span-2"><Label>Mobile Lottie JSON URL (optional)</Label><Input value={form.mobile_media_url || ""} onChange={e => setForm({ ...form, mobile_media_url: e.target.value })} /></div>
+            </>
+          ) : (
+            <>
+              <div className="col-span-2 space-y-1">
+                <Label>Desktop Image *</Label>
+                <MediaLibraryPicker value={form.media_url || ""} onChange={(url) => setForm({ ...form, media_url: url })} folder="banners" label="Choose desktop banner" aspectRatio="aspect-[16/6]" />
+              </div>
+              <div className="col-span-2 space-y-1">
+                <Label>Mobile Image (optional)</Label>
+                <MediaLibraryPicker value={form.mobile_media_url || ""} onChange={(url) => setForm({ ...form, mobile_media_url: url })} folder="banners" label="Choose mobile banner" aspectRatio="aspect-[4/3]" />
+              </div>
+            </>
+          )}
           <div><Label>CTA Text</Label><Input value={form.cta_text || ""} onChange={e => setForm({ ...form, cta_text: e.target.value })} /></div>
           <div><Label>CTA Link</Label><Input value={form.cta_link || ""} onChange={e => setForm({ ...form, cta_link: e.target.value })} /></div>
           <div><Label>Redirect Type</Label>
@@ -255,7 +293,10 @@ function VideoAdModal({ open, onClose, ad, onSave }: any) {
           </div>
 
           <div><Label>Video URL (auto-filled)</Label><Input value={form.video_url} onChange={e => setForm({ ...form, video_url: e.target.value })} placeholder="Paste a URL or upload above" /></div>
-          <div><Label>Thumbnail URL (auto-filled)</Label><Input value={form.thumbnail_url || ""} onChange={e => setForm({ ...form, thumbnail_url: e.target.value })} /></div>
+          <div className="space-y-1">
+            <Label>Thumbnail (auto-filled, or pick from Media Library)</Label>
+            <MediaLibraryPicker value={form.thumbnail_url || ""} onChange={(url) => setForm({ ...form, thumbnail_url: url })} folder="banners" label="Choose thumbnail" aspectRatio="aspect-video" />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div><Label>Duration (seconds)</Label><Input type="number" value={form.duration_seconds || 0} onChange={e => setForm({ ...form, duration_seconds: +e.target.value })} /></div>
             <div><Label>Status</Label>
