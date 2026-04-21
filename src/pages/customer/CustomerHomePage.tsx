@@ -338,6 +338,14 @@ export default function CustomerHomePage() {
   useEffect(() => {
     const savedLoc = loadSelectedLocation();
     if (savedLoc) { setDetectedLocation(savedLoc); return; }
+    // Don't auto-prompt for browser geolocation in the background — it
+    // surfaces a confusing prompt unrelated to user action. The
+    // LocationModal opens explicitly when the user clicks "Set Location".
+    // Only run a silent background detect on native (no permission popup
+    // when already granted via the FTUX permission screen).
+    if (typeof window === "undefined") return;
+    const isNative = !!(window as any).Capacitor?.isNativePlatform?.();
+    if (!isNative) return;
     getLocation().then(async (loc) => {
       if (!loc) return;
       try {
