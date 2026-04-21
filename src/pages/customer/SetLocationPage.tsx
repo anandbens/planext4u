@@ -36,8 +36,8 @@ async function fetchMapsKey(): Promise<string> {
 export default function SetLocationPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
-  const { country } = useCountry();
-  const activeCountryCode = (country?.code || "IN").toLowerCase();
+  const { country: activeCountry } = useCountry();
+  const activeCountryCode = (activeCountry?.code || "IN").toLowerCase();
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
   const [address, setAddress] = useState<GeoAddress | null>(null);

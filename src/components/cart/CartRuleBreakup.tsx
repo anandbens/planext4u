@@ -54,7 +54,7 @@ export function CartRuleBreakup({
   vendorId: _vendorId,
   className = "",
 }: CartRuleBreakupProps) {
-  const { fmt } = useCurrency();
+  const { format: fmt } = useCurrency();
 
   if (!rules || rules.length === 0) return null;
 
