@@ -412,6 +412,7 @@ registerWidget({
   group: "Vendor & social",
   modules: ["ecommerce", "homes"],
   fields: [{ key: "limit", label: "Max ads", type: "number" }],
+  validate: limitValidator(30),
   render: (p) => <ClassifiedsStripWidget title={p.title} config={p.config} />,
 });
 
