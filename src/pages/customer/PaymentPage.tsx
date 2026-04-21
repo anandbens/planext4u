@@ -328,7 +328,7 @@ export default function PaymentPage() {
         const { error: insertErr } = await supabase.from('orders').insert(orderData as any);
         if (insertErr) {
           console.error('Order insert error:', insertErr);
-          throw new Error(insertErr.message);
+          throw new Error(insertErr.message || 'Could not save your order');
         }
         return orderData;
       });
