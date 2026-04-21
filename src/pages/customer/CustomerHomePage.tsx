@@ -353,13 +353,25 @@ export default function CustomerHomePage() {
 
   const handleSplashComplete = useCallback(() => { setShowSplash(false); sessionStorage.setItem("p4u_splash_shown", "1"); }, []);
 
-  const parentCategories = (data?.categories || []).filter((c: any) => !c.parent_id)
-    .sort((a: any, b: any) => {
-      // Groceries always first
-      if (a.name === 'Groceries') return -1;
-      if (b.name === 'Groceries') return 1;
-      return a.name.localeCompare(b.name);
+  const allCategories = (data?.categories || []) as any[];
+  // Homepage parent categories: opt-in via show_on_homepage, sorted by display_order
+  const homepageParents = allCategories
+    .filter((c) => !c.parent_id && c.status === 'active' && c.show_on_homepage !== false)
+    .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999) || a.name.localeCompare(b.name));
+  // Map: parent_id -> active subcategories that are show_on_homepage, sorted
+  const subcatMap: Record<string, any[]> = {};
+  allCategories
+    .filter((c) => c.parent_id && c.status === 'active' && c.show_on_homepage !== false)
+    .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999) || a.name.localeCompare(b.name))
+    .forEach((c) => {
+      if (!subcatMap[c.parent_id]) subcatMap[c.parent_id] = [];
+      subcatMap[c.parent_id].push(c);
     });
+
+  const homepageCatMax = parseInt((data as any)?.platformConfig?.homepage_categories_max || '8', 10);
+  const homepageSubMax = parseInt((data as any)?.platformConfig?.homepage_subcategories_per_parent || '7', 10);
+  const parentCategories = homepageParents.slice(0, homepageCatMax);
+
 
   if (showSplash) return <SplashScreen onComplete={handleSplashComplete} />;
 
