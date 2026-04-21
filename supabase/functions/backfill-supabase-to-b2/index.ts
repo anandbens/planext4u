@@ -309,7 +309,8 @@ Deno.serve(async (req: Request) => {
 
     const body = await req.json().catch(() => ({}));
     const requestedScope: string = String(body.scope ?? "media_library");
-    const limit = Math.min(Math.max(Number(body.limit) || 50, 1), 200);
+    // Smaller default batch (10) to stay well under edge-function CPU/wall-time limits.
+    const limit = Math.min(Math.max(Number(body.limit) || 10, 1), 50);
     const dryRun = Boolean(body.dry_run);
 
     // ── 'all' meta-scope: rotate through SCOPES until we find one with rows

@@ -552,6 +552,47 @@ export default function CustomerHomePage() {
           </motion.div>
         </motion.section>
 
+        {/* ── Trending Categories ── */}
+        {(() => {
+          const trending = parentCategories.filter((c: any) => c.is_trending);
+          if (isLoading || trending.length === 0) return null;
+          return (
+            <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base md:text-lg font-bold flex items-center gap-1.5">
+                  <span className="text-amber-500">🔥</span> Trending Categories
+                </h2>
+                <Link to="/app/categories?trending=1" className="text-xs text-primary flex items-center gap-0.5 font-medium">
+                  View All <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 md:grid md:grid-cols-6 md:gap-4 md:overflow-visible">
+                {trending.map((c: any) => (
+                  <Link
+                    key={c.id}
+                    to={`/app/browse?category=${encodeURIComponent(c.name)}`}
+                    className="shrink-0 group"
+                  >
+                    <div className="flex flex-col items-center gap-1.5 min-w-[80px]">
+                      <div className="relative h-20 w-20 md:h-24 md:w-24 rounded-2xl bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/30 flex items-center justify-center overflow-hidden group-hover:border-primary group-hover:shadow-lg transition-all">
+                        {c.image?.startsWith('http') ? (
+                          <img src={c.image} alt={c.name} className="w-full h-full object-cover" loading="lazy" />
+                        ) : c.image && c.image.trim() !== '' ? (
+                          <span className="text-3xl">{c.image}</span>
+                        ) : (
+                          <span className="text-lg font-bold text-primary">{c.name?.charAt(0).toUpperCase()}</span>
+                        )}
+                        <span className="absolute top-1 right-1 text-[9px] bg-amber-500 text-white px-1.5 py-0.5 rounded-full font-bold">HOT</span>
+                      </div>
+                      <span className="text-[11px] md:text-xs font-semibold text-center leading-tight max-w-[80px] line-clamp-2">{c.name}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </motion.section>
+          );
+        })()}
+
         {/* ── Subcategory strips per parent (admin-controlled) ── */}
         {!isLoading && parentCategories.map((parent: any) => {
           const subs = (subcatMap[parent.id] || []).slice(0, homepageSubMax);
