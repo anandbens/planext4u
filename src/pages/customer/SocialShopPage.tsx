@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
+import { useCurrency } from "@/lib/country-context";
 
 const MOCK_PRODUCTS = [
   { id: "p1", name: "Premium Wireless Headphones", price: 2499, image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&h=200&fit=crop", rating: 4.5, reviews: 128, category: "Electronics" },
@@ -29,12 +30,10 @@ const TAGGED_POSTS = Array.from({ length: 9 }, (_, i) => ({
   price: MOCK_PRODUCTS[i % MOCK_PRODUCTS.length].price,
 }));
 
-function formatPrice(n: number): string {
-  return '₹' + n.toLocaleString('en-IN');
-}
-
 export default function SocialShopPage() {
   const navigate = useNavigate();
+  const { format: fmt } = useCurrency();
+  const formatPrice = (n: number) => fmt(n, { decimals: 0 });
   const [activeTab, setActiveTab] = useState<'shop' | 'collections'>('shop');
   const [selectedProduct, setSelectedProduct] = useState<typeof MOCK_PRODUCTS[0] | null>(null);
 

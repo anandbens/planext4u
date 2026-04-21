@@ -7,9 +7,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { foodApi, Rider } from "@/lib/food-api";
 import { ArrowLeft, IndianRupee, TrendingUp, Wallet } from "lucide-react";
 import { format } from "date-fns";
+import { useCurrency } from "@/lib/country-context";
 
 export default function RiderEarningsPage() {
   const navigate = useNavigate();
+  const { format: fmt } = useCurrency();
   const [rider, setRider] = useState<Rider | null>(null);
   const [payouts, setPayouts] = useState<any[]>([]);
   const [settlements, setSettlements] = useState<any[]>([]);
@@ -46,9 +48,9 @@ export default function RiderEarningsPage() {
       </header>
 
       <div className="p-4 grid grid-cols-3 gap-2">
-        <StatBox icon={<IndianRupee className="h-4 w-4" />} label="Today" value={`₹${todayEarnings.toFixed(0)}`} />
-        <StatBox icon={<Wallet className="h-4 w-4" />} label="Pending" value={`₹${pending.toFixed(0)}`} />
-        <StatBox icon={<TrendingUp className="h-4 w-4" />} label="Lifetime" value={`₹${Number(rider.total_earnings || 0).toFixed(0)}`} />
+        <StatBox icon={<IndianRupee className="h-4 w-4" />} label="Today" value={fmt(todayEarnings, { decimals: 0 })} />
+        <StatBox icon={<Wallet className="h-4 w-4" />} label="Pending" value={fmt(pending, { decimals: 0 })} />
+        <StatBox icon={<TrendingUp className="h-4 w-4" />} label="Lifetime" value={fmt(rider.total_earnings || 0, { decimals: 0 })} />
       </div>
 
       <div className="p-4">
@@ -65,10 +67,10 @@ export default function RiderEarningsPage() {
                 <div>
                   <p className="text-sm font-semibold">Order {p.order_id}</p>
                   <p className="text-xs text-muted-foreground">{format(new Date(p.earned_at), 'dd MMM yyyy, HH:mm')} • {Number(p.distance_km).toFixed(1)} km</p>
-                  <p className="text-[10px] text-muted-foreground">Base ₹{p.base_amount} + Distance ₹{p.distance_amount} + Tip ₹{p.tip_amount}</p>
+                  <p className="text-[10px] text-muted-foreground">Base {fmt(p.base_amount, { decimals: 0 })} + Distance {fmt(p.distance_amount, { decimals: 0 })} + Tip {fmt(p.tip_amount, { decimals: 0 })}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-primary">₹{Number(p.total_amount).toFixed(0)}</p>
+                  <p className="font-bold text-primary">{fmt(p.total_amount, { decimals: 0 })}</p>
                   <Badge variant={p.status === 'settled' ? 'default' : 'secondary'} className="text-[10px]">{p.status}</Badge>
                 </div>
               </Card>
@@ -85,7 +87,7 @@ export default function RiderEarningsPage() {
                   <p className="text-[10px] text-muted-foreground">{s.method}{s.reference ? ` • Ref ${s.reference}` : ''}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold">₹{Number(s.amount).toFixed(0)}</p>
+                  <p className="font-bold">{fmt(s.amount, { decimals: 0 })}</p>
                   <Badge variant={s.status === 'completed' ? 'default' : 'secondary'} className="text-[10px]">{s.status}</Badge>
                 </div>
               </Card>

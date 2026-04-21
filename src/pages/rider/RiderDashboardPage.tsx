@@ -9,9 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LogOut, MapPin, Phone, Bike, User, Wallet, Navigation } from "lucide-react";
 import { LiveTrackingMap } from "@/components/food/LiveTrackingMap";
+import { useCurrency } from "@/lib/country-context";
 
 export default function RiderDashboardPage() {
   const navigate = useNavigate();
+  const { format: fmt } = useCurrency();
   const [rider, setRider] = useState<Rider | null>(null);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +147,7 @@ export default function RiderDashboardPage() {
 
       <div className="p-4 grid grid-cols-3 gap-2">
         <button onClick={() => navigate('/rider/earnings')} className="text-left">
-          <Card className="p-3 text-center"><Wallet className="h-4 w-4 mx-auto text-primary mb-1" /><p className="text-base font-bold">₹{Number(rider.total_earnings || 0).toFixed(0)}</p><p className="text-[10px] text-muted-foreground">Lifetime</p></Card>
+          <Card className="p-3 text-center"><Wallet className="h-4 w-4 mx-auto text-primary mb-1" /><p className="text-base font-bold">{fmt(rider.total_earnings || 0, { decimals: 0 })}</p><p className="text-[10px] text-muted-foreground">Lifetime</p></Card>
         </button>
         <Card className="p-3 text-center"><p className="text-base font-bold">{rider.total_deliveries}</p><p className="text-[10px] text-muted-foreground">Trips</p></Card>
         <Card className="p-3 text-center"><p className="text-base font-bold">★ {rider.rating || 'New'}</p><p className="text-[10px] text-muted-foreground">Rating</p></Card>
@@ -180,7 +182,7 @@ export default function RiderDashboardPage() {
                 <Badge>NEW</Badge>
               </div>
               <div className="text-xs text-muted-foreground">
-                Distance: {Number(a.distance_km).toFixed(1)} km • Payout: ₹{a.payout_amount}
+                Distance: {Number(a.distance_km).toFixed(1)} km • Payout: {fmt(a.payout_amount, { decimals: 0 })}
               </div>
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" className="flex-1" onClick={() => respond(a.id, false)}>Decline</Button>

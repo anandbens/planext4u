@@ -4,15 +4,16 @@ import { ArrowLeft, Calculator } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
+import { formatPropertyPrice } from "@/lib/property-price";
+import { useCurrency } from "@/lib/country-context";
 
 function formatPrice(price: number): string {
-  if (price >= 10000000) return `₹${(price / 10000000).toFixed(2)} Cr`;
-  if (price >= 100000) return `₹${(price / 100000).toFixed(2)} L`;
-  return `₹${price.toLocaleString("en-IN")}`;
+  return formatPropertyPrice(price);
 }
 
 export default function PropertyEMIPage() {
   const navigate = useNavigate();
+  const { format: fmt } = useCurrency();
   const [loanAmount, setLoanAmount] = useState([5000000]);
   const [rate, setRate] = useState([8.5]);
   const [tenure, setTenure] = useState([20]);
@@ -53,7 +54,7 @@ export default function PropertyEMIPage() {
           <Card className="p-5 text-center">
             <Calculator className="h-8 w-8 text-primary mx-auto mb-2" />
             <p className="text-xs text-muted-foreground">Your Monthly EMI</p>
-            <p className="text-3xl font-bold text-primary">₹{emi.toLocaleString("en-IN")}</p>
+            <p className="text-3xl font-bold text-primary">{fmt(emi, { decimals: 0 })}</p>
             <div className="mt-4 grid grid-cols-3 gap-3 text-center">
               <div className="bg-secondary/30 rounded-lg p-3">
                 <p className="text-[10px] text-muted-foreground">Principal</p>
