@@ -64,28 +64,60 @@ export function LocationModal({ open, onOpenChange, onSelect }: LocationModalPro
         return;
       }
 
+      console.log("[LocationModal] GPS coords captured:", coords);
       saveSelectedCoords(coords.lat, coords.lng);
 
-      let label = "Current Location";
+      let label = "";
 
       try {
         const apiKey = await getGoogleMapsKey();
-        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${apiKey}`);
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${apiKey}`;
+        console.log("[LocationModal] Reverse-geocoding via Google Maps...");
+        const res = await fetch(url);
         const data = await res.json();
+        console.log("[LocationModal] Geocode status:", data.status, "results:", data.results?.length || 0);
 
-        if (data.status === "OK" && data.results.length > 0) {
-          const components = data.results[0].address_components || [];
+        if (data.status === "OK" && data.results?.length > 0) {
+          // Prefer the most specific result (street_address) over generic
+          // plus-code / country-level matches that Google sometimes returns first.
+          const ranked = [...data.results].sort((a: any, b: any) => {
+            const score = (r: any) => {
+              const t = r.types || [];
+              if (t.includes("street_address")) return 0;
+              if (t.includes("premise")) return 1;
+              if (t.includes("route")) return 2;
+              if (t.includes("sublocality_level_1")) return 3;
+              if (t.includes("sublocality")) return 4;
+              if (t.includes("neighborhood")) return 5;
+              if (t.includes("locality")) return 6;
+              return 9;
+            };
+            return score(a) - score(b);
+          });
+          const best = ranked[0];
+          const components = best.address_components || [];
           const get = (type: string) => components.find((c: { long_name: string; types: string[] }) => c.types.includes(type))?.long_name || "";
           const area = get("sublocality_level_1") || get("sublocality") || get("neighborhood") || get("locality");
           const city = get("locality") || get("administrative_area_level_3") || get("administrative_area_level_2") || "";
           const state = get("administrative_area_level_1");
 
-          label = [area || city, state].filter(Boolean).join(", ")
-            || data.results[0].formatted_address?.split(",").slice(0, 2).join(", ")
-            || "Current Location";
+          label = [area || city, state && state !== (area || city) ? state : ""].filter(Boolean).join(", ")
+            || best.formatted_address?.split(",").slice(0, 2).join(", ")
+            || "";
+
+          console.log("[LocationModal] Resolved label:", label);
+        } else if (data.status && data.status !== "OK") {
+          console.warn("[LocationModal] Google Maps geocode returned:", data.status, data.error_message);
+          toast.error(`Couldn't resolve address (${data.status}). Showing coordinates.`);
         }
-      } catch {
-        label = "Current Location";
+      } catch (geoErr) {
+        console.error("[LocationModal] Reverse geocode failed:", geoErr);
+      }
+
+      if (!label) {
+        // Fallback so the user still sees something meaningful and the
+        // coords are saved for downstream queries.
+        label = `Lat ${coords.lat.toFixed(4)}, Lng ${coords.lng.toFixed(4)}`;
       }
 
       onSelect(label);
