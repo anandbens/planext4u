@@ -15,6 +15,8 @@ const POINTS_KEYS = [
   'referral_cooling_enabled',
 ];
 
+const CALL_KEYS = ['voice_call_enabled', 'video_call_enabled'];
+
 export default function PlatformVariablesPage() {
   const [variables, setVariables] = useState<PlatformVariable[]>([]);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
@@ -51,7 +53,8 @@ export default function PlatformVariablesPage() {
   };
 
   const pointsVars = variables.filter(v => POINTS_KEYS.includes(v.key));
-  const otherVars = variables.filter(v => !POINTS_KEYS.includes(v.key));
+  const callVars = variables.filter(v => CALL_KEYS.includes(v.key));
+  const otherVars = variables.filter(v => !POINTS_KEYS.includes(v.key) && !CALL_KEYS.includes(v.key));
 
   const renderGroup = (title: string, vars: PlatformVariable[]) => (
     vars.length > 0 && (
@@ -82,6 +85,7 @@ export default function PlatformVariablesPage() {
       </div>
       <div className="bg-card rounded-xl border border-border/50 p-6 space-y-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
         {renderGroup("Points & Rewards", pointsVars)}
+        {renderGroup("Voice & Video Calls (Socio DMs)", callVars)}
         {renderGroup("Other Settings", otherVars)}
         <Button onClick={handleSave} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
