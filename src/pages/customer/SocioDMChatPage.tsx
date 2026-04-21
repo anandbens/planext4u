@@ -13,6 +13,7 @@ import CallScreen from "@/components/social/CallScreen";
 import { useQuery } from "@tanstack/react-query";
 import { compressToWebP } from "@/lib/webp-compress";
 import { ensureMicrophonePermission } from "@/lib/mic-permission";
+import { useCallSettings } from "@/hooks/use-call-settings";
 
 interface Reaction {
   id: string;
@@ -113,6 +114,7 @@ export default function SocioDMChatPage() {
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const { activeCall, initiateCall, closeCall } = useInitiateCall();
+  const { voiceEnabled, videoEnabled } = useCallSettings();
 
   const { data: callRemoteProfile } = useQuery({
     queryKey: ["call-remote-profile", recipientId],
@@ -126,9 +128,11 @@ export default function SocioDMChatPage() {
 
   const handleCall = useCallback(async (type: "audio" | "video") => {
     if (!recipientId || !currentUserId) { toast.error("Please login to make calls"); return; }
+    if (type === "audio" && !voiceEnabled) { toast.error("Voice calls are currently disabled"); return; }
+    if (type === "video" && !videoEnabled) { toast.error("Video calls are currently disabled"); return; }
     const callId = await initiateCall(recipientId, type);
     if (!callId) toast.error("Failed to start call");
-  }, [recipientId, currentUserId, initiateCall]);
+  }, [recipientId, currentUserId, initiateCall, voiceEnabled, videoEnabled]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -470,12 +474,16 @@ export default function SocioDMChatPage() {
           </div>
         </button>
         <div className="flex items-center gap-2">
-          <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => handleCall("audio")}>
-            <Phone className="h-5 w-5" />
-          </button>
-          <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => handleCall("video")}>
-            <Video className="h-5 w-5" />
-          </button>
+          {voiceEnabled && (
+            <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => handleCall("audio")} aria-label="Voice call">
+              <Phone className="h-5 w-5" />
+            </button>
+          )}
+          {videoEnabled && (
+            <button className="h-9 w-9 rounded-full hover:bg-accent flex items-center justify-center" onClick={() => handleCall("video")} aria-label="Video call">
+              <Video className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </header>
 
