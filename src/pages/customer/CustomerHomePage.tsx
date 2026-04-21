@@ -581,9 +581,9 @@ export default function CustomerHomePage() {
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-2">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {[
-              { title: "Pick up where you left off", items: data?.featuredProducts?.slice(0, 4) || [] },
-              { title: "Trending Now", items: (data?.trendingProducts || []).slice(0, 4) },
-              { title: "Deals of the Day", items: (data?.dealProducts || []).slice(0, 4) },
+              { title: "Pick up where you left off", items: data?.featuredProducts?.slice(0, 4) || [], link: "/app/browse" },
+              { title: "Trending Now", items: (data?.trendingProducts || []).slice(0, 4), link: "/app/trending" },
+              { title: "Deals of the Day", items: (data?.dealProducts || []).slice(0, 4), link: "/app/deals" },
             ].map((section, sIdx) => (
               <Card key={sIdx} className="p-3 hover:shadow-lg transition-shadow">
                 <h3 className="text-xs font-bold mb-2">{section.title}</h3>
@@ -598,7 +598,7 @@ export default function CustomerHomePage() {
                     </Link>
                   ))}
                 </div>
-                <Link to="/app/browse" className="text-[10px] text-primary font-medium mt-1.5 block">Explore More →</Link>
+                <Link to={section.link} className="text-[10px] text-primary font-medium mt-1.5 block">Explore More →</Link>
               </Card>
             ))}
           </div>

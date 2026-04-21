@@ -46,6 +46,7 @@ interface DataTableProps<T> {
   onBulkDelete?: (ids: string[]) => void;
   onBulkStatusUpdate?: (ids: string[], status: string) => void;
   bulkStatusOptions?: { value: string; label: string }[];
+  extraBulkActions?: (ids: string[], clearSelection: () => void) => ReactNode;
   // Summary widgets
   summaryWidgets?: SummaryWidget[];
 }
@@ -55,7 +56,7 @@ export function DataTable<T extends Record<string, any>>({
   onPageChange, onSearch, onExport, onRowClick, onAdd, addLabel = "Add New",
   searchPlaceholder = "Search...",
   filters, onFilterChange, onDateRangeChange, dateFilterLabel = "Date", showDateFilter = true,
-  enableBulkSelect = false, onBulkDelete, onBulkStatusUpdate, bulkStatusOptions,
+  enableBulkSelect = false, onBulkDelete, onBulkStatusUpdate, bulkStatusOptions, extraBulkActions,
   summaryWidgets,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
@@ -158,6 +159,7 @@ export function DataTable<T extends Record<string, any>>({
                   </Button>
                 </div>
               )}
+              {extraBulkActions?.(selectedArray, () => setSelectedIds(new Set()))}
               {onBulkDelete && (
                 <Button size="sm" variant="destructive" className="h-8 text-xs gap-1"
                   onClick={() => { onBulkDelete(selectedArray); setSelectedIds(new Set()); }}>

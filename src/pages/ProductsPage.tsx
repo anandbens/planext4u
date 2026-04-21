@@ -8,7 +8,7 @@ import { api, Product, PaginatedResponse } from "@/lib/api";
 import { ProductModal } from "@/components/admin/modals/ProductModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, Pencil, Trash2, Package, IndianRupee, Tag, TrendingUp, CheckCircle, XCircle } from "lucide-react";
+import { Eye, Pencil, Trash2, Package, IndianRupee, Tag, TrendingUp, CheckCircle, XCircle, Sparkles } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -62,6 +62,12 @@ export default function ProductsPage() {
   const handleBulkStatus = async (ids: string[], status: string) => {
     await api.bulkUpdateProductStatus(ids, status);
     toast.success(`${ids.length} products updated to ${status}`);
+    fetchData();
+  };
+
+  const handleBulkDealOfDay = async (ids: string[], isDeal: boolean) => {
+    await api.bulkUpdateProductDealOfDay(ids, isDeal);
+    toast.success(`${ids.length} products ${isDeal ? 'marked as' : 'removed from'} Deal of the Day`);
     fetchData();
   };
 
@@ -187,6 +193,18 @@ export default function ProductsPage() {
           { value: "draft", label: "Draft" },
           { value: "rejected", label: "Reject" },
         ]}
+        extraBulkActions={(ids, clear) => (
+          <>
+            <Button size="sm" variant="outline" className="h-8 text-xs gap-1 border-warning/40 text-warning hover:bg-warning/10"
+              onClick={async () => { await handleBulkDealOfDay(ids, true); clear(); }}>
+              <Sparkles className="h-3.5 w-3.5" /> Mark as Deal ({ids.length})
+            </Button>
+            <Button size="sm" variant="ghost" className="h-8 text-xs gap-1 text-muted-foreground"
+              onClick={async () => { await handleBulkDealOfDay(ids, false); clear(); }}>
+              Remove Deal
+            </Button>
+          </>
+        )}
       />
       <ProductModal product={selected} open={modalOpen} onOpenChange={setModalOpen} mode={modalMode} onSave={handleSave} onCreate={handleCreate} onDelete={handleDelete} />
       <ConfirmDialog
