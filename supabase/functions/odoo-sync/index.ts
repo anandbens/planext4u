@@ -63,9 +63,10 @@ async function xmlRpcCall(url: string, method: string, params: any[]): Promise<a
     body,
   });
   const text = await res.text();
-  // crude DOM parsing using DOMParser polyfill
-  const { DOMParser } = await import("https://esm.sh/linkedom@0.16.11");
-  const doc = new DOMParser().parseFromString(text, "text/xml");
+  // Use deno-dom (no native canvas dependency, unlike linkedom)
+  const { DOMParser } = await import("https://deno.land/x/[email protected]/deno-dom-wasm.ts");
+  const doc = new DOMParser().parseFromString(text, "text/html");
+  if (!doc) throw new Error("Failed to parse Odoo XML response");
   const fault = doc.querySelector("fault");
   if (fault) {
     const v = fault.querySelector("value");
