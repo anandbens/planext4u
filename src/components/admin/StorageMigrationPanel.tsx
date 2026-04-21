@@ -114,8 +114,64 @@ export default function StorageMigrationPanel() {
     toast.success("All scopes processed");
   };
 
+  // Generate carousel + product/service images via AI and upload to B2
+  const [seeding, setSeeding] = useState<null | "all" | "carousel" | "products" | "services">(null);
+  const seedMedia = async (mode: "all" | "carousel" | "products" | "services", limit = 8) => {
+    setSeeding(mode);
+    try {
+      const { data, error } = await supabase.functions.invoke("seed-homepage-media", {
+        body: { mode, limit },
+      });
+      if (error) throw error;
+      const r = data as { carousel_added: number; products_updated: number; services_updated: number; errors: string[] };
+      const parts = [];
+      if (r.carousel_added) parts.push(`${r.carousel_added} carousel banners`);
+      if (r.products_updated) parts.push(`${r.products_updated} product images`);
+      if (r.services_updated) parts.push(`${r.services_updated} service images`);
+      toast.success(parts.length ? `Added ${parts.join(", ")}` : "Nothing to seed (already populated)");
+      if (r.errors?.length) {
+        console.warn("[seed-homepage-media] errors", r.errors);
+        toast.warning(`${r.errors.length} item(s) failed — see console`);
+      }
+    } catch (e: any) {
+      toast.error(`Seed failed: ${e.message || e}`);
+    } finally {
+      setSeeding(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      <Card className="p-4 border-primary/30">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="text-lg font-semibold">Generate Homepage Images (AI → B2)</h2>
+            <p className="text-sm text-muted-foreground">
+              Generates photorealistic images via Lovable AI and uploads them to Backblaze B2.
+              Carousel seed runs only when no active banners exist; product/service runs fill missing images in batches of 8.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => seedMedia("carousel")} disabled={!!seeding} variant="outline" className="gap-2">
+              {seeding === "carousel" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Carousel (5 banners)
+            </Button>
+            <Button onClick={() => seedMedia("products", 8)} disabled={!!seeding} variant="outline" className="gap-2">
+              {seeding === "products" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Products (×8)
+            </Button>
+            <Button onClick={() => seedMedia("services", 8)} disabled={!!seeding} variant="outline" className="gap-2">
+              {seeding === "services" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Services (×8)
+            </Button>
+            <Button onClick={() => seedMedia("all", 8)} disabled={!!seeding} className="gap-2">
+              {seeding === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Generate everything
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       <Card className="p-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
