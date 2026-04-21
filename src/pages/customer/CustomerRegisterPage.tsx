@@ -389,12 +389,12 @@ export default function CustomerRegisterPage() {
               </div>
 
               <div>
-                <Label className="text-xs text-muted-foreground mb-1 block">District *</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">{regionLabel} *</Label>
                 <Select value={form.district} onValueChange={v => setForm({ ...form, district: v })} disabled={!form.state}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
+                  <SelectTrigger className="h-11"><SelectValue placeholder={form.state ? `Select ${regionLabel}` : "Select state first"} /></SelectTrigger>
                   <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
                     {districts.length === 0 && form.state ? (
-                      <div className="py-2 px-3 text-sm text-muted-foreground">Loading districts...</div>
+                      <div className="py-2 px-3 text-sm text-muted-foreground">Loading {regionLabel.toLowerCase()}s...</div>
                     ) : (
                       districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)
                     )}
@@ -402,7 +402,9 @@ export default function CustomerRegisterPage() {
                 </Select>
               </div>
 
-              <Input placeholder="Area / Locality" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} className="h-11" />
+              <Input placeholder={isIndia ? "Area / Locality" : "Street / Area"} value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} className="h-11" />
+
+              <Input placeholder={isIndia ? "Pincode (optional)" : "Postal code (optional)"} value={form.postal_code} onChange={e => setForm({ ...form, postal_code: e.target.value })} className="h-11" maxLength={10} />
 
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">Occupation</Label>
