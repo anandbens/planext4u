@@ -198,7 +198,7 @@ function ModulePanel({ module }: { module: WidgetModule }) {
   const [editing, setEditing] = useState<any>(null);
   const [addOpen, setAddOpen] = useState(false);
 
-  const { data: layout, refetch } = useQuery({
+  const { data: layout } = useQuery({
     queryKey: ["admin_layout", module],
     queryFn: async () => {
       let l: any = (await supabase.from("homepage_layouts" as any)
