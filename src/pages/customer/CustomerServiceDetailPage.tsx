@@ -62,58 +62,27 @@ export default function CustomerServiceDetailPage() {
     } catch {}
   }, [id]);
 
-  useEffect(() => {
-    if (!selectedDate || !id) { setBookedSlots([]); return; }
-    const fetchBooked = async () => {
-      const { data } = await supabase
-        .from("service_bookings")
-        .select("start_time")
-        .eq("service_id", id)
-        .eq("booking_date", selectedDate)
-        .in("status", ["confirmed", "pending", "in_progress"]);
-      const booked = (data || []).map((b: any) => {
-        const [h, m] = (b.start_time || "").split(":");
-        const hour = parseInt(h);
-        if (isNaN(hour)) return b.start_time;
-        const ampm = hour >= 12 ? "PM" : "AM";
-        const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        return `${String(h12).padStart(2, "0")}:${m} ${ampm}`;
+  // Fetch generated slots from RPC (respects duration, buffer, overrides, existing bookings, booking window)
+  const { data: rpcSlots = [] } = useQuery({
+    queryKey: ["serviceSlots", id, selectedDate],
+    queryFn: async () => {
+      if (!id || !selectedDate) return [];
+      const { data, error } = await (supabase.rpc as any)("generate_service_slots", {
+        _service_id: id,
+        _date: selectedDate,
       });
-      setBookedSlots(booked);
-    };
-    fetchBooked();
-  }, [selectedDate, id]);
-
-  const toggleServiceWishlist = () => {
-    if (!id) return;
-    const saved = JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]');
-    const updated = isWishlisted ? saved.filter((s: string) => s !== id) : [...saved, id];
-    localStorage.setItem('app_db_service_wishlist', JSON.stringify(updated));
-    setIsWishlisted(!isWishlisted);
-    toast.success(isWishlisted ? "Removed from wishlist" : "Service saved to wishlist");
-  };
-
-  const { data: service, isLoading } = useQuery({
-    queryKey: ["service", id],
-    queryFn: () => api.getServiceById(id!),
-    enabled: !!id,
+      if (error) { console.error("slots rpc:", error); return []; }
+      return (data || []) as { start_time: string; end_time: string; is_booked: boolean }[];
+    },
+    enabled: !!id && !!selectedDate,
   });
 
-  // Fetch vendor availability for selected date
-  const vendorId = service?.vendor_id;
-  const selectedDayOfWeek = selectedDate ? new Date(selectedDate).getDay() : null;
-  const { data: vendorAvailability } = useQuery({
-    queryKey: ["vendorAvailability", vendorId, selectedDayOfWeek],
+  const { data: bookingWindowDays = 7 } = useQuery({
+    queryKey: ["bookingWindowDays"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("vendor_availability" as any)
-        .select("*")
-        .eq("vendor_id", vendorId)
-        .eq("day_of_week", selectedDayOfWeek)
-        .maybeSingle();
-      return data as any as { is_available: boolean; time_slots: { start: string; end: string }[] } | null;
+      const { data } = await supabase.from("platform_variables").select("value").eq("key", "service_booking_window_days").maybeSingle();
+      return parseInt((data as any)?.value || "7", 10) || 7;
     },
-    enabled: !!vendorId && selectedDayOfWeek !== null,
   });
 
   // Fetch real reviews from DB
