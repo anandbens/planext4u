@@ -57,6 +57,7 @@ const DIETARY_OPTIONS = ["Jain", "Halal", "Keto", "Gluten-Free", "Vegan", "Low-C
 export default function FoodRestaurantPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { format: fmt } = useCurrency();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -322,7 +323,7 @@ export default function FoodRestaurantPage() {
             </Badge>
           )}
           {restaurant.min_order_amount > 0 && (
-            <span className="text-muted-foreground">Min ₹{restaurant.min_order_amount}</span>
+            <span className="text-muted-foreground">Min {fmt(restaurant.min_order_amount, { decimals: 0 })}</span>
           )}
           {restaurant.fssai_license && (
             <span className="text-muted-foreground">FSSAI: {restaurant.fssai_license}</span>
@@ -390,10 +391,10 @@ export default function FoodRestaurantPage() {
                   </p>
                 )}
                 <div className="flex items-baseline gap-2 mt-2">
-                  <span className="font-bold text-primary">₹{c.combo_price}</span>
+                  <span className="font-bold text-primary">{fmt(c.combo_price, { decimals: 0 })}</span>
                   {c.original_price > c.combo_price && (
                     <span className="text-xs text-muted-foreground line-through">
-                      ₹{c.original_price}
+                      {fmt(c.original_price, { decimals: 0 })}
                     </span>
                   )}
                 </div>
@@ -482,10 +483,10 @@ export default function FoodRestaurantPage() {
                         </div>
                         <h3 className="font-semibold text-sm">{item.name}</h3>
                         <p className="text-sm font-medium mt-0.5">
-                          ₹{item.discounted_price ?? item.price}
+                          {fmt(item.discounted_price ?? item.price, { decimals: 0 })}
                           {item.discounted_price != null && (
                             <span className="text-xs text-muted-foreground line-through ml-2">
-                              ₹{item.price}
+                              {fmt(item.price, { decimals: 0 })}
                             </span>
                           )}
                           {item.calories != null && (
@@ -591,7 +592,7 @@ export default function FoodRestaurantPage() {
           >
             <span className="text-sm">
               <ShoppingBag className="h-4 w-4 inline mr-2" />
-              {cartCount} {cartCount === 1 ? "item" : "items"} • ₹{cartTotal}
+              {cartCount} {cartCount === 1 ? "item" : "items"} • {fmt(cartTotal, { decimals: 0 })}
             </span>
             <span className="text-sm font-semibold">View Cart →</span>
           </button>
@@ -646,7 +647,7 @@ export default function FoodRestaurantPage() {
                   <div className="flex flex-wrap gap-2">
                     {(customizingItem.addons as any[]).map((a: any, i: number) => (
                       <Badge key={i} variant="outline">
-                        {a.name || a} {a.price ? `(+₹${a.price})` : ""}
+                        {a.name || a} {a.price ? `(+${fmt(a.price, { decimals: 0 })})` : ""}
                       </Badge>
                     ))}
                   </div>
