@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolveCommissionCascade } from "@/lib/commission-cascade";
 import { checkCartStock, decrementStockForCart } from "@/lib/stock-check";
 import { useAuth } from "@/lib/auth";
+import { useCurrency } from "@/lib/country-context";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { motion } from "framer-motion";
 import { format, addDays } from "date-fns";

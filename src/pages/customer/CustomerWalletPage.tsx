@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useCurrency } from "@/lib/country-context";
 
 const ITEMS_PER_PAGE = 8;
 

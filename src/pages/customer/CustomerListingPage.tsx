@@ -13,6 +13,7 @@ import { LoginPromptDialog } from "@/components/customer/LoginPromptDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useCurrency } from "@/lib/country-context";
 import { toast } from "sonner";
 
 type Mode = "deals" | "trending";
@@ -22,6 +23,7 @@ const ITEMS_PER_PAGE = 12;
 export default function CustomerListingPage({ mode }: { mode: Mode }) {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
+  const { format: fmt } = useCurrency();
   const isGuest = !customerUser;
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -195,8 +197,8 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
                           <span className="text-[10px] text-muted-foreground">({p.reviews || 0})</span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm font-bold">₹{Number(p.price).toLocaleString()}</span>
-                          {discountPct > 0 && <span className="text-xs text-muted-foreground line-through">₹{(Number(p.price) + Number(p.discount)).toLocaleString()}</span>}
+                          <span className="text-sm font-bold">{fmt(Number(p.price), { decimals: 0 })}</span>
+                          {discountPct > 0 && <span className="text-xs text-muted-foreground line-through">{fmt(Number(p.price) + Number(p.discount), { decimals: 0 })}</span>}
                         </div>
                       </div>
                     </Link>
@@ -254,6 +256,7 @@ export function ProductFilterPanel({
   selectedAttrs?: Record<string, string[]>;
   setSelectedAttrs?: (v: Record<string, string[]>) => void;
 }) {
+  const { format: fmt } = useCurrency();
   const toggleVal = (attrId: string, val: string) => {
     if (!setSelectedAttrs) return;
     const cur = selectedAttrs[attrId] || [];
@@ -266,7 +269,7 @@ export function ProductFilterPanel({
       <div>
         <div className="flex items-center justify-between mb-3">
           <label className="text-sm font-semibold">Price range</label>
-          <span className="text-xs text-muted-foreground">₹{priceRange[0].toLocaleString()} – ₹{priceRange[1].toLocaleString()}</span>
+          <span className="text-xs text-muted-foreground">{fmt(priceRange[0], { decimals: 0 })} – {fmt(priceRange[1], { decimals: 0 })}</span>
         </div>
         <Slider
           min={0}

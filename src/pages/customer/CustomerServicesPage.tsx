@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BannerAd } from "@/components/customer/BannerAd";
 import { useAuth } from "@/lib/auth";
+import { useCurrency } from "@/lib/country-context";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 
 function useServiceWishlist() {

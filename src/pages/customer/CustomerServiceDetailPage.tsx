@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { useCurrency } from "@/lib/country-context";
 import { supabase } from "@/integrations/supabase/client";
 
 const serviceImages: Record<string, string> = {

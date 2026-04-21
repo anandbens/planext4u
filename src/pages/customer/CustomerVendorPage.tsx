@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
+import { useCurrency } from "@/lib/country-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
