@@ -198,7 +198,7 @@ function ModulePanel({ module }: { module: WidgetModule }) {
   const [editing, setEditing] = useState<any>(null);
   const [addOpen, setAddOpen] = useState(false);
 
-  const { data: layout } = useQuery({
+  const { data: layout, refetch } = useQuery({
     queryKey: ["admin_layout", module],
     queryFn: async () => {
       let l: any = (await supabase.from("homepage_layouts" as any)
@@ -212,6 +212,77 @@ function ModulePanel({ module }: { module: WidgetModule }) {
       return { layout: l, sections: (secs || []) as any[] };
     },
   });
+
+  const [publishing, setPublishing] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
+
+  const handlePublish = async () => {
+    if (!layout) return;
+    setPublishing(true);
+    try {
+      // Build snapshot from current draft sections (already ordered by display_order)
+      const snapshot = layout.sections.map((s) => ({
+        id: s.id,
+        widget_type: s.widget_type,
+        title: s.title,
+        display_order: s.display_order,
+        is_visible: s.is_visible,
+        config: s.config || {},
+      }));
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("homepage_layouts" as any).update({
+        published_snapshot: snapshot,
+        published_at: new Date().toISOString(),
+        published_by: user?.id ?? null,
+        has_unpublished_changes: false,
+      } as any).eq("id", layout.layout.id);
+      if (error) throw error;
+      toast.success("Published — changes are now live");
+      qc.invalidateQueries({ queryKey: ["admin_layout", module] });
+      qc.invalidateQueries({ queryKey: ["homepage_layout", module] });
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to publish");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const handleDiscard = async () => {
+    if (!layout) return;
+    if (!confirm("Discard all unpublished changes? Draft will be replaced with the live published version.")) return;
+    setDiscarding(true);
+    try {
+      const snapshot = (layout.layout.published_snapshot || []) as any[];
+      // Wipe current draft sections and rebuild from snapshot
+      await supabase.from("homepage_layout_sections" as any).delete().eq("layout_id", layout.layout.id);
+      if (snapshot.length > 0) {
+        const rows = snapshot.map((s) => ({
+          layout_id: layout.layout.id,
+          widget_type: s.widget_type,
+          title: s.title,
+          display_order: s.display_order,
+          is_visible: s.is_visible !== false,
+          config: s.config || {},
+        }));
+        const { error } = await supabase.from("homepage_layout_sections" as any).insert(rows as any);
+        if (error) throw error;
+      }
+      // Trigger marked it dirty during the rebuild — clear that flag.
+      await supabase.from("homepage_layouts" as any).update({ has_unpublished_changes: false } as any).eq("id", layout.layout.id);
+      toast.success("Draft restored to published version");
+      qc.invalidateQueries({ queryKey: ["admin_layout", module] });
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to discard");
+    } finally {
+      setDiscarding(false);
+    }
+  };
+
+  const previewUrl = useMemo(() => {
+    const path = module === "ecommerce" ? "/app" : `/app/${module}`;
+    return `${path}?preview=draft`;
+  }, [module]);
+
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
