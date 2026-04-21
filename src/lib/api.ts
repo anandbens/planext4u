@@ -1806,7 +1806,7 @@ export const api = {
       supabase.from('products').select('*').eq('status', 'active').limit(50),
       supabase.from('services').select('*').eq('status', 'active').limit(4),
       supabase.from('popup_banners').select('*').eq('status', 'active').order('created_at', { ascending: false }),
-      supabase.from('platform_variables').select('key, value').ilike('key', 'homepage_image_%'),
+      supabase.from('platform_variables').select('key, value').or('key.ilike.homepage_image_%,key.eq.homepage_categories_max,key.eq.homepage_subcategories_per_parent'),
     ]);
 
     // Build assets map from platform variables
@@ -1834,6 +1834,7 @@ export const api = {
       featuredServices: featuredServices || [],
       storeBanners: storeBanners || [],
       assets,
+      platformConfig,
     };
   },
 
