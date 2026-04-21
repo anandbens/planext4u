@@ -209,6 +209,8 @@ import AdminRiderKYCPage from "./pages/admin/AdminRiderKYCPage";
 import AdminRiderSettlementsPage from "./pages/admin/AdminRiderSettlementsPage";
 import AdminFoodOrdersPage from "./pages/admin/AdminFoodOrdersPage";
 import AdminFoodCouponsPage from "./pages/admin/AdminFoodCouponsPage";
+import AdminDropshippingPage from "./pages/admin/AdminDropshippingPage";
+import VendorDropshippingPage from "./pages/vendor/VendorDropshippingPage";
 import { RiderProtectedRoute } from "@/components/rider/RiderProtectedRoute";
 import { RiderLayout } from "@/components/rider/RiderLayout";
 
@@ -564,6 +566,8 @@ const AppRoutes = () => {
         <Route path="/admin/rider-settlements" element={<SalesPage><AdminRiderSettlementsPage /></SalesPage>} />
         <Route path="/admin/food-orders" element={<SalesPage><AdminFoodOrdersPage /></SalesPage>} />
         <Route path="/admin/food-coupons" element={<SalesPage><AdminFoodCouponsPage /></SalesPage>} />
+        <Route path="/admin/dropshipping" element={<AdminOnlyPage><AdminDropshippingPage /></AdminOnlyPage>} />
+        <Route path="/vendor/dropshipping" element={<VendorPage><VendorDropshippingPage /></VendorPage>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>
