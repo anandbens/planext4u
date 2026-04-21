@@ -77,11 +77,32 @@ function EditSectionModal({
   open, onClose, section, onSave,
 }: { open: boolean; onClose: () => void; section: any; onSave: (s: any) => Promise<void> }) {
   const [form, setForm] = useState<any>(section);
-  useEffect(() => { setForm(section); }, [section?.id]);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { setForm(section); setError(null); }, [section?.id]);
   const spec = section ? getWidget(section.widget_type) : undefined;
   if (!section) return null;
 
   const updateConfig = (k: string, v: any) => setForm({ ...form, config: { ...(form.config || {}), [k]: v } });
+
+  const handleSave = async () => {
+    setError(null);
+    const title = String(form.title || "").trim();
+    if (title.length > 80) { setError("Title must be 80 characters or fewer."); return; }
+    if (spec?.validate) {
+      const msg = spec.validate({ title, config: form.config || {} });
+      if (msg) { setError(msg); return; }
+    }
+    try {
+      setSaving(true);
+      await onSave({ ...form, title });
+      onClose();
+    } catch (e: any) {
+      setError(e?.message || "Failed to save.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -90,7 +111,7 @@ function EditSectionModal({
         <div className="space-y-3 mt-3">
           <div>
             <Label>Title</Label>
-            <Input value={form.title || ""} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <Input value={form.title || ""} maxLength={80} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           </div>
           {spec?.fields?.map((f) => {
             const v = form.config?.[f.key] ?? "";
@@ -113,15 +134,21 @@ function EditSectionModal({
                 <Input
                   type={f.type === "number" ? "number" : "text"}
                   value={v}
-                  onChange={(e) => updateConfig(f.key, f.type === "number" ? Number(e.target.value) : e.target.value)}
+                  min={f.type === "number" ? 1 : undefined}
+                  onChange={(e) => updateConfig(f.key, f.type === "number" ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value)}
                 />
               </div>
             );
           })}
+          {error && (
+            <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {error}
+            </div>
+          )}
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={async () => { await onSave(form); onClose(); }}>Save</Button>
+          <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
         </div>
       </DialogContent>
     </Dialog>
