@@ -144,7 +144,8 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
       else if (vendor) { await onSave?.(vendor.id, form); }
       onOpenChange(false);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to save vendor");
+      console.error("Vendor save error:", e);
+      toast.error(friendlyError(e, "Failed to save vendor. Please review your input and try again."));
     } finally { setSaving(false); }
   };
 
@@ -206,7 +207,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
       setKycNotes("");
       onRefresh?.();
     } catch (err: any) {
-      toast.error(err.message || "Failed to update KYC status");
+      toast.error(friendlyError(err, "Failed to update KYC status"));
     } finally {
       setKycSaving(false);
     }
@@ -341,7 +342,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                                 onOpenChange(false);
                                 onRefresh?.();
                               } catch (err: any) {
-                                toast.error(err.message || "Failed to change vendor category");
+                                toast.error(friendlyError(err, "Failed to change vendor category"));
                               } finally {
                                 setSaving(false);
                               }
