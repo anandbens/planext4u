@@ -30,36 +30,54 @@ export async function checkCartStock(cart: CartItem[]): Promise<StockIssue[]> {
 
   const [variantsRes, productsRes] = await Promise.all([
     variantIds.length
-      ? supabase.from('product_variants').select('id, stock_quantity').in('id', variantIds)
+      ? supabase.from('product_variants').select('id, stock_quantity, stock_status').in('id', variantIds)
       : Promise.resolve({ data: [] as any[] }),
     productIds.length
-      ? supabase.from('products').select('id, stock, title').in('id', Array.from(new Set(productIds)))
+      ? supabase.from('products').select('id, stock, title, manage_stock, stock_status').in('id', Array.from(new Set(productIds)))
       : Promise.resolve({ data: [] as any[] }),
   ]);
 
-  const variantMap = new Map((variantsRes.data || []).map((v: any) => [v.id, v.stock_quantity ?? 0]));
-  const productMap = new Map((productsRes.data || []).map((p: any) => [p.id, { stock: p.stock ?? 0, title: p.title }]));
+  const variantMap = new Map((variantsRes.data || []).map((v: any) => [v.id, { stock: v.stock_quantity ?? 0, status: v.stock_status }]));
+  const productMap = new Map((productsRes.data || []).map((p: any) => [p.id, {
+    stock: p.stock ?? 0,
+    title: p.title,
+    manage_stock: p.manage_stock ?? true,
+    stock_status: p.stock_status ?? null,
+  }]));
 
   for (const item of cart as any[]) {
     const realProductId = item.product_id || (typeof item.id === 'string' && item.id.includes('__') ? item.id.split('__')[0] : item.id);
     const requested = item.qty || 0;
 
-    let available = 0;
     if (item.variant_id) {
-      available = variantMap.get(item.variant_id) ?? 0;
+      const v = variantMap.get(item.variant_id);
+      const available = v?.stock ?? 0;
+      if (available < requested) {
+        issues.push({
+          cartItemId: item.id, productId: realProductId, variantId: item.variant_id,
+          title: item.title || productMap.get(realProductId)?.title || 'Item',
+          requested, available,
+        });
+      }
     } else {
-      available = productMap.get(realProductId)?.stock ?? 0;
-    }
-
-    if (available < requested) {
-      issues.push({
-        cartItemId: item.id,
-        productId: realProductId,
-        variantId: item.variant_id || null,
-        title: item.title || productMap.get(realProductId)?.title || 'Item',
-        requested,
-        available,
-      });
+      const p = productMap.get(realProductId);
+      // Untracked products: only block when explicitly marked out_of_stock.
+      if (p && p.manage_stock === false) {
+        if (p.stock_status === 'out_of_stock') {
+          issues.push({
+            cartItemId: item.id, productId: realProductId, variantId: null,
+            title: item.title || p.title || 'Item', requested, available: 0,
+          });
+        }
+        continue;
+      }
+      const available = p?.stock ?? 0;
+      if (available < requested) {
+        issues.push({
+          cartItemId: item.id, productId: realProductId, variantId: null,
+          title: item.title || p?.title || 'Item', requested, available,
+        });
+      }
     }
   }
 
