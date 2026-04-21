@@ -28,6 +28,7 @@ const categoryConfig: Record<string, { label: string; icon: any; bg: string; tex
 
 export default function CustomerWalletPage() {
   const { customerUser } = useAuth();
+  const { country } = useCurrency();
   const customerId = customerUser?.customer_id || customerUser?.id || '';
 
   const { data: profile } = useQuery({

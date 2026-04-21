@@ -35,6 +35,7 @@ export default function CustomerServicesPage() {
   const categoryFilter = searchParams.get("category") || undefined;
   const { list: wishlist, toggle: toggleWishlist } = useServiceWishlist();
   const { customerUser } = useAuth();
+  const { format: fmt } = useCurrency();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
 
   // Resolve user location: default address → GPS fallback
@@ -197,8 +198,8 @@ export default function CustomerServicesPage() {
                         <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{s.service_area}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-lg font-bold">₹{s.price.toLocaleString()}</span>
-                        {discountPct > 0 && <span className="text-sm text-muted-foreground line-through">₹{(s.price + s.discount).toLocaleString()}</span>}
+                        <span className="text-lg font-bold">{fmt(s.price, { decimals: 0 })}</span>
+                        {discountPct > 0 && <span className="text-sm text-muted-foreground line-through">{fmt(s.price + s.discount, { decimals: 0 })}</span>}
                       </div>
                     </Link>
                   </div>

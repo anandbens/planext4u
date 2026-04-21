@@ -22,6 +22,7 @@ export default function PaymentPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { customerUser } = useAuth();
+  const { format: fmt } = useCurrency();
   const customerId = customerUser?.customer_id || customerUser?.id || 'USR-001';
 
   const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress, itemRedemptionMap, isServiceBooking, bookingDate, bookingSlot } = location.state || {};
@@ -549,7 +550,7 @@ export default function PaymentPage() {
 
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom">
         <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={handlePay}>
-          Pay ₹{total?.toLocaleString()}
+          Pay {fmt(total, { decimals: 0 })}
         </Button>
       </div>
     </CustomerLayout>
