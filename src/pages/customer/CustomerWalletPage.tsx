@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useCurrency } from "@/lib/country-context";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -27,6 +28,7 @@ const categoryConfig: Record<string, { label: string; icon: any; bg: string; tex
 
 export default function CustomerWalletPage() {
   const { customerUser } = useAuth();
+  const { country } = useCurrency();
   const customerId = customerUser?.customer_id || customerUser?.id || '';
 
   const { data: profile } = useQuery({
@@ -227,10 +229,10 @@ export default function CustomerWalletPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{t.description}</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(t.created_at).toLocaleDateString(country.locale_code, { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                       {t.cooling_status === 'pending' && <Badge className="bg-info/10 text-info border-0 text-[8px]">Cooling</Badge>}
                       {t.expires_at && !t.is_expired && (
-                        <span className="text-[8px] text-muted-foreground">Exp: {new Date(t.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                        <span className="text-[8px] text-muted-foreground">Exp: {new Date(t.expires_at).toLocaleDateString(country.locale_code, { day: 'numeric', month: 'short' })}</span>
                       )}
                       {t.is_expired && <Badge className="bg-destructive/10 text-destructive border-0 text-[8px]">Expired</Badge>}
                     </div>

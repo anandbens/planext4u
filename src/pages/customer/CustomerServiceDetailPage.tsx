@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { useCurrency } from "@/lib/country-context";
 import { supabase } from "@/integrations/supabase/client";
 
 const serviceImages: Record<string, string> = {
@@ -39,6 +40,7 @@ function getServiceImage(title: string, image?: string | null) {
 export default function CustomerServiceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { format: fmt, country } = useCurrency();
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
@@ -246,7 +248,7 @@ export default function CustomerServiceDetailPage() {
             <button onClick={async () => {
               const displayUrl = `https://www.planext4u.net/app/service/${id}`;
               const ogUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=service&id=${id}`;
-              const text = `Check out ${service.title} - ₹${service.price.toLocaleString()} on P4U!`;
+              const text = `Check out ${service.title} - ${fmt(service.price, { decimals: 0 })} on P4U!`;
               if (navigator.share) {
                 try {
                   const imgSrc = service.image || imgUrl;
@@ -300,7 +302,7 @@ export default function CustomerServiceDetailPage() {
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 {Array.from({ length: 7 }).map((_, i) => {
                   const d = new Date(); d.setDate(d.getDate() + i);
-                  const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' });
+                  const label = d.toLocaleDateString(country.locale_code, { weekday: 'short', day: 'numeric' });
                   const val = d.toISOString().split('T')[0];
                   return (
                     <button key={i} onClick={() => { setSelectedDate(val); setSelectedSlot(""); }}
@@ -336,7 +338,7 @@ export default function CustomerServiceDetailPage() {
             </div>
 
             <Button className="w-full mt-6" disabled={!selectedDate || !selectedSlot || !isVendorAvailable} onClick={handleBookNow}>
-              Book Now — ₹{finalPrice.toLocaleString()}
+              Book Now — {fmt(finalPrice, { decimals: 0 })}
             </Button>
 
             <div className="grid grid-cols-3 gap-3 mt-4">

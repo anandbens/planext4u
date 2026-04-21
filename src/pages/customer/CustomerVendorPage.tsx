@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
+import { useCurrency } from "@/lib/country-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function CustomerVendorPage() {
   const { id } = useParams();
+  const { format: fmt } = useCurrency();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isSellerSaved, setIsSellerSaved] = useState(false);
@@ -245,8 +247,8 @@ export default function CustomerVendorPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-sm font-bold">₹{(p.price - (p.discount || 0)).toLocaleString()}</span>
-                          {p.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">₹{p.price.toLocaleString()}</span>}
+                          <span className="text-sm font-bold">{fmt(p.price - (p.discount || 0), { decimals: 0 })}</span>
+                          {p.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">{fmt(p.price, { decimals: 0 })}</span>}
                         </div>
                       </div>
                     </Card>

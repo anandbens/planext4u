@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { NotificationConsentModal } from "@/components/customer/NotificationConsentModal";
 import { getLocation } from "@/lib/device-service";
 import { useAuth } from "@/lib/auth";
+import { useCurrency } from "@/lib/country-context";
 import { RatingPopup } from "@/components/customer/RatingPopup";
 import { BannerAd } from "@/components/customer/BannerAd";
 import { VideoAdOverlay } from "@/components/customer/VideoAdOverlay";
@@ -176,6 +177,7 @@ function HeroBannerCarousel({ banners, cmsBanners }: { banners: any[]; cmsBanner
 
 /* ── Horizontal Product Slider (Zepto-style) ── */
 function ProductSlider({ title, products, bgClass }: { title: string; products: any[]; bgClass?: string }) {
+  const { format: fmt } = useCurrency();
   const scrollRef = useRef<HTMLDivElement>(null);
   if (!products?.length) return null;
   return (
@@ -201,8 +203,8 @@ function ProductSlider({ title, products, bgClass }: { title: string; products: 
                   </div>
                   <div className="p-2.5">
                     <p className="text-[11px] font-semibold truncate leading-tight">{p.title}</p>
-                    <p className="text-xs font-bold text-primary mt-1">₹{(p.price - (p.discount || 0)).toLocaleString()}</p>
-                    {p.discount > 0 && <p className="text-[10px] text-muted-foreground line-through">₹{p.price}</p>}
+                    <p className="text-xs font-bold text-primary mt-1">{fmt(p.price - (p.discount || 0), { decimals: 0 })}</p>
+                    {p.discount > 0 && <p className="text-[10px] text-muted-foreground line-through">{fmt(p.price, { decimals: 0 })}</p>}
                   </div>
                 </Card>
               </Link>
@@ -216,6 +218,7 @@ function ProductSlider({ title, products, bgClass }: { title: string; products: 
 
 /* ── Horizontal Service Slider ── */
 function ServiceSlider({ title, services }: { title: string; services: any[] }) {
+  const { format: fmt } = useCurrency();
   const scrollRef = useRef<HTMLDivElement>(null);
   if (!services?.length) return null;
   return (
@@ -246,7 +249,7 @@ function ServiceSlider({ title, services }: { title: string; services: any[] }) 
                     <h3 className="text-[11px] font-semibold truncate">{s.title}</h3>
                     <p className="text-[10px] text-muted-foreground truncate">{s.vendor_name}</p>
                     <div className="flex items-center justify-between mt-1.5">
-                      <span className="text-xs font-bold">₹{(s.price - (s.discount || 0)).toLocaleString()}</span>
+                      <span className="text-xs font-bold">{fmt(s.price - (s.discount || 0), { decimals: 0 })}</span>
                       <span className="text-[10px] text-muted-foreground flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" />{s.duration}</span>
                     </div>
                   </div>
@@ -265,6 +268,7 @@ export default function CustomerHomePage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { customerUser } = useAuth();
+  const { format: fmt } = useCurrency();
   const { data, isLoading } = useQuery({ queryKey: ["customerHome"], queryFn: api.getCustomerHome });
   const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem("p4u_splash_shown"));
   const [showNotifConsent, setShowNotifConsent] = useState(false);
@@ -640,7 +644,7 @@ export default function CustomerHomePage() {
                         {c.name?.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <div><p className="text-[11px] font-semibold leading-tight">{c.name}</p><p className="text-[9px] text-muted-foreground">From ₹349</p></div>
+                    <div><p className="text-[11px] font-semibold leading-tight">{c.name}</p><p className="text-[9px] text-muted-foreground">From {fmt(349, { decimals: 0 })}</p></div>
                   </Link>
                 ))}
             </div>

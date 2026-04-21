@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { BannerAd } from "@/components/customer/BannerAd";
 import { useAuth } from "@/lib/auth";
+import { useCurrency } from "@/lib/country-context";
 import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";
 import { CategoryProductRow } from "@/components/customer/CategoryProductRow";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
@@ -24,6 +25,7 @@ export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { customerUser } = useAuth();
+  const { format: fmt } = useCurrency();
   const isGuest = !customerUser;
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [sortBy, setSortBy] = useState("popular");
@@ -347,8 +349,8 @@ export default function CustomerBrowsePage() {
                             <span className="text-[10px] text-muted-foreground">({p.reviews})</span>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm font-bold">₹{p.price.toLocaleString()}</span>
-                            {discountPct > 0 && <span className="text-xs text-muted-foreground line-through">₹{(p.price + p.discount).toLocaleString()}</span>}
+                            <span className="text-sm font-bold">{fmt(p.price, { decimals: 0 })}</span>
+                            {discountPct > 0 && <span className="text-xs text-muted-foreground line-through">{fmt(p.price + p.discount, { decimals: 0 })}</span>}
                           </div>
                         </div>
                       </Link>
