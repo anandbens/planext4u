@@ -850,7 +850,7 @@ export const api = {
   },
 
   // Services
-  getServices: async (params: { page?: number; per_page?: number; search?: string; date_from?: string; date_to?: string }) => {
+  getServices: async (params: { page?: number; per_page?: number; search?: string; date_from?: string; date_to?: string; status?: string }) => {
     const page = params.page || 1;
     const perPage = params.per_page || 10;
     const from = (page - 1) * perPage;
@@ -858,6 +858,7 @@ export const api = {
 
     let query = supabase.from('services').select('*', { count: 'exact' });
     if (params.search) query = query.or(`title.ilike.%${params.search}%,vendor_name.ilike.%${params.search}%,category_name.ilike.%${params.search}%`);
+    if (params.status) query = query.eq('status', params.status);
     if (params.date_from) query = query.gte('created_at', params.date_from);
     if (params.date_to) query = query.lte('created_at', params.date_to + 'T23:59:59Z');
     query = query.order('created_at', { ascending: false }).range(from, to);
