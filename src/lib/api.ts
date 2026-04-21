@@ -1229,6 +1229,12 @@ export const api = {
     return { success: true };
   },
 
+  bulkUpdateProductDealOfDay: async (ids: string[], isDeal: boolean) => {
+    const { error } = await supabase.from('products').update({ is_deal_of_day: isDeal }).in('id', ids);
+    if (error) throw error;
+    return { success: true };
+  },
+
   bulkDeleteVendors: async (ids: string[]) => {
     const ts = Date.now().toString();
     for (const id of ids) {
