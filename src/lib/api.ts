@@ -672,8 +672,23 @@ export const api = {
       total_products: 0, total_orders: 0, total_revenue: 0,
     };
     if ((data as any).category_id) newVendor.category_id = (data as any).category_id;
-    if ((data as any).city_id) newVendor.city_id = (data as any).city_id;
-    if ((data as any).area_id) newVendor.area_id = (data as any).area_id;
+    // FK columns must reference an existing row. Resolve city/area against the DB,
+    // and silently fall back to the seeded UNCATEGORIZED placeholder if the picked id
+    // does not exist (or the form sent a legacy value like "1").
+    const resolveFk = async (table: 'cities' | 'areas', id: any, fallback: string): Promise<string> => {
+      const candidate = typeof id === 'string' ? id.trim() : '';
+      if (candidate) {
+        const { data: row } = await supabase.from(table).select('id').eq('id', candidate).maybeSingle();
+        if (row?.id) return row.id;
+      }
+      // Verify the fallback exists; if not, return null-equivalent so we skip the field.
+      const { data: fb } = await supabase.from(table).select('id').eq('id', fallback).maybeSingle();
+      return fb?.id || '';
+    };
+    const safeCityId = await resolveFk('cities', (data as any).city_id, 'CTY0000000');
+    const safeAreaId = await resolveFk('areas', (data as any).area_id, 'ARE0000000');
+    if (safeCityId) newVendor.city_id = safeCityId;
+    if (safeAreaId) newVendor.area_id = safeAreaId;
     if ((data as any).plan_id) newVendor.plan_id = (data as any).plan_id;
     if ((data as any).max_redemption_percentage != null) newVendor.max_redemption_percentage = (data as any).max_redemption_percentage;
     if ((data as any).shop_photo_url) newVendor.shop_photo_url = (data as any).shop_photo_url;

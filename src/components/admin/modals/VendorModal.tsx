@@ -37,7 +37,9 @@ const emptyForm = {
   name: "", business_name: "", email: "", mobile: "", rejection_reason: "",
   // Admin-created vendors bypass the Submitted review state and go live immediately as `verified`.
   commission_rate: 10, membership: "basic", status: "verified" as Vendor["status"],
-  category_id: "1", city_id: "1", area_id: "1", plan_id: "",
+  // Use the seeded "UNCATEGORIZED" placeholder rows so the FK constraint is always satisfied
+  // when an admin creates a vendor without picking a city/area/category.
+  category_id: "1", city_id: "CTY0000000", area_id: "ARE0000000", plan_id: "",
   plan_payment_status: "unpaid", plan_transaction_id: "", shop_photo_url: "",
   max_redemption_percentage: null as number | null,
   gstin: "" as string, pan: "" as string,
