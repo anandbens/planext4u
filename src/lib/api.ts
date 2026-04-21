@@ -85,6 +85,7 @@ export interface Service {
   meta_title?: string; meta_description?: string; slug?: string;
   pricing_slots?: { label: string; duration_minutes: number; price: number }[];
   booking_duration_minutes?: number; max_bookings_per_slot?: number;
+  service_duration_minutes?: number;
   subcategory_id?: string | null; subcategory_name?: string | null;
   rejection_reason?: string | null;
   approved_at?: string | null; approved_by?: string | null;
@@ -1460,6 +1461,7 @@ export const api = {
       'max_points_redeemable', 'status', 'vendor_name', 'category_name', 'emoji', 'image', 'service_area',
       'duration', 'images', 'short_description', 'long_description', 'meta_title', 'meta_description',
       'slug', 'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot',
+      'service_duration_minutes',
       'sac_code', 'gst_rate', 'commission_override', 'max_redemption_percentage',
       'rejection_reason', 'approved_at', 'approved_by', 'updated_at'];
     const filtered: Record<string, any> = { updated_at: new Date().toISOString() };
@@ -1523,6 +1525,7 @@ export const api = {
       'subcategory_id', 'subcategory_name',
       'emoji', 'image', 'images', 'service_area', 'duration', 'meta_title', 'meta_description', 'slug',
       'pricing_slots', 'booking_duration_minutes', 'max_bookings_per_slot',
+      'service_duration_minutes',
       'sac_code', 'gst_rate', 'commission_override', 'max_redemption_percentage'];
     const newSrv: Record<string, any> = { id: genId('SRV'), rating: 0, reviews: 0 };
     for (const key of validFields) {

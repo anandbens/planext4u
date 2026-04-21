@@ -6247,6 +6247,7 @@ export type Database = {
           reviews: number | null
           sac_code: string | null
           service_area: string | null
+          service_duration_minutes: number
           short_description: string | null
           slug: string | null
           status: string
@@ -6289,6 +6290,7 @@ export type Database = {
           reviews?: number | null
           sac_code?: string | null
           service_area?: string | null
+          service_duration_minutes?: number
           short_description?: string | null
           slug?: string | null
           status?: string
@@ -6331,6 +6333,7 @@ export type Database = {
           reviews?: number | null
           sac_code?: string | null
           service_area?: string | null
+          service_duration_minutes?: number
           short_description?: string | null
           slug?: string | null
           status?: string
@@ -7675,28 +7678,37 @@ export type Database = {
       }
       vendor_availability: {
         Row: {
+          buffer_minutes: number
           created_at: string
           day_of_week: number
+          end_time: string
           id: string
           is_available: boolean
+          start_time: string
           time_slots: Json
           updated_at: string
           vendor_id: string
         }
         Insert: {
+          buffer_minutes?: number
           created_at?: string
           day_of_week: number
+          end_time?: string
           id?: string
           is_available?: boolean
+          start_time?: string
           time_slots?: Json
           updated_at?: string
           vendor_id: string
         }
         Update: {
+          buffer_minutes?: number
           created_at?: string
           day_of_week?: number
+          end_time?: string
           id?: string
           is_available?: boolean
+          start_time?: string
           time_slots?: Json
           updated_at?: string
           vendor_id?: string
@@ -7737,6 +7749,45 @@ export type Database = {
           id?: string
           ifsc_code?: string
           is_primary?: boolean
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: []
+      }
+      vendor_date_overrides: {
+        Row: {
+          buffer_minutes: number | null
+          created_at: string
+          end_time: string | null
+          id: string
+          is_available: boolean
+          override_date: string
+          reason: string | null
+          start_time: string | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          buffer_minutes?: number | null
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          is_available?: boolean
+          override_date: string
+          reason?: string | null
+          start_time?: string | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          buffer_minutes?: number | null
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          is_available?: boolean
+          override_date?: string
+          reason?: string | null
+          start_time?: string | null
           updated_at?: string
           vendor_id?: string
         }
@@ -8384,6 +8435,14 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      generate_service_slots: {
+        Args: { _date: string; _service_id: string }
+        Returns: {
+          end_time: string
+          is_booked: boolean
+          start_time: string
+        }[]
       }
       get_active_country: { Args: never; Returns: Json }
       get_active_country_code: { Args: never; Returns: string }
