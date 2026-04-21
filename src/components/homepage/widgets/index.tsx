@@ -81,6 +81,7 @@ registerWidget({
   description: "Wide gradient banner with a headline and CTA button.",
   group: "Banners & promos",
   modules: ["ecommerce", "food", "homes", "socio"],
+  requiresConfig: true,
   fields: [
     {
       key: "variant", label: "Gradient", type: "select", options: [
@@ -96,6 +97,23 @@ registerWidget({
     { key: "cta_text", label: "Button label", type: "text" },
     { key: "cta_link", label: "Button link", type: "url" },
   ],
+  validate: ({ config }) => {
+    const title = String(config.title || "").trim();
+    if (!title) return "Headline is required.";
+    if (title.length > 80) return "Headline must be 80 characters or fewer.";
+    const sub = String(config.subtitle || "").trim();
+    if (sub.length > 160) return "Subtitle must be 160 characters or fewer.";
+    const ctaText = String(config.cta_text || "").trim();
+    const ctaLink = String(config.cta_link || "").trim();
+    if ((ctaText && !ctaLink) || (ctaLink && !ctaText)) {
+      return "Button label and link must both be filled, or both empty.";
+    }
+    if (ctaLink) {
+      const ok = ctaLink.startsWith("/") || /^https?:\/\//i.test(ctaLink);
+      if (!ok) return "Button link must start with / or http(s)://.";
+    }
+    return null;
+  },
   render: ({ config }) => {
     const variant = config.variant || "aurora";
     const cls =
