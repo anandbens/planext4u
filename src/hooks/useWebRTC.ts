@@ -1,11 +1,19 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * STRICT STUN-ONLY configuration. NO TURN fallback under any circumstance —
+ * symmetric-NAT peers will see the call fail rather than relay through a
+ * server (product decision: zero server bandwidth for media).
+ */
 const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:stun3.l.google.com:19302" },
   ],
+  iceTransportPolicy: "all", // never "relay" — that would require TURN
 };
 
 export type CallStatus = "idle" | "calling" | "ringing" | "connected" | "ended";
