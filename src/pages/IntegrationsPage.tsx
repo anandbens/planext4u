@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Shield, MapPin, CheckCircle, AlertCircle, Key, Globe, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { CountrySwitcherPanel } from "@/components/admin/CountrySwitcherPanel";
 
 export default function IntegrationsPage() {
   const [hypervergeEnabled, setHypervergeEnabled] = useState(false);
@@ -91,14 +92,20 @@ export default function IntegrationsPage() {
         <p className="page-description">Configure third-party API integrations</p>
       </div>
 
-      <Tabs defaultValue="razorpay" className="space-y-4">
+      <Tabs defaultValue="country" className="space-y-4">
         <TabsList className="flex-wrap">
+          <TabsTrigger value="country" className="gap-2"><Globe className="h-4 w-4" /> Country & Mode</TabsTrigger>
           <TabsTrigger value="razorpay" className="gap-2"><CreditCard className="h-4 w-4" /> Razorpay</TabsTrigger>
           <TabsTrigger value="google-oauth" className="gap-2"><Globe className="h-4 w-4" /> Google OAuth</TabsTrigger>
           <TabsTrigger value="firebase" className="gap-2"><Key className="h-4 w-4" /> Firebase</TabsTrigger>
           <TabsTrigger value="hyperverge" className="gap-2"><Shield className="h-4 w-4" /> Hyperverge KYC</TabsTrigger>
           <TabsTrigger value="maps" className="gap-2"><MapPin className="h-4 w-4" /> Google Maps</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="country">
+          <CountrySwitcherPanel />
+        </TabsContent>
+
 
         <TabsContent value="razorpay">
           <Card className="p-6 space-y-6">
