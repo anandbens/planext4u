@@ -228,7 +228,7 @@ export default function AdminMediaLibraryPage() {
             );
             successCount++;
           } catch (videoErr: any) {
-            toast.error(`Failed: ${file.name} — ${videoErr.message || ""}`);
+            toast.error(`Failed: ${file.name} — ${friendlyError(videoErr, "video upload error")}`);
           }
           continue;
         }
@@ -258,7 +258,7 @@ export default function AdminMediaLibraryPage() {
           });
           successCount++;
         } catch (uploadErr: any) {
-          toast.error(`Failed: ${file.name} — ${uploadErr.message || ""}`);
+          toast.error(`Failed: ${file.name} — ${friendlyError(uploadErr, "upload error")}`);
         }
       }
       if (successCount > 0) {

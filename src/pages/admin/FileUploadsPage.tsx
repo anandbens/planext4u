@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/friendly-error";
 import { Upload, Download, FileText, AlertTriangle, CheckCircle, Clock, X, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -655,7 +656,7 @@ export default function FileUploadsPage() {
       a.href = url; a.download = upload.file_name; a.click();
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      toast.error("Failed to download: " + (err.message || "unknown"));
+      toast.error(friendlyError(err, "Failed to download file"));
     }
   };
 
@@ -664,7 +665,7 @@ export default function FileUploadsPage() {
     if (!confirm(`Re-process ${upload.file_name}? This creates a new upload run from the archived CSV.`)) return;
 
     const { data: blob, error: dlErr } = await supabase.storage.from("file-uploads").download(upload.original_file_path);
-    if (dlErr || !blob) { toast.error("Failed to download original: " + (dlErr?.message || "unknown")); return; }
+    if (dlErr || !blob) { toast.error(friendlyError(dlErr, "Failed to download original file")); return; }
 
     const text = await blob.text();
     const { headers, rows } = parseCSV(text);
@@ -697,7 +698,7 @@ export default function FileUploadsPage() {
       .eq("upload_id", upload.id)
       .order("row_number", { ascending: true });
 
-    if (error) { toast.error("Failed to load row archive: " + error.message); return; }
+    if (error) { toast.error(friendlyError(error, "Failed to load row archive")); return; }
     if (!archivedRows || archivedRows.length === 0) {
       toast.error("No archived row data found for this upload");
       return;

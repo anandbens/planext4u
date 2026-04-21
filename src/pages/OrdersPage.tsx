@@ -258,7 +258,7 @@ export default function OrdersPage() {
       ], `orders-${tab}${tab === "deleted" && deletedTypeFilter !== "all" ? "-" + deletedTypeFilter : ""}`);
       toast.success(`Exported ${rows.length} line items from ${orders.length} orders`, { id: "orders-export" });
     } catch (e: any) {
-      toast.error(e?.message || "Export failed", { id: "orders-export" });
+      toast.error(friendlyError(e, "Export failed"), { id: "orders-export" });
     }
   };
 
