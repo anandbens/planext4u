@@ -1622,9 +1622,11 @@ export const api = {
     return (data || []) as { id: string; name: string }[];
   },
 
-  getStates: async () => {
-    const { data } = await supabase.from('states').select('*').eq('status', 'active').order('name');
-    return (data || []) as { id: string; name: string; code: string }[];
+  getStates: async (countryCode?: string) => {
+    let q = supabase.from('states').select('*').eq('status', 'active');
+    if (countryCode) q = q.eq('country_code', countryCode);
+    const { data } = await q.order('name');
+    return (data || []) as { id: string; name: string; code: string; country_code: string }[];
   },
 
   getDistricts: async (stateId: string) => {
@@ -1632,8 +1634,16 @@ export const api = {
     return (data || []) as { id: string; name: string; state_id: string }[];
   },
 
+  /** Get cities for a country, optionally filtered by state name. Used by registration & vendor filter dropdowns. */
+  getCitiesByCountry: async (countryCode: string, stateName?: string) => {
+    let q = supabase.from('cities').select('id, name, state, country_code').eq('status', 'active').eq('country_code', countryCode);
+    if (stateName) q = q.eq('state', stateName);
+    const { data } = await q.order('name');
+    return (data || []) as { id: string; name: string; state: string; country_code: string }[];
+  },
+
   // Cities
-  getCities: async (params: { page?: number; per_page?: number; search?: string; status?: string }) => {
+  getCities: async (params: { page?: number; per_page?: number; search?: string; status?: string; country_code?: string }) => {
     const page = params.page || 1;
     const perPage = params.per_page || 10;
     const from = (page - 1) * perPage;
@@ -1642,6 +1652,7 @@ export const api = {
     let query = supabase.from('cities').select('*', { count: 'exact' });
     if (params.search) query = query.or(`name.ilike.%${params.search}%,state.ilike.%${params.search}%`);
     if (params.status && params.status !== 'all') query = query.eq('status', params.status);
+    if (params.country_code) query = query.eq('country_code', params.country_code);
     query = query.order('name').range(from, to);
 
     const { data, count, error } = await query;
@@ -1650,7 +1661,7 @@ export const api = {
   },
 
   // Areas
-  getAreas: async (params: { page?: number; per_page?: number; search?: string; status?: string; city_id?: string }) => {
+  getAreas: async (params: { page?: number; per_page?: number; search?: string; status?: string; city_id?: string; country_code?: string }) => {
     const page = params.page || 1;
     const perPage = params.per_page || 10;
     const from = (page - 1) * perPage;
@@ -1660,6 +1671,7 @@ export const api = {
     if (params.search) query = query.or(`name.ilike.%${params.search}%,city_name.ilike.%${params.search}%,pincode.ilike.%${params.search}%`);
     if (params.status && params.status !== 'all') query = query.eq('status', params.status);
     if (params.city_id) query = query.eq('city_id', params.city_id);
+    if (params.country_code) query = query.eq('country_code', params.country_code);
     query = query.order('name').range(from, to);
 
     const { data, count, error } = await query;
