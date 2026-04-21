@@ -17,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCurrency } from "@/lib/country-context";
 
 export default function CustomersPage() {
-  const { country } = useCountry();
+  const { country } = useCurrency();
   const [activeTab, setActiveTab] = useState("active");
   const [data, setData] = useState<PaginatedResponse<User> | null>(null);
   const [page, setPage] = useState(1);
