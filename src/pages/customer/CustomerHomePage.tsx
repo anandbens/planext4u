@@ -356,6 +356,17 @@ export default function CustomerHomePage() {
     });
   }, []);
 
+  // Keep displayed location in sync when changed from header / other tabs
+  useEffect(() => {
+    const sync = () => setDetectedLocation(loadSelectedLocation() || null);
+    window.addEventListener(LOCATION_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(LOCATION_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
   const handleSplashComplete = useCallback(() => { setShowSplash(false); sessionStorage.setItem("p4u_splash_shown", "1"); }, []);
 
   const allCategories = (data?.categories || []) as any[];
