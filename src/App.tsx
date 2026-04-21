@@ -213,6 +213,7 @@ import AdminDropshippingPage from "./pages/admin/AdminDropshippingPage";
 import VendorDropshippingPage from "./pages/vendor/VendorDropshippingPage";
 import { RiderProtectedRoute } from "@/components/rider/RiderProtectedRoute";
 import { RiderLayout } from "@/components/rider/RiderLayout";
+import CallsPage from "./pages/customer/CallsPage";
 
 const queryClient = new QueryClient();
 const NATIVE_PORTAL_STORAGE_KEY = "p4u_native_portal";
