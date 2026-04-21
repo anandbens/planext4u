@@ -52,6 +52,16 @@ export default function PaymentPage() {
 
     setPaymentState('processing');
 
+    // Helper that always surfaces a readable reason — never let the failure
+    // screen render with an empty error message (that's what the user keeps
+    // hitting: a generic "Payment Failed" with no explanation).
+    const failWith = (reason: string, extra?: unknown) => {
+      const safe = (reason && reason.trim()) || 'Payment could not be completed';
+      console.error('[Payment] Failed:', safe, extra ?? '');
+      setFailureReason(safe);
+      setPaymentState('failure');
+    };
+
     try {
       // Final stock cross-check right before charging the customer
       try {
@@ -67,17 +77,22 @@ export default function PaymentPage() {
         console.error('Pre-payment stock check failed', e);
       }
 
+      // Validate amount before hitting Razorpay — a 0/NaN amount returns a
+      // confusing gateway error.
+      if (!total || !Number.isFinite(Number(total)) || Number(total) <= 0) {
+        return failWith(`Invalid order total (${total}). Please go back to your cart and retry.`);
+      }
+
       // 1. Create order on Razorpay (server-side)
+      console.log('[Payment] Creating Razorpay order. amount=', total);
       const { data, error } = await supabase.functions.invoke("razorpay", {
         body: { action: "create_order", amount: total, currency: "INR" },
       });
 
       if (error || !data?.order_id) {
-        const reason = (data as any)?.error || error?.message || 'Failed to create payment order';
+        const reason = (data as any)?.error || error?.message || 'Failed to create payment order — the gateway did not respond. Please try again.';
         toast.error(reason);
-        setFailureReason(reason);
-        setPaymentState('failure');
-        return;
+        return failWith(reason, { error, data });
       }
 
       // 2. Open checkout — uses native Razorpay SDK on Android/iOS so installed
@@ -100,16 +115,17 @@ export default function PaymentPage() {
           },
         });
       } catch (e: any) {
-        const msg = String(e?.message || e);
+        const msg = String(e?.message || e || '').trim();
         if (msg.toLowerCase().includes("cancel")) {
           toast.info("Payment cancelled");
           setPaymentState('select');
-        } else {
-          console.error('Razorpay checkout failed:', e);
-          setFailureReason(msg || 'Checkout could not be completed');
-          setPaymentState('failure');
+          return;
         }
-        return;
+        return failWith(msg || 'Checkout could not be opened on this device.', e);
+      }
+
+      if (!response?.razorpay_payment_id) {
+        return failWith('No payment confirmation was returned from the gateway. If money was debited, it will be auto-refunded within 5 working days.', response);
       }
 
       // 3. Verify signature server-side
@@ -124,11 +140,11 @@ export default function PaymentPage() {
       });
 
       if (verifyError || !verifyData?.verified) {
-        const reason = verifyError?.message || 'Payment verification failed — please contact support with your payment ID';
-        console.error('Verify failed:', verifyError, verifyData, 'payment_id:', response.razorpay_payment_id);
-        setFailureReason(`${reason} (Payment ID: ${response.razorpay_payment_id})`);
-        setPaymentState('failure');
-        return;
+        const reason = verifyError?.message || (verifyData as any)?.error || 'Payment verification failed';
+        return failWith(
+          `${reason}. Please contact support with Payment ID: ${response.razorpay_payment_id}`,
+          { verifyError, verifyData },
+        );
       }
 
       if (isServiceBooking) {
@@ -137,11 +153,9 @@ export default function PaymentPage() {
         await createOrder(response.razorpay_payment_id, data.order_id);
       }
     } catch (err: any) {
-      console.error("Payment error:", err);
-      const msg = err?.message || "Unknown error";
+      const msg = err?.message || (typeof err === 'string' ? err : 'Unexpected error during payment');
       toast.error("Payment failed: " + msg);
-      setFailureReason(msg);
-      setPaymentState('failure');
+      failWith(msg, err);
     }
   };
 
@@ -473,11 +487,10 @@ export default function PaymentPage() {
           </motion.div>
           <h2 className="text-2xl font-bold mb-2">Payment Failed</h2>
           <p className="text-sm text-muted-foreground mb-2">Your payment could not be processed. Please try again.</p>
-          {failureReason && (
-            <p className="text-xs text-destructive/80 bg-destructive/5 border border-destructive/20 rounded-md p-2 mb-6 break-words">
-              {failureReason}
-            </p>
-          )}
+          <p className="text-xs text-destructive/80 bg-destructive/5 border border-destructive/20 rounded-md p-3 mb-6 break-words text-left">
+            <span className="font-semibold block mb-1">Reason:</span>
+            {failureReason || 'No specific error was reported by the payment gateway. This usually means the checkout window was closed before completing payment, or your device blocked the gateway. Please retry — if the problem persists, try a different network or contact support.'}
+          </p>
           <div className="flex flex-col gap-3">
             <Button className="w-full h-12" onClick={() => { setFailureReason(''); setPaymentState('select'); }}>Retry Payment</Button>
             <Button variant="outline" className="w-full h-11" onClick={() => navigate('/app/cart')}>Back to Cart</Button>
