@@ -238,6 +238,11 @@ export const foodApi = {
   placeOrder: async (payload: Partial<FoodOrder> & { id: string; customer_id: string; restaurant_id: string }) => {
     const { error } = await supabase.from('food_orders').insert(payload as any);
     if (error) throw error;
+    // Optional Odoo sync (no-op if disabled). Food orders are pushed under the same id.
+    try {
+      const { maybePushOrderToOdoo } = await import('@/lib/odoo-sync');
+      void maybePushOrderToOdoo(payload.id);
+    } catch {}
     return { success: true };
   },
 

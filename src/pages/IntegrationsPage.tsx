@@ -8,10 +8,11 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Shield, MapPin, CheckCircle, AlertCircle, Key, Globe, CreditCard } from "lucide-react";
+import { Shield, MapPin, CheckCircle, AlertCircle, Key, Globe, CreditCard, Boxes } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CountrySwitcherPanel } from "@/components/admin/CountrySwitcherPanel";
 import { PaymentGatewaysPanel } from "@/components/admin/PaymentGatewaysPanel";
+import { OdooConfigPanel } from "@/components/admin/OdooConfigPanel";
 
 export default function IntegrationsPage() {
   const [hypervergeEnabled, setHypervergeEnabled] = useState(false);
@@ -97,6 +98,7 @@ export default function IntegrationsPage() {
         <TabsList className="flex-wrap">
           <TabsTrigger value="country" className="gap-2"><Globe className="h-4 w-4" /> Country & Mode</TabsTrigger>
           <TabsTrigger value="gateways" className="gap-2"><CreditCard className="h-4 w-4" /> Payment Gateways</TabsTrigger>
+          <TabsTrigger value="odoo" className="gap-2"><Boxes className="h-4 w-4" /> Odoo ERP</TabsTrigger>
           <TabsTrigger value="razorpay" className="gap-2"><CreditCard className="h-4 w-4" /> Razorpay</TabsTrigger>
           <TabsTrigger value="google-oauth" className="gap-2"><Globe className="h-4 w-4" /> Google OAuth</TabsTrigger>
           <TabsTrigger value="firebase" className="gap-2"><Key className="h-4 w-4" /> Firebase</TabsTrigger>
@@ -112,6 +114,9 @@ export default function IntegrationsPage() {
           <PaymentGatewaysPanel />
         </TabsContent>
 
+        <TabsContent value="odoo">
+          <OdooConfigPanel />
+        </TabsContent>
 
         <TabsContent value="razorpay">
           <Card className="p-6 space-y-6">
