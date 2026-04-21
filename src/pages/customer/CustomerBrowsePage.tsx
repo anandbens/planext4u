@@ -78,23 +78,35 @@ export default function CustomerBrowsePage() {
 
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
 
-  // Detect parent category & subcategories for sectioned layout
+  // Detect category & subcategories for sectioned layout
   const activeCategory = categories?.find((c) => c.name === categoryFilter);
   const subcategories = activeCategory && !activeCategory.parent_id
-    ? (categories || []).filter((c) => c.parent_id === activeCategory.id)
+    ? (categories || [])
+        .filter((c) => c.parent_id === activeCategory.id && c.status === 'active')
+        .sort((a, b) => ((a as any).display_order ?? 999) - ((b as any).display_order ?? 999) || a.name.localeCompare(b.name))
     : [];
-  const isParentCategoryView = !!activeCategory && !activeCategory.parent_id && subcategories.length > 0 && !searchFilter;
+  // Show sectioned layout for ANY category view (parent OR subcategory) when filtered
+  const isCategoryView = !!activeCategory && !searchFilter;
 
-  // Derive featured / popular / most-redeemed slices from the loaded products
-  const featuredProducts = isParentCategoryView
-    ? [...(products || [])].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 8)
+  // Best sellers = highest sales in last 30 days (sales col proxy); New arrivals = created in last 30 days
+  const THIRTY_DAYS_AGO = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const bestSellers = isCategoryView
+    ? [...(products || [])]
+        .filter((p) => ((p as any).sales || 0) > 0)
+        .sort((a, b) => ((b as any).sales || 0) - ((a as any).sales || 0))
+        .slice(0, 8)
     : [];
-  const popularProducts = isParentCategoryView
-    ? [...(products || [])].sort((a, b) => ((b as any).sales || 0) - ((a as any).sales || 0)).slice(0, 8)
+  const newArrivals = isCategoryView
+    ? [...(products || [])]
+        .filter((p) => p.created_at && new Date(p.created_at).getTime() >= THIRTY_DAYS_AGO)
+        .sort((a, b) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime())
+        .slice(0, 8)
     : [];
-  const mostRedeemedProducts = isParentCategoryView
-    ? [...(products || [])].sort((a, b) => (b.max_points_redeemable || 0) - (a.max_points_redeemable || 0)).slice(0, 8)
-    : [];
+  // Legacy aliases preserved to avoid breaking template usage below
+  const featuredProducts = bestSellers;
+  const popularProducts = newArrivals;
+  const mostRedeemedProducts: any[] = [];
+  const isParentCategoryView = isCategoryView && !activeCategory!.parent_id && subcategories.length > 0;
 
   useEffect(() => {
     api.getCart().then(items => setCartCount(items.reduce((s, i) => s + i.qty, 0)));

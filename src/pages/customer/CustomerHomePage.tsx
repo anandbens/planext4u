@@ -353,13 +353,25 @@ export default function CustomerHomePage() {
 
   const handleSplashComplete = useCallback(() => { setShowSplash(false); sessionStorage.setItem("p4u_splash_shown", "1"); }, []);
 
-  const parentCategories = (data?.categories || []).filter((c: any) => !c.parent_id)
-    .sort((a: any, b: any) => {
-      // Groceries always first
-      if (a.name === 'Groceries') return -1;
-      if (b.name === 'Groceries') return 1;
-      return a.name.localeCompare(b.name);
+  const allCategories = (data?.categories || []) as any[];
+  // Homepage parent categories: opt-in via show_on_homepage, sorted by display_order
+  const homepageParents = allCategories
+    .filter((c) => !c.parent_id && c.status === 'active' && c.show_on_homepage !== false)
+    .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999) || a.name.localeCompare(b.name));
+  // Map: parent_id -> active subcategories that are show_on_homepage, sorted
+  const subcatMap: Record<string, any[]> = {};
+  allCategories
+    .filter((c) => c.parent_id && c.status === 'active' && c.show_on_homepage !== false)
+    .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999) || a.name.localeCompare(b.name))
+    .forEach((c) => {
+      if (!subcatMap[c.parent_id]) subcatMap[c.parent_id] = [];
+      subcatMap[c.parent_id].push(c);
     });
+
+  const homepageCatMax = parseInt((data as any)?.platformConfig?.homepage_categories_max || '8', 10);
+  const homepageSubMax = parseInt((data as any)?.platformConfig?.homepage_subcategories_per_parent || '7', 10);
+  const parentCategories = homepageParents.slice(0, homepageCatMax);
+
 
   if (showSplash) return <SplashScreen onComplete={handleSplashComplete} />;
 
@@ -386,7 +398,7 @@ export default function CustomerHomePage() {
         {/* ── Category Pill Row (Zepto-style horizontal scroll) ── */}
         <div className="px-4 pt-1 pb-2">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-            <Link to="/app/browse" className="shrink-0">
+            <Link to="/app/categories" className="shrink-0">
               <div className="flex flex-col items-center gap-1 min-w-[56px]">
                 <div className="h-14 w-14 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center shadow-sm">
                   <ShoppingBag className="h-6 w-6 text-primary" />
@@ -512,7 +524,7 @@ export default function CustomerHomePage() {
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base md:text-lg font-bold">Shop by Category</h2>
-            <Link to="/app/browse" className="text-xs text-primary flex items-center gap-0.5 font-medium">View All <ChevronRight className="h-3 w-3" /></Link>
+            <Link to="/app/categories" className="text-xs text-primary flex items-center gap-0.5 font-medium">View All <ChevronRight className="h-3 w-3" /></Link>
           </div>
           <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
             className="grid grid-cols-4 sm:grid-cols-5 gap-3 md:[grid-template-columns:repeat(auto-fit,minmax(96px,1fr))]">
@@ -535,6 +547,32 @@ export default function CustomerHomePage() {
               ))}
           </motion.div>
         </motion.section>
+
+        {/* ── Subcategory strips per parent (admin-controlled) ── */}
+        {!isLoading && parentCategories.map((parent: any) => {
+          const subs = (subcatMap[parent.id] || []).slice(0, homepageSubMax);
+          if (!subs.length) return null;
+          return (
+            <motion.section key={`subs-${parent.id}`} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-2">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold">Shop {parent.name}</h3>
+                <Link to={`/app/browse?category=${encodeURIComponent(parent.name)}`} className="text-[11px] text-primary font-medium flex items-center gap-0.5">View All <ChevronRight className="h-3 w-3" /></Link>
+              </div>
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                {subs.map((s: any) => (
+                  <Link key={s.id} to={`/app/browse?category=${encodeURIComponent(s.name)}`} className="shrink-0">
+                    <div className="flex flex-col items-center gap-1 min-w-[64px]">
+                      <div className="h-14 w-14 rounded-2xl bg-card border border-border/40 flex items-center justify-center overflow-hidden">
+                        {s.image?.startsWith('http') ? <img src={s.image} alt={s.name} className="w-full h-full object-cover" loading="lazy" /> : <span className="text-xl">{s.image || '📦'}</span>}
+                      </div>
+                      <span className="text-[10px] font-medium text-center leading-tight max-w-[64px] line-clamp-2">{s.name}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </motion.section>
+          );
+        })}
 
         {/* ── Top Services ── */}
         <ServiceSlider title="Top Services" services={data?.featuredServices || []} />

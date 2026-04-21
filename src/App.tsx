@@ -75,6 +75,7 @@ import InvoicesListPage from "./pages/reports/InvoicesListPage";
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
 import CustomerLoginPage from "./pages/customer/CustomerLoginPage";
 import CustomerBrowsePage from "./pages/customer/CustomerBrowsePage";
+import AllCategoriesPage from "./pages/customer/AllCategoriesPage";
 import CustomerVendorPage from "./pages/customer/CustomerVendorPage";
 import CustomerProductPage from "./pages/customer/CustomerProductPage";
 import CustomerCartPage from "./pages/customer/CustomerCartPage";
@@ -439,6 +440,7 @@ const AppRoutes = () => {
         <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/app/cms/:slug" element={<CustomerCMSPage />} />
         <Route path="/app/browse" element={<GuestPage><CustomerBrowsePage /></GuestPage>} />
+        <Route path="/app/categories" element={<GuestPage><AllCategoriesPage /></GuestPage>} />
         <Route path="/app/product/:id" element={<GuestPage><CustomerProductPage /></GuestPage>} />
         <Route path="/app/vendor/:id" element={<GuestPage><CustomerVendorPage /></GuestPage>} />
         <Route path="/app/cart" element={<CustomerPage><CustomerCartPage /></CustomerPage>} />

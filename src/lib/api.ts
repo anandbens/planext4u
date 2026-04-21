@@ -130,6 +130,7 @@ export interface Category {
   id: string; name: string; parent_id: string | null; image: string;
   status: 'active' | 'inactive'; count?: number; created_at?: string;
   banner_image?: string; icon?: string; is_trending?: boolean; description?: string;
+  display_order?: number; show_on_homepage?: boolean;
 }
 
 export interface Banner {
@@ -1401,14 +1402,19 @@ export const api = {
 
   // Categories
   getCategories: async () => {
-    const { data } = await supabase.from('categories').select('*').order('name');
+    const { data } = await supabase
+      .from('categories')
+      .select('*')
+      .order('display_order', { ascending: true })
+      .order('name', { ascending: true });
     return (data || []) as Category[];
   },
 
   updateCategory: async (id: string, data: Partial<Category>) => {
     const validFields = ['name', 'parent_id', 'image', 'status', 'count', 'banner_image', 'icon',
       'is_trending', 'description', 'is_emergency', 'commission_rate', 'verification_status',
-      'promotion_banner_url', 'promotion_title', 'promotion_active'];
+      'promotion_banner_url', 'promotion_title', 'promotion_active',
+      'display_order', 'show_on_homepage'];
     const filtered: Record<string, any> = {};
     for (const key of validFields) {
       if (key in data) filtered[key] = (data as any)[key];
@@ -1800,12 +1806,16 @@ export const api = {
       supabase.from('products').select('*').eq('status', 'active').limit(50),
       supabase.from('services').select('*').eq('status', 'active').limit(4),
       supabase.from('popup_banners').select('*').eq('status', 'active').order('created_at', { ascending: false }),
-      supabase.from('platform_variables').select('key, value').ilike('key', 'homepage_image_%'),
+      supabase.from('platform_variables').select('key, value').or('key.ilike.homepage_image_%,key.eq.homepage_categories_max,key.eq.homepage_subcategories_per_parent'),
     ]);
 
-    // Build assets map from platform variables
+    // Build assets map from platform variables (image keys) and config keys
     const assets: Record<string, string> = {};
-    (platformVars || []).forEach((v: any) => { assets[v.key] = v.value; });
+    const platformConfig: Record<string, string> = {};
+    (platformVars || []).forEach((v: any) => {
+      if (v.key?.startsWith('homepage_image_')) assets[v.key] = v.value;
+      else platformConfig[v.key] = v.value;
+    });
 
     // Filter products by verified/active vendors only
     let verifiedProducts = featuredProducts || [];
@@ -1828,6 +1838,7 @@ export const api = {
       featuredServices: featuredServices || [],
       storeBanners: storeBanners || [],
       assets,
+      platformConfig,
     };
   },
 
