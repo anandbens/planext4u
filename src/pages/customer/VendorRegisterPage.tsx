@@ -462,13 +462,15 @@ export default function VendorRegisterPage() {
                     {states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select></div>
-              <div><label className="text-xs font-medium text-muted-foreground">District *</label>
+              <div><label className="text-xs font-medium text-muted-foreground">{regionLabel} *</label>
                 <Select value={form.district} onValueChange={v => updateField('district', v)} disabled={!form.state}>
-                  <SelectTrigger><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={form.state ? `Select ${regionLabel}` : "Select state first"} /></SelectTrigger>
                   <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
                     {districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}
                   </SelectContent>
                 </Select></div>
+              <div><label className="text-xs font-medium text-muted-foreground">{isIndia ? "Pincode (optional)" : "Postal code (optional)"}</label>
+                <Input value={form.postal_code} onChange={e => updateField('postal_code', e.target.value)} maxLength={10} /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Facebook Link</label>
                 <Input value={form.fb_link} onChange={e => updateField('fb_link', e.target.value)} placeholder="https://..." /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Instagram Link</label>
