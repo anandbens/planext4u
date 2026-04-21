@@ -25,6 +25,10 @@ export interface WidgetSpec {
   group: "Banners & promos" | "Catalog" | "Vendor & social" | "Content" | "Module hero" | "Module specific";
   /** config fields editable in admin */
   fields?: WidgetConfigField[];
+  /** True if this widget requires config before it can be added (admin will be forced to edit immediately after add). */
+  requiresConfig?: boolean;
+  /** Validate the saved title/config. Return null when valid, or a human-readable error string. */
+  validate?: (input: { title?: string; config: Record<string, any> }) => string | null;
   /** Render the widget. `config` is the raw JSON blob from DB. */
   render: (props: { id: string; title?: string; config: Record<string, any> }) => ReactNode;
 }
