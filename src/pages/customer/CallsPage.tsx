@@ -102,18 +102,18 @@ export default function CallsPage() {
                   <button
                     onClick={() => initiateCall(u.userId, "audio", { displayName: u.displayName, avatarUrl: u.avatarUrl })}
                     disabled={!!activeCall}
-                    className="h-10 w-10 rounded-full bg-green-500 text-white flex items-center justify-center disabled:opacity-50 active:scale-95 transition-transform"
+                    className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 active:scale-95 transition-transform"
                     aria-label="Voice call"
                   >
-                    <Phone className="h-4.5 w-4.5" />
+                    <Phone className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => initiateCall(u.userId, "video", { displayName: u.displayName, avatarUrl: u.avatarUrl })}
                     disabled={!!activeCall}
-                    className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 active:scale-95 transition-transform"
+                    className="h-10 w-10 rounded-full bg-accent text-accent-foreground flex items-center justify-center disabled:opacity-50 active:scale-95 transition-transform"
                     aria-label="Video call"
                   >
-                    <Video className="h-4.5 w-4.5" />
+                    <Video className="h-4 w-4" />
                   </button>
                 </li>
               ))}
@@ -153,8 +153,8 @@ export default function CallsPage() {
                 <button onClick={rejectIncoming} className="h-12 w-12 rounded-full bg-destructive flex items-center justify-center shadow-md active:scale-95">
                   <PhoneOff className="h-5 w-5 text-white" />
                 </button>
-                <button onClick={acceptIncoming} className="h-12 w-12 rounded-full bg-green-500 flex items-center justify-center shadow-md animate-pulse active:scale-95">
-                  <Phone className="h-5 w-5 text-white" />
+                <button onClick={acceptIncoming} className="h-12 w-12 rounded-full bg-primary flex items-center justify-center shadow-md animate-pulse active:scale-95">
+                  <Phone className="h-5 w-5 text-primary-foreground" />
                 </button>
               </div>
             </div>
