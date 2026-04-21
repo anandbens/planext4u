@@ -17,6 +17,7 @@ import { compressToWebP } from "@/lib/webp-compress";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
 import { checkVendorPhoneUnique, checkVendorEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
+import { useCountry } from "@/lib/country-context";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -34,6 +35,9 @@ const STATUS_STEPS = [
 export default function VendorRegisterPage() {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
+  const { country } = useCountry();
+  const isIndia = country.code === "IN";
+  const regionLabel = isIndia ? "District" : "City";
   const customerId = customerUser?.customer_id || customerUser?.id || '';
   const [loading, setLoading] = useState(false);
   const [existingApp, setExistingApp] = useState<any>(null);
@@ -54,7 +58,7 @@ export default function VendorRegisterPage() {
 
   const [form, setForm] = useState({
     name: customerUser?.name || '', phone: customerUser?.mobile || '', secondary_phone: '',
-    email: customerUser?.email || '', state: '', district: '',
+    email: customerUser?.email || '', state: '', district: '', postal_code: '',
     fb_link: '', instagram_link: '',
     business_name: '', business_type: 'proprietorship', store_name: '', category: 'product',
     subcategory: '', business_description: '',
@@ -112,18 +116,21 @@ export default function VendorRegisterPage() {
 
   useEffect(() => {
     if (customerId) loadExistingApp();
-    api.getStates().then(setStates);
-  }, [customerId]);
+    api.getStates(country.code).then(setStates);
+  }, [customerId, country.code]);
 
   useEffect(() => {
-    if (form.state) {
+    if (!form.state) { setDistricts([]); return; }
+    if (isIndia) {
       const st = states.find(s => s.name === form.state);
       if (st) api.getDistricts(st.id).then(setDistricts);
       else setDistricts([]);
     } else {
-      setDistricts([]);
+      api.getCitiesByCountry(country.code, form.state).then((cities) =>
+        setDistricts(cities.map((c) => ({ id: c.id, name: c.name })))
+      );
     }
-  }, [form.state, states]);
+  }, [form.state, states, isIndia, country.code]);
 
   const loadExistingApp = async () => {
     setAppLoading(true);
@@ -133,7 +140,7 @@ export default function VendorRegisterPage() {
       setExistingApp(app);
       setForm({
         name: app.name || '', phone: app.phone || '', secondary_phone: app.secondary_phone || '',
-        email: app.email || '', state: app.state || '', district: app.district || app.city || '',
+        email: app.email || '', state: app.state || '', district: app.district || app.city || '', postal_code: (app as any).postal_code || '',
         fb_link: app.fb_link || '', instagram_link: app.instagram_link || '',
         business_name: app.business_name || '', business_type: app.business_type || 'proprietorship',
         store_name: app.store_name || '', category: app.category || 'product',
@@ -275,7 +282,7 @@ export default function VendorRegisterPage() {
       const payload: any = {
         user_id: customerId,
         name: form.name, phone: form.phone, secondary_phone: form.secondary_phone,
-        email: form.email, state: form.state, city: form.district, district: form.district,
+        email: form.email, state: form.state, city: form.district, district: form.district, postal_code: form.postal_code || null,
         fb_link: form.fb_link, instagram_link: form.instagram_link,
         business_name: form.business_name, business_type: form.business_type,
         store_name: form.store_name, category: form.category,
@@ -455,13 +462,15 @@ export default function VendorRegisterPage() {
                     {states.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select></div>
-              <div><label className="text-xs font-medium text-muted-foreground">District *</label>
+              <div><label className="text-xs font-medium text-muted-foreground">{regionLabel} *</label>
                 <Select value={form.district} onValueChange={v => updateField('district', v)} disabled={!form.state}>
-                  <SelectTrigger><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={form.state ? `Select ${regionLabel}` : "Select state first"} /></SelectTrigger>
                   <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
                     {districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}
                   </SelectContent>
                 </Select></div>
+              <div><label className="text-xs font-medium text-muted-foreground">{isIndia ? "Pincode (optional)" : "Postal code (optional)"}</label>
+                <Input value={form.postal_code} onChange={e => updateField('postal_code', e.target.value)} maxLength={10} /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Facebook Link</label>
                 <Input value={form.fb_link} onChange={e => updateField('fb_link', e.target.value)} placeholder="https://..." /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Instagram Link</label>

@@ -14,6 +14,7 @@ import { logActivity } from "@/lib/auth";
 import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, resetPhoneAuth, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { checkCustomerPhoneUnique, checkCustomerEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
+import { useCountry } from "@/lib/country-context";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 function TermsContent() {
@@ -88,9 +89,13 @@ function PrivacyContent() {
 
 export default function CustomerRegisterPage() {
   const navigate = useNavigate();
+  const { country } = useCountry();
+  const isIndia = country.code === "IN";
+  const phonePrefix = country.phone_prefix || "+91";
+  const regionLabel = isIndia ? "District" : "City";
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", mobile: "", email: "", state: "", district: "", area: "", referral_code: "", occupation: "" });
+  const [form, setForm] = useState({ name: "", mobile: "", email: "", state: "", district: "", area: "", postal_code: "", referral_code: "", occupation: "" });
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [occupations, setOccupations] = useState<{ id: string; name: string }[]>([]);
   const [states, setStates] = useState<{ id: string; name: string; code: string }[]>([]);
@@ -132,7 +137,7 @@ export default function CustomerRegisterPage() {
 
   useEffect(() => {
     api.getActiveOccupations().then(setOccupations);
-    api.getStates().then(setStates);
+    api.getStates(country.code).then(setStates);
     // Auto-capture location on load
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -141,17 +146,21 @@ export default function CustomerRegisterPage() {
         { enableHighAccuracy: true }
       );
     }
-  }, []);
+  }, [country.code]);
 
   useEffect(() => {
-    if (form.state) {
+    if (!form.state) { setDistricts([]); return; }
+    if (isIndia) {
       const st = states.find((s) => s.name === form.state);
       if (st) api.getDistricts(st.id).then(setDistricts);
       else setDistricts([]);
     } else {
-      setDistricts([]);
+      // For non-IN countries, load cities filtered by state
+      api.getCitiesByCountry(country.code, form.state).then((cities) =>
+        setDistricts(cities.map((c) => ({ id: c.id, name: c.name })))
+      );
     }
-  }, [form.state, states]);
+  }, [form.state, states, isIndia, country.code]);
 
   useEffect(() => {
     if (timer > 0) {
@@ -192,14 +201,15 @@ export default function CustomerRegisterPage() {
     if (fieldErrors.phone) { toast.error(fieldErrors.phone); return false; }
     if (fieldErrors.email) { toast.error(fieldErrors.email); return false; }
     if (!form.state) { toast.error("Please select a state"); return false; }
-    if (!form.district) { toast.error("Please select a district"); return false; }
+    if (!form.district) { toast.error(`Please select a ${regionLabel.toLowerCase()}`); return false; }
     if (!acceptedTerms) { toast.error("Please accept the Terms & Conditions and Privacy Policy"); return false; }
     return true;
   };
 
   const checkMobileUnique = async (): Promise<boolean> => {
-    // Check mobile uniqueness
-    const { data } = await supabase.from("customers").select("id").eq("mobile", `+91${form.mobile}`).maybeSingle();
+    // Check mobile uniqueness (full + raw)
+    const fullMobile = `${phonePrefix}${form.mobile}`;
+    const { data } = await supabase.from("customers").select("id").eq("mobile", fullMobile).maybeSingle();
     if (data) { toast.error("This mobile number is already registered. Please login instead."); return false; }
     const { data: data2 } = await supabase.from("customers").select("id").eq("mobile", form.mobile).maybeSingle();
     if (data2) { toast.error("This mobile number is already registered. Please login instead."); return false; }
@@ -217,10 +227,10 @@ export default function CustomerRegisterPage() {
       const isUnique = await checkMobileUnique();
       if (!isUnique) { setOtpLoading(false); return; }
       // Don't reset recaptcha before sending - reuse the pre-rendered one
-      await sendOTP(`+91${form.mobile}`);
+      await sendOTP(`${phonePrefix}${form.mobile}`);
       setOtpStep("otp");
       setTimer(45);
-      toast.success("OTP sent to +91 " + form.mobile);
+      toast.success(`OTP sent to ${phonePrefix} ${form.mobile}`);
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
       console.error("Registration OTP error:", err?.code, err?.message);
@@ -256,7 +266,7 @@ export default function CustomerRegisterPage() {
           register_data: {
             name: form.name,
             email: form.email,
-            mobile: `+91${form.mobile}`,
+            mobile: `${phonePrefix}${form.mobile}`,
             occupation: form.occupation || null,
             referral_code: form.referral_code || null,
           },
@@ -379,12 +389,12 @@ export default function CustomerRegisterPage() {
               </div>
 
               <div>
-                <Label className="text-xs text-muted-foreground mb-1 block">District *</Label>
+                <Label className="text-xs text-muted-foreground mb-1 block">{regionLabel} *</Label>
                 <Select value={form.district} onValueChange={v => setForm({ ...form, district: v })} disabled={!form.state}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder={form.state ? "Select District" : "Select state first"} /></SelectTrigger>
+                  <SelectTrigger className="h-11"><SelectValue placeholder={form.state ? `Select ${regionLabel}` : "Select state first"} /></SelectTrigger>
                   <SelectContent className="max-h-60 overflow-y-auto z-[9999]" position="popper" sideOffset={4}>
                     {districts.length === 0 && form.state ? (
-                      <div className="py-2 px-3 text-sm text-muted-foreground">Loading districts...</div>
+                      <div className="py-2 px-3 text-sm text-muted-foreground">Loading {regionLabel.toLowerCase()}s...</div>
                     ) : (
                       districts.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)
                     )}
@@ -392,7 +402,9 @@ export default function CustomerRegisterPage() {
                 </Select>
               </div>
 
-              <Input placeholder="Area / Locality" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} className="h-11" />
+              <Input placeholder={isIndia ? "Area / Locality" : "Street / Area"} value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} className="h-11" />
+
+              <Input placeholder={isIndia ? "Pincode (optional)" : "Postal code (optional)"} value={form.postal_code} onChange={e => setForm({ ...form, postal_code: e.target.value })} className="h-11" maxLength={10} />
 
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">Occupation</Label>
@@ -425,7 +437,7 @@ export default function CustomerRegisterPage() {
           ) : otpStep === "otp" ? (
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-center">Verify Your Phone</h3>
-              <p className="text-sm text-muted-foreground text-center">Enter the 6-digit OTP sent to +91 {form.mobile}</p>
+              <p className="text-sm text-muted-foreground text-center">Enter the 6-digit OTP sent to {phonePrefix} {form.mobile}</p>
 
               <div className="flex justify-center">
                 <input

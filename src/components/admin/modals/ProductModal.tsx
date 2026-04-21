@@ -17,6 +17,7 @@ import { useState, useEffect, useMemo } from "react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCountry } from "@/lib/country-context";
 
 interface ProductModalProps {
   product: Product | null;
@@ -78,9 +79,10 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
     },
   });
 
-  // Fetch all vendors with city/state info for filtering
+  // Fetch all vendors with city/state info for filtering — country-aware
+  const { country: activeCountry } = useCountry();
   const { data: allVendors } = useQuery({
-    queryKey: ["vendorsWithLocation"],
+    queryKey: ["vendorsWithLocation", activeCountry.code],
     queryFn: async () => {
       const { data } = await supabase
         .from("vendors")
@@ -88,18 +90,23 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
         .in("status", ["active", "verified"])
         .order("business_name");
       if (!data) return [];
-      // Fetch city details for state/district mapping
       const cityIds = [...new Set(data.map((v: any) => v.city_id).filter(Boolean))];
       let cityMap: Record<string, { name: string; state: string }> = {};
       if (cityIds.length > 0) {
-        const { data: cities } = await supabase.from("cities").select("id, name, state").in("id", cityIds);
+        const { data: cities } = await supabase
+          .from("cities")
+          .select("id, name, state, country_code")
+          .in("id", cityIds)
+          .eq("country_code", activeCountry.code);
         (cities || []).forEach((c: any) => { cityMap[c.id] = { name: c.name, state: c.state }; });
       }
-      return data.map((v: any) => ({
-        ...v,
-        city_name: cityMap[v.city_id]?.name || "",
-        state: cityMap[v.city_id]?.state || "",
-      }));
+      return data
+        .filter((v: any) => !v.city_id || cityMap[v.city_id])
+        .map((v: any) => ({
+          ...v,
+          city_name: cityMap[v.city_id]?.name || "",
+          state: cityMap[v.city_id]?.state || "",
+        }));
     },
     enabled: !isVendor,
   });
