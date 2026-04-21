@@ -362,6 +362,7 @@ registerWidget({
   group: "Vendor & social",
   modules: ["ecommerce"],
   fields: [{ key: "limit", label: "Max vendors", type: "number" }],
+  validate: limitValidator(30),
   render: (p) => <FeaturedVendorsWidget title={p.title} config={p.config} />,
 });
 
