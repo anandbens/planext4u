@@ -266,23 +266,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return await tryRolesWithFallback(roles, portal, supabaseUid, email, name, isFreshLogin);
   }, [tryRolesWithFallback, detectActivePortal]);
 
+  // SECURITY: Purge any cached profile that does not belong to the supplied
+  // Supabase auth UID. Prevents UI from showing a previous user's identity
+  // when a different account is currently signed in (account-switch bug).
+  const purgeMismatchedCaches = useCallback((currentUid: string | null) => {
+    const safeParse = (raw: string | null): { supabase_uid?: string } | null => {
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    };
+
+    const checkAndClear = (key: string, setter: (v: any) => void) => {
+      try {
+        const raw = localStorage.getItem(key);
+        const parsed = safeParse(raw);
+        if (!parsed) return;
+        const cachedUid = parsed.supabase_uid || null;
+        // No session, or session UID does not match cache UID → wipe it.
+        if (!currentUid || (cachedUid && cachedUid !== currentUid)) {
+          persistentStore.remove(key);
+          setter(null);
+        }
+      } catch { /* ignore */ }
+    };
+
+    checkAndClear("admin_user", setUser);
+    checkAndClear("customer_user", setCustomerUser);
+    checkAndClear("vendor_user", setVendorUser);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const isNative = Capacitor.isNativePlatform();
 
-    // Restore cached profiles immediately (sync localStorage) to prevent flash redirects.
-    // On native, also re-hydrate from Capacitor Preferences (survives app kill even when WebView storage is purged).
+    // Restore cached profiles ONLY if they belong to the current Supabase session.
+    // Without this guard, a stale cache from a previous user can be displayed
+    // while queries actually run as the new user (silent account-switch).
     const hydrate = async () => {
       try {
-        const [savedUser, savedCustomer, savedVendor] = await Promise.all([
+        const [{ data: { session } }, savedUser, savedCustomer, savedVendor] = await Promise.all([
+          supabase.auth.getSession(),
           persistentStore.get("admin_user"),
           persistentStore.get("customer_user"),
           persistentStore.get("vendor_user"),
         ]);
         if (cancelled) return;
-        if (savedUser) setUser(JSON.parse(savedUser));
-        if (savedCustomer) setCustomerUser(JSON.parse(savedCustomer));
-        if (savedVendor) setVendorUser(JSON.parse(savedVendor));
+
+        const sessionUid = session?.user?.id || null;
+
+        const tryRestore = (raw: string | null, setter: (v: any) => void, key: string) => {
+          if (!raw) return;
+          try {
+            const parsed = JSON.parse(raw);
+            const cachedUid = parsed?.supabase_uid || null;
+            // Only restore if cache UID matches session UID. Legacy caches without
+            // supabase_uid are treated as untrusted and discarded when there is
+            // no session, but kept temporarily on native if session is still loading.
+            if (sessionUid && cachedUid && cachedUid === sessionUid) {
+              setter(parsed);
+            } else if (sessionUid && !cachedUid && isNative) {
+              // Legacy cache, native still hydrating — keep until loadUserRole rewrites it.
+              setter(parsed);
+            } else {
+              persistentStore.remove(key);
+            }
+          } catch {
+            persistentStore.remove(key);
+          }
+        };
+
+        tryRestore(savedUser, setUser, "admin_user");
+        tryRestore(savedCustomer, setCustomerUser, "customer_user");
+        tryRestore(savedVendor, setVendorUser, "vendor_user");
       } catch { /* ignore */ }
     };
     hydrate();
@@ -291,6 +345,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session?.user) {
         const { id, email, user_metadata } = session.user;
         const name = user_metadata?.name || email?.split('@')[0] || '';
+
+        // SECURITY: Before loading the new role, purge any cached profile whose
+        // supabase_uid does not match the current session. Without this, the UI
+        // briefly shows the previous user's name/identity until loadUserRole
+        // overwrites it — and on TOKEN_REFRESHED for a different account, would
+        // never overwrite the unrelated portal caches at all.
+        purgeMismatchedCaches(id);
+
         const isFreshLogin = isFreshLoginRef.current;
         isFreshLoginRef.current = false;
         setTimeout(async () => {
@@ -312,16 +374,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         persistentStore.remove("vendor_user");
         setIsLoading(false);
       } else if (event === 'INITIAL_SESSION' && !session) {
-        // On web, no session means any cached portal profile is stale and must be cleared.
-        // On native, keep the cache briefly because the async storage adapter may hydrate late.
-        if (!isNative) {
-          setUser(null);
-          setCustomerUser(null);
-          setVendorUser(null);
-          persistentStore.remove("admin_user");
-          persistentStore.remove("customer_user");
-          persistentStore.remove("vendor_user");
-        }
+        // No session — any cached portal profile is stale and must be cleared.
+        // (Previously skipped on native, which let stale caches from a prior user
+        // leak into the UI before the new session loaded.)
+        purgeMismatchedCaches(null);
         setIsLoading(false);
       }
     });
@@ -332,10 +388,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isNative) {
       setTimeout(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
-          if (!session) return;
-          // If we already have a hydrated profile, no further action needed —
-          // onAuthStateChange will have populated state. This is just a guard
-          // to force a re-emit if nothing fired.
+          if (!session) {
+            purgeMismatchedCaches(null);
+            return;
+          }
+          // Always reconcile the cache against the actual session UID.
+          purgeMismatchedCaches(session.user.id);
           if (!user && !customerUser && !vendorUser) {
             const { id, email, user_metadata } = session.user;
             const name = user_metadata?.name || email?.split('@')[0] || '';
@@ -346,7 +404,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return () => { cancelled = true; subscription.unsubscribe(); };
-  }, [loadUserRole]);
+  }, [loadUserRole, purgeMismatchedCaches]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
