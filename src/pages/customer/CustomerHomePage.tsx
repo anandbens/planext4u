@@ -548,6 +548,32 @@ export default function CustomerHomePage() {
           </motion.div>
         </motion.section>
 
+        {/* ── Subcategory strips per parent (admin-controlled) ── */}
+        {!isLoading && parentCategories.map((parent: any) => {
+          const subs = (subcatMap[parent.id] || []).slice(0, homepageSubMax);
+          if (!subs.length) return null;
+          return (
+            <motion.section key={`subs-${parent.id}`} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-2">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold">Shop {parent.name}</h3>
+                <Link to={`/app/browse?category=${encodeURIComponent(parent.name)}`} className="text-[11px] text-primary font-medium flex items-center gap-0.5">View All <ChevronRight className="h-3 w-3" /></Link>
+              </div>
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+                {subs.map((s: any) => (
+                  <Link key={s.id} to={`/app/browse?category=${encodeURIComponent(s.name)}`} className="shrink-0">
+                    <div className="flex flex-col items-center gap-1 min-w-[64px]">
+                      <div className="h-14 w-14 rounded-2xl bg-card border border-border/40 flex items-center justify-center overflow-hidden">
+                        {s.image?.startsWith('http') ? <img src={s.image} alt={s.name} className="w-full h-full object-cover" loading="lazy" /> : <span className="text-xl">{s.image || '📦'}</span>}
+                      </div>
+                      <span className="text-[10px] font-medium text-center leading-tight max-w-[64px] line-clamp-2">{s.name}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </motion.section>
+          );
+        })}
+
         {/* ── Top Services ── */}
         <ServiceSlider title="Top Services" services={data?.featuredServices || []} />
 
