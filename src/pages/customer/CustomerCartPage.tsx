@@ -57,6 +57,8 @@ export default function CustomerCartPage() {
   const [addressForm, setAddressForm] = useState({ label: "Home", type: "home", address_line: "", city: "", pincode: "" });
   const [referralCountThisMonth, setReferralCountThisMonth] = useState(0);
   const [itemRedemptionMap, setItemRedemptionMap] = useState<Record<string, { maxRedemption: number; redemptionSource: string }>>({});
+  const [appliedCartRules, setAppliedCartRules] = useState<AppliedCartRule[]>([]);
+  const [cartRuleDiscount, setCartRuleDiscount] = useState(0);
 
   useEffect(() => {
     Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses(), loadPlatformFees()]).then(async ([cartItems, profile]) => {
@@ -223,8 +225,40 @@ export default function CustomerCartPage() {
   const tax = cart.reduce((sum, item) => sum + item.tax * item.qty, 0);
   const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
   const maxPoints = Math.min(walletPoints, perItemMaxPoints.reduce((s, i) => s + i.maxRedeemable, 0));
-  const total = subtotal + platformFee + gstOnPlatformFee - discount - pointsUsed;
-  const savings = totalDiscount + discount + pointsUsed;
+  const total = subtotal + platformFee + gstOnPlatformFee - discount - cartRuleDiscount - pointsUsed;
+  const savings = totalDiscount + discount + cartRuleDiscount + pointsUsed;
+
+  // Evaluate active cart rules whenever subtotal/customer changes
+  useEffect(() => {
+    if (!customerId || subtotal <= 0 || cart.length === 0) {
+      setAppliedCartRules([]);
+      setCartRuleDiscount(0);
+      return;
+    }
+    const vendorIds = Array.from(new Set(cart.map((c: any) => c.vendor_id).filter(Boolean)));
+    (supabase.rpc as any)("evaluate_cart_rules", {
+      _customer_id: customerId,
+      _cart_total: subtotal,
+      _vendor_ids: vendorIds,
+      _module: "ecommerce",
+    })
+      .then(({ data, error }: any) => {
+        if (error || !data) {
+          setAppliedCartRules([]);
+          setCartRuleDiscount(0);
+          return;
+        }
+        const rules: AppliedCartRule[] = Array.isArray(data?.applied_rules)
+          ? data.applied_rules
+          : [];
+        setAppliedCartRules(rules);
+        setCartRuleDiscount(Number(data?.total_discount || 0));
+      })
+      .catch(() => {
+        setAppliedCartRules([]);
+        setCartRuleDiscount(0);
+      });
+  }, [customerId, subtotal, cart]);
 
   const applyCoupon = () => {
     if (coupon === "WELCOME") { setCouponApplied(true); toast.success("Coupon applied! 10% discount"); }
