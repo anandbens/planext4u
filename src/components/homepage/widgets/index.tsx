@@ -557,6 +557,7 @@ registerWidget({
   group: "Module specific",
   modules: ["food"],
   fields: [{ key: "limit", label: "Max restaurants", type: "number" }],
+  validate: limitValidator(30),
   render: (p) => <FoodTopRestaurantsWidget title={p.title} config={p.config} />,
 });
 
