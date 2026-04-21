@@ -2684,31 +2684,43 @@ export type Database = {
       homepage_layouts: {
         Row: {
           created_at: string
+          has_unpublished_changes: boolean
           id: string
           is_active: boolean
           module: string
           name: string
           notes: string | null
+          published_at: string | null
+          published_by: string | null
+          published_snapshot: Json | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           created_at?: string
+          has_unpublished_changes?: boolean
           id?: string
           is_active?: boolean
           module: string
           name?: string
           notes?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          published_snapshot?: Json | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           created_at?: string
+          has_unpublished_changes?: boolean
           id?: string
           is_active?: boolean
           module?: string
           name?: string
           notes?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          published_snapshot?: Json | null
           updated_at?: string
           updated_by?: string | null
         }

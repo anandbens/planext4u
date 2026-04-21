@@ -22,8 +22,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GripVertical, Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { GripVertical, Plus, Pencil, Trash2, Eye, EyeOff, Rocket, Undo2, ExternalLink, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 import { listWidgetsForModule, getWidget, WidgetModule } from "@/components/homepage/widget-registry";
 import "@/components/homepage/widgets"; // register
 import {
@@ -212,6 +213,77 @@ function ModulePanel({ module }: { module: WidgetModule }) {
     },
   });
 
+  const [publishing, setPublishing] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
+
+  const handlePublish = async () => {
+    if (!layout) return;
+    setPublishing(true);
+    try {
+      // Build snapshot from current draft sections (already ordered by display_order)
+      const snapshot = layout.sections.map((s) => ({
+        id: s.id,
+        widget_type: s.widget_type,
+        title: s.title,
+        display_order: s.display_order,
+        is_visible: s.is_visible,
+        config: s.config || {},
+      }));
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("homepage_layouts" as any).update({
+        published_snapshot: snapshot,
+        published_at: new Date().toISOString(),
+        published_by: user?.id ?? null,
+        has_unpublished_changes: false,
+      } as any).eq("id", layout.layout.id);
+      if (error) throw error;
+      toast.success("Published — changes are now live");
+      qc.invalidateQueries({ queryKey: ["admin_layout", module] });
+      qc.invalidateQueries({ queryKey: ["homepage_layout", module] });
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to publish");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const handleDiscard = async () => {
+    if (!layout) return;
+    if (!confirm("Discard all unpublished changes? Draft will be replaced with the live published version.")) return;
+    setDiscarding(true);
+    try {
+      const snapshot = (layout.layout.published_snapshot || []) as any[];
+      // Wipe current draft sections and rebuild from snapshot
+      await supabase.from("homepage_layout_sections" as any).delete().eq("layout_id", layout.layout.id);
+      if (snapshot.length > 0) {
+        const rows = snapshot.map((s) => ({
+          layout_id: layout.layout.id,
+          widget_type: s.widget_type,
+          title: s.title,
+          display_order: s.display_order,
+          is_visible: s.is_visible !== false,
+          config: s.config || {},
+        }));
+        const { error } = await supabase.from("homepage_layout_sections" as any).insert(rows as any);
+        if (error) throw error;
+      }
+      // Trigger marked it dirty during the rebuild — clear that flag.
+      await supabase.from("homepage_layouts" as any).update({ has_unpublished_changes: false } as any).eq("id", layout.layout.id);
+      toast.success("Draft restored to published version");
+      qc.invalidateQueries({ queryKey: ["admin_layout", module] });
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to discard");
+    } finally {
+      setDiscarding(false);
+    }
+  };
+
+  const previewUrl = useMemo(() => {
+    const path = module === "ecommerce" ? "/app" : `/app/${module}`;
+    return `${path}?preview=draft`;
+  }, [module]);
+
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const onDragEnd = async (e: DragEndEvent) => {
@@ -279,10 +351,59 @@ function ModulePanel({ module }: { module: WidgetModule }) {
     }
   };
 
+  const isDirty = !!layout?.layout?.has_unpublished_changes;
+  const publishedAt = layout?.layout?.published_at as string | undefined;
+
   return (
     <div className="space-y-3">
+      {/* Publish bar */}
+      <Card className={`p-3 flex flex-wrap items-center gap-3 border-l-4 ${isDirty ? "border-l-warning bg-warning/5" : "border-l-success bg-success/5"}`}>
+        <div className="flex items-center gap-2 flex-1 min-w-[220px]">
+          {isDirty ? (
+            <AlertCircle className="h-5 w-5 text-warning shrink-0" />
+          ) : (
+            <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">
+              {isDirty ? "Unpublished changes" : "All changes published"}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {publishedAt
+                ? `Last published ${formatDistanceToNow(new Date(publishedAt), { addSuffix: true })}`
+                : "Never published yet"}
+            </p>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          asChild
+          disabled={!layout}
+        >
+          <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="h-4 w-4 mr-1" /> Preview draft
+          </a>
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDiscard}
+          disabled={!isDirty || discarding || publishing}
+        >
+          <Undo2 className="h-4 w-4 mr-1" /> {discarding ? "Discarding…" : "Discard draft"}
+        </Button>
+        <Button
+          size="sm"
+          onClick={handlePublish}
+          disabled={!isDirty || publishing || discarding}
+        >
+          <Rocket className="h-4 w-4 mr-1" /> {publishing ? "Publishing…" : "Publish"}
+        </Button>
+      </Card>
+
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Drag to reorder. Click pencil to edit settings.</p>
+        <p className="text-sm text-muted-foreground">Drag to reorder. Click pencil to edit settings. Changes stay in draft until you publish.</p>
         <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add widget</Button>
       </div>
 
@@ -317,7 +438,7 @@ export default function AdminLayoutBuilderPage() {
     <AdminLayout>
       <div className="page-header">
         <h1 className="page-title">Homepage Layout Builder</h1>
-        <p className="page-description">Drag-and-drop widgets to design each module's homepage. Changes go live instantly.</p>
+        <p className="page-description">Drag-and-drop widgets to design each module's homepage. Edits stay in draft — click <strong>Publish</strong> to make them live.</p>
       </div>
       <Tabs value={tab} onValueChange={(v) => setTab(v as WidgetModule)}>
         <TabsList>
