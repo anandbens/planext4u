@@ -24,13 +24,15 @@ const statusStyle: Record<string, string> = {
 
 interface ServiceForm {
   title: string; description: string; price: string; tax: string; discount: string;
-  duration: string; service_area: string; category_id: string; emoji: string; status: string;
+  duration: string; service_area: string; category_id: string; subcategory_id: string;
+  emoji: string; status: string;
   image: string; working_days: string; workers: string;
 }
 
 const emptyForm: ServiceForm = {
   title: "", description: "", price: "", tax: "", discount: "0",
-  duration: "", service_area: "", category_id: "", emoji: "🔧", status: "pending_approval",
+  duration: "", service_area: "", category_id: "", subcategory_id: "",
+  emoji: "🔧", status: "pending_approval",
   image: "", working_days: "Mon-Sat", workers: "1",
 };
 
@@ -52,10 +54,39 @@ export default function VendorServicesPage() {
     },
   });
 
-  const { data: categories } = useQuery({
-    queryKey: ["serviceCategories"],
+  // Parent service categories (top-level only)
+  const { data: parentCategories } = useQuery({
+    queryKey: ["serviceParentCategories"],
     queryFn: async () => {
-      const { data } = await supabase.from("service_categories").select("*").eq("status", "active");
+      const { data } = await supabase.from("service_categories")
+        .select("id, name, parent_id")
+        .eq("status", "active")
+        .is("parent_id", null)
+        .order("name");
+      return data || [];
+    },
+  });
+
+  // Subcategories for the currently selected parent category
+  const { data: subcategories } = useQuery({
+    queryKey: ["serviceSubcategories", form.category_id],
+    queryFn: async () => {
+      if (!form.category_id) return [];
+      const { data } = await supabase.from("service_categories")
+        .select("id, name, parent_id")
+        .eq("status", "active")
+        .eq("parent_id", form.category_id)
+        .order("name");
+      return data || [];
+    },
+    enabled: !!form.category_id,
+  });
+
+  // For backwards compatibility — flat list used to look up names from existing service rows
+  const { data: allCategoriesFlat } = useQuery({
+    queryKey: ["serviceAllCategoriesFlat"],
+    queryFn: async () => {
+      const { data } = await supabase.from("service_categories").select("id, name, parent_id");
       return data || [];
     },
   });
