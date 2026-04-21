@@ -157,15 +157,51 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
               : <p className="text-sm font-medium mt-1">{category?.name}</p>}
           </div>
 
+          {/* Category Type — only editable on top-level. Subcategories inherit. */}
+          <div>
+            <Label className="text-xs text-muted-foreground">Category Type *</Label>
+            {editMode && !isSubcategory ? (
+              <Select value={form.category_type} onValueChange={(v) => setForm({ ...form, category_type: v as "product" | "service" })}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="product">Product Category</SelectItem>
+                  <SelectItem value="service">Service Category</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="mt-1">
+                <Badge className={`text-[10px] border-0 ${form.category_type === 'service' ? 'bg-info/10 text-info' : 'bg-primary/10 text-primary'}`}>
+                  {form.category_type === 'service' ? 'SERVICE' : 'PRODUCT'}
+                </Badge>
+                {isSubcategory && editMode && (
+                  <p className="text-[10px] text-muted-foreground mt-1">Inherited from parent category</p>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Parent Category */}
           {editMode && parentOptions.length > 0 && (
             <div>
               <Label className="text-xs text-muted-foreground">Parent Category (leave empty for top-level)</Label>
-              <Select value={form.parent_id || "none"} onValueChange={(v) => setForm({ ...form, parent_id: v === "none" ? null : v })}>
+              <Select value={form.parent_id || "none"} onValueChange={(v) => {
+                const newParentId = v === "none" ? null : v;
+                const updates: any = { parent_id: newParentId };
+                // When attaching to a parent, inherit its type
+                if (newParentId) {
+                  const parent = parentOptions.find(p => p.id === newParentId);
+                  if (parent?.category_type) updates.category_type = parent.category_type;
+                }
+                setForm({ ...form, ...updates });
+              }}>
                 <SelectTrigger className="mt-1"><SelectValue placeholder="None (top-level)" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None (top-level)</SelectItem>
-                  {parentOptions.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                  {parentOptions.map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} <span className="text-[10px] text-muted-foreground ml-1">({p.category_type === 'service' ? 'Service' : 'Product'})</span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
