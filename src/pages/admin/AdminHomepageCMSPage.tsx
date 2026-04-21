@@ -293,7 +293,10 @@ function VideoAdModal({ open, onClose, ad, onSave }: any) {
           </div>
 
           <div><Label>Video URL (auto-filled)</Label><Input value={form.video_url} onChange={e => setForm({ ...form, video_url: e.target.value })} placeholder="Paste a URL or upload above" /></div>
-          <div><Label>Thumbnail URL (auto-filled)</Label><Input value={form.thumbnail_url || ""} onChange={e => setForm({ ...form, thumbnail_url: e.target.value })} /></div>
+          <div className="space-y-1">
+            <Label>Thumbnail (auto-filled, or pick from Media Library)</Label>
+            <MediaLibraryPicker value={form.thumbnail_url || ""} onChange={(url) => setForm({ ...form, thumbnail_url: url })} folder="banners" label="Choose thumbnail" aspectRatio="aspect-video" />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div><Label>Duration (seconds)</Label><Input type="number" value={form.duration_seconds || 0} onChange={e => setForm({ ...form, duration_seconds: +e.target.value })} /></div>
             <div><Label>Status</Label>
