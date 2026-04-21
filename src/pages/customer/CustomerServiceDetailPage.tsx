@@ -106,7 +106,8 @@ export default function CustomerServiceDetailPage() {
     queryKey: ["service", id],
     queryFn: async () => {
       if (!id) return null;
-      const all = await api.getServices();
+      const res = await api.getServices({ per_page: 1000 });
+      const all = (res as any).data || res;
       return all.find((s: any) => s.id === id) || null;
     },
     enabled: !!id,
