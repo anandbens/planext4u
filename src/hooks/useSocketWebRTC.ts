@@ -48,6 +48,9 @@ export function useSocketWebRTC({ userId, displayName, avatarUrl }: UseSocketWeb
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const pendingIceRef = useRef<RTCIceCandidateInit[]>([]);
   const activeCallRef = useRef<ActiveCall | null>(null);
+  // Suppresses errors that arrive after a call was already torn down so the
+  // user never sees a stale "microphone denied" toast post-hangup.
+  const endedRef = useRef(false);
 
   // Keep a ref in sync so socket handlers can read the latest call without re-binding.
   useEffect(() => { activeCallRef.current = activeCall; }, [activeCall]);
@@ -65,6 +68,8 @@ export function useSocketWebRTC({ userId, displayName, avatarUrl }: UseSocketWeb
   }, []);
 
   const endActiveCall = useCallback((notifyPeer = true) => {
+    endedRef.current = true;
+    setError(null); // suppress any in-flight permission/media error
     const call = activeCallRef.current;
     if (notifyPeer && call && signalingRef.current) {
       signalingRef.current.emit("end-call", { callId: call.callId, to: call.remoteUserId });
@@ -106,13 +111,30 @@ export function useSocketWebRTC({ userId, displayName, avatarUrl }: UseSocketWeb
   const acquireLocalMedia = useCallback(async (callType: CallType) => {
     const perm = await ensureMicrophonePermission();
     if (!perm.granted) {
-      setError(perm.reason || "Microphone permission required");
-      throw new Error(perm.reason || "Mic denied");
+      const msg = perm.reason || "Microphone permission required";
+      if (!endedRef.current) setError(msg);
+      throw new Error(msg);
     }
-    const stream = await navigator.mediaDevices.getUserMedia(getMediaConstraints(callType));
-    localStreamRef.current = stream;
-    if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-    return stream;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(getMediaConstraints(callType));
+      localStreamRef.current = stream;
+      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+      return stream;
+    } catch (err: any) {
+      const name: string = err?.name || "";
+      let friendly = "Could not start the call. Please try again.";
+      if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+        friendly = callType === "video"
+          ? "Camera or microphone permission denied. Enable both in Settings → Apps → Planext4u → Permissions."
+          : "Microphone permission denied. Enable it in Settings → Apps → Planext4u → Permissions.";
+      } else if (name === "NotFoundError") {
+        friendly = "No microphone or camera was found on this device.";
+      } else if (name === "NotReadableError" || name === "TrackStartError") {
+        friendly = "Your microphone or camera is being used by another app.";
+      }
+      if (!endedRef.current) setError(friendly);
+      throw new Error(friendly);
+    }
   }, []);
 
   // ---------- Outgoing call ----------
@@ -125,6 +147,7 @@ export function useSocketWebRTC({ userId, displayName, avatarUrl }: UseSocketWeb
       setError("Not connected to signaling server");
       return;
     }
+    endedRef.current = false;
     setError(null);
     setStatus("calling");
     try {
@@ -151,6 +174,7 @@ export function useSocketWebRTC({ userId, displayName, avatarUrl }: UseSocketWeb
   const acceptIncoming = useCallback(async () => {
     const call = incomingCall;
     if (!call || !signalingRef.current) return;
+    endedRef.current = false;
     setIncomingCall(null);
     setError(null);
     setStatus("connected"); // optimistic — switches to true connected on ICE event

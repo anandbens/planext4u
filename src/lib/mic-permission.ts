@@ -1,67 +1,128 @@
-import { isNativePlatform } from "@/lib/capacitor";
+import { isNativePlatform, getPlatform } from "@/lib/capacitor";
 
 /**
- * Ensure microphone access is granted before recording or starting a WebRTC call.
+ * Microphone permission helper — Capacitor-aware.
  *
- * Strategy (matches Chrome/Android best-practices):
- *  1. Proactively query `navigator.permissions` so we can short-circuit with a
- *     clear "open settings" message if the OS/browser already has it denied.
- *  2. Otherwise call `getUserMedia({ audio: true })` — this triggers the
- *     OS RECORD_AUDIO prompt on Android and the browser bar prompt on web.
- *     On Capacitor Android the WebView additionally needs `onPermissionRequest`
- *     to be granted in MainActivity.java (handled separately).
- *  3. Stop the probe stream immediately so we don't leave the mic busy.
- *
- * Returns:
- *   { granted: true }  — caller can proceed to start the real recording / call
- *   { granted: false, reason } — caller should toast and (optionally) prompt to open settings
+ * Why this exists:
+ *  • On Capacitor Android the `navigator.permissions.query({name:'microphone'})`
+ *    API is unreliable — Chrome WebView frequently returns `denied` even when
+ *    the OS-level permission is `prompt` (never asked yet). That false-negative
+ *    used to make us short-circuit with "open settings" before ever showing the
+ *    OS prompt. We now SKIP the query API on native and let `getUserMedia`
+ *    drive the prompt.
+ *  • We distinguish between "denied this once" (re-prompt is possible) and
+ *    "permanently denied" (user must open Settings). On the web a simple
+ *    NotAllowedError can mean either, so we treat consecutive failures as
+ *    permanent and tell the user how to recover.
+ *  • Errors that happen AFTER a call ends (e.g. mic was released) should never
+ *    be surfaced as permission errors — callers must check `granted` BEFORE
+ *    starting and ignore probe failures once the call is over.
  */
-export async function ensureMicrophonePermission(): Promise<{
+
+export interface MicPermissionResult {
   granted: boolean;
+  /** True when the OS/browser has permanently blocked the mic — user must open settings. */
+  permanentlyDenied?: boolean;
+  /** Friendly message for toasts. Empty when granted. */
   reason?: string;
-}> {
+}
+
+export async function ensureMicrophonePermission(): Promise<MicPermissionResult> {
   if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-    return { granted: false, reason: "Microphone API not available on this device" };
+    return { granted: false, reason: "Microphone is not supported on this device." };
   }
 
-  // 1) Best-effort proactive permission check.
-  try {
-    if ((navigator as any).permissions?.query) {
-      const status = await (navigator as any).permissions.query({ name: "microphone" as PermissionName });
-      if (status.state === "denied") {
-        return {
-          granted: false,
-          reason: isNativePlatform()
-            ? "Microphone is blocked. Open App Settings → Permissions → enable Microphone."
-            : "Microphone is blocked in your browser. Click the lock icon in the address bar to allow it.",
-        };
+  // Web only: a confident "denied" from the Permissions API means the user
+  // explicitly blocked us in browser settings. We can short-circuit there.
+  // On native we INTENTIONALLY skip this — the WebView lies (returns denied
+  // even on first launch) which would block us from ever showing the OS prompt.
+  if (!isNativePlatform()) {
+    try {
+      const perms = (navigator as any).permissions;
+      if (perms?.query) {
+        const status = await perms.query({ name: "microphone" as PermissionName });
+        if (status.state === "denied") {
+          return {
+            granted: false,
+            permanentlyDenied: true,
+            reason:
+              "Microphone is blocked in your browser. Click the lock icon in the address bar and allow Microphone, then reload the page.",
+          };
+        }
       }
+    } catch {
+      /* ignore — Permissions API not supported (e.g. older Safari) */
     }
-  } catch {
-    /* permission query unsupported (Safari old) — fall through */
   }
 
-  // 2) Trigger the actual prompt and probe.
+  // Trigger the actual OS / browser prompt and probe.
   try {
     const probe = await navigator.mediaDevices.getUserMedia({ audio: true });
     probe.getTracks().forEach((t) => t.stop());
     return { granted: true };
   } catch (err: any) {
-    const name = err?.name || "";
-    if (name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError") {
+    const name: string = err?.name || "";
+    const platform = getPlatform();
+
+    if (
+      name === "NotAllowedError" ||
+      name === "PermissionDeniedError" ||
+      name === "SecurityError"
+    ) {
+      // On native there's no "ask again" — second NotAllowedError after the OS
+      // prompt was answered means the user denied (or chose "Don't ask again").
       return {
         granted: false,
+        permanentlyDenied: true,
         reason: isNativePlatform()
-          ? "Microphone permission denied. Enable it in App Settings → Permissions → Microphone."
-          : "Microphone permission denied. Please allow it in your browser site settings.",
+          ? `Microphone permission denied. Open Settings → Apps → Planext4u → Permissions and enable Microphone${
+              platform === "ios" ? "" : " (and Camera for video calls)"
+            }, then return to the app.`
+          : "Microphone permission was denied. Please allow microphone access in your browser site settings and try again.",
       };
     }
     if (name === "NotFoundError" || name === "DevicesNotFoundError") {
       return { granted: false, reason: "No microphone found on this device." };
     }
     if (name === "NotReadableError" || name === "TrackStartError") {
-      return { granted: false, reason: "Microphone is in use by another app. Close it and try again." };
+      return {
+        granted: false,
+        reason: "Your microphone is being used by another app. Close it and try again.",
+      };
     }
-    return { granted: false, reason: err?.message || "Could not access microphone" };
+    if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError") {
+      return { granted: false, reason: "Your microphone does not support the requested settings." };
+    }
+    // Generic / unknown
+    return {
+      granted: false,
+      reason: err?.message ? `Microphone error: ${err.message}` : "Could not access the microphone.",
+    };
   }
+}
+
+/**
+ * Best-effort "open app settings" for native. Returns true when something was
+ * launched. On web there is no API for this — caller should show the friendly
+ * reason text instead.
+ */
+export async function tryOpenAppSettings(): Promise<boolean> {
+  if (!isNativePlatform()) return false;
+  try {
+    // @capacitor-community/native-settings is optional; use only if present.
+    // The dynamic specifier (variable, not literal) prevents Vite/TS from trying
+    // to resolve the module at build time when it isn't installed.
+    const moduleName = "@capacitor-community/native-settings";
+    const mod: any = await import(/* @vite-ignore */ moduleName).catch(() => null);
+    if (mod?.NativeSettings?.open) {
+      await mod.NativeSettings.open({
+        optionAndroid: "application_details",
+        optionIOS: "App",
+      });
+      return true;
+    }
+  } catch {
+    /* plugin not installed — silently fall through */
+  }
+  return false;
 }

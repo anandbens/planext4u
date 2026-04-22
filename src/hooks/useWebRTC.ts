@@ -62,20 +62,30 @@ export function useWebRTC({
     iceChannelRef.current = null;
   }, []);
 
+  // Tracks whether the call has been torn down so async errors that arrive
+  // after `endCall()` (e.g. mic stream surfacing a NotReadableError as we stop
+  // the tracks) don't get presented to the user as a fresh permission error.
+  const endedRef = useRef(false);
+
   // Get media stream — probes mic permission first (RECORD_AUDIO on Android,
-  // browser prompt on web) so we surface a clear error instead of an opaque
-  // NotAllowedError when permission was previously denied.
+  // browser prompt on web) so we surface a clear, specific error rather than
+  // an opaque NotAllowedError. Only the *first* error wins: we never overwrite
+  // a precise permission message with a generic camera/mic message.
   const getMedia = useCallback(async () => {
+    const { ensureMicrophonePermission } = await import("@/lib/mic-permission");
+    const perm = await ensureMicrophonePermission();
+    if (!perm.granted) {
+      const msg = perm.reason || "Microphone access denied. Please grant permissions.";
+      if (!endedRef.current) setError(msg);
+      throw new Error(msg);
+    }
     try {
-      const { ensureMicrophonePermission } = await import("@/lib/mic-permission");
-      const perm = await ensureMicrophonePermission();
-      if (!perm.granted) {
-        setError(perm.reason || "Microphone access denied. Please grant permissions.");
-        throw new Error(perm.reason || "Microphone access denied");
-      }
       const constraints: MediaStreamConstraints = {
         audio: true,
-        video: callType === "video" ? { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } : false,
+        video:
+          callType === "video"
+            ? { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }
+            : false,
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       localStreamRef.current = stream;
@@ -84,10 +94,23 @@ export function useWebRTC({
       }
       return stream;
     } catch (err: any) {
-      if (!err?.message?.includes("Microphone")) {
-        setError("Camera/microphone access denied. Please grant permissions.");
+      // Translate the raw DOMException into the same friendly text as
+      // ensureMicrophonePermission so the user sees one consistent message.
+      const name: string = err?.name || "";
+      let friendly = "Could not start the call. Please try again.";
+      if (name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError") {
+        friendly = callType === "video"
+          ? "Camera or microphone permission denied. Enable both in Settings → Apps → Planext4u → Permissions."
+          : "Microphone permission denied. Enable it in Settings → Apps → Planext4u → Permissions.";
+      } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+        friendly = callType === "video"
+          ? "No camera or microphone was found on this device."
+          : "No microphone was found on this device.";
+      } else if (name === "NotReadableError" || name === "TrackStartError") {
+        friendly = "Your microphone or camera is being used by another app. Close it and try again.";
       }
-      throw err;
+      if (!endedRef.current) setError(friendly);
+      throw new Error(friendly);
     }
   }, [callType]);
 
@@ -130,6 +153,7 @@ export function useWebRTC({
   // Start call as caller
   const startCall = useCallback(async () => {
     if (!callId) return;
+    endedRef.current = false;
     setError(null);
     setStatus("calling");
 
@@ -166,6 +190,7 @@ export function useWebRTC({
   // Answer call as callee
   const answerCall = useCallback(async (offer: RTCSessionDescriptionInit) => {
     if (!callId) return;
+    endedRef.current = false;
     setError(null);
 
     try {
@@ -198,6 +223,8 @@ export function useWebRTC({
 
   // End call
   const endCall = useCallback(async () => {
+    endedRef.current = true;
+    setError(null); // suppress any in-flight permission/media error
     if (callId) {
       await supabase
         .from("calls" as any)
@@ -211,6 +238,8 @@ export function useWebRTC({
 
   // Reject call
   const rejectCall = useCallback(async () => {
+    endedRef.current = true;
+    setError(null);
     if (callId) {
       await supabase
         .from("calls" as any)
