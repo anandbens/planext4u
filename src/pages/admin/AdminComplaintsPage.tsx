@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { TicketChatThread } from "@/components/support/TicketChatThread";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, AlertTriangle, Clock, CheckCircle, MessageSquare } from "lucide-react";
+import { Search, AlertTriangle, Clock, CheckCircle, MessageSquare, ExternalLink } from "lucide-react";
 
 interface Complaint {
   id: string; user_id: string; user_name: string | null; entity_type: string;
@@ -44,6 +45,7 @@ const CATEGORIES = ["quality", "delay", "damage", "wrong_item", "refund", "behav
 export default function AdminComplaintsPage() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [search, setSearch] = useState("");
+  const [contactFilter, setContactFilter] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
