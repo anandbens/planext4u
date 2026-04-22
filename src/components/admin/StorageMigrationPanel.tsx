@@ -250,6 +250,43 @@ export default function StorageMigrationPanel() {
             </div>
           </div>
         )}
+        {gapReport && (
+          <div className="mt-4 border-t border-border/50 pt-3 space-y-2">
+            <p className="text-sm font-medium">Coverage gap report (per scope)</p>
+            <p className="text-xs text-muted-foreground">
+              Records flagged "Missing in B2" have no folder under their prefix — populate cannot fill them.
+              Use the AI seeders below or upload via Media Library to fix.
+            </p>
+            <div className="grid gap-2 md:grid-cols-2 text-xs">
+              {gapReport.map((r: any) => {
+                const stillMissing = r.db_records_missing_image ?? 0;
+                const noFolder = r.db_rows_without_folder ?? 0;
+                return (
+                  <div key={r.scope} className="rounded border border-border/40 p-2 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold font-mono">{r.prefix}/</span>
+                      <div className="flex gap-1">
+                        <Badge variant="outline">{r.folders_found ?? 0} folders</Badge>
+                        <Badge variant={r.updated > 0 ? "secondary" : "outline"}>{r.updated ?? 0} updated</Badge>
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground">
+                      DB total: <span className="font-mono">{r.db_records_total ?? 0}</span> ·
+                      Still missing image: <span className="font-mono">{stillMissing}</span> ·
+                      Missing in B2: <span className={`font-mono ${noFolder > 0 ? "text-warning" : ""}`}>{noFolder}</span>
+                    </p>
+                    {r.db_rows_without_folder_sample?.length ? (
+                      <p className="text-muted-foreground font-mono truncate">
+                        e.g. {r.db_rows_without_folder_sample.join(", ")}
+                      </p>
+                    ) : null}
+                    {r.errors?.length ? <p className="text-destructive truncate">{r.errors[0]}</p> : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </Card>
 
       <Card className="p-4 border-primary/30">
