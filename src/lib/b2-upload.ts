@@ -150,14 +150,44 @@ export async function uploadToB2(
 }
 
 /**
+ * Hosts that point to our B2 buckets (direct Backblaze, our CDN, etc.).
+ * URLs from these hosts are signed via the public-bucket signer because the
+ * bucket may be configured as private at the B2 level (so direct GETs 404).
+ */
+const B2_PUBLIC_HOSTS = [
+  /\.backblazeb2\.com$/i,
+  /^cdn\.planext4u\.com$/i,
+];
+
+/** Extract the object key from a known B2/CDN URL, or null if it isn't one. */
+function extractB2Key(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const matchesHost = B2_PUBLIC_HOSTS.some((re) => re.test(u.hostname));
+    if (!matchesHost) return null;
+    // Backblaze friendly URL: /file/<bucket>/<key...>
+    const fileMatch = u.pathname.match(/^\/file\/[^/]+\/(.+)$/);
+    if (fileMatch) return decodeURIComponent(fileMatch[1]);
+    // CDN rewrite: /<key...>
+    const stripped = u.pathname.replace(/^\/+/, "");
+    return stripped ? decodeURIComponent(stripped) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Resolve a stored value that may be either:
- *   - a regular public URL (legacy or public-bucket upload), OR
- *   - a `b2-private://<key>` reference pointing to the private bucket.
+ *   - a `b2-private://<key>` reference pointing to the private bucket, OR
+ *   - a regular https URL to the public B2 bucket / CDN, OR
+ *   - any other URL (returned as-is).
  *
- * For the private case, calls the `b2-presigned-download` edge function
- * (admin-only) and returns a short-lived signed GET URL.
+ * For B2-hosted values, calls the `b2-presigned-download` edge function and
+ * returns a short-lived signed GET URL — this works whether the bucket is
+ * configured as public or private at the B2 level.
  *
- * Returns null if the input is empty or signing fails.
+ * Returns null if signing fails for a private reference; falls back to the
+ * original URL if signing fails for a public-bucket URL.
  */
 export async function resolveB2Url(
   storedValue: string | null | undefined,
@@ -166,20 +196,35 @@ export async function resolveB2Url(
   if (!storedValue) return null;
   const value = storedValue.trim();
   if (!value) return null;
-  if (!value.startsWith("b2-private://")) {
-    // Public URL or legacy URL — return as-is.
-    return value;
+
+  // Private bucket reference
+  if (value.startsWith("b2-private://")) {
+    const key = value.slice("b2-private://".length);
+    const { data, error } = await supabase.functions.invoke("b2-presigned-download", {
+      body: { key, expiresSeconds, bucket: "private" },
+    });
+    if (error || !data?.url) {
+      console.error("[resolveB2Url] failed to sign private", error);
+      return null;
+    }
+    return data.url as string;
   }
 
-  const key = value.slice("b2-private://".length);
-  const { data, error } = await supabase.functions.invoke("b2-presigned-download", {
-    body: { key, expiresSeconds },
-  });
-  if (error || !data?.url) {
-    console.error("[resolveB2Url] failed to sign", error);
-    return null;
+  // Raw B2/CDN public URL — sign via public bucket
+  const publicKey = extractB2Key(value);
+  if (publicKey) {
+    const { data, error } = await supabase.functions.invoke("b2-presigned-download", {
+      body: { key: publicKey, expiresSeconds, bucket: "public" },
+    });
+    if (error || !data?.url) {
+      console.warn("[resolveB2Url] public-bucket sign failed, returning original", error);
+      return value;
+    }
+    return data.url as string;
   }
-  return data.url as string;
+
+  // Anything else (legacy GCS URL, data URI, etc.) — return as-is
+  return value;
 }
 
 /** True if the stored value points to the private B2 bucket. */
