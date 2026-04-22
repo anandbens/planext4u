@@ -938,22 +938,19 @@ export const api = {
     const filtered = filteredServices.filter((s: any) => {
       const vendor = vendorMap[s.vendor_id];
       if (!vendor) return false;
-      // No user location yet → don't hide anything
+      // Mirrors browseProducts: only enforce geo when the vendor has an
+      // active plan with radius-based visibility. Otherwise show everywhere.
+      if (!vendor.plan_id) return true;
+      const plan = plansMap[vendor.plan_id];
+      if (!plan || !plan.is_active) return true;
+      if (plan.visibility_type === 'pan_india') return true;
       if (!userLat || !userLng) return true;
-      if (vendor.plan_id) {
-        const plan = plansMap[vendor.plan_id];
-        if (plan && plan.is_active) {
-          if (plan.visibility_type === 'pan_india') return true;
-          if (plan.visibility_type === 'radius_based') {
-            const dist = haversine(userLat, userLng, vendor.shop_latitude || 0, vendor.shop_longitude || 0);
-            return dist <= (plan.radius_km || 5);
-          }
-        }
+      if (plan.visibility_type === 'radius_based') {
+        const dist = haversine(userLat, userLng, vendor.shop_latitude || 0, vendor.shop_longitude || 0);
+        return dist <= (plan.radius_km || 5);
       }
-      // Default: show only if vendor shop is within 25km of user
-      if (!vendor.shop_latitude || !vendor.shop_longitude) return false;
-      const dist = haversine(userLat, userLng, vendor.shop_latitude, vendor.shop_longitude);
-      return dist <= 25;
+      // city/state visibility — show if we can't determine
+      return true;
     });
 
     return filtered as unknown as Service[];
