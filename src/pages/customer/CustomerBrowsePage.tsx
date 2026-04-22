@@ -43,10 +43,11 @@ export default function CustomerBrowsePage() {
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
   const [radiusInfo, setRadiusInfo] = useState<string>("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+  const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   const [minRating, setMinRating] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string[]>>({});
+  const [priceTouched, setPriceTouched] = useState(false);
 
   // Try to get customer's default address first, fallback to GPS
   useEffect(() => {
