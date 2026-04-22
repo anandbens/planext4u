@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { resolveB2Url } from "@/lib/b2-upload";
 import { PrivateKycImage } from "@/components/admin/PrivateKycImage";
 import StorageMigrationPanel from "@/components/admin/StorageMigrationPanel";
+import B2BucketBrowser from "@/components/admin/B2BucketBrowser";
 
 const DEFAULT_FOLDERS = [
   "banners", "category-images", "category-icons", "product-images",
@@ -443,9 +444,20 @@ export default function AdminMediaLibraryPage() {
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList className="bg-secondary/50">
           <TabsTrigger value="library" className="gap-2"><Image className="h-4 w-4" /> Media Files</TabsTrigger>
+          <TabsTrigger value="b2" className="gap-2"><FolderOpen className="h-4 w-4" /> Browse B2 Bucket</TabsTrigger>
           <TabsTrigger value="kyc" className="gap-2"><Shield className="h-4 w-4" /> KYC Documents</TabsTrigger>
           <TabsTrigger value="migration" className="gap-2"><CloudUpload className="h-4 w-4" /> Migrate to B2</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="b2" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-semibold">Live Backblaze B2 Browser</h3>
+              <p className="text-xs text-muted-foreground">Browse the actual public bucket. Click a folder to navigate; select files and import them into the Media Library.</p>
+            </div>
+          </div>
+          <B2BucketBrowser />
+        </TabsContent>
 
         <TabsContent value="library" className="space-y-4">
           <div onDragEnter={handleDragEnter} onDragLeave={handleDragLeave} onDragOver={handleDragOver} onDrop={handleDrop} className="relative">
