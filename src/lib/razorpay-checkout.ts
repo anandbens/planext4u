@@ -43,15 +43,34 @@ export interface RazorpayResult {
   razorpay_signature: string;
 }
 
-// NOTE: We intentionally DO NOT pass a `method` restriction to Razorpay.
-// Passing e.g. { upi: true } collapses the checkout to UPI-collect-only and
-// hides Cards / Netbanking / Wallets / installed UPI apps. Letting Razorpay
-// render the full picker lets the customer pick GPay / PhonePe / Paytm intents
-// natively on Android, plus all other enabled methods.
+// Razorpay's `notes` field accepts STRING values only — passing numbers/booleans
+// causes the native Android SDK to reject the order with a generic error.
+function stringifyNotes(notes?: Record<string, unknown>): Record<string, string> {
+  if (!notes) return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(notes)) {
+    if (v === null || v === undefined) continue;
+    out[k] = String(v);
+  }
+  return out;
+}
+
+// User-cancellation can come back as many shapes from the native plugin —
+// normalise so callers get a single recognisable signal.
+function isCancellation(err: any): boolean {
+  const msg = String(err?.message || err?.description || err || '').toLowerCase();
+  const code = String(err?.code || '').toLowerCase();
+  return (
+    msg.includes('cancel') ||
+    msg.includes('payment_cancelled') ||
+    msg.includes('user closed') ||
+    code === 'payment_cancelled' ||
+    code === 'cancelled'
+  );
+}
 
 /** Native Capacitor flow — uses Android/iOS Razorpay SDK so installed UPI apps appear */
 async function openNative(opts: RazorpayOpenOpts): Promise<RazorpayResult> {
-  // Dynamic import keeps the web bundle clean
   const { Checkout } = await import("capacitor-razorpay");
   const options: any = {
     key: opts.keyId,
@@ -60,15 +79,30 @@ async function openNative(opts: RazorpayOpenOpts): Promise<RazorpayResult> {
     name: opts.name || "Planext4u",
     description: opts.description || "Order",
     order_id: opts.orderId,
-    prefill: opts.prefill || {},
-    notes: opts.notes || {},
+    prefill: {
+      name: opts.prefill?.name || "",
+      email: opts.prefill?.email || "",
+      contact: opts.prefill?.contact || "",
+    },
+    notes: stringifyNotes(opts.notes),
     theme: { color: "#0d9488" },
-    // No `method` restriction — show full UPI app picker + all enabled options
+    // No `method` restriction — show full UPI app picker + all enabled options.
   };
-  // The plugin returns { response: { razorpay_payment_id, razorpay_order_id, razorpay_signature } }
-  const result: any = await Checkout.open(options);
+
+  let result: any;
+  try {
+    result = await Checkout.open(options);
+  } catch (e: any) {
+    if (isCancellation(e)) throw new Error("Payment cancelled");
+    // Surface the native plugin's actual description rather than a generic error.
+    const detail = e?.description || e?.message || e?.code || "Payment could not be completed";
+    throw new Error(String(detail));
+  }
+
   const payload = result?.response || result;
-  if (!payload?.razorpay_payment_id) throw new Error("Payment cancelled");
+  if (!payload?.razorpay_payment_id) {
+    throw new Error("Payment cancelled");
+  }
   return {
     razorpay_payment_id: payload.razorpay_payment_id,
     razorpay_order_id: payload.razorpay_order_id || opts.orderId,
@@ -88,15 +122,15 @@ async function openWeb(opts: RazorpayOpenOpts): Promise<RazorpayResult> {
       name: opts.name || "Planext4u",
       description: opts.description || "Order",
       prefill: opts.prefill || {},
-      notes: opts.notes || {},
-      // No method restriction — show full payment picker
+      notes: stringifyNotes(opts.notes),
       theme: { color: "#0d9488" },
       handler: (resp: RazorpayResult) => resolve(resp),
       modal: { ondismiss: () => reject(new Error("Payment cancelled")) },
     });
-    rp.on("payment.failed", (resp: any) =>
-      reject(new Error(resp.error?.description || "Payment failed"))
-    );
+    rp.on("payment.failed", (resp: any) => {
+      const detail = resp?.error?.description || resp?.error?.reason || "Payment failed";
+      reject(new Error(detail));
+    });
     rp.open();
   });
 }
@@ -106,9 +140,15 @@ export async function openRazorpayCheckout(opts: RazorpayOpenOpts): Promise<Razo
     try {
       return await openNative(opts);
     } catch (e: any) {
-      // If the plugin isn't installed yet on a dev build, fall back to web checkout
       const msg = String(e?.message || e);
-      if (msg.includes("not implemented") || msg.includes("Cannot find module")) {
+      // Plugin missing in dev/web build — fall back to web checkout, but never
+      // hide a real cancellation behind the fallback.
+      if (
+        !isCancellation(e) &&
+        (msg.includes("not implemented") ||
+          msg.includes("Cannot find module") ||
+          msg.includes("UNIMPLEMENTED"))
+      ) {
         return openWeb(opts);
       }
       throw e;
