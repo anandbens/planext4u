@@ -235,50 +235,60 @@ export default function CustomerBrowsePage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-44 md:pb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-xl font-bold">{categoryFilter || searchFilter || "All Products"}</h1>
-            <p className="text-sm text-muted-foreground">{filteredProducts.length} products{radiusInfo && ` · ${radiusInfo}`}</p>
+      <div className="max-w-7xl mx-auto px-4 py-4 pb-44 md:pb-6 overflow-x-hidden">
+        {/* Header: title + count on first line, toolbar wraps cleanly on small screens */}
+        <div className="mb-3">
+          <div className="flex items-baseline justify-between gap-2 min-w-0">
+            <h1 className="text-xl font-bold truncate min-w-0">{categoryFilter || searchFilter || "All Products"}</h1>
+            <p className="text-xs text-muted-foreground shrink-0">
+              {filteredProducts.length} product{filteredProducts.length === 1 ? '' : 's'}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
-                  <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
-                  {activeFilterCount > 0 && (
-                    <span className="ml-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-                <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
-                <ProductFilterPanel
-                  priceRange={priceRange} setPriceRange={setPriceRange}
-                  minRating={minRating} setMinRating={setMinRating}
-                  maxPrice={maxPrice}
-                  availableAttrs={availableAttrs}
-                  selectedAttrs={selectedAttrs} setSelectedAttrs={setSelectedAttrs}
-                />
-                <SheetFooter className="mt-4 flex-row gap-2">
-                  <Button variant="outline" className="flex-1" onClick={() => {
-                    setPriceRange([0, maxPrice]); setMinRating(0); setSelectedAttrs({}); setCurrentPage(1);
-                  }}>Reset</Button>
-                  <Button className="flex-1" onClick={() => { setCurrentPage(1); setFiltersOpen(false); }}>Apply</Button>
-                </SheetFooter>
-              </SheetContent>
-            </Sheet>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-36 h-8 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="popular">Most Popular</SelectItem>
-                <SelectItem value="price_low">Price: Low to High</SelectItem>
-                <SelectItem value="price_high">Price: High to Low</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
-              </SelectContent>
-            </Select>
+          {radiusInfo && (
+            <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{radiusInfo}</p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
+                <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
+                {activeFilterCount > 0 && (
+                  <span className="ml-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+              <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
+              <ProductFilterPanel
+                priceRange={effectivePriceRange}
+                setPriceRange={(v) => { setPriceTouched(true); setPriceRange(v); }}
+                minRating={minRating} setMinRating={setMinRating}
+                maxPrice={maxPrice}
+                availableAttrs={availableAttrs}
+                selectedAttrs={selectedAttrs} setSelectedAttrs={setSelectedAttrs}
+              />
+              <SheetFooter className="mt-4 flex-row gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => {
+                  setPriceTouched(false); setPriceRange([0, maxPrice]); setMinRating(0); setSelectedAttrs({}); setCurrentPage(1);
+                }}>Reset</Button>
+                <Button className="flex-1" onClick={() => { setCurrentPage(1); setFiltersOpen(false); }}>Apply</Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="popular">Most Popular</SelectItem>
+              <SelectItem value="price_low">Price: Low to High</SelectItem>
+              <SelectItem value="price_high">Price: High to Low</SelectItem>
+              <SelectItem value="rating">Highest Rated</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-1 ml-auto">
             <Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setViewMode("grid")}><Grid3X3 className="h-4 w-4" /></Button>
             <Button variant={viewMode === "list" ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setViewMode("list")}><List className="h-4 w-4" /></Button>
           </div>
