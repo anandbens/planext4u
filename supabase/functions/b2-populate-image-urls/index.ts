@@ -285,12 +285,15 @@ async function processScope(
     table: map.table,
     folders_found: 0,
     db_records_total: 0,
+    db_records_missing_image: 0,
     matched_records: 0,
     updated: 0,
     skipped_no_image: 0,
     skipped_no_record: 0,        // folders that have no matching DB row
     skipped_already_set: 0,
+    db_rows_without_folder: 0,   // DB rows that have no B2 folder at all
     folders_without_record_sample: [] as string[],
+    db_rows_without_folder_sample: [] as string[],
     sample_updates: [] as Array<{ id: string; url: string }>,
     errors: [] as string[],
   };
