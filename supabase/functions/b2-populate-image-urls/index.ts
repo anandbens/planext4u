@@ -212,6 +212,19 @@ function publicUrlForKey(key: string): string {
   return `${B2_PUBLIC_BASE}/${encoded}`;
 }
 
+function normalizeNumericId(value: string): string {
+  const normalized = value.replace(/^0+/, "");
+  return normalized || "0";
+}
+
+function extractNumericId(value: unknown): string | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const digits = (raw.match(/\d+/g) ?? []).join("");
+  if (!digits) return null;
+  return normalizeNumericId(digits);
+}
+
 async function listAllFolders(prefix: string): Promise<string[]> {
   const folders: string[] = [];
   let token: string | undefined;
@@ -286,9 +299,12 @@ async function processScope(
   // Build folder->id map
   const folderIds = folders.map((f) => f.slice(map.prefix.length + 1, -1)).filter(Boolean);
 
-  // Step 2 — bulk fetch all DB rows whose id matches a folder name
-  // (chunk into 500 to stay under PostgREST URL limits)
+  // Step 2 — exact match first, then fallback to numeric ID extraction
   const rowsById = new Map<string, Record<string, any>>();
+  const rowsByNumericId = new Map<string, Record<string, any>>();
+  const ambiguousNumericIds = new Set<string>();
+  const matchedRecordIds = new Set<string>();
+
   for (let i = 0; i < folderIds.length; i += 500) {
     const batch = folderIds.slice(i, i + 500);
     const { data, error } = await admin
@@ -298,11 +314,64 @@ async function processScope(
     if (error) { result.errors.push(`select batch: ${error.message}`); continue; }
     for (const r of (data ?? []) as any[]) rowsById.set(String(r[map.idColumn]), r);
   }
-  result.matched_records = rowsById.size;
+
+  const unmatchedFolderIds = folderIds.filter((folderId) => !rowsById.has(folderId));
+  const neededNumericIds = new Set(
+    unmatchedFolderIds
+      .map((folderId) => extractNumericId(folderId))
+      .filter((value): value is string => Boolean(value)),
+  );
+
+  if (neededNumericIds.size > 0) {
+    const pageSize = 1000;
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await admin
+        .from(map.table)
+        .select(`${map.idColumn}, ${map.columns.join(", ")}`)
+        .range(from, from + pageSize - 1);
+
+      if (error) {
+        result.errors.push(`scan rows: ${error.message}`);
+        break;
+      }
+
+      const rows = (data ?? []) as any[];
+      for (const row of rows) {
+        const rawId = String(row[map.idColumn] ?? "").trim();
+        if (!rawId) continue;
+
+        const numericId = extractNumericId(rawId);
+        if (!numericId || !neededNumericIds.has(numericId)) continue;
+
+        const existing = rowsByNumericId.get(numericId);
+        if (existing && String(existing[map.idColumn]) !== rawId) {
+          rowsByNumericId.delete(numericId);
+          ambiguousNumericIds.add(numericId);
+          continue;
+        }
+
+        if (!ambiguousNumericIds.has(numericId)) {
+          rowsByNumericId.set(numericId, row);
+        }
+      }
+
+      if (rows.length < pageSize) break;
+    }
+  }
 
   // Optional total record count for visibility
   const { count } = await admin.from(map.table).select("*", { count: "exact", head: true });
   result.db_records_total = count ?? 0;
+
+  const resolveRowForFolderId = (folderId: string) => {
+    const exactRow = rowsById.get(folderId);
+    if (exactRow) return exactRow;
+
+    const numericId = extractNumericId(folderId);
+    if (!numericId || ambiguousNumericIds.has(numericId)) return null;
+
+    return rowsByNumericId.get(numericId) ?? null;
+  };
 
   // Step 3 — for each folder, list files (concurrent), then update DB
   const concurrency = 12;
@@ -316,12 +385,23 @@ async function processScope(
       const folder = folders[idx];
       const recordId = folderIds[idx];
       if (!recordId) continue;
-      const row = rowsById.get(recordId);
+
+      const numericId = extractNumericId(recordId);
+      if (numericId && ambiguousNumericIds.has(numericId)) {
+        result.errors.push(`${recordId}: multiple DB rows share numeric id ${numericId}`);
+        result.skipped_no_record++;
+        if (orphanFolders.length < 10) orphanFolders.push(recordId);
+        continue;
+      }
+
+      const row = resolveRowForFolderId(recordId);
       if (!row) {
         result.skipped_no_record++;
         if (orphanFolders.length < 10) orphanFolders.push(recordId);
         continue;
       }
+
+      matchedRecordIds.add(String(row[map.idColumn]));
       try {
         const listing = await s3ListObjects({ prefix: folder, maxKeys: 50 });
         const imageKey = listing.keys
@@ -356,6 +436,7 @@ async function processScope(
     }
   }
   await Promise.all(Array.from({ length: concurrency }, () => worker()));
+  result.matched_records = matchedRecordIds.size;
   result.folders_without_record_sample = orphanFolders;
   return result;
 }
