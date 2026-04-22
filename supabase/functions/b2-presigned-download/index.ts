@@ -32,6 +32,13 @@ const B2_PRIVATE_APP_KEY = readSecret("B2_PRIVATE_APPLICATION_KEY");
 const B2_PRIVATE_BUCKET = readSecret("B2_PRIVATE_BUCKET_NAME");
 const B2_PRIVATE_ENDPOINT = readSecret("B2_PRIVATE_S3_ENDPOINT") || readSecret("B2_S3_ENDPOINT");
 
+// Public bucket credentials (used to sign URLs when the bucket has been
+// switched to private at the B2 level, so direct https://f00x... links 404).
+const B2_PUBLIC_KEY_ID = readSecret("B2_APPLICATION_KEY_ID");
+const B2_PUBLIC_APP_KEY = readSecret("B2_APPLICATION_KEY");
+const B2_PUBLIC_BUCKET = readSecret("B2_BUCKET_NAME");
+const B2_PUBLIC_ENDPOINT = readSecret("B2_S3_ENDPOINT");
+
 const SUPABASE_URL = readSecret("SUPABASE_URL");
 const SUPABASE_ANON = readSecret("SUPABASE_ANON_KEY");
 const SUPABASE_SERVICE_ROLE = readSecret("SUPABASE_SERVICE_ROLE_KEY");
