@@ -411,7 +411,11 @@ async function processScope(
         continue;
       }
 
-      matchedRecordIds.add(String(row[map.idColumn]));
+      // CRITICAL: use the actual DB row's ID for the UPDATE — not the folder
+      // name. When numeric fallback matched (folder "842" → row "PRD-842-idww"),
+      // these differ and updating by folder name silently affects 0 rows.
+      const dbId = String(row[map.idColumn]);
+      matchedRecordIds.add(dbId);
       try {
         const listing = await s3ListObjects({ prefix: folder, maxKeys: 50 });
         const imageKey = listing.keys
@@ -433,15 +437,15 @@ async function processScope(
           const { error: upErr } = await admin
             .from(map.table)
             .update(patch)
-            .eq(map.idColumn, recordId);
-          if (upErr) { result.errors.push(`${recordId}: ${upErr.message}`); continue; }
+            .eq(map.idColumn, dbId);
+          if (upErr) { result.errors.push(`${recordId}→${dbId}: ${upErr.message}`); continue; }
         }
         result.updated++;
         if (result.sample_updates.length < 3) {
-          result.sample_updates.push({ id: recordId, url });
+          result.sample_updates.push({ id: dbId, url });
         }
       } catch (e: any) {
-        result.errors.push(`${recordId}: ${e.message || e}`);
+        result.errors.push(`${recordId}→${dbId}: ${e.message || e}`);
       }
     }
   }
