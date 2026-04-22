@@ -147,6 +147,7 @@ export function useSocketWebRTC({ userId, displayName, avatarUrl }: UseSocketWeb
       setError("Not connected to signaling server");
       return;
     }
+    endedRef.current = false;
     setError(null);
     setStatus("calling");
     try {
@@ -173,6 +174,7 @@ export function useSocketWebRTC({ userId, displayName, avatarUrl }: UseSocketWeb
   const acceptIncoming = useCallback(async () => {
     const call = incomingCall;
     if (!call || !signalingRef.current) return;
+    endedRef.current = false;
     setIncomingCall(null);
     setError(null);
     setStatus("connected"); // optimistic — switches to true connected on ICE event
