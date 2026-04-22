@@ -13,6 +13,7 @@ import { useCurrency } from "@/lib/country-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isProductOutOfStock } from "@/lib/stock-display";
+import { SmartImage } from "@/components/SmartImage";
 
 export default function CustomerVendorPage() {
   const { id } = useParams();
@@ -234,7 +235,7 @@ export default function CustomerVendorPage() {
                           <Badge className="absolute top-2 left-2 z-10 bg-success text-success-foreground text-[9px]">New Arrival</Badge>
                         )}
                         {p.image ? (
-                          <img src={p.image} alt={p.title} className={`w-full h-full object-cover group-hover:scale-105 transition-transform ${isOutOfStock ? 'opacity-50' : ''}`} />
+                          <SmartImage src={p.image} alt={p.title} className={`w-full h-full object-cover group-hover:scale-105 transition-transform ${isOutOfStock ? 'opacity-50' : ''}`} />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-4xl">{p.emoji}</div>
                         )}

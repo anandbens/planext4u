@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrency } from "@/lib/country-context";
+import { SmartImage } from "@/components/SmartImage";
 
 export default function CustomerWishlistPage() {
   const { format: fmt } = useCurrency();
@@ -103,7 +104,7 @@ export default function CustomerWishlistPage() {
                     <Card key={p.id} className="overflow-hidden group">
                       <Link to={`/app/product/${p.id}`}>
                         <div className="h-36 md:h-44 bg-secondary/20 relative overflow-hidden">
-                          {p.image ? <img src={p.image} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> :
+                          {p.image ? <SmartImage src={p.image} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /> :
                             <div className="w-full h-full flex items-center justify-center text-4xl">{p.emoji}</div>}
                           <button onClick={(e) => { e.preventDefault(); removeItem(p.id, 'products'); }}
                             className="absolute top-2 right-2 h-8 w-8 rounded-full bg-card/90 flex items-center justify-center shadow">

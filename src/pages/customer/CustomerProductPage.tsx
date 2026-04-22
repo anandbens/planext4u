@@ -19,6 +19,7 @@ import DOMPurify from "dompurify";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { isProductOutOfStock } from "@/lib/stock-display";
+import { SmartImage } from "@/components/SmartImage";
 
 
 export default function CustomerProductPage() {
@@ -263,7 +264,7 @@ export default function CustomerProductPage() {
                 return (
                   <div className="bg-secondary/20 rounded-2xl h-64 md:h-96 flex items-center justify-center relative overflow-hidden">
                     {uniqueImages[0] ? (
-                      <img src={uniqueImages[0]} alt={product.title} className="w-full h-full object-cover rounded-2xl" />
+                      <SmartImage src={uniqueImages[0]} alt={product.title} className="w-full h-full object-cover rounded-2xl" />
                     ) : (
                       <span className="text-8xl">{product.emoji}</span>
                     )}
@@ -276,7 +277,7 @@ export default function CustomerProductPage() {
               return (
                 <div className="relative">
                   <div className="bg-secondary/20 rounded-2xl h-64 md:h-96 flex items-center justify-center relative overflow-hidden">
-                    <img src={uniqueImages[imgIdx] || ''} alt={product.title} className="w-full h-full object-cover rounded-2xl" />
+                    <SmartImage src={uniqueImages[imgIdx] || ''} alt={product.title} className="w-full h-full object-cover rounded-2xl" />
                     <button onClick={toggleWishlist} className="absolute top-3 right-3 h-8 w-8 rounded-full bg-card/80 flex items-center justify-center z-10">
                       <Heart className={`h-4 w-4 ${wishlisted ? "fill-destructive text-destructive" : "text-muted-foreground"}`} />
                     </button>

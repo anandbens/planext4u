@@ -21,6 +21,7 @@ import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";
 import { CategoryProductRow } from "@/components/customer/CategoryProductRow";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { isProductOutOfStock } from "@/lib/stock-display";
+import { SmartImage } from "@/components/SmartImage";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
@@ -404,7 +405,7 @@ export default function CustomerBrowsePage() {
                               );
                             }
                             return p.image ? (
-                              <img src={p.image} alt={p.title} className={`w-full h-full object-cover ${isOutOfStock ? 'opacity-50' : ''}`} />
+                              <SmartImage src={p.image} alt={p.title} className={`w-full h-full object-cover ${isOutOfStock ? 'opacity-50' : ''}`} />
                             ) : (
                               <span className="text-4xl">{p.emoji}</span>
                             );
