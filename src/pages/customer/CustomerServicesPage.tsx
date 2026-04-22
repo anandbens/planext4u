@@ -14,6 +14,7 @@ import { BannerAd } from "@/components/customer/BannerAd";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
+import { getServiceImage } from "@/lib/service-image";
 
 function useServiceWishlist() {
   const getList = () => { try { return JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]'); } catch { return []; } };
