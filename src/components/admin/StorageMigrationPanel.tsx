@@ -159,9 +159,10 @@ export default function StorageMigrationPanel() {
     }
   };
 
-  // Generate carousel + product/service images via AI and upload to B2
-  const [seeding, setSeeding] = useState<null | "all" | "carousel" | "products" | "services">(null);
-  const seedMedia = async (mode: "all" | "carousel" | "products" | "services", limit = 8) => {
+  // Generate carousel + product/service/category/vendor/customer/banner images via AI and upload to B2
+  type SeedMode = "all" | "carousel" | "products" | "services" | "categories" | "vendors" | "customers" | "banners";
+  const [seeding, setSeeding] = useState<null | SeedMode>(null);
+  const seedMedia = async (mode: SeedMode, limit = 8) => {
     setSeeding(mode);
     try {
       const { data, error } = await supabase.functions.invoke("seed-homepage-media", {
@@ -174,15 +175,23 @@ export default function StorageMigrationPanel() {
         carousel_added?: number;
         products_updated?: number;
         services_updated?: number;
+        categories_updated?: number;
+        vendors_updated?: number;
+        customers_updated?: number;
+        banners_updated?: number;
         errors?: string[];
       };
       if (r.accepted) {
-        toast.success(r.message || "Generation started in background. Refresh homepage in 1–3 minutes.");
+        toast.success(r.message || "Generation started in background. Refresh in 1–3 minutes.");
       } else {
-        const parts = [];
+        const parts: string[] = [];
         if (r.carousel_added) parts.push(`${r.carousel_added} carousel banners`);
-        if (r.products_updated) parts.push(`${r.products_updated} product images`);
-        if (r.services_updated) parts.push(`${r.services_updated} service images`);
+        if (r.products_updated) parts.push(`${r.products_updated} products`);
+        if (r.services_updated) parts.push(`${r.services_updated} services`);
+        if (r.categories_updated) parts.push(`${r.categories_updated} categories`);
+        if (r.vendors_updated) parts.push(`${r.vendors_updated} vendors`);
+        if (r.customers_updated) parts.push(`${r.customers_updated} customer avatars`);
+        if (r.banners_updated) parts.push(`${r.banners_updated} banners`);
         toast.success(parts.length ? `Added ${parts.join(", ")}` : "Nothing to seed (already populated)");
         if (r.errors?.length) {
           console.warn("[seed-homepage-media] errors", r.errors);
