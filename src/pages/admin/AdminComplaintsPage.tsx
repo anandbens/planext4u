@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { TicketChatThread } from "@/components/support/TicketChatThread";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, AlertTriangle, Clock, CheckCircle, MessageSquare } from "lucide-react";
+import { Search, AlertTriangle, Clock, CheckCircle, MessageSquare, ExternalLink } from "lucide-react";
 
 interface Complaint {
   id: string; user_id: string; user_name: string | null; entity_type: string;
@@ -44,6 +45,7 @@ const CATEGORIES = ["quality", "delay", "damage", "wrong_item", "refund", "behav
 export default function AdminComplaintsPage() {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [search, setSearch] = useState("");
+  const [contactFilter, setContactFilter] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
@@ -91,6 +93,11 @@ export default function AdminComplaintsPage() {
       const q = search.toLowerCase();
       const hay = [c.subject, c.user_name, c.customer_email, c.customer_mobile]
         .filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (contactFilter) {
+      const q = contactFilter.toLowerCase().trim();
+      const hay = [c.customer_email, c.customer_mobile].filter(Boolean).join(" ").toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -153,6 +160,15 @@ export default function AdminComplaintsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search complaints..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Filter by email or phone..."
+              value={contactFilter}
+              onChange={e => setContactFilter(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
@@ -172,6 +188,15 @@ export default function AdminComplaintsPage() {
               {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>)}
             </SelectContent>
           </Select>
+          {(search || contactFilter || filterStatus !== "all" || filterCategory !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setSearch(""); setContactFilter(""); setFilterStatus("all"); setFilterCategory("all"); }}
+            >
+              Clear filters
+            </Button>
+          )}
         </div>
 
         <Tabs defaultValue="all" className="space-y-4">
@@ -199,7 +224,20 @@ export default function AdminComplaintsPage() {
                         <h3 className="font-semibold truncate">{c.subject}</h3>
                         <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">{c.description}</p>
                         <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
-                          <span>By: {c.user_name || 'Unknown'}</span>
+                          <span className="inline-flex items-center gap-1">
+                            By:{" "}
+                            {c.user_id ? (
+                              <Link
+                                to={`/customers?customerId=${c.user_id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-primary hover:underline inline-flex items-center gap-1"
+                                title="Open customer profile"
+                              >
+                                {c.user_name || 'Unknown'}
+                                <ExternalLink className="h-3 w-3" />
+                              </Link>
+                            ) : (c.user_name || 'Unknown')}
+                          </span>
                           {c.customer_email && <span>📧 {c.customer_email}</span>}
                           {c.customer_mobile && <span>📱 {c.customer_mobile}</span>}
                           {c.order_id && <span>Order: {c.order_id}</span>}
@@ -235,7 +273,18 @@ export default function AdminComplaintsPage() {
                 <div><span className="text-muted-foreground">Type:</span> {selectedComplaint.entity_type}</div>
                 <div><span className="text-muted-foreground">Category:</span> {selectedComplaint.category.replace(/_/g, ' ')}</div>
                 <div><span className="text-muted-foreground">Priority:</span> {selectedComplaint.priority}</div>
-                <div><span className="text-muted-foreground">Customer:</span> {selectedComplaint.user_name || 'N/A'}</div>
+                <div>
+                  <span className="text-muted-foreground">Customer:</span>{" "}
+                  {selectedComplaint.user_id ? (
+                    <Link
+                      to={`/customers?customerId=${selectedComplaint.user_id}`}
+                      className="text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      {selectedComplaint.user_name || 'View profile'}
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  ) : (selectedComplaint.user_name || 'N/A')}
+                </div>
                 <div className="col-span-2 grid grid-cols-2 gap-3 rounded-md bg-muted/40 p-2">
                   <div><span className="text-muted-foreground">Email:</span> {selectedComplaint.customer_email || 'N/A'}</div>
                   <div><span className="text-muted-foreground">Phone:</span> {selectedComplaint.customer_mobile || 'N/A'}</div>

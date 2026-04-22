@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fmtTs } from "@/lib/format-date";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable, SummaryWidget } from "@/components/admin/DataTable";
@@ -89,6 +90,28 @@ export default function CustomersPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { fetchStats(); }, [fetchStats]);
   useEffect(() => { setPage(1); setStatusFilter(""); setOccupationFilter(""); }, [activeTab]);
+
+  // Deep-link: open a customer by id (used by admin complaint links)
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const cid = searchParams.get("customerId");
+    if (!cid) return;
+    (async () => {
+      const { data: row } = await supabase.from("customers").select("*").eq("id", cid).maybeSingle();
+      if (row) {
+        setSelected(row as any);
+        setModalMode("view");
+        setModalOpen(true);
+      } else {
+        toast.error("Customer not found");
+      }
+      // Clear the param so closing/reopening behaves normally
+      const next = new URLSearchParams(searchParams);
+      next.delete("customerId");
+      setSearchParams(next, { replace: true });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const openModal = (user: User | null, mode: "view" | "edit" | "create") => {
     setSelected(user); setModalMode(mode); setModalOpen(true);
