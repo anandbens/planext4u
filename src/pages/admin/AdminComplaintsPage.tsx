@@ -273,7 +273,18 @@ export default function AdminComplaintsPage() {
                 <div><span className="text-muted-foreground">Type:</span> {selectedComplaint.entity_type}</div>
                 <div><span className="text-muted-foreground">Category:</span> {selectedComplaint.category.replace(/_/g, ' ')}</div>
                 <div><span className="text-muted-foreground">Priority:</span> {selectedComplaint.priority}</div>
-                <div><span className="text-muted-foreground">Customer:</span> {selectedComplaint.user_name || 'N/A'}</div>
+                <div>
+                  <span className="text-muted-foreground">Customer:</span>{" "}
+                  {selectedComplaint.user_id ? (
+                    <Link
+                      to={`/customers?customerId=${selectedComplaint.user_id}`}
+                      className="text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      {selectedComplaint.user_name || 'View profile'}
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  ) : (selectedComplaint.user_name || 'N/A')}
+                </div>
                 <div className="col-span-2 grid grid-cols-2 gap-3 rounded-md bg-muted/40 p-2">
                   <div><span className="text-muted-foreground">Email:</span> {selectedComplaint.customer_email || 'N/A'}</div>
                   <div><span className="text-muted-foreground">Phone:</span> {selectedComplaint.customer_mobile || 'N/A'}</div>
