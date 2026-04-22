@@ -28,16 +28,29 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SUPABASE_SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+function readSecret(name: string): string {
+  return (Deno.env.get(name) ?? "")
+    .trim()
+    .replace(/^['"]+|['"]+$/g, "")
+    .replace(/[\r\n]+/g, "");
+}
 
-const B2_KEY_ID = Deno.env.get("B2_APPLICATION_KEY_ID") ?? "";
-const B2_APP_KEY = Deno.env.get("B2_APPLICATION_KEY") ?? "";
-const B2_BUCKET = Deno.env.get("B2_BUCKET_NAME") ?? "";
-const B2_ENDPOINT = Deno.env.get("B2_S3_ENDPOINT") ?? "";
+function redactSecret(value: string): string {
+  if (!value) return "missing";
+  if (value.length <= 8) return `${value.slice(0, 2)}…${value.slice(-2)}`;
+  return `${value.slice(0, 4)}…${value.slice(-4)}`;
+}
+
+const SUPABASE_URL = readSecret("SUPABASE_URL");
+const SUPABASE_ANON = readSecret("SUPABASE_ANON_KEY");
+const SUPABASE_SERVICE_ROLE = readSecret("SUPABASE_SERVICE_ROLE_KEY");
+
+const B2_KEY_ID = readSecret("B2_APPLICATION_KEY_ID");
+const B2_APP_KEY = readSecret("B2_APPLICATION_KEY");
+const B2_BUCKET = readSecret("B2_BUCKET_NAME");
+const B2_ENDPOINT = readSecret("B2_S3_ENDPOINT");
 const B2_PUBLIC_BASE =
-  (Deno.env.get("B2_PUBLIC_URL_BASE") ?? "").replace(/\/+$/, "") ||
+  readSecret("B2_PUBLIC_URL_BASE").replace(/\/+$/, "") ||
   `https://f005.backblazeb2.com/file/${B2_BUCKET}`;
 
 type Mapping = {
@@ -160,7 +173,12 @@ async function s3ListObjects(opts: {
   });
   if (!res.ok) {
     const txt = await res.text();
-    throw new Error(`B2 list failed ${res.status}: ${txt.slice(0, 400)}`);
+    const code = txt.match(/<Code>([^<]+)<\/Code>/)?.[1] ?? "unknown";
+    const message = txt.match(/<Message>([^<]+)<\/Message>/)?.[1] ?? txt.slice(0, 200);
+    throw new Error(
+      `B2 list failed ${res.status} [${code}]: ${message} ` +
+      `(endpoint=${host}, region=${region}, bucket=${B2_BUCKET}, key=${redactSecret(B2_KEY_ID)})`,
+    );
   }
   const xml = await res.text();
   const prefixes: string[] = [];
