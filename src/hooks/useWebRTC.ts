@@ -221,6 +221,8 @@ export function useWebRTC({
 
   // End call
   const endCall = useCallback(async () => {
+    endedRef.current = true;
+    setError(null); // suppress any in-flight permission/media error
     if (callId) {
       await supabase
         .from("calls" as any)
@@ -234,6 +236,8 @@ export function useWebRTC({
 
   // Reject call
   const rejectCall = useCallback(async () => {
+    endedRef.current = true;
+    setError(null);
     if (callId) {
       await supabase
         .from("calls" as any)
