@@ -153,6 +153,7 @@ export function useWebRTC({
   // Start call as caller
   const startCall = useCallback(async () => {
     if (!callId) return;
+    endedRef.current = false;
     setError(null);
     setStatus("calling");
 
@@ -189,6 +190,7 @@ export function useWebRTC({
   // Answer call as callee
   const answerCall = useCallback(async (offer: RTCSessionDescriptionInit) => {
     if (!callId) return;
+    endedRef.current = false;
     setError(null);
 
     try {
