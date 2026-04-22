@@ -4,6 +4,7 @@ import type { Database } from './types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -11,12 +12,43 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 import { capacitorStorageAdapter } from '@/lib/storage-adapter';
 import { Capacitor } from '@capacitor/core';
 
-// Use Capacitor Preferences securely on devices, fallback to localStorage if needed
 const isNative = Capacitor.isNativePlatform();
+
+/**
+ * Per-portal session isolation.
+ *
+ * Without this, every browser tab on the same origin shares ONE Supabase auth
+ * cookie/localStorage entry. That means logging in as admin in tab A and then
+ * opening `/app` (customer) in tab B causes tab B to inherit admin's session
+ * and silently auto-log the wrong identity.
+ *
+ * We split the storage key by portal so admin / vendor / customer each keep
+ * an independent session in the same browser. Native apps are single-portal,
+ * so they always use the default key.
+ */
+function detectPortal(): 'admin' | 'vendor' | 'customer' {
+  if (isNative) {
+    try {
+      const nativePortal = sessionStorage.getItem('p4u_native_portal');
+      if (nativePortal === 'vendor') return 'vendor';
+    } catch { /* ignore */ }
+    return 'customer';
+  }
+  if (typeof window === 'undefined') return 'customer';
+  const path = window.location.pathname || '';
+  if (path.startsWith('/vendor')) return 'vendor';
+  if (path.startsWith('/app')) return 'customer';
+  // /login, /admin, /dashboard, /reports, etc. → admin portal
+  return 'admin';
+}
+
+const portal = detectPortal();
+const storageKey = `sb-${SUPABASE_PROJECT_ID}-auth-token-${portal}`;
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: isNative ? capacitorStorageAdapter : localStorage,
+    storageKey,
     persistSession: true,
     autoRefreshToken: true,
   }
