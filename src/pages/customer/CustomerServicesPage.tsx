@@ -25,6 +25,7 @@ function useServiceWishlist() {
     const updated = isIn ? current.filter((s: string) => s !== id) : [...current, id];
     localStorage.setItem('app_db_service_wishlist', JSON.stringify(updated));
     setList(updated);
+    window.dispatchEvent(new Event('wishlist-changed'));
     toast.success(isIn ? "Removed from wishlist" : "Service saved to wishlist");
   };
   return { list, toggle };

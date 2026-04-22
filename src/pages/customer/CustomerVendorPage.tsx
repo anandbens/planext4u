@@ -35,6 +35,7 @@ export default function CustomerVendorPage() {
     const updated = isSellerSaved ? saved.filter((s: string) => s !== id) : [...saved, id];
     localStorage.setItem('app_db_seller_wishlist', JSON.stringify(updated));
     setIsSellerSaved(!isSellerSaved);
+    window.dispatchEvent(new Event('wishlist-changed'));
     toast.success(isSellerSaved ? "Removed from favorites" : "Seller saved to favorites");
   };
 
