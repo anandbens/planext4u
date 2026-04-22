@@ -159,9 +159,10 @@ export default function StorageMigrationPanel() {
     }
   };
 
-  // Generate carousel + product/service images via AI and upload to B2
-  const [seeding, setSeeding] = useState<null | "all" | "carousel" | "products" | "services">(null);
-  const seedMedia = async (mode: "all" | "carousel" | "products" | "services", limit = 8) => {
+  // Generate carousel + product/service/category/vendor/customer/banner images via AI and upload to B2
+  type SeedMode = "all" | "carousel" | "products" | "services" | "categories" | "vendors" | "customers" | "banners";
+  const [seeding, setSeeding] = useState<null | SeedMode>(null);
+  const seedMedia = async (mode: SeedMode, limit = 8) => {
     setSeeding(mode);
     try {
       const { data, error } = await supabase.functions.invoke("seed-homepage-media", {
@@ -174,15 +175,23 @@ export default function StorageMigrationPanel() {
         carousel_added?: number;
         products_updated?: number;
         services_updated?: number;
+        categories_updated?: number;
+        vendors_updated?: number;
+        customers_updated?: number;
+        banners_updated?: number;
         errors?: string[];
       };
       if (r.accepted) {
-        toast.success(r.message || "Generation started in background. Refresh homepage in 1–3 minutes.");
+        toast.success(r.message || "Generation started in background. Refresh in 1–3 minutes.");
       } else {
-        const parts = [];
+        const parts: string[] = [];
         if (r.carousel_added) parts.push(`${r.carousel_added} carousel banners`);
-        if (r.products_updated) parts.push(`${r.products_updated} product images`);
-        if (r.services_updated) parts.push(`${r.services_updated} service images`);
+        if (r.products_updated) parts.push(`${r.products_updated} products`);
+        if (r.services_updated) parts.push(`${r.services_updated} services`);
+        if (r.categories_updated) parts.push(`${r.categories_updated} categories`);
+        if (r.vendors_updated) parts.push(`${r.vendors_updated} vendors`);
+        if (r.customers_updated) parts.push(`${r.customers_updated} customer avatars`);
+        if (r.banners_updated) parts.push(`${r.banners_updated} banners`);
         toast.success(parts.length ? `Added ${parts.join(", ")}` : "Nothing to seed (already populated)");
         if (r.errors?.length) {
           console.warn("[seed-homepage-media] errors", r.errors);
@@ -292,12 +301,17 @@ export default function StorageMigrationPanel() {
       <Card className="p-4 border-primary/30">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h2 className="text-lg font-semibold">Generate Homepage Images (AI → B2)</h2>
+            <h2 className="text-lg font-semibold">Generate Images for Missing Records (AI → B2)</h2>
+            <p className="text-sm text-muted-foreground">
+              Generates AI images and uploads them to the same B2 folder structure
+              (e.g. <code>Categories/&lt;id&gt;/</code>) so the populator continues to find them.
+              Only fills records whose image columns are empty.
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => seedMedia("carousel")} disabled={!!seeding} variant="outline" className="gap-2">
               {seeding === "carousel" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-              Carousel (5 banners)
+              Carousel
             </Button>
             <Button onClick={() => seedMedia("products", 8)} disabled={!!seeding} variant="outline" className="gap-2">
               {seeding === "products" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
@@ -307,7 +321,23 @@ export default function StorageMigrationPanel() {
               {seeding === "services" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               Services (×8)
             </Button>
-            <Button onClick={() => seedMedia("all", 8)} disabled={!!seeding} className="gap-2">
+            <Button onClick={() => seedMedia("categories", 20)} disabled={!!seeding} variant="outline" className="gap-2">
+              {seeding === "categories" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Categories (×20)
+            </Button>
+            <Button onClick={() => seedMedia("vendors", 20)} disabled={!!seeding} variant="outline" className="gap-2">
+              {seeding === "vendors" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Vendors (×20)
+            </Button>
+            <Button onClick={() => seedMedia("customers", 50)} disabled={!!seeding} variant="outline" className="gap-2">
+              {seeding === "customers" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Customer avatars (×50)
+            </Button>
+            <Button onClick={() => seedMedia("banners", 10)} disabled={!!seeding} variant="outline" className="gap-2">
+              {seeding === "banners" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Banners (×10)
+            </Button>
+            <Button onClick={() => seedMedia("all", 20)} disabled={!!seeding} className="gap-2">
               {seeding === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               Generate everything
             </Button>
