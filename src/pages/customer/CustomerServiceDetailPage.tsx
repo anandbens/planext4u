@@ -116,6 +116,7 @@ export default function CustomerServiceDetailPage() {
       const next = saved.includes(id) ? saved.filter((x: string) => x !== id) : [...saved, id];
       localStorage.setItem('app_db_service_wishlist', JSON.stringify(next));
       setIsWishlisted(next.includes(id));
+      window.dispatchEvent(new Event('wishlist-changed'));
       toast.success(next.includes(id) ? "Added to wishlist" : "Removed from wishlist");
     } catch {}
   };
