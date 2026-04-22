@@ -93,6 +93,14 @@ export default function CustomerBrowsePage() {
     return Math.max(1000, Math.ceil(m / 100) * 100);
   }, [products]);
 
+  // Initialize / re-clamp price range whenever maxPrice changes (until user touches the slider)
+  useEffect(() => {
+    if (priceTouched) return;
+    setPriceRange([0, maxPrice]);
+  }, [maxPrice, priceTouched]);
+
+  const effectivePriceRange: [number, number] = priceRange ?? [0, maxPrice];
+
   const availableAttrs = useMemo(() => {
     const map = new Map<string, { name: string; values: Set<string> }>();
     for (const p of (products || []) as any[]) {
@@ -110,9 +118,10 @@ export default function CustomerBrowsePage() {
   // Apply local price/rating/attribute filters on top of the server-fetched list.
   const filteredProducts = useMemo(() => {
     const activeAttrIds = Object.keys(selectedAttrs).filter((k) => (selectedAttrs[k] || []).length > 0);
+    const [lo, hi] = effectivePriceRange;
     return (products || []).filter((p: any) => {
       const price = Number(p.price) || 0;
-      if (price < priceRange[0] || price > priceRange[1]) return false;
+      if (price < lo || price > hi) return false;
       if ((Number(p.rating) || 0) < minRating) return false;
       if (activeAttrIds.length > 0) {
         const productAttrs: any[] = Array.isArray(p.product_attributes) ? p.product_attributes : [];
@@ -125,10 +134,11 @@ export default function CustomerBrowsePage() {
       }
       return true;
     });
-  }, [products, priceRange, minRating, selectedAttrs]);
+  }, [products, effectivePriceRange, minRating, selectedAttrs]);
 
   const activeAttrCount = Object.values(selectedAttrs).reduce((s, v) => s + (v?.length ? 1 : 0), 0);
-  const activeFilterCount = (priceRange[0] > 0 ? 1 : 0) + (priceRange[1] < maxPrice ? 1 : 0) + (minRating > 0 ? 1 : 0) + activeAttrCount;
+  const priceFilterActive = priceTouched && (effectivePriceRange[0] > 0 || effectivePriceRange[1] < maxPrice);
+  const activeFilterCount = (priceFilterActive ? 1 : 0) + (minRating > 0 ? 1 : 0) + activeAttrCount;
 
   const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
 
