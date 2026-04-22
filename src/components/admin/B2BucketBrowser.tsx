@@ -31,15 +31,24 @@ export default function B2BucketBrowser() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const { data, isLoading, isFetching, refetch, error: queryError } = useQuery({
     queryKey: ["b2BucketList", prefix],
     queryFn: async (): Promise<ListResp> => {
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess?.session?.access_token) {
+        throw new Error("You must be signed in as an admin to browse the B2 bucket.");
+      }
       const { data, error } = await supabase.functions.invoke("b2-list-objects", {
         body: { mode: "list", prefix, maxKeys: 500 },
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        // Edge function returned non-2xx — surface the inner JSON error if any
+        const inner = (data as any)?.error;
+        throw new Error(inner || error.message || "Failed to list B2 bucket");
+      }
       return data as ListResp;
     },
+    retry: false,
   });
 
   const goInto = (folder: string) => {
