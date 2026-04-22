@@ -19,6 +19,7 @@ import DOMPurify from "dompurify";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { isProductOutOfStock } from "@/lib/stock-display";
+import { SmartImage } from "@/components/SmartImage";
 
 
 export default function CustomerProductPage() {
