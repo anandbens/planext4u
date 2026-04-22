@@ -285,12 +285,15 @@ async function processScope(
     table: map.table,
     folders_found: 0,
     db_records_total: 0,
+    db_records_missing_image: 0,
     matched_records: 0,
     updated: 0,
     skipped_no_image: 0,
     skipped_no_record: 0,        // folders that have no matching DB row
     skipped_already_set: 0,
+    db_rows_without_folder: 0,   // DB rows that have no B2 folder at all
     folders_without_record_sample: [] as string[],
+    db_rows_without_folder_sample: [] as string[],
     sample_updates: [] as Array<{ id: string; url: string }>,
     errors: [] as string[],
   };
@@ -452,6 +455,37 @@ async function processScope(
   await Promise.all(Array.from({ length: concurrency }, () => worker()));
   result.matched_records = matchedRecordIds.size;
   result.folders_without_record_sample = orphanFolders;
+
+  // Step 4 — find DB rows that have no B2 folder & no image yet (so admin can act)
+  try {
+    const firstCol = map.columns[0];
+    const orFilter = map.columns.map((c) => `${c}.is.null`).join(",");
+    const { data: missingRows, count: missingCount } = await admin
+      .from(map.table)
+      .select(`${map.idColumn}`, { count: "exact" })
+      .or(orFilter)
+      .limit(20);
+    result.db_records_missing_image = missingCount ?? 0;
+
+    const matchedFolderIds = new Set<string>();
+    for (const fid of folderIds) {
+      matchedFolderIds.add(fid);
+      const num = extractNumericId(fid);
+      if (num) matchedFolderIds.add(num);
+    }
+    const noFolderRows: string[] = [];
+    for (const r of (missingRows ?? []) as any[]) {
+      const rid = String(r[map.idColumn] ?? "");
+      const num = extractNumericId(rid);
+      const hasFolder = matchedFolderIds.has(rid) || (num && matchedFolderIds.has(num));
+      if (!hasFolder) noFolderRows.push(rid);
+    }
+    result.db_rows_without_folder_sample = noFolderRows.slice(0, 10);
+    result.db_rows_without_folder = noFolderRows.length;
+    void firstCol;
+  } catch (e: any) {
+    result.errors.push(`gap report: ${e.message || e}`);
+  }
   return result;
 }
 
@@ -534,10 +568,12 @@ Deno.serve(async (req: Request) => {
         acc.updated += r.updated ?? 0;
         acc.skipped_no_image += r.skipped_no_image ?? 0;
         acc.skipped_no_record += r.skipped_no_record ?? 0;
+        acc.db_rows_without_folder += r.db_rows_without_folder ?? 0;
+        acc.db_records_missing_image += r.db_records_missing_image ?? 0;
         acc.errors += (r.errors?.length ?? 0) + (r.error ? 1 : 0);
         return acc;
       },
-      { folders_found: 0, matched_records: 0, updated: 0, skipped_no_image: 0, skipped_no_record: 0, errors: 0 },
+      { folders_found: 0, matched_records: 0, updated: 0, skipped_no_image: 0, skipped_no_record: 0, db_rows_without_folder: 0, db_records_missing_image: 0, errors: 0 },
     );
 
     return new Response(
