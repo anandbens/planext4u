@@ -47,28 +47,38 @@ type Mapping = {
   columns: string[];       // columns to populate (first one wins; we set every empty one)
 };
 
+// Maps actual B2 folder prefixes (verified from bucket browser) to DB tables/columns.
+// Folders present in B2 but intentionally skipped (no scalar image column or
+// multi-image arrays managed elsewhere):
+//   AvailableAreas, AvailableCities, ClassifiedCategories, ClassifiedProducts,
+//   ClassifiedServices, ClassifiedVendors, NewsFeed, POSProducts, POSVendors,
+//   Posts, ProductRequests, Settlements
 const MAPPINGS: Record<string, Mapping> = {
-  advertisements:            { prefix: "Advertisements",          table: "advertisements",          idColumn: "id", columns: ["image_url", "mobile_image_url"] },
-  products:                  { prefix: "Products",                table: "products",                idColumn: "id", columns: ["image", "thumbnail_image", "banner_image"] },
-  product_variants:          { prefix: "ProductVariants",         table: "product_variants",        idColumn: "id", columns: ["image_url"] },
-  services:                  { prefix: "Services",                table: "services",                idColumn: "id", columns: ["image"] },
-  categories:                { prefix: "Categories",              table: "categories",              idColumn: "id", columns: ["image", "icon", "banner_image"] },
-  service_categories:        { prefix: "ServiceCategories",       table: "service_categories",      idColumn: "id", columns: ["image", "icon", "banner_image"] },
-  banners:                   { prefix: "Banners",                 table: "banners",                 idColumn: "id", columns: ["desktop_image", "mobile_image"] },
-  popup_banners:             { prefix: "PopupBanners",            table: "popup_banners",           idColumn: "id", columns: ["image"] },
-  homepage_banners:          { prefix: "HomepageBanners",         table: "homepage_banners",        idColumn: "id", columns: ["media_url", "mobile_media_url"] },
-  homepage_section_items:    { prefix: "HomepageSectionItems",    table: "homepage_section_items",  idColumn: "id", columns: ["image_url"] },
-  splash_screens:            { prefix: "SplashScreens",           table: "splash_screens",          idColumn: "id", columns: ["image_url"] },
-  onboarding_screens:        { prefix: "OnboardingScreens",       table: "onboarding_screens",      idColumn: "id", columns: ["image_url"] },
+  // Confirmed folders from B2 bucket
+  advertisements:        { prefix: "Advertisements", table: "advertisements", idColumn: "id",      columns: ["image_url", "mobile_image_url"] },
+  banners:               { prefix: "Banners",        table: "banners",        idColumn: "id",      columns: ["desktop_image", "mobile_image"] },
+  categories:            { prefix: "Categories",     table: "categories",     idColumn: "id",      columns: ["image", "icon", "banner_image", "promotion_banner_url"] },
+  customers:             { prefix: "Customers",      table: "customers",      idColumn: "id",      columns: ["profile_photo"] },
+  popup_banners:         { prefix: "PopupBanners",   table: "popup_banners",  idColumn: "id",      columns: ["image"] },
+  products:              { prefix: "Products",       table: "products",       idColumn: "id",      columns: ["image", "thumbnail_image", "banner_image"] },
+  services:              { prefix: "Services",       table: "services",       idColumn: "id",      columns: ["image"] },
+  vendors:               { prefix: "Vendors",        table: "vendors",        idColumn: "id",      columns: ["shop_photo_url", "background_image"] },
+  // Some vendor folders (esp. service vendors) share the same id space — try both tables
+  service_vendors:       { prefix: "Vendors",        table: "service_vendors", idColumn: "id",     columns: ["shop_photo_url", "background_image"] },
+  // Social avatars are keyed by user_id (UUID) — folder name = SocialProfiles/<uuid>/
+  social_profiles:       { prefix: "SocialProfiles", table: "social_profiles", idColumn: "user_id", columns: ["avatar_url"] },
+
+  // The following are only used if matching folders are added later in B2.
+  // They scan harmlessly and are skipped if no folders exist.
+  restaurants:           { prefix: "Restaurants",        table: "restaurants",        idColumn: "id", columns: ["logo_url", "cover_image", "banner_url"] },
+  menu_items:            { prefix: "MenuItems",          table: "menu_items",         idColumn: "id", columns: ["image_url"] },
+  menu_combos:           { prefix: "MenuCombos",         table: "menu_combos",        idColumn: "id", columns: ["image_url"] },
+  homepage_banners:      { prefix: "HomepageBanners",    table: "homepage_banners",   idColumn: "id", columns: ["media_url", "mobile_media_url"] },
+  homepage_section_items:{ prefix: "HomepageSectionItems",table: "homepage_section_items", idColumn: "id", columns: ["image_url"] },
+  splash_screens:        { prefix: "SplashScreens",      table: "splash_screens",     idColumn: "id", columns: ["image_url"] },
+  onboarding_screens:    { prefix: "OnboardingScreens",  table: "onboarding_screens", idColumn: "id", columns: ["image_url"] },
   vendor_onboarding_screens: { prefix: "VendorOnboardingScreens", table: "vendor_onboarding_screens", idColumn: "id", columns: ["image_url"] },
-  vendors:                   { prefix: "Vendors",                 table: "vendors",                 idColumn: "id", columns: ["shop_photo_url", "background_image"] },
-  service_vendors:           { prefix: "ServiceVendors",          table: "service_vendors",         idColumn: "id", columns: ["shop_photo_url", "background_image"] },
-  customers:                 { prefix: "Customers",               table: "customers",               idColumn: "id", columns: ["profile_photo"] },
-  social_profiles:           { prefix: "SocialProfiles",          table: "social_profiles",         idColumn: "user_id", columns: ["avatar_url"] },
-  restaurants:               { prefix: "Restaurants",             table: "restaurants",             idColumn: "id", columns: ["logo_url", "cover_image", "banner_url"] },
-  menu_items:                { prefix: "MenuItems",               table: "menu_items",              idColumn: "id", columns: ["image_url"] },
-  menu_combos:               { prefix: "MenuCombos",              table: "menu_combos",             idColumn: "id", columns: ["image_url"] },
-  property_amenities:        { prefix: "PropertyAmenities",       table: "property_amenities",      idColumn: "id", columns: ["icon"] },
+  property_amenities:    { prefix: "PropertyAmenities",  table: "property_amenities", idColumn: "id", columns: ["icon"] },
 };
 
 const IMAGE_RE = /\.(jpe?g|png|webp|gif|avif|bmp|svg)$/i;
