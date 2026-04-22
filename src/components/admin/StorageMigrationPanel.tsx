@@ -115,23 +115,43 @@ export default function StorageMigrationPanel() {
   };
 
   // Populate empty image URL columns from B2 folder structure
-  const [populating, setPopulating] = useState<null | "preview" | "run">(null);
-  const populateFromB2 = async (dryRun: boolean) => {
-    setPopulating(dryRun ? "preview" : "run");
+  const [populating, setPopulating] = useState<null | "preview" | "run" | "diagnose" | "overwrite">(null);
+  const [diag, setDiag] = useState<any[] | null>(null);
+  const populateFromB2 = async (opts: { dryRun?: boolean; overwrite?: boolean }) => {
+    setPopulating(opts.overwrite ? "overwrite" : opts.dryRun ? "preview" : "run");
     try {
       const { data, error } = await supabase.functions.invoke("b2-populate-image-urls", {
-        body: { scope: "all", dry_run: dryRun },
+        body: { scope: "all", dry_run: !!opts.dryRun, overwrite: !!opts.overwrite },
       });
       if (error) throw error;
-      const r = data as { totals: { folders_found: number; updated: number; errors: number }; results: any[] };
+      const r = data as { totals: any; results: any[] };
       console.log("[b2-populate-image-urls]", r);
-      const verb = dryRun ? "Would update" : "Updated";
+      const t = r.totals || {};
       toast.success(
-        `${verb} ${r.totals.updated} record(s) from ${r.totals.folders_found} B2 folder(s)` +
-        (r.totals.errors ? ` · ${r.totals.errors} error(s)` : ""),
+        `Folders: ${t.folders_found ?? 0} · Matched DB rows: ${t.matched_records ?? 0} · ` +
+        `${opts.dryRun ? "Would update" : "Updated"}: ${t.updated ?? 0} · ` +
+        `No image: ${t.skipped_no_image ?? 0} · No DB row: ${t.skipped_no_record ?? 0}` +
+        (t.errors ? ` · ${t.errors} error(s)` : ""),
       );
     } catch (e: any) {
       toast.error(`Populate failed: ${e.message || e}`);
+    } finally {
+      setPopulating(null);
+    }
+  };
+
+  const diagnoseB2 = async () => {
+    setPopulating("diagnose");
+    try {
+      const { data, error } = await supabase.functions.invoke("b2-populate-image-urls", {
+        body: { mode: "list_folders", scope: "all" },
+      });
+      if (error) throw error;
+      console.log("[b2 list_folders]", data);
+      setDiag((data as any).results || []);
+      toast.success("Folder scan complete — see panel below");
+    } catch (e: any) {
+      toast.error(`Diagnose failed: ${e.message || e}`);
     } finally {
       setPopulating(null);
     }
@@ -187,16 +207,47 @@ export default function StorageMigrationPanel() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => populateFromB2(true)} disabled={!!populating} variant="outline" className="gap-2">
+            <Button onClick={diagnoseB2} disabled={!!populating} variant="outline" className="gap-2">
+              {populating === "diagnose" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Diagnose folders
+            </Button>
+            <Button onClick={() => populateFromB2({ dryRun: true })} disabled={!!populating} variant="outline" className="gap-2">
               {populating === "preview" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               Preview (dry run)
             </Button>
-            <Button onClick={() => populateFromB2(false)} disabled={!!populating} className="gap-2">
+            <Button onClick={() => populateFromB2({})} disabled={!!populating} className="gap-2">
               {populating === "run" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               Populate now
             </Button>
+            <Button onClick={() => populateFromB2({ overwrite: true })} disabled={!!populating} variant="destructive" className="gap-2">
+              {populating === "overwrite" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Force overwrite
+            </Button>
           </div>
         </div>
+        {diag && (
+          <div className="mt-4 border-t border-border/50 pt-3 space-y-2">
+            <p className="text-sm font-medium">B2 folder scan</p>
+            <div className="grid gap-2 md:grid-cols-2 text-xs font-mono">
+              {diag.map((d) => (
+                <div key={d.scope} className="rounded border border-border/40 p-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold">{d.prefix}/</span>
+                    <Badge variant={d.folder_count > 0 ? "secondary" : "outline"}>{d.folder_count ?? 0} folders</Badge>
+                  </div>
+                  {d.error ? (
+                    <p className="text-destructive mt-1">{d.error}</p>
+                  ) : (
+                    <>
+                      {d.sample_first?.length ? <p className="text-muted-foreground mt-1 truncate">first: {d.sample_first.join(", ")}</p> : null}
+                      {d.sample_last?.length ? <p className="text-muted-foreground truncate">last: {d.sample_last.join(", ")}</p> : null}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
 
       <Card className="p-4 border-primary/30">
