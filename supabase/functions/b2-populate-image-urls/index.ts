@@ -568,10 +568,12 @@ Deno.serve(async (req: Request) => {
         acc.updated += r.updated ?? 0;
         acc.skipped_no_image += r.skipped_no_image ?? 0;
         acc.skipped_no_record += r.skipped_no_record ?? 0;
+        acc.db_rows_without_folder += r.db_rows_without_folder ?? 0;
+        acc.db_records_missing_image += r.db_records_missing_image ?? 0;
         acc.errors += (r.errors?.length ?? 0) + (r.error ? 1 : 0);
         return acc;
       },
-      { folders_found: 0, matched_records: 0, updated: 0, skipped_no_image: 0, skipped_no_record: 0, errors: 0 },
+      { folders_found: 0, matched_records: 0, updated: 0, skipped_no_image: 0, skipped_no_record: 0, db_rows_without_folder: 0, db_records_missing_image: 0, errors: 0 },
     );
 
     return new Response(
