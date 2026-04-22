@@ -220,9 +220,19 @@ function normalizeNumericId(value: string): string {
 function extractNumericId(value: unknown): string | null {
   const raw = String(value ?? "").trim();
   if (!raw) return null;
-  const digits = (raw.match(/\d+/g) ?? []).join("");
-  if (!digits) return null;
-  return normalizeNumericId(digits);
+
+  if (/^\d+$/.test(raw)) return normalizeNumericId(raw);
+
+  const directSuffix = raw.match(/^[A-Za-z]+0*(\d+)$/);
+  if (directSuffix?.[1]) return normalizeNumericId(directSuffix[1]);
+
+  const delimitedSegment = raw.match(/^[A-Za-z]+[-_]0*(\d+)(?:[-_].*)?$/);
+  if (delimitedSegment?.[1]) return normalizeNumericId(delimitedSegment[1]);
+
+  const boundedSegment = raw.match(/(?:^|[-_])0*(\d+)(?=$|[-_])/);
+  if (boundedSegment?.[1]) return normalizeNumericId(boundedSegment[1]);
+
+  return null;
 }
 
 async function listAllFolders(prefix: string): Promise<string[]> {
