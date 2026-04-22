@@ -269,6 +269,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // SECURITY: Purge any cached profile that does not belong to the supplied
   // Supabase auth UID. Prevents UI from showing a previous user's identity
   // when a different account is currently signed in (account-switch bug).
+  //
+  // Only touches the cache for the *current* portal (admin / vendor / customer).
+  // Each browser tab now has its own isolated Supabase session (see
+  // src/integrations/supabase/client.ts), so a customer tab must NOT clear
+  // the admin tab's cached admin_user entry, and vice versa.
   const purgeMismatchedCaches = useCallback((currentUid: string | null) => {
     const safeParse = (raw: string | null): { supabase_uid?: string } | null => {
       if (!raw) return null;
@@ -289,10 +294,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch { /* ignore */ }
     };
 
-    checkAndClear("admin_user", setUser);
-    checkAndClear("customer_user", setCustomerUser);
-    checkAndClear("vendor_user", setVendorUser);
-  }, []);
+    const portal = detectActivePortal();
+    if (portal === 'admin') checkAndClear("admin_user", setUser);
+    else if (portal === 'vendor') checkAndClear("vendor_user", setVendorUser);
+    else checkAndClear("customer_user", setCustomerUser);
+  }, [detectActivePortal]);
 
   useEffect(() => {
     let cancelled = false;
