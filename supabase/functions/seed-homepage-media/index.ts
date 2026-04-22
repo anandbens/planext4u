@@ -168,6 +168,41 @@ async function generateAndUpload(prompt: string, folder: string, baseName: strin
   return await putToB2(key, bytes, "image/png");
 }
 
+/** Extract numeric suffix from a formatted ID (e.g. "PRD-842-idww" → "842", "CUST0012364" → "12364"). */
+function extractNumericId(value: unknown): string | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  if (/^\d+$/.test(raw)) return String(parseInt(raw, 10));
+  const patterns = [
+    /^[A-Za-z]+0*(\d+)$/,
+    /^[A-Za-z]+[-_]0*(\d+)(?:[-_].*)?$/,
+    /(?:^|[-_])0*(\d+)(?=$|[-_])/,
+  ];
+  for (const re of patterns) {
+    const m = raw.match(re);
+    if (m?.[1]) return String(parseInt(m[1], 10));
+  }
+  return null;
+}
+
+/**
+ * Generate an image and upload it to B2 inside the canonical folder used by
+ * the populator: `<Prefix>/<numericId-or-id>/<filename>.png`. This way the
+ * "Populate from B2" tool will continue to find the file on a future re-scan.
+ */
+async function generateAndUploadInIdFolder(
+  prompt: string,
+  prefix: string,
+  recordId: string,
+  baseName: string,
+): Promise<string> {
+  const bytes = await generateImage(prompt);
+  const numeric = extractNumericId(recordId);
+  const folderId = numeric ?? recordId;
+  const key = `${prefix}/${folderId}/${Date.now()}-${slug(baseName)}.png`;
+  return await putToB2(key, bytes, "image/png");
+}
+
 // ───────────────────── Carousel definitions ─────────────────────
 
 const CAROUSEL_BANNERS: Array<{
