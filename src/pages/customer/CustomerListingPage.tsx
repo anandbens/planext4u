@@ -185,7 +185,7 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
                         {discountPct > 0 && !isOutOfStock && <span className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">{discountPct}% Off</span>}
                         {isOutOfStock && <span className="absolute top-2 left-2 z-10 bg-destructive/90 text-destructive-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">Out of Stock</span>}
                         {p.image ? (
-                          <img src={p.image} alt={p.title} className={`w-full h-full object-cover ${isOutOfStock ? 'opacity-50' : ''}`} loading="lazy" />
+                          <SmartImage src={p.image} alt={p.title} className={`w-full h-full object-cover ${isOutOfStock ? 'opacity-50' : ''}`} />
                         ) : (
                           <span className="text-4xl">{p.emoji || '📦'}</span>
                         )}

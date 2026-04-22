@@ -405,7 +405,7 @@ export default function CustomerBrowsePage() {
                               );
                             }
                             return p.image ? (
-                              <img src={p.image} alt={p.title} className={`w-full h-full object-cover ${isOutOfStock ? 'opacity-50' : ''}`} />
+                              <SmartImage src={p.image} alt={p.title} className={`w-full h-full object-cover ${isOutOfStock ? 'opacity-50' : ''}`} />
                             ) : (
                               <span className="text-4xl">{p.emoji}</span>
                             );

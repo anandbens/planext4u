@@ -201,7 +201,7 @@ function ProductSlider({ title, products, bgClass }: { title: string; products: 
                 <Card className="w-32 sm:w-40 overflow-hidden hover:shadow-xl transition-all duration-300 bg-card border-0 hover:-translate-y-1">
                   <div className="h-28 sm:h-32 bg-secondary/20 flex items-center justify-center overflow-hidden relative">
                     {p.discount > 0 && <span className="absolute top-1.5 left-1.5 bg-destructive text-destructive-foreground text-[9px] px-1.5 py-0.5 rounded-sm font-bold z-10">{Math.round((p.discount / p.price) * 100)}% OFF</span>}
-                    {p.image ? <img src={p.image} alt={p.title} className="w-full h-full object-cover" loading="lazy" /> : <span className="text-3xl">{p.emoji}</span>}
+                    {p.image ? <SmartImage src={p.image} alt={p.title} className="w-full h-full object-cover" /> : <span className="text-3xl">{p.emoji}</span>}
                   </div>
                   <div className="p-2.5">
                     <p className="text-[11px] font-semibold truncate leading-tight">{p.title}</p>
@@ -667,7 +667,7 @@ export default function CustomerHomePage() {
                   {section.items.map((p: any) => (
                     <Link key={p.id} to={`/app/product/${p.id}`} className="group">
                       <div className="h-16 bg-secondary/30 rounded-lg overflow-hidden mb-1">
-                        {p.image ? <img src={p.image} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" loading="lazy" /> :
+                        {p.image ? <SmartImage src={p.image} alt={p.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" /> :
                           <div className="w-full h-full flex items-center justify-center text-xl">{p.emoji}</div>}
                       </div>
                       <p className="text-[10px] text-muted-foreground truncate">{p.title}</p>
