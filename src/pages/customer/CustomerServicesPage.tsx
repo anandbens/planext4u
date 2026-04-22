@@ -160,11 +160,13 @@ export default function CustomerServicesPage() {
                 <Card key={s.id} className={`overflow-hidden hover:shadow-md transition-all ${!isAvailableToday ? 'opacity-60' : ''}`}>
                   <Link to={`/app/service/${s.id}`}>
                     <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 h-32 flex items-center justify-center relative overflow-hidden">
-                      {s.image ? (
-                        <img src={s.image} alt={s.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-5xl">{s.emoji}</span>
-                      )}
+                      <img
+                        src={getServiceImage(s.title, s.image)}
+                        alt={s.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = getServiceImage(s.title, null); }}
+                      />
                       {discountPct > 0 && <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-[10px]">{discountPct}% OFF</Badge>}
                       <div className="absolute top-2 left-2 flex items-center gap-0.5 bg-card/90 px-1.5 py-0.5 rounded ml-auto" style={discountPct > 0 ? { left: 'auto', right: '40px' } : { left: '8px' }}>
                         <Star className="h-2.5 w-2.5 fill-warning text-warning" />
