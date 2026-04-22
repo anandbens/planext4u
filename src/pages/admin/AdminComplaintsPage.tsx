@@ -95,6 +95,11 @@ export default function AdminComplaintsPage() {
         .filter(Boolean).join(" ").toLowerCase();
       if (!hay.includes(q)) return false;
     }
+    if (contactFilter) {
+      const q = contactFilter.toLowerCase().trim();
+      const hay = [c.customer_email, c.customer_mobile].filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     return true;
   });
 
@@ -155,6 +160,15 @@ export default function AdminComplaintsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search complaints..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Filter by email or phone..."
+              value={contactFilter}
+              onChange={e => setContactFilter(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
@@ -174,6 +188,15 @@ export default function AdminComplaintsPage() {
               {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</SelectItem>)}
             </SelectContent>
           </Select>
+          {(search || contactFilter || filterStatus !== "all" || filterCategory !== "all") && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setSearch(""); setContactFilter(""); setFilterStatus("all"); setFilterCategory("all"); }}
+            >
+              Clear filters
+            </Button>
+          )}
         </div>
 
         <Tabs defaultValue="all" className="space-y-4">
