@@ -161,14 +161,29 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    if (!B2_PRIVATE_KEY_ID || !B2_PRIVATE_APP_KEY || !B2_PRIVATE_BUCKET || !B2_PRIVATE_ENDPOINT) {
-      return new Response(
-        JSON.stringify({ error: "Private B2 bucket not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    // --- Body ---
+    const body = await req.json().catch(() => ({}));
+    let key = String(body.key ?? "").trim();
+    const bucketChoice: "public" | "private" =
+      body.bucket === "public" ? "public" : "private";
+
+    if (!key) {
+      return new Response(JSON.stringify({ error: "Missing key" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Strip the b2-private:// scheme if the caller passed the stored value
+    if (key.startsWith("b2-private://")) key = key.slice("b2-private://".length);
+    // Defensive: don't allow path-traversal or absolute URLs
+    if (key.startsWith("http") || /\.\./.test(key) || key.startsWith("/")) {
+      return new Response(JSON.stringify({ error: "Invalid key" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // --- Auth: require valid Supabase JWT ---
+    // --- Auth: require valid Supabase JWT for both buckets ---
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
     if (!token) {
@@ -189,48 +204,44 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // --- Authorization: must be admin / finance / sales ---
-    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
-    const { data: roles } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id)
-      .in("role", ["admin", "finance", "sales"]);
-    if (!roles || roles.length === 0) {
-      return new Response(JSON.stringify({ error: "Admin access required" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Private bucket = strict admin-only access.
+    // Public bucket = any authenticated user (these were originally world-readable).
+    if (bucketChoice === "private") {
+      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
+      const { data: roles } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .in("role", ["admin", "finance", "sales"]);
+      if (!roles || roles.length === 0) {
+        return new Response(JSON.stringify({ error: "Admin access required" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
-    // --- Body ---
-    const body = await req.json().catch(() => ({}));
-    let key = String(body.key ?? "").trim();
-    if (!key) {
-      return new Response(JSON.stringify({ error: "Missing key" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    // Strip the b2-private:// scheme if the caller passed the stored value
-    if (key.startsWith("b2-private://")) key = key.slice("b2-private://".length);
-    // Defensive: don't allow path-traversal or absolute URLs
-    if (key.startsWith("http") || /\.\./.test(key) || key.startsWith("/")) {
-      return new Response(JSON.stringify({ error: "Invalid key" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // --- Pick credentials ---
+    const cfg = bucketChoice === "private"
+      ? { keyId: B2_PRIVATE_KEY_ID, appKey: B2_PRIVATE_APP_KEY, bucket: B2_PRIVATE_BUCKET, endpoint: B2_PRIVATE_ENDPOINT }
+      : { keyId: B2_PUBLIC_KEY_ID, appKey: B2_PUBLIC_APP_KEY, bucket: B2_PUBLIC_BUCKET, endpoint: B2_PUBLIC_ENDPOINT };
+
+    if (!cfg.keyId || !cfg.appKey || !cfg.bucket || !cfg.endpoint) {
+      return new Response(
+        JSON.stringify({ error: `B2 ${bucketChoice} bucket not configured` }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const expiresSeconds = Math.min(Math.max(Number(body.expiresSeconds) || 300, 60), 3600);
 
     const url = await presignGetUrl({
-      endpoint: B2_PRIVATE_ENDPOINT,
-      bucket: B2_PRIVATE_BUCKET,
+      endpoint: cfg.endpoint,
+      bucket: cfg.bucket,
       key,
       expiresSeconds,
-      keyId: B2_PRIVATE_KEY_ID,
-      appKey: B2_PRIVATE_APP_KEY,
+      keyId: cfg.keyId,
+      appKey: cfg.appKey,
     });
 
     return new Response(
