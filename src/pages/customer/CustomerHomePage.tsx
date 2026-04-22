@@ -24,6 +24,7 @@ import { RatingPopup } from "@/components/customer/RatingPopup";
 import { BannerAd } from "@/components/customer/BannerAd";
 import { VideoAdOverlay } from "@/components/customer/VideoAdOverlay";
 import { FloatingVideoAd } from "@/components/customer/FloatingVideoAd";
+import { getServiceImage } from "@/lib/service-image";
 
 /* ── Helpers ── */
 const containerAnim = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
@@ -239,8 +240,15 @@ function ServiceSlider({ title, services }: { title: string; services: any[] }) 
               <Link to={`/app/service/${s.id}`}>
                 <Card className="w-44 sm:w-52 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                   <div className="h-28 sm:h-36 bg-secondary/20 relative overflow-hidden">
-                    {s.image ? <img src={s.image} alt={s.title} className="w-full h-full object-cover" loading="lazy" /> :
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5"><span className="text-3xl">{s.emoji}</span></div>}
+                    <img
+                      src={getServiceImage(s.title, s.image)}
+                      alt={s.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = getServiceImage(s.title, null);
+                      }}
+                    />
                     <div className="absolute top-1.5 left-1.5 flex items-center gap-0.5 bg-card/90 px-1.5 py-0.5 rounded text-[10px]">
                       <Star className="h-2.5 w-2.5 fill-warning text-warning" /><span className="font-medium">{s.rating || 0}</span>
                     </div>
