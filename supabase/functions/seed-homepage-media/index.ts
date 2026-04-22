@@ -517,8 +517,11 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const mode: "all" | "carousel" | "products" | "services" = body.mode || "all";
-    const limit: number = Math.max(1, Math.min(20, Number(body.limit) || 8));
+    const allowedModes = ["all", "carousel", "products", "services", "categories", "vendors", "customers", "banners"] as const;
+    type SeedMode = typeof allowedModes[number];
+    const requested = String(body.mode || "all") as SeedMode;
+    const mode: SeedMode = (allowedModes as readonly string[]).includes(requested) ? requested : "all";
+    const limit: number = Math.max(1, Math.min(50, Number(body.limit) || 8));
     const background: boolean = body.background !== false; // default true
 
     // Synchronous mode (small jobs): keep old behaviour.
