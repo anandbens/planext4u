@@ -117,6 +117,7 @@ export default function StorageMigrationPanel() {
   // Populate empty image URL columns from B2 folder structure
   const [populating, setPopulating] = useState<null | "preview" | "run" | "diagnose" | "overwrite">(null);
   const [diag, setDiag] = useState<any[] | null>(null);
+  const [gapReport, setGapReport] = useState<any[] | null>(null);
   const populateFromB2 = async (opts: { dryRun?: boolean; overwrite?: boolean }) => {
     setPopulating(opts.overwrite ? "overwrite" : opts.dryRun ? "preview" : "run");
     try {
@@ -126,11 +127,12 @@ export default function StorageMigrationPanel() {
       if (error) throw error;
       const r = data as { totals: any; results: any[] };
       console.log("[b2-populate-image-urls]", r);
+      setGapReport(r.results || []);
       const t = r.totals || {};
       toast.success(
-        `Folders: ${t.folders_found ?? 0} · Matched DB rows: ${t.matched_records ?? 0} · ` +
+        `Folders: ${t.folders_found ?? 0} · Matched: ${t.matched_records ?? 0} · ` +
         `${opts.dryRun ? "Would update" : "Updated"}: ${t.updated ?? 0} · ` +
-        `No image: ${t.skipped_no_image ?? 0} · No DB row: ${t.skipped_no_record ?? 0}` +
+        `Missing in B2: ${t.db_rows_without_folder ?? 0} · No DB row: ${t.skipped_no_record ?? 0}` +
         (t.errors ? ` · ${t.errors} error(s)` : ""),
       );
     } catch (e: any) {
