@@ -21,6 +21,7 @@ import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";
 import { CategoryProductRow } from "@/components/customer/CategoryProductRow";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { isProductOutOfStock } from "@/lib/stock-display";
+import { SmartImage } from "@/components/SmartImage";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();

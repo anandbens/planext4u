@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrency } from "@/lib/country-context";
+import { SmartImage } from "@/components/SmartImage";
 
 export default function CustomerWishlistPage() {
   const { format: fmt } = useCurrency();
