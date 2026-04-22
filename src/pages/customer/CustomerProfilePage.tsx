@@ -48,9 +48,13 @@ export default function CustomerProfilePage() {
     refresh();
     window.addEventListener('storage', refresh);
     window.addEventListener('focus', refresh);
+    window.addEventListener('wishlist-changed', refresh);
+    document.addEventListener('visibilitychange', refresh);
     return () => {
       window.removeEventListener('storage', refresh);
       window.removeEventListener('focus', refresh);
+      window.removeEventListener('wishlist-changed', refresh);
+      document.removeEventListener('visibilitychange', refresh);
     };
   }, []);
 

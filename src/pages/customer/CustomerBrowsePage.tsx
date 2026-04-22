@@ -209,6 +209,7 @@ export default function CustomerBrowsePage() {
     }
     setWishlist(wl);
     localStorage.setItem('app_db_wishlist', JSON.stringify(wl));
+    window.dispatchEvent(new Event('wishlist-changed'));
   };
 
   const buyNow = async (p: any, e: React.MouseEvent) => {

@@ -154,6 +154,7 @@ export default function CustomerProductPage() {
       else { wl.push(id); toast.success("Added to wishlist ❤️"); }
       localStorage.setItem('app_db_wishlist', JSON.stringify(wl));
       setWishlisted(!wishlisted);
+      window.dispatchEvent(new Event('wishlist-changed'));
     } catch {}
   };
 

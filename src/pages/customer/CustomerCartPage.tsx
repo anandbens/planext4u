@@ -169,6 +169,7 @@ export default function CustomerCartPage() {
       let wl = JSON.parse(localStorage.getItem('app_db_wishlist') || '[]') as string[];
       if (!wl.includes(item.id)) wl.push(item.id);
       localStorage.setItem('app_db_wishlist', JSON.stringify(wl));
+      window.dispatchEvent(new Event('wishlist-changed'));
     } catch {}
     // Also save in saved-for-later list with full data
     const updated = [...savedForLater, item];
