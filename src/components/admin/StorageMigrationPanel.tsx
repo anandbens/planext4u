@@ -115,23 +115,43 @@ export default function StorageMigrationPanel() {
   };
 
   // Populate empty image URL columns from B2 folder structure
-  const [populating, setPopulating] = useState<null | "preview" | "run">(null);
-  const populateFromB2 = async (dryRun: boolean) => {
-    setPopulating(dryRun ? "preview" : "run");
+  const [populating, setPopulating] = useState<null | "preview" | "run" | "diagnose" | "overwrite">(null);
+  const [diag, setDiag] = useState<any[] | null>(null);
+  const populateFromB2 = async (opts: { dryRun?: boolean; overwrite?: boolean }) => {
+    setPopulating(opts.overwrite ? "overwrite" : opts.dryRun ? "preview" : "run");
     try {
       const { data, error } = await supabase.functions.invoke("b2-populate-image-urls", {
-        body: { scope: "all", dry_run: dryRun },
+        body: { scope: "all", dry_run: !!opts.dryRun, overwrite: !!opts.overwrite },
       });
       if (error) throw error;
-      const r = data as { totals: { folders_found: number; updated: number; errors: number }; results: any[] };
+      const r = data as { totals: any; results: any[] };
       console.log("[b2-populate-image-urls]", r);
-      const verb = dryRun ? "Would update" : "Updated";
+      const t = r.totals || {};
       toast.success(
-        `${verb} ${r.totals.updated} record(s) from ${r.totals.folders_found} B2 folder(s)` +
-        (r.totals.errors ? ` · ${r.totals.errors} error(s)` : ""),
+        `Folders: ${t.folders_found ?? 0} · Matched DB rows: ${t.matched_records ?? 0} · ` +
+        `${opts.dryRun ? "Would update" : "Updated"}: ${t.updated ?? 0} · ` +
+        `No image: ${t.skipped_no_image ?? 0} · No DB row: ${t.skipped_no_record ?? 0}` +
+        (t.errors ? ` · ${t.errors} error(s)` : ""),
       );
     } catch (e: any) {
       toast.error(`Populate failed: ${e.message || e}`);
+    } finally {
+      setPopulating(null);
+    }
+  };
+
+  const diagnoseB2 = async () => {
+    setPopulating("diagnose");
+    try {
+      const { data, error } = await supabase.functions.invoke("b2-populate-image-urls", {
+        body: { mode: "list_folders", scope: "all" },
+      });
+      if (error) throw error;
+      console.log("[b2 list_folders]", data);
+      setDiag((data as any).results || []);
+      toast.success("Folder scan complete — see panel below");
+    } catch (e: any) {
+      toast.error(`Diagnose failed: ${e.message || e}`);
     } finally {
       setPopulating(null);
     }
