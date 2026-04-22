@@ -22,6 +22,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { resolveB2Url } from "@/lib/b2-upload";
 import { PrivateKycImage } from "@/components/admin/PrivateKycImage";
+import { B2Media } from "@/components/admin/B2Media";
 import StorageMigrationPanel from "@/components/admin/StorageMigrationPanel";
 import B2BucketBrowser from "@/components/admin/B2BucketBrowser";
 
