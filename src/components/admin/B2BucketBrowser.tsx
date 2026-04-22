@@ -31,15 +31,24 @@ export default function B2BucketBrowser() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [importing, setImporting] = useState(false);
 
-  const { data, isLoading, isFetching, refetch } = useQuery({
+  const { data, isLoading, isFetching, refetch, error: queryError } = useQuery({
     queryKey: ["b2BucketList", prefix],
     queryFn: async (): Promise<ListResp> => {
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess?.session?.access_token) {
+        throw new Error("You must be signed in as an admin to browse the B2 bucket.");
+      }
       const { data, error } = await supabase.functions.invoke("b2-list-objects", {
         body: { mode: "list", prefix, maxKeys: 500 },
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        // Edge function returned non-2xx — surface the inner JSON error if any
+        const inner = (data as any)?.error;
+        throw new Error(inner || error.message || "Failed to list B2 bucket");
+      }
       return data as ListResp;
     },
+    retry: false,
   });
 
   const goInto = (folder: string) => {
@@ -108,6 +117,14 @@ export default function B2BucketBrowser() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+      ) : queryError ? (
+        <div className="text-center py-16 text-destructive border-2 border-dashed border-destructive/40 rounded-xl">
+          <p className="font-medium mb-1">Could not load B2 bucket</p>
+          <p className="text-sm text-muted-foreground">{(queryError as Error).message}</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-3 gap-1">
+            <RefreshCw className="h-4 w-4" /> Retry
+          </Button>
+        </div>
       ) : (
         <>
           {/* Folders */}
