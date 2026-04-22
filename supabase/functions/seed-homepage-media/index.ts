@@ -265,13 +265,34 @@ const CAROUSEL_BANNERS: Array<{
 
 async function runSeed(
   admin: ReturnType<typeof createClient>,
-  mode: "all" | "carousel" | "products" | "services",
+  mode:
+    | "all"
+    | "carousel"
+    | "products"
+    | "services"
+    | "categories"
+    | "vendors"
+    | "customers"
+    | "banners",
   limit: number,
-): Promise<{ carousel_added: number; products_updated: number; services_updated: number; errors: string[] }> {
+): Promise<{
+  carousel_added: number;
+  products_updated: number;
+  services_updated: number;
+  categories_updated: number;
+  vendors_updated: number;
+  customers_updated: number;
+  banners_updated: number;
+  errors: string[];
+}> {
   const errors: string[] = [];
   let carousel_added = 0;
   let products_updated = 0;
   let services_updated = 0;
+  let categories_updated = 0;
+  let vendors_updated = 0;
+  let customers_updated = 0;
+  let banners_updated = 0;
 
   // 1) CAROUSEL — only seed if there are no active banners yet (idempotent)
   if (mode === "all" || mode === "carousel") {
@@ -317,7 +338,7 @@ async function runSeed(
     for (const p of products || []) {
       try {
         const prompt = `Photorealistic e-commerce product photo of "${p.title}"${p.category_name ? ` (${p.category_name})` : ""} on a clean white seamless background, soft studio lighting, sharp focus, centered composition, premium commercial product photography, no text, no watermark, square crop.`;
-        const url = await generateAndUpload(prompt, "homepage-products", p.title);
+        const url = await generateAndUploadInIdFolder(prompt, "Products", String(p.id), p.title);
         const { error } = await admin.from("products").update({ image: url } as any).eq("id", p.id);
         if (error) errors.push(`product ${p.id}: ${error.message}`);
         else products_updated++;
@@ -338,7 +359,7 @@ async function runSeed(
     for (const s of services || []) {
       try {
         const prompt = `Photorealistic lifestyle photograph of a professional providing "${s.title}"${s.category_name ? ` (${s.category_name})` : ""} service in a real Indian home or workspace setting, the professional in clean uniform, warm natural daylight, friendly customer in the background, premium commercial editorial photography, sharp focus, no text, no watermark, square crop.`;
-        const url = await generateAndUpload(prompt, "homepage-services", s.title);
+        const url = await generateAndUploadInIdFolder(prompt, "Services", String(s.id), s.title);
         const { error } = await admin.from("services").update({ image: url } as any).eq("id", s.id);
         if (error) errors.push(`service ${s.id}: ${error.message}`);
         else services_updated++;
@@ -348,7 +369,118 @@ async function runSeed(
     }
   }
 
-  return { carousel_added, products_updated, services_updated, errors };
+  // 4) CATEGORIES — fill missing image / icon
+  if (mode === "all" || mode === "categories") {
+    const { data: categories } = await admin
+      .from("categories")
+      .select("id, name, category_type, image, icon")
+      .or("image.is.null,image.eq.,icon.is.null,icon.eq.")
+      .eq("status", "active")
+      .limit(limit);
+    for (const c of (categories as any[]) || []) {
+      try {
+        const isService = c.category_type === "service";
+        const prompt = isService
+          ? `Minimalist flat icon-style illustration representing the "${c.name}" service category, clean modern look, vibrant teal & amber accent colors on a soft white background, centered composition, no text, no watermark, square crop, premium commercial illustration quality.`
+          : `Premium product-category hero image for "${c.name}", photorealistic arrangement of typical items in this category on a clean light background, soft studio lighting, vibrant colors, no text, no watermark, square crop.`;
+        const url = await generateAndUploadInIdFolder(prompt, "Categories", String(c.id), c.name);
+        const patch: Record<string, string> = {};
+        if (!c.image) patch.image = url;
+        if (!c.icon) patch.icon = url;
+        if (Object.keys(patch).length === 0) continue;
+        const { error } = await admin.from("categories").update(patch as any).eq("id", c.id);
+        if (error) errors.push(`category ${c.id}: ${error.message}`);
+        else categories_updated++;
+      } catch (e: any) {
+        errors.push(`category ${c.id}: ${e.message || e}`);
+      }
+    }
+  }
+
+  // 5) VENDORS — fill missing logo / shop photo
+  if (mode === "all" || mode === "vendors") {
+    const { data: vendors } = await admin
+      .from("vendors")
+      .select("id, business_name, name, shop_photo, background_image, category_name")
+      .or("shop_photo.is.null,shop_photo.eq.,background_image.is.null,background_image.eq.")
+      .eq("status", "active")
+      .limit(limit);
+    for (const v of (vendors as any[]) || []) {
+      const displayName = v.business_name || v.name || "Local Shop";
+      try {
+        const prompt = `Photorealistic storefront photograph of an Indian local business named "${displayName}"${v.category_name ? ` specializing in ${v.category_name}` : ""}, clean modern shop facade, branded signage (no readable text), warm welcoming daylight, sharp focus, premium commercial photography, no watermark, landscape crop.`;
+        const url = await generateAndUploadInIdFolder(prompt, "Vendors", String(v.id), displayName);
+        const patch: Record<string, string> = {};
+        if (!v.shop_photo) patch.shop_photo = url;
+        if (!v.background_image) patch.background_image = url;
+        if (Object.keys(patch).length === 0) continue;
+        const { error } = await admin.from("vendors").update(patch as any).eq("id", v.id);
+        if (error) errors.push(`vendor ${v.id}: ${error.message}`);
+        else vendors_updated++;
+      } catch (e: any) {
+        errors.push(`vendor ${v.id}: ${e.message || e}`);
+      }
+    }
+  }
+
+  // 6) CUSTOMERS — fill missing default avatars
+  if (mode === "all" || mode === "customers") {
+    const { data: customers } = await admin
+      .from("customers")
+      .select("id, name, gender")
+      .or("profile_photo.is.null,profile_photo.eq.")
+      .eq("status", "active")
+      .limit(limit);
+    for (const cu of (customers as any[]) || []) {
+      try {
+        const gender = (cu.gender || "").toLowerCase();
+        const subject = gender === "female" ? "young Indian woman" : gender === "male" ? "young Indian man" : "friendly Indian person";
+        const prompt = `Photorealistic neutral default avatar portrait of a ${subject}, soft natural studio lighting, gentle smile, plain pastel background, centered head-and-shoulders composition, premium professional headshot quality, no text, no watermark, square crop.`;
+        const url = await generateAndUploadInIdFolder(prompt, "Customers", String(cu.id), cu.name || "user");
+        const { error } = await admin.from("customers").update({ profile_photo: url } as any).eq("id", cu.id);
+        if (error) errors.push(`customer ${cu.id}: ${error.message}`);
+        else customers_updated++;
+      } catch (e: any) {
+        errors.push(`customer ${cu.id}: ${e.message || e}`);
+      }
+    }
+  }
+
+  // 7) BANNERS — fill missing desktop / mobile placeholder images
+  if (mode === "all" || mode === "banners") {
+    const { data: bannerRows } = await admin
+      .from("banners")
+      .select("id, title, subtitle, desktop_image, mobile_image")
+      .or("desktop_image.is.null,desktop_image.eq.,mobile_image.is.null,mobile_image.eq.")
+      .eq("status", "active")
+      .limit(limit);
+    for (const b of (bannerRows as any[]) || []) {
+      try {
+        const prompt = `Photorealistic horizontal marketing banner illustrating "${b.title}"${b.subtitle ? ` — ${b.subtitle}` : ""}, vibrant editorial composition, premium commercial photography, soft cinematic lighting, no text, no watermark, ultra-sharp.`;
+        const url = await generateAndUploadInIdFolder(prompt, "Banners", String(b.id), b.title || "banner");
+        const patch: Record<string, string> = {};
+        if (!b.desktop_image) patch.desktop_image = url;
+        if (!b.mobile_image) patch.mobile_image = url;
+        if (Object.keys(patch).length === 0) continue;
+        const { error } = await admin.from("banners").update(patch as any).eq("id", b.id);
+        if (error) errors.push(`banner ${b.id}: ${error.message}`);
+        else banners_updated++;
+      } catch (e: any) {
+        errors.push(`banner ${b.id}: ${e.message || e}`);
+      }
+    }
+  }
+
+  return {
+    carousel_added,
+    products_updated,
+    services_updated,
+    categories_updated,
+    vendors_updated,
+    customers_updated,
+    banners_updated,
+    errors,
+  };
 }
 
 Deno.serve(async (req) => {
