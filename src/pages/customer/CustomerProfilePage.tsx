@@ -107,8 +107,17 @@ export default function CustomerProfilePage() {
       <div className="max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-6 space-y-6">
         {isLoading ? <Skeleton className="h-24 rounded-xl" /> : (
           <Card className="p-6 flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-8 w-8 text-primary" />
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+              {profile?.profile_photo ? (
+                <img
+                  src={profile.profile_photo}
+                  alt={displayName || 'Profile'}
+                  className="h-full w-full object-cover"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
+              ) : (
+                <User className="h-8 w-8 text-primary" />
+              )}
             </div>
             <div className="flex-1">
               <h2 className="text-lg font-bold">{displayName}</h2>
