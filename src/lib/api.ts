@@ -675,20 +675,24 @@ export const api = {
     // FK columns must reference an existing row. Resolve city/area against the DB,
     // and silently fall back to the seeded UNCATEGORIZED placeholder if the picked id
     // does not exist (or the form sent a legacy value like "1").
-    const resolveFk = async (table: 'cities' | 'areas', id: any, fallback: string): Promise<string> => {
+    // Resolve city/area FKs. If the supplied id doesn't exist, fall back to the
+    // seeded UNCATEGORIZED placeholder. If even that doesn't exist (or the read
+    // is blocked), leave the column NULL so the FK constraint is never violated.
+    const resolveFk = async (table: 'cities' | 'areas', id: any, fallback: string): Promise<string | null> => {
       const candidate = typeof id === 'string' ? id.trim() : '';
       if (candidate) {
         const { data: row } = await supabase.from(table).select('id').eq('id', candidate).maybeSingle();
         if (row?.id) return row.id;
       }
-      // Verify the fallback exists; if not, return null-equivalent so we skip the field.
       const { data: fb } = await supabase.from(table).select('id').eq('id', fallback).maybeSingle();
-      return fb?.id || '';
+      return fb?.id ?? null;
     };
     const safeCityId = await resolveFk('cities', (data as any).city_id, 'CTY0000000');
     const safeAreaId = await resolveFk('areas', (data as any).area_id, 'ARE0000000');
-    if (safeCityId) newVendor.city_id = safeCityId;
-    if (safeAreaId) newVendor.area_id = safeAreaId;
+    // Always include the column — set to null when no valid FK target was found
+    // so we never accidentally insert a stale id from the form state.
+    newVendor.city_id = safeCityId;
+    newVendor.area_id = safeAreaId;
     if ((data as any).plan_id) newVendor.plan_id = (data as any).plan_id;
     if ((data as any).max_redemption_percentage != null) newVendor.max_redemption_percentage = (data as any).max_redemption_percentage;
     if ((data as any).shop_photo_url) newVendor.shop_photo_url = (data as any).shop_photo_url;
