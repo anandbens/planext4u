@@ -20,6 +20,7 @@ interface Complaint {
   category: string; subject: string; description: string; images: string[] | null;
   status: string; priority: string; assigned_to: string | null;
   resolution_notes: string | null; resolved_at: string | null; created_at: string;
+  customer_email?: string | null; customer_mobile?: string | null;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -53,7 +54,24 @@ export default function AdminComplaintsPage() {
 
   const fetchComplaints = async () => {
     const { data } = await supabase.from("complaints" as any).select("*").order("created_at", { ascending: false });
-    setComplaints((data || []) as any[]);
+    const list = (data || []) as any[];
+    const userIds = Array.from(new Set(list.map(c => c.user_id).filter(Boolean)));
+    const contactMap: Record<string, { email: string | null; mobile: string | null }> = {};
+    if (userIds.length > 0) {
+      const { data: customers } = await supabase
+        .from("customers")
+        .select("id, email, mobile")
+        .in("id", userIds);
+      (customers || []).forEach((c: any) => {
+        contactMap[c.id] = { email: c.email || null, mobile: c.mobile || null };
+      });
+    }
+    const enriched = list.map(c => ({
+      ...c,
+      customer_email: contactMap[c.user_id]?.email ?? null,
+      customer_mobile: contactMap[c.user_id]?.mobile ?? null,
+    }));
+    setComplaints(enriched as any[]);
   };
 
   useEffect(() => { fetchComplaints(); }, []);
@@ -69,7 +87,12 @@ export default function AdminComplaintsPage() {
   const filtered = complaints.filter(c => {
     if (filterStatus !== "all" && c.status !== filterStatus) return false;
     if (filterCategory !== "all" && c.category !== filterCategory) return false;
-    if (search && !c.subject.toLowerCase().includes(search.toLowerCase()) && !c.user_name?.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      const hay = [c.subject, c.user_name, c.customer_email, c.customer_mobile]
+        .filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     return true;
   });
 
@@ -175,8 +198,10 @@ export default function AdminComplaintsPage() {
                         </div>
                         <h3 className="font-semibold truncate">{c.subject}</h3>
                         <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">{c.description}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                        <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
                           <span>By: {c.user_name || 'Unknown'}</span>
+                          {c.customer_email && <span>📧 {c.customer_email}</span>}
+                          {c.customer_mobile && <span>📱 {c.customer_mobile}</span>}
                           {c.order_id && <span>Order: {c.order_id}</span>}
                           <span>{new Date(c.created_at).toLocaleDateString()}</span>
                         </div>
@@ -211,6 +236,10 @@ export default function AdminComplaintsPage() {
                 <div><span className="text-muted-foreground">Category:</span> {selectedComplaint.category.replace(/_/g, ' ')}</div>
                 <div><span className="text-muted-foreground">Priority:</span> {selectedComplaint.priority}</div>
                 <div><span className="text-muted-foreground">Customer:</span> {selectedComplaint.user_name || 'N/A'}</div>
+                <div className="col-span-2 grid grid-cols-2 gap-3 rounded-md bg-muted/40 p-2">
+                  <div><span className="text-muted-foreground">Email:</span> {selectedComplaint.customer_email || 'N/A'}</div>
+                  <div><span className="text-muted-foreground">Phone:</span> {selectedComplaint.customer_mobile || 'N/A'}</div>
+                </div>
                 {selectedComplaint.order_id && <div><span className="text-muted-foreground">Order:</span> {selectedComplaint.order_id}</div>}
               </div>
 
