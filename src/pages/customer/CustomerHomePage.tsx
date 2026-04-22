@@ -24,6 +24,7 @@ import { RatingPopup } from "@/components/customer/RatingPopup";
 import { BannerAd } from "@/components/customer/BannerAd";
 import { VideoAdOverlay } from "@/components/customer/VideoAdOverlay";
 import { FloatingVideoAd } from "@/components/customer/FloatingVideoAd";
+import { getServiceImage } from "@/lib/service-image";
 
 /* ── Helpers ── */
 const containerAnim = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
