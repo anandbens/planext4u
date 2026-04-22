@@ -117,6 +117,14 @@ export default function B2BucketBrowser() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+      ) : queryError ? (
+        <div className="text-center py-16 text-destructive border-2 border-dashed border-destructive/40 rounded-xl">
+          <p className="font-medium mb-1">Could not load B2 bucket</p>
+          <p className="text-sm text-muted-foreground">{(queryError as Error).message}</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-3 gap-1">
+            <RefreshCw className="h-4 w-4" /> Retry
+          </Button>
+        </div>
       ) : (
         <>
           {/* Folders */}
