@@ -179,6 +179,29 @@ export default function StorageMigrationPanel() {
       <Card className="p-4 border-primary/30">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
+            <h2 className="text-lg font-semibold">Populate Image URLs from B2</h2>
+            <p className="text-sm text-muted-foreground">
+              Scans every <code>&lt;Prefix&gt;/&lt;ID&gt;/</code> folder in the public Backblaze
+              bucket, picks the first image inside, and writes the URL to the matching record.
+              Only fills empty columns — safe to re-run.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => populateFromB2(true)} disabled={!!populating} variant="outline" className="gap-2">
+              {populating === "preview" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Preview (dry run)
+            </Button>
+            <Button onClick={() => populateFromB2(false)} disabled={!!populating} className="gap-2">
+              {populating === "run" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              Populate now
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-4 border-primary/30">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
             <h2 className="text-lg font-semibold">Generate Homepage Images (AI → B2)</h2>
           </div>
           <div className="flex flex-wrap gap-2">
