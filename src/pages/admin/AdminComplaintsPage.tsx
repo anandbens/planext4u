@@ -224,7 +224,20 @@ export default function AdminComplaintsPage() {
                         <h3 className="font-semibold truncate">{c.subject}</h3>
                         <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">{c.description}</p>
                         <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
-                          <span>By: {c.user_name || 'Unknown'}</span>
+                          <span className="inline-flex items-center gap-1">
+                            By:{" "}
+                            {c.user_id ? (
+                              <Link
+                                to={`/customers?customerId=${c.user_id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-primary hover:underline inline-flex items-center gap-1"
+                                title="Open customer profile"
+                              >
+                                {c.user_name || 'Unknown'}
+                                <ExternalLink className="h-3 w-3" />
+                              </Link>
+                            ) : (c.user_name || 'Unknown')}
+                          </span>
                           {c.customer_email && <span>📧 {c.customer_email}</span>}
                           {c.customer_mobile && <span>📱 {c.customer_mobile}</span>}
                           {c.order_id && <span>Order: {c.order_id}</span>}
