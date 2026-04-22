@@ -110,9 +110,10 @@ export async function tryOpenAppSettings(): Promise<boolean> {
   if (!isNativePlatform()) return false;
   try {
     // @capacitor-community/native-settings is optional; use only if present.
-    const mod: any = await import(/* @vite-ignore */ "@capacitor-community/native-settings").catch(
-      () => null,
-    );
+    // The dynamic specifier (variable, not literal) prevents Vite/TS from trying
+    // to resolve the module at build time when it isn't installed.
+    const moduleName = "@capacitor-community/native-settings";
+    const mod: any = await import(/* @vite-ignore */ moduleName).catch(() => null);
     if (mod?.NativeSettings?.open) {
       await mod.NativeSettings.open({
         optionAndroid: "application_details",
