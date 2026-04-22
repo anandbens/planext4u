@@ -411,7 +411,7 @@ export default function AdminMediaLibraryPage() {
   };
 
   const renderMediaThumbnail = (item: MediaItem, className = "w-full h-full object-cover") => {
-    if (item.file_type.startsWith("image")) return <img src={item.file_url} alt={item.alt_text || item.file_name} className={className} loading="lazy" />;
+    if (item.file_type.startsWith("image")) return <B2Media src={item.file_url} alt={item.alt_text || item.file_name} className={className} />;
     if (item.file_type.startsWith("video")) return (
       <div className="w-full h-full flex flex-col items-center justify-center bg-secondary/50">
         <Video className="h-8 w-8 text-primary" /><span className="text-[9px] text-muted-foreground mt-1">Video</span>
@@ -748,9 +748,9 @@ export default function AdminMediaLibraryPage() {
             <div className="space-y-4">
               <div className="rounded-lg overflow-hidden bg-secondary/20 flex items-center justify-center max-h-[60vh]">
                 {selected.file_type.startsWith("image") ? (
-                  <img src={selected.file_url} alt={selected.alt_text || ""} className="max-w-full max-h-[60vh] object-contain" />
+                  <B2Media src={selected.file_url} alt={selected.alt_text || ""} className="max-w-full max-h-[60vh] object-contain" />
                 ) : selected.file_type.startsWith("video") ? (
-                  <video src={selected.file_url} controls className="max-w-full max-h-[60vh]" />
+                  <B2Media src={selected.file_url} kind="video" className="max-w-full max-h-[60vh]" />
                 ) : (
                   <div className="py-20 text-center"><FileText className="h-16 w-16 mx-auto text-muted-foreground mb-2" /><p className="text-sm text-muted-foreground">PDF Document</p></div>
                 )}
