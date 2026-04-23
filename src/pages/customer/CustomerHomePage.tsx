@@ -443,7 +443,7 @@ export default function CustomerHomePage() {
             </Link>
             {parentCategories.slice(0, 8).map((c: any, i: number) => (
               <motion.div key={c.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }}>
-                <Link to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-1 min-w-[56px]">
+                <Link to={`/app/browse?category=${encodeURIComponent(c.name)}`} className="flex flex-col items-center gap-1 min-w-[56px]">
                   <div className="h-14 w-14 rounded-2xl bg-card border border-border/40 flex items-center justify-center overflow-hidden shadow-sm hover:border-primary/30 hover:shadow-md transition-all">
                     {c.image?.startsWith('http') ? <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-2xl" loading="lazy" /> : <span className="text-xl">{c.image || '📦'}</span>}
                   </div>
@@ -526,7 +526,7 @@ export default function CustomerHomePage() {
                 </div>
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 md:[grid-template-columns:repeat(auto-fit,minmax(96px,1fr))]">
                   {parentCategories.map((c: any) => (
-                    <Link key={c.id} to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-1.5 group">
+                    <Link key={c.id} to={`/app/browse?category=${encodeURIComponent(c.name)}`} className="flex flex-col items-center gap-1.5 group">
                       <div className="h-14 w-14 rounded-full bg-secondary/50 border border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/50 transition-all">
                         {c.image?.startsWith('http') ? <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-full" loading="lazy" /> : <span className="text-xl">{c.image || '📦'}</span>}
                       </div>
@@ -566,7 +566,7 @@ export default function CustomerHomePage() {
             {isLoading ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
               parentCategories.map((c: any) => (
                 <motion.div key={c.id} variants={itemAnim}>
-                  <Link to={`/app/browse?category=${c.name}`} className="flex flex-col items-center gap-1.5 group">
+                  <Link to={`/app/browse?category=${encodeURIComponent(c.name)}`} className="flex flex-col items-center gap-1.5 group">
                     <div className="h-14 w-14 md:h-18 md:w-18 rounded-2xl bg-secondary/50 border border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/50 group-hover:shadow-md transition-all">
                       {c.image?.startsWith('http') ? (
                         <img src={c.image} alt={c.name} className="w-full h-full object-cover rounded-2xl" loading="lazy" />
@@ -692,7 +692,7 @@ export default function CustomerHomePage() {
             <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
               {isLoading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
                 data?.serviceCategories?.slice(0, 8).map((c: any) => (
-                  <Link key={c.id} to={`/app/services?category=${c.name}`}
+                  <Link key={c.id} to={`/app/services?category=${encodeURIComponent(c.name)}`}
                     className="bg-card rounded-xl border border-border/50 p-2.5 hover:border-primary/30 hover:shadow-md transition-all flex items-center gap-2">
                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-primary/10">
                       {c.image && (c.image.startsWith('http') || c.image.startsWith('/')) ? (
