@@ -34,6 +34,7 @@ export function FloatingVideoAd({
   const navigate = useNavigate();
   const [playing, setPlaying] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [muted, setMuted] = useState(true);
   const impressionLogged = useRef(false);
   const playableVideoUrl = usePlayableVideoSource(videoUrl);
 
