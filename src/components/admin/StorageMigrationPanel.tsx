@@ -374,6 +374,30 @@ export default function StorageMigrationPanel() {
         </div>
       </Card>
 
+      <Card className="p-4 border-warning/40">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold">Repair Socio Media (Supabase → B2 at existing URL)</h2>
+            <p className="text-sm text-muted-foreground">
+              Many <code>social_posts</code>, <code>social_stories</code> and <code>social_messages</code> rows
+              already point to <code>backblazeb2.com/.../migrated/&lt;bucket&gt;/&lt;path&gt;</code> URLs whose files
+              were never actually copied. This finds the original file in Supabase Storage and uploads it to that
+              exact B2 key — no DB rewrite needed. Safe to re-run.
+            </p>
+            {repairStats && (
+              <p className="text-xs text-muted-foreground mt-2 font-mono">
+                Copied: {repairStats.copied} · Already in B2: {repairStats.already} ·
+                Missing in storage: {repairStats.missing} · Errors: {repairStats.errors}
+              </p>
+            )}
+          </div>
+          <Button onClick={repairSocioMedia} disabled={repairing} className="gap-2">
+            {repairing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+            Repair Socio media
+          </Button>
+        </div>
+      </Card>
+
       <Card className="p-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
