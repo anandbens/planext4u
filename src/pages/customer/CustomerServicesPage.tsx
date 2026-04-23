@@ -76,7 +76,7 @@ export default function CustomerServicesPage() {
 
   const { data: categories } = useQuery({
     queryKey: ["serviceCategories"],
-    queryFn: api.getServiceCategories,
+    queryFn: () => api.getServiceCategories(),
   });
 
   // Fetch vendor availability for today's day of week
