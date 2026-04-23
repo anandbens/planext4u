@@ -7,10 +7,11 @@ import { CategoryModal } from "@/components/admin/modals/CategoryModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, Layers, CheckCircle, Package, ShieldCheck, ShieldX, Plus, TrendingUp } from "lucide-react";
+import { Pencil, Trash2, Layers, CheckCircle, Package, ShieldCheck, ShieldX, Plus, TrendingUp, Sparkles, Loader2 } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 type StatusFilter = "all" | "active" | "inactive";
 type TrendingFilter = "all" | "yes" | "no";
