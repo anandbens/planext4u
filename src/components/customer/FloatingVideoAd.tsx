@@ -165,7 +165,7 @@ export function FloatingVideoAd({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.92 }}
         transition={{ type: "spring", stiffness: 280, damping: 26 }}
-        className="fixed z-50 left-2.5 bottom-[calc(5rem+env(safe-area-inset-bottom)+1rem)] md:bottom-8 md:left-8 w-[clamp(125px,27vw,172px)] aspect-[9/16] rounded-xl overflow-hidden shadow-2xl bg-black"
+        className="fixed z-50 left-2.5 bottom-[calc(5rem+env(safe-area-inset-bottom)+1rem)] md:bottom-8 md:left-8 w-[clamp(140px,30vw,190px)] aspect-[9/16] rounded-xl overflow-hidden shadow-2xl bg-black"
         onClick={handleTogglePlay}
         role="button"
         aria-label="Floating video advertisement"
@@ -175,7 +175,7 @@ export function FloatingVideoAd({
           poster={thumbnailUrl}
           autoPlay
           loop
-          muted
+          muted={muted}
           {...({ defaultMuted: true } as any)}
           playsInline
           {...({ "webkit-playsinline": "true" } as Record<string, string>)}
@@ -185,7 +185,7 @@ export function FloatingVideoAd({
           onPause={() => setPlaying(false)}
           onLoadedMetadata={(e) => {
             const v = e.currentTarget;
-            v.muted = true;
+            v.muted = muted;
             v.play().catch(() => {});
           }}
           onError={(e) => {
@@ -199,35 +199,48 @@ export function FloatingVideoAd({
           className="w-full h-full object-cover"
         />
 
+        {/* Top-left: close */}
         <button
           onClick={handleClose}
           aria-label="Close ad"
-          className="absolute top-1.5 left-1.5 h-5 w-5 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/75 transition-colors"
+          className="absolute top-1.5 left-1.5 h-6 w-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors"
         >
-          <X className="h-3 w-3" />
+          <X className="h-3.5 w-3.5" />
         </button>
 
-        <button
-          onClick={handleExpand}
-          aria-label="Expand to fullscreen"
-          className="absolute bottom-1.5 right-1.5 h-5 w-5 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/75 transition-colors"
-        >
-          <Maximize2 className="h-3 w-3" />
-        </button>
+        {/* Top-right: mute + maximize (kept off the bottom CTA so they remain tappable) */}
+        <div className="absolute top-1.5 right-1.5 flex items-center gap-1">
+          <button
+            onClick={handleToggleMute}
+            aria-label={muted ? "Unmute" : "Mute"}
+            className="h-6 w-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+          >
+            {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+          </button>
+          <button
+            onClick={handleExpand}
+            aria-label="Expand to fullscreen"
+            className="h-6 w-6 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/80 transition-colors"
+          >
+            <Maximize2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
 
         {!playing && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="h-6 w-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-              <Play className="h-3 w-3 text-white fill-white" />
+            <div className="h-7 w-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+              <Play className="h-3.5 w-3.5 text-white fill-white" />
             </div>
           </div>
         )}
 
+        {/* Bottom CTA: full-width, sits flush at the bottom so it never overlaps the
+            top-row maximize / mute buttons. Tapping it triggers the CTA, not play/pause. */}
         {ctaLink && (
           <button
             onClick={handleCTA}
             aria-label={ctaText || "Click here"}
-            className="absolute bottom-1 left-1/2 -translate-x-1/2 max-w-[calc(100%-0.5rem)] truncate px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-lg flex items-center gap-1 hover:scale-105 transition-transform"
+            className="absolute bottom-0 inset-x-0 px-2 py-1.5 bg-primary/95 text-primary-foreground text-[11px] font-semibold shadow-lg flex items-center justify-center gap-1 hover:bg-primary transition-colors"
           >
             <span className="truncate">{ctaText || "Click here"}</span>
             <ExternalLink className="h-2.5 w-2.5 shrink-0" />
