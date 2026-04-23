@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
 import { useCurrency } from "@/lib/country-context";
 import { supabase } from "@/integrations/supabase/client";
-import SmartImage from "@/components/SmartImage";
+import { SmartImage } from "@/components/SmartImage";
 
 interface ShopProduct {
   id: string;
