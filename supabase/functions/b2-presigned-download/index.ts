@@ -183,30 +183,30 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // --- Auth: require valid Supabase JWT for both buckets ---
+    // --- Auth ---
+    // Private bucket: REQUIRES valid JWT + admin/finance/sales role.
+    // Public bucket: open — these objects were originally world-readable; we just
+    // re-sign them when the bucket itself was flipped to private at the B2 level.
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Missing Authorization" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser(token);
-    if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Private bucket = strict admin-only access.
-    // Public bucket = any authenticated user (these were originally world-readable).
     if (bucketChoice === "private") {
+      if (!token) {
+        return new Response(JSON.stringify({ error: "Missing Authorization" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser(token);
+      if (userErr || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
       const { data: roles } = await adminClient
         .from("user_roles")
