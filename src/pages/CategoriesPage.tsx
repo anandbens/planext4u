@@ -7,10 +7,11 @@ import { CategoryModal } from "@/components/admin/modals/CategoryModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, Layers, CheckCircle, Package, ShieldCheck, ShieldX, Plus, TrendingUp } from "lucide-react";
+import { Pencil, Trash2, Layers, CheckCircle, Package, ShieldCheck, ShieldX, Plus, TrendingUp, Sparkles, Loader2 } from "lucide-react";
 import { exportToCSV } from "@/lib/csv";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 type StatusFilter = "all" | "active" | "inactive";
 type TrendingFilter = "all" | "yes" | "no";
@@ -31,6 +32,29 @@ export default function CategoriesPage() {
   const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [createAsSubcategory, setCreateAsSubcategory] = useState(false);
+  const [autoFilling, setAutoFilling] = useState(false);
+
+  const handleAutoFillImages = async () => {
+    if (autoFilling) return;
+    setAutoFilling(true);
+    const t = toast.loading(`Generating images for up to 30 categories…`);
+    try {
+      const { data, error } = await supabase.functions.invoke("seed-category-images", {
+        body: { limit: 30 },
+      });
+      if (error) throw error;
+      toast.success(
+        `Updated ${data?.updated ?? 0} categories${data?.errors?.length ? ` · ${data.errors.length} failed` : ""}`,
+        { id: t },
+      );
+      if (data?.errors?.length) console.warn("[auto-fill errors]", data.errors);
+      fetchData();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to auto-fill images", { id: t });
+    } finally {
+      setAutoFilling(false);
+    }
+  };
 
   const fetchData = useCallback(() => {
     api.getCategories().then(setAllData);
@@ -151,6 +175,14 @@ export default function CategoriesPage() {
         <Button variant="outline" size="sm" className="h-9 text-xs gap-1"
           onClick={() => { setCreateAsSubcategory(true); setSelected(null); setModalMode("create"); setModalOpen(true); }}>
           <Plus className="h-3.5 w-3.5" /> Add Subcategory
+        </Button>
+
+        <Button variant="default" size="sm" className="h-9 text-xs gap-1 ml-auto"
+          disabled={autoFilling}
+          onClick={handleAutoFillImages}
+          title="Generate AI category images for entries missing an image and upload to B2">
+          {autoFilling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          {autoFilling ? "Generating…" : "Auto-fill Missing Images"}
         </Button>
       </div>
 
