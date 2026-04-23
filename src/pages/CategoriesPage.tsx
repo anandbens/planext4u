@@ -176,6 +176,14 @@ export default function CategoriesPage() {
           onClick={() => { setCreateAsSubcategory(true); setSelected(null); setModalMode("create"); setModalOpen(true); }}>
           <Plus className="h-3.5 w-3.5" /> Add Subcategory
         </Button>
+
+        <Button variant="default" size="sm" className="h-9 text-xs gap-1 ml-auto"
+          disabled={autoFilling}
+          onClick={handleAutoFillImages}
+          title="Generate AI category images for entries missing an image and upload to B2">
+          {autoFilling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          {autoFilling ? "Generating…" : "Auto-fill Missing Images"}
+        </Button>
       </div>
 
       <DataTable
