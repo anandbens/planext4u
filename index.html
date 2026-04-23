@@ -68,6 +68,32 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      // Portal-isolation pre-bootstrap.
+      // The Supabase client (src/integrations/supabase/client.ts) decides which
+      // storage key to use based on window.location.pathname AT MODULE LOAD TIME.
+      // If the user opens the deployed root URL (`/` or `/index`) in a new tab
+      // while admin is logged in in another tab, the default fall-through used
+      // to pick the admin storage key — silently inheriting admin's session into
+      // what becomes the customer (`/app`) tab. We normalize the pathname to a
+      // portal-prefixed value BEFORE the JS module graph (and therefore the
+      // Supabase client) is loaded, so detection picks the right portal.
+      (function(){
+        try {
+          var path = window.location.pathname || '/';
+          var ADMIN_PREFIXES = ['/login','/admin','/dashboard','/reports','/customers','/vendors','/products','/orders','/categories','/banners','/advertisements','/cms','/settings','/integrations','/platform-variables','/tax','/points','/referrals','/classifieds','/settlements','/occupations','/website-queries','/popup-banners','/support-tickets','/services','/file-uploads','/parent-items','/cf-'];
+          var PORTAL_PREFIXES = ['/app','/vendor','/rider','/auth'];
+          var isAdmin = ADMIN_PREFIXES.some(function(p){ return path === p || path.indexOf(p + '/') === 0 || path === p + '/'; });
+          var isPortal = PORTAL_PREFIXES.some(function(p){ return path === p || path.indexOf(p + '/') === 0 || path === p + '/'; });
+          if (!isAdmin && !isPortal) {
+            // Unknown path (`/`, `/index`, `/index.html`) → treat as customer storefront.
+            var search = window.location.search || '';
+            var hash = window.location.hash || '';
+            window.history.replaceState({}, '', '/app' + search + hash);
+          }
+        } catch (e) { /* ignore — fall through to default behavior */ }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
