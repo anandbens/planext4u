@@ -32,6 +32,29 @@ export default function CategoriesPage() {
   const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [createAsSubcategory, setCreateAsSubcategory] = useState(false);
+  const [autoFilling, setAutoFilling] = useState(false);
+
+  const handleAutoFillImages = async () => {
+    if (autoFilling) return;
+    setAutoFilling(true);
+    const t = toast.loading(`Generating images for up to 30 categories…`);
+    try {
+      const { data, error } = await supabase.functions.invoke("seed-category-images", {
+        body: { limit: 30 },
+      });
+      if (error) throw error;
+      toast.success(
+        `Updated ${data?.updated ?? 0} categories${data?.errors?.length ? ` · ${data.errors.length} failed` : ""}`,
+        { id: t },
+      );
+      if (data?.errors?.length) console.warn("[auto-fill errors]", data.errors);
+      fetchData();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to auto-fill images", { id: t });
+    } finally {
+      setAutoFilling(false);
+    }
+  };
 
   const fetchData = useCallback(() => {
     api.getCategories().then(setAllData);
