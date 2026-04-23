@@ -115,6 +115,17 @@ export function FloatingVideoAd({
     }
   };
 
+  const handleToggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const v = videoRef.current;
+    if (!v) return;
+    const next = !muted;
+    v.muted = next;
+    setMuted(next);
+    // Browsers may pause when toggling unmute under some autoplay policies — try resume.
+    if (!next) v.play().catch(() => {});
+  };
+
   // Handle "Click here" CTA: log click, then route in-app for /paths or open external URLs.
   const handleCTA = (e: React.MouseEvent) => {
     e.stopPropagation();
