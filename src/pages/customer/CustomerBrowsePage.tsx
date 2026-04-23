@@ -49,9 +49,21 @@ export default function CustomerBrowsePage() {
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string[]>>({});
   const [priceTouched, setPriceTouched] = useState(false);
 
-  // Try to get customer's default address first, fallback to GPS
+  // Resolve user location: 1) header-selected coords (web + Capacitor),
+  // 2) customer's default saved address, 3) GPS fallback. Re-runs whenever
+  // the header location changes so vendor-radius filtering stays in sync.
   useEffect(() => {
+    let cancelled = false;
     const loadLocation = async () => {
+      const { loadSelectedCoords, LOCATION_CHANGED_EVENT } = await import("@/components/customer/LocationModal");
+      const headerCoords = loadSelectedCoords();
+      if (headerCoords) {
+        if (!cancelled) {
+          setUserLocation({ lat: headerCoords.lat, lng: headerCoords.lng });
+          setRadiusInfo("Showing results near your selected location");
+        }
+        return;
+      }
       try {
         const { ownerIds } = await getCustomerAddressOwnerContext(customerUser);
         if (ownerIds.length) {
@@ -61,17 +73,17 @@ export default function CustomerBrowsePage() {
             .in('customer_id', ownerIds)
             .eq('is_default', true)
             .maybeSingle();
-          if (addr?.latitude && addr?.longitude) {
+          if (!cancelled && addr?.latitude && addr?.longitude) {
             setUserLocation({ lat: addr.latitude, lng: addr.longitude });
             setRadiusInfo("Showing results near your default address");
             return;
           }
         }
       } catch {}
-      // Fallback to GPS
-      if (navigator.geolocation) {
+      if (!cancelled && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
+            if (cancelled) return;
             setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
             setRadiusInfo("Showing results near your location");
           },
@@ -80,7 +92,15 @@ export default function CustomerBrowsePage() {
       }
     };
     loadLocation();
-  }, []);
+    const onLocChange = () => loadLocation();
+    window.addEventListener("p4u:location-changed", onLocChange);
+    window.addEventListener("storage", onLocChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("p4u:location-changed", onLocChange);
+      window.removeEventListener("storage", onLocChange);
+    };
+  }, [customerUser]);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["browseProducts", categoryFilter, sortBy, searchFilter, userLocation.lat],
