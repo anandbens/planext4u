@@ -159,6 +159,35 @@ export default function StorageMigrationPanel() {
     }
   };
 
+  // Repair Socio media: copy original files from Supabase Storage to B2 at the
+  // exact `migrated/<bucket>/<path>` key the DB URLs already reference.
+  const [repairing, setRepairing] = useState(false);
+  const [repairStats, setRepairStats] = useState<{ copied: number; already: number; missing: number; errors: number } | null>(null);
+  const repairSocioMedia = async () => {
+    setRepairing(true);
+    let copied = 0, already = 0, missing = 0, errors = 0, safety = 0;
+    try {
+      while (true) {
+        const { data, error } = await supabase.functions.invoke("repair-socio-b2-media", { body: { limit: 25 } });
+        if (error) throw error;
+        const r = data as { copied: number; already_present: number; missing_in_storage: number; error_count: number; remaining: number; processed: number; errors?: any[] };
+        if (r.errors?.length) console.warn("[repair-socio-b2-media]", r.errors);
+        copied += r.copied || 0;
+        already += r.already_present || 0;
+        missing += r.missing_in_storage || 0;
+        errors += r.error_count || 0;
+        setRepairStats({ copied, already, missing, errors });
+        if (r.processed === 0 || r.remaining === 0) break;
+        if (++safety > 50) break;
+      }
+      toast.success(`Socio media repair: ${copied} copied · ${already} already in B2 · ${missing} missing · ${errors} error(s)`);
+    } catch (e: any) {
+      toast.error(`Repair failed: ${e.message || e}`);
+    } finally {
+      setRepairing(false);
+    }
+  };
+
   // Generate carousel + product/service/category/vendor/customer/banner images via AI and upload to B2
   type SeedMode = "all" | "carousel" | "products" | "services" | "categories" | "vendors" | "customers" | "banners";
   const [seeding, setSeeding] = useState<null | SeedMode>(null);
@@ -342,6 +371,30 @@ export default function StorageMigrationPanel() {
               Generate everything
             </Button>
           </div>
+        </div>
+      </Card>
+
+      <Card className="p-4 border-warning/40">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold">Repair Socio Media (Supabase → B2 at existing URL)</h2>
+            <p className="text-sm text-muted-foreground">
+              Many <code>social_posts</code>, <code>social_stories</code> and <code>social_messages</code> rows
+              already point to <code>backblazeb2.com/.../migrated/&lt;bucket&gt;/&lt;path&gt;</code> URLs whose files
+              were never actually copied. This finds the original file in Supabase Storage and uploads it to that
+              exact B2 key — no DB rewrite needed. Safe to re-run.
+            </p>
+            {repairStats && (
+              <p className="text-xs text-muted-foreground mt-2 font-mono">
+                Copied: {repairStats.copied} · Already in B2: {repairStats.already} ·
+                Missing in storage: {repairStats.missing} · Errors: {repairStats.errors}
+              </p>
+            )}
+          </div>
+          <Button onClick={repairSocioMedia} disabled={repairing} className="gap-2">
+            {repairing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+            Repair Socio media
+          </Button>
         </div>
       </Card>
 
