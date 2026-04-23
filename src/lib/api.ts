@@ -960,8 +960,10 @@ export const api = {
     return filtered as unknown as Service[];
   },
 
-  getServiceCategories: async () => {
-    const { data } = await supabase.from('service_categories').select('*');
+  getServiceCategories: async (includeInactive = false) => {
+    let q = supabase.from('service_categories').select('*');
+    if (!includeInactive) q = q.eq('status', 'active');
+    const { data } = await q;
     return (data || []) as Category[];
   },
 
@@ -1436,12 +1438,16 @@ export const api = {
   },
 
   // Categories
-  getCategories: async () => {
-    const { data } = await supabase
+  // includeInactive=false by default — customer-facing surfaces should only
+  // see active categories. Admin pages pass includeInactive=true.
+  getCategories: async (includeInactive = false) => {
+    let q = supabase
       .from('categories')
       .select('*')
       .order('display_order', { ascending: true })
       .order('name', { ascending: true });
+    if (!includeInactive) q = q.eq('status', 'active');
+    const { data } = await q;
     return (data || []) as Category[];
   },
 
