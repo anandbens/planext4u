@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, Maximize2, Play, ExternalLink } from "lucide-react";
+import { X, Maximize2, Play, ExternalLink, Volume2, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { VideoAdOverlay } from "./VideoAdOverlay";
