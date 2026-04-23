@@ -13,7 +13,7 @@ export default function CFCategoriesPage() {
   const [page, setPage] = useState(1);
 
   const fetchData = useCallback(() => {
-    api.getCategories().then((cats) => {
+    api.getCategories(true).then((cats) => {
       const start = (page - 1) * 10;
       setData({ data: cats.slice(start, start + 10), total: cats.length, page, per_page: 10, total_pages: Math.ceil(cats.length / 10) });
     });
