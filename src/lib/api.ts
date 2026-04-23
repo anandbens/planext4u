@@ -960,8 +960,10 @@ export const api = {
     return filtered as unknown as Service[];
   },
 
-  getServiceCategories: async () => {
-    const { data } = await supabase.from('service_categories').select('*');
+  getServiceCategories: async (includeInactive = false) => {
+    let q = supabase.from('service_categories').select('*');
+    if (!includeInactive) q = q.eq('status', 'active');
+    const { data } = await q;
     return (data || []) as Category[];
   },
 
@@ -1436,12 +1438,16 @@ export const api = {
   },
 
   // Categories
-  getCategories: async () => {
-    const { data } = await supabase
+  // includeInactive=false by default — customer-facing surfaces should only
+  // see active categories. Admin pages pass includeInactive=true.
+  getCategories: async (includeInactive = false) => {
+    let q = supabase
       .from('categories')
       .select('*')
       .order('display_order', { ascending: true })
       .order('name', { ascending: true });
+    if (!includeInactive) q = q.eq('status', 'active');
+    const { data } = await q;
     return (data || []) as Category[];
   },
 
@@ -1880,8 +1886,8 @@ export const api = {
       { data: platformVars },
     ] = await Promise.all([
       supabase.from('banners').select('*').eq('status', 'active').order('priority', { ascending: false }),
-      supabase.from('categories').select('*'),
-      supabase.from('service_categories').select('*'),
+      supabase.from('categories').select('*').eq('status', 'active'),
+      supabase.from('service_categories').select('*').eq('status', 'active'),
       supabase.from('products').select('*').eq('status', 'active').limit(100),
       supabase.from('services').select('*').eq('status', 'active').limit(4),
       supabase.from('popup_banners').select('*').eq('status', 'active').order('created_at', { ascending: false }),

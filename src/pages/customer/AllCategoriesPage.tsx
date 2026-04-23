@@ -11,7 +11,7 @@ export default function AllCategoriesPage() {
   const [search, setSearch] = useState("");
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
-    queryFn: api.getCategories,
+    queryFn: () => api.getCategories(),
   });
 
   const parents = useMemo(() => {

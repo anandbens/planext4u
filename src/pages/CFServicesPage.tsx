@@ -11,7 +11,7 @@ export default function CFServicesPage() {
   const [page, setPage] = useState(1);
 
   const fetchData = useCallback(() => {
-    api.getServiceCategories().then((cats) => {
+    api.getServiceCategories(true).then((cats) => {
       const start = (page - 1) * 10;
       setData({ data: cats.slice(start, start + 10) as Category[], total: cats.length, page, per_page: 10, total_pages: Math.ceil(cats.length / 10) });
     });

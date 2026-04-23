@@ -1,10 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Clock, MapPin, Heart } from "lucide-react";
+import { Star, Clock, MapPin, Heart, SlidersHorizontal, Wrench, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
+import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomerLayout } from "@/components/customer/CustomerLayout";
 import { api } from "@/lib/api";
@@ -15,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { getServiceImage } from "@/lib/service-image";
+import { loadSelectedCoords, LOCATION_CHANGED_EVENT } from "@/components/customer/LocationModal";
 
 function useServiceWishlist() {
   const getList = () => { try { return JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]'); } catch { return []; } };
@@ -39,11 +43,27 @@ export default function CustomerServicesPage() {
   const { customerUser } = useAuth();
   const { format: fmt } = useCurrency();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
+  const [radiusInfo, setRadiusInfo] = useState<string>("");
 
-  // Resolve user location: default address → GPS fallback
+  // Filters
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
+  const [minRating, setMinRating] = useState(0);
+  const [availableOnly, setAvailableOnly] = useState(false);
+  const [priceTouched, setPriceTouched] = useState(false);
+
+  // Resolve user location: header coords → default address → GPS.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const loadLocation = async () => {
+      const headerCoords = loadSelectedCoords();
+      if (headerCoords) {
+        if (!cancelled) {
+          setUserLocation({ lat: headerCoords.lat, lng: headerCoords.lng });
+          setRadiusInfo("Showing services near your selected location");
+        }
+        return;
+      }
       try {
         const { ownerIds } = await getCustomerAddressOwnerContext(customerUser);
         if (ownerIds.length) {
@@ -55,6 +75,7 @@ export default function CustomerServicesPage() {
             .maybeSingle();
           if (!cancelled && addr?.latitude && addr?.longitude) {
             setUserLocation({ lat: addr.latitude, lng: addr.longitude });
+            setRadiusInfo("Showing services near your default address");
             return;
           }
         }
@@ -65,8 +86,16 @@ export default function CustomerServicesPage() {
           () => {},
         );
       }
-    })();
-    return () => { cancelled = true; };
+    };
+    loadLocation();
+    const onLocChange = () => loadLocation();
+    window.addEventListener(LOCATION_CHANGED_EVENT, onLocChange);
+    window.addEventListener("storage", onLocChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(LOCATION_CHANGED_EVENT, onLocChange);
+      window.removeEventListener("storage", onLocChange);
+    };
   }, [customerUser]);
 
   const { data: services, isLoading } = useQuery({
@@ -76,10 +105,17 @@ export default function CustomerServicesPage() {
 
   const { data: categories } = useQuery({
     queryKey: ["serviceCategories"],
-    queryFn: api.getServiceCategories,
+    queryFn: () => api.getServiceCategories(),
   });
 
-  // Fetch vendor availability for today's day of week
+  // Detect parent category & subcategories for the strip
+  const activeCategory = categories?.find((c) => c.name === categoryFilter);
+  const subcategories = activeCategory && !activeCategory.parent_id
+    ? (categories || []).filter((c) => c.parent_id === activeCategory.id)
+    : [];
+  const parentCategories = (categories || []).filter((c) => !c.parent_id);
+
+  // Today's day-of-week vendor availability lookup
   const todayDow = new Date().getDay();
   const vendorIds = useMemo(() => {
     const ids = new Set<string>();
@@ -105,16 +141,114 @@ export default function CustomerServicesPage() {
     enabled: vendorIds.length > 0,
   });
 
+  // Local price + rating + availability filters on top of server-fetched list
+  const maxPrice = useMemo(() => {
+    const m = Math.max(0, ...((services || []).map((s: any) => Number(s.price) || 0)));
+    return Math.max(1000, Math.ceil(m / 100) * 100);
+  }, [services]);
+
+  useEffect(() => {
+    if (!priceTouched) setPriceRange([0, maxPrice]);
+  }, [maxPrice, priceTouched]);
+
+  const effectivePriceRange: [number, number] = priceRange ?? [0, maxPrice];
+
+  const filteredServices = useMemo(() => {
+    const [lo, hi] = effectivePriceRange;
+    return (services || []).filter((s: any) => {
+      const price = Number(s.price) || 0;
+      if (price < lo || price > hi) return false;
+      if ((Number(s.rating) || 0) < minRating) return false;
+      if (availableOnly) {
+        const avail = availabilityMap?.[s.vendor_id];
+        if (avail && !avail.is_available) return false;
+      }
+      return true;
+    });
+  }, [services, effectivePriceRange, minRating, availableOnly, availabilityMap]);
+
+  const priceFilterActive = priceTouched && (effectivePriceRange[0] > 0 || effectivePriceRange[1] < maxPrice);
+  const activeFilterCount = (priceFilterActive ? 1 : 0) + (minRating > 0 ? 1 : 0) + (availableOnly ? 1 : 0);
+
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-bold">{categoryFilter || "All Services"}</h1>
-            <p className="text-sm text-muted-foreground">{services?.length || 0} services available</p>
+      <div className="max-w-7xl mx-auto px-4 py-4 pb-28 md:pb-6">
+        {/* Header */}
+        <div className="mb-3">
+          <div className="flex items-baseline justify-between gap-2 min-w-0">
+            <h1 className="text-xl font-bold truncate min-w-0 flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-primary" />
+              {categoryFilter || "All Services"}
+            </h1>
+            <p className="text-xs text-muted-foreground shrink-0">
+              {filteredServices.length} service{filteredServices.length === 1 ? '' : 's'}
+            </p>
           </div>
+          {radiusInfo && (
+            <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{radiusInfo}</p>
+          )}
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
+                <SlidersHorizontal className="h-3.5 w-3.5" /> Filters
+                {activeFilterCount > 0 && (
+                  <span className="ml-0.5 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+              <SheetHeader><SheetTitle>Filter Services</SheetTitle></SheetHeader>
+              <div className="space-y-6 mt-4">
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Price range</h4>
+                  <Slider
+                    min={0} max={maxPrice} step={50}
+                    value={effectivePriceRange}
+                    onValueChange={(v) => { setPriceTouched(true); setPriceRange([v[0], v[1]] as [number, number]); }}
+                  />
+                  <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                    <span>{fmt(effectivePriceRange[0], { decimals: 0 })}</span>
+                    <span>{fmt(effectivePriceRange[1], { decimals: 0 })}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Minimum rating</h4>
+                  <div className="flex gap-2">
+                    {[0, 3, 4, 4.5].map((r) => (
+                      <button key={r} onClick={() => setMinRating(r)}
+                        className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${minRating === r ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
+                        {r === 0 ? 'Any' : `${r}+`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" className="h-4 w-4 accent-primary"
+                      checked={availableOnly} onChange={(e) => setAvailableOnly(e.target.checked)} />
+                    Show only services available today
+                  </label>
+                </div>
+              </div>
+              <SheetFooter className="mt-6 flex-row gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => {
+                  setPriceTouched(false); setPriceRange([0, maxPrice]); setMinRating(0); setAvailableOnly(false);
+                }}>Reset</Button>
+                <Button className="flex-1" onClick={() => setFiltersOpen(false)}>Apply</Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-36 h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="popular">Most Popular</SelectItem>
               <SelectItem value="price_low">Price: Low to High</SelectItem>
@@ -124,21 +258,22 @@ export default function CustomerServicesPage() {
           </Select>
         </div>
 
-        <div className="flex gap-2.5 overflow-x-auto pb-4 mb-4 scrollbar-hide">
+        {/* Category chips (parents) */}
+        <div className="flex gap-2.5 overflow-x-auto pb-3 mb-3 scrollbar-hide">
           <Link to="/app/services" className="shrink-0">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
               ${!categoryFilter ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
               <span className="text-sm font-medium">All</span>
             </div>
           </Link>
-          {categories?.map((c) => (
-            <Link key={c.id} to={`/app/services?category=${c.name}`} className="shrink-0">
+          {parentCategories.map((c) => (
+            <Link key={c.id} to={`/app/services?category=${encodeURIComponent(c.name)}`} className="shrink-0">
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
                 ${categoryFilter === c.name ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
                 {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
                   <img src={c.image} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
                 ) : (
-                  <span className="text-base">{c.image}</span>
+                  <span className="text-base">{c.image || '🛠️'}</span>
                 )}
                 <span className="text-sm font-medium">{c.name}</span>
               </div>
@@ -146,21 +281,54 @@ export default function CustomerServicesPage() {
           ))}
         </div>
 
+        {/* Subcategory strip when parent category is selected */}
+        {subcategories.length > 0 && (
+          <section className="mb-5">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <h2 className="text-sm md:text-base font-bold">Browse {activeCategory!.name} services</h2>
+            </div>
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+              {subcategories.map((s) => (
+                <Link key={s.id} to={`/app/services?category=${encodeURIComponent(s.name)}`} className="shrink-0">
+                  <div className="flex flex-col items-center gap-1.5 min-w-[72px]">
+                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center border-2 border-border/50 bg-card hover:border-primary/40 transition-all overflow-hidden">
+                      {s.image && (s.image.startsWith("/") || s.image.startsWith("http")) ? (
+                        <img src={s.image} alt={s.name} className="h-9 w-9 rounded-lg object-cover" />
+                      ) : (
+                        <span className="text-xl">{s.image || "🛠️"}</span>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-medium text-center leading-tight max-w-[72px] line-clamp-2">
+                      {s.name}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Service grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-xl" />)}
           </div>
+        ) : filteredServices.length === 0 ? (
+          <div className="text-center py-16 text-sm text-muted-foreground">
+            <Wrench className="h-10 w-10 mx-auto mb-3 opacity-40" />
+            No services found in your area. Try adjusting filters or changing your location.
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-            {services?.map((s) => {
+            {filteredServices.map((s) => {
               const discountPct = s.discount ? Math.round((s.discount / s.price) * 100) : 0;
               const isWished = wishlist.includes(s.id);
               const vendorAvail = availabilityMap?.[s.vendor_id];
-              const isAvailableToday = vendorAvail ? vendorAvail.is_available : true; // default available if no data
+              const isAvailableToday = vendorAvail ? vendorAvail.is_available : true;
               return (
                 <Card key={s.id} className={`overflow-hidden hover:shadow-md transition-all ${!isAvailableToday ? 'opacity-60' : ''}`}>
                   <Link to={`/app/service/${s.id}`}>
-                    <div className="bg-gradient-to-br from-secondary/50 to-secondary/20 h-32 flex items-center justify-center relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-primary/15 to-secondary/30 h-32 flex items-center justify-center relative overflow-hidden">
                       <img
                         src={getServiceImage(s.title, s.image)}
                         alt={s.title}
@@ -169,9 +337,9 @@ export default function CustomerServicesPage() {
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = getServiceImage(s.title, null); }}
                       />
                       {discountPct > 0 && <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground text-[10px]">{discountPct}% OFF</Badge>}
-                      <div className="absolute top-2 left-2 flex items-center gap-0.5 bg-card/90 px-1.5 py-0.5 rounded ml-auto" style={discountPct > 0 ? { left: 'auto', right: '40px' } : { left: '8px' }}>
+                      <div className="absolute top-2 right-2 flex items-center gap-0.5 bg-card/90 px-1.5 py-0.5 rounded">
                         <Star className="h-2.5 w-2.5 fill-warning text-warning" />
-                        <span className="text-[10px] font-medium">{s.rating}</span>
+                        <span className="text-[10px] font-medium">{s.rating || "New"}</span>
                       </div>
                       {!isAvailableToday && (
                         <Badge className="absolute bottom-2 left-2 bg-muted text-muted-foreground border-0 text-[10px]">Unavailable Today</Badge>
@@ -187,23 +355,26 @@ export default function CustomerServicesPage() {
                     </button>
                     <Link to={`/app/service/${s.id}`}>
                       <div className="flex items-center gap-2">
-                        <p className="text-xs text-primary font-medium">{s.vendor_name}</p>
+                        <p className="text-xs text-primary font-medium truncate">{s.vendor_name}</p>
                         {isAvailableToday ? (
-                          <Badge variant="outline" className="text-[9px] h-4 px-1 border-green-500/50 text-green-600">Available</Badge>
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 border-success/50 text-success">Available</Badge>
                         ) : (
                           <Badge variant="outline" className="text-[9px] h-4 px-1 border-destructive/50 text-destructive">Unavailable</Badge>
                         )}
                       </div>
-                      <h3 className="text-base font-semibold mt-0.5">{s.title}</h3>
+                      <h3 className="text-base font-semibold mt-0.5 line-clamp-2">{s.title}</h3>
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{s.description}</p>
-                      <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-warning text-warning" />{s.rating} ({s.reviews})</span>
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{s.duration}</span>
-                        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{s.service_area}</span>
+                      <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground flex-wrap">
+                        <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-warning text-warning" />{s.rating || 0} ({s.reviews || 0})</span>
+                        {s.duration && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{s.duration}</span>}
+                        {s.service_area && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{s.service_area}</span>}
                       </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-lg font-bold">{fmt(s.price, { decimals: 0 })}</span>
-                        {discountPct > 0 && <span className="text-sm text-muted-foreground line-through">{fmt(s.price + s.discount, { decimals: 0 })}</span>}
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold">{fmt(s.price, { decimals: 0 })}</span>
+                          {discountPct > 0 && <span className="text-sm text-muted-foreground line-through">{fmt(s.price + s.discount, { decimals: 0 })}</span>}
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </Link>
                   </div>

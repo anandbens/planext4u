@@ -57,7 +57,7 @@ export default function CategoriesPage() {
   };
 
   const fetchData = useCallback(() => {
-    api.getCategories().then(setAllData);
+    api.getCategories(true).then(setAllData);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
