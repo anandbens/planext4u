@@ -172,8 +172,16 @@ export default function CustomerBrowsePage() {
         .filter((c) => c.parent_id === activeCategory.id && c.status === 'active')
         .sort((a, b) => ((a as any).display_order ?? 999) - ((b as any).display_order ?? 999) || a.name.localeCompare(b.name))
     : [];
+  // When the active category IS a subcategory, gather its siblings (incl. self)
+  // so we can render the same horizontally-scrollable image-tile ribbon.
+  const siblingSubcategories = activeCategory?.parent_id
+    ? (categories || [])
+        .filter((c) => c.parent_id === activeCategory.parent_id && c.status === 'active')
+        .sort((a, b) => ((a as any).display_order ?? 999) - ((b as any).display_order ?? 999) || a.name.localeCompare(b.name))
+    : [];
   // Show sectioned layout for ANY category view (parent OR subcategory) when filtered
   const isCategoryView = !!activeCategory && !searchFilter;
+  const isChildCategoryView = isCategoryView && !!activeCategory!.parent_id && siblingSubcategories.length > 1;
 
   // Resolve theme: subcategory inherits from parent when unset.
   const activeParent = activeCategory?.parent_id
@@ -386,10 +394,26 @@ export default function CustomerBrowsePage() {
           </div>
         </div>
 
-        {/* Sectioned layout for parent categories */}
+        {/* Subcategory image-tile ribbon for parent OR child category views.
+            On a parent page we show its children; on a subcategory page we
+            show the parent's children with the active tile highlighted. The
+            redundant text chip strip has been removed in favour of this
+            single, consistent visual. */}
+        {isParentCategoryView && (
+          <SubcategoryStrip parentName={activeCategory!.name} subcategories={subcategories} />
+        )}
+        {isChildCategoryView && (
+          <SubcategoryStrip
+            parentName={activeParent?.name || ""}
+            subcategories={siblingSubcategories}
+            activeName={activeCategory!.name}
+            hideHeader
+          />
+        )}
+
+        {/* Sectioned rows for parent categories only. */}
         {isParentCategoryView && (
           <>
-            <SubcategoryStrip parentName={activeCategory!.name} subcategories={subcategories} />
             <ReorderTiles
               categoryName={activeCategory!.name}
               includeCategoryNames={subcategories.map((s) => s.name)}
@@ -429,6 +453,13 @@ export default function CustomerBrowsePage() {
             </div>
           </>
         )}
+
+        {/* Inline sponsored slot — placed once, just above the grid, so a
+            scrolling shopper sees the ad in context (not after pagination). */}
+        <div className="mb-3">
+          <BannerAd placement="products" />
+        </div>
+
 
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -559,9 +590,8 @@ export default function CustomerBrowsePage() {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="px-3 pt-2 pb-24 md:px-4 md:pt-3 md:pb-6">
-        <BannerAd placement="products" />
-      </div>
+      {/* Trailing BannerAd removed — the inline slot above the grid is now
+          the single sponsored placement on this page. */}
       <LoginPromptDialog open={loginPromptOpen} onOpenChange={setLoginPromptOpen} message="Please sign in to add items to your cart." />
     </CustomerLayout>
   );
