@@ -304,63 +304,6 @@ export function AdvertisementModal({ ad, open, onOpenChange, mode, onSave, onCre
             )}
           </div>
 
-          {/* Category-targeted placements: tag this ad to specific categories so it
-              appears above the subcategory chips on /app/browse?category=<name>.
-              Persisted into the same `placements` string[] using the prefix
-              `category:<Name>`, so no schema change is required. */}
-          <div>
-            <Label className="text-xs font-semibold">
-              Show above category pages (optional)
-            </Label>
-            {editMode ? (
-              <div className="mt-2 space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  Pick one or more categories. The banner will render at the top of each
-                  selected category's browse page (e.g. <code>?category=Bio Enzyme</code>).
-                </p>
-                <div className="max-h-44 overflow-y-auto border border-border/40 rounded-md p-2 grid grid-cols-2 gap-1.5">
-                  {categories.length === 0 && (
-                    <p className="col-span-2 text-xs text-muted-foreground py-2 text-center">
-                      No categories available.
-                    </p>
-                  )}
-                  {categories.map((c: any) => {
-                    const tag = `category:${c.name}`;
-                    const checked = form.placements.includes(tag);
-                    return (
-                      <label
-                        key={c.id}
-                        className="flex items-center gap-2 text-xs cursor-pointer rounded px-1.5 py-1 hover:bg-accent/50"
-                      >
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={() => {
-                            setForm((f) => {
-                              const without = f.placements.filter((p) => p !== "all");
-                              const has = without.includes(tag);
-                              const next = has
-                                ? without.filter((p) => p !== tag)
-                                : [...without, tag];
-                              return { ...f, placements: next.length === 0 ? ["all"] : next };
-                            });
-                          }}
-                        />
-                        <span className="truncate">{c.name}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm mt-1">
-                {(ad?.placements || [])
-                  .filter((p: string) => p.startsWith("category:"))
-                  .map((p: string) => p.slice("category:".length))
-                  .join(", ") || "—"}
-              </p>
-            )}
-          </div>
-
           {/* Dates, Type, Status */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>

@@ -447,3 +447,22 @@ div.fixed[class*="bottom-0"] {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* Discount ribbon — angled corner ribbon used on product cards.
+   Wrap requires a positioned parent with overflow-hidden. */
+.discount-ribbon {
+  position: absolute;
+  top: 8px;
+  left: -28px;
+  transform: rotate(-45deg);
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 2px 32px;
+  box-shadow: 0 1px 4px hsl(var(--destructive) / 0.35);
+  z-index: 10;
+  pointer-events: none;
+  text-transform: uppercase;
+}

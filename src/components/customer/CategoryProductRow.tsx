@@ -79,9 +79,7 @@ export function CategoryProductRow({
                 <Link to={`/app/product/${p.id}`} className="flex-1 flex flex-col">
                   <div className="bg-secondary/30 flex items-center justify-center relative overflow-hidden h-32">
                     {discountPct > 0 && !isOutOfStock && (
-                      <span className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">
-                        {discountPct}% Off
-                      </span>
+                      <span className="discount-ribbon">{discountPct}% Off</span>
                     )}
                     {isOutOfStock && (
                       <span className="absolute top-2 left-2 z-10 bg-destructive/90 text-destructive-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">
