@@ -202,9 +202,16 @@ export default function CustomerBrowsePage() {
   const mostRedeemedProducts: any[] = [];
   const isParentCategoryView = isCategoryView && !activeCategory!.parent_id && subcategories.length > 0;
 
-  useEffect(() => {
+  const refreshCartCount = () => {
     api.getCart().then(items => setCartCount(items.reduce((s, i) => s + i.qty, 0)));
+  };
+
+  useEffect(() => {
+    refreshCartCount();
     try { setWishlist(JSON.parse(localStorage.getItem('app_db_wishlist') || '[]')); } catch { setWishlist([]); }
+    const handler = () => refreshCartCount();
+    window.addEventListener('cart-changed', handler);
+    return () => window.removeEventListener('cart-changed', handler);
   }, []);
 
   const checkScroll = () => {
