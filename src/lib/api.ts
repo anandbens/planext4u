@@ -863,8 +863,10 @@ export const api = {
     return { success: true };
   },
 
-  getProductById: async (id: string): Promise<Product | null> => {
-    const { data } = await supabase.from('products').select('*').eq('id', id).single();
+  getProductById: async (id: string, opts?: { includeInactive?: boolean }): Promise<Product | null> => {
+    let q = supabase.from('products').select('*').eq('id', id);
+    if (!opts?.includeInactive) q = q.eq('status', 'active');
+    const { data } = await q.maybeSingle();
     return data as any;
   },
 
