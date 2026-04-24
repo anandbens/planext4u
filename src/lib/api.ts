@@ -1462,7 +1462,8 @@ export const api = {
     const validFields = ['name', 'parent_id', 'image', 'status', 'count', 'banner_image', 'icon',
       'is_trending', 'description', 'is_emergency', 'commission_rate', 'verification_status',
       'promotion_banner_url', 'promotion_title', 'promotion_active',
-      'display_order', 'show_on_homepage', 'category_type'];
+      'display_order', 'show_on_homepage', 'category_type',
+      'theme_color', 'theme_accent'];
     const filtered: Record<string, any> = {};
     for (const key of validFields) {
       if (key in data) filtered[key] = (data as any)[key];
