@@ -1991,7 +1991,13 @@ export const api = {
       if (plan.visibility_type === 'pan_india') return true;
       if (!userLat || !userLng) return true; // no user location = show all
       if (plan.visibility_type === 'radius_based') {
-        const dist = haversine(userLat, userLng, vendor.shop_latitude || 0, vendor.shop_longitude || 0);
+        const sLat = Number(vendor.shop_latitude) || 0;
+        const sLng = Number(vendor.shop_longitude) || 0;
+        // Treat (0,0) or null/undefined shop coords as "unset" → don't penalise the
+        // vendor by hiding their entire catalog. Show the products and let the
+        // vendor add a shop location to enable proper geo-filtering.
+        if (!sLat || !sLng) return true;
+        const dist = haversine(userLat, userLng, sLat, sLng);
         return dist <= (plan.radius_km || 5);
       }
       // city/state visibility - show all if we can't determine
