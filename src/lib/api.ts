@@ -1944,7 +1944,26 @@ export const api = {
 
   browseProducts: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number }) => {
     let query = supabase.from('products').select('*').eq('status', 'active');
-    if (params.category) query = query.ilike('category_name', `%${params.category}%`);
+    if (params.category) {
+      // Resolve whether the supplied name is a parent category or a subcategory.
+      // - Parent  → match products whose category_name matches (covers all its subcategories).
+      // - Subcat  → match products whose subcategory_name matches exactly so we don't bleed
+      //             in sibling subcategories under the same parent.
+      const { data: catRow } = await supabase
+        .from('categories')
+        .select('id, name, parent_id')
+        .ilike('name', params.category)
+        .maybeSingle();
+      if (catRow?.parent_id) {
+        // Subcategory: filter strictly by subcategory_name (or subcategory_id as fallback).
+        query = query.or(
+          `subcategory_name.ilike.${params.category},subcategory_id.eq.${catRow.id}`
+        );
+      } else {
+        // Parent (or unknown): match by category_name so the full tree is shown.
+        query = query.ilike('category_name', `%${params.category}%`);
+      }
+    }
     if (params.search) query = query.ilike('title', `%${params.search}%`);
     if (params.sort === 'price_low') query = query.order('price', { ascending: true });
     else if (params.sort === 'price_high') query = query.order('price', { ascending: false });
