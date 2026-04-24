@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { ChevronRight, Star, Heart, ShoppingCart, Zap } from "lucide-react";
+import { ChevronRight, Star, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isProductOutOfStock } from "@/lib/stock-display";
+import { QtyStepper } from "@/components/customer/QtyStepper";
 
 type RowProduct = {
   id: string;
@@ -28,8 +28,9 @@ interface CategoryProductRowProps {
   emptyHint?: string;
   wishlist: string[];
   onToggleWishlist: (id: string, e: React.MouseEvent) => void;
-  onQuickAdd: (p: any) => void;
-  onBuyNow: (p: any, e: React.MouseEvent) => void;
+  isAuthenticated?: boolean;
+  onAuthRequired?: () => void;
+  onCartChange?: () => void;
 }
 
 export function CategoryProductRow({
@@ -40,8 +41,9 @@ export function CategoryProductRow({
   emptyHint,
   wishlist,
   onToggleWishlist,
-  onQuickAdd,
-  onBuyNow,
+  isAuthenticated = true,
+  onAuthRequired,
+  onCartChange,
 }: CategoryProductRowProps) {
   if (!isLoading && products.length === 0) {
     if (!emptyHint) return null;
@@ -127,24 +129,14 @@ export function CategoryProductRow({
                     </div>
                   </div>
                 </Link>
-                <div className="px-2.5 pb-2.5 flex gap-1.5 mt-auto">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-7 text-xs"
-                    onClick={() => onQuickAdd(p)}
+                <div className="px-2.5 pb-2.5 mt-auto">
+                  <QtyStepper
+                    product={p}
                     disabled={isOutOfStock}
-                  >
-                    <ShoppingCart className="h-3 w-3 mr-1" /> {isOutOfStock ? "N/A" : "Cart"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="h-7 text-xs px-2"
-                    onClick={(e) => onBuyNow(p, e as any)}
-                    disabled={isOutOfStock}
-                  >
-                    <Zap className="h-3 w-3 mr-1" /> Buy
-                  </Button>
+                    isAuthenticated={isAuthenticated}
+                    onAuthRequired={onAuthRequired}
+                    onChange={() => onCartChange?.()}
+                  />
                 </div>
               </Card>
             );

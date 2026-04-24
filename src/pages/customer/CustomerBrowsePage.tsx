@@ -24,6 +24,7 @@ import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { isProductOutOfStock } from "@/lib/stock-display";
 import { SmartImage } from "@/components/SmartImage";
 import { resolveCategoryTheme, categoryThemeStyle } from "@/lib/category-theme";
+import { QtyStepper } from "@/components/customer/QtyStepper";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
@@ -201,9 +202,16 @@ export default function CustomerBrowsePage() {
   const mostRedeemedProducts: any[] = [];
   const isParentCategoryView = isCategoryView && !activeCategory!.parent_id && subcategories.length > 0;
 
-  useEffect(() => {
+  const refreshCartCount = () => {
     api.getCart().then(items => setCartCount(items.reduce((s, i) => s + i.qty, 0)));
+  };
+
+  useEffect(() => {
+    refreshCartCount();
     try { setWishlist(JSON.parse(localStorage.getItem('app_db_wishlist') || '[]')); } catch { setWishlist([]); }
+    const handler = () => refreshCartCount();
+    window.addEventListener('cart-changed', handler);
+    return () => window.removeEventListener('cart-changed', handler);
   }, []);
 
   const checkScroll = () => {
@@ -392,8 +400,9 @@ export default function CustomerBrowsePage() {
               isLoading={isLoading}
               wishlist={wishlist}
               onToggleWishlist={toggleWishlist}
-              onQuickAdd={quickAdd}
-              onBuyNow={buyNow}
+              isAuthenticated={!isGuest}
+              onAuthRequired={() => setLoginPromptOpen(true)}
+              onCartChange={refreshCartCount}
             />
             <CategoryProductRow
               title="Popular in this category"
@@ -401,8 +410,9 @@ export default function CustomerBrowsePage() {
               isLoading={isLoading}
               wishlist={wishlist}
               onToggleWishlist={toggleWishlist}
-              onQuickAdd={quickAdd}
-              onBuyNow={buyNow}
+              isAuthenticated={!isGuest}
+              onAuthRequired={() => setLoginPromptOpen(true)}
+              onCartChange={refreshCartCount}
             />
             <CategoryProductRow
               title="Most redeemed with points"
@@ -410,8 +420,9 @@ export default function CustomerBrowsePage() {
               isLoading={isLoading}
               wishlist={wishlist}
               onToggleWishlist={toggleWishlist}
-              onQuickAdd={quickAdd}
-              onBuyNow={buyNow}
+              isAuthenticated={!isGuest}
+              onAuthRequired={() => setLoginPromptOpen(true)}
+              onCartChange={refreshCartCount}
             />
             <div className="flex items-center justify-between mb-3 px-1 mt-2">
               <h2 className="text-base md:text-lg font-bold">All products</h2>
@@ -489,13 +500,14 @@ export default function CustomerBrowsePage() {
                           </div>
                         </div>
                       </Link>
-                      <div className="px-2.5 pb-2.5 flex gap-1.5 mt-auto">
-                        <Button size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => quickAdd(p)} disabled={isOutOfStock}>
-                          <ShoppingCart className="h-3 w-3 mr-1" /> {isOutOfStock ? 'Unavailable' : 'Cart'}
-                        </Button>
-                        <Button size="sm" className="h-7 text-xs px-2" onClick={(e) => buyNow(p, e as any)} disabled={isOutOfStock}>
-                          <Zap className="h-3 w-3 mr-1" /> Buy
-                        </Button>
+                      <div className="px-2.5 pb-2.5 mt-auto">
+                        <QtyStepper
+                          product={p}
+                          disabled={isOutOfStock}
+                          isAuthenticated={!isGuest}
+                          onAuthRequired={() => setLoginPromptOpen(true)}
+                          onChange={refreshCartCount}
+                        />
                       </div>
                     </Card>
                   );
