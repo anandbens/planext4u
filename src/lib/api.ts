@@ -950,7 +950,12 @@ export const api = {
       if (plan.visibility_type === 'pan_india') return true;
       if (!userLat || !userLng) return true;
       if (plan.visibility_type === 'radius_based') {
-        const dist = haversine(userLat, userLng, vendor.shop_latitude || 0, vendor.shop_longitude || 0);
+        const sLat = Number(vendor.shop_latitude) || 0;
+        const sLng = Number(vendor.shop_longitude) || 0;
+        // Treat (0,0) / null shop coords as unset → don't hide the vendor's
+        // catalog. They'll get proper geo-filtering once they set a location.
+        if (!sLat || !sLng) return true;
+        const dist = haversine(userLat, userLng, sLat, sLng);
         return dist <= (plan.radius_km || 5);
       }
       // city/state visibility — show if we can't determine
