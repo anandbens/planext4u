@@ -264,7 +264,7 @@ export default function CustomerBrowsePage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-44 md:pb-6 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-4 py-4 pb-44 md:pb-6 overflow-x-hidden" style={themeStyle}>
         {/* Header: title + count on first line, toolbar wraps cleanly on small screens */}
         <div className="mb-3">
           <div className="flex items-baseline justify-between gap-2 min-w-0">
