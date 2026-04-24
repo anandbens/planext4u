@@ -137,6 +137,8 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         display_order: orderNum,
         show_on_homepage: form.show_on_homepage,
         category_type: finalType,
+        theme_color: form.theme_color || null,
+        theme_accent: form.theme_accent || null,
       };
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
