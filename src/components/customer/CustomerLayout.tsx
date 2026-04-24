@@ -173,11 +173,11 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-3 -mx-1 px-1" style={{ WebkitOverflowScrolling: 'touch' }}>
             {[
               { label: "planext4u", to: "/app", highlight: true },
-              { label: "Shop", to: "/app/browse" },
-              { label: "Socio", to: "/app/social" },
-              { label: "Services", to: "/app/services" },
-              { label: "Find Home", to: "/app/find-home", comingSoon: true },
-              { label: "Classified", to: "/app/classifieds", comingSoon: true },
+              { label: "Shop", to: "/app/browse", comingSoon: !modules.shop },
+              { label: "Socio", to: "/app/social", comingSoon: !modules.socio },
+              { label: "Services", to: "/app/services", comingSoon: !modules.services },
+              { label: "Find Home", to: "/app/find-home", comingSoon: !modules.homes },
+              { label: "Classified", to: "/app/classifieds", comingSoon: !modules.classifieds },
             ].map((tab) => (
               <Link key={tab.label} to={tab.comingSoon ? "#" : tab.to}
                 onClick={(e) => { if (tab.comingSoon) { e.preventDefault(); toast.info(`${tab.label} — Coming Soon!`); } }}
@@ -269,11 +269,11 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-center gap-1 py-1.5">
               {[
-                { icon: ShoppingBag, label: "Shop", to: "/app/browse" },
-                { icon: Megaphone, label: "Socio", to: "/app/social" },
-                { icon: Wrench, label: "Services", to: "/app/services" },
-                { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: true },
-                { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds", comingSoon: true },
+                { icon: ShoppingBag, label: "Shop", to: "/app/browse", comingSoon: !modules.shop },
+                { icon: Megaphone, label: "Socio", to: "/app/social", comingSoon: !modules.socio },
+                { icon: Wrench, label: "Services", to: "/app/services", comingSoon: !modules.services },
+                { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: !modules.homes },
+                { icon: Newspaper, label: "Classified Ads", to: "/app/classifieds", comingSoon: !modules.classifieds },
               ].map((tab) => (
                   <Link key={tab.label} to={tab.comingSoon ? "#" : tab.to}
                     onClick={(e) => { if (tab.comingSoon) { e.preventDefault(); toast.info(`${tab.label} — Coming Soon!`); } }}
@@ -611,11 +611,11 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         // Default Shop footer
         const shopTabs = [
           { icon: Home, label: "Home", to: "/app", badge: 0 },
-          { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: 0 },
-          { icon: Megaphone, label: "Socio", to: "/app/social", badge: 0 },
-          { icon: Wrench, label: "Services", to: "/app/services", badge: 0 },
-          { icon: Building, label: "Find Home", to: "/app/find-home", badge: 0, comingSoon: true },
-          { icon: Newspaper, label: "Classified", to: "/app/classifieds", badge: 0, comingSoon: true },
+          { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: 0, comingSoon: !modules.shop },
+          { icon: Megaphone, label: "Socio", to: "/app/social", badge: 0, comingSoon: !modules.socio },
+          { icon: Wrench, label: "Services", to: "/app/services", badge: 0, comingSoon: !modules.services },
+          { icon: Building, label: "Find Home", to: "/app/find-home", badge: 0, comingSoon: !modules.homes },
+          { icon: Newspaper, label: "Classified", to: "/app/classifieds", badge: 0, comingSoon: !modules.classifieds },
         ];
         return (
           <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
