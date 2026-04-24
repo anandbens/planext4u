@@ -590,9 +590,8 @@ export default function CustomerBrowsePage() {
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="px-3 pt-2 pb-24 md:px-4 md:pt-3 md:pb-6">
-        <BannerAd placement="products" />
-      </div>
+      {/* Trailing BannerAd removed — the inline slot above the grid is now
+          the single sponsored placement on this page. */}
       <LoginPromptDialog open={loginPromptOpen} onOpenChange={setLoginPromptOpen} message="Please sign in to add items to your cart." />
     </CustomerLayout>
   );
