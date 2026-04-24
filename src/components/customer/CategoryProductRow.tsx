@@ -28,8 +28,9 @@ interface CategoryProductRowProps {
   emptyHint?: string;
   wishlist: string[];
   onToggleWishlist: (id: string, e: React.MouseEvent) => void;
-  onQuickAdd: (p: any) => void;
-  onBuyNow: (p: any, e: React.MouseEvent) => void;
+  isAuthenticated?: boolean;
+  onAuthRequired?: () => void;
+  onCartChange?: () => void;
 }
 
 export function CategoryProductRow({
