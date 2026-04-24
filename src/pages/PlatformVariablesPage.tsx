@@ -2,6 +2,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { api, PlatformVariable } from "@/lib/api";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +17,27 @@ const POINTS_KEYS = [
 ];
 
 const CALL_KEYS = ['voice_call_enabled', 'video_call_enabled'];
+
+const MODULE_KEYS = [
+  'module_shop_enabled',
+  'module_socio_enabled',
+  'module_services_enabled',
+  'module_homes_enabled',
+  'module_classifieds_enabled',
+  'module_food_enabled',
+];
+
+const MODULE_LABELS: Record<string, string> = {
+  module_shop_enabled: 'Shop',
+  module_socio_enabled: 'Socio',
+  module_services_enabled: 'Services',
+  module_homes_enabled: 'Find Home',
+  module_classifieds_enabled: 'Classifieds',
+  module_food_enabled: 'Food',
+};
+
+const isBooleanKey = (k: string) =>
+  MODULE_KEYS.includes(k) || CALL_KEYS.includes(k) || k === 'referral_cooling_enabled';
 
 export default function PlatformVariablesPage() {
   const [variables, setVariables] = useState<PlatformVariable[]>([]);
@@ -52,27 +74,47 @@ export default function PlatformVariablesPage() {
     }
   };
 
+  const moduleVars = MODULE_KEYS
+    .map(k => variables.find(v => v.key === k))
+    .filter((v): v is PlatformVariable => !!v);
   const pointsVars = variables.filter(v => POINTS_KEYS.includes(v.key));
   const callVars = variables.filter(v => CALL_KEYS.includes(v.key));
-  const otherVars = variables.filter(v => !POINTS_KEYS.includes(v.key) && !CALL_KEYS.includes(v.key));
+  const otherVars = variables.filter(v =>
+    !POINTS_KEYS.includes(v.key) &&
+    !CALL_KEYS.includes(v.key) &&
+    !MODULE_KEYS.includes(v.key)
+  );
 
-  const renderGroup = (title: string, vars: PlatformVariable[]) => (
+  const renderRow = (v: PlatformVariable, labelOverride?: string) => {
+    const isBool = isBooleanKey(v.key);
+    const currentVal = editValues[v.id] ?? v.value;
+    return (
+      <div key={v.id} className="flex items-center gap-4 p-3 rounded-lg bg-secondary/20">
+        <div className="flex-1">
+          <Label className="text-sm font-medium">{labelOverride || v.key}</Label>
+          <p className="text-xs text-muted-foreground">{v.description}</p>
+        </div>
+        {isBool ? (
+          <Switch
+            checked={String(currentVal).toLowerCase() === 'true'}
+            onCheckedChange={(c) => setEditValues((prev) => ({ ...prev, [v.id]: c ? 'true' : 'false' }))}
+          />
+        ) : (
+          <Input
+            value={currentVal || ""}
+            onChange={(e) => setEditValues((prev) => ({ ...prev, [v.id]: e.target.value }))}
+            className="w-32 h-9 bg-card"
+          />
+        )}
+      </div>
+    );
+  };
+
+  const renderGroup = (title: string, vars: PlatformVariable[], labelMap?: Record<string, string>) => (
     vars.length > 0 && (
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{title}</h3>
-        {vars.map((v) => (
-          <div key={v.id} className="flex items-center gap-4 p-3 rounded-lg bg-secondary/20">
-            <div className="flex-1">
-              <Label className="text-sm font-medium">{v.key}</Label>
-              <p className="text-xs text-muted-foreground">{v.description}</p>
-            </div>
-            <Input
-              value={editValues[v.id] || ""}
-              onChange={(e) => setEditValues((prev) => ({ ...prev, [v.id]: e.target.value }))}
-              className="w-32 h-9 bg-card"
-            />
-          </div>
-        ))}
+        {vars.map((v) => renderRow(v, labelMap?.[v.key]))}
       </div>
     )
   );
@@ -84,6 +126,7 @@ export default function PlatformVariablesPage() {
         <p className="page-description">Configure system-wide settings and parameters</p>
       </div>
       <div className="bg-card rounded-xl border border-border/50 p-6 space-y-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
+        {renderGroup("Module Visibility (toggle 'Coming Soon')", moduleVars, MODULE_LABELS)}
         {renderGroup("Points & Rewards", pointsVars)}
         {renderGroup("Voice & Video Calls (Socio DMs)", callVars)}
         {renderGroup("Other Settings", otherVars)}
