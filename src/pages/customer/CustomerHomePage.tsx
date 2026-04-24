@@ -686,47 +686,49 @@ export default function CustomerHomePage() {
         </motion.section>
 
         {/* ── Home Services Grid ── */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-3">
-          <h2 className="text-base font-bold mb-3">Home Services</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="gradient-primary rounded-2xl p-5 flex flex-col justify-center text-primary-foreground">
-              <h2 className="text-lg font-bold">Book a Service</h2>
-              <p className="text-xs opacity-80 mt-1">Professional services at your doorstep</p>
-              <Link to="/app/services"><Button size="sm" variant="secondary" className="mt-3 w-fit rounded-full">View All Services</Button></Link>
+        {modules.services && (
+          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-3">
+            <h2 className="text-base font-bold mb-3">Home Services</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="gradient-primary rounded-2xl p-5 flex flex-col justify-center text-primary-foreground">
+                <h2 className="text-lg font-bold">Book a Service</h2>
+                <p className="text-xs opacity-80 mt-1">Professional services at your doorstep</p>
+                <Link to="/app/services"><Button size="sm" variant="secondary" className="mt-3 w-fit rounded-full">View All Services</Button></Link>
+              </div>
+              <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {isLoading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
+                  data?.serviceCategories?.slice(0, 8).map((c: any) => (
+                    <Link key={c.id} to={`/app/services?category=${encodeURIComponent(c.name)}`}
+                      className="bg-card rounded-xl border border-border/50 p-2.5 hover:border-primary/30 hover:shadow-md transition-all flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-primary/10">
+                        {c.image && (c.image.startsWith('http') || c.image.startsWith('/')) ? (
+                          <img
+                            src={c.image}
+                            alt={c.name}
+                            className="w-full h-full object-cover rounded-full"
+                            loading="lazy"
+                            onError={(e) => {
+                              const t = e.currentTarget;
+                              t.style.display = 'none';
+                              const fb = t.nextElementSibling as HTMLElement | null;
+                              if (fb) fb.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <span
+                          className="text-sm font-bold text-primary w-full h-full items-center justify-center"
+                          style={{ display: c.image && (c.image.startsWith('http') || c.image.startsWith('/')) ? 'none' : 'flex' }}
+                        >
+                          {c.name?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div><p className="text-[11px] font-semibold leading-tight">{c.name}</p><p className="text-[9px] text-muted-foreground">From {fmt(349, { decimals: 0 })}</p></div>
+                    </Link>
+                  ))}
+              </div>
             </div>
-            <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {isLoading ? Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
-                data?.serviceCategories?.slice(0, 8).map((c: any) => (
-                  <Link key={c.id} to={`/app/services?category=${encodeURIComponent(c.name)}`}
-                    className="bg-card rounded-xl border border-border/50 p-2.5 hover:border-primary/30 hover:shadow-md transition-all flex items-center gap-2">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-primary/10">
-                      {c.image && (c.image.startsWith('http') || c.image.startsWith('/')) ? (
-                        <img
-                          src={c.image}
-                          alt={c.name}
-                          className="w-full h-full object-cover rounded-full"
-                          loading="lazy"
-                          onError={(e) => {
-                            const t = e.currentTarget;
-                            t.style.display = 'none';
-                            const fb = t.nextElementSibling as HTMLElement | null;
-                            if (fb) fb.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <span
-                        className="text-sm font-bold text-primary w-full h-full items-center justify-center"
-                        style={{ display: c.image && (c.image.startsWith('http') || c.image.startsWith('/')) ? 'none' : 'flex' }}
-                      >
-                        {c.name?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div><p className="text-[11px] font-semibold leading-tight">{c.name}</p><p className="text-[9px] text-muted-foreground">From {fmt(349, { decimals: 0 })}</p></div>
-                  </Link>
-                ))}
-            </div>
-          </div>
-        </motion.section>
+          </motion.section>
+        )}
 
         <DiscountSubscriptionSection />
 
@@ -749,21 +751,23 @@ export default function CustomerHomePage() {
         <div className="px-3 py-1 md:px-4 md:py-2"><BannerAd placement="home" /></div>
 
         {/* ── Classifieds CTA ── */}
-        <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-3">
-          <div className="rounded-2xl overflow-hidden relative">
-            <img src={data?.assets?.homepage_image_classifieds_banner || "/images/banners/classifieds-banner.jpg"} alt="Classifieds" className="w-full h-36 md:h-48 object-cover" loading="lazy" />
-            <div className="absolute inset-0 bg-gradient-to-r from-foreground/70 to-foreground/20 flex items-center">
-              <div className="p-5">
-                <h2 className="text-base md:text-xl font-bold text-card">Buy & Sell Locally</h2>
-                <p className="text-[11px] text-card/90 mt-0.5">Post free classified ads and find great deals near you</p>
-                <div className="flex gap-2 mt-2">
-                  <Link to="/app/classifieds"><Button variant="secondary" size="sm" className="rounded-full text-xs">Browse Ads</Button></Link>
-                  <Link to="/app/classifieds/post"><Button variant="secondary" size="sm" className="rounded-full text-xs">Post Ad Free</Button></Link>
+        {modules.classifieds && (
+          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-3">
+            <div className="rounded-2xl overflow-hidden relative">
+              <img src={data?.assets?.homepage_image_classifieds_banner || "/images/banners/classifieds-banner.jpg"} alt="Classifieds" className="w-full h-36 md:h-48 object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-r from-foreground/70 to-foreground/20 flex items-center">
+                <div className="p-5">
+                  <h2 className="text-base md:text-xl font-bold text-card">Buy & Sell Locally</h2>
+                  <p className="text-[11px] text-card/90 mt-0.5">Post free classified ads and find great deals near you</p>
+                  <div className="flex gap-2 mt-2">
+                    <Link to="/app/classifieds"><Button variant="secondary" size="sm" className="rounded-full text-xs">Browse Ads</Button></Link>
+                    <Link to="/app/classifieds/post"><Button variant="secondary" size="sm" className="rounded-full text-xs">Post Ad Free</Button></Link>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </motion.section>
+          </motion.section>
+        )}
       </div>
 
       {/* ── Video Ad: floating PiP (default) or fullscreen takeover ── */}
