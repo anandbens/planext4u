@@ -328,54 +328,39 @@ export default function CustomerBrowsePage() {
           </div>
         </div>
 
-        {/* Category chips */}
-        <div className="relative mb-4">
-          <AnimatePresence>
-            {canScrollLeft && (
-              <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={() => scrollCategories('left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-card border border-border shadow-md flex items-center justify-center hover:bg-accent transition-colors">
-                <ChevronLeft className="h-4 w-4" />
-              </motion.button>
-            )}
-          </AnimatePresence>
-          <AnimatePresence>
-            {canScrollRight && (
-              <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                onClick={() => scrollCategories('right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-card border border-border shadow-md flex items-center justify-center hover:bg-accent transition-colors">
-                <ChevronRight className="h-4 w-4" />
-              </motion.button>
-            )}
-          </AnimatePresence>
-          <div ref={scrollRef} className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide px-1 scroll-smooth">
-            <Link to="/app/browse" className="shrink-0">
-              <div className="flex flex-col items-center gap-1.5 min-w-[70px]">
-                <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all
-                  ${!categoryFilter ? 'bg-primary/10 border-primary shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
-                  <span className="text-xl">📦</span>
-                </div>
-                <span className={`text-[11px] font-medium ${!categoryFilter ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>All</span>
-              </div>
-            </Link>
-            {categories?.map((c) => (
-              <Link key={c.id} to={`/app/browse?category=${c.name}`} className="shrink-0">
-                <div className="flex flex-col items-center gap-1.5 min-w-[70px]">
-                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all overflow-hidden
-                    ${categoryFilter === c.name ? 'bg-primary/10 border-primary shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
-                    {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
-                      <img src={c.image} alt={c.name} className="h-8 w-8 rounded-lg object-cover" />
-                    ) : (
-                      <span className="text-xl">{c.image || '📦'}</span>
-                    )}
-                  </div>
-                  <span className={`text-[11px] font-medium text-center leading-tight max-w-[70px] truncate
-                    ${categoryFilter === c.name ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>{c.name}</span>
-                </div>
-              </Link>
-            ))}
+        {/* Subcategory chips: shown whenever the active (parent or sub) belongs to a parent with subcategories */}
+        {subcategories.length > 0 && activeParent && (
+          <div className="-mx-1 mb-3">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide px-1 pb-1">
+              <button
+                onClick={() => navigate(`/app/browse?category=${encodeURIComponent(activeParent.name)}`)}
+                className={`shrink-0 px-3 h-8 rounded-full text-xs font-medium border transition-colors ${
+                  categoryFilter === activeParent.name
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-card text-muted-foreground border-border/60 hover:border-primary/40'
+                }`}
+              >
+                All {activeParent.name}
+              </button>
+              {subcategories.map((s) => {
+                const active = categoryFilter === s.name;
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => navigate(`/app/browse?category=${encodeURIComponent(s.name)}`)}
+                    className={`shrink-0 px-3 h-8 rounded-full text-xs font-medium border transition-colors ${
+                      active
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-card text-muted-foreground border-border/60 hover:border-primary/40'
+                    }`}
+                  >
+                    {s.name}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Sectioned layout for parent categories */}
         {isParentCategoryView && (
