@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { ChevronRight, Star, Heart, ShoppingCart, Zap } from "lucide-react";
+import { ChevronRight, Star, Heart } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isProductOutOfStock } from "@/lib/stock-display";
+import { QtyStepper } from "@/components/customer/QtyStepper";
 
 type RowProduct = {
   id: string;
