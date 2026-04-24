@@ -433,7 +433,7 @@ export default function CustomerBrowsePage() {
                     <Card key={p.id} className={`overflow-hidden hover:shadow-md transition-shadow group flex flex-col ${viewMode === "list" ? "flex-row" : ""}`}>
                       <Link to={`/app/product/${p.id}`} className={`flex-1 flex ${viewMode === "list" ? "flex-row" : "flex-col"}`}>
                         <div className={`bg-secondary/30 flex items-center justify-center relative overflow-hidden ${viewMode === "list" ? "w-28 h-28 shrink-0" : "h-36"}`}>
-                          {discountPct > 0 && !isOutOfStock && <span className="absolute top-2 left-2 z-10 bg-primary/90 text-primary-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">{discountPct}% Off</span>}
+                          {discountPct > 0 && !isOutOfStock && <span className="discount-ribbon">{discountPct}% Off</span>}
                           {isOutOfStock && <span className="absolute top-2 left-2 z-10 bg-destructive/90 text-destructive-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">Out of Stock</span>}
                           {(() => {
                             const allImages = [p.image, ...((p as any).images || [])].filter(Boolean);
