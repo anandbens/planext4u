@@ -174,6 +174,13 @@ export default function CustomerBrowsePage() {
   // Show sectioned layout for ANY category view (parent OR subcategory) when filtered
   const isCategoryView = !!activeCategory && !searchFilter;
 
+  // Resolve theme: subcategory inherits from parent when unset.
+  const activeParent = activeCategory?.parent_id
+    ? categories?.find((c) => c.id === activeCategory.parent_id) ?? null
+    : activeCategory ?? null;
+  const categoryTheme = resolveCategoryTheme(activeCategory ?? null, activeParent);
+  const themeStyle = categoryThemeStyle(categoryTheme);
+
   // Best sellers = highest sales in last 30 days (sales col proxy); New arrivals = created in last 30 days
   const THIRTY_DAYS_AGO = Date.now() - 30 * 24 * 60 * 60 * 1000;
   const bestSellers = isCategoryView
