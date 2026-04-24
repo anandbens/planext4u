@@ -23,6 +23,7 @@ import { ReorderTiles } from "@/components/customer/ReorderTiles";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { isProductOutOfStock } from "@/lib/stock-display";
 import { SmartImage } from "@/components/SmartImage";
+import { resolveCategoryTheme, categoryThemeStyle } from "@/lib/category-theme";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
