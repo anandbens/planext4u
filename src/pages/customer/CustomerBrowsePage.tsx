@@ -368,6 +368,10 @@ export default function CustomerBrowsePage() {
         {isParentCategoryView && (
           <>
             <SubcategoryStrip parentName={activeCategory!.name} subcategories={subcategories} />
+            <ReorderTiles
+              categoryName={activeCategory!.name}
+              includeCategoryNames={subcategories.map((s) => s.name)}
+            />
             <CategoryProductRow
               title="Featured"
               products={featuredProducts as any}
