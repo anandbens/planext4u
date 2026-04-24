@@ -296,6 +296,75 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
             ) : <p className="text-sm mt-1 text-muted-foreground">—</p>}
           </div>
 
+          {/* Category Theme — cosmetic accent applied to the customer browse view */}
+          <div className="space-y-2 p-3 rounded-lg border border-border/50 bg-muted/20">
+            <Label className="text-xs font-semibold">Category Theme</Label>
+            <p className="text-[10px] text-muted-foreground -mt-1">
+              Tints the category rail, active chip, and discount ribbon when shoppers browse this category. Subcategories inherit the parent's theme when unset.
+            </p>
+            {editMode ? (
+              <>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, theme_color: "", theme_accent: "" })}
+                    className={`h-8 px-3 rounded-md border text-xs ${!form.theme_color ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
+                  >
+                    None
+                  </button>
+                  {THEME_PRESETS.map((p) => {
+                    const active = form.theme_color === p.primary;
+                    return (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => setForm({ ...form, theme_color: p.primary, theme_accent: p.accent })}
+                        title={p.label}
+                        className={`h-8 px-2 rounded-md border flex items-center gap-1.5 text-xs ${active ? "ring-2 ring-offset-1 ring-primary border-primary" : "border-border"}`}
+                      >
+                        <span className="h-4 w-4 rounded-sm" style={{ background: p.hex }} />
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <Label className="text-[10px] text-muted-foreground">Primary HSL</Label>
+                    <Input
+                      value={form.theme_color}
+                      onChange={(e) => setForm({ ...form, theme_color: e.target.value })}
+                      placeholder="e.g. 178 90% 32%"
+                      className="mt-1 h-8 text-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] text-muted-foreground">Accent HSL</Label>
+                    <Input
+                      value={form.theme_accent}
+                      onChange={(e) => setForm({ ...form, theme_accent: e.target.value })}
+                      placeholder="e.g. 168 85% 48%"
+                      className="mt-1 h-8 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : form.theme_color ? (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="h-5 w-5 rounded" style={{ background: `hsl(${form.theme_color})` }} />
+                <code className="text-[11px]">{form.theme_color}</code>
+                {form.theme_accent && (
+                  <>
+                    <span className="h-5 w-5 rounded" style={{ background: `hsl(${form.theme_accent})` }} />
+                    <code className="text-[11px]">{form.theme_accent}</code>
+                  </>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">Default (global primary)</p>
+            )}
+          </div>
+
           {/* Description */}
           <div>
             <Label className="text-xs text-muted-foreground">Description</Label>
