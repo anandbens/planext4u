@@ -41,8 +41,9 @@ export function CategoryProductRow({
   emptyHint,
   wishlist,
   onToggleWishlist,
-  onQuickAdd,
-  onBuyNow,
+  isAuthenticated = true,
+  onAuthRequired,
+  onCartChange,
 }: CategoryProductRowProps) {
   if (!isLoading && products.length === 0) {
     if (!emptyHint) return null;
