@@ -86,6 +86,8 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         display_order: (category as any).display_order != null ? String((category as any).display_order) : "",
         show_on_homepage: (category as any).show_on_homepage !== false,
         category_type: (category.category_type as any) || "product",
+        theme_color: (category as any).theme_color || "",
+        theme_accent: (category as any).theme_accent || "",
       });
       setEditMode(mode === "edit");
     }
