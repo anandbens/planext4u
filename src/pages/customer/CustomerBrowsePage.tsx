@@ -393,8 +393,9 @@ export default function CustomerBrowsePage() {
               isLoading={isLoading}
               wishlist={wishlist}
               onToggleWishlist={toggleWishlist}
-              onQuickAdd={quickAdd}
-              onBuyNow={buyNow}
+              isAuthenticated={!isGuest}
+              onAuthRequired={() => setLoginPromptOpen(true)}
+              onCartChange={refreshCartCount}
             />
             <CategoryProductRow
               title="Popular in this category"
@@ -402,8 +403,9 @@ export default function CustomerBrowsePage() {
               isLoading={isLoading}
               wishlist={wishlist}
               onToggleWishlist={toggleWishlist}
-              onQuickAdd={quickAdd}
-              onBuyNow={buyNow}
+              isAuthenticated={!isGuest}
+              onAuthRequired={() => setLoginPromptOpen(true)}
+              onCartChange={refreshCartCount}
             />
             <CategoryProductRow
               title="Most redeemed with points"
@@ -411,8 +413,9 @@ export default function CustomerBrowsePage() {
               isLoading={isLoading}
               wishlist={wishlist}
               onToggleWishlist={toggleWishlist}
-              onQuickAdd={quickAdd}
-              onBuyNow={buyNow}
+              isAuthenticated={!isGuest}
+              onAuthRequired={() => setLoginPromptOpen(true)}
+              onCartChange={refreshCartCount}
             />
             <div className="flex items-center justify-between mb-3 px-1 mt-2">
               <h2 className="text-base md:text-lg font-bold">All products</h2>
