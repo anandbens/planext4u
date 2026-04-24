@@ -473,6 +473,8 @@ export type Database = {
           promotion_title: string | null
           show_on_homepage: boolean
           status: string
+          theme_accent: string | null
+          theme_color: string | null
           verification_status: string | null
         }
         Insert: {
@@ -495,6 +497,8 @@ export type Database = {
           promotion_title?: string | null
           show_on_homepage?: boolean
           status?: string
+          theme_accent?: string | null
+          theme_color?: string | null
           verification_status?: string | null
         }
         Update: {
@@ -517,6 +521,8 @@ export type Database = {
           promotion_title?: string | null
           show_on_homepage?: boolean
           status?: string
+          theme_accent?: string | null
+          theme_color?: string | null
           verification_status?: string | null
         }
         Relationships: []
