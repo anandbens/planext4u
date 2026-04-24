@@ -328,6 +328,23 @@ export default function CustomerBrowsePage() {
           </div>
         </div>
 
+        {/* Category-targeted banner: prefers an ad tagged to the active subcategory,
+            falls back to the parent category. Hidden when no matching ad exists. */}
+        {activeCategory && (
+          <div className="mb-3">
+            <BannerAd
+              placement={`category:${activeCategory.name}`}
+              className="rounded-2xl"
+            />
+            {activeParent && activeParent.name !== activeCategory.name && (
+              <BannerAd
+                placement={`category:${activeParent.name}`}
+                className="rounded-2xl"
+              />
+            )}
+          </div>
+        )}
+
         {/* Subcategory chips: shown whenever the active (parent or sub) belongs to a parent with subcategories */}
         {subcategories.length > 0 && activeParent && (
           <div className="-mx-1 mb-3">
