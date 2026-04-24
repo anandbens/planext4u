@@ -52,13 +52,17 @@ export function BannerAd({ placement, className = "", variant = "banner" }: Bann
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  // Lock the random pick to the first render so parent re-renders (cart count
+  // updates, location changes, etc.) don't swap the visible ad mid-session,
+  // which previously could look like a duplicate flashing on the page.
+  const [pickIndex] = useState<number>(() => Math.random());
 
   if (ads.length === 0) return null;
 
   const visibleAds = ads.filter(a => !dismissed.has(a.id));
   if (visibleAds.length === 0) return null;
 
-  const ad = visibleAds[Math.floor(Math.random() * visibleAds.length)];
+  const ad = visibleAds[Math.floor(pickIndex * visibleAds.length)];
 
   const handleClick = async () => {
     // Track click
