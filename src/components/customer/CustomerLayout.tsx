@@ -16,6 +16,7 @@ import p4uLogo from "@/assets/p4u-logo.png";
 import IncomingCallProvider from "@/components/social/IncomingCallProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useModuleStatus } from "@/hooks/useModuleStatus";
 
 function WalletBalance() {
   const { customerUser } = useAuth();
