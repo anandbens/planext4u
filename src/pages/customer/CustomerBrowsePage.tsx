@@ -400,6 +400,28 @@ export default function CustomerBrowsePage() {
             <SubcategoryStrip parentName={activeCategory!.name} subcategories={subcategories} />
             <ReorderTiles
               categoryName={activeCategory!.name}
+        {/* Subcategory image-tile ribbon for parent OR child category views.
+            On a parent page we show its children; on a subcategory page we
+            show the parent's children with the active tile highlighted. The
+            redundant text chip strip has been removed in favour of this
+            single, consistent visual. */}
+        {isParentCategoryView && (
+          <SubcategoryStrip parentName={activeCategory!.name} subcategories={subcategories} />
+        )}
+        {isChildCategoryView && (
+          <SubcategoryStrip
+            parentName={activeParent?.name || ""}
+            subcategories={siblingSubcategories}
+            activeName={activeCategory!.name}
+            hideHeader
+          />
+        )}
+
+        {/* Sectioned rows for parent categories only. */}
+        {isParentCategoryView && (
+          <>
+            <ReorderTiles
+              categoryName={activeCategory!.name}
               includeCategoryNames={subcategories.map((s) => s.name)}
             />
             <CategoryProductRow
