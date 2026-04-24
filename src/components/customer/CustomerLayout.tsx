@@ -86,13 +86,15 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
     navigate("/app");
   };
 
+  const { modules } = useModuleStatus();
+
   const navItems = [
     { icon: Home, label: "Home", to: "/app" },
-    { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount },
-    { icon: Megaphone, label: "Socio", to: "/app/social" },
-    { icon: Wrench, label: "Services", to: "/app/services" },
-    { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: true },
-    { icon: Newspaper, label: "Classified", to: "/app/classifieds", comingSoon: true },
+    { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount, comingSoon: !modules.shop },
+    { icon: Megaphone, label: "Socio", to: "/app/social", comingSoon: !modules.socio },
+    { icon: Wrench, label: "Services", to: "/app/services", comingSoon: !modules.services },
+    { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: !modules.homes },
+    { icon: Newspaper, label: "Classified", to: "/app/classifieds", comingSoon: !modules.classifieds },
   ];
 
   const isActive = (path: string) => {
