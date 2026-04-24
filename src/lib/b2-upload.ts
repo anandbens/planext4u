@@ -177,6 +177,46 @@ function extractB2Key(url: string): string | null {
 }
 
 /**
+ * In-memory cache of resolved (signed) B2 URLs, plus a map of in-flight
+ * sign requests so concurrent calls for the same key dedupe to a single
+ * edge-function invocation.
+ *
+ * Cache TTL is shorter than the actual signed-URL TTL so we always return
+ * a URL with comfortable headroom before expiry. Signed URLs default to
+ * 300s on the edge — we cache the resolved URL for 240s.
+ */
+interface CacheEntry { url: string; expiresAt: number; }
+const RESOLVED_CACHE = new Map<string, CacheEntry>();
+const INFLIGHT = new Map<string, Promise<string | null>>();
+const CACHE_TTL_MS = 240 * 1000; // 4 minutes (signed URLs live ~5 min)
+const MAX_CACHE_ENTRIES = 500;
+
+function cacheGet(key: string): string | null {
+  const hit = RESOLVED_CACHE.get(key);
+  if (!hit) return null;
+  if (hit.expiresAt <= Date.now()) {
+    RESOLVED_CACHE.delete(key);
+    return null;
+  }
+  return hit.url;
+}
+
+function cacheSet(key: string, url: string) {
+  // Simple bounded-cache eviction: drop oldest insertion when at capacity.
+  if (RESOLVED_CACHE.size >= MAX_CACHE_ENTRIES) {
+    const firstKey = RESOLVED_CACHE.keys().next().value;
+    if (firstKey) RESOLVED_CACHE.delete(firstKey);
+  }
+  RESOLVED_CACHE.set(key, { url, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
+/** Manually clear the resolver cache (e.g. on sign-out or storage migration). */
+export function clearResolveB2Cache() {
+  RESOLVED_CACHE.clear();
+  INFLIGHT.clear();
+}
+
+/**
  * Resolve a stored value that may be either:
  *   - a `b2-private://<key>` reference pointing to the private bucket, OR
  *   - a regular https URL to the public B2 bucket / CDN, OR
@@ -185,6 +225,10 @@ function extractB2Key(url: string): string | null {
  * For B2-hosted values, calls the `b2-presigned-download` edge function and
  * returns a short-lived signed GET URL — this works whether the bucket is
  * configured as public or private at the B2 level.
+ *
+ * Results are memoized in-process for ~4 minutes per stored value, and any
+ * concurrent requests for the same value share a single in-flight promise,
+ * so re-renders of `<SmartImage>` do not re-invoke the edge function.
  *
  * Returns null if signing fails for a private reference; falls back to the
  * original URL if signing fails for a public-bucket URL.
@@ -197,34 +241,60 @@ export async function resolveB2Url(
   const value = storedValue.trim();
   if (!value) return null;
 
-  // Private bucket reference
-  if (value.startsWith("b2-private://")) {
-    const key = value.slice("b2-private://".length);
-    const { data, error } = await supabase.functions.invoke("b2-presigned-download", {
-      body: { key, expiresSeconds, bucket: "private" },
-    });
-    if (error || !data?.url) {
-      console.error("[resolveB2Url] failed to sign private", error);
-      return null;
-    }
-    return data.url as string;
-  }
+  // Cache key includes the requested TTL so callers asking for different
+  // expirations don't collide.
+  const cacheKey = `${expiresSeconds}|${value}`;
 
-  // Raw B2/CDN public URL — sign via public bucket
-  const publicKey = extractB2Key(value);
-  if (publicKey) {
-    const { data, error } = await supabase.functions.invoke("b2-presigned-download", {
-      body: { key: publicKey, expiresSeconds, bucket: "public" },
-    });
-    if (error || !data?.url) {
-      console.warn("[resolveB2Url] public-bucket sign failed, returning original", error);
-      return value;
-    }
-    return data.url as string;
-  }
+  const cached = cacheGet(cacheKey);
+  if (cached) return cached;
 
-  // Anything else (legacy GCS URL, data URI, etc.) — return as-is
-  return value;
+  const inflight = INFLIGHT.get(cacheKey);
+  if (inflight) return inflight;
+
+  const job = (async (): Promise<string | null> => {
+    // Private bucket reference
+    if (value.startsWith("b2-private://")) {
+      const key = value.slice("b2-private://".length);
+      const { data, error } = await supabase.functions.invoke("b2-presigned-download", {
+        body: { key, expiresSeconds, bucket: "private" },
+      });
+      if (error || !data?.url) {
+        console.error("[resolveB2Url] failed to sign private", error);
+        return null;
+      }
+      const url = data.url as string;
+      cacheSet(cacheKey, url);
+      return url;
+    }
+
+    // Raw B2/CDN public URL — sign via public bucket
+    const publicKey = extractB2Key(value);
+    if (publicKey) {
+      const { data, error } = await supabase.functions.invoke("b2-presigned-download", {
+        body: { key: publicKey, expiresSeconds, bucket: "public" },
+      });
+      if (error || !data?.url) {
+        console.warn("[resolveB2Url] public-bucket sign failed, returning original", error);
+        // Cache the fallback briefly too so we don't keep retrying a known-bad sign.
+        cacheSet(cacheKey, value);
+        return value;
+      }
+      const url = data.url as string;
+      cacheSet(cacheKey, url);
+      return url;
+    }
+
+    // Anything else (legacy GCS URL, data URI, etc.) — return as-is
+    cacheSet(cacheKey, value);
+    return value;
+  })();
+
+  INFLIGHT.set(cacheKey, job);
+  try {
+    return await job;
+  } finally {
+    INFLIGHT.delete(cacheKey);
+  }
 }
 
 /** True if the stored value points to the private B2 bucket. */
