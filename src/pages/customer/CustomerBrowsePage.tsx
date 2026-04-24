@@ -172,8 +172,16 @@ export default function CustomerBrowsePage() {
         .filter((c) => c.parent_id === activeCategory.id && c.status === 'active')
         .sort((a, b) => ((a as any).display_order ?? 999) - ((b as any).display_order ?? 999) || a.name.localeCompare(b.name))
     : [];
+  // When the active category IS a subcategory, gather its siblings (incl. self)
+  // so we can render the same horizontally-scrollable image-tile ribbon.
+  const siblingSubcategories = activeCategory?.parent_id
+    ? (categories || [])
+        .filter((c) => c.parent_id === activeCategory.parent_id && c.status === 'active')
+        .sort((a, b) => ((a as any).display_order ?? 999) - ((b as any).display_order ?? 999) || a.name.localeCompare(b.name))
+    : [];
   // Show sectioned layout for ANY category view (parent OR subcategory) when filtered
   const isCategoryView = !!activeCategory && !searchFilter;
+  const isChildCategoryView = isCategoryView && !!activeCategory!.parent_id && siblingSubcategories.length > 1;
 
   // Resolve theme: subcategory inherits from parent when unset.
   const activeParent = activeCategory?.parent_id
