@@ -35,7 +35,23 @@ const emptyForm = {
   is_emergency: false, verification_status: "unverified" as string,
   display_order: "" as string, show_on_homepage: true,
   category_type: "product" as "product" | "service",
+  theme_color: "" as string, theme_accent: "" as string,
 };
+
+/**
+ * Curated theme palette for category accents. Values are HSL triplets
+ * (no "hsl()" wrapper) so they can be plugged directly into a CSS variable.
+ * Pick "None" to fall back to the global primary.
+ */
+const THEME_PRESETS: Array<{ label: string; primary: string; accent: string; hex: string }> = [
+  { label: "Teal (default)", primary: "178 90% 32%", accent: "168 85% 48%", hex: "#0d9488" },
+  { label: "Indigo", primary: "239 84% 60%", accent: "262 83% 70%", hex: "#4f46e5" },
+  { label: "Coral", primary: "12 88% 60%", accent: "24 95% 65%", hex: "#f97316" },
+  { label: "Forest", primary: "152 60% 36%", accent: "142 70% 50%", hex: "#16a34a" },
+  { label: "Berry", primary: "330 75% 50%", accent: "320 85% 65%", hex: "#db2777" },
+  { label: "Slate", primary: "215 40% 28%", accent: "210 35% 50%", hex: "#334155" },
+  { label: "Amber", primary: "35 92% 48%", accent: "45 95% 55%", hex: "#d97706" },
+];
 
 export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories, defaultAsSubcategory }: CategoryModalProps) {
   const isCreate = mode === "create";
@@ -70,6 +86,8 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         display_order: (category as any).display_order != null ? String((category as any).display_order) : "",
         show_on_homepage: (category as any).show_on_homepage !== false,
         category_type: (category.category_type as any) || "product",
+        theme_color: (category as any).theme_color || "",
+        theme_accent: (category as any).theme_accent || "",
       });
       setEditMode(mode === "edit");
     }
@@ -119,6 +137,8 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
         display_order: orderNum,
         show_on_homepage: form.show_on_homepage,
         category_type: finalType,
+        theme_color: form.theme_color || null,
+        theme_accent: form.theme_accent || null,
       };
       if (isCreate) await onCreate?.(payload);
       else if (category) await onSave?.(category.id, payload);
@@ -274,6 +294,75 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
             ) : form.banner_image ? (
               <img src={form.banner_image} alt="Banner" className="mt-1 h-20 w-full object-cover rounded" />
             ) : <p className="text-sm mt-1 text-muted-foreground">—</p>}
+          </div>
+
+          {/* Category Theme — cosmetic accent applied to the customer browse view */}
+          <div className="space-y-2 p-3 rounded-lg border border-border/50 bg-muted/20">
+            <Label className="text-xs font-semibold">Category Theme</Label>
+            <p className="text-[10px] text-muted-foreground -mt-1">
+              Tints the category rail, active chip, and discount ribbon when shoppers browse this category. Subcategories inherit the parent's theme when unset.
+            </p>
+            {editMode ? (
+              <>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, theme_color: "", theme_accent: "" })}
+                    className={`h-8 px-3 rounded-md border text-xs ${!form.theme_color ? "border-primary ring-2 ring-primary/30" : "border-border"}`}
+                  >
+                    None
+                  </button>
+                  {THEME_PRESETS.map((p) => {
+                    const active = form.theme_color === p.primary;
+                    return (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => setForm({ ...form, theme_color: p.primary, theme_accent: p.accent })}
+                        title={p.label}
+                        className={`h-8 px-2 rounded-md border flex items-center gap-1.5 text-xs ${active ? "ring-2 ring-offset-1 ring-primary border-primary" : "border-border"}`}
+                      >
+                        <span className="h-4 w-4 rounded-sm" style={{ background: p.hex }} />
+                        {p.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div>
+                    <Label className="text-[10px] text-muted-foreground">Primary HSL</Label>
+                    <Input
+                      value={form.theme_color}
+                      onChange={(e) => setForm({ ...form, theme_color: e.target.value })}
+                      placeholder="e.g. 178 90% 32%"
+                      className="mt-1 h-8 text-xs font-mono"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] text-muted-foreground">Accent HSL</Label>
+                    <Input
+                      value={form.theme_accent}
+                      onChange={(e) => setForm({ ...form, theme_accent: e.target.value })}
+                      placeholder="e.g. 168 85% 48%"
+                      className="mt-1 h-8 text-xs font-mono"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : form.theme_color ? (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="h-5 w-5 rounded" style={{ background: `hsl(${form.theme_color})` }} />
+                <code className="text-[11px]">{form.theme_color}</code>
+                {form.theme_accent && (
+                  <>
+                    <span className="h-5 w-5 rounded" style={{ background: `hsl(${form.theme_accent})` }} />
+                    <code className="text-[11px]">{form.theme_accent}</code>
+                  </>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1">Default (global primary)</p>
+            )}
           </div>
 
           {/* Description */}

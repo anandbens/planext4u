@@ -23,6 +23,7 @@ import { ReorderTiles } from "@/components/customer/ReorderTiles";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { isProductOutOfStock } from "@/lib/stock-display";
 import { SmartImage } from "@/components/SmartImage";
+import { resolveCategoryTheme, categoryThemeStyle } from "@/lib/category-theme";
 
 export default function CustomerBrowsePage() {
   const [searchParams] = useSearchParams();
@@ -173,6 +174,13 @@ export default function CustomerBrowsePage() {
   // Show sectioned layout for ANY category view (parent OR subcategory) when filtered
   const isCategoryView = !!activeCategory && !searchFilter;
 
+  // Resolve theme: subcategory inherits from parent when unset.
+  const activeParent = activeCategory?.parent_id
+    ? categories?.find((c) => c.id === activeCategory.parent_id) ?? null
+    : activeCategory ?? null;
+  const categoryTheme = resolveCategoryTheme(activeCategory ?? null, activeParent);
+  const themeStyle = categoryThemeStyle(categoryTheme);
+
   // Best sellers = highest sales in last 30 days (sales col proxy); New arrivals = created in last 30 days
   const THIRTY_DAYS_AGO = Date.now() - 30 * 24 * 60 * 60 * 1000;
   const bestSellers = isCategoryView
@@ -256,7 +264,7 @@ export default function CustomerBrowsePage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-44 md:pb-6 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-4 py-4 pb-44 md:pb-6 overflow-x-hidden" style={themeStyle}>
         {/* Header: title + count on first line, toolbar wraps cleanly on small screens */}
         <div className="mb-3">
           <div className="flex items-baseline justify-between gap-2 min-w-0">
@@ -345,22 +353,28 @@ export default function CustomerBrowsePage() {
                 <span className={`text-[11px] font-medium ${!categoryFilter ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>All</span>
               </div>
             </Link>
-            {categories?.map((c) => (
-              <Link key={c.id} to={`/app/browse?category=${c.name}`} className="shrink-0">
-                <div className="flex flex-col items-center gap-1.5 min-w-[70px]">
-                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all overflow-hidden
-                    ${categoryFilter === c.name ? 'bg-primary/10 border-primary shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
-                    {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
-                      <img src={c.image} alt={c.name} className="h-8 w-8 rounded-lg object-cover" />
-                    ) : (
-                      <span className="text-xl">{c.image || '📦'}</span>
-                    )}
+            {categories?.map((c) => {
+              const active = categoryFilter === c.name;
+              const chipStyle: React.CSSProperties | undefined = (c as any).theme_color
+                ? ({ ["--cat-primary" as any]: (c as any).theme_color } as React.CSSProperties)
+                : undefined;
+              return (
+                <Link key={c.id} to={`/app/browse?category=${c.name}`} className="shrink-0" style={chipStyle}>
+                  <div className="flex flex-col items-center gap-1.5 min-w-[70px]">
+                    <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all overflow-hidden
+                      ${active ? 'cat-themed-soft-bg cat-themed-border shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
+                      {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
+                        <img src={c.image} alt={c.name} className="h-8 w-8 rounded-lg object-cover" />
+                      ) : (
+                        <span className="text-xl">{c.image || '📦'}</span>
+                      )}
+                    </div>
+                    <span className={`text-[11px] font-medium text-center leading-tight max-w-[70px] truncate
+                      ${active ? 'cat-themed-text font-semibold' : 'text-muted-foreground'}`}>{c.name}</span>
                   </div>
-                  <span className={`text-[11px] font-medium text-center leading-tight max-w-[70px] truncate
-                    ${categoryFilter === c.name ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>{c.name}</span>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </div>
 
