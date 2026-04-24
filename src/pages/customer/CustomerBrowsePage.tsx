@@ -353,22 +353,28 @@ export default function CustomerBrowsePage() {
                 <span className={`text-[11px] font-medium ${!categoryFilter ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>All</span>
               </div>
             </Link>
-            {categories?.map((c) => (
-              <Link key={c.id} to={`/app/browse?category=${c.name}`} className="shrink-0">
-                <div className="flex flex-col items-center gap-1.5 min-w-[70px]">
-                  <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all overflow-hidden
-                    ${categoryFilter === c.name ? 'bg-primary/10 border-primary shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
-                    {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
-                      <img src={c.image} alt={c.name} className="h-8 w-8 rounded-lg object-cover" />
-                    ) : (
-                      <span className="text-xl">{c.image || '📦'}</span>
-                    )}
+            {categories?.map((c) => {
+              const active = categoryFilter === c.name;
+              const chipStyle: React.CSSProperties | undefined = (c as any).theme_color
+                ? ({ ["--cat-primary" as any]: (c as any).theme_color } as React.CSSProperties)
+                : undefined;
+              return (
+                <Link key={c.id} to={`/app/browse?category=${c.name}`} className="shrink-0" style={chipStyle}>
+                  <div className="flex flex-col items-center gap-1.5 min-w-[70px]">
+                    <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all overflow-hidden
+                      ${active ? 'cat-themed-soft-bg cat-themed-border shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
+                      {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
+                        <img src={c.image} alt={c.name} className="h-8 w-8 rounded-lg object-cover" />
+                      ) : (
+                        <span className="text-xl">{c.image || '📦'}</span>
+                      )}
+                    </div>
+                    <span className={`text-[11px] font-medium text-center leading-tight max-w-[70px] truncate
+                      ${active ? 'cat-themed-text font-semibold' : 'text-muted-foreground'}`}>{c.name}</span>
                   </div>
-                  <span className={`text-[11px] font-medium text-center leading-tight max-w-[70px] truncate
-                    ${categoryFilter === c.name ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>{c.name}</span>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         </div>
 
