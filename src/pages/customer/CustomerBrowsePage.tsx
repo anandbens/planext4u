@@ -19,6 +19,7 @@ import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";
 import { CategoryProductRow } from "@/components/customer/CategoryProductRow";
+import { ReorderTiles } from "@/components/customer/ReorderTiles";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { isProductOutOfStock } from "@/lib/stock-display";
 import { SmartImage } from "@/components/SmartImage";
