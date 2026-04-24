@@ -165,9 +165,13 @@ export default function CustomerBrowsePage() {
 
   // Detect category & subcategories for sectioned layout
   const activeCategory = categories?.find((c) => c.name === categoryFilter);
-  const subcategories = activeCategory && !activeCategory.parent_id
+  // Resolve the parent for an active subcategory so the left rail can stay highlighted.
+  const activeParent = activeCategory?.parent_id
+    ? categories?.find((c) => c.id === activeCategory.parent_id)
+    : activeCategory;
+  const subcategories = activeParent && !activeParent.parent_id
     ? (categories || [])
-        .filter((c) => c.parent_id === activeCategory.id && c.status === 'active')
+        .filter((c) => c.parent_id === activeParent.id && c.status === 'active')
         .sort((a, b) => ((a as any).display_order ?? 999) - ((b as any).display_order ?? 999) || a.name.localeCompare(b.name))
     : [];
   // Show sectioned layout for ANY category view (parent OR subcategory) when filtered
