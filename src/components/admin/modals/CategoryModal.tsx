@@ -35,7 +35,23 @@ const emptyForm = {
   is_emergency: false, verification_status: "unverified" as string,
   display_order: "" as string, show_on_homepage: true,
   category_type: "product" as "product" | "service",
+  theme_color: "" as string, theme_accent: "" as string,
 };
+
+/**
+ * Curated theme palette for category accents. Values are HSL triplets
+ * (no "hsl()" wrapper) so they can be plugged directly into a CSS variable.
+ * Pick "None" to fall back to the global primary.
+ */
+const THEME_PRESETS: Array<{ label: string; primary: string; accent: string; hex: string }> = [
+  { label: "Teal (default)", primary: "178 90% 32%", accent: "168 85% 48%", hex: "#0d9488" },
+  { label: "Indigo", primary: "239 84% 60%", accent: "262 83% 70%", hex: "#4f46e5" },
+  { label: "Coral", primary: "12 88% 60%", accent: "24 95% 65%", hex: "#f97316" },
+  { label: "Forest", primary: "152 60% 36%", accent: "142 70% 50%", hex: "#16a34a" },
+  { label: "Berry", primary: "330 75% 50%", accent: "320 85% 65%", hex: "#db2777" },
+  { label: "Slate", primary: "215 40% 28%", accent: "210 35% 50%", hex: "#334155" },
+  { label: "Amber", primary: "35 92% 48%", accent: "45 95% 55%", hex: "#d97706" },
+];
 
 export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCreate, onDelete, parentCategories, defaultAsSubcategory }: CategoryModalProps) {
   const isCreate = mode === "create";
