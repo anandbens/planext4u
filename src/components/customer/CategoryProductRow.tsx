@@ -129,24 +129,14 @@ export function CategoryProductRow({
                     </div>
                   </div>
                 </Link>
-                <div className="px-2.5 pb-2.5 flex gap-1.5 mt-auto">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1 h-7 text-xs"
-                    onClick={() => onQuickAdd(p)}
+                <div className="px-2.5 pb-2.5 mt-auto">
+                  <QtyStepper
+                    product={p}
                     disabled={isOutOfStock}
-                  >
-                    <ShoppingCart className="h-3 w-3 mr-1" /> {isOutOfStock ? "N/A" : "Cart"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="h-7 text-xs px-2"
-                    onClick={(e) => onBuyNow(p, e as any)}
-                    disabled={isOutOfStock}
-                  >
-                    <Zap className="h-3 w-3 mr-1" /> Buy
-                  </Button>
+                    isAuthenticated={isAuthenticated}
+                    onAuthRequired={onAuthRequired}
+                    onChange={() => onCartChange?.()}
+                  />
                 </div>
               </Card>
             );
