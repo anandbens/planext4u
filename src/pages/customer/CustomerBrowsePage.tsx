@@ -506,6 +506,7 @@ export default function CustomerBrowsePage() {
             </>
           );
         })()}
+        </div>
       </div>
 
       {/* Floating View Cart Bar - above bottom nav */}
