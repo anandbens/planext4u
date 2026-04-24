@@ -115,7 +115,8 @@ export function QtyStepper({
 
   return (
     <div
-      className={`h-8 w-full flex items-center justify-between rounded-md cat-themed-bg text-white px-1 ${className || ""}`}
+      className={`h-8 w-full flex items-center justify-between rounded-md cat-themed-bg px-1 ${className || ""}`}
+      style={{ color: "hsl(var(--primary-foreground))" }}
     >
       <button
         onClick={handleDec}
