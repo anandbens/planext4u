@@ -26,6 +26,7 @@ import { VideoAdOverlay } from "@/components/customer/VideoAdOverlay";
 import { FloatingVideoAd } from "@/components/customer/FloatingVideoAd";
 import { getServiceImage } from "@/lib/service-image";
 import { SmartImage } from "@/components/SmartImage";
+import { useModuleStatus } from "@/hooks/useModuleStatus";
 
 /* ── Helpers ── */
 const containerAnim = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } };
@@ -276,6 +277,7 @@ function ServiceSlider({ title, services }: { title: string; services: any[] }) 
 export default function CustomerHomePage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { modules } = useModuleStatus();
   const { customerUser } = useAuth();
   const { format: fmt } = useCurrency();
   const { data, isLoading } = useQuery({ queryKey: ["customerHome"], queryFn: api.getCustomerHome });
