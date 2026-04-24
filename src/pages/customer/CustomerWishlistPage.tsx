@@ -41,7 +41,7 @@ export default function CustomerWishlistPage() {
     const loadData = async () => {
       setLoading(true);
       if (tab === "products" && wishlist.length > 0) {
-        const { data } = await supabase.from('products').select('*').in('id', wishlist);
+        const { data } = await supabase.from('products').select('*').eq('status', 'active').in('id', wishlist);
         setProducts(data || []);
       } else if (tab === "services" && serviceWishlist.length > 0) {
         const { data } = await supabase.from('services' as any).select('*').in('id', serviceWishlist);
