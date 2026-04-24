@@ -490,12 +490,14 @@ export default function CustomerHomePage() {
           </motion.section>
         )}
 
-        {/* ── Quick Actions (Ride, Emergency, Services) ── */}
+        {/* ── Quick Actions (Ride, Emergency, Help) ── */}
         <div className="px-4 py-2 md:hidden">
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: "Ride", emoji: "🛺", to: "/app/services?category=Transport", color: "from-amber-500/20 to-amber-500/5" },
-              { label: "Emergency", emoji: "🚨", to: "/app/services", color: "from-red-500/20 to-red-500/5" },
+              ...(modules.services ? [
+                { label: "Ride", emoji: "🛺", to: "/app/services?category=Transport", color: "from-amber-500/20 to-amber-500/5" },
+                { label: "Emergency", emoji: "🚨", to: "/app/services", color: "from-red-500/20 to-red-500/5" },
+              ] : []),
               { label: "Help", emoji: "🆘", to: "/app/support", color: "from-blue-500/20 to-blue-500/5" },
             ].map(a => (
               <Link key={a.label} to={a.to}>
@@ -517,6 +519,7 @@ export default function CustomerHomePage() {
             return <ProductSlider key={section.id} title={section.title} products={data?.featuredProducts?.slice(0, 8) || []} bgClass="bg-accent" />;
           }
           if (section.section_type === "service_tiles") {
+            if (!modules.services) return null;
             return <ServiceSlider key={section.id} title={section.title} services={data?.featuredServices?.slice(0, 8) || []} />;
           }
           if (section.section_type === "category_tiles") {
@@ -653,7 +656,7 @@ export default function CustomerHomePage() {
         })}
 
         {/* ── Top Services ── */}
-        <ServiceSlider title="Top Services" services={data?.featuredServices || []} />
+        {modules.services && <ServiceSlider title="Top Services" services={data?.featuredServices || []} />}
 
         {/* ── Pick Up Where You Left Off (Blinkit grid) ── */}
         <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-2">
