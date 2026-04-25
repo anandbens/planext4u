@@ -389,10 +389,12 @@ export default function CustomerHomePage() {
   const handleSplashComplete = useCallback(() => { setShowSplash(false); sessionStorage.setItem("p4u_splash_shown", "1"); }, []);
 
   const allCategories = (data?.categories || []) as any[];
-  // Homepage parent categories: opt-in via show_on_homepage, sorted by display_order
+  // Homepage parent categories: ALL active main categories, sorted by display_order
   const homepageParents = allCategories
-    .filter((c) => !c.parent_id && c.status === 'active' && c.show_on_homepage !== false)
+    .filter((c) => !c.parent_id && c.status === 'active')
     .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999) || a.name.localeCompare(b.name));
+  // Full list of active main categories for "Shop by Category" (no opt-in / limit)
+  const allActiveParents = homepageParents;
   // Map: parent_id -> active subcategories that are show_on_homepage, sorted
   const subcatMap: Record<string, any[]> = {};
   allCategories
@@ -569,7 +571,7 @@ export default function CustomerHomePage() {
           <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
             className="grid grid-cols-4 sm:grid-cols-5 gap-3 md:[grid-template-columns:repeat(auto-fit,minmax(96px,1fr))]">
             {isLoading ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
-              parentCategories.map((c: any) => (
+              allActiveParents.map((c: any) => (
                 <motion.div key={c.id} variants={itemAnim}>
                   <Link to={`/app/browse?category=${encodeURIComponent(c.name)}`} className="flex flex-col items-center gap-1.5 group">
                     <div className="h-14 w-14 md:h-18 md:w-18 rounded-2xl bg-secondary/50 border border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/50 group-hover:shadow-md transition-all">
