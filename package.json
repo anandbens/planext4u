@@ -69,6 +69,7 @@
     "@tanstack/react-query": "^5.83.0",
     "@types/dompurify": "^3.2.0",
     "capacitor-razorpay": "^1.0.4",
+    "capacitor-voice-recorder": "^7.0.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
