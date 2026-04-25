@@ -1,0 +1,1 @@
+UPDATE public.homepage_banners SET is_active = false WHERE id = 'f849b944-7fda-449b-8d90-0385435335c7';
