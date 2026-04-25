@@ -157,7 +157,19 @@ export async function uploadToB2(
 const B2_PUBLIC_HOSTS = [
   /\.backblazeb2\.com$/i,
   /^cdn\.planext4u\.com$/i,
+  /^cdn\.planext4u\.net$/i,
 ];
+
+/**
+ * Public CDN hostname (Cloudflare in front of the public B2 bucket via the
+ * Bandwidth Alliance — zero egress cost). When set, every public-bucket URL
+ * is rewritten to this host at render time so traffic flows through the
+ * cached CDN edge instead of hitting Backblaze directly.
+ *
+ * IMPORTANT: must match the CNAME you configured in Cloudflare and the
+ * `CDN_PUBLIC_URL_BASE` secret used by the upload edge function.
+ */
+const PUBLIC_CDN_HOST = "cdn.planext4u.net";
 
 /** Extract the object key from a known B2/CDN URL, or null if it isn't one. */
 function extractB2Key(url: string): string | null {
@@ -267,21 +279,17 @@ export async function resolveB2Url(
       return url;
     }
 
-    // Raw B2/CDN public URL — sign via public bucket
+    // Raw B2 / legacy CDN public URL — the bucket is public, so we just
+    // rewrite the host to our Cloudflare CDN (Bandwidth Alliance, zero
+    // egress, fully cacheable). No presign required.
     const publicKey = extractB2Key(value);
     if (publicKey) {
-      const { data, error } = await supabase.functions.invoke("b2-presigned-download", {
-        body: { key: publicKey, expiresSeconds, bucket: "public" },
-      });
-      if (error || !data?.url) {
-        console.warn("[resolveB2Url] public-bucket sign failed, returning original", error);
-        // Cache the fallback briefly too so we don't keep retrying a known-bad sign.
-        cacheSet(cacheKey, value);
-        return value;
-      }
-      const url = data.url as string;
-      cacheSet(cacheKey, url);
-      return url;
+      const cdnUrl = `https://${PUBLIC_CDN_HOST}/${publicKey
+        .split("/")
+        .map(encodeURIComponent)
+        .join("/")}`;
+      cacheSet(cacheKey, cdnUrl);
+      return cdnUrl;
     }
 
     // Anything else (legacy GCS URL, data URI, etc.) — return as-is
