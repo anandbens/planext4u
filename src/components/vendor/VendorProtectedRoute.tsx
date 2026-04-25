@@ -1,30 +1,59 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
+import { isSessionStampValid } from "@/lib/session-stamp";
 import { VendorFTUXFlow } from "./VendorFTUXFlow";
 
+/**
+ * Vendor route guard.
+ *
+ * Same cold-start strategy as CustomerProtectedRoute — see that file for the
+ * full rationale. In short: wait for a decisive Supabase auth event (or for
+ * the cached vendor profile to hydrate) instead of a fixed short timeout, and
+ * never redirect to /vendor/login while a <3-day session stamp is still valid
+ * AND Supabase reports a live session.
+ */
 export function VendorProtectedRoute({ children }: { children: React.ReactNode }) {
   const { vendorUser, isLoading } = useAuth();
-  const [checkingSession, setCheckingSession] = useState(!vendorUser && !isLoading);
   const location = useLocation();
+  const [resolved, setResolved] = useState(false);
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const settledRef = useRef(false);
 
   useEffect(() => {
-    if (!vendorUser && !isLoading) {
-      const grace = Capacitor.isNativePlatform() ? 5000 : 3000;
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-          setCheckingSession(false);
-        } else {
-          const timeout = setTimeout(() => setCheckingSession(false), grace);
-          return () => clearTimeout(timeout);
-        }
-      });
-    }
-  }, [vendorUser, isLoading]);
+    if (vendorUser) { settledRef.current = true; setResolved(true); return; }
+    settledRef.current = false;
 
-  if (isLoading || (checkingSession && !vendorUser)) {
+    const isNative = Capacitor.isNativePlatform();
+    const stampValid = isSessionStampValid("vendor");
+    const hardTimeoutMs = isNative ? (stampValid ? 12000 : 8000) : (stampValid ? 6000 : 3500);
+
+    const settle = (sessionPresent: boolean | null) => {
+      if (settledRef.current) return;
+      settledRef.current = true;
+      setHasSession(sessionPresent);
+      setResolved(true);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        if (session) settle(true);
+        else if (event === "INITIAL_SESSION") settle(false);
+      } else if (event === "SIGNED_OUT") {
+        settle(false);
+      }
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) settle(true);
+    });
+
+    const t = setTimeout(() => settle(null), hardTimeoutMs);
+    return () => { clearTimeout(t); subscription.unsubscribe(); };
+  }, [vendorUser]);
+
+  if (isLoading || (!vendorUser && !resolved)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
@@ -32,14 +61,20 @@ export function VendorProtectedRoute({ children }: { children: React.ReactNode }
     );
   }
 
-  if (!vendorUser) {
-    return <Navigate to="/vendor/login" replace />;
+  if (vendorUser) {
+    if (vendorUser.just_logged_in && !vendorUser.password_set && location.pathname !== "/vendor/set-password") {
+      return <Navigate to="/vendor/set-password" replace />;
+    }
+    return <VendorFTUXFlow>{children}</VendorFTUXFlow>;
   }
 
-  // Redirect to set-password ONLY on fresh first-time login (not on session restore / app reopen)
-  if (vendorUser.just_logged_in && !vendorUser.password_set && location.pathname !== "/vendor/set-password") {
-    return <Navigate to="/vendor/set-password" replace />;
+  if (hasSession && isSessionStampValid("vendor")) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    );
   }
 
-  return <VendorFTUXFlow>{children}</VendorFTUXFlow>;
+  return <Navigate to="/vendor/login" replace />;
 }
