@@ -279,21 +279,17 @@ export async function resolveB2Url(
       return url;
     }
 
-    // Raw B2/CDN public URL — sign via public bucket
+    // Raw B2 / legacy CDN public URL — the bucket is public, so we just
+    // rewrite the host to our Cloudflare CDN (Bandwidth Alliance, zero
+    // egress, fully cacheable). No presign required.
     const publicKey = extractB2Key(value);
     if (publicKey) {
-      const { data, error } = await supabase.functions.invoke("b2-presigned-download", {
-        body: { key: publicKey, expiresSeconds, bucket: "public" },
-      });
-      if (error || !data?.url) {
-        console.warn("[resolveB2Url] public-bucket sign failed, returning original", error);
-        // Cache the fallback briefly too so we don't keep retrying a known-bad sign.
-        cacheSet(cacheKey, value);
-        return value;
-      }
-      const url = data.url as string;
-      cacheSet(cacheKey, url);
-      return url;
+      const cdnUrl = `https://${PUBLIC_CDN_HOST}/${publicKey
+        .split("/")
+        .map(encodeURIComponent)
+        .join("/")}`;
+      cacheSet(cacheKey, cdnUrl);
+      return cdnUrl;
     }
 
     // Anything else (legacy GCS URL, data URI, etc.) — return as-is
