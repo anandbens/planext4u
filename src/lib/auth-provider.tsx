@@ -5,6 +5,7 @@ import { AuthContext } from "@/lib/auth-context";
 import { logActivity } from "@/lib/activity-log";
 import { initPushNotifications, linkPushTokenToUser } from "@/lib/push-notifications";
 import { persistentStore } from "@/lib/storage-adapter";
+import { stampSession, clearSessionStamp } from "@/lib/session-stamp";
 import type { AuthUser, CustomerUser, VendorUser, UserRole, AppRole } from "@/lib/auth-types";
 
 const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setUser(authUser);
       persistentStore.set("admin_user", JSON.stringify(authUser));
+      stampSession("admin");
     } else if (role === 'vendor') {
       const vendorId = roleRecord.vendor_id;
       if (!vendorId) {
@@ -110,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setVendorUser(vu);
       persistentStore.set("vendor_user", JSON.stringify(vu));
+      stampSession("vendor");
     } else if (role === 'customer') {
       const customerId = roleRecord.customer_id;
       if (!customerId) {
@@ -150,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setCustomerUser(cu);
       persistentStore.set("customer_user", JSON.stringify(cu));
+      stampSession("customer");
     }
 
     // Log login event for fresh logins
@@ -378,6 +382,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         persistentStore.remove("admin_user");
         persistentStore.remove("customer_user");
         persistentStore.remove("vendor_user");
+        clearSessionStamp("admin");
+        clearSessionStamp("customer");
+        clearSessionStamp("vendor");
         setIsLoading(false);
       } else if (event === 'INITIAL_SESSION' && !session) {
         // No session — any cached portal profile is stale and must be cleared.
@@ -502,18 +509,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     persistentStore.remove("admin_user");
+    clearSessionStamp("admin");
   };
 
   const customerLogout = async () => {
     await supabase.auth.signOut();
     setCustomerUser(null);
     persistentStore.remove("customer_user");
+    clearSessionStamp("customer");
   };
 
   const vendorLogout = async () => {
     await supabase.auth.signOut();
     setVendorUser(null);
     persistentStore.remove("vendor_user");
+    clearSessionStamp("vendor");
   };
 
   const hasAccess = (allowedRoles: UserRole[]) => {

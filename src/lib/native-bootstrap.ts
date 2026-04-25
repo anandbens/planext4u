@@ -7,6 +7,7 @@
  * because of broken keyboard / status-bar behaviour.
  */
 import { Capacitor } from "@capacitor/core";
+import { supabase } from "@/integrations/supabase/client";
 
 export async function initNativeBridges() {
   if (!Capacitor.isNativePlatform()) return;
@@ -47,10 +48,12 @@ export async function initNativeBridges() {
     /* non-fatal — plugin not installed */
   }
 
-  // -------- Hardware / gesture back button (Android) --------
-  if (platform === "android") {
-    try {
-      const { App } = await import("@capacitor/app");
+  // -------- App lifecycle (back button + resume) --------
+  try {
+    const { App } = await import("@capacitor/app");
+
+    // Hardware / gesture back button (Android only)
+    if (platform === "android") {
       App.addListener("backButton", ({ canGoBack }) => {
         if (canGoBack) {
           window.history.back();
@@ -58,8 +61,22 @@ export async function initNativeBridges() {
           App.exitApp();
         }
       });
-    } catch (e) {
-      /* non-fatal */
     }
+
+    // When the app is resumed from background (or relaunched without a full
+    // process kill), proactively refresh the Supabase session so any JWT
+    // that expired while we were backgrounded is renewed BEFORE the first
+    // RLS-protected query runs. Without this, users sometimes see a flash
+    // of "logged out" UI on app resume even though their refresh token is
+    // still valid.
+    App.addListener("appStateChange", async ({ isActive }) => {
+      if (!isActive) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) await supabase.auth.refreshSession();
+      } catch { /* non-fatal — auto-refresh will retry */ }
+    });
+  } catch (e) {
+    /* non-fatal */
   }
 }
