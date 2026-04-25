@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Repeat2, ChevronDown, Trash2, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Repeat2, ChevronDown, Trash2, ShoppingBag, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -155,11 +155,17 @@ export default function SocialPostDetailPage() {
           </div>
           <p className="text-[11px] text-muted-foreground">
             {post.location_name ? `${post.location_name} · ` : ''}{timeAgo(post.created_at)}
+            {(post as any).is_edited && <span className="ml-1">· Edited</span>}
           </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild><button className="p-1"><MoreHorizontal className="h-5 w-5" /></button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {(customerUser?.supabase_uid || customerUser?.id) === post.user_id && (
+              <DropdownMenuItem onClick={() => navigate(`/app/social/post/${postId}/edit`)}>
+                <Pencil className="h-4 w-4 mr-2" /> Edit Post
+              </DropdownMenuItem>
+            )}
             {((customerUser?.supabase_uid || customerUser?.id) === post.user_id || isSocialModerator(customerUser?.supabase_uid || customerUser?.id)) && (
               <DropdownMenuItem className="text-destructive" onClick={async () => {
                 if (!confirm("Are you sure you want to delete this post?")) return;
