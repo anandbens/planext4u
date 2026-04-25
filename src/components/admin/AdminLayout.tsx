@@ -31,6 +31,7 @@ const SEARCH_ROUTES: { label: string; keywords: string[]; path: string }[] = [
   { label: "CF City", keywords: ["city", "location"], path: "/cf/city" },
   { label: "CF Area", keywords: ["area", "zone", "pincode"], path: "/cf/area" },
   { label: "Platform Variables", keywords: ["variable", "parameter", "config"], path: "/platform-variables" },
+  { label: "Module Visibility", keywords: ["module", "coming soon", "shop", "socio", "services", "homes", "classifieds", "food", "toggle"], path: "/admin/module-visibility" },
 ];
 
 interface AdminLayoutProps {

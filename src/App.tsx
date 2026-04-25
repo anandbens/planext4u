@@ -170,6 +170,7 @@ import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
 import AdminVendorOnboardingPage from "./pages/admin/AdminVendorOnboardingPage";
 import AdminSplashScreensPage from "./pages/admin/AdminSplashScreensPage";
 import AdminHomepageCMSPage from "./pages/admin/AdminHomepageCMSPage";
+import AdminModuleVisibilityPage from "./pages/admin/AdminModuleVisibilityPage";
 
 // Vendor pages
 import VendorLoginPage from "./pages/vendor/VendorLoginPage";
@@ -429,6 +430,7 @@ const AppRoutes = () => {
         <Route path="/cf/products" element={<AdminOnlyPage><CFProductsPage /></AdminOnlyPage>} />
         <Route path="/occupations" element={<AdminOnlyPage><OccupationsPage /></AdminOnlyPage>} />
         <Route path="/platform-variables" element={<AdminOnlyPage><PlatformVariablesPage /></AdminOnlyPage>} />
+        <Route path="/admin/module-visibility" element={<AdminOnlyPage><AdminModuleVisibilityPage /></AdminOnlyPage>} />
         <Route path="/popup-banners" element={<AdminOnlyPage><PopupBannersPage /></AdminOnlyPage>} />
         <Route path="/banners" element={<AdminOnlyPage><BannersPage /></AdminOnlyPage>} />
         <Route path="/advertisements" element={<SalesPage><AdvertisementsPage /></SalesPage>} />
