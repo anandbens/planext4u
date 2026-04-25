@@ -477,15 +477,30 @@ export default function AdminHomepageCMSPage() {
   });
 
   /* ── CRUD handlers ── */
+  // Convert "" → null for nullable fields (timestamps, uuids, etc.) to avoid silent DB errors.
+  const sanitize = (obj: any, nullableFields: string[]) => {
+    const out: any = { ...obj };
+    for (const k of nullableFields) {
+      if (out[k] === "" || out[k] === undefined) out[k] = null;
+    }
+    return out;
+  };
+
   const saveBanner = async (form: any) => {
-    const payload = { ...form };
+    let payload: any = { ...form };
     delete payload.id; delete payload.created_at; delete payload.updated_at; delete payload.impressions; delete payload.clicks;
+    payload = sanitize(payload, [
+      "start_date", "end_date", "subtitle", "mobile_media_url",
+      "cta_text", "cta_link", "redirect_id",
+      "theme_header_color", "theme_bg_color", "theme_button_color",
+      "background_gradient", "festival_tag",
+    ]);
     if (form.id) {
-      const { error } = await supabase.from("homepage_banners" as any).update(payload as any).eq("id", form.id);
+      const { error } = await supabase.from("homepage_banners" as any).update(payload).eq("id", form.id);
       if (error) throw error;
       toast.success("Banner updated");
     } else {
-      const { error } = await supabase.from("homepage_banners" as any).insert(payload as any);
+      const { error } = await supabase.from("homepage_banners" as any).insert(payload);
       if (error) throw error;
       toast.success("Banner created");
     }
@@ -494,19 +509,24 @@ export default function AdminHomepageCMSPage() {
 
   const deleteBanner = async (id: string) => {
     if (!confirm("Delete this banner?")) return;
-    await supabase.from("homepage_banners" as any).delete().eq("id", id);
+    const { error } = await supabase.from("homepage_banners" as any).delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
     toast.success("Banner deleted"); qc.invalidateQueries({ queryKey: ["homepage_banners"] });
   };
 
   const saveSection = async (form: any) => {
-    const payload = { ...form };
+    let payload: any = { ...form };
     delete payload.id; delete payload.created_at; delete payload.updated_at;
+    payload = sanitize(payload, [
+      "start_date", "end_date", "background_color", "background_gradient",
+      "cta_text", "cta_link", "festival_tag", "target_location", "target_segment",
+    ]);
     if (form.id) {
-      const { error } = await supabase.from("homepage_sections" as any).update(payload as any).eq("id", form.id);
+      const { error } = await supabase.from("homepage_sections" as any).update(payload).eq("id", form.id);
       if (error) throw error;
       toast.success("Section updated");
     } else {
-      const { error } = await supabase.from("homepage_sections" as any).insert(payload as any);
+      const { error } = await supabase.from("homepage_sections" as any).insert(payload);
       if (error) throw error;
       toast.success("Section created");
     }
@@ -515,21 +535,25 @@ export default function AdminHomepageCMSPage() {
 
   const deleteSection = async (id: string) => {
     if (!confirm("Delete this section?")) return;
-    await supabase.from("homepage_sections" as any).delete().eq("id", id);
+    const { error } = await supabase.from("homepage_sections" as any).delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
     toast.success("Section deleted"); qc.invalidateQueries({ queryKey: ["homepage_sections"] });
   };
 
   const saveVideoAd = async (form: any) => {
-    const payload = { ...form };
+    let payload: any = { ...form };
     delete payload.id; delete payload.created_at; delete payload.updated_at; delete payload.impressions; delete payload.clicks;
     // Strip UI-only helper fields that are not real columns on video_ads
     delete payload.cta_target_type; delete payload.cta_target_id;
+    payload = sanitize(payload, [
+      "start_date", "end_date", "thumbnail_url", "cta_text", "cta_link",
+    ]);
     if (form.id) {
-      const { error } = await supabase.from("video_ads" as any).update(payload as any).eq("id", form.id);
+      const { error } = await supabase.from("video_ads" as any).update(payload).eq("id", form.id);
       if (error) throw error;
       toast.success("Video ad updated");
     } else {
-      const { error } = await supabase.from("video_ads" as any).insert(payload as any);
+      const { error } = await supabase.from("video_ads" as any).insert(payload);
       if (error) throw error;
       toast.success("Video ad created");
     }
