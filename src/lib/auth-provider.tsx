@@ -382,6 +382,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         persistentStore.remove("admin_user");
         persistentStore.remove("customer_user");
         persistentStore.remove("vendor_user");
+        clearSessionStamp("admin");
+        clearSessionStamp("customer");
+        clearSessionStamp("vendor");
         setIsLoading(false);
       } else if (event === 'INITIAL_SESSION' && !session) {
         // No session — any cached portal profile is stale and must be cleared.
@@ -506,18 +509,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     persistentStore.remove("admin_user");
+    clearSessionStamp("admin");
   };
 
   const customerLogout = async () => {
     await supabase.auth.signOut();
     setCustomerUser(null);
     persistentStore.remove("customer_user");
+    clearSessionStamp("customer");
   };
 
   const vendorLogout = async () => {
     await supabase.auth.signOut();
     setVendorUser(null);
     persistentStore.remove("vendor_user");
+    clearSessionStamp("vendor");
   };
 
   const hasAccess = (allowedRoles: UserRole[]) => {
