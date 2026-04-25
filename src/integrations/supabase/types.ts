@@ -8530,6 +8530,7 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      is_module_enabled: { Args: { _module_key: string }; Returns: boolean }
       match_contacts_by_phone: {
         Args: { _phones: string[] }
         Returns: {
