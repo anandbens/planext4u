@@ -522,15 +522,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return allowedRoles.includes(user.role);
   };
 
+  // (seedDemoUsers removed — demo seeding is no longer supported.)
   const seedDemoUsers = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('seed-users');
-      if (error) throw error;
-      console.log('Demo users seeded:', data);
-    } catch (err) {
-      console.error('Failed to seed demo users:', err);
-      throw err;
-    }
+    throw new Error("Demo seeding has been removed from this application.");
   };
 
   return (

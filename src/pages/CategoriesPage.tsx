@@ -32,29 +32,7 @@ export default function CategoriesPage() {
   const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [createAsSubcategory, setCreateAsSubcategory] = useState(false);
-  const [autoFilling, setAutoFilling] = useState(false);
-
-  const handleAutoFillImages = async () => {
-    if (autoFilling) return;
-    setAutoFilling(true);
-    const t = toast.loading(`Generating images for up to 30 categories…`);
-    try {
-      const { data, error } = await supabase.functions.invoke("seed-category-images", {
-        body: { limit: 30 },
-      });
-      if (error) throw error;
-      toast.success(
-        `Updated ${data?.updated ?? 0} categories${data?.errors?.length ? ` · ${data.errors.length} failed` : ""}`,
-        { id: t },
-      );
-      if (data?.errors?.length) console.warn("[auto-fill errors]", data.errors);
-      fetchData();
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to auto-fill images", { id: t });
-    } finally {
-      setAutoFilling(false);
-    }
-  };
+  // (AI auto-fill images handler removed — demo seeding is no longer supported.)
 
   const fetchData = useCallback(() => {
     api.getCategories(true).then(setAllData);
@@ -177,13 +155,7 @@ export default function CategoriesPage() {
           <Plus className="h-3.5 w-3.5" /> Add Subcategory
         </Button>
 
-        <Button variant="default" size="sm" className="h-9 text-xs gap-1 ml-auto"
-          disabled={autoFilling}
-          onClick={handleAutoFillImages}
-          title="Generate AI category images for entries missing an image and upload to B2">
-          {autoFilling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-          {autoFilling ? "Generating…" : "Auto-fill Missing Images"}
-        </Button>
+        {/* AI auto-fill images button removed — demo seeding is no longer supported. */}
       </div>
 
       <DataTable
