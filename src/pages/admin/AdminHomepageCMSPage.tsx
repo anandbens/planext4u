@@ -143,7 +143,11 @@ function SectionModal({ open, onClose, section, onSave }: any) {
   const handleSave = async () => {
     if (!form.title) { toast.error("Title required"); return; }
     setSaving(true);
-    try { await onSave(form); onClose(); } catch { toast.error("Save failed"); }
+    try { await onSave(form); onClose(); }
+    catch (e: any) {
+      console.error("Section save failed:", e);
+      toast.error(e?.message || "Save failed");
+    }
     finally { setSaving(false); }
   };
 
