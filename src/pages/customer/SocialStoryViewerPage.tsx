@@ -196,6 +196,18 @@ export default function SocialStoryViewerPage() {
             <span className="text-white/60 text-xs">{timeAgo(story.created_at)}</span>
           </div>
           <div className="flex items-center gap-2">
+            {(customerUser?.supabase_uid || customerUser?.id) === group.user.id && (
+              <button
+                onClick={() => {
+                  setEditText(story.text_content || "");
+                  setEditBg(story.background_color || "");
+                  setIsPaused(true);
+                  setEditOpen(true);
+                }}
+                className="p-1"
+                aria-label="Edit story"
+              ><Pencil className="h-5 w-5 text-white" /></button>
+            )}
             {((customerUser?.supabase_uid || customerUser?.id) === group.user.id || isSocialModerator(customerUser?.supabase_uid || customerUser?.id)) && (
               <button onClick={async () => {
                 if (!confirm("Delete this story?")) return;
