@@ -4,7 +4,7 @@ import {
   Grid3X3, Wrench, Receipt, MapPin, Map, Tag, Briefcase, SlidersHorizontal,
   MessageSquare, MonitorPlay, ExternalLink, ClipboardList, Headphones, Key,
   Home, Crown, Shield, Filter, Palette, Flag, Heart, Upload, Layers,
-  Smartphone, UtensilsCrossed, Bike, Truck,
+  Smartphone, UtensilsCrossed, Bike, Truck, ToggleLeft,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -92,6 +92,7 @@ const systemItems: NavItem[] = [
   { title: "File Uploads", url: "/admin/file-uploads", icon: Upload, roles: ['admin'] },
   { title: "Onboarding Screens", url: "/admin/onboarding", icon: MonitorPlay, roles: ['admin'] },
   { title: "Occupations", url: "/occupations", icon: Briefcase, roles: ['admin'] },
+  { title: "Module Visibility", url: "/admin/module-visibility", icon: ToggleLeft, roles: ['admin'] },
   { title: "Platform Variables", url: "/platform-variables", icon: SlidersHorizontal, roles: ['admin'] },
   { title: "Popup Banners", url: "/popup-banners", icon: MonitorPlay, roles: ['admin'] },
   { title: "Banners", url: "/banners", icon: Image, roles: ['admin'] },
