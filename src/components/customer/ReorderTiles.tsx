@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, type CartItem } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /**
