@@ -19,6 +19,7 @@ import { VendorProtectedRoute } from "@/components/vendor/VendorProtectedRoute";
 import { FTUXFlow } from "@/components/customer/FTUXFlow";
 import { isVendorApp, isVendorAppSync, isRiderAppSync, getNativeAppId } from "@/lib/capacitor";
 import { ForceUpdateOverlay } from "@/components/ForceUpdateOverlay";
+import { ModuleGuard } from "@/components/customer/ModuleGuard";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
@@ -266,6 +267,27 @@ function GuestPage({ children }: { children: React.ReactNode }) {
   return <GuestOrCustomerRoute>{children}</GuestOrCustomerRoute>;
 }
 
+// Module-gated wrappers: enforce platform_variables module flags at the route
+// level so direct URL navigation cannot bypass a "Coming Soon" module.
+function ServicesGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="services">{children}</ModuleGuard>;
+}
+function HomesGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="homes" label="Find Home">{children}</ModuleGuard>;
+}
+function ClassifiedsGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="classifieds">{children}</ModuleGuard>;
+}
+function SocioGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="socio" label="Socio">{children}</ModuleGuard>;
+}
+function ShopGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="shop">{children}</ModuleGuard>;
+}
+function FoodGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="food">{children}</ModuleGuard>;
+}
+
 function VendorPage({ children }: { children: React.ReactNode }) {
   return <VendorProtectedRoute>{children}</VendorProtectedRoute>;
 }
@@ -446,12 +468,12 @@ const AppRoutes = () => {
         <Route path="/app/terms" element={<TermsPage />} />
         <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/app/cms/:slug" element={<CustomerCMSPage />} />
-        <Route path="/app/browse" element={<GuestPage><CustomerBrowsePage /></GuestPage>} />
-        <Route path="/app/categories" element={<GuestPage><AllCategoriesPage /></GuestPage>} />
-        <Route path="/app/deals" element={<GuestPage><CustomerDealsPage /></GuestPage>} />
-        <Route path="/app/trending" element={<GuestPage><CustomerTrendingPage /></GuestPage>} />
-        <Route path="/app/product/:id" element={<GuestPage><CustomerProductPage /></GuestPage>} />
-        <Route path="/app/vendor/:id" element={<GuestPage><CustomerVendorPage /></GuestPage>} />
+        <Route path="/app/browse" element={<GuestPage><ShopGate><CustomerBrowsePage /></ShopGate></GuestPage>} />
+        <Route path="/app/categories" element={<GuestPage><ShopGate><AllCategoriesPage /></ShopGate></GuestPage>} />
+        <Route path="/app/deals" element={<GuestPage><ShopGate><CustomerDealsPage /></ShopGate></GuestPage>} />
+        <Route path="/app/trending" element={<GuestPage><ShopGate><CustomerTrendingPage /></ShopGate></GuestPage>} />
+        <Route path="/app/product/:id" element={<GuestPage><ShopGate><CustomerProductPage /></ShopGate></GuestPage>} />
+        <Route path="/app/vendor/:id" element={<GuestPage><ShopGate><CustomerVendorPage /></ShopGate></GuestPage>} />
         <Route path="/app/cart" element={<CustomerPage><CustomerCartPage /></CustomerPage>} />
         <Route path="/app/payment" element={<CustomerPage><PaymentPage /></CustomerPage>} />
         <Route path="/app/orders" element={<CustomerPage><CustomerOrdersPage /></CustomerPage>} />
@@ -462,63 +484,63 @@ const AppRoutes = () => {
         <Route path="/app/wallet" element={<CustomerPage><CustomerWalletPage /></CustomerPage>} />
         <Route path="/app/wishlist" element={<CustomerPage><CustomerWishlistPage /></CustomerPage>} />
         <Route path="/app/referrals" element={<CustomerPage><CustomerReferralPage /></CustomerPage>} />
-        <Route path="/app/services" element={<GuestPage><CustomerServicesPage /></GuestPage>} />
-        <Route path="/app/service/:id" element={<GuestPage><CustomerServiceDetailPage /></GuestPage>} />
-        <Route path="/app/classifieds" element={<GuestPage><CustomerClassifiedsPage /></GuestPage>} />
-        <Route path="/app/classifieds/post" element={<CustomerPage><CustomerPostAdPage /></CustomerPage>} />
-        <Route path="/app/classifieds/:id" element={<GuestPage><CustomerClassifiedDetailPage /></GuestPage>} />
+        <Route path="/app/services" element={<GuestPage><ServicesGate><CustomerServicesPage /></ServicesGate></GuestPage>} />
+        <Route path="/app/service/:id" element={<GuestPage><ServicesGate><CustomerServiceDetailPage /></ServicesGate></GuestPage>} />
+        <Route path="/app/classifieds" element={<GuestPage><ClassifiedsGate><CustomerClassifiedsPage /></ClassifiedsGate></GuestPage>} />
+        <Route path="/app/classifieds/post" element={<CustomerPage><ClassifiedsGate><CustomerPostAdPage /></ClassifiedsGate></CustomerPage>} />
+        <Route path="/app/classifieds/:id" element={<GuestPage><ClassifiedsGate><CustomerClassifiedDetailPage /></ClassifiedsGate></GuestPage>} />
         <Route path="/app/vendor-register" element={<CustomerPage><VendorRegisterPage /></CustomerPage>} />
         <Route path="/app/support" element={<CustomerPage><CustomerSupportPage /></CustomerPage>} />
         <Route path="/app/change-password" element={<CustomerPage><CustomerChangePasswordPage /></CustomerPage>} />
 
         {/* Social routes */}
-        <Route path="/app/social" element={<CustomerPage><SocialFeedPage /></CustomerPage>} />
-        <Route path="/app/social/create" element={<CustomerPage><SocialCreatePostPage /></CustomerPage>} />
-        <Route path="/app/social/post/:postId/edit" element={<CustomerPage><SocialEditPostPage /></CustomerPage>} />
-        <Route path="/app/social/profile" element={<CustomerPage><SocialProfilePage /></CustomerPage>} />
-        <Route path="/app/social/explore" element={<CustomerPage><SocialExplorePage /></CustomerPage>} />
-        <Route path="/app/social/reels" element={<CustomerPage><SocialReelsPage /></CustomerPage>} />
-        <Route path="/app/social/stories/:userId" element={<CustomerPage><SocialStoryViewerPage /></CustomerPage>} />
-        <Route path="/app/social/messages" element={<CustomerPage><SocialDMPage /></CustomerPage>} />
-        <Route path="/app/social/messages/:recipientId" element={<CustomerPage><SocioDMChatPage /></CustomerPage>} />
-        <Route path="/app/social/notifications" element={<CustomerPage><SocialNotificationsPage /></CustomerPage>} />
-        <Route path="/app/social/settings" element={<CustomerPage><SocialSettingsPage /></CustomerPage>} />
-        <Route path="/app/social/@:username" element={<CustomerPage><SocialProfilePage /></CustomerPage>} />
-        <Route path="/app/social/profile/:userId" element={<CustomerPage><SocialProfilePage /></CustomerPage>} />
-        <Route path="/app/social/post/:postId" element={<CustomerPage><SocialPostDetailPage /></CustomerPage>} />
-        <Route path="/app/social/user/:userId/posts/:postId" element={<CustomerPage><SocialUserPostsPage /></CustomerPage>} />
-        <Route path="/app/social/comments/:postId" element={<CustomerPage><SocialCommentsPage /></CustomerPage>} />
-        <Route path="/app/social/:username/followers" element={<CustomerPage><SocialFollowersPage /></CustomerPage>} />
-        <Route path="/app/social/:username/following" element={<CustomerPage><SocialFollowersPage /></CustomerPage>} />
-        <Route path="/app/social/profile/:userId/followers" element={<CustomerPage><SocialFollowersPage /></CustomerPage>} />
-        <Route path="/app/social/edit-profile" element={<CustomerPage><SocialEditProfilePage /></CustomerPage>} />
-        <Route path="/app/social/dashboard" element={<CustomerPage><SocialCreatorDashboardPage /></CustomerPage>} />
-        <Route path="/app/social/live" element={<CustomerPage><SocialLivePage /></CustomerPage>} />
-        <Route path="/app/social/channels" element={<CustomerPage><SocialBroadcastPage /></CustomerPage>} />
-        <Route path="/app/social/change-password" element={<CustomerPage><SocialChangePasswordPage /></CustomerPage>} />
-        <Route path="/app/social/privacy" element={<CustomerPage><SocialPrivacyPage /></CustomerPage>} />
-        <Route path="/app/social/security" element={<CustomerPage><SocialSecurityPage /></CustomerPage>} />
-        <Route path="/app/social/notification-settings" element={<CustomerPage><SocialNotificationSettingsPage /></CustomerPage>} />
-        <Route path="/app/social/help" element={<CustomerPage><SocialHelpCenterPage /></CustomerPage>} />
-        <Route path="/app/social/shop" element={<CustomerPage><SocialShopPage /></CustomerPage>} />
-        <Route path="/app/social/suggestions" element={<CustomerPage><SocialSuggestionsPage /></CustomerPage>} />
-        <Route path="/app/social/friends" element={<CustomerPage><SocialFriendsPage /></CustomerPage>} />
+        <Route path="/app/social" element={<CustomerPage><SocioGate><SocialFeedPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/create" element={<CustomerPage><SocioGate><SocialCreatePostPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/post/:postId/edit" element={<CustomerPage><SocioGate><SocialEditPostPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/profile" element={<CustomerPage><SocioGate><SocialProfilePage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/explore" element={<CustomerPage><SocioGate><SocialExplorePage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/reels" element={<CustomerPage><SocioGate><SocialReelsPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/stories/:userId" element={<CustomerPage><SocioGate><SocialStoryViewerPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/messages" element={<CustomerPage><SocioGate><SocialDMPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/messages/:recipientId" element={<CustomerPage><SocioGate><SocioDMChatPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/notifications" element={<CustomerPage><SocioGate><SocialNotificationsPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/settings" element={<CustomerPage><SocioGate><SocialSettingsPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/@:username" element={<CustomerPage><SocioGate><SocialProfilePage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/profile/:userId" element={<CustomerPage><SocioGate><SocialProfilePage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/post/:postId" element={<CustomerPage><SocioGate><SocialPostDetailPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/user/:userId/posts/:postId" element={<CustomerPage><SocioGate><SocialUserPostsPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/comments/:postId" element={<CustomerPage><SocioGate><SocialCommentsPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/:username/followers" element={<CustomerPage><SocioGate><SocialFollowersPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/:username/following" element={<CustomerPage><SocioGate><SocialFollowersPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/profile/:userId/followers" element={<CustomerPage><SocioGate><SocialFollowersPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/edit-profile" element={<CustomerPage><SocioGate><SocialEditProfilePage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/dashboard" element={<CustomerPage><SocioGate><SocialCreatorDashboardPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/live" element={<CustomerPage><SocioGate><SocialLivePage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/channels" element={<CustomerPage><SocioGate><SocialBroadcastPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/change-password" element={<CustomerPage><SocioGate><SocialChangePasswordPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/privacy" element={<CustomerPage><SocioGate><SocialPrivacyPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/security" element={<CustomerPage><SocioGate><SocialSecurityPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/notification-settings" element={<CustomerPage><SocioGate><SocialNotificationSettingsPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/help" element={<CustomerPage><SocioGate><SocialHelpCenterPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/shop" element={<CustomerPage><SocioGate><SocialShopPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/suggestions" element={<CustomerPage><SocioGate><SocialSuggestionsPage /></SocioGate></CustomerPage>} />
+        <Route path="/app/social/friends" element={<CustomerPage><SocioGate><SocialFriendsPage /></SocioGate></CustomerPage>} />
         <Route path="/app/calls" element={<CustomerPage><CallsPage /></CustomerPage>} />
 
         {/* Admin Social */}
         <Route path="/admin/social" element={<AdminOnlyPage><AdminSocialDashboardPage /></AdminOnlyPage>} />
 
         {/* Property / Find Home routes */}
-        <Route path="/app/find-home" element={<GuestPage><PropertyHomePage /></GuestPage>} />
-        <Route path="/app/find-home/post" element={<CustomerPage><PostPropertyPage /></CustomerPage>} />
-        <Route path="/app/find-home/emi" element={<GuestPage><PropertyEMIPage /></GuestPage>} />
-        <Route path="/app/find-home/my-properties" element={<CustomerPage><MyPropertiesPage /></CustomerPage>} />
-        <Route path="/app/find-home/saved" element={<CustomerPage><MyPropertiesPage /></CustomerPage>} />
-        <Route path="/app/find-home/saved-searches" element={<CustomerPage><SavedSearchesPage /></CustomerPage>} />
-        <Route path="/app/find-home/messages" element={<CustomerPage><PropertyMessagesPage /></CustomerPage>} />
-        <Route path="/app/find-home/rent-tracker" element={<CustomerPage><RentTrackerPage /></CustomerPage>} />
-        <Route path="/app/find-home/value-estimator" element={<GuestPage><PropertyValueEstimatorPage /></GuestPage>} />
-        <Route path="/app/find-home/:id" element={<GuestPage><PropertyDetailPage /></GuestPage>} />
+        <Route path="/app/find-home" element={<GuestPage><HomesGate><PropertyHomePage /></HomesGate></GuestPage>} />
+        <Route path="/app/find-home/post" element={<CustomerPage><HomesGate><PostPropertyPage /></HomesGate></CustomerPage>} />
+        <Route path="/app/find-home/emi" element={<GuestPage><HomesGate><PropertyEMIPage /></HomesGate></GuestPage>} />
+        <Route path="/app/find-home/my-properties" element={<CustomerPage><HomesGate><MyPropertiesPage /></HomesGate></CustomerPage>} />
+        <Route path="/app/find-home/saved" element={<CustomerPage><HomesGate><MyPropertiesPage /></HomesGate></CustomerPage>} />
+        <Route path="/app/find-home/saved-searches" element={<CustomerPage><HomesGate><SavedSearchesPage /></HomesGate></CustomerPage>} />
+        <Route path="/app/find-home/messages" element={<CustomerPage><HomesGate><PropertyMessagesPage /></HomesGate></CustomerPage>} />
+        <Route path="/app/find-home/rent-tracker" element={<CustomerPage><HomesGate><RentTrackerPage /></HomesGate></CustomerPage>} />
+        <Route path="/app/find-home/value-estimator" element={<GuestPage><HomesGate><PropertyValueEstimatorPage /></HomesGate></GuestPage>} />
+        <Route path="/app/find-home/:id" element={<GuestPage><HomesGate><PropertyDetailPage /></HomesGate></GuestPage>} />
 
         {/* Vendor-facing routes */}
         <Route path="/vendor/login" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorLoginPage />} />
@@ -544,11 +566,11 @@ const AppRoutes = () => {
         <Route path="/app/account-control" element={<CustomerPage><AccountControlPage /></CustomerPage>} />
 
         {/* Food delivery — Customer */}
-        <Route path="/app/food" element={<GuestPage><FoodHomePage /></GuestPage>} />
-        <Route path="/app/food/restaurant/:id" element={<GuestPage><FoodRestaurantPage /></GuestPage>} />
-        <Route path="/app/food/cart" element={<CustomerPage><FoodCartPage /></CustomerPage>} />
-        <Route path="/app/food/orders" element={<CustomerPage><FoodOrdersPage /></CustomerPage>} />
-        <Route path="/app/food/orders/:id" element={<CustomerPage><FoodOrderDetailPage /></CustomerPage>} />
+        <Route path="/app/food" element={<GuestPage><FoodGate><FoodHomePage /></FoodGate></GuestPage>} />
+        <Route path="/app/food/restaurant/:id" element={<GuestPage><FoodGate><FoodRestaurantPage /></FoodGate></GuestPage>} />
+        <Route path="/app/food/cart" element={<CustomerPage><FoodGate><FoodCartPage /></FoodGate></CustomerPage>} />
+        <Route path="/app/food/orders" element={<CustomerPage><FoodGate><FoodOrdersPage /></FoodGate></CustomerPage>} />
+        <Route path="/app/food/orders/:id" element={<CustomerPage><FoodGate><FoodOrderDetailPage /></FoodGate></CustomerPage>} />
 
         {/* Food delivery — Vendor (Restaurant) */}
         <Route path="/vendor/restaurant" element={<VendorPage><VendorRestaurantPage /></VendorPage>} />
