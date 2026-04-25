@@ -589,7 +589,10 @@ export default function AdminHomepageCMSPage() {
                     </p>
                     <p className="text-[10px] text-muted-foreground">{b.impressions} impressions · {b.clicks} clicks</p>
                   </div>
-                  <Badge variant={b.is_active ? "default" : "secondary"}>{b.is_active ? "Active" : "Inactive"}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={!!b.is_active} onCheckedChange={(v) => toggleField("homepage_banners", "homepage_banners", b.id, "is_active", v)} />
+                    <span className="text-[10px] text-muted-foreground w-10">{b.is_active ? "Active" : "Off"}</span>
+                  </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setBannerModal(b)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteBanner(b.id)}><Trash2 className="h-4 w-4" /></Button>
