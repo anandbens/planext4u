@@ -7,6 +7,7 @@
  * because of broken keyboard / status-bar behaviour.
  */
 import { Capacitor } from "@capacitor/core";
+import { supabase } from "@/integrations/supabase/client";
 
 export async function initNativeBridges() {
   if (!Capacitor.isNativePlatform()) return;
