@@ -15,6 +15,14 @@ type QueueMessage = {
   message: EmailPayload
 }
 
+function stringOrEmpty(value: unknown): string {
+  return typeof value === 'string' ? value : ''
+}
+
+function stringOrUndefined(value: unknown): string | undefined {
+  return typeof value === 'string' && value ? value : undefined
+}
+
 // Check if an error is a rate-limit (429) response.
 // Uses EmailAPIError.status when available (email-js >=0.x with structured errors),
 // falls back to parsing the error message for older versions.
@@ -208,7 +216,7 @@ Deno.serve(async (req) => {
           : 0
 
       // Drop expired messages (TTL exceeded)
-      if (payload.queued_at) {
+      if (typeof payload.queued_at === 'string' || typeof payload.queued_at === 'number') {
         const ageMs = Date.now() - new Date(payload.queued_at).getTime()
         const maxAgeMs = ttlMinutes[queue] * 60 * 1000
         if (ageMs > maxAgeMs) {
@@ -258,18 +266,18 @@ Deno.serve(async (req) => {
       try {
         await sendLovableEmail(
           {
-            run_id: payload.run_id,
-            to: payload.to,
-            from: payload.from,
-            sender_domain: payload.sender_domain,
-            subject: payload.subject,
-            html: payload.html,
-            text: payload.text,
-            purpose: payload.purpose,
-            label: payload.label,
-            idempotency_key: payload.idempotency_key,
-            unsubscribe_token: payload.unsubscribe_token,
-            message_id: payload.message_id,
+            run_id: stringOrUndefined(payload.run_id),
+            to: stringOrEmpty(payload.to),
+            from: stringOrEmpty(payload.from),
+            sender_domain: stringOrUndefined(payload.sender_domain),
+            subject: stringOrEmpty(payload.subject),
+            html: stringOrEmpty(payload.html),
+            text: stringOrEmpty(payload.text),
+            purpose: stringOrUndefined(payload.purpose),
+            label: stringOrUndefined(payload.label),
+            idempotency_key: stringOrUndefined(payload.idempotency_key),
+            unsubscribe_token: stringOrUndefined(payload.unsubscribe_token),
+            message_id: stringOrUndefined(payload.message_id),
           },
           // sendUrl is optional — when LOVABLE_SEND_URL is not set, the library
           // falls back to the default Lovable API endpoint (https://api.lovable.dev).
