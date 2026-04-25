@@ -537,6 +537,13 @@ export default function AdminHomepageCMSPage() {
     qc.invalidateQueries({ queryKey: [table] });
   };
 
+  const toggleField = async (table: string, queryKey: string, id: string, field: string, value: any) => {
+    const { error } = await supabase.from(table as any).update({ [field]: value } as any).eq("id", id);
+    if (error) { toast.error("Update failed"); return; }
+    toast.success("Updated");
+    qc.invalidateQueries({ queryKey: [queryKey] });
+  };
+
   const sectionTypeLabels: Record<string, string> = {
     category_tiles: "Category Tiles", product_slider: "Product Slider",
     service_tiles: "Service Tiles", promotional_cards: "Promotional Cards",
@@ -582,7 +589,10 @@ export default function AdminHomepageCMSPage() {
                     </p>
                     <p className="text-[10px] text-muted-foreground">{b.impressions} impressions · {b.clicks} clicks</p>
                   </div>
-                  <Badge variant={b.is_active ? "default" : "secondary"}>{b.is_active ? "Active" : "Inactive"}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Switch checked={!!b.is_active} onCheckedChange={(v) => toggleField("homepage_banners", "homepage_banners", b.id, "is_active", v)} />
+                    <span className="text-[10px] text-muted-foreground w-10">{b.is_active ? "Active" : "Off"}</span>
+                  </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setBannerModal(b)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteBanner(b.id)}><Trash2 className="h-4 w-4" /></Button>
@@ -616,7 +626,10 @@ export default function AdminHomepageCMSPage() {
                       {s.target_segment && s.target_segment !== "all" && <> · <Badge variant="outline" className="text-[10px] ml-1">{s.target_segment}</Badge></>}
                     </p>
                   </div>
-                  {s.is_visible ? <Eye className="h-4 w-4 text-success" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                  <div className="flex items-center gap-2">
+                    <Switch checked={!!s.is_visible} onCheckedChange={(v) => toggleField("homepage_sections", "homepage_sections", s.id, "is_visible", v)} />
+                    <span className="text-[10px] text-muted-foreground w-10">{s.is_visible ? "Shown" : "Hidden"}</span>
+                  </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSectionModal(s)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSection(s.id)}><Trash2 className="h-4 w-4" /></Button>
@@ -644,7 +657,13 @@ export default function AdminHomepageCMSPage() {
                     <p className="text-xs text-muted-foreground">{v.duration_seconds}s · {v.impressions} impressions · {v.clicks} clicks</p>
                     {v.start_date && <p className="text-[10px] text-muted-foreground"><Calendar className="h-3 w-3 inline mr-1" />{new Date(v.start_date).toLocaleDateString()} — {v.end_date ? new Date(v.end_date).toLocaleDateString() : "Ongoing"}</p>}
                   </div>
-                  <Badge variant={v.status === "active" ? "default" : "secondary"}>{v.status}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={v.status === "active"}
+                      onCheckedChange={(on) => toggleField("video_ads", "video_ads", v.id, "status", on ? "active" : "inactive")}
+                    />
+                    <span className="text-[10px] text-muted-foreground w-12">{v.status}</span>
+                  </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setVideoModal(v)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteVideoAd(v.id)}><Trash2 className="h-4 w-4" /></Button>
