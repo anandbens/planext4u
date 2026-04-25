@@ -270,7 +270,11 @@ function VideoAdModal({ open, onClose, ad, onSave }: any) {
   const handleSave = async () => {
     if (!form.title || !form.video_url) { toast.error("Title and video URL required"); return; }
     setSaving(true);
-    try { await onSave(form); onClose(); } catch { toast.error("Save failed"); }
+    try { await onSave(form); onClose(); }
+    catch (e: any) {
+      console.error("Video ad save failed:", e);
+      toast.error(e?.message || "Save failed");
+    }
     finally { setSaving(false); }
   };
 
