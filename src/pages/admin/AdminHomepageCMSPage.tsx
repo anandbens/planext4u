@@ -657,7 +657,13 @@ export default function AdminHomepageCMSPage() {
                     <p className="text-xs text-muted-foreground">{v.duration_seconds}s · {v.impressions} impressions · {v.clicks} clicks</p>
                     {v.start_date && <p className="text-[10px] text-muted-foreground"><Calendar className="h-3 w-3 inline mr-1" />{new Date(v.start_date).toLocaleDateString()} — {v.end_date ? new Date(v.end_date).toLocaleDateString() : "Ongoing"}</p>}
                   </div>
-                  <Badge variant={v.status === "active" ? "default" : "secondary"}>{v.status}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={v.status === "active"}
+                      onCheckedChange={(on) => toggleField("video_ads", "video_ads", v.id, "status", on ? "active" : "inactive")}
+                    />
+                    <span className="text-[10px] text-muted-foreground w-12">{v.status}</span>
+                  </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setVideoModal(v)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteVideoAd(v.id)}><Trash2 className="h-4 w-4" /></Button>
