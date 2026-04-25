@@ -71,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setUser(authUser);
       persistentStore.set("admin_user", JSON.stringify(authUser));
+      stampSession("admin");
     } else if (role === 'vendor') {
       const vendorId = roleRecord.vendor_id;
       if (!vendorId) {
@@ -111,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setVendorUser(vu);
       persistentStore.set("vendor_user", JSON.stringify(vu));
+      stampSession("vendor");
     } else if (role === 'customer') {
       const customerId = roleRecord.customer_id;
       if (!customerId) {
@@ -151,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       setCustomerUser(cu);
       persistentStore.set("customer_user", JSON.stringify(cu));
+      stampSession("customer");
     }
 
     // Log login event for fresh logins
