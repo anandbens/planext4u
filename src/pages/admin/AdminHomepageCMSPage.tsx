@@ -537,6 +537,13 @@ export default function AdminHomepageCMSPage() {
     qc.invalidateQueries({ queryKey: [table] });
   };
 
+  const toggleField = async (table: string, queryKey: string, id: string, field: string, value: any) => {
+    const { error } = await supabase.from(table as any).update({ [field]: value } as any).eq("id", id);
+    if (error) { toast.error("Update failed"); return; }
+    toast.success("Updated");
+    qc.invalidateQueries({ queryKey: [queryKey] });
+  };
+
   const sectionTypeLabels: Record<string, string> = {
     category_tiles: "Category Tiles", product_slider: "Product Slider",
     service_tiles: "Service Tiles", promotional_cards: "Promotional Cards",
