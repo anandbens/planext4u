@@ -266,6 +266,27 @@ function GuestPage({ children }: { children: React.ReactNode }) {
   return <GuestOrCustomerRoute>{children}</GuestOrCustomerRoute>;
 }
 
+// Module-gated wrappers: enforce platform_variables module flags at the route
+// level so direct URL navigation cannot bypass a "Coming Soon" module.
+function ServicesGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="services">{children}</ModuleGuard>;
+}
+function HomesGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="homes" label="Find Home">{children}</ModuleGuard>;
+}
+function ClassifiedsGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="classifieds">{children}</ModuleGuard>;
+}
+function SocioGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="socio" label="Socio">{children}</ModuleGuard>;
+}
+function ShopGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="shop">{children}</ModuleGuard>;
+}
+function FoodGate({ children }: { children: React.ReactNode }) {
+  return <ModuleGuard moduleKey="food">{children}</ModuleGuard>;
+}
+
 function VendorPage({ children }: { children: React.ReactNode }) {
   return <VendorProtectedRoute>{children}</VendorProtectedRoute>;
 }
