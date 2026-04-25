@@ -157,7 +157,19 @@ export async function uploadToB2(
 const B2_PUBLIC_HOSTS = [
   /\.backblazeb2\.com$/i,
   /^cdn\.planext4u\.com$/i,
+  /^cdn\.planext4u\.net$/i,
 ];
+
+/**
+ * Public CDN hostname (Cloudflare in front of the public B2 bucket via the
+ * Bandwidth Alliance — zero egress cost). When set, every public-bucket URL
+ * is rewritten to this host at render time so traffic flows through the
+ * cached CDN edge instead of hitting Backblaze directly.
+ *
+ * IMPORTANT: must match the CNAME you configured in Cloudflare and the
+ * `CDN_PUBLIC_URL_BASE` secret used by the upload edge function.
+ */
+const PUBLIC_CDN_HOST = "cdn.planext4u.net";
 
 /** Extract the object key from a known B2/CDN URL, or null if it isn't one. */
 function extractB2Key(url: string): string | null {
