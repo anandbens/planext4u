@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Music2, Plus, Search, Home, Film, ShoppingBag } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Music2, Plus, Search, Home, Film, ShoppingBag, Pencil, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
@@ -258,18 +259,27 @@ function ReelCard({ reel }: { reel: any }) {
         <button onClick={() => toggleSave.mutate()} className="flex flex-col items-center gap-1">
           <Bookmark className={`h-7 w-7 text-white ${isSaved ? 'fill-white' : ''}`} />
         </button>
-        {userId === reel.user_id && !isMock && (
-          <button onClick={async () => {
-            if (!confirm("Delete this reel?")) return;
-            const { error } = await supabase.from('social_posts').delete().eq('id', reel.id).eq('user_id', userId);
-            if (error) { toast.error("Failed to delete"); return; }
-            toast.success("Reel deleted");
-            qc.invalidateQueries({ queryKey: ['social-reels'] });
-          }} className="flex flex-col items-center gap-1">
-            <MoreHorizontal className="h-7 w-7 text-white" />
-          </button>
-        )}
-        {(userId !== reel.user_id || isMock) && (
+        {userId === reel.user_id && !isMock ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex flex-col items-center gap-1"><MoreHorizontal className="h-7 w-7 text-white" /></button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate(`/app/social/post/${reel.id}/edit`)}>
+                <Pencil className="h-4 w-4 mr-2" /> Edit Reel
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={async () => {
+                if (!confirm("Delete this reel?")) return;
+                const { error } = await supabase.from('social_posts').delete().eq('id', reel.id).eq('user_id', userId);
+                if (error) { toast.error("Failed to delete"); return; }
+                toast.success("Reel deleted");
+                qc.invalidateQueries({ queryKey: ['social-reels'] });
+              }}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete Reel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
           <button onClick={() => toast.info("More options")} className="flex flex-col items-center gap-1">
             <MoreHorizontal className="h-7 w-7 text-white" />
           </button>
