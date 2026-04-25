@@ -22,6 +22,19 @@ export default function SocialStoryViewerPage() {
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editText, setEditText] = useState("");
+  const [editBg, setEditBg] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+
+  const STORY_BG_OPTIONS = [
+    { label: "Sunset", value: "bg-gradient-to-br from-purple-600 to-pink-500" },
+    { label: "Ocean", value: "bg-gradient-to-br from-cyan-500 to-blue-600" },
+    { label: "Forest", value: "bg-gradient-to-br from-emerald-500 to-teal-700" },
+    { label: "Fire", value: "bg-gradient-to-br from-amber-500 to-rose-600" },
+    { label: "Night", value: "bg-gradient-to-br from-slate-800 to-slate-950" },
+    { label: "Candy", value: "bg-gradient-to-br from-pink-400 to-fuchsia-500" },
+  ];
 
   // Fetch active stories from DB grouped by user
   const { data: storyGroups = [], isLoading } = useQuery({
