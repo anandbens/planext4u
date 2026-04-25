@@ -5,6 +5,7 @@ import { AuthContext } from "@/lib/auth-context";
 import { logActivity } from "@/lib/activity-log";
 import { initPushNotifications, linkPushTokenToUser } from "@/lib/push-notifications";
 import { persistentStore } from "@/lib/storage-adapter";
+import { stampSession, clearSessionStamp } from "@/lib/session-stamp";
 import type { AuthUser, CustomerUser, VendorUser, UserRole, AppRole } from "@/lib/auth-types";
 
 const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
