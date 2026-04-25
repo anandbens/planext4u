@@ -19,6 +19,7 @@ import { VendorProtectedRoute } from "@/components/vendor/VendorProtectedRoute";
 import { FTUXFlow } from "@/components/customer/FTUXFlow";
 import { isVendorApp, isVendorAppSync, isRiderAppSync, getNativeAppId } from "@/lib/capacitor";
 import { ForceUpdateOverlay } from "@/components/ForceUpdateOverlay";
+import { ModuleGuard } from "@/components/customer/ModuleGuard";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import CustomersPage from "./pages/CustomersPage";
