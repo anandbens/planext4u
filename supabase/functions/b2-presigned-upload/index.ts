@@ -43,14 +43,9 @@ const B2_BUCKET = readSecret("B2_BUCKET_NAME");
 const B2_ENDPOINT = readSecret("B2_S3_ENDPOINT");
 const B2_PUBLIC_BASE = readSecret("B2_PUBLIC_URL_BASE").replace(/\/+$/, "");
 
-// Cloudflare CDN in front of B2 (Bandwidth Alliance — zero egress cost).
-// When set, the returned `publicUrl` uses this hostname instead of the raw
-// Backblaze Friendly URL, e.g. https://cdn.planext4u.com/<key>. The CDN must
-// be configured in Cloudflare to CNAME → f005.backblazeb2.com (or your bucket's
-// regional hostname) with an ingress rule that rewrites to /file/<bucket>/<key>.
-// Falls back to B2_PUBLIC_BASE if not configured — zero-downtime swap.
-const CDN_PUBLIC_BASE = readSecret("CDN_PUBLIC_URL_BASE").replace(/\/+$/, "");
-const PUBLIC_URL_BASE = CDN_PUBLIC_BASE || B2_PUBLIC_BASE;
+// Public media must return the working Backblaze Friendly URL while the CDN
+// hostname is returning 403 for valid public objects.
+const PUBLIC_URL_BASE = B2_PUBLIC_BASE;
 
 // Private bucket (KYC documents, etc.)
 const B2_PRIVATE_KEY_ID = readSecret("B2_PRIVATE_KEY_ID");
@@ -107,15 +102,16 @@ function getExt(filename: string, contentType: string): string {
 
 // --- AWS SigV4 helpers ---
 async function sha256Hex(data: string | Uint8Array): Promise<string> {
-  const buf = typeof data === "string" ? new TextEncoder().encode(data) : data;
+  const buf: BufferSource = typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
   const hash = await crypto.subtle.digest("SHA-256", buf);
   return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 async function hmac(key: ArrayBuffer | Uint8Array, data: string): Promise<ArrayBuffer> {
+  const keyData: BufferSource = key instanceof ArrayBuffer ? key : new Uint8Array(key);
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
-    key,
+    keyData,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -318,7 +314,7 @@ Deno.serve(async (req: Request) => {
           appKey: B2_APP_KEY,
           bucket: B2_BUCKET,
           endpoint: B2_ENDPOINT,
-          // Use Cloudflare CDN base when configured, otherwise raw B2 Friendly URL
+          // Use the working raw B2 Friendly URL until CDN configuration is fixed.
           publicBase: PUBLIC_URL_BASE,
         };
 

@@ -161,15 +161,10 @@ const B2_PUBLIC_HOSTS = [
 ];
 
 /**
- * Public CDN hostname (Cloudflare in front of the public B2 bucket via the
- * Bandwidth Alliance — zero egress cost). When set, every public-bucket URL
- * is rewritten to this host at render time so traffic flows through the
- * cached CDN edge instead of hitting Backblaze directly.
- *
- * IMPORTANT: must match the CNAME you configured in Cloudflare and the
- * `CDN_PUBLIC_URL_BASE` secret used by the upload edge function.
+ * Public B2 Friendly URL base. The CDN host is currently returning 403 for
+ * valid public objects, so render-time resolution must use this working base.
  */
-const PUBLIC_CDN_HOST = "cdn.planext4u.net";
+const PUBLIC_B2_FRIENDLY_BASE = "https://f005.backblazeb2.com/file/planext4u";
 
 /** Extract the object key from a known B2/CDN URL, or null if it isn't one. */
 function extractB2Key(url: string): string | null {
@@ -279,17 +274,16 @@ export async function resolveB2Url(
       return url;
     }
 
-    // Raw B2 / legacy CDN public URL — the bucket is public, so we just
-    // rewrite the host to our Cloudflare CDN (Bandwidth Alliance, zero
-    // egress, fully cacheable). No presign required.
+    // Raw B2 / legacy CDN public URL — the bucket is public. Use the known
+    // working B2 Friendly URL format while the CDN host is returning 403s.
     const publicKey = extractB2Key(value);
     if (publicKey) {
-      const cdnUrl = `https://${PUBLIC_CDN_HOST}/${publicKey
+      const publicUrl = `${PUBLIC_B2_FRIENDLY_BASE}/${publicKey
         .split("/")
         .map(encodeURIComponent)
         .join("/")}`;
-      cacheSet(cacheKey, cdnUrl);
-      return cdnUrl;
+      cacheSet(cacheKey, publicUrl);
+      return publicUrl;
     }
 
     // Anything else (legacy GCS URL, data URI, etc.) — return as-is
