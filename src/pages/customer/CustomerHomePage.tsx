@@ -772,8 +772,8 @@ export default function CustomerHomePage() {
         )}
       </div>
 
-      {/* ── Video Ad: floating PiP (default) or fullscreen takeover ── */}
-      {videoAd && (videoAd.display_mode === "fullscreen" ? (
+      {/* ── Video Ad: temporarily disabled (broken B2 source causing media format errors and slow renders) ── */}
+      {false && videoAd && (videoAd.display_mode === "fullscreen" ? (
         <VideoAdOverlay
           videoUrl={videoAd.video_url}
           thumbnailUrl={videoAd.thumbnail_url}

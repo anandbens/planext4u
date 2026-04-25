@@ -1,15 +1,20 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
+/**
+ * Production Capacitor config (customer app).
+ *
+ * NOTE: The `server.url` block was intentionally removed so the native APK
+ * loads bundled assets from `dist/` instead of streaming the entire web app
+ * from www.planext4u.net on every cold start. This dramatically improves
+ * startup time and enables true offline shell behavior.
+ *
+ * For live-reload during development, create a separate dev config that
+ * re-adds a `server.url` pointing at the Lovable preview URL.
+ */
 const config: CapacitorConfig = {
   appId: "com.p4u_customer",
   appName: "Planext4u",
   webDir: "dist",
-  server: {
-    url: "https://www.planext4u.net",
-    androidScheme: "https",
-    iosScheme: "https",
-    allowNavigation: ["www.planext4u.net", "planext4u.net", "*.planext4u.net", "*.supabase.co", "*.firebaseapp.com", "*.googleapis.com"],
-  },
   ios: {
     contentInset: "always",
     scrollEnabled: true,
