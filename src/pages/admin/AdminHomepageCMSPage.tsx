@@ -29,9 +29,15 @@ function BannerModal({ open, onClose, banner, onSave }: any) {
 
   const handleSave = async () => {
     if (!form.title) { toast.error("Title is required"); return; }
+    if (form.media_type !== "video" && form.media_type !== "lottie" && !form.media_url) {
+      toast.error("Desktop image is required"); return;
+    }
     setSaving(true);
     try { await onSave(form); onClose(); }
-    catch { toast.error("Save failed"); }
+    catch (e: any) {
+      console.error("Banner save failed:", e);
+      toast.error(e?.message || "Save failed");
+    }
     finally { setSaving(false); }
   };
 
