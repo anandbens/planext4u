@@ -389,10 +389,12 @@ export default function CustomerHomePage() {
   const handleSplashComplete = useCallback(() => { setShowSplash(false); sessionStorage.setItem("p4u_splash_shown", "1"); }, []);
 
   const allCategories = (data?.categories || []) as any[];
-  // Homepage parent categories: opt-in via show_on_homepage, sorted by display_order
+  // Homepage parent categories: ALL active main categories, sorted by display_order
   const homepageParents = allCategories
-    .filter((c) => !c.parent_id && c.status === 'active' && c.show_on_homepage !== false)
+    .filter((c) => !c.parent_id && c.status === 'active')
     .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999) || a.name.localeCompare(b.name));
+  // Full list of active main categories for "Shop by Category" (no opt-in / limit)
+  const allActiveParents = homepageParents;
   // Map: parent_id -> active subcategories that are show_on_homepage, sorted
   const subcatMap: Record<string, any[]> = {};
   allCategories
