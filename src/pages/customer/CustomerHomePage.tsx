@@ -571,7 +571,7 @@ export default function CustomerHomePage() {
           <motion.div variants={containerAnim} initial="hidden" whileInView="show" viewport={{ once: true }}
             className="grid grid-cols-4 sm:grid-cols-5 gap-3 md:[grid-template-columns:repeat(auto-fit,minmax(96px,1fr))]">
             {isLoading ? Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) :
-              parentCategories.map((c: any) => (
+              allActiveParents.map((c: any) => (
                 <motion.div key={c.id} variants={itemAnim}>
                   <Link to={`/app/browse?category=${encodeURIComponent(c.name)}`} className="flex flex-col items-center gap-1.5 group">
                     <div className="h-14 w-14 md:h-18 md:w-18 rounded-2xl bg-secondary/50 border border-border/50 flex items-center justify-center overflow-hidden group-hover:border-primary/50 group-hover:shadow-md transition-all">
