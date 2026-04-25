@@ -98,6 +98,10 @@ export function ReorderTiles({ categoryName, includeCategoryNames, title = "Buy 
         } else if (!cancelled) {
           setItems(collected);
         }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
     return () => { cancelled = true; };
   }, [customerUser?.customer_id, categoryName, JSON.stringify(includeCategoryNames || [])]);
 
