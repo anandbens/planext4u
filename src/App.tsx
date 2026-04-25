@@ -476,10 +476,10 @@ const AppRoutes = () => {
         <Route path="/app/trending" element={<GuestPage><ShopGate><CustomerTrendingPage /></ShopGate></GuestPage>} />
         <Route path="/app/product/:id" element={<GuestPage><ShopGate><CustomerProductPage /></ShopGate></GuestPage>} />
         <Route path="/app/vendor/:id" element={<GuestPage><ShopGate><CustomerVendorPage /></ShopGate></GuestPage>} />
-        <Route path="/app/cart" element={<CustomerPage><CustomerCartPage /></CustomerPage>} />
-        <Route path="/app/payment" element={<CustomerPage><PaymentPage /></CustomerPage>} />
-        <Route path="/app/orders" element={<CustomerPage><CustomerOrdersPage /></CustomerPage>} />
-        <Route path="/app/orders/:orderId" element={<CustomerPage><CustomerOrderDetailPage /></CustomerPage>} />
+        <Route path="/app/cart" element={<CustomerPage><ShopGate><CustomerCartPage /></ShopGate></CustomerPage>} />
+        <Route path="/app/payment" element={<CustomerPage><ShopGate><PaymentPage /></ShopGate></CustomerPage>} />
+        <Route path="/app/orders" element={<CustomerPage><ShopGate><CustomerOrdersPage /></ShopGate></CustomerPage>} />
+        <Route path="/app/orders/:orderId" element={<CustomerPage><ShopGate><CustomerOrderDetailPage /></ShopGate></CustomerPage>} />
         <Route path="/app/profile" element={<CustomerPage><CustomerProfilePage /></CustomerPage>} />
         <Route path="/app/profile/edit" element={<CustomerPage><CustomerProfileEditPage /></CustomerPage>} />
         <Route path="/app/kyc" element={<CustomerPage><CustomerKYCPage /></CustomerPage>} />
@@ -527,7 +527,7 @@ const AppRoutes = () => {
         <Route path="/app/social/shop" element={<CustomerPage><SocioGate><SocialShopPage /></SocioGate></CustomerPage>} />
         <Route path="/app/social/suggestions" element={<CustomerPage><SocioGate><SocialSuggestionsPage /></SocioGate></CustomerPage>} />
         <Route path="/app/social/friends" element={<CustomerPage><SocioGate><SocialFriendsPage /></SocioGate></CustomerPage>} />
-        <Route path="/app/calls" element={<CustomerPage><CallsPage /></CustomerPage>} />
+        <Route path="/app/calls" element={<CustomerPage><SocioGate><CallsPage /></SocioGate></CustomerPage>} />
 
         {/* Admin Social */}
         <Route path="/admin/social" element={<AdminOnlyPage><AdminSocialDashboardPage /></AdminOnlyPage>} />
