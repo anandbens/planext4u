@@ -102,15 +102,16 @@ function getExt(filename: string, contentType: string): string {
 
 // --- AWS SigV4 helpers ---
 async function sha256Hex(data: string | Uint8Array): Promise<string> {
-  const buf = typeof data === "string" ? new TextEncoder().encode(data) : data;
+  const buf: BufferSource = typeof data === "string" ? new TextEncoder().encode(data) : new Uint8Array(data);
   const hash = await crypto.subtle.digest("SHA-256", buf);
   return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 async function hmac(key: ArrayBuffer | Uint8Array, data: string): Promise<ArrayBuffer> {
+  const keyData: BufferSource = key instanceof ArrayBuffer ? key : new Uint8Array(key);
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
-    key,
+    keyData,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
