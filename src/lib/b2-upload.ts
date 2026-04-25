@@ -161,13 +161,8 @@ const B2_PUBLIC_HOSTS = [
 ];
 
 /**
- * Public CDN hostname (Cloudflare in front of the public B2 bucket via the
- * Bandwidth Alliance — zero egress cost). When set, every public-bucket URL
- * is rewritten to this host at render time so traffic flows through the
- * cached CDN edge instead of hitting Backblaze directly.
- *
- * IMPORTANT: must match the CNAME you configured in Cloudflare and the
- * `CDN_PUBLIC_URL_BASE` secret used by the upload edge function.
+ * Public B2 Friendly URL base. The CDN host is currently returning 403 for
+ * valid public objects, so render-time resolution must use this working base.
  */
 const PUBLIC_B2_FRIENDLY_BASE = "https://f005.backblazeb2.com/file/planext4u";
 
