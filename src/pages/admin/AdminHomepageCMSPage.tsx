@@ -626,7 +626,10 @@ export default function AdminHomepageCMSPage() {
                       {s.target_segment && s.target_segment !== "all" && <> · <Badge variant="outline" className="text-[10px] ml-1">{s.target_segment}</Badge></>}
                     </p>
                   </div>
-                  {s.is_visible ? <Eye className="h-4 w-4 text-success" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                  <div className="flex items-center gap-2">
+                    <Switch checked={!!s.is_visible} onCheckedChange={(v) => toggleField("homepage_sections", "homepage_sections", s.id, "is_visible", v)} />
+                    <span className="text-[10px] text-muted-foreground w-10">{s.is_visible ? "Shown" : "Hidden"}</span>
+                  </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSectionModal(s)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSection(s.id)}><Trash2 className="h-4 w-4" /></Button>
