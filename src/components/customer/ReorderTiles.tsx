@@ -84,11 +84,20 @@ export function ReorderTiles({ categoryName, includeCategoryNames, title = "Buy 
           }
           if (collected.length >= 10) break;
         }
-        if (!cancelled) setItems(collected);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
+        // Filter out products that no longer exist in the DB (deleted).
+        // Inactive / out-of-stock products are still allowed through.
+        if (collected.length > 0) {
+          const ids = collected.map((c) => c.id);
+          const { data: existingRows } = await supabase
+            .from("products")
+            .select("id")
+            .in("id", ids);
+          const existing = new Set((existingRows || []).map((r: any) => String(r.id)));
+          const filtered = collected.filter((c) => existing.has(c.id));
+          if (!cancelled) setItems(filtered);
+        } else if (!cancelled) {
+          setItems(collected);
+        }
     return () => { cancelled = true; };
   }, [customerUser?.customer_id, categoryName, JSON.stringify(includeCategoryNames || [])]);
 
