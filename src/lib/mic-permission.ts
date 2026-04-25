@@ -32,6 +32,44 @@ export async function ensureMicrophonePermission(): Promise<MicPermissionResult>
     return { granted: false, reason: "Microphone is not supported on this device." };
   }
 
+  // ---- Native (Capacitor Android / iOS): use the OS-level permission API ----
+  // The WebView's `getUserMedia` will silently fail with NotAllowedError if the
+  // OS-level RECORD_AUDIO permission was previously denied (or never granted),
+  // and there is NO way to re-prompt from JS alone. We must call the native
+  // permission API every time the user taps the mic so Android shows the OS
+  // dialog again. Only when the OS itself reports "denied" (i.e. user picked
+  // "Don't ask again" / blocked) do we tell them to open Settings.
+  if (isNativePlatform()) {
+    try {
+      // Dynamic import so web builds don't pull in the plugin.
+      const moduleName = "capacitor-voice-recorder";
+      const mod: any = await import(/* @vite-ignore */ moduleName).catch(() => null);
+      const VoiceRecorder = mod?.VoiceRecorder;
+      if (VoiceRecorder?.hasAudioRecordingPermission && VoiceRecorder?.requestAudioRecordingPermission) {
+        const has = await VoiceRecorder.hasAudioRecordingPermission().catch(() => ({ value: false }));
+        if (!has?.value) {
+          // Triggers the native Android RECORD_AUDIO prompt (re-prompts unless
+          // user checked "Don't ask again").
+          const req = await VoiceRecorder.requestAudioRecordingPermission().catch(() => ({ value: false }));
+          if (!req?.value) {
+            const platform = getPlatform();
+            return {
+              granted: false,
+              permanentlyDenied: true,
+              reason: `Microphone permission denied. Open Settings → Apps → Planext4u → Permissions and enable Microphone${
+                platform === "ios" ? "" : " (and Camera for video calls)"
+              }, then return to the app.`,
+            };
+          }
+        }
+      }
+      // Fall through to getUserMedia — the OS-level grant should now let the
+      // WebView open the mic stream.
+    } catch {
+      /* plugin missing — fall through to plain getUserMedia */
+    }
+  }
+
   // Web only: a confident "denied" from the Permissions API means the user
   // explicitly blocked us in browser settings. We can short-circuit there.
   // On native we INTENTIONALLY skip this — the WebView lies (returns denied
