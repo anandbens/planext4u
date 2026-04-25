@@ -398,11 +398,15 @@ function PostCard({ post }: { post: any }) {
           </div>
           <p className="text-[11px] text-muted-foreground">
             {post.location_name ? `${post.location_name} · ` : ''}{timeAgo(post.created_at)}
+            {post.is_edited && <span className="ml-1">· Edited</span>}
           </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild><button className="p-1"><MoreHorizontal className="h-5 w-5" /></button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {userId === post.user_id && !isMock && (
+              <DropdownMenuItem onClick={() => navigate(`/app/social/post/${postId}/edit`)}>Edit Post</DropdownMenuItem>
+            )}
             {(userId === post.user_id || isSocialModerator(userId)) && (
               <DropdownMenuItem className="text-destructive" onClick={async () => {
                 if (!confirm("Are you sure you want to delete this post?")) return;

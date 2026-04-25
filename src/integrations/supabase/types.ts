@@ -6986,11 +6986,13 @@ export type Database = {
           collab_user_id: string | null
           comment_count: number | null
           created_at: string | null
+          edited_at: string | null
           hashtags: string[] | null
           hide_like_count: boolean | null
           id: string
           is_ai_generated: boolean | null
           is_collab: boolean | null
+          is_edited: boolean
           is_pinned: boolean | null
           is_repost: boolean | null
           like_count: number | null
@@ -7017,11 +7019,13 @@ export type Database = {
           collab_user_id?: string | null
           comment_count?: number | null
           created_at?: string | null
+          edited_at?: string | null
           hashtags?: string[] | null
           hide_like_count?: boolean | null
           id?: string
           is_ai_generated?: boolean | null
           is_collab?: boolean | null
+          is_edited?: boolean
           is_pinned?: boolean | null
           is_repost?: boolean | null
           like_count?: number | null
@@ -7048,11 +7052,13 @@ export type Database = {
           collab_user_id?: string | null
           comment_count?: number | null
           created_at?: string | null
+          edited_at?: string | null
           hashtags?: string[] | null
           hide_like_count?: boolean | null
           id?: string
           is_ai_generated?: boolean | null
           is_collab?: boolean | null
+          is_edited?: boolean
           is_pinned?: boolean | null
           is_repost?: boolean | null
           like_count?: number | null
@@ -7177,13 +7183,16 @@ export type Database = {
           audience: string | null
           background_color: string | null
           created_at: string | null
+          edited_at: string | null
           expires_at: string
           id: string
+          is_edited: boolean
           media_type: string | null
           media_url: string | null
           reply_count: number | null
           stickers: Json | null
           text_content: string | null
+          updated_at: string | null
           user_id: string
           view_count: number | null
         }
@@ -7191,13 +7200,16 @@ export type Database = {
           audience?: string | null
           background_color?: string | null
           created_at?: string | null
+          edited_at?: string | null
           expires_at: string
           id?: string
+          is_edited?: boolean
           media_type?: string | null
           media_url?: string | null
           reply_count?: number | null
           stickers?: Json | null
           text_content?: string | null
+          updated_at?: string | null
           user_id: string
           view_count?: number | null
         }
@@ -7205,13 +7217,16 @@ export type Database = {
           audience?: string | null
           background_color?: string | null
           created_at?: string | null
+          edited_at?: string | null
           expires_at?: string
           id?: string
+          is_edited?: boolean
           media_type?: string | null
           media_url?: string | null
           reply_count?: number | null
           stickers?: Json | null
           text_content?: string | null
+          updated_at?: string | null
           user_id?: string
           view_count?: number | null
         }

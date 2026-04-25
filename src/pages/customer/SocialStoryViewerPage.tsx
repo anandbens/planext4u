@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { X, Heart, Send, MoreHorizontal, Eye, Trash2 } from "lucide-react";
+import { X, Heart, Send, MoreHorizontal, Eye, Trash2, Pencil } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +22,19 @@ export default function SocialStoryViewerPage() {
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [editText, setEditText] = useState("");
+  const [editBg, setEditBg] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+
+  const STORY_BG_OPTIONS = [
+    { label: "Sunset", value: "bg-gradient-to-br from-purple-600 to-pink-500" },
+    { label: "Ocean", value: "bg-gradient-to-br from-cyan-500 to-blue-600" },
+    { label: "Forest", value: "bg-gradient-to-br from-emerald-500 to-teal-700" },
+    { label: "Fire", value: "bg-gradient-to-br from-amber-500 to-rose-600" },
+    { label: "Night", value: "bg-gradient-to-br from-slate-800 to-slate-950" },
+    { label: "Candy", value: "bg-gradient-to-br from-pink-400 to-fuchsia-500" },
+  ];
 
   // Fetch active stories from DB grouped by user
   const { data: storyGroups = [], isLoading } = useQuery({
@@ -180,6 +196,18 @@ export default function SocialStoryViewerPage() {
             <span className="text-white/60 text-xs">{timeAgo(story.created_at)}</span>
           </div>
           <div className="flex items-center gap-2">
+            {(customerUser?.supabase_uid || customerUser?.id) === group.user.id && (
+              <button
+                onClick={() => {
+                  setEditText(story.text_content || "");
+                  setEditBg(story.background_color || "");
+                  setIsPaused(true);
+                  setEditOpen(true);
+                }}
+                className="p-1"
+                aria-label="Edit story"
+              ><Pencil className="h-5 w-5 text-white" /></button>
+            )}
             {((customerUser?.supabase_uid || customerUser?.id) === group.user.id || isSocialModerator(customerUser?.supabase_uid || customerUser?.id)) && (
               <button onClick={async () => {
                 if (!confirm("Delete this story?")) return;
@@ -248,6 +276,78 @@ export default function SocialStoryViewerPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit story dialog (owner only, while still active) */}
+      <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setIsPaused(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit story</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">
+                {story.media_url ? "Caption text overlay" : "Story text"}
+              </p>
+              <Textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                rows={4}
+                maxLength={500}
+                placeholder="Type something…"
+              />
+            </div>
+
+            {!story.media_url && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Background</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {STORY_BG_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setEditBg(opt.value)}
+                      className={`h-14 rounded-lg ${opt.value} relative ${editBg === opt.value ? "ring-2 ring-primary" : ""}`}
+                      aria-label={opt.label}
+                    >
+                      <span className="absolute bottom-1 left-1 right-1 text-[10px] font-semibold text-white/90 truncate">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p className="text-[11px] text-muted-foreground">
+              You can edit your story while it's still active (within 24 hours of posting).
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={editSaving}>Cancel</Button>
+            <Button
+              onClick={async () => {
+                setEditSaving(true);
+                const payload: Record<string, any> = { text_content: editText };
+                if (!story.media_url) payload.background_color = editBg;
+                const { error } = await supabase
+                  .from("social_stories")
+                  .update(payload)
+                  .eq("id", story.id);
+                setEditSaving(false);
+                if (error) {
+                  toast.error(`Failed to update: ${error.message}`);
+                  return;
+                }
+                toast.success("Story updated");
+                setEditOpen(false);
+                setIsPaused(false);
+                qc.invalidateQueries({ queryKey: ["social-stories-viewer"] });
+                qc.invalidateQueries({ queryKey: ["social-feed-stories"] });
+              }}
+              disabled={editSaving}
+            >
+              {editSaving ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

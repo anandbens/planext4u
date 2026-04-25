@@ -112,6 +112,7 @@ import CustomerChangePasswordPage from "./pages/customer/CustomerChangePasswordP
 // Social pages
 import SocialFeedPage from "./pages/customer/SocialFeedPage";
 import SocialCreatePostPage from "./pages/customer/SocialCreatePostPage";
+import SocialEditPostPage from "./pages/customer/SocialEditPostPage";
 import SocialProfilePage from "./pages/customer/SocialProfilePage";
 import SocialExplorePage from "./pages/customer/SocialExplorePage";
 import SocialReelsPage from "./pages/customer/SocialReelsPage";
@@ -473,6 +474,7 @@ const AppRoutes = () => {
         {/* Social routes */}
         <Route path="/app/social" element={<CustomerPage><SocialFeedPage /></CustomerPage>} />
         <Route path="/app/social/create" element={<CustomerPage><SocialCreatePostPage /></CustomerPage>} />
+        <Route path="/app/social/post/:postId/edit" element={<CustomerPage><SocialEditPostPage /></CustomerPage>} />
         <Route path="/app/social/profile" element={<CustomerPage><SocialProfilePage /></CustomerPage>} />
         <Route path="/app/social/explore" element={<CustomerPage><SocialExplorePage /></CustomerPage>} />
         <Route path="/app/social/reels" element={<CustomerPage><SocialReelsPage /></CustomerPage>} />
