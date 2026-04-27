@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { Capacitor } from "@capacitor/core";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, signOut } from "firebase/auth";
 
-const PUBLISHED_APP_URL = "https://planext4u.lovable.app";
+const PUBLISHED_APP_URL = "https://www.planext4u.net";
 const FIREBASE_FALLBACK_AUTH_DOMAIN = "p4u-console.firebaseapp.com";
 const PLANEXT_HOSTNAMES = ["www.planext4u.net", "planext4u.net"];
 
@@ -27,7 +27,7 @@ const WEB_ALLOWED_HOSTNAMES = ["localhost", "127.0.0.1", "planext4u.lovable.app"
 
 function isAllowedHostname(host: string): boolean {
   if (Capacitor.isNativePlatform()) {
-    return PLANEXT_HOSTNAMES.includes(host);
+    return true;
   }
 
   return WEB_ALLOWED_HOSTNAMES.includes(host);
@@ -60,7 +60,7 @@ export function ensureFirebaseHostname(): boolean {
   // CRITICAL: On native (Capacitor) the WebView loads bundled assets from
   // `capacitor://localhost` or `http://localhost`. Those hostnames will never
   // match `PLANEXT_HOSTNAMES`, so the legacy code below would redirect the
-  // entire WebView to https://planext4u.lovable.app/app/login on launch —
+  // entire WebView to a browser-hosted login route on launch —
   // effectively kicking the user out of the installed app and into the web
   // build. Firebase Phone Auth on native uses the Firebase Auth SDK directly
   // (no reCAPTCHA hostname check), so we always treat native as allowed.
@@ -123,6 +123,7 @@ export function setupRecaptcha(): RecaptchaVerifier {
  * Call this on page mount.
  */
 export function preRenderRecaptcha() {
+  if (Capacitor.isNativePlatform()) return;
   if (!isAllowedHostname(window.location.hostname)) return;
   if ((window as any).recaptchaVerifier) return;
   getOrCreateRecaptchaContainer();
