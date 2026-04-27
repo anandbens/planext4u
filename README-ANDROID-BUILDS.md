@@ -6,13 +6,13 @@ This project has **two separate Android apps**:
 - **Package:** `com.p4u_customer`
 - **App Name:** Planext4u
 - **Config:** `capacitor.config.customer.ts`
-- **Version:** 5.36 (versionCode 80)
+- **Version:** 5.39 (versionCode 83)
 
 ## Vendor App (`android-vendor/`)
 - **Package:** `com.p4u.p4u_vendor`
 - **App Name:** Planext4u Vendor
 - **Config:** `capacitor.config.vendor.ts`
-- **Version:** 2.28 (versionCode 56)
+- **Version:** 2.30 (versionCode 58)
 
 ## Building
 
