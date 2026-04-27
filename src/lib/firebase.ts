@@ -60,7 +60,7 @@ export function ensureFirebaseHostname(): boolean {
   // CRITICAL: On native (Capacitor) the WebView loads bundled assets from
   // `capacitor://localhost` or `http://localhost`. Those hostnames will never
   // match `PLANEXT_HOSTNAMES`, so the legacy code below would redirect the
-  // entire WebView to https://planext4u.lovable.app/app/login on launch —
+  // entire WebView to a browser-hosted login route on launch —
   // effectively kicking the user out of the installed app and into the web
   // build. Firebase Phone Auth on native uses the Firebase Auth SDK directly
   // (no reCAPTCHA hostname check), so we always treat native as allowed.
