@@ -5,10 +5,10 @@ const config: CapacitorConfig = {
   appName: "Planext4u",
   webDir: "dist",
   server: {
-    url: "https://www.planext4u.net",
+    url: "https://www.planext4u.net/app",
     androidScheme: "https",
     iosScheme: "https",
-    allowNavigation: ["www.planext4u.net", "planext4u.net", "*.planext4u.net", "*.supabase.co", "*.firebaseapp.com", "*.googleapis.com"],
+    allowNavigation: ["www.planext4u.net", "planext4u.net", "*.planext4u.net", "*.firebaseapp.com", "*.googleapis.com"],
   },
   ios: {
     // Keep the WebView clear of the status bar / home indicator
