@@ -2115,9 +2115,19 @@ export const api = {
       availableStock = null;
     }
 
-    // Untracked products: only block when explicitly marked out_of_stock.
-    if (!manageStock) {
-      if (stockStatus === 'out_of_stock') {
+    // Explicit out_of_stock flag always blocks, regardless of manage_stock.
+    if (stockStatus === 'out_of_stock') {
+      return {
+        success: false,
+        blocked: true,
+        message: `${product.title} is out of stock.`,
+        cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
+      };
+    }
+    // Whenever a numeric stock value is present, enforce it. Untracked products
+    // with a NULL stock value remain unrestricted.
+    if (availableStock !== null) {
+      if (availableStock <= 0) {
         return {
           success: false,
           blocked: true,
@@ -2125,17 +2135,7 @@ export const api = {
           cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
         };
       }
-    } else {
-      // Tracked products: enforce numeric stock.
-      if (availableStock !== null && availableStock <= 0) {
-        return {
-          success: false,
-          blocked: true,
-          message: `${product.title} is out of stock.`,
-          cartCount: cart.reduce((s: number, i: CartItem) => s + i.qty, 0),
-        };
-      }
-      if (availableStock !== null && desiredQty > availableStock) {
+      if (desiredQty > availableStock) {
         return {
           success: false,
           blocked: true,
