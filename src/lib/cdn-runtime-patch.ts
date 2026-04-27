@@ -14,9 +14,27 @@
  * Idempotent — safe to call multiple times.
  */
 
-import { toCdnUrl } from "./cdn-url";
+import { toCdnUrl, isRenderableImageSrc, BLANK_PIXEL } from "./cdn-url";
 
 let installed = false;
+
+/**
+ * Sanitize a value before it reaches an <img>/<video> src or poster attribute.
+ *
+ * - Empty/whitespace → "" (browser will not fire a request).
+ * - Non-URL strings (emoji like "📦", plain text, "shop.jpg") → BLANK_PIXEL,
+ *   to prevent the browser from resolving them as relative paths against the
+ *   current origin (which produced bad requests like
+ *   `https://www.planext4u.net/%F0%9F%93%A6`).
+ * - Real URLs are routed through `toCdnUrl` to rewrite legacy hosts.
+ */
+function sanitizeMediaSrc(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (!isRenderableImageSrc(trimmed)) return BLANK_PIXEL;
+  return toCdnUrl(trimmed) || BLANK_PIXEL;
+}
 
 function patchSrcProperty(proto: any, attr: "src" | "poster" = "src") {
   const desc = Object.getOwnPropertyDescriptor(proto, attr);
@@ -29,8 +47,7 @@ function patchSrcProperty(proto: any, attr: "src" | "poster" = "src") {
     },
     set(this: HTMLElement, value: string) {
       try {
-        const rewritten = toCdnUrl(value);
-        desc.set!.call(this, rewritten || value);
+        desc.set!.call(this, sanitizeMediaSrc(value));
       } catch {
         desc.set!.call(this, value);
       }
@@ -59,15 +76,15 @@ function patchSetAttribute() {
             .map((part) => {
               const trimmed = part.trim();
               const spaceIdx = trimmed.search(/\s/);
-              if (spaceIdx === -1) return toCdnUrl(trimmed);
+              if (spaceIdx === -1) return sanitizeMediaSrc(trimmed);
               const url = trimmed.slice(0, spaceIdx);
               const descriptor = trimmed.slice(spaceIdx);
-              return `${toCdnUrl(url)}${descriptor}`;
+              return `${sanitizeMediaSrc(url)}${descriptor}`;
             })
             .join(", ");
           return original.call(this, name, rewritten);
         }
-        return original.call(this, name, toCdnUrl(value) || value);
+        return original.call(this, name, sanitizeMediaSrc(value));
       } catch {
         return original.call(this, name, value);
       }
