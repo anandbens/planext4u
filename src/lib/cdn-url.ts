@@ -82,3 +82,6 @@ export function toCdnUrl(url: string | null | undefined): string {
 
   return trimmed;
 }
+
+export { BLANK_PIXEL };
+
