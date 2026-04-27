@@ -12,6 +12,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { toCdnUrl } from "@/lib/cdn-url";
 
 export interface B2UploadResult {
   /** For public uploads: the Friendly URL.
@@ -106,7 +107,10 @@ export async function uploadToB2(
     });
     onProgress?.(100);
     return {
-      publicUrl: isPrivate ? `b2-private://${key}` : publicUrl,
+      // Always canonicalize to the cdn.planext4u.net host so callers persist
+      // CDN-only URLs in the database, even if the edge function returned a
+      // raw Backblaze URL (defensive fallback).
+      publicUrl: isPrivate ? `b2-private://${key}` : toCdnUrl(publicUrl),
       key,
       isPrivate,
     };
@@ -145,7 +149,7 @@ export async function uploadToB2(
 
   await uploadViaBrowser();
 
-  const returnedUrl = isPrivate ? `b2-private://${key}` : publicUrl;
+  const returnedUrl = isPrivate ? `b2-private://${key}` : toCdnUrl(publicUrl);
   return { publicUrl: returnedUrl, key, isPrivate };
 }
 
