@@ -15,6 +15,10 @@
 
 const CDN_BASE = "https://cdn.planext4u.net";
 
+/** 1x1 transparent GIF — used as a safe no-op when an invalid value is passed to <img src>. */
+const BLANK_PIXEL =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
 /** Legacy bases we still need to rewrite away from. */
 const LEGACY_BASES = [
   "https://cdn.planext4u.com/",
@@ -24,6 +28,26 @@ const LEGACY_BASES = [
 
 const BACKBLAZE_FRIENDLY = /^https?:\/\/f\d+\.backblazeb2\.com\/file\/[^/]+\//i;
 const BACKBLAZE_S3 = /^https?:\/\/s3\.[^.]+\.backblazeb2\.com\/[^/]+\//i;
+
+/**
+ * Return true when `value` looks like a real renderable image source —
+ * an absolute URL, a data:/blob: URI, or a root-absolute path.
+ *
+ * We deliberately reject bare strings (e.g. emoji like "📦", "Sample text",
+ * "shop.jpg") because the browser would resolve them as relative paths
+ * against the current origin and produce broken requests like
+ * `https://www.planext4u.net/%F0%9F%93%A6`.
+ */
+export function isRenderableImageSrc(value: string | null | undefined): boolean {
+  if (!value) return false;
+  const v = value.trim();
+  if (!v) return false;
+  if (v.startsWith("data:") || v.startsWith("blob:")) return true;
+  if (v.startsWith("//")) return true; // protocol-relative
+  if (/^https?:\/\//i.test(v)) return true;
+  if (v.startsWith("/")) return true; // root-absolute
+  return false;
+}
 
 /**
  * Rewrite any known Backblaze / legacy CDN URL form to the canonical
@@ -58,3 +82,6 @@ export function toCdnUrl(url: string | null | undefined): string {
 
   return trimmed;
 }
+
+export { BLANK_PIXEL };
+
