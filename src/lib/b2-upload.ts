@@ -161,29 +161,32 @@ const B2_PUBLIC_HOSTS = [
 ];
 
 /**
- * Cloudflare CDN base in front of the public B2 bucket. Cloudflare caches
- * the response and serves it from the user's nearest edge POP, which is
- * dramatically faster than streaming directly from Backblaze and also avoids
- * Backblaze egress charges.
- *
- * Both `cdn.planext4u.com` and `cdn.planext4u.net` are configured as
- * Cloudflare workers/page rules pointing at the public B2 bucket. We prefer
- * `.com` for canonical render-time URLs.
+ * Public media base. Images are served via Vercel (www.planext4u.net), which
+ * rewrites `/media-library/<key>` to the public Backblaze B2 bucket. The
+ * www DNS record stays unproxied at Cloudflare (so Vercel SSL keeps working),
+ * but Cloudflare in front of Vercel still caches responses at the edge.
  */
-const PUBLIC_CDN_BASE = "https://cdn.planext4u.com";
-/** Direct Backblaze fallback (used only if CDN is unreachable). */
-const PUBLIC_B2_FRIENDLY_BASE = "https://f005.backblazeb2.com/file/planext4u";
+const PUBLIC_CDN_BASE = "https://www.planext4u.net/media-library";
 
-/** Extract the object key from a known B2/CDN URL, or null if it isn't one. */
+/** Hosts that are already serving via the Vercel-fronted media-library path. */
+const MEDIA_LIBRARY_HOSTS = [/^www\.planext4u\.net$/i, /^planext4u\.net$/i];
+
+/** Extract the object key from a known B2/CDN/media-library URL, or null if it isn't one. */
 function extractB2Key(url: string): string | null {
   try {
     const u = new URL(url);
+    // Vercel media-library rewrite: /media-library/<key...>
+    if (MEDIA_LIBRARY_HOSTS.some((re) => re.test(u.hostname))) {
+      const mlMatch = u.pathname.match(/^\/media-library\/(.+)$/);
+      if (mlMatch) return decodeURIComponent(mlMatch[1]);
+      return null;
+    }
     const matchesHost = B2_PUBLIC_HOSTS.some((re) => re.test(u.hostname));
     if (!matchesHost) return null;
     // Backblaze friendly URL: /file/<bucket>/<key...>
     const fileMatch = u.pathname.match(/^\/file\/[^/]+\/(.+)$/);
     if (fileMatch) return decodeURIComponent(fileMatch[1]);
-    // CDN rewrite: /<key...>
+    // Legacy CDN rewrite: /<key...>
     const stripped = u.pathname.replace(/^\/+/, "");
     return stripped ? decodeURIComponent(stripped) : null;
   } catch {
@@ -282,9 +285,9 @@ export async function resolveB2Url(
       return url;
     }
 
-    // Raw B2 / CDN public URL — route through Cloudflare CDN for speed and
-    // edge caching. CDN is healthy (HTTP 200) for both legacy and freshly
-    // uploaded objects.
+    // Raw B2 / legacy CDN / media-library URL — route through the Vercel
+    // /media-library/ rewrite so Cloudflare (in front of Vercel) caches
+    // the response at the edge without needing the www DNS record proxied.
     const publicKey = extractB2Key(value);
     if (publicKey) {
       const publicUrl = `${PUBLIC_CDN_BASE}/${publicKey

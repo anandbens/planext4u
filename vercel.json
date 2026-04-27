@@ -1,5 +1,17 @@
 {
   "rewrites": [
+    {
+      "source": "/media-library/:path*",
+      "destination": "https://f005.backblazeb2.com/file/planext4u/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/media-library/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
   ]
 }
