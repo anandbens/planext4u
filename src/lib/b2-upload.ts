@@ -161,21 +161,19 @@ const B2_PUBLIC_HOSTS = [
 ];
 
 /**
- * Public media base. Images are served via Vercel (www.planext4u.net), which
- * rewrites `/media-library/<key>` to the public Backblaze B2 bucket. The
- * www DNS record stays unproxied at Cloudflare (so Vercel SSL keeps working),
- * but Cloudflare in front of Vercel still caches responses at the edge.
+ * Canonical public media base. `cdn.planext4u.net` is a CNAME pointing to
+ * f005.backblazeb2.com and proxied by Cloudflare (orange cloud) for caching.
  */
-const PUBLIC_CDN_BASE = "https://www.planext4u.net/media-library";
+const PUBLIC_CDN_BASE = "https://cdn.planext4u.net";
 
-/** Hosts that are already serving via the Vercel-fronted media-library path. */
+/** Hosts that previously served media via Vercel /media-library/. */
 const MEDIA_LIBRARY_HOSTS = [/^www\.planext4u\.net$/i, /^planext4u\.net$/i];
 
 /** Extract the object key from a known B2/CDN/media-library URL, or null if it isn't one. */
 function extractB2Key(url: string): string | null {
   try {
     const u = new URL(url);
-    // Vercel media-library rewrite: /media-library/<key...>
+    // Legacy Vercel media-library rewrite: /media-library/<key...>
     if (MEDIA_LIBRARY_HOSTS.some((re) => re.test(u.hostname))) {
       const mlMatch = u.pathname.match(/^\/media-library\/(.+)$/);
       if (mlMatch) return decodeURIComponent(mlMatch[1]);
@@ -186,7 +184,7 @@ function extractB2Key(url: string): string | null {
     // Backblaze friendly URL: /file/<bucket>/<key...>
     const fileMatch = u.pathname.match(/^\/file\/[^/]+\/(.+)$/);
     if (fileMatch) return decodeURIComponent(fileMatch[1]);
-    // Legacy CDN rewrite: /<key...>
+    // CDN-style: /<key...>
     const stripped = u.pathname.replace(/^\/+/, "");
     return stripped ? decodeURIComponent(stripped) : null;
   } catch {
