@@ -61,22 +61,24 @@ export async function checkCartStock(cart: CartItem[]): Promise<StockIssue[]> {
       }
     } else {
       const p = productMap.get(realProductId);
-      // Untracked products: only block when explicitly marked out_of_stock.
-      if (p && p.manage_stock === false) {
-        if (p.stock_status === 'out_of_stock') {
-          issues.push({
-            cartItemId: item.id, productId: realProductId, variantId: null,
-            title: item.title || p.title || 'Item', requested, available: 0,
-          });
-        }
-        continue;
-      }
-      const available = p?.stock ?? 0;
-      if (available < requested) {
+      // Explicit out_of_stock flag always blocks.
+      if (p?.stock_status === 'out_of_stock') {
         issues.push({
           cartItemId: item.id, productId: realProductId, variantId: null,
-          title: item.title || p?.title || 'Item', requested, available,
+          title: item.title || p?.title || 'Item', requested, available: 0,
         });
+        continue;
+      }
+      // If a numeric stock value exists, enforce it regardless of manage_stock.
+      // Untracked products with no numeric stock are assumed available.
+      if (typeof p?.stock === 'number') {
+        const available = p.stock;
+        if (available < requested) {
+          issues.push({
+            cartItemId: item.id, productId: realProductId, variantId: null,
+            title: item.title || p?.title || 'Item', requested, available,
+          });
+        }
       }
     }
   }
