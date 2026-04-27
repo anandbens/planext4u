@@ -89,12 +89,6 @@ function getOrCreateRecaptchaContainer(): HTMLElement {
 let recaptchaReady: Promise<void> | null = null;
 
 export function setupRecaptcha(): RecaptchaVerifier {
-  if (Capacitor.isNativePlatform()) {
-    throw Object.assign(new Error("Phone OTP is available only in the published web app context."), {
-      code: "auth/native-phone-auth-web-sdk",
-    });
-  }
-
   if (!isAllowedHostname(window.location.hostname)) {
     throw Object.assign(new Error("Phone OTP is only available on the published app."), {
       code: "auth/unauthorized-hostname",
