@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { Capacitor } from "@capacitor/core";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, signOut } from "firebase/auth";
 
-const PUBLISHED_APP_URL = "https://planext4u.lovable.app";
+const PUBLISHED_APP_URL = "https://www.planext4u.net";
 const FIREBASE_FALLBACK_AUTH_DOMAIN = "p4u-console.firebaseapp.com";
 const PLANEXT_HOSTNAMES = ["www.planext4u.net", "planext4u.net"];
 
@@ -27,7 +27,7 @@ const WEB_ALLOWED_HOSTNAMES = ["localhost", "127.0.0.1", "planext4u.lovable.app"
 
 function isAllowedHostname(host: string): boolean {
   if (Capacitor.isNativePlatform()) {
-    return PLANEXT_HOSTNAMES.includes(host);
+    return true;
   }
 
   return WEB_ALLOWED_HOSTNAMES.includes(host);
@@ -89,6 +89,12 @@ function getOrCreateRecaptchaContainer(): HTMLElement {
 let recaptchaReady: Promise<void> | null = null;
 
 export function setupRecaptcha(): RecaptchaVerifier {
+  if (Capacitor.isNativePlatform()) {
+    throw Object.assign(new Error("Phone OTP is available only in the published web app context."), {
+      code: "auth/native-phone-auth-web-sdk",
+    });
+  }
+
   if (!isAllowedHostname(window.location.hostname)) {
     throw Object.assign(new Error("Phone OTP is only available on the published app."), {
       code: "auth/unauthorized-hostname",
@@ -123,6 +129,7 @@ export function setupRecaptcha(): RecaptchaVerifier {
  * Call this on page mount.
  */
 export function preRenderRecaptcha() {
+  if (Capacitor.isNativePlatform()) return;
   if (!isAllowedHostname(window.location.hostname)) return;
   if ((window as any).recaptchaVerifier) return;
   getOrCreateRecaptchaContainer();
