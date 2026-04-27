@@ -43,9 +43,17 @@ const B2_BUCKET = readSecret("B2_BUCKET_NAME");
 const B2_ENDPOINT = readSecret("B2_S3_ENDPOINT");
 const B2_PUBLIC_BASE = readSecret("B2_PUBLIC_URL_BASE").replace(/\/+$/, "");
 
-// Public media must return the working Backblaze Friendly URL while the CDN
-// hostname is returning 403 for valid public objects.
-const PUBLIC_URL_BASE = B2_PUBLIC_BASE;
+// Cloudflare CDN base for the public B2 bucket. Cached at the edge, served
+// from the user's nearest POP, and avoids Backblaze egress charges. Falls
+// back to the configured B2_PUBLIC_URL_BASE secret if CDN_PUBLIC_URL_BASE is
+// not set in the environment.
+const CDN_PUBLIC_BASE =
+  readSecret("CDN_PUBLIC_URL_BASE").replace(/\/+$/, "") ||
+  "https://cdn.planext4u.com";
+
+// New uploads are returned with the CDN URL by default — much faster than
+// streaming directly from Backblaze.
+const PUBLIC_URL_BASE = CDN_PUBLIC_BASE || B2_PUBLIC_BASE;
 
 // Private bucket (KYC documents, etc.)
 const B2_PRIVATE_KEY_ID = readSecret("B2_PRIVATE_KEY_ID");
