@@ -161,9 +161,17 @@ const B2_PUBLIC_HOSTS = [
 ];
 
 /**
- * Public B2 Friendly URL base. The CDN host is currently returning 403 for
- * valid public objects, so render-time resolution must use this working base.
+ * Cloudflare CDN base in front of the public B2 bucket. Cloudflare caches
+ * the response and serves it from the user's nearest edge POP, which is
+ * dramatically faster than streaming directly from Backblaze and also avoids
+ * Backblaze egress charges.
+ *
+ * Both `cdn.planext4u.com` and `cdn.planext4u.net` are configured as
+ * Cloudflare workers/page rules pointing at the public B2 bucket. We prefer
+ * `.com` for canonical render-time URLs.
  */
+const PUBLIC_CDN_BASE = "https://cdn.planext4u.com";
+/** Direct Backblaze fallback (used only if CDN is unreachable). */
 const PUBLIC_B2_FRIENDLY_BASE = "https://f005.backblazeb2.com/file/planext4u";
 
 /** Extract the object key from a known B2/CDN URL, or null if it isn't one. */
@@ -274,11 +282,12 @@ export async function resolveB2Url(
       return url;
     }
 
-    // Raw B2 / legacy CDN public URL — the bucket is public. Use the known
-    // working B2 Friendly URL format while the CDN host is returning 403s.
+    // Raw B2 / CDN public URL — route through Cloudflare CDN for speed and
+    // edge caching. CDN is healthy (HTTP 200) for both legacy and freshly
+    // uploaded objects.
     const publicKey = extractB2Key(value);
     if (publicKey) {
-      const publicUrl = `${PUBLIC_B2_FRIENDLY_BASE}/${publicKey
+      const publicUrl = `${PUBLIC_CDN_BASE}/${publicKey
         .split("/")
         .map(encodeURIComponent)
         .join("/")}`;
