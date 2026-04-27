@@ -11,11 +11,12 @@ export function isProductOutOfStock(p: {
   stock_status?: string | null;
 } | null | undefined): boolean {
   if (!p) return false;
-  // Untracked: only block when explicitly marked out_of_stock.
-  if (p.manage_stock === false) {
-    return p.stock_status === 'out_of_stock';
-  }
-  // Tracked (or unknown): rely on numeric stock when present.
-  if (p.stock === undefined || p.stock === null) return false;
-  return p.stock <= 0;
+  // Explicit status flag always wins.
+  if (p.stock_status === 'out_of_stock') return true;
+  // Whenever a numeric stock value is present, treat 0 (or less) as out of stock,
+  // regardless of whether the vendor manages inventory. This ensures that any
+  // product whose stock has been depleted is clearly blocked from purchase.
+  if (typeof p.stock === 'number') return p.stock <= 0;
+  // Untracked product with no numeric stock: assume in stock.
+  return false;
 }
