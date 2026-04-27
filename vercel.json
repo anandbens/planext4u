@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/media-library/:path*",
-      "destination": "https://f005.backblazeb2.com/file/planext4u/:path*"
+      "destination": "https://cdn.planext4u.net/:path*"
     },
     { "source": "/(.*)", "destination": "/index.html" }
   ],

@@ -43,13 +43,13 @@ const B2_BUCKET = readSecret("B2_BUCKET_NAME");
 const B2_ENDPOINT = readSecret("B2_S3_ENDPOINT");
 const B2_PUBLIC_BASE = readSecret("B2_PUBLIC_URL_BASE").replace(/\/+$/, "");
 
-// Public media base — served via Vercel (www.planext4u.net) which rewrites
-// `/media-library/<key>` to the Backblaze B2 public bucket. Cloudflare in
-// front of Vercel caches responses at the edge. Falls back to the configured
-// CDN_PUBLIC_URL_BASE secret if set, otherwise B2_PUBLIC_URL_BASE.
+// Public media base — served via Cloudflare CDN at cdn.planext4u.net, which
+// CNAMEs to the public Backblaze B2 bucket and is proxied (orange cloud) for
+// edge caching. Falls back to the configured CDN_PUBLIC_URL_BASE secret if set,
+// otherwise B2_PUBLIC_URL_BASE.
 const CDN_PUBLIC_BASE =
   readSecret("CDN_PUBLIC_URL_BASE").replace(/\/+$/, "") ||
-  "https://www.planext4u.net/media-library";
+  "https://cdn.planext4u.net";
 
 // New uploads are returned with the public media-library URL by default.
 const PUBLIC_URL_BASE = CDN_PUBLIC_BASE || B2_PUBLIC_BASE;
