@@ -17,6 +17,8 @@ import { uploadVideoWithProcessing } from "@/lib/video-upload";
 
 const MAX_VIDEO_SIZE_MB = 100;
 
+export const SOCIAL_CATEGORIES = ["Fashion", "Food", "Travel", "Tech", "Fitness", "Art", "Local", "Sports"] as const;
+
 const FILTERS = [
   "Normal", "Clarendon", "Gingham", "Moon", "Lark", "Reyes", "Juno", "Slumber",
   "Crema", "Ludwig", "Aden", "Perpetua", "Amaro", "Mayfair", "Rise", "Valencia"
