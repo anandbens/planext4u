@@ -67,6 +67,7 @@ export default function SocialEditPostPage() {
     setCaption(post.caption || "");
     setLocation(post.location_name || "");
     setAudience(post.audience || "public");
+    setCategory((post as any).category || "");
     setAllowComments(post.allow_comments || "everyone");
     setHideLikeCount(!!post.hide_like_count);
     setHashtagsInput(Array.isArray(post.hashtags) ? post.hashtags.join(" ") : "");
