@@ -77,6 +77,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
   }, [location.pathname]);
 
   const handleSearch = (query: string) => {
+    if (socialMode || location.pathname.startsWith('/app/social')) return;
     navigate(`/app/browse?search=${encodeURIComponent(query)}`);
   };
 
