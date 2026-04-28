@@ -24,4 +24,19 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     include: ["react", "react-dom", "react/jsx-runtime", "@tanstack/react-query", "react-router-dom", "@supabase/supabase-js"],
   },
+  build: {
+    // Split big vendor libs into their own chunks so route-level lazy loading
+    // is not undone by a giant shared vendor bundle.
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "supabase": ["@supabase/supabase-js"],
+          "query": ["@tanstack/react-query"],
+        },
+      },
+    },
+    // Silence noisy warnings; chunks are now intentionally split.
+    chunkSizeWarningLimit: 1200,
+  },
 }));
