@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, X, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 
 const RECENT_SEARCH_KEY = "app_db_recent_searches";
+const SOCIAL_RECENT_SEARCH_KEY = "app_db_social_recent_searches";
 
 function loadRecentSearches(): string[] {
   try {
