@@ -1071,18 +1071,35 @@ export default function SocialFeedPage() {
 
       {/* Feed */}
       <div className="pb-28 md:pb-8">
-        {posts.map((post: any, idx: number) => (
-          <div key={post.id}>
-            <PostCard post={post} />
-            {socioAds.length > 0 && (idx + 1) % 4 === 0 && (
-              <SocialFeedAd ad={socioAds[(Math.floor(idx / 4)) % socioAds.length]} />
-            )}
+        {isFeedLoading ? (
+          <div className="py-12 px-4 text-center">
+            <p className="text-sm text-muted-foreground">Loading posts…</p>
           </div>
-        ))}
-        <div className="py-6 px-4 text-center">
-          <p className="text-sm font-semibold mb-1">You're All Caught Up</p>
-          <p className="text-xs text-muted-foreground">You've seen all new posts from the last 3 days.</p>
-        </div>
+        ) : posts.length === 0 ? (
+          <div className="py-16 px-4 text-center">
+            <p className="text-sm font-semibold mb-1">No posts available</p>
+            <p className="text-xs text-muted-foreground">
+              {feedMode === 'following'
+                ? "Follow people to see their posts here."
+                : "Be the first to share something with the community."}
+            </p>
+          </div>
+        ) : (
+          <>
+            {posts.map((post: any, idx: number) => (
+              <div key={post.id}>
+                <PostCard post={post} />
+                {socioAds.length > 0 && (idx + 1) % 4 === 0 && (
+                  <SocialFeedAd ad={socioAds[(Math.floor(idx / 4)) % socioAds.length]} />
+                )}
+              </div>
+            ))}
+            <div className="py-6 px-4 text-center">
+              <p className="text-sm font-semibold mb-1">You're All Caught Up</p>
+              <p className="text-xs text-muted-foreground">You've seen all new posts from the last 3 days.</p>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
