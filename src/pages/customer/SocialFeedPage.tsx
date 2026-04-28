@@ -16,77 +16,8 @@ import PeopleYouMayKnow from "@/components/social/PeopleYouMayKnow";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePlacementAds, SocialFeedAd } from "@/components/customer/BannerAd";
 
-const FALLBACK_POSTS = [
-  {
-    id: "p1", user_id: "mock", username: "vijay_sivakumar", displayName: "Vijay Sivakumar",
-    isVerified: true, location_name: "Pondicherry, TN", created_at: new Date(Date.now() - 3600000).toISOString(),
-    media: [
-      { type: "photo", url: "https://picsum.photos/seed/p1a/600/600" },
-      { type: "photo", url: "https://picsum.photos/seed/p1b/600/600" },
-      { type: "photo", url: "https://picsum.photos/seed/p1c/600/600" },
-    ],
-    caption: "Just tried the amazing coffee from Brooklyn Coffee Co.! Best pour-over in town ☕",
-    hashtags: ["#coffee", "#local", "#brooklyn"],
-    like_count: 1600, comment_count: 800, share_count: 145,
-    collabUser: "Kokila",
-  },
-  {
-    id: "p2", user_id: "mock", username: "planext4u", displayName: "Planext4u",
-    isVerified: true, location_name: "Coimbatore, TN", created_at: new Date(Date.now() - 10800000).toISOString(),
-    media: [
-      { type: "photo", url: "https://picsum.photos/seed/p2a/600/600" },
-      { type: "photo", url: "https://picsum.photos/seed/p2b/600/600" },
-    ],
-    caption: "Exciting things are coming to P4U! Stay tuned for the biggest update yet 🚀",
-    hashtags: ["#planext4u", "#superapp"],
-    like_count: 3200, comment_count: 450, share_count: 890,
-  },
-  {
-    id: "p3", user_id: "mock", username: "priya_designs", displayName: "Priya Designs",
-    isVerified: false, location_name: "Chennai, TN", created_at: new Date(Date.now() - 18000000).toISOString(),
-    media: [
-      { type: "photo", url: "https://picsum.photos/seed/p3a/600/600" },
-    ],
-    caption: "New collection dropping soon! What do you think of these designs? 🎨✨",
-    hashtags: ["#design", "#art"],
-    like_count: 892, comment_count: 67, share_count: 23,
-  },
-  {
-    id: "p4", user_id: "mock", username: "foodie_arun", displayName: "Arun Foodie",
-    isVerified: false, location_name: "Bangalore, KA", created_at: new Date(Date.now() - 25200000).toISOString(),
-    media: [
-      { type: "photo", url: "https://picsum.photos/seed/p4a/600/600" },
-      { type: "photo", url: "https://picsum.photos/seed/p4b/600/600" },
-    ],
-    caption: "Weekend biryani feast at this hidden gem in Koramangala 🍚🔥 Must try!",
-    hashtags: ["#food", "#biryani", "#bangalore"],
-    like_count: 2100, comment_count: 312, share_count: 89,
-  },
-  {
-    id: "p5", user_id: "mock", username: "travel_meera", displayName: "Meera Travels",
-    isVerified: true, location_name: "Munnar, KL", created_at: new Date(Date.now() - 43200000).toISOString(),
-    media: [
-      { type: "photo", url: "https://picsum.photos/seed/p5a/600/600" },
-      { type: "photo", url: "https://picsum.photos/seed/p5b/600/600" },
-      { type: "photo", url: "https://picsum.photos/seed/p5c/600/600" },
-    ],
-    caption: "Lost in the tea gardens of Munnar 🍃 This place is pure magic",
-    hashtags: ["#travel", "#munnar", "#kerala", "#nature"],
-    like_count: 4500, comment_count: 678, share_count: 234,
-  },
-  {
-    id: "p6", user_id: "mock", username: "fit_kumar", displayName: "Kumar Fitness",
-    isVerified: false, location_name: "Hyderabad, TS", created_at: new Date(Date.now() - 72000000).toISOString(),
-    media: [
-      { type: "photo", url: "https://picsum.photos/seed/p6a/600/600" },
-    ],
-    caption: "Day 90 of the transformation journey 💪 Consistency is key!",
-    hashtags: ["#fitness", "#gym", "#transformation"],
-    like_count: 1800, comment_count: 145, share_count: 56,
-  },
-];
+// No mock posts or stories — only real DB content is rendered.
 
-// No mock stories - only real DB stories are shown
 
 function formatCount(n: number): string {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
@@ -935,7 +866,7 @@ export default function SocialFeedPage() {
   const [feedMode, setFeedMode] = useState<'following' | 'for_you'>('for_you');
   const storiesRef = useRef<HTMLDivElement>(null);
 
-  const { data: dbPosts = [] } = useSocialFeed(feedMode);
+  const { data: dbPosts = [], isLoading: isFeedLoading } = useSocialFeed(feedMode);
 
   const authUid = customerUser?.supabase_uid || customerUser?.id;
 
@@ -1012,10 +943,11 @@ export default function SocialFeedPage() {
 
   const socioAds = usePlacementAds("socio");
 
-  const posts = dbPosts.length > 0 ? dbPosts.map((p: any) => ({
+  // Only real DB posts — no mock/fallback content. RPC returns rows ordered by created_at DESC.
+  const posts = dbPosts.map((p: any) => ({
     ...p,
     media: Array.isArray(p.media) ? p.media : [],
-  })) : FALLBACK_POSTS;
+  }));
 
   const content = (
     <>
@@ -1070,18 +1002,35 @@ export default function SocialFeedPage() {
 
       {/* Feed */}
       <div className="pb-28 md:pb-8">
-        {posts.map((post: any, idx: number) => (
-          <div key={post.id}>
-            <PostCard post={post} />
-            {socioAds.length > 0 && (idx + 1) % 4 === 0 && (
-              <SocialFeedAd ad={socioAds[(Math.floor(idx / 4)) % socioAds.length]} />
-            )}
+        {isFeedLoading ? (
+          <div className="py-12 px-4 text-center">
+            <p className="text-sm text-muted-foreground">Loading posts…</p>
           </div>
-        ))}
-        <div className="py-6 px-4 text-center">
-          <p className="text-sm font-semibold mb-1">You're All Caught Up</p>
-          <p className="text-xs text-muted-foreground">You've seen all new posts from the last 3 days.</p>
-        </div>
+        ) : posts.length === 0 ? (
+          <div className="py-16 px-4 text-center">
+            <p className="text-sm font-semibold mb-1">No posts available</p>
+            <p className="text-xs text-muted-foreground">
+              {feedMode === 'following'
+                ? "Follow people to see their posts here."
+                : "Be the first to share something with the community."}
+            </p>
+          </div>
+        ) : (
+          <>
+            {posts.map((post: any, idx: number) => (
+              <div key={post.id}>
+                <PostCard post={post} />
+                {socioAds.length > 0 && (idx + 1) % 4 === 0 && (
+                  <SocialFeedAd ad={socioAds[(Math.floor(idx / 4)) % socioAds.length]} />
+                )}
+              </div>
+            ))}
+            <div className="py-6 px-4 text-center">
+              <p className="text-sm font-semibold mb-1">You're All Caught Up</p>
+              <p className="text-xs text-muted-foreground">You've seen all new posts from the last 3 days.</p>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
