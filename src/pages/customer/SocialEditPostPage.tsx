@@ -49,6 +49,7 @@ export default function SocialEditPostPage() {
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
   const [audience, setAudience] = useState<string>("public");
+  const [category, setCategory] = useState<string>("");
   const [allowComments, setAllowComments] = useState<string>("everyone");
   const [hideLikeCount, setHideLikeCount] = useState(false);
   const [hashtagsInput, setHashtagsInput] = useState("");
