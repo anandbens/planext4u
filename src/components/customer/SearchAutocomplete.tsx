@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, X, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 
 const RECENT_SEARCH_KEY = "app_db_recent_searches";
+const SOCIAL_RECENT_SEARCH_KEY = "app_db_social_recent_searches";
 
 function loadRecentSearches(): string[] {
   try {
@@ -21,13 +24,39 @@ interface SearchAutocompleteProps {
   onSearch: (query: string) => void;
   placeholder?: string;
   className?: string;
+  socialMode?: boolean;
 }
 
-export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electronics"', className }: SearchAutocompleteProps) {
+interface SocialUser {
+  id: string;
+  user_id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  is_verified: boolean | null;
+}
+
+export function SearchAutocomplete({ onSearch, placeholder, className, socialMode }: SearchAutocompleteProps) {
+  const navigate = useNavigate();
+  const effectivePlaceholder = placeholder ?? (socialMode ? "Search user" : 'Search for "Electronics"');
+  const recentKey = socialMode ? SOCIAL_RECENT_SEARCH_KEY : RECENT_SEARCH_KEY;
+
+  function loadRecent(): string[] {
+    try {
+      const raw = localStorage.getItem(recentKey);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return socialMode ? [] : ["Mobiles", "Headphones", "Running Shoes", "Laptops", "AC Repair"];
+  }
+  function saveRecent(searches: string[]) {
+    localStorage.setItem(recentKey, JSON.stringify(searches.slice(0, 10)));
+  }
+
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
-  const [recentSearches, setRecentSearches] = useState(loadRecentSearches);
+  const [recentSearches, setRecentSearches] = useState<string[]>(loadRecent);
   const [searchItems, setSearchItems] = useState<string[]>([]);
+  const [userResults, setUserResults] = useState<SocialUser[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,8 +69,9 @@ export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electr
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Load search items from DB on mount
+  // Load search items from DB on mount (non-social mode only)
   useEffect(() => {
+    if (socialMode) return;
     async function loadItems() {
       const [{ data: cats }, { data: prods }, { data: srvs }] = await Promise.all([
         supabase.from("categories").select("name").limit(50),
@@ -56,9 +86,26 @@ export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electr
       setSearchItems(items);
     }
     loadItems();
-  }, []);
+  }, [socialMode]);
 
-  const suggestions = query.length >= 2
+  // Social mode: live user search by username/display_name
+  useEffect(() => {
+    if (!socialMode) return;
+    if (query.trim().length < 2) { setUserResults([]); return; }
+    let cancelled = false;
+    const handle = setTimeout(async () => {
+      const term = query.trim();
+      const { data } = await supabase
+        .from("social_profiles")
+        .select("id, user_id, username, display_name, avatar_url, is_verified")
+        .or(`username.ilike.%${term}%,display_name.ilike.%${term}%`)
+        .limit(8);
+      if (!cancelled) setUserResults((data as SocialUser[]) || []);
+    }, 200);
+    return () => { cancelled = true; clearTimeout(handle); };
+  }, [query, socialMode]);
+
+  const suggestions = !socialMode && query.length >= 2
     ? searchItems.filter(s => s.toLowerCase().includes(query.toLowerCase())).slice(0, 6)
     : [];
 
@@ -66,31 +113,44 @@ export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electr
     if (!q.trim()) return;
     const updated = [q, ...recentSearches.filter(s => s !== q)].slice(0, 10);
     setRecentSearches(updated);
-    saveRecentSearches(updated);
+    saveRecent(updated);
     setQuery("");
     setFocused(false);
     onSearch(q);
   };
 
+  const handleSelectUser = (u: SocialUser) => {
+    const updated = [u.username, ...recentSearches.filter(s => s !== u.username)].slice(0, 10);
+    setRecentSearches(updated);
+    saveRecent(updated);
+    setQuery("");
+    setFocused(false);
+    navigate(`/app/social/profile/${u.user_id}`);
+  };
+
   const removeRecent = (item: string) => {
     const updated = recentSearches.filter(s => s !== item);
     setRecentSearches(updated);
-    saveRecentSearches(updated);
+    saveRecent(updated);
   };
 
   const clearAll = () => {
     setRecentSearches([]);
-    saveRecentSearches([]);
+    saveRecent([]);
   };
 
-  const showDropdown = focused && (recentSearches.length > 0 || suggestions.length > 0 || query.length >= 2);
+  const showDropdown = focused && (
+    recentSearches.length > 0 ||
+    (socialMode ? userResults.length > 0 : suggestions.length > 0) ||
+    query.length >= 2
+  );
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(query); }}>
+      <form onSubmit={(e) => { e.preventDefault(); if (!socialMode) handleSubmit(query); }}>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
         <Input
-          placeholder={placeholder}
+          placeholder={effectivePlaceholder}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setFocused(true)}
@@ -108,7 +168,7 @@ export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electr
               </div>
               {recentSearches.map((item) => (
                 <div key={item} className="flex items-center justify-between py-1.5 hover:bg-accent/30 px-2 rounded-lg cursor-pointer group">
-                  <button onClick={() => handleSubmit(item)} className="flex items-center gap-2 text-sm text-muted-foreground flex-1 text-left">
+                  <button onClick={() => socialMode ? setQuery(item) : handleSubmit(item)} className="flex items-center gap-2 text-sm text-muted-foreground flex-1 text-left">
                     <Search className="h-3.5 w-3.5" /> {item}
                   </button>
                   <button onClick={() => removeRecent(item)} className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -119,7 +179,25 @@ export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electr
             </div>
           )}
 
-          {suggestions.length > 0 && (
+          {socialMode && userResults.length > 0 && (
+            <div className="p-2 border-t border-border/30">
+              {userResults.map((u) => (
+                <button key={u.id} onClick={() => handleSelectUser(u)}
+                  className="flex items-center gap-3 w-full text-left py-2 px-2 hover:bg-accent/30 rounded-lg">
+                  <Avatar className="h-9 w-9">
+                    {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover rounded-full" /> :
+                      <AvatarFallback className="bg-muted text-xs font-bold">{u.username?.charAt(0).toUpperCase()}</AvatarFallback>}
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate">{u.username}</p>
+                    {u.display_name && <p className="text-xs text-muted-foreground truncate">{u.display_name}</p>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!socialMode && suggestions.length > 0 && (
             <div className="p-3 border-t border-border/30">
               {suggestions.map((item) => (
                 <button key={item} onClick={() => handleSubmit(item)}
@@ -130,10 +208,10 @@ export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electr
             </div>
           )}
 
-          {query.length >= 2 && suggestions.length === 0 && (
+          {query.length >= 2 && (socialMode ? userResults.length === 0 : suggestions.length === 0) && (
             <div className="p-4 text-center">
-              <p className="text-sm text-muted-foreground">No results found for "{query}"</p>
-              <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
+              <p className="text-sm text-muted-foreground">{socialMode ? `No users found for "${query}"` : `No results found for "${query}"`}</p>
+              <p className="text-xs text-muted-foreground mt-1">{socialMode ? "Try a different username" : "Try a different search term"}</p>
             </div>
           )}
         </div>

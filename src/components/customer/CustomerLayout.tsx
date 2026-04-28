@@ -77,6 +77,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
   }, [location.pathname]);
 
   const handleSearch = (query: string) => {
+    if (socialMode || location.pathname.startsWith('/app/social')) return;
     navigate(`/app/browse?search=${encodeURIComponent(query)}`);
   };
 
@@ -197,7 +198,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           </div>
 
           {/* Row 3: Search bar */}
-          <SearchAutocomplete onSearch={handleSearch} placeholder='Search for "Groceries"' />
+          <SearchAutocomplete onSearch={handleSearch} socialMode={socialMode || location.pathname.startsWith('/app/social')} placeholder={(socialMode || location.pathname.startsWith('/app/social')) ? 'Search user' : 'Search for "Groceries"'} />
         </div>
       </header>
 
@@ -215,7 +216,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               <span className="text-primary-foreground/80 text-xs truncate max-w-[140px]">{selectedLocation}</span>
             </button>
 
-            <SearchAutocomplete onSearch={handleSearch} className="flex-1 max-w-xl" />
+            <SearchAutocomplete onSearch={handleSearch} socialMode={socialMode || location.pathname.startsWith('/app/social')} placeholder={(socialMode || location.pathname.startsWith('/app/social')) ? 'Search user' : undefined} className="flex-1 max-w-xl" />
 
             <div className="flex items-center gap-1 ml-auto">
               <Link to="/app/vendor-register" className="hidden lg:block">
