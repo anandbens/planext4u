@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const CATEGORIES = ["For You", "Trending", "Fashion", "Food", "Travel", "Tech", "Fitness", "Art", "Local", "Sports"];
+const SELECTABLE_CATEGORIES = new Set(["Fashion", "Food", "Travel", "Tech", "Fitness", "Art", "Local", "Sports"]);
 
 export default function SocialExplorePage() {
   const navigate = useNavigate();
