@@ -173,7 +173,7 @@ export default function SocialExplorePage() {
     ? explorePosts.map((p: any) => {
         const media = Array.isArray(p.media) && p.media.length > 0 ? p.media[0] : null;
         const isVideo = media?.type === 'video';
-        return { id: p.id, isReel: p.post_type === 'reel', isVideo, imageUrl: isVideo ? (media?.thumbnailUrl || media?.url || '') : (media?.url || media?.thumbnailUrl || ''), likeCount: p.like_count || 0, commentCount: p.comment_count || 0 };
+        return { id: p.id, isReel: p.post_type === 'reel', isVideo, imageUrl: isVideo ? (media?.thumbnailUrl || media?.url || '') : (media?.thumbnailUrl || media?.mediumUrl || media?.url || ''), likeCount: p.like_count || 0, commentCount: p.comment_count || 0 };
       })
     : Array.from({ length: 24 }, (_, i) => ({
         id: `e-${i}`, isReel: i % 3 === 2, isVideo: false, imageUrl: '', color: ['bg-rose-200', 'bg-sky-200', 'bg-amber-200', 'bg-emerald-200', 'bg-violet-200'][i % 5], likeCount: 0, commentCount: 0,
