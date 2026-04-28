@@ -449,19 +449,19 @@ function PostCard({ post }: { post: any }) {
             />
           ) : (
             <img 
-              src={mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || ''} 
+              src={mediaItems[carouselIdx]?.mediumUrl || mediaItems[carouselIdx]?.url || ''} 
               alt="" 
               className="w-full h-full object-cover cursor-pointer" 
-              loading="lazy"
-              referrerPolicy="no-referrer"
-              crossOrigin="anonymous"
+              loading={carouselIdx === 0 ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={carouselIdx === 0 ? "high" : "low" as any}
               onClick={() => setFullscreenImg(mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || '')}
               onDoubleClick={(e) => { e.stopPropagation(); toggleLike.mutate(); }}
               onError={(e) => {
                 const target = e.currentTarget;
                 if (!target.dataset.retried) {
                   target.dataset.retried = "1";
-                  target.src = target.src.replace('&fit=crop', '&fit=crop&auto=format');
+                  target.src = mediaItems[carouselIdx]?.url || target.src;
                 }
               }}
             />

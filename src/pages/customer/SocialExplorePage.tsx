@@ -173,7 +173,7 @@ export default function SocialExplorePage() {
     ? explorePosts.map((p: any) => {
         const media = Array.isArray(p.media) && p.media.length > 0 ? p.media[0] : null;
         const isVideo = media?.type === 'video';
-        return { id: p.id, isReel: p.post_type === 'reel', isVideo, imageUrl: isVideo ? (media?.thumbnailUrl || media?.url || '') : (media?.url || media?.thumbnailUrl || ''), likeCount: p.like_count || 0, commentCount: p.comment_count || 0 };
+        return { id: p.id, isReel: p.post_type === 'reel', isVideo, imageUrl: isVideo ? (media?.thumbnailUrl || media?.url || '') : (media?.thumbnailUrl || media?.mediumUrl || media?.url || ''), likeCount: p.like_count || 0, commentCount: p.comment_count || 0 };
       })
     : Array.from({ length: 24 }, (_, i) => ({
         id: `e-${i}`, isReel: i % 3 === 2, isVideo: false, imageUrl: '', color: ['bg-rose-200', 'bg-sky-200', 'bg-amber-200', 'bg-emerald-200', 'bg-violet-200'][i % 5], likeCount: 0, commentCount: 0,
@@ -202,7 +202,7 @@ export default function SocialExplorePage() {
         {gridItems.map((item: any) => (
           <button key={item.id} className={`relative overflow-hidden aspect-square group ${!item.imageUrl ? (item.color || 'bg-muted') : 'bg-muted'}`}
             onClick={() => navigate(`/app/social/post/${item.id}`)}>
-            {item.imageUrl ? <img src={item.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" /> : <div className="w-full h-full" />}
+            {item.imageUrl ? <img src={item.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="w-full h-full" />}
             {item.isVideo && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="h-8 w-8 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
