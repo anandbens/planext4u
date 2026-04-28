@@ -24,13 +24,39 @@ interface SearchAutocompleteProps {
   onSearch: (query: string) => void;
   placeholder?: string;
   className?: string;
+  socialMode?: boolean;
 }
 
-export function SearchAutocomplete({ onSearch, placeholder = 'Search for "Electronics"', className }: SearchAutocompleteProps) {
+interface SocialUser {
+  id: string;
+  user_id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  is_verified: boolean | null;
+}
+
+export function SearchAutocomplete({ onSearch, placeholder, className, socialMode }: SearchAutocompleteProps) {
+  const navigate = useNavigate();
+  const effectivePlaceholder = placeholder ?? (socialMode ? "Search user" : 'Search for "Electronics"');
+  const recentKey = socialMode ? SOCIAL_RECENT_SEARCH_KEY : RECENT_SEARCH_KEY;
+
+  function loadRecent(): string[] {
+    try {
+      const raw = localStorage.getItem(recentKey);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return socialMode ? [] : ["Mobiles", "Headphones", "Running Shoes", "Laptops", "AC Repair"];
+  }
+  function saveRecent(searches: string[]) {
+    localStorage.setItem(recentKey, JSON.stringify(searches.slice(0, 10)));
+  }
+
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
-  const [recentSearches, setRecentSearches] = useState(loadRecentSearches);
+  const [recentSearches, setRecentSearches] = useState<string[]>(loadRecent);
   const [searchItems, setSearchItems] = useState<string[]>([]);
+  const [userResults, setUserResults] = useState<SocialUser[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
