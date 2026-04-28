@@ -57,6 +57,7 @@ export default function SocialCreatePostPage() {
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
   const [audience, setAudience] = useState("public");
+  const [category, setCategory] = useState<string>("");
   const [hidelikeCounts, setHideLikeCounts] = useState(false);
   const [allowComments, setAllowComments] = useState("everyone");
   const [isSubmitting, setIsSubmitting] = useState(false);
