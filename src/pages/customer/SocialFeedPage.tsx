@@ -326,6 +326,7 @@ function PostCard({ post }: { post: any }) {
       if (!isMock) {
         qc.invalidateQueries({ queryKey: ['social-like', postId] });
         qc.invalidateQueries({ queryKey: ['social-like-count', postId] });
+        qc.invalidateQueries({ queryKey: ['social-feed'] });
       }
     },
   });
@@ -342,7 +343,7 @@ function PostCard({ post }: { post: any }) {
         toast.success("Post saved");
       }
     },
-    onSuccess: () => { if (!isMock) qc.invalidateQueries({ queryKey: ['social-bookmark', postId] }); },
+    onSuccess: () => { if (!isMock) { qc.invalidateQueries({ queryKey: ['social-bookmark', postId] }); qc.invalidateQueries({ queryKey: ['social-feed'] }); } },
   });
 
   const submitComment = useMutation({
