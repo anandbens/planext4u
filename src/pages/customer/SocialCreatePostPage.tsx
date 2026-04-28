@@ -117,6 +117,7 @@ export default function SocialCreatePostPage() {
   const handlePublish = async () => {
     if (!customerUser?.id) { toast.error("Please login to post"); return; }
     if (selectedFiles.length === 0) { toast.error("Please select at least one image or video"); return; }
+    if (!category) { toast.error("Please select a category before posting"); return; }
 
     // Verify we have an active session
     const { data: { session } } = await supabase.auth.getSession();
