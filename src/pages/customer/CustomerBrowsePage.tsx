@@ -531,14 +531,25 @@ export default function CustomerBrowsePage() {
                           </div>
                         </div>
                       </Link>
-                      <div className="px-2.5 pb-2.5 mt-auto">
-                        <QtyStepper
-                          product={p}
+                      <div className="px-2.5 pb-2.5 mt-auto flex gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
                           disabled={isOutOfStock}
-                          isAuthenticated={!isGuest}
-                          onAuthRequired={() => setLoginPromptOpen(true)}
-                          onChange={refreshCartCount}
-                        />
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); quickAdd(p); refreshCartCount(); }}
+                          className="h-8 flex-1 text-xs font-bold cat-themed-text cat-themed-border bg-card hover:cat-themed-soft-bg px-2"
+                        >
+                          <ShoppingCart className="h-3 w-3" /> Cart
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="premium"
+                          disabled={isOutOfStock}
+                          onClick={(e) => buyNow(p, e)}
+                          className="h-8 flex-1 text-xs font-bold px-2"
+                        >
+                          <Zap className="h-3 w-3" /> Buy
+                        </Button>
                       </div>
                     </Card>
                   );
