@@ -286,9 +286,11 @@ export const api = {
       { count: totalCustomers },
       { count: totalVendors },
       { count: totalServiceVendors },
-      { data: orders },
-      { data: settlements },
-      { data: classifieds },
+      { count: totalOrders },
+      { data: revenueRows },
+      { data: recentOrders },
+      { count: pendingSettlementsCount },
+      { count: activeAdsCount },
       { count: totalServices },
       { data: categories },
       { data: serviceCategories },
@@ -298,9 +300,13 @@ export const api = {
       supabase.from('customers').select('*', { count: 'exact', head: true }),
       supabase.from('vendors').select('*', { count: 'exact', head: true }),
       supabase.from('service_vendors').select('*', { count: 'exact', head: true }),
-      supabase.from('orders').select('*'),
-      supabase.from('settlements').select('*'),
-      supabase.from('classified_ads').select('*').eq('status', 'approved'),
+      supabase.from('orders').select('*', { count: 'exact', head: true }),
+      // Only the columns we need to aggregate revenue (excludes large jsonb like items/media)
+      supabase.from('orders').select('total, status').neq('status', 'cancelled'),
+      // Recent orders need a few display fields only
+      supabase.from('orders').select('id, customer_name, vendor_name, status, total').order('created_at', { ascending: false }).limit(5),
+      supabase.from('settlements').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('classified_ads').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
       supabase.from('services').select('*', { count: 'exact', head: true }),
       supabase.from('categories').select('name, count'),
       supabase.from('service_categories').select('name, count'),
@@ -308,19 +314,18 @@ export const api = {
       supabase.from('service_vendors').select('business_name, total_revenue, total_orders').not('total_revenue', 'is', null).order('total_revenue', { ascending: false }).limit(5),
     ]);
 
-    const allOrders = orders || [];
-    const totalRevenue = allOrders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total), 0);
+    const totalRevenue = (revenueRows || []).reduce((s, o: any) => s + Number(o.total || 0), 0);
 
     return {
       total_customers: totalCustomers || 0,
       total_vendors: (totalVendors || 0) + (totalServiceVendors || 0),
-      total_orders: allOrders.length,
+      total_orders: totalOrders || 0,
       total_revenue: totalRevenue,
-      pending_settlements: (settlements || []).filter(s => s.status === 'pending').length,
-      active_ads: (classifieds || []).length,
+      pending_settlements: pendingSettlementsCount || 0,
+      active_ads: activeAdsCount || 0,
       total_services: totalServices || 0,
       customers_trend: 12.5, vendors_trend: 8.3, orders_trend: 15.2, revenue_trend: 22.1,
-      recent_orders: (allOrders.slice(0, 5) as any) as Order[],
+      recent_orders: (recentOrders || []) as any as Order[],
       revenue_chart: [
         { date: '2026-03-07', revenue: 185000, orders: 320 },
         { date: '2026-03-08', revenue: 210000, orders: 345 },
