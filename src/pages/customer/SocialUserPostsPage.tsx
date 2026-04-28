@@ -124,7 +124,7 @@ function SinglePostCard({ post, profile, isFirst }: { post: any; profile: any; i
           mediaItems[carouselIdx]?.type === 'video' ? (
             <video ref={videoRef} src={mediaItems[carouselIdx]?.url} className="w-full h-full object-cover" controls muted playsInline />
           ) : (
-            <img src={mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+            <img src={mediaItems[carouselIdx]?.mediumUrl || mediaItems[carouselIdx]?.url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
           )
         ) : (
           <div className="w-full h-full bg-accent/30 flex items-center justify-center"><span className="text-muted-foreground text-sm">No media</span></div>
