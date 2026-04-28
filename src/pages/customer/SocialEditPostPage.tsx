@@ -147,6 +147,7 @@ export default function SocialEditPostPage() {
           caption: caption,
           location_name: location || null,
           audience,
+          category: category || null,
           allow_comments: allowComments,
           hide_like_count: hideLikeCount,
           hashtags: hashtags.length ? hashtags : [],
