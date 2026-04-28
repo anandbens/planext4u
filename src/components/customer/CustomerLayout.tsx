@@ -198,7 +198,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           </div>
 
           {/* Row 3: Search bar */}
-          <SearchAutocomplete onSearch={handleSearch} placeholder='Search for "Groceries"' />
+          <SearchAutocomplete onSearch={handleSearch} socialMode={socialMode || location.pathname.startsWith('/app/social')} placeholder={(socialMode || location.pathname.startsWith('/app/social')) ? 'Search user' : 'Search for "Groceries"'} />
         </div>
       </header>
 
