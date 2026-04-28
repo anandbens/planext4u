@@ -216,7 +216,7 @@ export default function SocioDMChatPage() {
     if (!conversationId) return;
     // Unique channel name per mount avoids "callbacks after subscribe()" crash
     // when React StrictMode / re-renders try to reuse an already-subscribed channel.
-    const channel = supabase.channel(`dm_${conversationId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+    const channel = supabase.channel(`dm_${conversationId}`);
     channel
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'social_messages', filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
@@ -245,7 +245,7 @@ export default function SocioDMChatPage() {
         .in('message_id', messageIds);
       if (!cancelled) setReactions(((data || []) as any) as Reaction[]);
     })();
-    const channel = supabase.channel(`dm_reactions_${conversationId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+    const channel = supabase.channel(`dm_reactions_${conversationId}`);
     channel
       .on('postgres_changes', { event: '*', schema: 'public', table: 'social_message_reactions' }, (payload) => {
         const newRow = payload.new as any;
