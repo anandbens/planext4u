@@ -73,7 +73,7 @@ export function VendorNotificationBell({ iconClassName, buttonClassName }: Props
     if (!vendorId) return;
     // Unique channel name per mount to avoid "callbacks after subscribe()" error
     // when StrictMode / re-renders try to reuse a channel that's already subscribed
-    const channel = supabase.channel(`vendor_notif_${vendorId}`);
+    const channel = supabase.channel(`vendor_notif_${vendorId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
     channel
       .on(
         "postgres_changes",

@@ -16,8 +16,77 @@ import PeopleYouMayKnow from "@/components/social/PeopleYouMayKnow";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePlacementAds, SocialFeedAd } from "@/components/customer/BannerAd";
 
-// No mock posts or stories — only real DB content is rendered.
+const FALLBACK_POSTS = [
+  {
+    id: "p1", user_id: "mock", username: "vijay_sivakumar", displayName: "Vijay Sivakumar",
+    isVerified: true, location_name: "Pondicherry, TN", created_at: new Date(Date.now() - 3600000).toISOString(),
+    media: [
+      { type: "photo", url: "https://picsum.photos/seed/p1a/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p1b/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p1c/600/600" },
+    ],
+    caption: "Just tried the amazing coffee from Brooklyn Coffee Co.! Best pour-over in town ☕",
+    hashtags: ["#coffee", "#local", "#brooklyn"],
+    like_count: 1600, comment_count: 800, share_count: 145,
+    collabUser: "Kokila",
+  },
+  {
+    id: "p2", user_id: "mock", username: "planext4u", displayName: "Planext4u",
+    isVerified: true, location_name: "Coimbatore, TN", created_at: new Date(Date.now() - 10800000).toISOString(),
+    media: [
+      { type: "photo", url: "https://picsum.photos/seed/p2a/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p2b/600/600" },
+    ],
+    caption: "Exciting things are coming to P4U! Stay tuned for the biggest update yet 🚀",
+    hashtags: ["#planext4u", "#superapp"],
+    like_count: 3200, comment_count: 450, share_count: 890,
+  },
+  {
+    id: "p3", user_id: "mock", username: "priya_designs", displayName: "Priya Designs",
+    isVerified: false, location_name: "Chennai, TN", created_at: new Date(Date.now() - 18000000).toISOString(),
+    media: [
+      { type: "photo", url: "https://picsum.photos/seed/p3a/600/600" },
+    ],
+    caption: "New collection dropping soon! What do you think of these designs? 🎨✨",
+    hashtags: ["#design", "#art"],
+    like_count: 892, comment_count: 67, share_count: 23,
+  },
+  {
+    id: "p4", user_id: "mock", username: "foodie_arun", displayName: "Arun Foodie",
+    isVerified: false, location_name: "Bangalore, KA", created_at: new Date(Date.now() - 25200000).toISOString(),
+    media: [
+      { type: "photo", url: "https://picsum.photos/seed/p4a/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p4b/600/600" },
+    ],
+    caption: "Weekend biryani feast at this hidden gem in Koramangala 🍚🔥 Must try!",
+    hashtags: ["#food", "#biryani", "#bangalore"],
+    like_count: 2100, comment_count: 312, share_count: 89,
+  },
+  {
+    id: "p5", user_id: "mock", username: "travel_meera", displayName: "Meera Travels",
+    isVerified: true, location_name: "Munnar, KL", created_at: new Date(Date.now() - 43200000).toISOString(),
+    media: [
+      { type: "photo", url: "https://picsum.photos/seed/p5a/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p5b/600/600" },
+      { type: "photo", url: "https://picsum.photos/seed/p5c/600/600" },
+    ],
+    caption: "Lost in the tea gardens of Munnar 🍃 This place is pure magic",
+    hashtags: ["#travel", "#munnar", "#kerala", "#nature"],
+    like_count: 4500, comment_count: 678, share_count: 234,
+  },
+  {
+    id: "p6", user_id: "mock", username: "fit_kumar", displayName: "Kumar Fitness",
+    isVerified: false, location_name: "Hyderabad, TS", created_at: new Date(Date.now() - 72000000).toISOString(),
+    media: [
+      { type: "photo", url: "https://picsum.photos/seed/p6a/600/600" },
+    ],
+    caption: "Day 90 of the transformation journey 💪 Consistency is key!",
+    hashtags: ["#fitness", "#gym", "#transformation"],
+    like_count: 1800, comment_count: 145, share_count: 56,
+  },
+];
 
+// No mock stories - only real DB stories are shown
 
 function formatCount(n: number): string {
   if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
@@ -147,67 +216,52 @@ function PostCard({ post }: { post: any }) {
   const EMOJI_PALETTE = ["😀","😂","😍","🥰","😎","🤩","😢","😡","👍","👏","🔥","❤️","💯","🎉","🙌","💪","🤔","😅","🥺","✨","💕","🎊","👀","🤗","😤","💀","🫡","🤝"];
   const GIF_STICKERS = ["😊","🎉","🔥","💯","👏","❤️‍🔥","🥳","🫶","💐","🌟"];
 
-  // If the parent prefetched meta (via get_feed_with_meta RPC), skip per-post queries.
-  const hasPrefetchedMeta = post && typeof post.is_liked === 'boolean' && typeof post.is_saved === 'boolean';
-
-  const { data: isLikedRemote = false } = useQuery({
+  const { data: isLiked = false } = useQuery({
     queryKey: ['social-like', postId, userId],
     queryFn: async () => {
       if (!userId) return false;
       const { data } = await supabase.from('social_likes').select('id').eq('post_id', postId).eq('user_id', userId).maybeSingle();
       return !!data;
     },
-    enabled: !!userId && !isMock && !hasPrefetchedMeta,
+    enabled: !!userId && !isMock,
   });
-  const isLiked = hasPrefetchedMeta ? !!post.is_liked : isLikedRemote;
 
-  const { data: likeCountRemote = post.like_count || 0 } = useQuery({
+  const { data: likeCount = post.like_count || 0 } = useQuery({
     queryKey: ['social-like-count', postId],
     queryFn: async () => {
       const { count } = await supabase.from('social_likes').select('*', { count: 'exact', head: true }).eq('post_id', postId);
       return count || 0;
     },
-    enabled: !isMock && !hasPrefetchedMeta,
+    enabled: !isMock,
   });
-  const likeCount = hasPrefetchedMeta ? (post.like_count || 0) : likeCountRemote;
 
-  const { data: commentCountRemote = post.comment_count || 0 } = useQuery({
+  const { data: commentCount = post.comment_count || 0 } = useQuery({
     queryKey: ['social-comment-count', postId],
     queryFn: async () => {
       const { count } = await supabase.from('social_comments').select('*', { count: 'exact', head: true }).eq('post_id', postId).eq('status', 'active');
       return count || 0;
     },
-    enabled: !isMock && !hasPrefetchedMeta,
+    enabled: !isMock,
   });
-  const commentCount = hasPrefetchedMeta ? (post.comment_count || 0) : commentCountRemote;
 
-  const { data: isSavedRemote = false } = useQuery({
+  const { data: isSaved = false } = useQuery({
     queryKey: ['social-bookmark', postId, userId],
     queryFn: async () => {
       if (!userId) return false;
       const { data } = await supabase.from('social_bookmarks').select('id').eq('post_id', postId).eq('user_id', userId).maybeSingle();
       return !!data;
     },
-    enabled: !!userId && !isMock && !hasPrefetchedMeta,
+    enabled: !!userId && !isMock,
   });
-  const isSaved = hasPrefetchedMeta ? !!post.is_saved : isSavedRemote;
 
-  const prefetchedProfile = hasPrefetchedMeta ? {
-    username: post.author_username,
-    display_name: post.author_display_name,
-    avatar_url: post.author_avatar_url,
-    is_verified: post.author_is_verified,
-  } : null;
-
-  const { data: postProfileRemote } = useQuery({
+  const { data: postProfile } = useQuery({
     queryKey: ['social-post-profile', post.user_id],
     queryFn: async () => {
       const { data } = await supabase.from('social_profiles').select('username, display_name, avatar_url, is_verified').eq('user_id', post.user_id).maybeSingle();
       return data;
     },
-    enabled: !isMock && !!post.user_id && !prefetchedProfile,
+    enabled: !isMock && !!post.user_id,
   });
-  const postProfile = prefetchedProfile || postProfileRemote;
 
   // All comments for inline display
   const { data: allComments = [] } = useQuery({
@@ -257,7 +311,6 @@ function PostCard({ post }: { post: any }) {
       if (!isMock) {
         qc.invalidateQueries({ queryKey: ['social-like', postId] });
         qc.invalidateQueries({ queryKey: ['social-like-count', postId] });
-        qc.invalidateQueries({ queryKey: ['social-feed'] });
       }
     },
   });
@@ -274,7 +327,7 @@ function PostCard({ post }: { post: any }) {
         toast.success("Post saved");
       }
     },
-    onSuccess: () => { if (!isMock) { qc.invalidateQueries({ queryKey: ['social-bookmark', postId] }); qc.invalidateQueries({ queryKey: ['social-feed'] }); } },
+    onSuccess: () => { if (!isMock) qc.invalidateQueries({ queryKey: ['social-bookmark', postId] }); },
   });
 
   const submitComment = useMutation({
@@ -866,7 +919,7 @@ export default function SocialFeedPage() {
   const [feedMode, setFeedMode] = useState<'following' | 'for_you'>('for_you');
   const storiesRef = useRef<HTMLDivElement>(null);
 
-  const { data: dbPosts = [], isLoading: isFeedLoading } = useSocialFeed(feedMode);
+  const { data: dbPosts = [] } = useSocialFeed(feedMode);
 
   const authUid = customerUser?.supabase_uid || customerUser?.id;
 
@@ -943,11 +996,10 @@ export default function SocialFeedPage() {
 
   const socioAds = usePlacementAds("socio");
 
-  // Only real DB posts — no mock/fallback content. RPC returns rows ordered by created_at DESC.
-  const posts = dbPosts.map((p: any) => ({
+  const posts = dbPosts.length > 0 ? dbPosts.map((p: any) => ({
     ...p,
     media: Array.isArray(p.media) ? p.media : [],
-  }));
+  })) : FALLBACK_POSTS;
 
   const content = (
     <>
@@ -1002,35 +1054,18 @@ export default function SocialFeedPage() {
 
       {/* Feed */}
       <div className="pb-28 md:pb-8">
-        {isFeedLoading ? (
-          <div className="py-12 px-4 text-center">
-            <p className="text-sm text-muted-foreground">Loading posts…</p>
+        {posts.map((post: any, idx: number) => (
+          <div key={post.id}>
+            <PostCard post={post} />
+            {socioAds.length > 0 && (idx + 1) % 4 === 0 && (
+              <SocialFeedAd ad={socioAds[(Math.floor(idx / 4)) % socioAds.length]} />
+            )}
           </div>
-        ) : posts.length === 0 ? (
-          <div className="py-16 px-4 text-center">
-            <p className="text-sm font-semibold mb-1">No posts available</p>
-            <p className="text-xs text-muted-foreground">
-              {feedMode === 'following'
-                ? "Follow people to see their posts here."
-                : "Be the first to share something with the community."}
-            </p>
-          </div>
-        ) : (
-          <>
-            {posts.map((post: any, idx: number) => (
-              <div key={post.id}>
-                <PostCard post={post} />
-                {socioAds.length > 0 && (idx + 1) % 4 === 0 && (
-                  <SocialFeedAd ad={socioAds[(Math.floor(idx / 4)) % socioAds.length]} />
-                )}
-              </div>
-            ))}
-            <div className="py-6 px-4 text-center">
-              <p className="text-sm font-semibold mb-1">You're All Caught Up</p>
-              <p className="text-xs text-muted-foreground">You've seen all new posts from the last 3 days.</p>
-            </div>
-          </>
-        )}
+        ))}
+        <div className="py-6 px-4 text-center">
+          <p className="text-sm font-semibold mb-1">You're All Caught Up</p>
+          <p className="text-xs text-muted-foreground">You've seen all new posts from the last 3 days.</p>
+        </div>
       </div>
     </>
   );

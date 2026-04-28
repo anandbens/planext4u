@@ -73,7 +73,7 @@ export default function PropertyMessagesPage() {
   // Realtime subscription
   useEffect(() => {
     if (!userId) return;
-    const channel = supabase.channel(`property_msgs`)
+    const channel = supabase.channel(`property_msgs_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "property_messages" }, () => {
         queryClient.invalidateQueries({ queryKey: ["propertyConversations"] });
         queryClient.invalidateQueries({ queryKey: ["chatMessages"] });

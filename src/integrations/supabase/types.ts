@@ -8483,42 +8483,6 @@ export type Database = {
       get_active_country: { Args: never; Returns: Json }
       get_active_country_code: { Args: never; Returns: string }
       get_customer_id: { Args: { _user_id: string }; Returns: string }
-      get_feed_with_meta: {
-        Args: {
-          _limit?: number
-          _mode?: string
-          _offset?: number
-          _viewer?: string
-        }
-        Returns: {
-          author_avatar_url: string
-          author_display_name: string
-          author_is_verified: boolean
-          author_username: string
-          caption: string
-          category: string
-          comment_count: number
-          created_at: string
-          hashtags: Json
-          id: string
-          is_edited: boolean
-          is_liked: boolean
-          is_repost: boolean
-          is_saved: boolean
-          like_count: number
-          media: Json
-          original_post: Json
-          original_post_id: string
-          post_type: string
-          product_tags: Json
-          repost_note: string
-          save_count: number
-          share_count: number
-          status: string
-          updated_at: string
-          user_id: string
-        }[]
-      }
       get_friends_of_friends: {
         Args: { _limit?: number; _user: string }
         Returns: {
