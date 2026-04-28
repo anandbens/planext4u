@@ -306,63 +306,36 @@ export function useFollow(targetUserId: string) {
 }
 
 // ─── POSTS (feed) ────────────────────────────
+// Uses single RPC `get_feed_with_meta` to collapse ~11 per-post queries into one round-trip.
+// Returns rows enriched with author profile fields and viewer's like/save flags.
 export function useSocialFeed(mode: 'following' | 'for_you' = 'for_you') {
   const authUserId = useAuthUserId();
 
   return useQuery({
-    queryKey: ['social-feed', mode],
+    queryKey: ['social-feed', mode, authUserId],
     queryFn: async () => {
-      let query = supabase
-        .from('social_posts')
-        .select('*')
-        .eq('status', 'published')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (mode === 'following' && authUserId) {
-        const { data: followings } = await supabase
-          .from('social_follows')
-          .select('following_id')
-          .eq('follower_id', authUserId)
-          .eq('status', 'active');
-
-        const ids = followings?.map(f => f.following_id) || [];
-        if (ids.length > 0) {
-          query = query.in('user_id', ids);
-        }
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc('get_feed_with_meta', {
+        _viewer: authUserId || null,
+        _mode: mode,
+        _limit: 20,
+        _offset: 0,
+      });
       if (error) throw error;
 
-      // Hydrate repost posts with the original author profile + caption
-      const reposts = (data || []).filter((p: any) => p.is_repost && p.original_post_id);
-      const originalIds = Array.from(new Set(reposts.map((p: any) => p.original_post_id)));
-      let originalsMap = new Map<string, any>();
-      if (originalIds.length > 0) {
-        const { data: originals } = await supabase
-          .from('social_posts')
-          .select('id, user_id, caption, created_at')
-          .in('id', originalIds);
-        const ownerIds = Array.from(new Set((originals || []).map((o: any) => o.user_id)));
-        const { data: ownerProfiles } = ownerIds.length
-          ? await supabase
-              .from('social_profiles')
-              .select('user_id, username, display_name, avatar_url, is_verified')
-              .in('user_id', ownerIds)
-          : { data: [] as any[] };
-        const ownerMap = new Map((ownerProfiles || []).map((p: any) => [p.user_id, p]));
-        originalsMap = new Map(
-          (originals || []).map((o: any) => [o.id, { ...o, owner: ownerMap.get(o.user_id) || null }])
-        );
-      }
-
-      return (data || []).map((p: any) =>
-        p.is_repost && p.original_post_id
-          ? { ...p, original_post: originalsMap.get(p.original_post_id) || null }
-          : p
-      );
+      // Re-shape RPC rows so legacy consumers keep working.
+      return (data || []).map((p: any) => ({
+        ...p,
+        // Profile shape used by PostCard fallbacks
+        profile: {
+          username: p.author_username,
+          display_name: p.author_display_name,
+          avatar_url: p.author_avatar_url,
+          is_verified: p.author_is_verified,
+        },
+        // original_post already in jsonb shape from RPC
+      }));
     },
+    staleTime: 30_000,
   });
 }
 
