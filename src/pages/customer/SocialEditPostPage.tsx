@@ -357,6 +357,19 @@ export default function SocialEditPostPage() {
             )}
           </div>
 
+          {/* Category */}
+          <div className="space-y-2">
+            <Label>Category <span className="text-destructive">*</span></Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
+              <SelectContent>
+                {["Fashion", "Food", "Travel", "Tech", "Fitness", "Art", "Local", "Sports"].map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Privacy / audience */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2"><Globe className="h-4 w-4" /> Audience</Label>
