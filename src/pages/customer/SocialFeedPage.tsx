@@ -1012,10 +1012,11 @@ export default function SocialFeedPage() {
 
   const socioAds = usePlacementAds("socio");
 
-  const posts = dbPosts.length > 0 ? dbPosts.map((p: any) => ({
+  // Only real DB posts — no mock/fallback content. RPC returns rows ordered by created_at DESC.
+  const posts = dbPosts.map((p: any) => ({
     ...p,
     media: Array.isArray(p.media) ? p.media : [],
-  })) : FALLBACK_POSTS;
+  }));
 
   const content = (
     <>
