@@ -935,7 +935,7 @@ export default function SocialFeedPage() {
   const [feedMode, setFeedMode] = useState<'following' | 'for_you'>('for_you');
   const storiesRef = useRef<HTMLDivElement>(null);
 
-  const { data: dbPosts = [] } = useSocialFeed(feedMode);
+  const { data: dbPosts = [], isLoading: isFeedLoading } = useSocialFeed(feedMode);
 
   const authUid = customerUser?.supabase_uid || customerUser?.id;
 
