@@ -17,6 +17,8 @@ import { uploadVideoWithProcessing } from "@/lib/video-upload";
 
 const MAX_VIDEO_SIZE_MB = 100;
 
+export const SOCIAL_CATEGORIES = ["Fashion", "Food", "Travel", "Tech", "Fitness", "Art", "Local", "Sports"] as const;
+
 const FILTERS = [
   "Normal", "Clarendon", "Gingham", "Moon", "Lark", "Reyes", "Juno", "Slumber",
   "Crema", "Ludwig", "Aden", "Perpetua", "Amaro", "Mayfair", "Rise", "Valencia"
@@ -55,6 +57,7 @@ export default function SocialCreatePostPage() {
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
   const [audience, setAudience] = useState("public");
+  const [category, setCategory] = useState<string>("");
   const [hidelikeCounts, setHideLikeCounts] = useState(false);
   const [allowComments, setAllowComments] = useState("everyone");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,6 +117,7 @@ export default function SocialCreatePostPage() {
   const handlePublish = async () => {
     if (!customerUser?.id) { toast.error("Please login to post"); return; }
     if (selectedFiles.length === 0) { toast.error("Please select at least one image or video"); return; }
+    if (!category) { toast.error("Please select a category before posting"); return; }
 
     // Verify we have an active session
     const { data: { session } } = await supabase.auth.getSession();
@@ -271,6 +275,7 @@ export default function SocialCreatePostPage() {
         user_id: authUserId,
         post_type: postType,
         caption,
+        category: category || null,
         location_name: location || null,
         media: mediaItems,
         product_tags: productTagsData,
@@ -523,6 +528,18 @@ export default function SocialCreatePostPage() {
         <p className="text-xs text-muted-foreground text-right">{caption.length}/2200</p>
 
         <div className="divide-y divide-border/50">
+          <div className="flex items-center gap-3 py-3.5">
+            <Tag className="h-5 w-5 text-muted-foreground" />
+            <span className="text-sm flex-1">Category <span className="text-destructive">*</span></span>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="w-36 h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectContent>
+                {SOCIAL_CATEGORIES.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center gap-3 py-3.5">
             <MapPin className="h-5 w-5 text-muted-foreground" />
             <Input placeholder="Add location" value={location} onChange={(e) => setLocation(e.target.value)} className="border-0 p-0 h-auto focus-visible:ring-0" />

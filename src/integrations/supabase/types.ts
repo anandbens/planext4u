@@ -6983,6 +6983,7 @@ export type Database = {
           allow_remix: boolean | null
           audience: string | null
           caption: string | null
+          category: string | null
           collab_user_id: string | null
           comment_count: number | null
           created_at: string | null
@@ -7016,6 +7017,7 @@ export type Database = {
           allow_remix?: boolean | null
           audience?: string | null
           caption?: string | null
+          category?: string | null
           collab_user_id?: string | null
           comment_count?: number | null
           created_at?: string | null
@@ -7049,6 +7051,7 @@ export type Database = {
           allow_remix?: boolean | null
           audience?: string | null
           caption?: string | null
+          category?: string | null
           collab_user_id?: string | null
           comment_count?: number | null
           created_at?: string | null

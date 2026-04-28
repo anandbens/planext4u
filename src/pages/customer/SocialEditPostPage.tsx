@@ -49,6 +49,7 @@ export default function SocialEditPostPage() {
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
   const [audience, setAudience] = useState<string>("public");
+  const [category, setCategory] = useState<string>("");
   const [allowComments, setAllowComments] = useState<string>("everyone");
   const [hideLikeCount, setHideLikeCount] = useState(false);
   const [hashtagsInput, setHashtagsInput] = useState("");
@@ -66,6 +67,7 @@ export default function SocialEditPostPage() {
     setCaption(post.caption || "");
     setLocation(post.location_name || "");
     setAudience(post.audience || "public");
+    setCategory((post as any).category || "");
     setAllowComments(post.allow_comments || "everyone");
     setHideLikeCount(!!post.hide_like_count);
     setHashtagsInput(Array.isArray(post.hashtags) ? post.hashtags.join(" ") : "");
@@ -145,6 +147,7 @@ export default function SocialEditPostPage() {
           caption: caption,
           location_name: location || null,
           audience,
+          category: category || null,
           allow_comments: allowComments,
           hide_like_count: hideLikeCount,
           hashtags: hashtags.length ? hashtags : [],
@@ -352,6 +355,19 @@ export default function SocialEditPostPage() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Category */}
+          <div className="space-y-2">
+            <Label>Category <span className="text-destructive">*</span></Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
+              <SelectContent>
+                {["Fashion", "Food", "Travel", "Tech", "Fitness", "Art", "Local", "Sports"].map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Privacy / audience */}

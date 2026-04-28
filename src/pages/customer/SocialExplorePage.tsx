@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const CATEGORIES = ["For You", "Trending", "Fashion", "Food", "Travel", "Tech", "Fitness", "Art", "Local", "Sports"];
+const SELECTABLE_CATEGORIES = new Set(["Fashion", "Food", "Travel", "Tech", "Fitness", "Art", "Local", "Sports"]);
 
 export default function SocialExplorePage() {
   const navigate = useNavigate();
@@ -23,12 +24,15 @@ export default function SocialExplorePage() {
   const { data: explorePosts = [] } = useQuery({
     queryKey: ['social-explore', activeCategory],
     queryFn: async () => {
-      let query = supabase.from('social_posts').select('id, media, post_type, like_count, comment_count, view_count')
-        .eq('status', 'published').order('like_count', { ascending: false }).limit(30);
-      if (activeCategory !== 'For You' && activeCategory !== 'Trending') {
-        query = query.contains('hashtags', [activeCategory.toLowerCase()]);
+      let query = supabase.from('social_posts').select('id, media, post_type, like_count, comment_count, view_count, category')
+        .eq('status', 'published').limit(30);
+      if (SELECTABLE_CATEGORIES.has(activeCategory)) {
+        query = query.eq('category', activeCategory).order('created_at', { ascending: false });
+      } else if (activeCategory === 'Trending') {
+        query = query.order('view_count', { ascending: false });
+      } else {
+        query = query.order('like_count', { ascending: false });
       }
-      if (activeCategory === 'Trending') query = query.order('view_count', { ascending: false });
       const { data } = await query;
       return data || [];
     },
