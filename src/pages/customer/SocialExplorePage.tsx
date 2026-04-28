@@ -24,7 +24,7 @@ export default function SocialExplorePage() {
   const { data: explorePosts = [] } = useQuery({
     queryKey: ['social-explore', activeCategory],
     queryFn: async () => {
-      let query = supabase.from('social_posts').select('id, media, post_type, like_count, comment_count, view_count, category')
+      let query = supabase.from('social_posts').select('id, user_id, media, post_type, like_count, comment_count, view_count, category')
         .eq('status', 'published').limit(30);
       if (SELECTABLE_CATEGORIES.has(activeCategory)) {
         query = query.eq('category', activeCategory).order('created_at', { ascending: false });
@@ -34,7 +34,16 @@ export default function SocialExplorePage() {
         query = query.order('like_count', { ascending: false });
       }
       const { data } = await query;
-      return data || [];
+      const rows = data || [];
+      // Exclude posts whose author profile no longer exists
+      const authorIds = Array.from(new Set(rows.map((p: any) => p.user_id).filter(Boolean)));
+      if (authorIds.length === 0) return rows;
+      const { data: profs } = await supabase
+        .from('social_profiles')
+        .select('user_id')
+        .in('user_id', authorIds);
+      const existing = new Set((profs || []).map((p: any) => p.user_id));
+      return rows.filter((p: any) => existing.has(p.user_id));
     },
   });
 
