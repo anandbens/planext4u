@@ -202,7 +202,7 @@ export default function SocialExplorePage() {
         {gridItems.map((item: any) => (
           <button key={item.id} className={`relative overflow-hidden aspect-square group ${!item.imageUrl ? (item.color || 'bg-muted') : 'bg-muted'}`}
             onClick={() => navigate(`/app/social/post/${item.id}`)}>
-            {item.imageUrl ? <img src={item.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" /> : <div className="w-full h-full" />}
+            {item.imageUrl ? <img src={item.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" /> : <div className="w-full h-full" />}
             {item.isVideo && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="h-8 w-8 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
