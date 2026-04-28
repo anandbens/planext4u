@@ -332,8 +332,20 @@ export function useSocialFeed(mode: 'following' | 'for_you' = 'for_you') {
         }
       }
 
-      const { data, error } = await query;
+      const { data: rawData, error } = await query;
       if (error) throw error;
+
+      // Filter out posts whose author profile no longer exists
+      const authorIds = Array.from(new Set((rawData || []).map((p: any) => p.user_id).filter(Boolean)));
+      let existingAuthors = new Set<string>();
+      if (authorIds.length > 0) {
+        const { data: profs } = await supabase
+          .from('social_profiles')
+          .select('user_id')
+          .in('user_id', authorIds);
+        existingAuthors = new Set((profs || []).map((p: any) => p.user_id));
+      }
+      const data = (rawData || []).filter((p: any) => existingAuthors.has(p.user_id));
 
       // Hydrate repost posts with the original author profile + caption
       const reposts = (data || []).filter((p: any) => p.is_repost && p.original_post_id);
