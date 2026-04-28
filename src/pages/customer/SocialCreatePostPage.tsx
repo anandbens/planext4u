@@ -275,6 +275,7 @@ export default function SocialCreatePostPage() {
         user_id: authUserId,
         post_type: postType,
         caption,
+        category: category || null,
         location_name: location || null,
         media: mediaItems,
         product_tags: productTagsData,
