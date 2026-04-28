@@ -285,13 +285,15 @@ export default function SocialProfilePage() {
             {displayPosts.map((post: any) => {
               const media = Array.isArray(post.media) && post.media.length > 0 ? post.media[0] : null;
               const isVideo = media?.type === 'video';
-              const thumbSrc = isVideo ? (media?.thumbnailUrl || media?.url) : (media?.url || '');
+              const thumbSrc = isVideo
+                ? (media?.thumbnailUrl || media?.url)
+                : (media?.thumbnailUrl || media?.mediumUrl || media?.url || '');
               return (
                 <button key={post.id} className="aspect-square bg-muted relative overflow-hidden group" onClick={() => navigate(`/app/social/user/${targetUserId}/posts/${post.id}`)}>
                   {thumbSrc ? (
                     isVideo ? (
                       <>
-                        <img src={media?.thumbnailUrl || ''} alt="" className="w-full h-full object-cover" loading="lazy"
+                        <img src={media?.thumbnailUrl || ''} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async"
                           onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="h-10 w-10 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
@@ -300,7 +302,7 @@ export default function SocialProfilePage() {
                         </div>
                       </>
                     ) : (
-                      <img src={thumbSrc} alt="" className="w-full h-full object-cover" loading="lazy" />
+                      <img src={thumbSrc} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                     )
                   ) : (
                     <div className="w-full h-full bg-accent/30" />
