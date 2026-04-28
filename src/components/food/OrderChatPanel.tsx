@@ -31,7 +31,7 @@ export function OrderChatPanel({ orderId, userId, role, height = 320 }: Props) {
     foodApi.listChatMessages(orderId).then(setMessages);
     foodApi.markChatRead(orderId, userId).catch(() => {});
 
-    const ch = supabase.channel(`food_chat_${orderId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
+    const ch = supabase.channel(`food_chat_${orderId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'food_order_chats', filter: `order_id=eq.${orderId}` },
         (payload) => {
           setMessages(prev => [...prev, payload.new]);

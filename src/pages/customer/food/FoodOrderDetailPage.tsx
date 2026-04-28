@@ -72,7 +72,7 @@ export default function FoodOrderDetailPage() {
       if (rev) setExistingReview(rev);
     };
     load();
-    const ch = supabase.channel(`food_order_${id}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`)
+    const ch = supabase.channel(`food_order_${id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'food_orders', filter: `id=eq.${id}` },
         (payload) => setOrder(payload.new as FoodOrder))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rider_assignments', filter: `order_id=eq.${id}` },

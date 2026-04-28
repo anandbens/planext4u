@@ -216,52 +216,67 @@ function PostCard({ post }: { post: any }) {
   const EMOJI_PALETTE = ["😀","😂","😍","🥰","😎","🤩","😢","😡","👍","👏","🔥","❤️","💯","🎉","🙌","💪","🤔","😅","🥺","✨","💕","🎊","👀","🤗","😤","💀","🫡","🤝"];
   const GIF_STICKERS = ["😊","🎉","🔥","💯","👏","❤️‍🔥","🥳","🫶","💐","🌟"];
 
-  const { data: isLiked = false } = useQuery({
+  // If the parent prefetched meta (via get_feed_with_meta RPC), skip per-post queries.
+  const hasPrefetchedMeta = post && typeof post.is_liked === 'boolean' && typeof post.is_saved === 'boolean';
+
+  const { data: isLikedRemote = false } = useQuery({
     queryKey: ['social-like', postId, userId],
     queryFn: async () => {
       if (!userId) return false;
       const { data } = await supabase.from('social_likes').select('id').eq('post_id', postId).eq('user_id', userId).maybeSingle();
       return !!data;
     },
-    enabled: !!userId && !isMock,
+    enabled: !!userId && !isMock && !hasPrefetchedMeta,
   });
+  const isLiked = hasPrefetchedMeta ? !!post.is_liked : isLikedRemote;
 
-  const { data: likeCount = post.like_count || 0 } = useQuery({
+  const { data: likeCountRemote = post.like_count || 0 } = useQuery({
     queryKey: ['social-like-count', postId],
     queryFn: async () => {
       const { count } = await supabase.from('social_likes').select('*', { count: 'exact', head: true }).eq('post_id', postId);
       return count || 0;
     },
-    enabled: !isMock,
+    enabled: !isMock && !hasPrefetchedMeta,
   });
+  const likeCount = hasPrefetchedMeta ? (post.like_count || 0) : likeCountRemote;
 
-  const { data: commentCount = post.comment_count || 0 } = useQuery({
+  const { data: commentCountRemote = post.comment_count || 0 } = useQuery({
     queryKey: ['social-comment-count', postId],
     queryFn: async () => {
       const { count } = await supabase.from('social_comments').select('*', { count: 'exact', head: true }).eq('post_id', postId).eq('status', 'active');
       return count || 0;
     },
-    enabled: !isMock,
+    enabled: !isMock && !hasPrefetchedMeta,
   });
+  const commentCount = hasPrefetchedMeta ? (post.comment_count || 0) : commentCountRemote;
 
-  const { data: isSaved = false } = useQuery({
+  const { data: isSavedRemote = false } = useQuery({
     queryKey: ['social-bookmark', postId, userId],
     queryFn: async () => {
       if (!userId) return false;
       const { data } = await supabase.from('social_bookmarks').select('id').eq('post_id', postId).eq('user_id', userId).maybeSingle();
       return !!data;
     },
-    enabled: !!userId && !isMock,
+    enabled: !!userId && !isMock && !hasPrefetchedMeta,
   });
+  const isSaved = hasPrefetchedMeta ? !!post.is_saved : isSavedRemote;
 
-  const { data: postProfile } = useQuery({
+  const prefetchedProfile = hasPrefetchedMeta ? {
+    username: post.author_username,
+    display_name: post.author_display_name,
+    avatar_url: post.author_avatar_url,
+    is_verified: post.author_is_verified,
+  } : null;
+
+  const { data: postProfileRemote } = useQuery({
     queryKey: ['social-post-profile', post.user_id],
     queryFn: async () => {
       const { data } = await supabase.from('social_profiles').select('username, display_name, avatar_url, is_verified').eq('user_id', post.user_id).maybeSingle();
       return data;
     },
-    enabled: !isMock && !!post.user_id,
+    enabled: !isMock && !!post.user_id && !prefetchedProfile,
   });
+  const postProfile = prefetchedProfile || postProfileRemote;
 
   // All comments for inline display
   const { data: allComments = [] } = useQuery({
@@ -311,6 +326,7 @@ function PostCard({ post }: { post: any }) {
       if (!isMock) {
         qc.invalidateQueries({ queryKey: ['social-like', postId] });
         qc.invalidateQueries({ queryKey: ['social-like-count', postId] });
+        qc.invalidateQueries({ queryKey: ['social-feed'] });
       }
     },
   });
@@ -327,7 +343,7 @@ function PostCard({ post }: { post: any }) {
         toast.success("Post saved");
       }
     },
-    onSuccess: () => { if (!isMock) qc.invalidateQueries({ queryKey: ['social-bookmark', postId] }); },
+    onSuccess: () => { if (!isMock) { qc.invalidateQueries({ queryKey: ['social-bookmark', postId] }); qc.invalidateQueries({ queryKey: ['social-feed'] }); } },
   });
 
   const submitComment = useMutation({
