@@ -529,6 +529,18 @@ export default function SocialCreatePostPage() {
 
         <div className="divide-y divide-border/50">
           <div className="flex items-center gap-3 py-3.5">
+            <Tag className="h-5 w-5 text-muted-foreground" />
+            <span className="text-sm flex-1">Category <span className="text-destructive">*</span></span>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="w-36 h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+              <SelectContent>
+                {SOCIAL_CATEGORIES.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-3 py-3.5">
             <MapPin className="h-5 w-5 text-muted-foreground" />
             <Input placeholder="Add location" value={location} onChange={(e) => setLocation(e.target.value)} className="border-0 p-0 h-auto focus-visible:ring-0" />
           </div>
