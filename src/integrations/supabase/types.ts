@@ -4136,6 +4136,7 @@ export type Database = {
         Row: {
           cooling_status: string
           created_at: string
+          dedupe_key: string | null
           description: string
           expires_at: string | null
           id: string
@@ -4148,6 +4149,7 @@ export type Database = {
         Insert: {
           cooling_status?: string
           created_at?: string
+          dedupe_key?: string | null
           description?: string
           expires_at?: string | null
           id: string
@@ -4160,6 +4162,7 @@ export type Database = {
         Update: {
           cooling_status?: string
           created_at?: string
+          dedupe_key?: string | null
           description?: string
           expires_at?: string | null
           id?: string
@@ -7181,6 +7184,38 @@ export type Database = {
         }
         Relationships: []
       }
+      social_shares: {
+        Row: {
+          channel: string | null
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_shares_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_stories: {
         Row: {
           audience: string | null
@@ -8444,6 +8479,16 @@ export type Database = {
           _vendor_id: string
         }
         Returns: string
+      }
+      credit_points_to_user: {
+        Args: {
+          _auth_user_id: string
+          _dedupe_key: string
+          _description: string
+          _points: number
+          _type: string
+        }
+        Returns: undefined
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
