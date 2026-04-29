@@ -488,3 +488,7 @@ nav.fixed[class*="top-0"]:not([data-no-safe-area]) {
     hsl(var(--cat-primary, var(--primary))),
     hsl(var(--cat-accent, var(--primary-glow))));
 }
+
+/* Hide horizontal scrollbar for swipeable carousels */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
