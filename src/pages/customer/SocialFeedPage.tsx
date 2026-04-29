@@ -401,6 +401,7 @@ function PostCard({ post }: { post: any }) {
             {post.is_edited && <span className="ml-1">· Edited</span>}
           </p>
         </div>
+        {userId && userId !== post.user_id && !isMock && <FollowButton targetUserId={post.user_id} />}
         <DropdownMenu>
           <DropdownMenuTrigger asChild><button className="p-1"><MoreHorizontal className="h-5 w-5" /></button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
