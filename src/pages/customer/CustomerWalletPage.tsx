@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Wallet, ArrowUpRight, Gift, ChevronLeft, ChevronRight, AlertTriangle, Share2, Heart, BookOpen, ShoppingBag, Users, Store, Clock, RotateCcw, MinusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,6 +30,26 @@ export default function CustomerWalletPage() {
   const { customerUser } = useAuth();
   const { country } = useCurrency();
   const customerId = customerUser?.customer_id || customerUser?.id || '';
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!customerId) return;
+    const channel = supabase
+      .channel(`wallet-${customerId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'customers', filter: `id=eq.${customerId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['customerProfile', customerId] });
+          queryClient.invalidateQueries({ queryKey: ['layout-profile-photo'] });
+        })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'points_transactions', filter: `user_id=eq.${customerId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['pointsTransactions', customerId] });
+          queryClient.invalidateQueries({ queryKey: ['expiringPoints', customerId] });
+          queryClient.invalidateQueries({ queryKey: ['customerProfile', customerId] });
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [customerId, queryClient]);
 
   const { data: profile } = useQuery({
     queryKey: ["customerProfile", customerId],

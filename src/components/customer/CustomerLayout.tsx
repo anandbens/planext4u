@@ -15,11 +15,12 @@ import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 import p4uLogo from "@/assets/p4u-logo.png";
 import IncomingCallProvider from "@/components/social/IncomingCallProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useModuleStatus } from "@/hooks/useModuleStatus";
 
 function WalletBalance() {
   const { customerUser } = useAuth();
+  const queryClient = useQueryClient();
   const { data: balance = 0 } = useQuery({
     queryKey: ["wallet-balance", customerUser?.id],
     queryFn: async () => {
@@ -30,6 +31,19 @@ function WalletBalance() {
     enabled: !!customerUser?.id,
     staleTime: 30000,
   });
+
+  useEffect(() => {
+    if (!customerUser?.id) return;
+    const channel = supabase
+      .channel(`wallet-balance-${customerUser.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'customers', filter: `id=eq.${customerUser.id}` },
+        () => queryClient.invalidateQueries({ queryKey: ['wallet-balance', customerUser.id] }))
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'points_transactions', filter: `user_id=eq.${customerUser.id}` },
+        () => queryClient.invalidateQueries({ queryKey: ['wallet-balance', customerUser.id] }))
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [customerUser?.id, queryClient]);
+
   return <span className="text-xs font-bold text-primary-foreground">{balance}</span>;
 }
 
