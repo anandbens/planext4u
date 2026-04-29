@@ -184,8 +184,12 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                   <span className="text-xs font-semibold text-primary-foreground">Login</span>
                 </Link>
               ) : (
-                <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center">
-                  <span className="text-sm font-bold text-primary-foreground">{customerUser.name.charAt(0)}</span>
+                <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center overflow-hidden">
+                  {profilePhoto ? (
+                    <img src={profilePhoto} alt={customerUser.name} className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                  ) : (
+                    <span className="text-sm font-bold text-primary-foreground">{initial}</span>
+                  )}
                 </button>
               )}
             </div>
