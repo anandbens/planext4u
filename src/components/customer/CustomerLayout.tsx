@@ -544,7 +544,11 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                       </div>
                     ) : tab.label === 'Profile' ? (
                       <div className={`h-7 w-7 rounded-full bg-muted flex items-center justify-center overflow-hidden ${tab.active ? 'border-2 border-foreground' : 'border border-border'}`}>
-                        <span className="text-xs font-bold">{customerUser?.name?.charAt(0) || 'U'}</span>
+                        {profilePhoto ? (
+                          <img src={profilePhoto} alt="" className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                        ) : (
+                          <span className="text-xs font-bold">{initial}</span>
+                        )}
                       </div>
                     ) : (
                       <tab.icon className={`h-5 w-5 ${tab.active ? 'text-foreground fill-current' : 'text-muted-foreground'}`} />
