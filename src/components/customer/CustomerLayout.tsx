@@ -343,8 +343,12 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               <div className="p-5 bg-card">
                 {customerUser ? (
                   <Link to="/app/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center">
-                      <span className="text-2xl font-bold text-primary">{customerUser.name.charAt(0)}</span>
+                    <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center overflow-hidden">
+                      {profilePhoto ? (
+                        <img src={profilePhoto} alt={customerUser.name} className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
+                        <span className="text-2xl font-bold text-primary">{initial}</span>
+                      )}
                     </div>
                     <div className="flex-1">
                       <p className="text-xl font-bold">{customerUser.name}</p>
