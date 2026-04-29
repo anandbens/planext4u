@@ -262,11 +262,7 @@ export default function SocialStoryViewerPage() {
             const { data: { session } } = await supabase.auth.getSession();
             const uid = session?.user?.id;
             if (uid && story) {
-              // Upsert a story view with reaction='like' — DB trigger awards 1 pt to author (deduped per viewer)
-              await supabase.from('social_story_views').upsert(
-                { story_id: story.id, viewer_id: uid, reaction: 'like' } as any,
-                { onConflict: 'story_id,viewer_id' }
-              );
+              awardPoints(story.user_id, 'story_liked_points', 'Points for your story being liked');
             }
           }}><Heart className="h-6 w-6 text-white" /></button>
           <button onClick={handleReply}><Send className="h-6 w-6 text-white" /></button>
