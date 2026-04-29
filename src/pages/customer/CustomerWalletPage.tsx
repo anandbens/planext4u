@@ -30,6 +30,26 @@ export default function CustomerWalletPage() {
   const { customerUser } = useAuth();
   const { country } = useCurrency();
   const customerId = customerUser?.customer_id || customerUser?.id || '';
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!customerId) return;
+    const channel = supabase
+      .channel(`wallet-${customerId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'customers', filter: `id=eq.${customerId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['customerProfile', customerId] });
+          queryClient.invalidateQueries({ queryKey: ['layout-profile-photo'] });
+        })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'points_transactions', filter: `user_id=eq.${customerId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['pointsTransactions', customerId] });
+          queryClient.invalidateQueries({ queryKey: ['expiringPoints', customerId] });
+          queryClient.invalidateQueries({ queryKey: ['customerProfile', customerId] });
+        })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [customerId, queryClient]);
 
   const { data: profile } = useQuery({
     queryKey: ["customerProfile", customerId],
