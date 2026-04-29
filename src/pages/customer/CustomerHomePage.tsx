@@ -492,22 +492,28 @@ export default function CustomerHomePage() {
           </motion.section>
         )}
 
-        {/* ── Quick Actions (Ride, Emergency, Help) ── */}
+        {/* ── Quick Actions (Ride, Emergency, SOS) — all Coming Soon ── */}
         <div className="px-4 py-2 md:hidden">
           <div className="grid grid-cols-3 gap-2">
             {[
-              ...(modules.services ? [
-                { label: "Ride", emoji: "🛺", to: "/app/services?category=Transport", color: "from-amber-500/20 to-amber-500/5" },
-                { label: "Emergency", emoji: "🚨", to: "/app/services", color: "from-red-500/20 to-red-500/5" },
-              ] : []),
-              { label: "Help", emoji: "🆘", to: "/app/support", color: "from-blue-500/20 to-blue-500/5" },
+              { label: "Ride", emoji: "🛺", color: "from-amber-500/20 to-amber-500/5" },
+              { label: "Emergency", emoji: "🚨", color: "from-red-500/20 to-red-500/5" },
+              { label: "SOS", emoji: "🆘", color: "from-blue-500/20 to-blue-500/5" },
             ].map(a => (
-              <Link key={a.label} to={a.to}>
-                <div className={`bg-gradient-to-br ${a.color} rounded-xl p-3 text-center hover:shadow-md transition-all`}>
+              <button
+                key={a.label}
+                type="button"
+                onClick={() => toast.info("Coming Soon")}
+                className="text-left"
+              >
+                <div className={`relative bg-gradient-to-br ${a.color} rounded-xl p-3 text-center hover:shadow-md transition-all`}>
+                  <span className="absolute top-1 right-1 text-[8px] font-bold uppercase tracking-wide bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 leading-none">
+                    Soon
+                  </span>
                   <span className="text-2xl block">{a.emoji}</span>
                   <p className="text-[10px] font-semibold mt-1">{a.label}</p>
                 </div>
-              </Link>
+              </button>
             ))}
           </div>
         </div>
