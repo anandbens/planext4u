@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
-import { useSocialFeed, useSharePost, useRepost } from "@/hooks/use-social-interactions";
+import { useSocialFeed, useSharePost, useRepost, useFollow } from "@/hooks/use-social-interactions";
 import { isSocialModerator } from "@/lib/social-moderator";
 import { supabase } from "@/integrations/supabase/client";
 import PeopleYouMayKnow from "@/components/social/PeopleYouMayKnow";
@@ -171,6 +171,22 @@ function CommentItem({ comment, isMock, postId, onReply }: { comment: any; isMoc
         <Heart className={`h-3.5 w-3.5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} />
       </button>
     </div>
+  );
+}
+
+function FollowButton({ targetUserId }: { targetUserId: string }) {
+  const { isFollowing, toggleFollow } = useFollow(targetUserId);
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleFollow(); }}
+      className={`shrink-0 text-xs font-semibold px-3 py-1 rounded-md transition-colors ${
+        isFollowing
+          ? 'bg-muted text-foreground hover:bg-muted/80'
+          : 'bg-primary text-primary-foreground hover:bg-primary/90'
+      }`}
+    >
+      {isFollowing ? 'Following' : 'Follow'}
+    </button>
   );
 }
 
@@ -401,6 +417,7 @@ function PostCard({ post }: { post: any }) {
             {post.is_edited && <span className="ml-1">· Edited</span>}
           </p>
         </div>
+        {userId && userId !== post.user_id && !isMock && <FollowButton targetUserId={post.user_id} />}
         <DropdownMenu>
           <DropdownMenuTrigger asChild><button className="p-1"><MoreHorizontal className="h-5 w-5" /></button></DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -439,41 +456,59 @@ function PostCard({ post }: { post: any }) {
       {/* Media */}
       <div className="relative aspect-square bg-muted overflow-hidden">
         {mediaItems.length > 0 ? (
-          mediaItems[carouselIdx]?.type === 'video' ? (
-            <video 
-              ref={videoRef}
-              src={mediaItems[carouselIdx]?.url || ''} 
-              className="w-full h-full object-cover cursor-pointer"
-              controls muted playsInline
-              onClick={() => setFullscreenImg(mediaItems[carouselIdx]?.url || '')}
-            />
-          ) : (
-            <img 
-              src={mediaItems[carouselIdx]?.mediumUrl || mediaItems[carouselIdx]?.url || ''} 
-              alt="" 
-              className="w-full h-full object-cover cursor-pointer" 
-              loading={carouselIdx === 0 ? "eager" : "lazy"}
-              decoding="async"
-              fetchPriority={carouselIdx === 0 ? "high" : "low" as any}
-              onClick={() => setFullscreenImg(mediaItems[carouselIdx]?.url || mediaItems[carouselIdx]?.mediumUrl || '')}
-              onDoubleClick={(e) => { e.stopPropagation(); toggleLike.mutate(); }}
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (!target.dataset.retried) {
-                  target.dataset.retried = "1";
-                  target.src = mediaItems[carouselIdx]?.url || target.src;
-                }
-              }}
-            />
-          )
+          <div
+            className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+            style={{ scrollbarWidth: 'none' }}
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const idx = Math.round(el.scrollLeft / el.clientWidth);
+              if (idx !== carouselIdx && idx >= 0 && idx < mediaItems.length) {
+                setCarouselIdx(idx);
+              }
+            }}
+          >
+            {mediaItems.map((m: any, i: number) => (
+              <div key={i} className="shrink-0 w-full h-full snap-center snap-always">
+                {m?.type === 'video' ? (
+                  <video
+                    ref={i === 0 ? videoRef : undefined}
+                    src={m?.url || ''}
+                    className="w-full h-full object-cover cursor-pointer"
+                    controls muted playsInline
+                    onClick={() => setFullscreenImg(m?.url || '')}
+                  />
+                ) : (
+                  <img
+                    src={m?.mediumUrl || m?.url || ''}
+                    alt=""
+                    className="w-full h-full object-cover cursor-pointer"
+                    loading={i === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                    draggable={false}
+                    fetchPriority={i === 0 ? "high" : "low" as any}
+                    onClick={() => setFullscreenImg(m?.url || m?.mediumUrl || '')}
+                    onDoubleClick={(e) => { e.stopPropagation(); toggleLike.mutate(); }}
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.dataset.retried) {
+                        target.dataset.retried = "1";
+                        target.src = m?.url || target.src;
+                      }
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="w-full h-full bg-accent/30 flex items-center justify-center"><span className="text-muted-foreground text-sm">No media</span></div>
         )}
         {isCarousel && (
           <>
-            {carouselIdx > 0 && <button className="absolute left-2 top-1/2 -translate-y-1/2 bg-card/80 rounded-full p-1" onClick={() => setCarouselIdx(i => i - 1)}><ChevronDown className="h-4 w-4 -rotate-90" /></button>}
-            {carouselIdx < mediaItems.length - 1 && <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-card/80 rounded-full p-1" onClick={() => setCarouselIdx(i => i + 1)}><ChevronDown className="h-4 w-4 rotate-90" /></button>}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+            <div className="absolute top-2 right-2 bg-black/60 text-white text-[11px] font-semibold px-2 py-0.5 rounded-full pointer-events-none">
+              {carouselIdx + 1}/{mediaItems.length}
+            </div>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 pointer-events-none">
               {mediaItems.map((_: any, i: number) => <div key={i} className={`h-1.5 w-1.5 rounded-full ${i === carouselIdx ? 'bg-primary' : 'bg-white/50'}`} />)}
             </div>
           </>
