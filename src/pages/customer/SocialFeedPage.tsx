@@ -174,6 +174,22 @@ function CommentItem({ comment, isMock, postId, onReply }: { comment: any; isMoc
   );
 }
 
+function FollowButton({ targetUserId }: { targetUserId: string }) {
+  const { isFollowing, toggleFollow } = useFollow(targetUserId);
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleFollow(); }}
+      className={`shrink-0 text-xs font-semibold px-3 py-1 rounded-md transition-colors ${
+        isFollowing
+          ? 'bg-muted text-foreground hover:bg-muted/80'
+          : 'bg-primary text-primary-foreground hover:bg-primary/90'
+      }`}
+    >
+      {isFollowing ? 'Following' : 'Follow'}
+    </button>
+  );
+}
+
 function PostCard({ post }: { post: any }) {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
