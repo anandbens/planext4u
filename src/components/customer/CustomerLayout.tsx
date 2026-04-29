@@ -89,6 +89,27 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
 
   const { modules } = useModuleStatus();
 
+  // Fetch profile photo so all avatar slots (header, menu, bottom nav) show
+  // the uploaded picture instead of the name initial. Triggers in the DB keep
+  // customers.profile_photo and social_profiles.avatar_url in sync, so a single
+  // read of customers.profile_photo is sufficient regardless of where the user
+  // last updated their picture.
+  const { data: profilePhoto } = useQuery({
+    queryKey: ["layout-profile-photo", customerUser?.id],
+    queryFn: async () => {
+      if (!customerUser?.id) return null;
+      const { data } = await supabase
+        .from("customers")
+        .select("profile_photo")
+        .eq("id", customerUser.id)
+        .maybeSingle();
+      return data?.profile_photo || null;
+    },
+    enabled: !!customerUser?.id,
+    staleTime: 30_000,
+  });
+  const initial = (customerUser?.name?.charAt(0) || 'U').toUpperCase();
+
   const navItems = [
     { icon: Home, label: "Home", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount, comingSoon: !modules.shop },
