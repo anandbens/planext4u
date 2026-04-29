@@ -69,17 +69,8 @@ export function usePostLike(postId: string) {
       if (isLiked) {
         await supabase.from('social_likes').delete().eq('post_id', postId).eq('user_id', uid);
       } else {
+        // DB trigger awards 1 point to the post author (deduped by unique (user_id, post_id))
         await supabase.from('social_likes').insert({ post_id: postId, user_id: uid });
-        // Only award points if the post has a tagged product link
-        const { data: postRow } = await supabase
-          .from('social_posts')
-          .select('product_tags')
-          .eq('id', postId)
-          .maybeSingle();
-        const tags = Array.isArray(postRow?.product_tags) ? postRow!.product_tags as any[] : [];
-        if (tags.length > 0) {
-          awardPoints(uid, 'post_like_points', 'Points for liking a post with tagged products');
-        }
       }
     },
     onSuccess: () => {
@@ -400,16 +391,10 @@ export function useSharePost() {
     if (shared) {
       const uid = await getAuthUserId();
       if (uid) {
-        // Only award points when the shared post has a tagged product link
-        const { data: postRow } = await supabase
-          .from('social_posts')
-          .select('product_tags')
-          .eq('id', postId)
-          .maybeSingle();
-        const tags = Array.isArray(postRow?.product_tags) ? postRow!.product_tags as any[] : [];
-        if (tags.length > 0) {
-          awardPoints(uid, 'post_share_points', 'Points for sharing a post with tagged products');
-        }
+        // Record share (unique per user+post). DB trigger awards 1 pt to author.
+        try {
+          await supabase.from('social_shares').insert({ post_id: postId, user_id: uid } as any);
+        } catch { /* duplicate share — ignore */ }
       }
     }
   }, []);
