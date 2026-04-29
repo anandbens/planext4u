@@ -89,6 +89,27 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
 
   const { modules } = useModuleStatus();
 
+  // Fetch profile photo so all avatar slots (header, menu, bottom nav) show
+  // the uploaded picture instead of the name initial. Triggers in the DB keep
+  // customers.profile_photo and social_profiles.avatar_url in sync, so a single
+  // read of customers.profile_photo is sufficient regardless of where the user
+  // last updated their picture.
+  const { data: profilePhoto } = useQuery({
+    queryKey: ["layout-profile-photo", customerUser?.id],
+    queryFn: async () => {
+      if (!customerUser?.id) return null;
+      const { data } = await supabase
+        .from("customers")
+        .select("profile_photo")
+        .eq("id", customerUser.id)
+        .maybeSingle();
+      return data?.profile_photo || null;
+    },
+    enabled: !!customerUser?.id,
+    staleTime: 30_000,
+  });
+  const initial = (customerUser?.name?.charAt(0) || 'U').toUpperCase();
+
   const navItems = [
     { icon: Home, label: "Home", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount, comingSoon: !modules.shop },
@@ -163,8 +184,12 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                   <span className="text-xs font-semibold text-primary-foreground">Login</span>
                 </Link>
               ) : (
-                <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center">
-                  <span className="text-sm font-bold text-primary-foreground">{customerUser.name.charAt(0)}</span>
+                <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center overflow-hidden">
+                  {profilePhoto ? (
+                    <img src={profilePhoto} alt={customerUser.name} className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                  ) : (
+                    <span className="text-sm font-bold text-primary-foreground">{initial}</span>
+                  )}
                 </button>
               )}
             </div>
@@ -318,8 +343,12 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               <div className="p-5 bg-card">
                 {customerUser ? (
                   <Link to="/app/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center">
-                      <span className="text-2xl font-bold text-primary">{customerUser.name.charAt(0)}</span>
+                    <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center overflow-hidden">
+                      {profilePhoto ? (
+                        <img src={profilePhoto} alt={customerUser.name} className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                      ) : (
+                        <span className="text-2xl font-bold text-primary">{initial}</span>
+                      )}
                     </div>
                     <div className="flex-1">
                       <p className="text-xl font-bold">{customerUser.name}</p>
@@ -515,7 +544,11 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                       </div>
                     ) : tab.label === 'Profile' ? (
                       <div className={`h-7 w-7 rounded-full bg-muted flex items-center justify-center overflow-hidden ${tab.active ? 'border-2 border-foreground' : 'border border-border'}`}>
-                        <span className="text-xs font-bold">{customerUser?.name?.charAt(0) || 'U'}</span>
+                        {profilePhoto ? (
+                          <img src={profilePhoto} alt="" className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                        ) : (
+                          <span className="text-xs font-bold">{initial}</span>
+                        )}
                       </div>
                     ) : (
                       <tab.icon className={`h-5 w-5 ${tab.active ? 'text-foreground fill-current' : 'text-muted-foreground'}`} />
