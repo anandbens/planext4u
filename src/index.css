@@ -218,8 +218,16 @@ nav.sticky.safe-area-top {
 
 /* Fixed bottom bars: respect bottom safe area (home indicator) */
 nav.fixed,
-div.fixed[class*="bottom-0"] {
+div.fixed[class*="bottom-0"],
+aside.fixed[class*="bottom-0"],
+section.fixed[class*="bottom-0"] {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Fixed top bars without explicit safe-area-top class: respect notch / status bar */
+header.fixed[class*="top-0"]:not([data-no-safe-area]),
+nav.fixed[class*="top-0"]:not([data-no-safe-area]) {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* iPhone landscape: avoid notch / dynamic island on the sides */
