@@ -224,8 +224,8 @@ export default function CustomerDashboardPage() {
               <WalletIcon className="h-7 w-7 text-white" strokeWidth={1.8} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg sm:text-xl font-bold text-[#013a3a]">Wallet</h3>
-              <p className="text-xs sm:text-sm text-[#013a3a]/70">
+              <h3 className="text-lg sm:text-xl font-bold text-white drop-shadow">Wallet</h3>
+              <p className="text-xs sm:text-sm text-white/85">
                 Secure payments made easy
               </p>
             </div>
