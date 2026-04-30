@@ -153,7 +153,7 @@ export default function CustomerDashboardPage() {
           {/* Grid + Center Home button — geometrically centered.
               Symmetric 2x2 grid (equal cols, equal rows via aspect-square, uniform gap)
               guarantees the cross point is exactly at top:50% / left:50%. */}
-          <div className="relative mt-4 flex-none">
+          <div className="relative mt-8 flex-none">
             <div className="relative w-full">
               <div className="grid grid-cols-2 grid-rows-2 gap-3">
                 {tiles.map((t, i) => (
@@ -182,28 +182,36 @@ export default function CustomerDashboardPage() {
                 ))}
               </div>
 
-              {/* Home button — mathematically centered at the grid intersection. */}
-              <motion.button
-                initial={{ scale: 0, rotate: -90 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.3 }}
-                whileTap={{ scale: 0.92 }}
-                onClick={() => navigate("/app/home")}
-                aria-label="Home"
-                className="absolute h-[4.6rem] w-[4.6rem] aspect-square shrink-0 rounded-full flex flex-col items-center justify-center shadow-[0_18px_42px_rgba(0,82,78,0.38),0_0_0_6px_rgba(255,255,255,0.58),0_0_0_9px_rgba(255,255,255,0.28),inset_0_18px_28px_rgba(255,255,255,0.12)] border-[3px] border-white/85 z-20"
+              {/* Home button — mathematically centered at the grid intersection.
+                  Wrapper handles centering (translate). The inner motion.button handles animation
+                  so framer-motion's transform doesn't override the centering translate. */}
+              <div
+                className="absolute z-20 h-[4.6rem] w-[4.6rem] pointer-events-none"
                 style={{
                   top: "50%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
-                  background:
-                    "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)",
                 }}
               >
-                <HomeIcon className="h-6 w-6 shrink-0 text-white drop-shadow-md" strokeWidth={2.6} />
-                <span className="text-[0.65rem] leading-none font-medium text-white mt-1">
-                  Home
-                </span>
-              </motion.button>
+                <motion.button
+                  initial={{ scale: 0, rotate: -90 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.3 }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => navigate("/app/home")}
+                  aria-label="Home"
+                  className="pointer-events-auto h-full w-full aspect-square shrink-0 rounded-full flex flex-col items-center justify-center shadow-[0_18px_42px_rgba(0,82,78,0.38),0_0_0_6px_rgba(255,255,255,0.58),0_0_0_9px_rgba(255,255,255,0.28),inset_0_18px_28px_rgba(255,255,255,0.12)] border-[3px] border-white/85"
+                  style={{
+                    background:
+                      "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)",
+                  }}
+                >
+                  <HomeIcon className="h-6 w-6 shrink-0 text-white drop-shadow-md" strokeWidth={2.6} />
+                  <span className="text-[0.65rem] leading-none font-medium text-white mt-1">
+                    Home
+                  </span>
+                </motion.button>
+              </div>
             </div>
           </div>
 
