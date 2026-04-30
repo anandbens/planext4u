@@ -81,6 +81,7 @@ const InvoicesListPage = lazy(() => import("./pages/reports/InvoicesListPage"));
 
 // Customer pages
 const CustomerHomePage = lazy(() => import("./pages/customer/CustomerHomePage"));
+const CustomerDashboardPage = lazy(() => import("./pages/customer/CustomerDashboardPage"));
 const CustomerLoginPage = lazy(() => import("./pages/customer/CustomerLoginPage"));
 const CustomerBrowsePage = lazy(() => import("./pages/customer/CustomerBrowsePage"));
 const AllCategoriesPage = lazy(() => import("./pages/customer/AllCategoriesPage"));
@@ -486,7 +487,8 @@ const AppRoutes = () => {
           <Route path="/admin/homepage-cms" element={<AdminOnlyPage><AdminHomepageCMSPage /></AdminOnlyPage>} />
 
           {/* Customer-facing routes */}
-          <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <GuestPage><CustomerHomePage /></GuestPage>} />
+          <Route path="/app" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <GuestPage><CustomerDashboardPage /></GuestPage>} />
+          <Route path="/app/home" element={vendorPortalMode ? <Navigate to={customerHomeRoute} replace /> : <GuestPage><CustomerHomePage /></GuestPage>} />
           <Route path="/app/login" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <CustomerLoginPage />} />
           <Route path="/app/forgot-password" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <ForgotPasswordPage />} />
           <Route path="/app/reset-password" element={vendorPortalMode ? <Navigate to={customerLoginRoute} replace /> : <ResetPasswordPage />} />
