@@ -205,10 +205,10 @@ export default function CustomerDashboardPage() {
             transition={{ duration: 0.4, delay: 0.35 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/app/wallet")}
-            className="mt-4 w-full rounded-3xl p-4 sm:p-5 bg-white/15 backdrop-blur-2xl border border-white/30 shadow-[0_8px_32px_rgba(0,40,40,0.25),inset_0_1px_0_rgba(255,255,255,0.4)] flex items-center gap-4 text-left"
+            className="mt-4 w-full rounded-3xl p-4 sm:p-5 bg-white/25 backdrop-blur-3xl border border-white/50 shadow-[0_10px_40px_rgba(0,40,40,0.18),inset_0_1px_0_rgba(255,255,255,0.7)] flex items-center gap-4 text-left"
           >
             <div
-              className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex items-center justify-center shrink-0 shadow-inner"
+              className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]"
               style={{
                 background:
                   "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)",
@@ -217,8 +217,8 @@ export default function CustomerDashboardPage() {
               <WalletIcon className="h-7 w-7 text-white" strokeWidth={1.8} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg sm:text-xl font-bold text-white drop-shadow">Wallet</h3>
-              <p className="text-xs sm:text-sm text-white/85">
+              <h3 className="text-lg sm:text-xl font-bold text-[#0a3a3a]">Wallet</h3>
+              <p className="text-xs sm:text-sm text-[#0a3a3a]/75">
                 Secure payments made easy
               </p>
             </div>
