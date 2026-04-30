@@ -141,10 +141,12 @@ export default function CustomerDashboardPage() {
             </p>
           </motion.div>
 
-          {/* Grid + Center Home button — geometrically centered */}
+          {/* Grid + Center Home button — geometrically centered.
+              Symmetric 2x2 grid (equal cols, equal rows via aspect-square, uniform gap)
+              guarantees the cross point is exactly at top:50% / left:50%. */}
           <div className="relative mt-6 flex-1 flex items-center justify-center">
             <div className="relative w-full">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 grid-rows-2 gap-4">
                 {tiles.map((t, i) => (
                   <motion.button
                     key={t.label}
@@ -153,27 +155,25 @@ export default function CustomerDashboardPage() {
                     transition={{ duration: 0.4, delay: 0.05 * i }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => navigate(t.to)}
-                    className="group relative rounded-3xl p-4 sm:p-5 text-left bg-white/15 backdrop-blur-2xl border border-white/30 shadow-[0_8px_32px_rgba(0,40,40,0.25),inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-white/25 transition-all duration-300 aspect-square flex flex-col items-center justify-center"
+                    className="group relative rounded-3xl p-4 sm:p-5 text-left bg-white/20 backdrop-blur-3xl border border-white/50 shadow-[0_10px_40px_rgba(0,40,40,0.18),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_0_0_1px_rgba(255,255,255,0.15)] hover:bg-white/30 transition-all duration-300 aspect-square flex flex-col items-center justify-center"
                   >
-                    <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-white/25 backdrop-blur-md border border-white/50 shadow-inner flex items-center justify-center mb-2">
-                      <t.icon className="h-7 w-7 sm:h-8 sm:w-8 text-white drop-shadow" strokeWidth={1.6} />
+                    <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-white/30 backdrop-blur-md border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex items-center justify-center mb-2">
+                      <t.icon className="h-7 w-7 sm:h-8 sm:w-8 text-white drop-shadow-md" strokeWidth={1.6} />
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-white drop-shadow">
+                    <h3 className="text-base sm:text-lg font-bold text-[#0a3a3a] drop-shadow-sm">
                       {t.label}
                     </h3>
-                    <p className="text-[11px] sm:text-xs text-white/85 mt-0.5 text-center whitespace-pre-line leading-tight">
+                    <p className="text-[11px] sm:text-xs text-[#0a3a3a]/75 mt-0.5 text-center whitespace-pre-line leading-tight">
                       {t.tagline}
                     </p>
-                    <div className="mt-2 h-7 w-7 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center">
-                      <ArrowRight className="h-3.5 w-3.5 text-white" />
+                    <div className="mt-2 h-7 w-7 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center">
+                      <ArrowRight className="h-3.5 w-3.5 text-[#089b96]" />
                     </div>
                   </motion.button>
                 ))}
               </div>
 
-              {/* Home button — geometrically centered at the grid intersection.
-                  Because the 2x2 grid uses equal cols + equal rows + uniform gap,
-                  top:50% / left:50% with -translate-1/2 lands exactly on the cross. */}
+              {/* Home button — mathematically centered at the grid intersection. */}
               <motion.button
                 initial={{ scale: 0, rotate: -90 }}
                 animate={{ scale: 1, rotate: 0 }}
@@ -181,8 +181,11 @@ export default function CustomerDashboardPage() {
                 whileTap={{ scale: 0.92 }}
                 onClick={() => navigate("/app/home")}
                 aria-label="Home"
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-20 w-20 sm:h-24 sm:w-24 rounded-full flex flex-col items-center justify-center shadow-[0_12px_36px_rgba(0,40,40,0.45)] border-[3px] border-white/80 backdrop-blur-xl z-20"
+                className="absolute h-20 w-20 sm:h-24 sm:w-24 rounded-full flex flex-col items-center justify-center shadow-[0_12px_36px_rgba(0,40,40,0.45),0_0_0_4px_rgba(255,255,255,0.55)] border-[3px] border-white z-20"
                 style={{
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
                   background:
                     "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)",
                 }}
