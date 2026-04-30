@@ -443,14 +443,16 @@ function PostCard({ post }: { post: any }) {
             )}
             <DropdownMenuItem onClick={async () => {
               if (!userId) { toast.error("Please login"); return; }
-              await supabase.from('social_reports').insert({ reporter_id: userId, content_type: 'post', content_id: postId, reason: 'not_interested', details: '', status: 'dismissed' } as any);
+              const { error } = await supabase.from('social_reports').insert({ reporter_id: userId, content_type: 'post', content_id: postId, reason: 'not_interested', details: '', status: 'dismissed' } as any);
+              if (error) { toast.error("Could not hide post. Please try again."); return; }
               toast.success("Post hidden from your feed");
               qc.invalidateQueries({ queryKey: ['social-feed'] });
             }}>Not Interested</DropdownMenuItem>
-            <DropdownMenuItem onClick={async () => {
-              if (!userId) { toast.error("Please login"); return; }
-              await supabase.from('social_reports').insert({ reporter_id: userId, content_type: 'post', content_id: postId, reason: 'inappropriate', details: '', status: 'pending' } as any);
-              toast.success("Post reported. We'll review it shortly.");
+            <DropdownMenuItem onClick={() => {
+              if (!userId) { toast.error("Please login to report"); return; }
+              setReportReason("");
+              setReportDetails("");
+              setReportOpen(true);
             }}>Report</DropdownMenuItem>
             <DropdownMenuItem onClick={() => sharePost(postId, post.caption)}>Copy Link</DropdownMenuItem>
           </DropdownMenuContent>
