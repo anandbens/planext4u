@@ -203,6 +203,10 @@ function PostCard({ post }: { post: any }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
   const [showProductTags, setShowProductTags] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<string>("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const userId = customerUser?.supabase_uid || customerUser?.id;
@@ -439,14 +443,16 @@ function PostCard({ post }: { post: any }) {
             )}
             <DropdownMenuItem onClick={async () => {
               if (!userId) { toast.error("Please login"); return; }
-              await supabase.from('social_reports').insert({ reporter_id: userId, content_type: 'post', content_id: postId, reason: 'not_interested', details: '', status: 'dismissed' } as any);
+              const { error } = await supabase.from('social_reports').insert({ reporter_id: userId, content_type: 'post', content_id: postId, reason: 'not_interested', details: '', status: 'dismissed' } as any);
+              if (error) { toast.error("Could not hide post. Please try again."); return; }
               toast.success("Post hidden from your feed");
               qc.invalidateQueries({ queryKey: ['social-feed'] });
             }}>Not Interested</DropdownMenuItem>
-            <DropdownMenuItem onClick={async () => {
-              if (!userId) { toast.error("Please login"); return; }
-              await supabase.from('social_reports').insert({ reporter_id: userId, content_type: 'post', content_id: postId, reason: 'inappropriate', details: '', status: 'pending' } as any);
-              toast.success("Post reported. We'll review it shortly.");
+            <DropdownMenuItem onClick={() => {
+              if (!userId) { toast.error("Please login to report"); return; }
+              setReportReason("");
+              setReportDetails("");
+              setReportOpen(true);
             }}>Report</DropdownMenuItem>
             <DropdownMenuItem onClick={() => sharePost(postId, post.caption)}>Copy Link</DropdownMenuItem>
           </DropdownMenuContent>
@@ -750,6 +756,74 @@ function PostCard({ post }: { post: any }) {
           )}
         </AnimatePresence>
       </div>
+      {/* Report Dialog */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          <div className="px-5 py-4 border-b border-border/40">
+            <h3 className="text-base font-semibold">Report post</h3>
+            <p className="text-xs text-muted-foreground mt-1">Why are you reporting this post? Your report is anonymous.</p>
+          </div>
+          <div className="max-h-[50vh] overflow-y-auto">
+            {[
+              { v: 'spam', l: 'Spam or misleading' },
+              { v: 'inappropriate', l: 'Nudity or sexual content' },
+              { v: 'hate_speech', l: 'Hate speech or symbols' },
+              { v: 'violence', l: 'Violence or dangerous content' },
+              { v: 'harassment', l: 'Bullying or harassment' },
+              { v: 'false_info', l: 'False information' },
+              { v: 'scam', l: 'Scam or fraud' },
+              { v: 'ip_violation', l: 'Intellectual property violation' },
+              { v: 'other', l: 'Something else' },
+            ].map((r) => (
+              <button
+                key={r.v}
+                onClick={() => setReportReason(r.v)}
+                className={`w-full text-left px-5 py-3 text-sm border-b border-border/30 hover:bg-muted/50 transition-colors ${reportReason === r.v ? 'bg-muted/70 font-medium' : ''}`}
+              >
+                {r.l}
+              </button>
+            ))}
+          </div>
+          {reportReason === 'other' && (
+            <div className="px-5 py-3 border-t border-border/40">
+              <Input
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                placeholder="Tell us more (optional)"
+                maxLength={300}
+              />
+            </div>
+          )}
+          <div className="px-5 py-3 border-t border-border/40 flex items-center justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setReportOpen(false)} disabled={reportSubmitting}>Cancel</Button>
+            <Button
+              size="sm"
+              disabled={!reportReason || reportSubmitting}
+              onClick={async () => {
+                if (!userId || !reportReason) return;
+                setReportSubmitting(true);
+                const { error } = await supabase.from('social_reports').insert({
+                  reporter_id: userId,
+                  content_type: 'post',
+                  content_id: postId,
+                  reason: reportReason,
+                  details: reportDetails || '',
+                  status: 'pending',
+                } as any);
+                setReportSubmitting(false);
+                if (error) {
+                  toast.error("Could not submit report. Please try again.");
+                  return;
+                }
+                setReportOpen(false);
+                toast.success("Thanks for reporting. We'll review it shortly.");
+              }}
+            >
+              {reportSubmitting ? "Submitting..." : "Submit Report"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </article>
   );
 }
