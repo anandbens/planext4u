@@ -78,35 +78,25 @@ export default function CustomerDashboardPage() {
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
 
       <div className="min-h-screen w-full relative overflow-hidden">
-        {/* Background image layer (blurred + dimmed) */}
+        {/* Background image layer — clearly visible, only lightly softened */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: `url(${dashboardBg})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            filter: "blur(8px) brightness(0.55)",
-            transform: "scale(1.1)",
+            filter: "blur(2px) brightness(0.95) saturate(1.05)",
+            transform: "scale(1.05)",
           }}
           aria-hidden="true"
         />
 
-        {/* Teal gradient overlay */}
+        {/* Semi-transparent teal overlay — strong at top, fading to soft white at bottom */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "linear-gradient(160deg, rgba(8,155,150,0.92) 0%, rgba(10,170,164,0.78) 35%, rgba(95,201,195,0.7) 70%, rgba(216,240,238,0.55) 100%)",
-          }}
-          aria-hidden="true"
-        />
-
-        {/* Subtle radial highlights for depth */}
-        <div
-          className="absolute inset-0 opacity-25 pointer-events-none"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 75% 18%, rgba(255,255,255,0.5) 0%, transparent 35%), radial-gradient(circle at 15% 85%, rgba(255,255,255,0.3) 0%, transparent 40%)",
+              "linear-gradient(180deg, rgba(8,155,150,0.78) 0%, rgba(8,155,150,0.55) 30%, rgba(180,225,222,0.45) 65%, rgba(232,246,244,0.75) 100%)",
           }}
           aria-hidden="true"
         />
