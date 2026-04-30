@@ -135,12 +135,12 @@ export default function CustomerDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="mt-6"
+            className="mt-[clamp(2.25rem,6.2vw,3.9rem)]"
           >
-            <h1 className="text-3xl font-bold text-white drop-shadow-sm">
+            <h1 className="text-[clamp(2.2rem,6.1vw,3.65rem)] leading-none font-extrabold text-white drop-shadow-[0_2px_10px_rgba(0,65,65,0.18)]">
               Welcome!
             </h1>
-            <p className="text-white/85 text-sm mt-1">
+            <p className="text-[clamp(1.12rem,3.35vw,2rem)] leading-tight text-white/95 mt-[clamp(0.8rem,2vw,1.15rem)] drop-shadow-sm">
               Everything you need, in one place.
             </p>
           </motion.div>
@@ -148,9 +148,9 @@ export default function CustomerDashboardPage() {
           {/* Grid + Center Home button — geometrically centered.
               Symmetric 2x2 grid (equal cols, equal rows via aspect-square, uniform gap)
               guarantees the cross point is exactly at top:50% / left:50%. */}
-          <div className="relative mt-6 flex-1 flex items-center justify-center">
+          <div className="relative mt-[clamp(1.65rem,4.8vw,2.75rem)] flex-none">
             <div className="relative w-full">
-              <div className="grid grid-cols-2 grid-rows-2 gap-4">
+              <div className="grid grid-cols-2 grid-rows-2 gap-[clamp(0.5rem,2.6vw,1.18rem)]">
                 {tiles.map((t, i) => (
                   <motion.button
                     key={t.label}
@@ -159,19 +159,19 @@ export default function CustomerDashboardPage() {
                     transition={{ duration: 0.4, delay: 0.05 * i }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => navigate(t.to)}
-                    className="group relative rounded-3xl p-4 sm:p-5 text-left bg-white/20 backdrop-blur-3xl border border-white/50 shadow-[0_10px_40px_rgba(0,40,40,0.18),inset_0_1px_0_rgba(255,255,255,0.7),inset_0_0_0_1px_rgba(255,255,255,0.15)] hover:bg-white/30 transition-all duration-300 aspect-square flex flex-col items-center justify-center"
+                    className="group relative h-[clamp(11.6rem,45.6vw,22.7rem)] rounded-[clamp(1.65rem,4.9vw,3.2rem)] px-3 py-[clamp(1rem,3.8vw,2.1rem)] text-left bg-white/38 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_20px_55px_rgba(15,77,75,0.18),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-30px_80px_rgba(255,255,255,0.34)] hover:bg-white/44 transition-all duration-300 flex flex-col items-center justify-center"
                   >
-                    <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-white/30 backdrop-blur-md border border-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex items-center justify-center mb-2">
-                      <t.icon className="h-7 w-7 sm:h-8 sm:w-8 text-white drop-shadow-md" strokeWidth={1.6} />
+                    <div className="h-[clamp(4rem,14.4vw,7.15rem)] w-[clamp(4rem,14.4vw,7.15rem)] rounded-full bg-[#089b96]/54 backdrop-blur-2xl border-2 border-white/72 shadow-[0_14px_32px_rgba(0,95,92,0.24),inset_0_18px_28px_rgba(255,255,255,0.18)] flex items-center justify-center mb-[clamp(1.55rem,4vw,2.7rem)]">
+                      <t.icon className="h-[clamp(1.75rem,6.2vw,3rem)] w-[clamp(1.75rem,6.2vw,3rem)] text-white drop-shadow-[0_3px_6px_rgba(0,83,80,0.35)]" strokeWidth={1.9} />
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-[#0a3a3a] drop-shadow-sm">
+                    <h3 className="text-[clamp(1.28rem,4vw,2.55rem)] leading-none font-extrabold text-[#103348] drop-shadow-sm">
                       {t.label}
                     </h3>
-                    <p className="text-[11px] sm:text-xs text-[#0a3a3a]/75 mt-0.5 text-center whitespace-pre-line leading-tight">
+                    <p className="text-[clamp(0.88rem,2.7vw,1.7rem)] text-[#1e3149]/88 mt-[clamp(0.9rem,2.3vw,1.45rem)] text-center whitespace-pre-line leading-[1.25]">
                       {t.tagline}
                     </p>
-                    <div className="mt-2 h-7 w-7 rounded-full bg-white/50 backdrop-blur-sm border border-white/60 flex items-center justify-center">
-                      <ArrowRight className="h-3.5 w-3.5 text-[#089b96]" />
+                    <div className="mt-[clamp(1rem,3.1vw,2rem)] h-[clamp(2.15rem,5.8vw,3.7rem)] w-[clamp(2.15rem,5.8vw,3.7rem)] rounded-full bg-[#bfece8]/82 backdrop-blur-md border border-white/50 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+                      <ArrowRight className="h-[clamp(1.05rem,3.1vw,1.9rem)] w-[clamp(1.05rem,3.1vw,1.9rem)] text-[#078a86]" strokeWidth={3} />
                     </div>
                   </motion.button>
                 ))}
@@ -185,7 +185,7 @@ export default function CustomerDashboardPage() {
                 whileTap={{ scale: 0.92 }}
                 onClick={() => navigate("/app/home")}
                 aria-label="Home"
-                className="absolute h-20 w-20 sm:h-24 sm:w-24 rounded-full flex flex-col items-center justify-center shadow-[0_12px_36px_rgba(0,40,40,0.45),0_0_0_4px_rgba(255,255,255,0.55)] border-[3px] border-white z-20"
+                className="absolute h-[clamp(5.4rem,16.6vw,9.35rem)] w-[clamp(5.4rem,16.6vw,9.35rem)] rounded-full flex flex-col items-center justify-center shadow-[0_18px_42px_rgba(0,82,78,0.38),0_0_0_7px_rgba(255,255,255,0.58),0_0_0_10px_rgba(255,255,255,0.28),inset_0_18px_28px_rgba(255,255,255,0.12)] border-[3px] border-white/85 z-20"
                 style={{
                   top: "50%",
                   left: "50%",
@@ -194,8 +194,8 @@ export default function CustomerDashboardPage() {
                     "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)",
                 }}
               >
-                <HomeIcon className="h-7 w-7 sm:h-8 sm:w-8 text-white" strokeWidth={2} />
-                <span className="text-[10px] sm:text-xs font-semibold text-white mt-0.5">
+                <HomeIcon className="h-[clamp(1.7rem,5.1vw,2.9rem)] w-[clamp(1.7rem,5.1vw,2.9rem)] text-white drop-shadow-md" strokeWidth={2.6} />
+                <span className="text-[clamp(0.8rem,2.5vw,1.45rem)] leading-none font-medium text-white mt-[clamp(0.35rem,1vw,0.55rem)]">
                   Home
                 </span>
               </motion.button>
