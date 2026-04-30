@@ -10,6 +10,11 @@ import { SplashScreen } from "@/components/customer/SplashScreen";
 import p4uLogo from "@/assets/p4u-logo-dark.png";
 import dashboardBg from "@/assets/dashboard-food-bg.jpg";
 
+type DashboardProfile = {
+  profile_photo: string | null;
+  wallet_points: number | null;
+};
+
 /**
  * Glassmorphic dashboard shown immediately after splash.
  * 2x2 grid of primary modules with a circular Home button at the intersection.
@@ -28,7 +33,7 @@ export default function CustomerDashboardPage() {
   }, [showSplash]);
 
   // Profile photo
-  const { data: profilePhoto } = useQuery({
+  const { data: profilePhoto } = useQuery<DashboardProfile | null>({
     queryKey: ["dash-profile-photo", customerUser?.id],
     queryFn: async () => {
       if (!customerUser?.id) return null;
@@ -43,7 +48,7 @@ export default function CustomerDashboardPage() {
     staleTime: 30_000,
   });
 
-  const walletBalance = (profilePhoto as any)?.wallet_points || 0;
+  const walletBalance = profilePhoto?.wallet_points || 0;
   const initial = (customerUser?.name?.charAt(0) || "U").toUpperCase();
 
   const tiles = [
@@ -118,9 +123,9 @@ export default function CustomerDashboardPage() {
               className="h-[3.65rem] w-[3.65rem] shrink-0 rounded-full overflow-hidden border-[3px] border-white/75 shadow-[0_12px_30px_rgba(0,55,55,0.22)] bg-white/20 backdrop-blur-md flex items-center justify-center"
               aria-label="Profile"
             >
-              {(profilePhoto as any)?.profile_photo ? (
+              {profilePhoto?.profile_photo ? (
                 <img
-                  src={(profilePhoto as any).profile_photo}
+                  src={profilePhoto.profile_photo}
                   alt="Profile"
                   className="h-full w-full object-cover"
                 />
