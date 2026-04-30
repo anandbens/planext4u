@@ -209,31 +209,31 @@ export default function CustomerDashboardPage() {
             transition={{ duration: 0.4, delay: 0.35 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/app/wallet")}
-            className="mt-4 w-full rounded-3xl p-4 sm:p-5 bg-white/25 backdrop-blur-3xl border border-white/50 shadow-[0_10px_40px_rgba(0,40,40,0.18),inset_0_1px_0_rgba(255,255,255,0.7)] flex items-center gap-4 text-left"
+            className="mt-[clamp(0.75rem,2.25vw,1.1rem)] w-full rounded-[clamp(1.5rem,4.2vw,2.7rem)] px-[clamp(1rem,4.4vw,2.55rem)] py-[clamp(0.9rem,2.9vw,1.85rem)] bg-white/42 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_18px_48px_rgba(15,77,75,0.16),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-18px_54px_rgba(255,255,255,0.25)] flex items-center gap-[clamp(1rem,4vw,2.3rem)] text-left"
           >
             <div
-              className="h-14 w-14 sm:h-16 sm:w-16 rounded-full flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]"
+              className="h-[clamp(4.1rem,13.5vw,7.7rem)] w-[clamp(4.1rem,13.5vw,7.7rem)] rounded-full flex items-center justify-center shrink-0 shadow-[0_12px_28px_rgba(0,100,96,0.25),inset_0_16px_26px_rgba(255,255,255,0.16)]"
               style={{
                 background:
                   "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)",
               }}
             >
-              <WalletIcon className="h-7 w-7 text-white" strokeWidth={1.8} />
+              <WalletIcon className="h-[clamp(2rem,5.7vw,3.35rem)] w-[clamp(2rem,5.7vw,3.35rem)] text-white drop-shadow-md" strokeWidth={1.9} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg sm:text-xl font-bold text-[#0a3a3a]">Wallet</h3>
-              <p className="text-xs sm:text-sm text-[#0a3a3a]/75">
+              <h3 className="text-[clamp(1.45rem,4.2vw,2.55rem)] leading-none font-extrabold text-[#103348]">Wallet</h3>
+              <p className="text-[clamp(0.95rem,2.85vw,1.75rem)] text-[#1e3149]/88 mt-[clamp(0.55rem,1.45vw,0.85rem)] leading-[1.18]">
                 Secure payments made easy
               </p>
             </div>
-            <div className="flex flex-col items-end gap-1.5">
-              <div className="px-3 py-1 rounded-full bg-white/50 backdrop-blur-sm border border-white/60">
-                <span className="text-sm font-bold text-[#089b96]">
+            <div className="flex flex-col items-end gap-[clamp(0.75rem,2vw,1.2rem)]">
+              <div className="px-[clamp(0.8rem,2.6vw,1.45rem)] py-[clamp(0.38rem,1vw,0.65rem)] rounded-full bg-[#c6eee9]/82 backdrop-blur-md border border-white/55">
+                <span className="text-[clamp(0.9rem,2.75vw,1.75rem)] font-bold text-[#078a86]">
                   {fmt(walletBalance, { decimals: 0 })}
                 </span>
               </div>
-              <div className="h-7 w-7 rounded-full bg-white/40 flex items-center justify-center">
-                <ArrowRight className="h-3.5 w-3.5 text-[#089b96]" />
+              <div className="h-[clamp(2.15rem,5.8vw,3.7rem)] w-[clamp(2.15rem,5.8vw,3.7rem)] rounded-full bg-[#c6eee9]/82 flex items-center justify-center border border-white/45">
+                <ArrowRight className="h-[clamp(1.05rem,3.1vw,1.9rem)] w-[clamp(1.05rem,3.1vw,1.9rem)] text-[#078a86]" strokeWidth={3} />
               </div>
             </div>
           </motion.button>
