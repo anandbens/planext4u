@@ -203,6 +203,10 @@ function PostCard({ post }: { post: any }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullscreenImg, setFullscreenImg] = useState<string | null>(null);
   const [showProductTags, setShowProductTags] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<string>("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const userId = customerUser?.supabase_uid || customerUser?.id;
