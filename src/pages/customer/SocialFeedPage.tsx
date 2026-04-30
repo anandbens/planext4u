@@ -756,6 +756,74 @@ function PostCard({ post }: { post: any }) {
           )}
         </AnimatePresence>
       </div>
+      {/* Report Dialog */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          <div className="px-5 py-4 border-b border-border/40">
+            <h3 className="text-base font-semibold">Report post</h3>
+            <p className="text-xs text-muted-foreground mt-1">Why are you reporting this post? Your report is anonymous.</p>
+          </div>
+          <div className="max-h-[50vh] overflow-y-auto">
+            {[
+              { v: 'spam', l: 'Spam or misleading' },
+              { v: 'inappropriate', l: 'Nudity or sexual content' },
+              { v: 'hate_speech', l: 'Hate speech or symbols' },
+              { v: 'violence', l: 'Violence or dangerous content' },
+              { v: 'harassment', l: 'Bullying or harassment' },
+              { v: 'false_info', l: 'False information' },
+              { v: 'scam', l: 'Scam or fraud' },
+              { v: 'ip_violation', l: 'Intellectual property violation' },
+              { v: 'other', l: 'Something else' },
+            ].map((r) => (
+              <button
+                key={r.v}
+                onClick={() => setReportReason(r.v)}
+                className={`w-full text-left px-5 py-3 text-sm border-b border-border/30 hover:bg-muted/50 transition-colors ${reportReason === r.v ? 'bg-muted/70 font-medium' : ''}`}
+              >
+                {r.l}
+              </button>
+            ))}
+          </div>
+          {reportReason === 'other' && (
+            <div className="px-5 py-3 border-t border-border/40">
+              <Input
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                placeholder="Tell us more (optional)"
+                maxLength={300}
+              />
+            </div>
+          )}
+          <div className="px-5 py-3 border-t border-border/40 flex items-center justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setReportOpen(false)} disabled={reportSubmitting}>Cancel</Button>
+            <Button
+              size="sm"
+              disabled={!reportReason || reportSubmitting}
+              onClick={async () => {
+                if (!userId || !reportReason) return;
+                setReportSubmitting(true);
+                const { error } = await supabase.from('social_reports').insert({
+                  reporter_id: userId,
+                  content_type: 'post',
+                  content_id: postId,
+                  reason: reportReason,
+                  details: reportDetails || '',
+                  status: 'pending',
+                } as any);
+                setReportSubmitting(false);
+                if (error) {
+                  toast.error("Could not submit report. Please try again.");
+                  return;
+                }
+                setReportOpen(false);
+                toast.success("Thanks for reporting. We'll review it shortly.");
+              }}
+            >
+              {reportSubmitting ? "Submitting..." : "Submit Report"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </article>
   );
 }
