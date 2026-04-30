@@ -106,16 +106,16 @@ export default function CustomerDashboardPage() {
         />
 
         {/* Safe area top padding for notched devices */}
-        <div className="relative z-10 mx-auto h-full w-full max-w-[768px] px-[4.7vw] pt-[max(env(safe-area-inset-top),3.55rem)] pb-[max(env(safe-area-inset-bottom),0.65rem)] flex flex-col">
+        <div className="relative z-10 mx-auto h-full w-full max-w-[430px] px-[22px] pt-[max(env(safe-area-inset-top),3.1rem)] pb-[max(env(safe-area-inset-bottom),0.65rem)] flex flex-col">
           {/* Header */}
           <div className="flex items-start justify-between">
-            <div className="h-[clamp(3.5rem,10vw,4.85rem)] w-[clamp(3.5rem,10vw,4.85rem)] rounded-[1.15rem] overflow-hidden bg-white/10 backdrop-blur-md border border-white/25 shadow-[0_12px_28px_rgba(0,60,60,0.18)] flex items-center justify-center">
+            <div className="h-14 w-14 shrink-0 rounded-[1.05rem] overflow-hidden bg-white/10 backdrop-blur-md border border-white/25 shadow-[0_12px_28px_rgba(0,60,60,0.18)] flex items-center justify-center">
               <img src={p4uLogo} alt="Planext4u" className="h-full w-full object-contain" />
             </div>
 
             <Link
               to="/app/profile"
-              className="h-[clamp(3.75rem,10.3vw,5rem)] w-[clamp(3.75rem,10.3vw,5rem)] rounded-full overflow-hidden border-[3px] border-white/75 shadow-[0_12px_30px_rgba(0,55,55,0.22)] bg-white/20 backdrop-blur-md flex items-center justify-center"
+              className="h-[3.65rem] w-[3.65rem] shrink-0 rounded-full overflow-hidden border-[3px] border-white/75 shadow-[0_12px_30px_rgba(0,55,55,0.22)] bg-white/20 backdrop-blur-md flex items-center justify-center"
               aria-label="Profile"
             >
               {(profilePhoto as any)?.profile_photo ? (
@@ -135,12 +135,12 @@ export default function CustomerDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="mt-[clamp(2.25rem,6.2vw,3.9rem)]"
+            className="mt-8"
           >
-            <h1 className="text-[clamp(2.2rem,6.1vw,3.65rem)] leading-none font-extrabold text-white drop-shadow-[0_2px_10px_rgba(0,65,65,0.18)]">
+            <h1 className="text-[2.15rem] leading-none font-extrabold text-white drop-shadow-[0_2px_10px_rgba(0,65,65,0.18)]">
               Welcome!
             </h1>
-            <p className="text-[clamp(1.12rem,3.35vw,2rem)] leading-tight text-white/95 mt-[clamp(0.8rem,2vw,1.15rem)] drop-shadow-sm">
+            <p className="text-[1.08rem] leading-tight text-white/95 mt-3 drop-shadow-sm">
               Everything you need, in one place.
             </p>
           </motion.div>
