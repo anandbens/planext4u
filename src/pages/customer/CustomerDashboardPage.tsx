@@ -77,20 +77,38 @@ export default function CustomerDashboardPage() {
     <>
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
 
-      <div
-        className="min-h-screen w-full relative overflow-hidden"
-        style={{
-          background:
-            "linear-gradient(160deg, #089b96 0%, #0aaaa4 35%, #5fc9c3 70%, #d8f0ee 100%)",
-        }}
-      >
-        {/* Decorative background bowls layer for visual depth */}
+      <div className="min-h-screen w-full relative overflow-hidden">
+        {/* Background image layer (blurred + dimmed) */}
         <div
-          className="absolute inset-0 opacity-20 pointer-events-none"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: `url(${dashboardBg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(8px) brightness(0.55)",
+            transform: "scale(1.1)",
+          }}
+          aria-hidden="true"
+        />
+
+        {/* Teal gradient overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(160deg, rgba(8,155,150,0.92) 0%, rgba(10,170,164,0.78) 35%, rgba(95,201,195,0.7) 70%, rgba(216,240,238,0.55) 100%)",
+          }}
+          aria-hidden="true"
+        />
+
+        {/* Subtle radial highlights for depth */}
+        <div
+          className="absolute inset-0 opacity-25 pointer-events-none"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 75% 18%, rgba(255,255,255,0.4) 0%, transparent 35%), radial-gradient(circle at 90% 35%, rgba(255,255,255,0.3) 0%, transparent 30%)",
+              "radial-gradient(circle at 75% 18%, rgba(255,255,255,0.5) 0%, transparent 35%), radial-gradient(circle at 15% 85%, rgba(255,255,255,0.3) 0%, transparent 40%)",
           }}
+          aria-hidden="true"
         />
 
         {/* Safe area top padding for notched devices */}
