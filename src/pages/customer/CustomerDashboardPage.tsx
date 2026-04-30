@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { ShoppingBag, Users, Wrench, Tag, Home as HomeIcon, Wallet as WalletIcon, ArrowRight } from "lucide-react";
+import { ShoppingBag, Users, BriefcaseBusiness, Tag, Home as HomeIcon, Wallet as WalletIcon, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
@@ -77,41 +77,45 @@ export default function CustomerDashboardPage() {
     <>
       {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
 
-      <div className="min-h-screen w-full relative overflow-hidden">
-        {/* Background image layer — clearly visible, only lightly softened */}
+      <div className="h-dvh min-h-[100dvh] w-full relative overflow-hidden bg-[#dff4ef]">
+        {/* Background image layer — clear food/grain detail like the reference */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage: `url(${dashboardBg})`,
             backgroundSize: "cover",
-            backgroundPosition: "center",
-            filter: "blur(2px) brightness(0.95) saturate(1.05)",
-            transform: "scale(1.05)",
+            backgroundPosition: "center top",
+            filter: "brightness(0.88) saturate(1.18)",
           }}
           aria-hidden="true"
         />
 
-        {/* Semi-transparent teal overlay — strong at top, fading to soft white at bottom */}
+        {/* Semi-transparent teal wash that keeps the food image recognizable */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "linear-gradient(180deg, rgba(8,155,150,0.78) 0%, rgba(8,155,150,0.55) 30%, rgba(180,225,222,0.45) 65%, rgba(232,246,244,0.75) 100%)",
+              "linear-gradient(180deg, rgba(8,155,150,0.86) 0%, rgba(8,155,150,0.63) 25%, rgba(8,155,150,0.22) 43%, rgba(236,250,247,0.72) 58%, rgba(236,250,247,0.92) 100%)",
           }}
+          aria-hidden="true"
+        />
+        <div
+          className="absolute inset-x-0 top-[30%] h-[24%] pointer-events-none blur-2xl"
+          style={{ background: "linear-gradient(180deg, rgba(0,131,126,0) 0%, rgba(239,253,250,0.78) 72%, rgba(239,253,250,0) 100%)" }}
           aria-hidden="true"
         />
 
         {/* Safe area top padding for notched devices */}
-        <div className="relative z-10 px-5 pt-[max(env(safe-area-inset-top),1.25rem)] pb-[max(env(safe-area-inset-bottom),1.25rem)] min-h-screen flex flex-col">
+        <div className="relative z-10 mx-auto h-full w-full max-w-[768px] px-[4.7vw] pt-[max(env(safe-area-inset-top),3.55rem)] pb-[max(env(safe-area-inset-bottom),0.65rem)] flex flex-col">
           {/* Header */}
           <div className="flex items-start justify-between">
-            <div className="h-14 w-14 rounded-2xl overflow-hidden bg-white/20 backdrop-blur-md border border-white/30 shadow-lg flex items-center justify-center">
+            <div className="h-[clamp(3.5rem,10vw,4.85rem)] w-[clamp(3.5rem,10vw,4.85rem)] rounded-[1.15rem] overflow-hidden bg-white/10 backdrop-blur-md border border-white/25 shadow-[0_12px_28px_rgba(0,60,60,0.18)] flex items-center justify-center">
               <img src={p4uLogo} alt="Planext4u" className="h-full w-full object-contain" />
             </div>
 
             <Link
               to="/app/profile"
-              className="h-14 w-14 rounded-full overflow-hidden border-2 border-white/60 shadow-lg bg-white/20 backdrop-blur-md flex items-center justify-center"
+              className="h-[clamp(3.75rem,10.3vw,5rem)] w-[clamp(3.75rem,10.3vw,5rem)] rounded-full overflow-hidden border-[3px] border-white/75 shadow-[0_12px_30px_rgba(0,55,55,0.22)] bg-white/20 backdrop-blur-md flex items-center justify-center"
               aria-label="Profile"
             >
               {(profilePhoto as any)?.profile_photo ? (
