@@ -148,9 +148,9 @@ export default function CustomerDashboardPage() {
           {/* Grid + Center Home button — geometrically centered.
               Symmetric 2x2 grid (equal cols, equal rows via aspect-square, uniform gap)
               guarantees the cross point is exactly at top:50% / left:50%. */}
-          <div className="relative mt-[clamp(1.65rem,4.8vw,2.75rem)] flex-none">
+          <div className="relative mt-7 flex-none">
             <div className="relative w-full">
-              <div className="grid grid-cols-2 grid-rows-2 gap-[clamp(0.5rem,2.6vw,1.18rem)]">
+              <div className="grid grid-cols-2 grid-rows-2 gap-4">
                 {tiles.map((t, i) => (
                   <motion.button
                     key={t.label}
@@ -159,19 +159,19 @@ export default function CustomerDashboardPage() {
                     transition={{ duration: 0.4, delay: 0.05 * i }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => navigate(t.to)}
-                    className="group relative h-[clamp(11.6rem,45.6vw,22.7rem)] rounded-[clamp(1.65rem,4.9vw,3.2rem)] px-3 py-[clamp(1rem,3.8vw,2.1rem)] text-left bg-white/38 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_20px_55px_rgba(15,77,75,0.18),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-30px_80px_rgba(255,255,255,0.34)] hover:bg-white/44 transition-all duration-300 flex flex-col items-center justify-center"
+                    className="group relative aspect-square min-w-0 rounded-[1.65rem] px-3 py-4 text-left bg-white/38 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_20px_55px_rgba(15,77,75,0.18),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-30px_80px_rgba(255,255,255,0.34)] hover:bg-white/44 transition-all duration-300 flex flex-col items-center justify-center"
                   >
-                    <div className="h-[clamp(4rem,14.4vw,7.15rem)] w-[clamp(4rem,14.4vw,7.15rem)] rounded-full bg-[#089b96]/54 backdrop-blur-2xl border-2 border-white/72 shadow-[0_14px_32px_rgba(0,95,92,0.24),inset_0_18px_28px_rgba(255,255,255,0.18)] flex items-center justify-center mb-[clamp(1.55rem,4vw,2.7rem)]">
-                      <t.icon className="h-[clamp(1.75rem,6.2vw,3rem)] w-[clamp(1.75rem,6.2vw,3rem)] text-white drop-shadow-[0_3px_6px_rgba(0,83,80,0.35)]" strokeWidth={1.9} />
+                    <div className="h-[4.6rem] w-[4.6rem] aspect-square shrink-0 rounded-full bg-[#089b96]/54 backdrop-blur-2xl border-2 border-white/72 shadow-[0_14px_32px_rgba(0,95,92,0.24),inset_0_18px_28px_rgba(255,255,255,0.18)] flex items-center justify-center mb-4">
+                      <t.icon className="h-8 w-8 shrink-0 text-white drop-shadow-[0_3px_6px_rgba(0,83,80,0.35)]" strokeWidth={1.9} />
                     </div>
-                    <h3 className="text-[clamp(1.28rem,4vw,2.55rem)] leading-none font-extrabold text-[#103348] drop-shadow-sm">
+                    <h3 className="text-[1.17rem] leading-none font-extrabold text-[#103348] drop-shadow-sm">
                       {t.label}
                     </h3>
-                    <p className="text-[clamp(0.88rem,2.7vw,1.7rem)] text-[#1e3149]/88 mt-[clamp(0.9rem,2.3vw,1.45rem)] text-center whitespace-pre-line leading-[1.25]">
+                    <p className="text-[0.78rem] text-[#1e3149]/88 mt-2.5 text-center whitespace-pre-line leading-[1.24]">
                       {t.tagline}
                     </p>
-                    <div className="mt-[clamp(1rem,3.1vw,2rem)] h-[clamp(2.15rem,5.8vw,3.7rem)] w-[clamp(2.15rem,5.8vw,3.7rem)] rounded-full bg-[#bfece8]/82 backdrop-blur-md border border-white/50 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                      <ArrowRight className="h-[clamp(1.05rem,3.1vw,1.9rem)] w-[clamp(1.05rem,3.1vw,1.9rem)] text-[#078a86]" strokeWidth={3} />
+                    <div className="mt-3 h-8 w-8 aspect-square shrink-0 rounded-full bg-[#bfece8]/82 backdrop-blur-md border border-white/50 flex items-center justify-center p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+                      <ArrowRight className="h-full w-full shrink-0 text-[#078a86]" strokeWidth={3} />
                     </div>
                   </motion.button>
                 ))}
