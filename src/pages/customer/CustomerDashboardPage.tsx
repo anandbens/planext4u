@@ -10,6 +10,11 @@ import { SplashScreen } from "@/components/customer/SplashScreen";
 import p4uLogo from "@/assets/p4u-logo-dark.png";
 import dashboardBg from "@/assets/dashboard-food-bg.jpg";
 
+type DashboardProfile = {
+  profile_photo: string | null;
+  wallet_points: number | null;
+};
+
 /**
  * Glassmorphic dashboard shown immediately after splash.
  * 2x2 grid of primary modules with a circular Home button at the intersection.
@@ -28,7 +33,7 @@ export default function CustomerDashboardPage() {
   }, [showSplash]);
 
   // Profile photo
-  const { data: profilePhoto } = useQuery({
+  const { data: profilePhoto } = useQuery<DashboardProfile | null>({
     queryKey: ["dash-profile-photo", customerUser?.id],
     queryFn: async () => {
       if (!customerUser?.id) return null;
@@ -43,7 +48,7 @@ export default function CustomerDashboardPage() {
     staleTime: 30_000,
   });
 
-  const walletBalance = (profilePhoto as any)?.wallet_points || 0;
+  const walletBalance = profilePhoto?.wallet_points || 0;
   const initial = (customerUser?.name?.charAt(0) || "U").toUpperCase();
 
   const tiles = [
@@ -106,21 +111,21 @@ export default function CustomerDashboardPage() {
         />
 
         {/* Safe area top padding for notched devices */}
-        <div className="relative z-10 mx-auto h-full w-full max-w-[768px] px-[4.7vw] pt-[max(env(safe-area-inset-top),3.55rem)] pb-[max(env(safe-area-inset-bottom),0.65rem)] flex flex-col">
+        <div className="relative z-10 mx-auto h-full w-full max-w-[430px] px-[22px] pt-[max(env(safe-area-inset-top),3.1rem)] pb-[max(env(safe-area-inset-bottom),0.65rem)] flex flex-col">
           {/* Header */}
           <div className="flex items-start justify-between">
-            <div className="h-[clamp(3.5rem,10vw,4.85rem)] w-[clamp(3.5rem,10vw,4.85rem)] rounded-[1.15rem] overflow-hidden bg-white/10 backdrop-blur-md border border-white/25 shadow-[0_12px_28px_rgba(0,60,60,0.18)] flex items-center justify-center">
+            <div className="h-14 w-14 shrink-0 rounded-[1.05rem] overflow-hidden bg-white/10 backdrop-blur-md border border-white/25 shadow-[0_12px_28px_rgba(0,60,60,0.18)] flex items-center justify-center">
               <img src={p4uLogo} alt="Planext4u" className="h-full w-full object-contain" />
             </div>
 
             <Link
               to="/app/profile"
-              className="h-[clamp(3.75rem,10.3vw,5rem)] w-[clamp(3.75rem,10.3vw,5rem)] rounded-full overflow-hidden border-[3px] border-white/75 shadow-[0_12px_30px_rgba(0,55,55,0.22)] bg-white/20 backdrop-blur-md flex items-center justify-center"
+              className="h-[3.65rem] w-[3.65rem] shrink-0 rounded-full overflow-hidden border-[3px] border-white/75 shadow-[0_12px_30px_rgba(0,55,55,0.22)] bg-white/20 backdrop-blur-md flex items-center justify-center"
               aria-label="Profile"
             >
-              {(profilePhoto as any)?.profile_photo ? (
+              {profilePhoto?.profile_photo ? (
                 <img
-                  src={(profilePhoto as any).profile_photo}
+                  src={profilePhoto.profile_photo}
                   alt="Profile"
                   className="h-full w-full object-cover"
                 />
@@ -135,12 +140,12 @@ export default function CustomerDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="mt-[clamp(2.25rem,6.2vw,3.9rem)]"
+            className="mt-8"
           >
-            <h1 className="text-[clamp(2.2rem,6.1vw,3.65rem)] leading-none font-extrabold text-white drop-shadow-[0_2px_10px_rgba(0,65,65,0.18)]">
+            <h1 className="text-[2.15rem] leading-none font-extrabold text-white drop-shadow-[0_2px_10px_rgba(0,65,65,0.18)]">
               Welcome!
             </h1>
-            <p className="text-[clamp(1.12rem,3.35vw,2rem)] leading-tight text-white/95 mt-[clamp(0.8rem,2vw,1.15rem)] drop-shadow-sm">
+            <p className="text-[1.08rem] leading-tight text-white/95 mt-3 drop-shadow-sm">
               Everything you need, in one place.
             </p>
           </motion.div>
@@ -148,9 +153,9 @@ export default function CustomerDashboardPage() {
           {/* Grid + Center Home button — geometrically centered.
               Symmetric 2x2 grid (equal cols, equal rows via aspect-square, uniform gap)
               guarantees the cross point is exactly at top:50% / left:50%. */}
-          <div className="relative mt-[clamp(1.65rem,4.8vw,2.75rem)] flex-none">
+          <div className="relative mt-7 flex-none">
             <div className="relative w-full">
-              <div className="grid grid-cols-2 grid-rows-2 gap-[clamp(0.5rem,2.6vw,1.18rem)]">
+              <div className="grid grid-cols-2 grid-rows-2 gap-4">
                 {tiles.map((t, i) => (
                   <motion.button
                     key={t.label}
@@ -159,19 +164,19 @@ export default function CustomerDashboardPage() {
                     transition={{ duration: 0.4, delay: 0.05 * i }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => navigate(t.to)}
-                    className="group relative h-[clamp(11.6rem,45.6vw,22.7rem)] rounded-[clamp(1.65rem,4.9vw,3.2rem)] px-3 py-[clamp(1rem,3.8vw,2.1rem)] text-left bg-white/38 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_20px_55px_rgba(15,77,75,0.18),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-30px_80px_rgba(255,255,255,0.34)] hover:bg-white/44 transition-all duration-300 flex flex-col items-center justify-center"
+                    className="group relative aspect-square min-w-0 rounded-[1.65rem] px-3 py-4 text-left bg-white/38 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_20px_55px_rgba(15,77,75,0.18),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-30px_80px_rgba(255,255,255,0.34)] hover:bg-white/44 transition-all duration-300 flex flex-col items-center justify-center"
                   >
-                    <div className="h-[clamp(4rem,14.4vw,7.15rem)] w-[clamp(4rem,14.4vw,7.15rem)] rounded-full bg-[#089b96]/54 backdrop-blur-2xl border-2 border-white/72 shadow-[0_14px_32px_rgba(0,95,92,0.24),inset_0_18px_28px_rgba(255,255,255,0.18)] flex items-center justify-center mb-[clamp(1.55rem,4vw,2.7rem)]">
-                      <t.icon className="h-[clamp(1.75rem,6.2vw,3rem)] w-[clamp(1.75rem,6.2vw,3rem)] text-white drop-shadow-[0_3px_6px_rgba(0,83,80,0.35)]" strokeWidth={1.9} />
+                    <div className="h-[4.6rem] w-[4.6rem] aspect-square shrink-0 rounded-full bg-[#089b96]/54 backdrop-blur-2xl border-2 border-white/72 shadow-[0_14px_32px_rgba(0,95,92,0.24),inset_0_18px_28px_rgba(255,255,255,0.18)] flex items-center justify-center mb-4">
+                      <t.icon className="h-8 w-8 shrink-0 text-white drop-shadow-[0_3px_6px_rgba(0,83,80,0.35)]" strokeWidth={1.9} />
                     </div>
-                    <h3 className="text-[clamp(1.28rem,4vw,2.55rem)] leading-none font-extrabold text-[#103348] drop-shadow-sm">
+                    <h3 className="text-[1.17rem] leading-none font-extrabold text-[#103348] drop-shadow-sm">
                       {t.label}
                     </h3>
-                    <p className="text-[clamp(0.88rem,2.7vw,1.7rem)] text-[#1e3149]/88 mt-[clamp(0.9rem,2.3vw,1.45rem)] text-center whitespace-pre-line leading-[1.25]">
+                    <p className="text-[0.78rem] text-[#1e3149]/88 mt-2.5 text-center whitespace-pre-line leading-[1.24]">
                       {t.tagline}
                     </p>
-                    <div className="mt-[clamp(1rem,3.1vw,2rem)] h-[clamp(2.15rem,5.8vw,3.7rem)] w-[clamp(2.15rem,5.8vw,3.7rem)] rounded-full bg-[#bfece8]/82 backdrop-blur-md border border-white/50 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                      <ArrowRight className="h-[clamp(1.05rem,3.1vw,1.9rem)] w-[clamp(1.05rem,3.1vw,1.9rem)] text-[#078a86]" strokeWidth={3} />
+                    <div className="mt-3 h-8 w-8 aspect-square shrink-0 rounded-full bg-[#bfece8]/82 backdrop-blur-md border border-white/50 flex items-center justify-center p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+                      <ArrowRight className="h-full w-full shrink-0 text-[#078a86]" strokeWidth={3} />
                     </div>
                   </motion.button>
                 ))}
@@ -185,7 +190,7 @@ export default function CustomerDashboardPage() {
                 whileTap={{ scale: 0.92 }}
                 onClick={() => navigate("/app/home")}
                 aria-label="Home"
-                className="absolute h-[clamp(5.4rem,16.6vw,9.35rem)] w-[clamp(5.4rem,16.6vw,9.35rem)] rounded-full flex flex-col items-center justify-center shadow-[0_18px_42px_rgba(0,82,78,0.38),0_0_0_7px_rgba(255,255,255,0.58),0_0_0_10px_rgba(255,255,255,0.28),inset_0_18px_28px_rgba(255,255,255,0.12)] border-[3px] border-white/85 z-20"
+                className="absolute h-[5.7rem] w-[5.7rem] aspect-square shrink-0 rounded-full flex flex-col items-center justify-center shadow-[0_18px_42px_rgba(0,82,78,0.38),0_0_0_7px_rgba(255,255,255,0.58),0_0_0_10px_rgba(255,255,255,0.28),inset_0_18px_28px_rgba(255,255,255,0.12)] border-[3px] border-white/85 z-20"
                 style={{
                   top: "50%",
                   left: "50%",
@@ -194,8 +199,8 @@ export default function CustomerDashboardPage() {
                     "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)",
                 }}
               >
-                <HomeIcon className="h-[clamp(1.7rem,5.1vw,2.9rem)] w-[clamp(1.7rem,5.1vw,2.9rem)] text-white drop-shadow-md" strokeWidth={2.6} />
-                <span className="text-[clamp(0.8rem,2.5vw,1.45rem)] leading-none font-medium text-white mt-[clamp(0.35rem,1vw,0.55rem)]">
+                <HomeIcon className="h-7 w-7 shrink-0 text-white drop-shadow-md" strokeWidth={2.6} />
+                <span className="text-[0.78rem] leading-none font-medium text-white mt-1.5">
                   Home
                 </span>
               </motion.button>
@@ -209,31 +214,31 @@ export default function CustomerDashboardPage() {
             transition={{ duration: 0.4, delay: 0.35 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/app/wallet")}
-            className="mt-[clamp(0.75rem,2.25vw,1.1rem)] w-full rounded-[clamp(1.5rem,4.2vw,2.7rem)] px-[clamp(1rem,4.4vw,2.55rem)] py-[clamp(0.9rem,2.9vw,1.85rem)] bg-white/42 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_18px_48px_rgba(15,77,75,0.16),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-18px_54px_rgba(255,255,255,0.25)] flex items-center gap-[clamp(1rem,4vw,2.3rem)] text-left"
+            className="mt-4 w-full rounded-[1.65rem] px-4 py-3.5 bg-white/42 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_18px_48px_rgba(15,77,75,0.16),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-18px_54px_rgba(255,255,255,0.25)] flex items-center gap-4 text-left"
           >
             <div
-              className="h-[clamp(4.1rem,13.5vw,7.7rem)] w-[clamp(4.1rem,13.5vw,7.7rem)] rounded-full flex items-center justify-center shrink-0 shadow-[0_12px_28px_rgba(0,100,96,0.25),inset_0_16px_26px_rgba(255,255,255,0.16)]"
+              className="h-[4.35rem] w-[4.35rem] aspect-square rounded-full flex items-center justify-center shrink-0 shadow-[0_12px_28px_rgba(0,100,96,0.25),inset_0_16px_26px_rgba(255,255,255,0.16)]"
               style={{
                 background:
                   "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)",
               }}
             >
-              <WalletIcon className="h-[clamp(2rem,5.7vw,3.35rem)] w-[clamp(2rem,5.7vw,3.35rem)] text-white drop-shadow-md" strokeWidth={1.9} />
+              <WalletIcon className="h-8 w-8 shrink-0 text-white drop-shadow-md" strokeWidth={1.9} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-[clamp(1.45rem,4.2vw,2.55rem)] leading-none font-extrabold text-[#103348]">Wallet</h3>
-              <p className="text-[clamp(0.95rem,2.85vw,1.75rem)] text-[#1e3149]/88 mt-[clamp(0.55rem,1.45vw,0.85rem)] leading-[1.18]">
+              <h3 className="text-[1.22rem] leading-none font-extrabold text-[#103348]">Wallet</h3>
+              <p className="text-[0.82rem] text-[#1e3149]/88 mt-2 leading-[1.18]">
                 Secure payments made easy
               </p>
             </div>
-            <div className="flex flex-col items-end gap-[clamp(0.75rem,2vw,1.2rem)]">
-              <div className="px-[clamp(0.8rem,2.6vw,1.45rem)] py-[clamp(0.38rem,1vw,0.65rem)] rounded-full bg-[#c6eee9]/82 backdrop-blur-md border border-white/55">
-                <span className="text-[clamp(0.9rem,2.75vw,1.75rem)] font-bold text-[#078a86]">
+            <div className="flex flex-col items-end gap-3">
+              <div className="px-3 py-1.5 rounded-full bg-[#c6eee9]/82 backdrop-blur-md border border-white/55">
+                <span className="text-[0.9rem] font-bold text-[#078a86]">
                   {fmt(walletBalance, { decimals: 0 })}
                 </span>
               </div>
-              <div className="h-[clamp(2.15rem,5.8vw,3.7rem)] w-[clamp(2.15rem,5.8vw,3.7rem)] rounded-full bg-[#c6eee9]/82 flex items-center justify-center border border-white/45">
-                <ArrowRight className="h-[clamp(1.05rem,3.1vw,1.9rem)] w-[clamp(1.05rem,3.1vw,1.9rem)] text-[#078a86]" strokeWidth={3} />
+              <div className="h-8 w-8 aspect-square shrink-0 rounded-full bg-[#c6eee9]/82 flex items-center justify-center p-1.5 border border-white/45">
+                <ArrowRight className="h-full w-full shrink-0 text-[#078a86]" strokeWidth={3} />
               </div>
             </div>
           </motion.button>
