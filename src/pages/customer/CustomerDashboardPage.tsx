@@ -62,7 +62,7 @@ export default function CustomerDashboardPage() {
     {
       label: "Services",
       tagline: "Book trusted\nservices",
-      icon: Wrench,
+      icon: BriefcaseBusiness,
       to: "/app/services",
     },
     {
