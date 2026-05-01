@@ -198,14 +198,14 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           {/* Row 2: Horizontal pill tabs */}
           <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-3 -mx-1 px-1" style={{ WebkitOverflowScrolling: 'touch' }}>
             {[
-              { label: "Home", to: "/app" },
+              { label: "Home", to: "/app/home" },
               { label: "Shop", to: "/app/browse", comingSoon: !modules.shop },
               { label: "Socio", to: "/app/social", comingSoon: !modules.socio },
               { label: "Services", to: "/app/services", comingSoon: !modules.services },
               { label: "Find Home", to: "/app/find-home", comingSoon: !modules.homes },
               { label: "Classified", to: "/app/classifieds", comingSoon: !modules.classifieds },
             ].map((tab) => {
-              const active = tab.to === "/app" ? location.pathname === "/app" : isActive(tab.to);
+              const active = tab.to === "/app/home" ? location.pathname === "/app/home" : isActive(tab.to);
               return (
               <Link key={tab.label} to={tab.comingSoon ? "#" : tab.to}
                 onClick={(e) => { if (tab.comingSoon) { e.preventDefault(); toast.info(`${tab.label} — Coming Soon!`); } }}
