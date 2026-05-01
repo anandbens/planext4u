@@ -487,7 +487,7 @@ function PostCard({ post }: { post: any }) {
                   <img
                     src={m?.mediumUrl || m?.url || ''}
                     alt=""
-                    className="w-full h-full object-cover cursor-pointer"
+                    className="w-full h-full object-contain cursor-pointer"
                     loading={i === 0 ? "eager" : "lazy"}
                     decoding="async"
                     draggable={false}
