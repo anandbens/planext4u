@@ -460,7 +460,7 @@ function PostCard({ post }: { post: any }) {
       </div>
 
       {/* Media */}
-      <div className="relative aspect-square bg-muted overflow-hidden">
+      <div className="relative w-full bg-black overflow-hidden flex items-center justify-center" style={{ maxHeight: '125vw', minHeight: '60vw' }}>
         {mediaItems.length > 0 ? (
           <div
             className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
@@ -479,7 +479,7 @@ function PostCard({ post }: { post: any }) {
                   <video
                     ref={i === 0 ? videoRef : undefined}
                     src={m?.url || ''}
-                    className="w-full h-full object-cover cursor-pointer"
+                    className="w-full h-full object-contain cursor-pointer"
                     controls muted playsInline
                     onClick={() => setFullscreenImg(m?.url || '')}
                   />
@@ -487,7 +487,7 @@ function PostCard({ post }: { post: any }) {
                   <img
                     src={m?.mediumUrl || m?.url || ''}
                     alt=""
-                    className="w-full h-full object-cover cursor-pointer"
+                    className="w-full h-full object-contain cursor-pointer"
                     loading={i === 0 ? "eager" : "lazy"}
                     decoding="async"
                     draggable={false}
