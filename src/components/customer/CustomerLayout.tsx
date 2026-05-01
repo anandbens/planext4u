@@ -205,7 +205,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               { label: "Find Home", to: "/app/find-home", comingSoon: !modules.homes },
               { label: "Classified", to: "/app/classifieds", comingSoon: !modules.classifieds },
             ].map((tab) => {
-              const active = tab.to === "/app" ? location.pathname === "/app" : isActive(tab.to);
+              const active = tab.to === "/app/home" ? location.pathname === "/app/home" : isActive(tab.to);
               return (
               <Link key={tab.label} to={tab.comingSoon ? "#" : tab.to}
                 onClick={(e) => { if (tab.comingSoon) { e.preventDefault(); toast.info(`${tab.label} — Coming Soon!`); } }}
