@@ -190,7 +190,7 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 bg-black/80">
+      <div className="flex items-center justify-between p-3 bg-black/80" style={{ paddingTop: 'max(env(safe-area-inset-top), 0.75rem)' }}>
         <button onClick={onCancel}><X className="h-6 w-6 text-white" /></button>
         <span className="text-white font-semibold">Edit Image</span>
         <Button size="sm" onClick={handleSave} className="gap-1"><Check className="h-4 w-4" /> Done</Button>
@@ -280,7 +280,7 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
       </div>
 
       {/* Tool tabs */}
-      <div className="bg-black/90 border-t border-white/10">
+      <div className="bg-black/90 border-t border-white/10" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)' }}>
         <div className="flex items-center justify-around py-2">
           <button
             className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-lg ${activeTab === "crop" ? "bg-white/20 text-white" : "text-white/60"}`}
