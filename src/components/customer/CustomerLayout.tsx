@@ -219,7 +219,8 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                   <span className="absolute -top-1.5 -right-1 bg-warning text-warning-foreground text-[7px] font-bold px-1 py-px rounded-full leading-none whitespace-nowrap">SOON</span>
                 )}
               </Link>
-            ))}
+              );
+            })}
           </div>
 
           {/* Row 3: Search bar */}
