@@ -460,7 +460,7 @@ function PostCard({ post }: { post: any }) {
       </div>
 
       {/* Media */}
-      <div className="relative aspect-square bg-muted overflow-hidden">
+      <div className="relative w-full bg-black overflow-hidden flex items-center justify-center" style={{ maxHeight: '125vw', minHeight: '60vw' }}>
         {mediaItems.length > 0 ? (
           <div
             className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
