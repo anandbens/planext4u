@@ -559,20 +559,20 @@ export default function CustomerBrowsePage() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-6">
                   <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage <= 1}
-                    onClick={() => setCurrentPage(p => p - 1)}>
+                    onClick={() => { setCurrentPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                     const pageNum = totalPages <= 5 ? i + 1 : currentPage <= 3 ? i + 1 : currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i;
                     return (
                       <Button key={pageNum} variant={currentPage === pageNum ? "default" : "outline"} size="sm"
-                        className="h-8 w-8 text-xs" onClick={() => setCurrentPage(pageNum)}>
+                        className="h-8 w-8 text-xs" onClick={() => { setCurrentPage(pageNum); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                         {pageNum}
                       </Button>
                     );
                   })}
                   <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage >= totalPages}
-                    onClick={() => setCurrentPage(p => p + 1)}>
+                    onClick={() => { setCurrentPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
