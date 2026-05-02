@@ -219,18 +219,18 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
 
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 mt-6">
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page <= 1} onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   const pageNum = totalPages <= 5 ? i + 1 : page <= 3 ? i + 1 : page >= totalPages - 2 ? totalPages - 4 + i : page - 2 + i;
                   return (
-                    <Button key={pageNum} variant={page === pageNum ? "default" : "outline"} size="sm" className="h-8 w-8 text-xs" onClick={() => setPage(pageNum)}>
+                    <Button key={pageNum} variant={page === pageNum ? "default" : "outline"} size="sm" className="h-8 w-8 text-xs" onClick={() => { setPage(pageNum); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                       {pageNum}
                     </Button>
                   );
                 })}
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages} onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
