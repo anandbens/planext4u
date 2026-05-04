@@ -255,27 +255,10 @@ export const api = {
       description: "Welcome bonus on registration", user_name: data.name,
     });
 
-    // Handle referral
-    if (data.referral_code) {
-      const { data: referrer } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('referral_code', data.referral_code)
-        .single();
-
-      if (referrer) {
-        await supabase.from('customers').update({ wallet_points: referrer.wallet_points + 100 }).eq('id', referrer.id);
-        await supabase.from('referrals').insert({
-          id: genId('REF'), referrer_id: referrer.id, referee_id: newId,
-          status: "completed", points_awarded: 100,
-          referrer_name: referrer.name, referee_name: data.name,
-        });
-        await supabase.from('points_transactions').insert({
-          id: genId('PT'), user_id: referrer.id, type: "referral", points: 100,
-          description: `Referral reward: ${data.name} joined`, user_name: referrer.name,
-        });
-      }
-    }
+    // Refer & Earn: do NOT credit points at signup.
+    // The referrer is rewarded only after the referee completes their first order
+    // (handled by DB trigger credit_referral_on_first_delivery, which awards 1 point
+    // and is idempotent per referee). We only stamp referred_by on the customer record.
 
     return { success: true, user: { id: newId, name: data.name }, token: 'session' };
   },
