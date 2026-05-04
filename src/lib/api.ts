@@ -1965,7 +1965,27 @@ export const api = {
         query = query.ilike('category_name', `%${params.category}%`);
       }
     }
-    if (params.search) query = query.ilike('title', `%${params.search}%`);
+    if (params.search) {
+      // Flexible search: split into tokens, ignore hyphens/punctuation, match any token
+      // in title/category/vendor. Final precise filtering is done post-fetch below.
+      const raw = params.search.trim();
+      const tokens = raw
+        .replace(/[-_/\\]+/g, ' ')
+        .split(/\s+/)
+        .map(t => t.replace(/[^\p{L}\p{N}]/gu, ''))
+        .filter(t => t.length >= 2);
+      const searchTerms = tokens.length ? tokens : [raw.replace(/[^\p{L}\p{N}]/gu, '')].filter(Boolean);
+      if (searchTerms.length) {
+        const orParts: string[] = [];
+        for (const t of searchTerms) {
+          const safe = t.replace(/[,()]/g, '');
+          orParts.push(`title.ilike.%${safe}%`);
+          orParts.push(`category_name.ilike.%${safe}%`);
+          orParts.push(`vendor_name.ilike.%${safe}%`);
+        }
+        query = query.or(orParts.join(','));
+      }
+    }
     if (params.sort === 'price_low') query = query.order('price', { ascending: true });
     else if (params.sort === 'price_high') query = query.order('price', { ascending: false });
     else if (params.sort === 'rating') query = query.order('rating', { ascending: false });
