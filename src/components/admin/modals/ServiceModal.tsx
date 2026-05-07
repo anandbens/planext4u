@@ -139,30 +139,59 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
     return list;
   }, [allVendors, vendorState, vendorDistrict, vendorSearch, states, districts]);
 
-  // Parent service categories (top-level only)
+  // Parent service categories (top-level only) — from both `categories` (category_type='service')
+  // and legacy `service_categories` table, so admin sees only service-typed parents.
   const { data: dbCategories } = useQuery({
-    queryKey: ["serviceParentCategoriesForModal"],
+    queryKey: ["serviceParentCategoriesForModal_v2"],
     queryFn: async () => {
-      const { data } = await supabase.from("service_categories" as any)
-        .select("id, name, parent_id")
-        .eq("status", "active")
-        .is("parent_id", null)
-        .order("name");
-      return (data || []) as any[];
+      const [catRes, svcRes]: any[] = await Promise.all([
+        supabase.from("categories" as any)
+          .select("id, name, parent_id, category_type")
+          .eq("status", "active")
+          .eq("category_type", "service")
+          .is("parent_id", null)
+          .order("name"),
+        supabase.from("service_categories" as any)
+          .select("id, name, parent_id")
+          .eq("status", "active")
+          .is("parent_id", null)
+          .order("name"),
+      ]);
+      const merged: any[] = [...((catRes?.data) || []), ...((svcRes?.data) || [])];
+      const seen = new Set<string>();
+      return merged.filter((c: any) => {
+        if (seen.has(c.id)) return false;
+        seen.add(c.id);
+        return true;
+      });
     },
   });
 
-  // Subcategories for the selected parent
+  // Subcategories for the selected parent — checks both tables
   const { data: dbSubcategories } = useQuery({
-    queryKey: ["serviceSubcategoriesForModal", form.category_id],
+    queryKey: ["serviceSubcategoriesForModal_v2", form.category_id],
     queryFn: async () => {
       if (!form.category_id) return [];
-      const { data } = await supabase.from("service_categories" as any)
-        .select("id, name, parent_id")
-        .eq("status", "active")
-        .eq("parent_id", form.category_id)
-        .order("name");
-      return (data || []) as any[];
+      const [catRes, svcRes]: any[] = await Promise.all([
+        supabase.from("categories" as any)
+          .select("id, name, parent_id, category_type")
+          .eq("status", "active")
+          .eq("category_type", "service")
+          .eq("parent_id", form.category_id)
+          .order("name"),
+        supabase.from("service_categories" as any)
+          .select("id, name, parent_id")
+          .eq("status", "active")
+          .eq("parent_id", form.category_id)
+          .order("name"),
+      ]);
+      const merged: any[] = [...((catRes?.data) || []), ...((svcRes?.data) || [])];
+      const seen = new Set<string>();
+      return merged.filter((c: any) => {
+        if (seen.has(c.id)) return false;
+        seen.add(c.id);
+        return true;
+      });
     },
     enabled: !!form.category_id,
   });
