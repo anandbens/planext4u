@@ -1604,6 +1604,8 @@ export const api = {
         filtered[key] = val;
       }
     }
+    if (filtered.category_id) await ensureServiceCategoryMirrored(filtered.category_id, null);
+    if (filtered.subcategory_id) await ensureServiceCategoryMirrored(filtered.subcategory_id, filtered.category_id || null);
     const { data: updated, error } = await supabase.from('services').update(filtered).eq('id', id).select();
     if (error) { console.error("Service update error:", error); throw error; }
     if (!updated || updated.length === 0) throw new Error("Service update failed — no rows affected.");
