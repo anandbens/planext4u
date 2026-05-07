@@ -1972,6 +1972,8 @@ export const api = {
     if (params.sort === 'price_low') query = query.order('price', { ascending: true });
     else if (params.sort === 'price_high') query = query.order('price', { ascending: false });
     else if (params.sort === 'rating') query = query.order('rating', { ascending: false });
+    else if (params.sort === 'newest') query = query.order('created_at', { ascending: false });
+    else query = query.order('created_at', { ascending: false }); // default: newest first
 
     const { data: products } = await query;
     if (!products?.length) return [] as Product[];
