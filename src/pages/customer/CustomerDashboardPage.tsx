@@ -111,7 +111,7 @@ export default function CustomerDashboardPage() {
         />
 
         {/* Safe area top padding for notched devices */}
-        <div className="relative z-10 mx-auto h-full w-full max-w-[430px] px-[18px] pt-[max(env(safe-area-inset-top),2.2rem)] pb-[max(env(safe-area-inset-bottom),0.65rem)] flex flex-col">
+        <div className="relative z-10 mx-auto h-full w-full max-w-[430px] px-[18px] pt-[max(env(safe-area-inset-top),2.2rem)] pb-[max(env(safe-area-inset-bottom),0.65rem)] flex flex-col overflow-y-auto">
           {/* Header */}
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 shrink-0 rounded-[0.95rem] overflow-hidden bg-white/10 backdrop-blur-md border border-white/25 shadow-[0_12px_28px_rgba(0,60,60,0.18)] flex items-center justify-center">
