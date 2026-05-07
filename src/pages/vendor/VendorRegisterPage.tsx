@@ -186,6 +186,7 @@ export default function VendorRegisterPage() {
         bank_account_number: form.bank_account_number, bank_ifsc: form.bank_ifsc,
         bank_holder_name: form.bank_holder_name, store_logo_url: form.store_logo_url,
         latitude: form.latitude, longitude: form.longitude, shop_address: form.shop_address,
+        referred_by: form.referral_code?.trim() ? form.referral_code.trim().toUpperCase() : null,
         status: 'submitted',
       };
 
