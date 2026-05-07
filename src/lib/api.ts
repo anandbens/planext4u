@@ -1556,6 +1556,8 @@ export const api = {
   },
 
   // Services CRUD
+
+
   updateService: async (id: string, data: Partial<Service>) => {
     const validFields = ['vendor_id', 'category_id', 'subcategory_id', 'subcategory_name', 'title', 'description', 'price', 'tax', 'discount',
       'max_points_redeemable', 'status', 'vendor_name', 'category_name', 'emoji', 'image', 'service_area',
