@@ -1502,15 +1502,29 @@ export const api = {
   // Categories
   // includeInactive=false by default — customer-facing surfaces should only
   // see active categories. Admin pages pass includeInactive=true.
-  getCategories: async (includeInactive = false) => {
+  // categoryType: 'product' | 'service' filters the unified categories table
+  // by its category_type column. Rows with NULL category_type are treated as
+  // 'product' for backward compatibility with legacy data.
+  getCategories: async (
+    includeInactive: boolean | { includeInactive?: boolean; categoryType?: 'product' | 'service' } = false,
+  ) => {
+    const opts = typeof includeInactive === 'boolean'
+      ? { includeInactive, categoryType: undefined as 'product' | 'service' | undefined }
+      : { includeInactive: !!includeInactive.includeInactive, categoryType: includeInactive.categoryType };
     let q = supabase
       .from('categories')
       .select('*')
       .order('display_order', { ascending: true })
       .order('name', { ascending: true });
-    if (!includeInactive) q = q.eq('status', 'active');
+    if (!opts.includeInactive) q = q.eq('status', 'active');
     const { data } = await q;
-    return (data || []) as Category[];
+    let rows = (data || []) as Category[];
+    if (opts.categoryType === 'product') {
+      rows = rows.filter((c: any) => !c.category_type || c.category_type === 'product');
+    } else if (opts.categoryType === 'service') {
+      rows = rows.filter((c: any) => c.category_type === 'service');
+    }
+    return rows;
   },
 
   updateCategory: async (id: string, data: Partial<Category>) => {
@@ -1984,9 +1998,16 @@ export const api = {
       .sort((a: any, b: any) => (Number(b.rating) || 0) - (Number(a.rating) || 0) || (Number(b.reviews) || 0) - (Number(a.reviews) || 0))
       .slice(0, 8);
 
+    // Shop surfaces only show product-type categories. Service categories live
+    // in `service_categories` (and any rows with category_type='service' in the
+    // unified `categories` table are excluded here).
+    const productCategories = (categories || []).filter(
+      (c: any) => !c.category_type || c.category_type === 'product',
+    );
+
     return {
       banners: banners || [],
-      categories: categories || [],
+      categories: productCategories,
       serviceCategories: serviceCategories || [],
       featuredProducts: verifiedProducts.slice(0, 8),
       dealProducts,
