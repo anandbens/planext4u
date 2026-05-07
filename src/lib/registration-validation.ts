@@ -13,6 +13,7 @@ export async function checkCustomerPhoneUnique(phone: string): Promise<string | 
     .from("customers")
     .select("id")
     .or(`mobile.eq.${normalizedPhone},mobile.eq.${cleaned}`)
+    .neq("status", "deleted")
     .limit(1)
     .maybeSingle();
 
