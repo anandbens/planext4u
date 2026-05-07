@@ -104,8 +104,8 @@ export default function CustomerServicesPage() {
   });
 
   const { data: categories } = useQuery({
-    queryKey: ["serviceCategories"],
-    queryFn: () => api.getServiceCategories(),
+    queryKey: ["categories", "service"],
+    queryFn: () => api.getCategories({ categoryType: 'service' }),
   });
 
   // Detect parent category & subcategories for the strip.
