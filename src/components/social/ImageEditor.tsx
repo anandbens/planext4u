@@ -390,17 +390,25 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
           <div className="px-4 pb-4 space-y-3">
             <div className="flex gap-2">
               {[
-                { label: "Free", w: 80, h: 80 },
-                { label: "1:1", w: 60, h: 60 },
-                { label: "4:5", w: 56, h: 70 },
-                { label: "16:9", w: 80, h: 45 },
-              ].map(preset => (
-                <button key={preset.label} className="text-xs text-white/70 px-3 py-1.5 rounded-full border border-white/20 hover:bg-white/10"
-                  onClick={() => setCropBox({ x: (100 - preset.w) / 2, y: (100 - preset.h) / 2, width: preset.w, height: preset.h })}
-                >
-                  {preset.label}
-                </button>
-              ))}
+                { label: "Free", w: 80, h: 80, aspect: null as number | null },
+                { label: "1:1", w: 60, h: 60, aspect: 1 },
+                { label: "4:5", w: 56, h: 70, aspect: 4 / 5 },
+                { label: "16:9", w: 80, h: 45, aspect: 16 / 9 },
+              ].map(preset => {
+                const active = cropAspect === preset.aspect;
+                return (
+                  <button
+                    key={preset.label}
+                    className={`text-xs px-3 py-1.5 rounded-full border ${active ? "bg-white text-black border-white" : "text-white/70 border-white/20 hover:bg-white/10"}`}
+                    onClick={() => {
+                      setCropAspect(preset.aspect);
+                      setCropBox({ x: (100 - preset.w) / 2, y: (100 - preset.h) / 2, width: preset.w, height: preset.h });
+                    }}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
