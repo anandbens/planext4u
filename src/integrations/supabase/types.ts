@@ -7645,6 +7645,7 @@ export type Database = {
           pan_image_url: string | null
           pan_number: string | null
           phone: string
+          postal_code: string | null
           referred_by: string | null
           rejection_reason: string | null
           secondary_phone: string | null
@@ -7690,6 +7691,7 @@ export type Database = {
           pan_image_url?: string | null
           pan_number?: string | null
           phone?: string
+          postal_code?: string | null
           referred_by?: string | null
           rejection_reason?: string | null
           secondary_phone?: string | null
@@ -7735,6 +7737,7 @@ export type Database = {
           pan_image_url?: string | null
           pan_number?: string | null
           phone?: string
+          postal_code?: string | null
           referred_by?: string | null
           rejection_reason?: string | null
           secondary_phone?: string | null
