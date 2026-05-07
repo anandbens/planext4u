@@ -111,7 +111,7 @@ export default function CustomerDashboardPage() {
         />
 
         {/* Safe area top padding for notched devices */}
-        <div className="relative z-10 mx-auto h-full w-full max-w-[430px] px-[18px] pt-[max(env(safe-area-inset-top),2.2rem)] pb-[max(env(safe-area-inset-bottom),0.65rem)] flex flex-col">
+        <div className="relative z-10 mx-auto h-full w-full max-w-[430px] px-[18px] pt-[max(env(safe-area-inset-top),2.2rem)] pb-[max(env(safe-area-inset-bottom),0.65rem)] flex flex-col overflow-y-auto">
           {/* Header */}
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 shrink-0 rounded-[0.95rem] overflow-hidden bg-white/10 backdrop-blur-md border border-white/25 shadow-[0_12px_28px_rgba(0,60,60,0.18)] flex items-center justify-center">
@@ -140,12 +140,12 @@ export default function CustomerDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="mt-5"
+            className="mt-3"
           >
-            <h1 className="text-[1.85rem] leading-none font-extrabold text-white drop-shadow-[0_2px_10px_rgba(0,65,65,0.18)]">
+            <h1 className="text-[1.5rem] leading-none font-extrabold text-white drop-shadow-[0_2px_10px_rgba(0,65,65,0.18)]">
               Welcome!
             </h1>
-            <p className="text-[0.95rem] leading-tight text-white/95 mt-2 drop-shadow-sm">
+            <p className="text-[0.85rem] leading-tight text-white/95 mt-1.5 drop-shadow-sm">
               Everything you need, in one place.
             </p>
           </motion.div>
@@ -153,7 +153,7 @@ export default function CustomerDashboardPage() {
           {/* Grid + Center Home button — geometrically centered.
               Symmetric 2x2 grid (equal cols, equal rows via aspect-square, uniform gap)
               guarantees the cross point is exactly at top:50% / left:50%. */}
-          <div className="relative mt-10 flex-none">
+          <div className="relative mt-6 flex-none">
             <div className="relative w-full">
               <div className="grid grid-cols-2 grid-rows-2 gap-3">
                 {tiles.map((t, i) => (
