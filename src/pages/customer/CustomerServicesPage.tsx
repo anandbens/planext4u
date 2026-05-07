@@ -108,12 +108,18 @@ export default function CustomerServicesPage() {
     queryFn: () => api.getServiceCategories(),
   });
 
-  // Detect parent category & subcategories for the strip
-  const activeCategory = categories?.find((c) => c.name === categoryFilter);
-  const subcategories = activeCategory && !activeCategory.parent_id
-    ? (categories || []).filter((c) => c.parent_id === activeCategory.id)
+  // Detect parent category & subcategories for the strip.
+  // Deep-link support: categoryFilter may be a parent OR a subcategory name.
+  const activeCategory = categories?.find((c) => c.name.toLowerCase() === (categoryFilter || "").toLowerCase());
+  const parentOfActive = activeCategory?.parent_id
+    ? (categories || []).find((c) => c.id === activeCategory.parent_id)
+    : activeCategory;
+  const subcategories = parentOfActive
+    ? (categories || []).filter((c) => c.parent_id === parentOfActive.id)
     : [];
   const parentCategories = (categories || []).filter((c) => !c.parent_id);
+  const activeParentName = parentOfActive?.name;
+  const activeSubName = activeCategory?.parent_id ? activeCategory.name : null;
 
   // Today's day-of-week vendor availability lookup
   const todayDow = new Date().getDay();
@@ -269,7 +275,7 @@ export default function CustomerServicesPage() {
           {parentCategories.map((c) => (
             <Link key={c.id} to={`/app/services?category=${encodeURIComponent(c.name)}`} className="shrink-0">
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
-                ${categoryFilter === c.name ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
+                ${activeParentName === c.name ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
                 {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
                   <img src={c.image} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
                 ) : (
@@ -281,29 +287,37 @@ export default function CustomerServicesPage() {
           ))}
         </div>
 
-        {/* Subcategory strip when parent category is selected */}
-        {subcategories.length > 0 && (
+        {/* Subcategory strip when a parent or subcategory is selected */}
+        {subcategories.length > 0 && parentOfActive && (
           <section className="mb-5">
             <div className="flex items-center justify-between mb-2 px-1">
-              <h2 className="text-sm md:text-base font-bold">Browse {activeCategory!.name} services</h2>
+              <h2 className="text-sm md:text-base font-bold">Browse {parentOfActive.name} services</h2>
+              {activeSubName && (
+                <Link to={`/app/services?category=${encodeURIComponent(parentOfActive.name)}`} className="text-[11px] text-primary font-medium">
+                  Clear
+                </Link>
+              )}
             </div>
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-              {subcategories.map((s) => (
-                <Link key={s.id} to={`/app/services?category=${encodeURIComponent(s.name)}`} className="shrink-0">
-                  <div className="flex flex-col items-center gap-1.5 min-w-[72px]">
-                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center border-2 border-border/50 bg-card hover:border-primary/40 transition-all overflow-hidden">
-                      {s.image && (s.image.startsWith("/") || s.image.startsWith("http")) ? (
-                        <img src={s.image} alt={s.name} className="h-9 w-9 rounded-lg object-cover" />
-                      ) : (
-                        <span className="text-xl">{s.image || "🛠️"}</span>
-                      )}
+              {subcategories.map((s) => {
+                const isActive = activeSubName === s.name;
+                return (
+                  <Link key={s.id} to={`/app/services?category=${encodeURIComponent(s.name)}`} className="shrink-0">
+                    <div className="flex flex-col items-center gap-1.5 min-w-[72px]">
+                      <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all overflow-hidden ${isActive ? 'border-primary bg-primary/10' : 'border-border/50 bg-card hover:border-primary/40'}`}>
+                        {s.image && (s.image.startsWith("/") || s.image.startsWith("http")) ? (
+                          <img src={s.image} alt={s.name} className="h-9 w-9 rounded-lg object-cover" />
+                        ) : (
+                          <span className="text-xl">{s.image || "🛠️"}</span>
+                        )}
+                      </div>
+                      <span className={`text-[11px] text-center leading-tight max-w-[72px] line-clamp-2 ${isActive ? 'text-primary font-semibold' : 'font-medium'}`}>
+                        {s.name}
+                      </span>
                     </div>
-                    <span className="text-[11px] font-medium text-center leading-tight max-w-[72px] line-clamp-2">
-                      {s.name}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
