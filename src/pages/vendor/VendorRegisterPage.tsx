@@ -142,17 +142,10 @@ export default function VendorRegisterPage() {
       if (form.business_name.length > 1000) return "Business name too long";
     }
     if (step === 3) {
+      // KYC is OPTIONAL during registration. Vendors can complete it later from the KYC page.
       if (form.aadhaar_number && !/^\d{12}$/.test(form.aadhaar_number)) return "Aadhaar must be 12 digits";
       if (form.pan_number && !/^[A-Z0-9]{10}$/i.test(form.pan_number)) return "PAN must be 10 alphanumeric chars";
       if (form.gst_number && !/^[0-9A-Z]{15}$/i.test(form.gst_number)) return "GST must be 15 characters";
-      if (!form.aadhaar_number && !form.pan_number) return "Either Aadhaar or PAN is required";
-      // Document uploads are mandatory
-      if (form.aadhaar_number) {
-        if (!form.aadhaar_front_url) return "Aadhaar front image is required";
-        if (!form.aadhaar_back_url) return "Aadhaar back image is required";
-      }
-      if (form.pan_number && !form.pan_image_url) return "PAN card image is required";
-      if (form.gst_number && !form.gst_certificate_url) return "GST certificate is required";
     }
     if (step === 4) {
       if (form.bank_account_number && (form.bank_account_number.length < 9 || form.bank_account_number.length > 18)) return "Bank account number must be 9-18 digits";
@@ -395,7 +388,7 @@ export default function VendorRegisterPage() {
         {step === 3 && (
           <Card className="p-5 space-y-4">
             <h3 className="text-sm font-semibold">KYC Documents</h3>
-            <p className="text-xs text-muted-foreground">Either Aadhaar or PAN is mandatory. Document images must be uploaded.</p>
+            <p className="text-xs text-muted-foreground">KYC is optional during registration. You can complete it later from the KYC page in your vendor profile.</p>
             <div className="space-y-4">
               <div className="p-3 rounded-lg border border-border space-y-3">
                 <h4 className="text-xs font-bold">Aadhaar Card</h4>
