@@ -33,7 +33,7 @@ export default function CustomerBrowsePage() {
   const { format: fmt } = useCurrency();
   const isGuest = !customerUser;
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
-  const [sortBy, setSortBy] = useState("popular");
+  const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
