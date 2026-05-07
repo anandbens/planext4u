@@ -1634,6 +1634,11 @@ export const api = {
     // Convert empty FK strings to null (FK to service_categories)
     if (newSrv.category_id === '') newSrv.category_id = null;
     if (newSrv.subcategory_id === '') newSrv.subcategory_id = null;
+    // services.category_id FK -> service_categories(id). The admin modal now also surfaces
+    // rows from the unified `categories` table (category_type='service'). Mirror those into
+    // `service_categories` so the FK insert succeeds.
+    await ensureServiceCategoryMirrored(newSrv.category_id, null);
+    await ensureServiceCategoryMirrored(newSrv.subcategory_id, newSrv.category_id);
     // Admin-created services are auto-approved (active) unless an explicit non-default status was chosen.
     // Vendor-created services go through VendorServicesPage which forces 'pending_approval'.
     if (!newSrv.status || newSrv.status === 'draft') {
