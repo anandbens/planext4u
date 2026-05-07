@@ -108,12 +108,18 @@ export default function CustomerServicesPage() {
     queryFn: () => api.getServiceCategories(),
   });
 
-  // Detect parent category & subcategories for the strip
-  const activeCategory = categories?.find((c) => c.name === categoryFilter);
-  const subcategories = activeCategory && !activeCategory.parent_id
-    ? (categories || []).filter((c) => c.parent_id === activeCategory.id)
+  // Detect parent category & subcategories for the strip.
+  // Deep-link support: categoryFilter may be a parent OR a subcategory name.
+  const activeCategory = categories?.find((c) => c.name.toLowerCase() === (categoryFilter || "").toLowerCase());
+  const parentOfActive = activeCategory?.parent_id
+    ? (categories || []).find((c) => c.id === activeCategory.parent_id)
+    : activeCategory;
+  const subcategories = parentOfActive
+    ? (categories || []).filter((c) => c.parent_id === parentOfActive.id)
     : [];
   const parentCategories = (categories || []).filter((c) => !c.parent_id);
+  const activeParentName = parentOfActive?.name;
+  const activeSubName = activeCategory?.parent_id ? activeCategory.name : null;
 
   // Today's day-of-week vendor availability lookup
   const todayDow = new Date().getDay();
