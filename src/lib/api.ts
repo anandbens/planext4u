@@ -951,10 +951,65 @@ export const api = {
   },
 
   getServiceCategories: async (includeInactive = false) => {
-    let q = supabase.from('service_categories').select('*');
+    let q = supabase.from('service_categories').select('*')
+      .order('display_order', { ascending: true })
+      .order('name', { ascending: true });
     if (!includeInactive) q = q.eq('status', 'active');
     const { data } = await q;
     return (data || []) as Category[];
+  },
+
+  createServiceCategory: async (data: Partial<Category>) => {
+    const validFields = ['name', 'parent_id', 'image', 'icon', 'banner_image', 'status',
+      'is_trending', 'is_emergency', 'description', 'commission_rate', 'verification_status',
+      'promotion_banner_url', 'promotion_title', 'promotion_active',
+      'display_order', 'show_on_homepage'];
+    const filtered: Record<string, any> = { id: genId('SCAT'), count: 0 };
+    for (const key of validFields) {
+      if (key in data) {
+        let val = (data as any)[key];
+        if (key === 'parent_id' && val === '') val = null;
+        filtered[key] = val;
+      }
+    }
+    if (!filtered.image) filtered.image = '🛠️';
+    const { error } = await supabase.from('service_categories').insert(filtered as any);
+    if (error) throw error;
+    return { success: true };
+  },
+
+  updateServiceCategory: async (id: string, data: Partial<Category>) => {
+    const validFields = ['name', 'parent_id', 'image', 'icon', 'banner_image', 'status',
+      'is_trending', 'is_emergency', 'description', 'commission_rate', 'verification_status',
+      'promotion_banner_url', 'promotion_title', 'promotion_active',
+      'display_order', 'show_on_homepage'];
+    const filtered: Record<string, any> = {};
+    for (const key of validFields) {
+      if (key in data) {
+        let val = (data as any)[key];
+        if (key === 'parent_id' && val === '') val = null;
+        filtered[key] = val;
+      }
+    }
+    const { error } = await supabase.from('service_categories').update(filtered).eq('id', id);
+    if (error) throw error;
+    return { success: true };
+  },
+
+  deleteServiceCategory: async (id: string) => {
+    // Cascade delete subcategories first
+    await supabase.from('service_categories').delete().eq('parent_id', id);
+    const { error } = await supabase.from('service_categories').delete().eq('id', id);
+    if (error) throw error;
+    return { success: true };
+  },
+
+  bulkDeleteServiceCategories: async (ids: string[]) => {
+    if (!ids.length) return { success: true };
+    await supabase.from('service_categories').delete().in('parent_id', ids);
+    const { error } = await supabase.from('service_categories').delete().in('id', ids);
+    if (error) throw error;
+    return { success: true };
   },
 
   // Orders
