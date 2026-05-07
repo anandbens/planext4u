@@ -121,11 +121,14 @@ export async function uploadToB2(
   options: B2UploadOptions,
 ): Promise<B2UploadResult> {
   const { folder, filename, contentType, onProgress } = options;
-  // For PRIVATE bucket uploads we always use the presigned-URL flow (browser →
-  // B2 direct). The inline base64 PUT-through path has been observed to hang
-  // and 504 against the private bucket, blocking KYC uploads.
+  // PRIVATE bucket uploads MUST go through the inline (server-side PUT) path
+  // because the private B2 bucket has no browser CORS rules — a direct
+  // browser PUT to the presigned URL fails with a "Network error" (CORS
+  // preflight blocked). The edge function PUTs server-side which avoids CORS.
+  // Public uploads can take either path; small files use inline to skip the
+  // extra round-trip.
   const shouldInlineUpload =
-    options.private !== true && file.size <= INLINE_UPLOAD_THRESHOLD_BYTES;
+    options.private === true || file.size <= INLINE_UPLOAD_THRESHOLD_BYTES;
 
   if (shouldInlineUpload) {
     onProgress?.(0);
