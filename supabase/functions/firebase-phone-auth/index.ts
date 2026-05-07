@@ -209,6 +209,7 @@ Deno.serve(async (req) => {
         .from("customers")
         .select("id, mobile")
         .eq("email", registerData.email)
+        .neq("status", "deleted")
         .maybeSingle();
 
       if (emailExists) {
