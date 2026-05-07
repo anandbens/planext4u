@@ -163,7 +163,7 @@ export default function CustomerBrowsePage() {
   const priceFilterActive = priceTouched && (effectivePriceRange[0] > 0 || effectivePriceRange[1] < maxPrice);
   const activeFilterCount = (priceFilterActive ? 1 : 0) + (minRating > 0 ? 1 : 0) + activeAttrCount;
 
-  const { data: categories } = useQuery({ queryKey: ["categories"], queryFn: () => api.getCategories() });
+  const { data: categories } = useQuery({ queryKey: ["categories", "product"], queryFn: () => api.getCategories({ categoryType: 'product' }) });
 
   // Detect category & subcategories for sectioned layout
   const activeCategory = categories?.find((c) => c.name === categoryFilter);
