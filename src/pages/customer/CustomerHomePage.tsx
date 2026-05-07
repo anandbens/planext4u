@@ -496,9 +496,9 @@ export default function CustomerHomePage() {
         <div className="px-4 py-2 md:hidden">
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: "Ride", emoji: "🛺", color: "from-amber-500/20 to-amber-500/5" },
-              { label: "Emergency", emoji: "🚨", color: "from-red-500/20 to-red-500/5" },
-              { label: "SOS", emoji: "🆘", color: "from-blue-500/20 to-blue-500/5" },
+              { label: "Auto Ride", emoji: "🛺", color: "from-amber-500/20 to-amber-500/5" },
+              { label: "Bike Ride", emoji: "🏍️", color: "from-emerald-500/20 to-emerald-500/5" },
+              { label: "Car Ride", emoji: "🚗", color: "from-blue-500/20 to-blue-500/5" },
             ].map(a => (
               <button
                 key={a.label}
