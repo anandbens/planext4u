@@ -120,8 +120,61 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
   };
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!draggingId || !containerRef.current) return;
+    if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+
+    if (cropDrag) {
+      const dx = ((e.clientX - cropDrag.startX) / rect.width) * 100;
+      const dy = ((e.clientY - cropDrag.startY) / rect.height) * 100;
+      let { x, y, width, height } = cropDrag.box;
+      const minSize = 5;
+
+      if (cropDrag.mode === "move") {
+        x = Math.max(0, Math.min(100 - width, x + dx));
+        y = Math.max(0, Math.min(100 - height, y + dy));
+      } else {
+        const m = cropDrag.mode;
+        if (m.includes("e")) width = Math.max(minSize, Math.min(100 - x, width + dx));
+        if (m.includes("w")) {
+          const nw = Math.max(minSize, width - dx);
+          const nx = Math.max(0, Math.min(x + width - minSize, x + dx));
+          width = x + width - nx;
+          x = nx;
+        }
+        if (m.includes("s")) height = Math.max(minSize, Math.min(100 - y, height + dy));
+        if (m.includes("n")) {
+          const nh = Math.max(minSize, height - dy);
+          const ny = Math.max(0, Math.min(y + height - minSize, y + dy));
+          height = y + height - ny;
+          y = ny;
+        }
+        // Apply aspect ratio constraint if locked
+        if (cropAspect) {
+          // Convert aspect (in image-pixel space approximation): use container ratio so percent-based works visually
+          const containerAspect = rect.width / rect.height;
+          // ratio of width% to height% that yields cropAspect: (width% * cw) / (height% * ch) = cropAspect
+          // => height% = width% * (cw/ch) / cropAspect
+          const ratioPct = containerAspect / cropAspect;
+          if (m === "e" || m === "w") {
+            height = width / ratioPct;
+            if (y + height > 100) height = 100 - y;
+            if (m.includes("n")) y = cropDrag.box.y + cropDrag.box.height - height;
+          } else if (m === "n" || m === "s") {
+            width = height * ratioPct;
+            if (x + width > 100) width = 100 - x;
+            if (m.includes("w")) x = cropDrag.box.x + cropDrag.box.width - width;
+          } else {
+            // corner
+            height = width / ratioPct;
+            if (m.includes("n")) y = cropDrag.box.y + cropDrag.box.height - height;
+          }
+        }
+      }
+      setCropBox({ x, y, width, height });
+      return;
+    }
+
+    if (!draggingId) return;
     const x = Math.max(5, Math.min(95, ((e.clientX - rect.left) / rect.width) * 100));
     const y = Math.max(5, Math.min(95, ((e.clientY - rect.top) / rect.height) * 100));
     if (draggingType === "text") {
@@ -129,12 +182,19 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
     } else {
       setEmojis(prev => prev.map(em => em.id === draggingId ? { ...em, x, y } : em));
     }
-  }, [draggingId, draggingType]);
+  }, [draggingId, draggingType, cropDrag, cropAspect]);
 
   const handlePointerUp = useCallback(() => {
     setDraggingId(null);
     setDraggingType(null);
+    setCropDrag(null);
   }, []);
+
+  const startCropDrag = (mode: "move" | "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw") => (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCropDrag({ mode, startX: e.clientX, startY: e.clientY, box: cropBox });
+  };
 
   // Render to canvas and export
   const handleSave = async () => {
