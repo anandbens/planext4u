@@ -1998,9 +1998,16 @@ export const api = {
       .sort((a: any, b: any) => (Number(b.rating) || 0) - (Number(a.rating) || 0) || (Number(b.reviews) || 0) - (Number(a.reviews) || 0))
       .slice(0, 8);
 
+    // Shop surfaces only show product-type categories. Service categories live
+    // in `service_categories` (and any rows with category_type='service' in the
+    // unified `categories` table are excluded here).
+    const productCategories = (categories || []).filter(
+      (c: any) => !c.category_type || c.category_type === 'product',
+    );
+
     return {
       banners: banners || [],
-      categories: categories || [],
+      categories: productCategories,
       serviceCategories: serviceCategories || [],
       featuredProducts: verifiedProducts.slice(0, 8),
       dealProducts,
