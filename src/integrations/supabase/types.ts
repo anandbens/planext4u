@@ -6039,6 +6039,7 @@ export type Database = {
           count: number
           created_at: string
           description: string | null
+          display_order: number
           icon: string | null
           id: string
           image: string
@@ -6049,6 +6050,7 @@ export type Database = {
           promotion_active: boolean | null
           promotion_banner_url: string | null
           promotion_title: string | null
+          show_on_homepage: boolean
           status: string
           verification_status: string | null
         }
@@ -6058,6 +6060,7 @@ export type Database = {
           count?: number
           created_at?: string
           description?: string | null
+          display_order?: number
           icon?: string | null
           id: string
           image?: string
@@ -6068,6 +6071,7 @@ export type Database = {
           promotion_active?: boolean | null
           promotion_banner_url?: string | null
           promotion_title?: string | null
+          show_on_homepage?: boolean
           status?: string
           verification_status?: string | null
         }
@@ -6077,6 +6081,7 @@ export type Database = {
           count?: number
           created_at?: string
           description?: string | null
+          display_order?: number
           icon?: string | null
           id?: string
           image?: string
@@ -6087,6 +6092,7 @@ export type Database = {
           promotion_active?: boolean | null
           promotion_banner_url?: string | null
           promotion_title?: string | null
+          show_on_homepage?: boolean
           status?: string
           verification_status?: string | null
         }
