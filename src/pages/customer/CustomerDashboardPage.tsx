@@ -153,7 +153,7 @@ export default function CustomerDashboardPage() {
           {/* Grid + Center Home button — geometrically centered.
               Symmetric 2x2 grid (equal cols, equal rows via aspect-square, uniform gap)
               guarantees the cross point is exactly at top:50% / left:50%. */}
-          <div className="relative mt-10 flex-none">
+          <div className="relative mt-6 flex-none">
             <div className="relative w-full">
               <div className="grid grid-cols-2 grid-rows-2 gap-3">
                 {tiles.map((t, i) => (
