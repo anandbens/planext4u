@@ -98,8 +98,14 @@ export default function CustomerCartPage() {
     const { data } = await supabase.from('platform_variables').select('key, value').in('key', ['platform_fee', 'platform_fee_gst_percent']);
     if (data) {
       data.forEach((v: any) => {
-        if (v.key === 'platform_fee') setPlatformFeeValue(Number(v.value) || 10);
-        if (v.key === 'platform_fee_gst_percent') setPlatformFeeGst(Number(v.value) || 18);
+        if (v.key === 'platform_fee') {
+          const n = Number(v.value);
+          setPlatformFeeValue(Number.isFinite(n) ? n : 10);
+        }
+        if (v.key === 'platform_fee_gst_percent') {
+          const n = Number(v.value);
+          setPlatformFeeGst(Number.isFinite(n) ? n : 18);
+        }
       });
     }
   };
