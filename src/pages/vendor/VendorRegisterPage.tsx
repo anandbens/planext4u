@@ -41,6 +41,7 @@ export default function VendorRegisterPage() {
     bank_account_number: '', bank_confirm_account: '', bank_ifsc: '', bank_holder_name: '',
     store_logo_url: '',
     latitude: 0, longitude: 0, shop_address: '',
+    referral_code: '',
   });
   const [locating, setLocating] = useState(false);
   const [states, setStates] = useState<{ id: string; name: string }[]>([]);
@@ -185,6 +186,7 @@ export default function VendorRegisterPage() {
         bank_account_number: form.bank_account_number, bank_ifsc: form.bank_ifsc,
         bank_holder_name: form.bank_holder_name, store_logo_url: form.store_logo_url,
         latitude: form.latitude, longitude: form.longitude, shop_address: form.shop_address,
+        referred_by: form.referral_code?.trim() ? form.referral_code.trim().toUpperCase() : null,
         status: 'submitted',
       };
 
@@ -300,6 +302,9 @@ export default function VendorRegisterPage() {
                 <Input value={form.fb_link} onChange={e => updateField('fb_link', e.target.value)} placeholder="https://..." /></div>
               <div><label className="text-xs font-medium text-muted-foreground">Instagram</label>
                 <Input value={form.instagram_link} onChange={e => updateField('instagram_link', e.target.value)} placeholder="https://..." /></div>
+              <div className="sm:col-span-2"><label className="text-xs font-medium text-muted-foreground">Referral Code (optional)</label>
+                <Input value={form.referral_code} onChange={e => updateField('referral_code', e.target.value.toUpperCase().replace(/\s+/g, '').slice(0, 20))} placeholder="Enter referral code if you have one" maxLength={20} />
+                <p className="text-[10px] text-muted-foreground mt-0.5">If a friend referred you, enter their code. They'll earn reward points once your account is verified.</p></div>
             </div>
           </Card>
         )}
