@@ -275,7 +275,7 @@ export default function CustomerServicesPage() {
           {parentCategories.map((c) => (
             <Link key={c.id} to={`/app/services?category=${encodeURIComponent(c.name)}`} className="shrink-0">
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
-                ${categoryFilter === c.name ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
+                ${activeParentName === c.name ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
                 {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
                   <img src={c.image} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
                 ) : (
