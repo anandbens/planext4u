@@ -31,6 +31,7 @@ export async function checkCustomerEmailUnique(email: string): Promise<string | 
     .from("customers")
     .select("id")
     .eq("email", email.toLowerCase().trim())
+    .neq("status", "deleted")
     .maybeSingle();
 
   if (data) return "This email is already registered. Please login instead.";
