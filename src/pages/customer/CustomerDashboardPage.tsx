@@ -259,9 +259,9 @@ export default function CustomerDashboardPage() {
             className="mt-3 flex items-start justify-around gap-2 px-2"
           >
             {[
-              { label: "Emergency", icon: Siren, to: "/app/support?type=emergency" },
-              { label: "Help", icon: LifeBuoy, to: "/app/support" },
-              { label: "Quick Assist", icon: Zap, to: "/app/support?type=quick" },
+              { label: "Emergency", icon: Siren, to: `/app/services?category=${encodeURIComponent("Emergency")}` },
+              { label: "Help", icon: LifeBuoy, to: `/app/services?category=${encodeURIComponent("Help")}` },
+              { label: "Quick Assist", icon: Zap, to: `/app/services?category=${encodeURIComponent("Quick Assist")}` },
             ].map((b, i) => (
               <motion.button
                 key={b.label}
