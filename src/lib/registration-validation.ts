@@ -13,6 +13,7 @@ export async function checkCustomerPhoneUnique(phone: string): Promise<string | 
     .from("customers")
     .select("id")
     .or(`mobile.eq.${normalizedPhone},mobile.eq.${cleaned}`)
+    .neq("status", "deleted")
     .limit(1)
     .maybeSingle();
 
@@ -30,6 +31,7 @@ export async function checkCustomerEmailUnique(email: string): Promise<string | 
     .from("customers")
     .select("id")
     .eq("email", email.toLowerCase().trim())
+    .neq("status", "deleted")
     .maybeSingle();
 
   if (data) return "This email is already registered. Please login instead.";

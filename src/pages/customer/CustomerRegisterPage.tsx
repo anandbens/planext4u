@@ -207,17 +207,17 @@ export default function CustomerRegisterPage() {
   };
 
   const checkMobileUnique = async (): Promise<boolean> => {
-    // Check mobile uniqueness (full + raw)
+    // Check mobile uniqueness (full + raw), excluding soft-deleted accounts
     const fullMobile = `${phonePrefix}${form.mobile}`;
-    const { data } = await supabase.from("customers").select("id").eq("mobile", fullMobile).maybeSingle();
+    const { data } = await supabase.from("customers").select("id").eq("mobile", fullMobile).neq("status", "deleted").maybeSingle();
     if (data) { toast.error("This mobile number is already registered. Please login instead."); return false; }
-    const { data: data2 } = await supabase.from("customers").select("id").eq("mobile", form.mobile).maybeSingle();
+    const { data: data2 } = await supabase.from("customers").select("id").eq("mobile", form.mobile).neq("status", "deleted").maybeSingle();
     if (data2) { toast.error("This mobile number is already registered. Please login instead."); return false; }
-    // Check email uniqueness
-    const { data: emailData } = await supabase.from("customers").select("id").eq("email", form.email).maybeSingle();
+    const { data: emailData } = await supabase.from("customers").select("id").eq("email", form.email).neq("status", "deleted").maybeSingle();
     if (emailData) { toast.error("This email is already registered. Please login instead."); return false; }
     return true;
   };
+
 
   const handleSendOTP = async () => {
     if (!validateForm()) return;
