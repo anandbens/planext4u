@@ -388,7 +388,7 @@ export default function VendorRegisterPage() {
         {step === 3 && (
           <Card className="p-5 space-y-4">
             <h3 className="text-sm font-semibold">KYC Documents</h3>
-            <p className="text-xs text-muted-foreground">Either Aadhaar or PAN is mandatory. Document images must be uploaded.</p>
+            <p className="text-xs text-muted-foreground">KYC is optional during registration. You can complete it later from the KYC page in your vendor profile.</p>
             <div className="space-y-4">
               <div className="p-3 rounded-lg border border-border space-y-3">
                 <h4 className="text-xs font-bold">Aadhaar Card</h4>
