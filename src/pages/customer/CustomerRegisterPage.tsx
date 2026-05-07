@@ -218,10 +218,6 @@ export default function CustomerRegisterPage() {
     return true;
   };
 
-  // (legacy duplicate email check removed)
-  const _unused_legacy = async () => true;
-    return true;
-  };
 
   const handleSendOTP = async () => {
     if (!validateForm()) return;
