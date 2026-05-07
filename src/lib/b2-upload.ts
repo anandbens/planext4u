@@ -50,13 +50,16 @@ async function getPresignedUrl(opts: {
   // can race with `functions.invoke`'s implicit auth header, causing the
   // edge function to receive no Authorization header and reject with 401
   // "Missing Authorization".
+  // Try to attach the current session's access token. Some flows (vendor
+  // registration, customer registration) intentionally upload BEFORE a user
+  // session exists — in those cases we send no Authorization header and let
+  // the edge function fall back to its anonymous-upload allowlist (folders
+  // under `vendor-reg`, `customer-reg`, etc.).
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
-  if (!accessToken) {
-    throw new Error(
-      "You appear to be signed out. Please log in again before uploading.",
-    );
-  }
+
+  const headers: Record<string, string> = {};
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
   const { data, error } = await supabase.functions.invoke("b2-presigned-upload", {
     body: {
@@ -66,9 +69,7 @@ async function getPresignedUrl(opts: {
       private: opts.private === true,
       fileBase64: opts.fileBase64,
     },
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+    headers,
   });
 
   if (error) {
