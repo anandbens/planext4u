@@ -1502,15 +1502,29 @@ export const api = {
   // Categories
   // includeInactive=false by default — customer-facing surfaces should only
   // see active categories. Admin pages pass includeInactive=true.
-  getCategories: async (includeInactive = false) => {
+  // categoryType: 'product' | 'service' filters the unified categories table
+  // by its category_type column. Rows with NULL category_type are treated as
+  // 'product' for backward compatibility with legacy data.
+  getCategories: async (
+    includeInactive: boolean | { includeInactive?: boolean; categoryType?: 'product' | 'service' } = false,
+  ) => {
+    const opts = typeof includeInactive === 'boolean'
+      ? { includeInactive, categoryType: undefined as 'product' | 'service' | undefined }
+      : { includeInactive: !!includeInactive.includeInactive, categoryType: includeInactive.categoryType };
     let q = supabase
       .from('categories')
       .select('*')
       .order('display_order', { ascending: true })
       .order('name', { ascending: true });
-    if (!includeInactive) q = q.eq('status', 'active');
+    if (!opts.includeInactive) q = q.eq('status', 'active');
     const { data } = await q;
-    return (data || []) as Category[];
+    let rows = (data || []) as Category[];
+    if (opts.categoryType === 'product') {
+      rows = rows.filter((c: any) => !c.category_type || c.category_type === 'product');
+    } else if (opts.categoryType === 'service') {
+      rows = rows.filter((c: any) => c.category_type === 'service');
+    }
+    return rows;
   },
 
   updateCategory: async (id: string, data: Partial<Category>) => {
