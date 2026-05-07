@@ -277,14 +277,28 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
 
         {/* Crop overlay */}
         {activeTab === "crop" && (
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-black/50" style={{
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-black/50 pointer-events-none" style={{
               clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${cropBox.x}% ${cropBox.y}%, ${cropBox.x}% ${cropBox.y + cropBox.height}%, ${cropBox.x + cropBox.width}% ${cropBox.y + cropBox.height}%, ${cropBox.x + cropBox.width}% ${cropBox.y}%, ${cropBox.x}% ${cropBox.y}%)`
             }} />
-            <div className="absolute border-2 border-white pointer-events-auto cursor-move" style={{
-              left: `${cropBox.x}%`, top: `${cropBox.y}%`,
-              width: `${cropBox.width}%`, height: `${cropBox.height}%`,
-            }} />
+            <div
+              className="absolute border-2 border-white cursor-move"
+              style={{
+                left: `${cropBox.x}%`, top: `${cropBox.y}%`,
+                width: `${cropBox.width}%`, height: `${cropBox.height}%`,
+                touchAction: "none",
+              }}
+              onPointerDown={startCropDrag("move")}
+            >
+              <div className="absolute left-0 right-0 -top-1 h-2 cursor-n-resize" onPointerDown={startCropDrag("n")} style={{ touchAction: "none" }} />
+              <div className="absolute left-0 right-0 -bottom-1 h-2 cursor-s-resize" onPointerDown={startCropDrag("s")} style={{ touchAction: "none" }} />
+              <div className="absolute top-0 bottom-0 -left-1 w-2 cursor-w-resize" onPointerDown={startCropDrag("w")} style={{ touchAction: "none" }} />
+              <div className="absolute top-0 bottom-0 -right-1 w-2 cursor-e-resize" onPointerDown={startCropDrag("e")} style={{ touchAction: "none" }} />
+              <div className="absolute h-3 w-3 bg-white border border-black/40 -top-1.5 -left-1.5 cursor-nw-resize" onPointerDown={startCropDrag("nw")} style={{ touchAction: "none" }} />
+              <div className="absolute h-3 w-3 bg-white border border-black/40 -top-1.5 -right-1.5 cursor-ne-resize" onPointerDown={startCropDrag("ne")} style={{ touchAction: "none" }} />
+              <div className="absolute h-3 w-3 bg-white border border-black/40 -bottom-1.5 -left-1.5 cursor-sw-resize" onPointerDown={startCropDrag("sw")} style={{ touchAction: "none" }} />
+              <div className="absolute h-3 w-3 bg-white border border-black/40 -bottom-1.5 -right-1.5 cursor-se-resize" onPointerDown={startCropDrag("se")} style={{ touchAction: "none" }} />
+            </div>
           </div>
         )}
 
