@@ -273,24 +273,17 @@ Deno.serve(async (req: Request) => {
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Missing Authorization" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-    });
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    let userId = "anonymous";
+    if (token) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
       });
+      const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+      if (!userErr && userData?.user) {
+        userId = userData.user.id;
+      }
     }
-    const userId = userData.user.id;
 
     const body = await req.json().catch(() => ({}));
     const folder = String(body.folder ?? "uploads").replace(/^\/+|\/+$/g, "") || "uploads";
@@ -305,6 +298,24 @@ Deno.serve(async (req: Request) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Anonymous uploads are restricted to pre-signup registration folders only.
+    // These are short-lived staging paths used by vendor/customer/rider
+    // registration flows that run before a Supabase session exists.
+    const ANON_ALLOWED_FOLDER_PATTERNS = [
+      /(^|\/)vendor-reg(\/|$)/i,
+      /(^|\/)customer-reg(\/|$)/i,
+      /(^|\/)rider-reg(\/|$)/i,
+    ];
+    if (userId === "anonymous") {
+      const allowed = ANON_ALLOWED_FOLDER_PATTERNS.some((re) => re.test(folder));
+      if (!allowed) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: sign in required for this upload" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     // Pick bucket config based on private flag
