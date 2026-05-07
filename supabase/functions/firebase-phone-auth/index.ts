@@ -183,8 +183,9 @@ Deno.serve(async (req) => {
     // Check if a registered customer exists with this phone number
     const { data: existingCustomer, error: custLookupErr } = await supabase
       .from("customers")
-      .select("id, name, email, mobile")
+      .select("id, name, email, mobile, status")
       .or(`mobile.eq.${normalizedPhone},mobile.eq.${rawDigits},mobile.ilike.%${rawDigits}%`)
+      .neq("status", "deleted")
       .limit(1)
       .maybeSingle();
 
