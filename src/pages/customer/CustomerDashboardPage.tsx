@@ -140,12 +140,12 @@ export default function CustomerDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="mt-5"
+            className="mt-3"
           >
-            <h1 className="text-[1.85rem] leading-none font-extrabold text-white drop-shadow-[0_2px_10px_rgba(0,65,65,0.18)]">
+            <h1 className="text-[1.5rem] leading-none font-extrabold text-white drop-shadow-[0_2px_10px_rgba(0,65,65,0.18)]">
               Welcome!
             </h1>
-            <p className="text-[0.95rem] leading-tight text-white/95 mt-2 drop-shadow-sm">
+            <p className="text-[0.85rem] leading-tight text-white/95 mt-1.5 drop-shadow-sm">
               Everything you need, in one place.
             </p>
           </motion.div>
