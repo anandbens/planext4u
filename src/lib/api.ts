@@ -226,6 +226,36 @@ function genId(prefix: string, length: number = 3): string {
   return `${prefix}-${String(Math.floor(Math.random() * 999) + 1).padStart(length, '0')}-${Date.now().toString(36).slice(-4)}`;
 }
 
+/**
+ * services.category_id has an FK to service_categories(id). The unified
+ * `categories` table (category_type='service') is also surfaced in admin UIs.
+ * Before inserting/updating a service, mirror the chosen id into service_categories
+ * if it doesn't already exist there, so the FK constraint is satisfied.
+ */
+async function ensureServiceCategoryMirrored(id: string | null | undefined, parentId: string | null | undefined): Promise<void> {
+  if (!id) return;
+  const { data: existing } = await supabase.from('service_categories').select('id').eq('id', id).maybeSingle();
+  if (existing) return;
+  const { data: cat } = await supabase
+    .from('categories' as any)
+    .select('id, name, parent_id, image, icon, description, status')
+    .eq('id', id)
+    .maybeSingle();
+  if (!cat) return;
+  const effectiveParent = parentId || (cat as any).parent_id || null;
+  if (effectiveParent) await ensureServiceCategoryMirrored(effectiveParent, null);
+  await supabase.from('service_categories').insert({
+    id: (cat as any).id,
+    name: (cat as any).name,
+    parent_id: effectiveParent,
+    image: (cat as any).image || null,
+    icon: (cat as any).icon || null,
+    description: (cat as any).description || null,
+    status: (cat as any).status || 'active',
+    count: 0,
+  } as any);
+}
+
 // API Methods
 export const api = {
   // Auth
