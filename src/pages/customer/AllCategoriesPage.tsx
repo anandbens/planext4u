@@ -10,8 +10,8 @@ import { api, Category } from "@/lib/api";
 export default function AllCategoriesPage() {
   const [search, setSearch] = useState("");
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => api.getCategories(),
+    queryKey: ["categories", "product"],
+    queryFn: () => api.getCategories({ categoryType: 'product' }),
   });
 
   const parents = useMemo(() => {
