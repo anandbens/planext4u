@@ -41,6 +41,7 @@ export default function VendorRegisterPage() {
     bank_account_number: '', bank_confirm_account: '', bank_ifsc: '', bank_holder_name: '',
     store_logo_url: '',
     latitude: 0, longitude: 0, shop_address: '',
+    referral_code: '',
   });
   const [locating, setLocating] = useState(false);
   const [states, setStates] = useState<{ id: string; name: string }[]>([]);
