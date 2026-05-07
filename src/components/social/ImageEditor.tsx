@@ -62,6 +62,8 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
   const [emojiCategory, setEmojiCategory] = useState<keyof typeof EMOJI_SETS>("Smileys");
   const [isCropping, setIsCropping] = useState(false);
   const [cropBox, setCropBox] = useState<CropState>({ x: 10, y: 10, width: 80, height: 80 });
+  const [cropAspect, setCropAspect] = useState<number | null>(null); // null = free
+  const [cropDrag, setCropDrag] = useState<{ mode: "move" | "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw"; startX: number; startY: number; box: CropState } | null>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
@@ -118,8 +120,61 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
   };
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!draggingId || !containerRef.current) return;
+    if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
+
+    if (cropDrag) {
+      const dx = ((e.clientX - cropDrag.startX) / rect.width) * 100;
+      const dy = ((e.clientY - cropDrag.startY) / rect.height) * 100;
+      let { x, y, width, height } = cropDrag.box;
+      const minSize = 5;
+
+      if (cropDrag.mode === "move") {
+        x = Math.max(0, Math.min(100 - width, x + dx));
+        y = Math.max(0, Math.min(100 - height, y + dy));
+      } else {
+        const m = cropDrag.mode;
+        if (m.includes("e")) width = Math.max(minSize, Math.min(100 - x, width + dx));
+        if (m.includes("w")) {
+          const nw = Math.max(minSize, width - dx);
+          const nx = Math.max(0, Math.min(x + width - minSize, x + dx));
+          width = x + width - nx;
+          x = nx;
+        }
+        if (m.includes("s")) height = Math.max(minSize, Math.min(100 - y, height + dy));
+        if (m.includes("n")) {
+          const nh = Math.max(minSize, height - dy);
+          const ny = Math.max(0, Math.min(y + height - minSize, y + dy));
+          height = y + height - ny;
+          y = ny;
+        }
+        // Apply aspect ratio constraint if locked
+        if (cropAspect) {
+          // Convert aspect (in image-pixel space approximation): use container ratio so percent-based works visually
+          const containerAspect = rect.width / rect.height;
+          // ratio of width% to height% that yields cropAspect: (width% * cw) / (height% * ch) = cropAspect
+          // => height% = width% * (cw/ch) / cropAspect
+          const ratioPct = containerAspect / cropAspect;
+          if (m === "e" || m === "w") {
+            height = width / ratioPct;
+            if (y + height > 100) height = 100 - y;
+            if (m.includes("n")) y = cropDrag.box.y + cropDrag.box.height - height;
+          } else if (m === "n" || m === "s") {
+            width = height * ratioPct;
+            if (x + width > 100) width = 100 - x;
+            if (m.includes("w")) x = cropDrag.box.x + cropDrag.box.width - width;
+          } else {
+            // corner
+            height = width / ratioPct;
+            if (m.includes("n")) y = cropDrag.box.y + cropDrag.box.height - height;
+          }
+        }
+      }
+      setCropBox({ x, y, width, height });
+      return;
+    }
+
+    if (!draggingId) return;
     const x = Math.max(5, Math.min(95, ((e.clientX - rect.left) / rect.width) * 100));
     const y = Math.max(5, Math.min(95, ((e.clientY - rect.top) / rect.height) * 100));
     if (draggingType === "text") {
@@ -127,12 +182,19 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
     } else {
       setEmojis(prev => prev.map(em => em.id === draggingId ? { ...em, x, y } : em));
     }
-  }, [draggingId, draggingType]);
+  }, [draggingId, draggingType, cropDrag, cropAspect]);
 
   const handlePointerUp = useCallback(() => {
     setDraggingId(null);
     setDraggingType(null);
+    setCropDrag(null);
   }, []);
+
+  const startCropDrag = (mode: "move" | "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw") => (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCropDrag({ mode, startX: e.clientX, startY: e.clientY, box: cropBox });
+  };
 
   // Render to canvas and export
   const handleSave = async () => {
@@ -215,14 +277,28 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
 
         {/* Crop overlay */}
         {activeTab === "crop" && (
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-black/50" style={{
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-black/50 pointer-events-none" style={{
               clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${cropBox.x}% ${cropBox.y}%, ${cropBox.x}% ${cropBox.y + cropBox.height}%, ${cropBox.x + cropBox.width}% ${cropBox.y + cropBox.height}%, ${cropBox.x + cropBox.width}% ${cropBox.y}%, ${cropBox.x}% ${cropBox.y}%)`
             }} />
-            <div className="absolute border-2 border-white pointer-events-auto cursor-move" style={{
-              left: `${cropBox.x}%`, top: `${cropBox.y}%`,
-              width: `${cropBox.width}%`, height: `${cropBox.height}%`,
-            }} />
+            <div
+              className="absolute border-2 border-white cursor-move"
+              style={{
+                left: `${cropBox.x}%`, top: `${cropBox.y}%`,
+                width: `${cropBox.width}%`, height: `${cropBox.height}%`,
+                touchAction: "none",
+              }}
+              onPointerDown={startCropDrag("move")}
+            >
+              <div className="absolute left-0 right-0 -top-1 h-2 cursor-n-resize" onPointerDown={startCropDrag("n")} style={{ touchAction: "none" }} />
+              <div className="absolute left-0 right-0 -bottom-1 h-2 cursor-s-resize" onPointerDown={startCropDrag("s")} style={{ touchAction: "none" }} />
+              <div className="absolute top-0 bottom-0 -left-1 w-2 cursor-w-resize" onPointerDown={startCropDrag("w")} style={{ touchAction: "none" }} />
+              <div className="absolute top-0 bottom-0 -right-1 w-2 cursor-e-resize" onPointerDown={startCropDrag("e")} style={{ touchAction: "none" }} />
+              <div className="absolute h-3 w-3 bg-white border border-black/40 -top-1.5 -left-1.5 cursor-nw-resize" onPointerDown={startCropDrag("nw")} style={{ touchAction: "none" }} />
+              <div className="absolute h-3 w-3 bg-white border border-black/40 -top-1.5 -right-1.5 cursor-ne-resize" onPointerDown={startCropDrag("ne")} style={{ touchAction: "none" }} />
+              <div className="absolute h-3 w-3 bg-white border border-black/40 -bottom-1.5 -left-1.5 cursor-sw-resize" onPointerDown={startCropDrag("sw")} style={{ touchAction: "none" }} />
+              <div className="absolute h-3 w-3 bg-white border border-black/40 -bottom-1.5 -right-1.5 cursor-se-resize" onPointerDown={startCropDrag("se")} style={{ touchAction: "none" }} />
+            </div>
           </div>
         )}
 
@@ -314,17 +390,25 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
           <div className="px-4 pb-4 space-y-3">
             <div className="flex gap-2">
               {[
-                { label: "Free", w: 80, h: 80 },
-                { label: "1:1", w: 60, h: 60 },
-                { label: "4:5", w: 56, h: 70 },
-                { label: "16:9", w: 80, h: 45 },
-              ].map(preset => (
-                <button key={preset.label} className="text-xs text-white/70 px-3 py-1.5 rounded-full border border-white/20 hover:bg-white/10"
-                  onClick={() => setCropBox({ x: (100 - preset.w) / 2, y: (100 - preset.h) / 2, width: preset.w, height: preset.h })}
-                >
-                  {preset.label}
-                </button>
-              ))}
+                { label: "Free", w: 80, h: 80, aspect: null as number | null },
+                { label: "1:1", w: 60, h: 60, aspect: 1 },
+                { label: "4:5", w: 56, h: 70, aspect: 4 / 5 },
+                { label: "16:9", w: 80, h: 45, aspect: 16 / 9 },
+              ].map(preset => {
+                const active = cropAspect === preset.aspect;
+                return (
+                  <button
+                    key={preset.label}
+                    className={`text-xs px-3 py-1.5 rounded-full border ${active ? "bg-white text-black border-white" : "text-white/70 border-white/20 hover:bg-white/10"}`}
+                    onClick={() => {
+                      setCropAspect(preset.aspect);
+                      setCropBox({ x: (100 - preset.w) / 2, y: (100 - preset.h) / 2, width: preset.w, height: preset.h });
+                    }}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
