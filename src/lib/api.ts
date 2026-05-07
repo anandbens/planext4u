@@ -226,6 +226,36 @@ function genId(prefix: string, length: number = 3): string {
   return `${prefix}-${String(Math.floor(Math.random() * 999) + 1).padStart(length, '0')}-${Date.now().toString(36).slice(-4)}`;
 }
 
+/**
+ * services.category_id has an FK to service_categories(id). The unified
+ * `categories` table (category_type='service') is also surfaced in admin UIs.
+ * Before inserting/updating a service, mirror the chosen id into service_categories
+ * if it doesn't already exist there, so the FK constraint is satisfied.
+ */
+async function ensureServiceCategoryMirrored(id: string | null | undefined, parentId: string | null | undefined): Promise<void> {
+  if (!id) return;
+  const { data: existing } = await supabase.from('service_categories').select('id').eq('id', id).maybeSingle();
+  if (existing) return;
+  const { data: cat } = await supabase
+    .from('categories' as any)
+    .select('id, name, parent_id, image, icon, description, status')
+    .eq('id', id)
+    .maybeSingle();
+  if (!cat) return;
+  const effectiveParent = parentId || (cat as any).parent_id || null;
+  if (effectiveParent) await ensureServiceCategoryMirrored(effectiveParent, null);
+  await supabase.from('service_categories').insert({
+    id: (cat as any).id,
+    name: (cat as any).name,
+    parent_id: effectiveParent,
+    image: (cat as any).image || null,
+    icon: (cat as any).icon || null,
+    description: (cat as any).description || null,
+    status: (cat as any).status || 'active',
+    count: 0,
+  } as any);
+}
+
 // API Methods
 export const api = {
   // Auth
@@ -1556,6 +1586,8 @@ export const api = {
   },
 
   // Services CRUD
+
+
   updateService: async (id: string, data: Partial<Service>) => {
     const validFields = ['vendor_id', 'category_id', 'subcategory_id', 'subcategory_name', 'title', 'description', 'price', 'tax', 'discount',
       'max_points_redeemable', 'status', 'vendor_name', 'category_name', 'emoji', 'image', 'service_area',
@@ -1572,6 +1604,8 @@ export const api = {
         filtered[key] = val;
       }
     }
+    if (filtered.category_id) await ensureServiceCategoryMirrored(filtered.category_id, null);
+    if (filtered.subcategory_id) await ensureServiceCategoryMirrored(filtered.subcategory_id, filtered.category_id || null);
     const { data: updated, error } = await supabase.from('services').update(filtered).eq('id', id).select();
     if (error) { console.error("Service update error:", error); throw error; }
     if (!updated || updated.length === 0) throw new Error("Service update failed — no rows affected.");
@@ -1634,6 +1668,11 @@ export const api = {
     // Convert empty FK strings to null (FK to service_categories)
     if (newSrv.category_id === '') newSrv.category_id = null;
     if (newSrv.subcategory_id === '') newSrv.subcategory_id = null;
+    // services.category_id FK -> service_categories(id). The admin modal now also surfaces
+    // rows from the unified `categories` table (category_type='service'). Mirror those into
+    // `service_categories` so the FK insert succeeds.
+    await ensureServiceCategoryMirrored(newSrv.category_id, null);
+    await ensureServiceCategoryMirrored(newSrv.subcategory_id, newSrv.category_id);
     // Admin-created services are auto-approved (active) unless an explicit non-default status was chosen.
     // Vendor-created services go through VendorServicesPage which forces 'pending_approval'.
     if (!newSrv.status || newSrv.status === 'draft') {
