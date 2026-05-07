@@ -194,6 +194,7 @@ export default function VendorsPage() {
             shop_address: a.shop_address || '',
             plan_id: (updates as any).plan_id || null,
             max_redemption_percentage: (updates as any).max_redemption_percentage || null,
+            referred_by: a.referred_by || null,
           };
           const { error: insertErr } = await supabase.from('vendors').insert(newVendor);
           if (insertErr) { toast.error(friendlyError(insertErr, "Failed to create vendor")); return; }
