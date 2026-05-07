@@ -215,9 +215,11 @@ export default function CustomerRegisterPage() {
     if (data2) { toast.error("This mobile number is already registered. Please login instead."); return false; }
     const { data: emailData } = await supabase.from("customers").select("id").eq("email", form.email).neq("status", "deleted").maybeSingle();
     if (emailData) { toast.error("This email is already registered. Please login instead."); return false; }
-    // Check email uniqueness
-    const { data: emailData } = await supabase.from("customers").select("id").eq("email", form.email).maybeSingle();
-    if (emailData) { toast.error("This email is already registered. Please login instead."); return false; }
+    return true;
+  };
+
+  // (legacy duplicate email check removed)
+  const _unused_legacy = async () => true;
     return true;
   };
 
