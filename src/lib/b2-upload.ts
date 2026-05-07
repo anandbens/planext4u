@@ -45,6 +45,19 @@ async function getPresignedUrl(opts: {
   private?: boolean;
   fileBase64?: string;
 }): Promise<{ uploadUrl: string; publicUrl: string; key: string; isPrivate: boolean }> {
+  // Explicitly attach the current session's access token. Some flows
+  // (per-portal storage keys, freshly hydrated sessions, native bridge)
+  // can race with `functions.invoke`'s implicit auth header, causing the
+  // edge function to receive no Authorization header and reject with 401
+  // "Missing Authorization".
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) {
+    throw new Error(
+      "You appear to be signed out. Please log in again before uploading.",
+    );
+  }
+
   const { data, error } = await supabase.functions.invoke("b2-presigned-upload", {
     body: {
       folder: opts.folder,
@@ -53,10 +66,23 @@ async function getPresignedUrl(opts: {
       private: opts.private === true,
       fileBase64: opts.fileBase64,
     },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
   });
 
   if (error) {
-    throw new Error(`Failed to get B2 upload URL: ${error.message}`);
+    // Try to surface the actual edge-function error body (FunctionsHttpError
+    // exposes the raw Response on .context).
+    let detail = error.message;
+    try {
+      const ctx = (error as any).context;
+      if (ctx && typeof ctx.json === "function") {
+        const body = await ctx.json();
+        if (body?.error) detail = body.error;
+      }
+    } catch { /* ignore */ }
+    throw new Error(`Failed to get B2 upload URL: ${detail}`);
   }
   if (typeof data?.key !== "string") {
     throw new Error("B2 presigned-upload returned an invalid response");
