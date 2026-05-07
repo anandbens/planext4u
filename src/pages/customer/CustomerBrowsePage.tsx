@@ -33,7 +33,7 @@ export default function CustomerBrowsePage() {
   const { format: fmt } = useCurrency();
   const isGuest = !customerUser;
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
-  const [sortBy, setSortBy] = useState("popular");
+  const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 12;
@@ -327,6 +327,7 @@ export default function CustomerBrowsePage() {
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="newest">Newest First</SelectItem>
               <SelectItem value="popular">Most Popular</SelectItem>
               <SelectItem value="price_low">Price: Low to High</SelectItem>
               <SelectItem value="price_high">Price: High to Low</SelectItem>
