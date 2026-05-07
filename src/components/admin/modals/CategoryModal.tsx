@@ -219,11 +219,13 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
                 <SelectTrigger className="mt-1"><SelectValue placeholder="None (top-level)" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None (top-level)</SelectItem>
-                  {parentOptions.map(p => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name} <span className="text-[10px] text-muted-foreground ml-1">({p.category_type === 'service' ? 'Service' : 'Product'})</span>
-                    </SelectItem>
-                  ))}
+                  {parentOptions
+                    .filter(p => (p.category_type || 'product') === form.category_type)
+                    .map(p => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} <span className="text-[10px] text-muted-foreground ml-1">({p.category_type === 'service' ? 'Service' : 'Product'})</span>
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
