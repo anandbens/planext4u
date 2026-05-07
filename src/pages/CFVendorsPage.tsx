@@ -187,6 +187,7 @@ export default function CFVendorsPage() {
             shop_photo_url: a.shop_photo_url || '',
             shop_address: a.shop_address || '',
             plan_id: (updates as any).plan_id || null,
+            referred_by: a.referred_by || null,
           };
           const { error: insertErr } = await supabase.from('service_vendors' as any).insert(newVendor);
           if (insertErr) { toast.error(friendlyError(insertErr, "Failed to create service vendor")); return; }
