@@ -172,7 +172,7 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
     queryKey: ["serviceSubcategoriesForModal_v2", form.category_id],
     queryFn: async () => {
       if (!form.category_id) return [];
-      const [{ data: catRows }, { data: svcRows }] = await Promise.all([
+      const [catRes, svcRes]: any[] = await Promise.all([
         supabase.from("categories" as any)
           .select("id, name, parent_id, category_type")
           .eq("status", "active")
@@ -185,7 +185,7 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
           .eq("parent_id", form.category_id)
           .order("name"),
       ]);
-      const merged = [...(catRows || []), ...(svcRows || [])];
+      const merged: any[] = [...((catRes?.data) || []), ...((svcRes?.data) || [])];
       const seen = new Set<string>();
       return merged.filter((c: any) => {
         if (seen.has(c.id)) return false;
