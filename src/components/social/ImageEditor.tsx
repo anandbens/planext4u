@@ -62,6 +62,8 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
   const [emojiCategory, setEmojiCategory] = useState<keyof typeof EMOJI_SETS>("Smileys");
   const [isCropping, setIsCropping] = useState(false);
   const [cropBox, setCropBox] = useState<CropState>({ x: 10, y: 10, width: 80, height: 80 });
+  const [cropAspect, setCropAspect] = useState<number | null>(null); // null = free
+  const [cropDrag, setCropDrag] = useState<{ mode: "move" | "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw"; startX: number; startY: number; box: CropState } | null>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
