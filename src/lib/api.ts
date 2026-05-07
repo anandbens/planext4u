@@ -879,7 +879,24 @@ export const api = {
 
   browseServices: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number }) => {
     let query = supabase.from('services').select('*').eq('status', 'active');
-    if (params.category) query = query.ilike('category_name', `%${params.category}%`);
+    if (params.category) {
+      // Resolve whether the supplied name is a parent service category or a subcategory.
+      // - Parent  → match services whose category_name matches (covers all subcategories).
+      // - Subcat  → strict match on subcategory_name (or subcategory_id) so siblings don't bleed in.
+      const { data: catRow } = await supabase
+        .from('service_categories')
+        .select('id, name, parent_id, status')
+        .ilike('name', params.category)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (catRow?.parent_id) {
+        query = query.or(
+          `subcategory_name.ilike.${params.category},subcategory_id.eq.${catRow.id}`
+        );
+      } else {
+        query = query.ilike('category_name', `%${params.category}%`);
+      }
+    }
     if (params.search) query = query.ilike('title', `%${params.search}%`);
     if (params.sort === 'price_low') query = query.order('price', { ascending: true });
     else if (params.sort === 'price_high') query = query.order('price', { ascending: false });
