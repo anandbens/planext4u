@@ -344,6 +344,7 @@ export default function VendorsPage() {
               shop_latitude: a.latitude || 0, shop_longitude: a.longitude || 0,
               shop_address: a.shop_address || '',
               shop_photo_url: a.shop_photo_url || '',
+              referred_by: a.referred_by || null,
             };
             const { error: insertErr } = await supabase.from('vendors').insert(newVendor as any);
             if (insertErr) { toast.error(friendlyError(insertErr, "Failed to create vendor")); return; }
