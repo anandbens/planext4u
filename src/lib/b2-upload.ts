@@ -94,7 +94,11 @@ export async function uploadToB2(
   options: B2UploadOptions,
 ): Promise<B2UploadResult> {
   const { folder, filename, contentType, onProgress } = options;
-  const shouldInlineUpload = file.size <= INLINE_UPLOAD_THRESHOLD_BYTES;
+  // For PRIVATE bucket uploads we always use the presigned-URL flow (browser →
+  // B2 direct). The inline base64 PUT-through path has been observed to hang
+  // and 504 against the private bucket, blocking KYC uploads.
+  const shouldInlineUpload =
+    options.private !== true && file.size <= INLINE_UPLOAD_THRESHOLD_BYTES;
 
   if (shouldInlineUpload) {
     onProgress?.(0);
