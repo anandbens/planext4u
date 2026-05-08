@@ -111,7 +111,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
   const initial = (customerUser?.name?.charAt(0) || 'U').toUpperCase();
 
   const navItems = [
-    { icon: Home, label: "Home", to: "/app" },
+    { icon: Home, label: "Dashboard", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount, comingSoon: !modules.shop },
     { icon: Megaphone, label: "Socio", to: "/app/social", comingSoon: !modules.socio },
     { icon: Wrench, label: "Services", to: "/app/services", comingSoon: !modules.services },
@@ -645,7 +645,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
 
         // Default Shop footer
         const shopTabs = [
-          { icon: Home, label: "Home", to: "/app", badge: 0 },
+          { icon: Home, label: "Dashboard", to: "/app", badge: 0 },
           { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: 0, comingSoon: !modules.shop },
           { icon: Megaphone, label: "Socio", to: "/app/social", badge: 0, comingSoon: !modules.socio },
           { icon: Wrench, label: "Services", to: "/app/services", badge: 0, comingSoon: !modules.services },
