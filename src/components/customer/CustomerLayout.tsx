@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned, Building, Film, Plus, Compass, Users, UtensilsCrossed } from "lucide-react";
+import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned, Building, Film, Plus, Compass, Users, UtensilsCrossed, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,7 +30,7 @@ function WalletBalance() {
     enabled: !!customerUser?.id,
     staleTime: 30000,
   });
-  return <span className="text-xs font-bold text-primary-foreground">{balance}</span>;
+  return <span className="text-xs font-extrabold tracking-tight">{balance.toLocaleString()} <span className="font-semibold opacity-80">pts</span></span>;
 }
 
 interface CustomerLayoutProps {
@@ -173,8 +173,11 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {customerUser && (
-                <Link to="/app/wallet" className="flex items-center gap-1 bg-primary-foreground/15 px-2.5 py-1.5 rounded-full">
-                  <span className="text-[10px] text-primary-foreground/80">₹</span>
+                <Link
+                  to="/app/wallet"
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-amber-950 px-3 py-1.5 rounded-full shadow-md shadow-amber-500/40 ring-1 ring-amber-200/60 hover:brightness-110 transition"
+                >
+                  <Coins className="h-3.5 w-3.5 text-amber-900" />
                   <WalletBalance />
                 </Link>
               )}
