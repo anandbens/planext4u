@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
-import { awardPoints } from "@/lib/award-points";
+
 import { isSocialModerator } from "@/lib/social-moderator";
 
 export default function SocialStoryViewerPage() {
@@ -262,7 +262,18 @@ export default function SocialStoryViewerPage() {
             const { data: { session } } = await supabase.auth.getSession();
             const uid = session?.user?.id;
             if (uid && story) {
-              awardPoints(story.user_id, 'story_liked_points', 'Points for your story being liked');
+              // Upsert the view with reaction='like'. DB trigger credits 1 point to the
+              // story owner with dedupe_key 'story_like:storyId:viewerId', so repeated
+              // taps (or removing/re-liking) won't double-credit.
+              const { error } = await supabase
+                .from('social_story_views')
+                .upsert(
+                  { story_id: story.id, viewer_id: uid, reaction: 'like' },
+                  { onConflict: 'story_id,viewer_id' }
+                );
+              if (error) console.warn('story like upsert error', error);
+              // Refresh wallet UI immediately for the story owner case (no-op otherwise)
+              window.dispatchEvent(new Event('wallet:refresh'));
             }
           }}><Heart className="h-6 w-6 text-white" /></button>
           <button onClick={handleReply}><Send className="h-6 w-6 text-white" /></button>

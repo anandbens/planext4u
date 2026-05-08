@@ -400,16 +400,17 @@ export function useSharePost() {
     if (shared) {
       const uid = await getAuthUserId();
       if (uid) {
-        // Only award points when the shared post has a tagged product link
-        const { data: postRow } = await supabase
-          .from('social_posts')
-          .select('product_tags')
-          .eq('id', postId)
-          .maybeSingle();
-        const tags = Array.isArray(postRow?.product_tags) ? postRow!.product_tags as any[] : [];
-        if (tags.length > 0) {
-          awardPoints(uid, 'post_share_points', 'Points for sharing a post with tagged products');
+        // Insert into social_shares — DB trigger awards 1 point to post owner with dedupe.
+        // Unique (post_id, user_id) ensures repeated shares by the same user don't re-credit.
+        const { error } = await supabase
+          .from('social_shares')
+          .insert({ post_id: postId, user_id: uid });
+        // Ignore unique_violation (already shared) — silently no-op
+        if (error && !`${error.message}`.toLowerCase().includes('duplicate')) {
+          console.warn('social_shares insert error', error);
         }
+        // Refresh wallet UI immediately
+        window.dispatchEvent(new Event('wallet:refresh'));
       }
     }
   }, []);

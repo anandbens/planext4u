@@ -18,9 +18,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useModuleStatus } from "@/hooks/useModuleStatus";
 
+export const WALLET_REFRESH_EVENT = "wallet:refresh";
 function WalletBalance() {
   const { customerUser } = useAuth();
-  const { data: balance = 0 } = useQuery({
+  const { data: balance = 0, refetch } = useQuery({
     queryKey: ["wallet-balance", customerUser?.id],
     queryFn: async () => {
       if (!customerUser?.id) return 0;
@@ -30,6 +31,11 @@ function WalletBalance() {
     enabled: !!customerUser?.id,
     staleTime: 30000,
   });
+  useEffect(() => {
+    const handler = () => refetch();
+    window.addEventListener(WALLET_REFRESH_EVENT, handler);
+    return () => window.removeEventListener(WALLET_REFRESH_EVENT, handler);
+  }, [refetch]);
   return <span className="text-xs font-extrabold tracking-tight">{balance.toLocaleString()}</span>;
 }
 
