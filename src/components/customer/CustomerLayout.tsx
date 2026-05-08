@@ -30,7 +30,7 @@ function WalletBalance() {
     enabled: !!customerUser?.id,
     staleTime: 30000,
   });
-  return <span className="text-xs font-bold text-primary-foreground">{balance}</span>;
+  return <span className="text-xs font-extrabold tracking-tight">{balance.toLocaleString()} <span className="font-semibold opacity-80">pts</span></span>;
 }
 
 interface CustomerLayoutProps {
