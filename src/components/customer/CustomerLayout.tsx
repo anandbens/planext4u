@@ -30,7 +30,7 @@ function WalletBalance() {
     enabled: !!customerUser?.id,
     staleTime: 30000,
   });
-  return <span className="text-xs font-extrabold tracking-tight">{balance.toLocaleString()} <span className="font-semibold opacity-80">pts</span></span>;
+  return <span className="text-xs font-extrabold tracking-tight">{balance.toLocaleString()}</span>;
 }
 
 interface CustomerLayoutProps {
@@ -175,9 +175,9 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               {customerUser && (
                 <Link
                   to="/app/wallet"
-                  className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-amber-950 px-3 py-1.5 rounded-full shadow-md shadow-amber-500/40 ring-1 ring-amber-200/60 hover:brightness-110 transition"
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-700 text-amber-50 px-3 py-1.5 rounded-full shadow-md shadow-amber-900/30 ring-1 ring-amber-300/40 hover:brightness-105 transition"
                 >
-                  <Coins className="h-3.5 w-3.5 text-amber-900" />
+                  <Coins className="h-3.5 w-3.5 text-amber-100" />
                   <WalletBalance />
                 </Link>
               )}
