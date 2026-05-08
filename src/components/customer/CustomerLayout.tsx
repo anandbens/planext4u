@@ -173,8 +173,11 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {customerUser && (
-                <Link to="/app/wallet" className="flex items-center gap-1 bg-primary-foreground/15 px-2.5 py-1.5 rounded-full">
-                  <span className="text-[10px] text-primary-foreground/80">₹</span>
+                <Link
+                  to="/app/wallet"
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-amber-950 px-3 py-1.5 rounded-full shadow-md shadow-amber-500/40 ring-1 ring-amber-200/60 hover:brightness-110 transition"
+                >
+                  <Coins className="h-3.5 w-3.5 text-amber-900" />
                   <WalletBalance />
                 </Link>
               )}
