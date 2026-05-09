@@ -166,7 +166,7 @@ export default function VendorServicesPage() {
       const err = validateServiceForm(formData);
       if (err) throw new Error(err);
       // Ensure vendor exists in service_vendors table first
-      await ensureServiceVendor();
+      const vendor = await ensureServiceVendor();
 
       const parentCat = (allCategoriesFlat || []).find(c => c.id === formData.category_id);
       const subCat = (allCategoriesFlat || []).find(c => c.id === formData.subcategory_id);
@@ -176,12 +176,17 @@ export default function VendorServicesPage() {
       const isResubmit = editingId && (formData.status === 'rejected' || formData.status === 'pending_approval');
       const finalStatus = !editingId ? 'pending_approval' : (isResubmit ? 'pending_approval' : formData.status);
 
+      const lat = formData.latitude ? Number(formData.latitude) : Number((vendor as any)?.shop_latitude || 0);
+      const lng = formData.longitude ? Number(formData.longitude) : Number((vendor as any)?.shop_longitude || 0);
       const payload: any = {
         title: formData.title, description: formData.description,
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
         discount: parseFloat(formData.discount) || 0, duration: formData.duration,
         service_duration_minutes: Math.max(15, parseInt(formData.service_duration_minutes) || 60),
         service_area: formData.service_area,
+        latitude: Number.isFinite(lat) && lat !== 0 ? lat : null,
+        longitude: Number.isFinite(lng) && lng !== 0 ? lng : null,
+        location_address: formData.location_address || formData.service_area || (vendor as any)?.shop_address || null,
         category_id: formData.category_id || null,
         category_name: parentCat?.name || "",
         subcategory_id: formData.subcategory_id || null,
@@ -227,6 +232,8 @@ export default function VendorServicesPage() {
       emoji: s.emoji || "🔧", status: s.status,
       image: s.image || "", working_days: "Mon-Sat", workers: "1",
       service_duration_minutes: String(s.service_duration_minutes || 60),
+      latitude: String((s as any).latitude || ""), longitude: String((s as any).longitude || ""),
+      location_address: (s as any).location_address || s.service_area || "",
     });
     setModalOpen(true);
   };
