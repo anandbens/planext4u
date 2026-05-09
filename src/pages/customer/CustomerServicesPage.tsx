@@ -256,6 +256,7 @@ export default function CustomerServicesPage() {
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-36 h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
+              <SelectItem value="nearest">Nearest First</SelectItem>
               <SelectItem value="popular">Most Popular</SelectItem>
               <SelectItem value="price_low">Price: Low to High</SelectItem>
               <SelectItem value="price_high">Price: High to Low</SelectItem>
