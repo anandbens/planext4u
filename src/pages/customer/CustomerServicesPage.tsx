@@ -55,7 +55,23 @@ export default function CustomerServicesPage() {
   const [availableOnly, setAvailableOnly] = useState(false);
   const [priceTouched, setPriceTouched] = useState(false);
 
-  // Resolve user location: header coords → default address → GPS.
+  const applyCurrentLocation = async (showToast = false) => {
+    setLocating(true);
+    try {
+      const coords = await getLocation();
+      if (!coords) throw new Error("Couldn't read your current location.");
+      localStorage.setItem("app_db_selected_coords", JSON.stringify({ lat: coords.lat, lng: coords.lng }));
+      setUserLocation({ lat: coords.lat, lng: coords.lng });
+      setRadiusInfo("Showing services near your current GPS location");
+      if (showToast) toast.success("Current location updated");
+    } catch (err: any) {
+      if (showToast) toast.error(err?.message || "Could not fetch your current location");
+    } finally {
+      setLocating(false);
+    }
+  };
+
+  // Resolve user location: header coords → default address → accurate GPS.
   useEffect(() => {
     let cancelled = false;
     const loadLocation = async () => {
@@ -83,11 +99,14 @@ export default function CustomerServicesPage() {
           }
         }
       } catch {}
-      if (!cancelled && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => !cancelled && setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-          () => {},
-        );
+      if (!cancelled) {
+        try {
+          const coords = await getLocation();
+          if (!cancelled && coords) {
+            setUserLocation({ lat: coords.lat, lng: coords.lng });
+            setRadiusInfo("Showing services near your current GPS location");
+          }
+        } catch {}
       }
     };
     loadLocation();
@@ -102,8 +121,8 @@ export default function CustomerServicesPage() {
   }, [customerUser]);
 
   const { data: services, isLoading } = useQuery({
-    queryKey: ["browseServices", categoryFilter, sortBy, userLocation.lat, userLocation.lng],
-    queryFn: () => api.browseServices({ category: categoryFilter, sort: sortBy, userLat: userLocation.lat, userLng: userLocation.lng }),
+    queryKey: ["browseServices", categoryFilter, searchFilter, sortBy, userLocation.lat, userLocation.lng],
+    queryFn: () => api.browseServices({ category: categoryFilter, search: searchFilter, sort: sortBy, userLat: userLocation.lat, userLng: userLocation.lng }),
   });
 
   const { data: categories } = useQuery({
