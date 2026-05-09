@@ -37,7 +37,7 @@ function useServiceWishlist() {
 
 export default function CustomerServicesPage() {
   const [searchParams] = useSearchParams();
-  const [sortBy, setSortBy] = useState("popular");
+  const [sortBy, setSortBy] = useState("nearest");
   const categoryFilter = searchParams.get("category") || undefined;
   const { list: wishlist, toggle: toggleWishlist } = useServiceWishlist();
   const { customerUser } = useAuth();
