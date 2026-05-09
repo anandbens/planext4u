@@ -22,14 +22,41 @@ export default function VendorProfilePage() {
   const bgInputRef = useRef<HTMLInputElement>(null);
   const [bgUploading, setBgUploading] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ email: "", mobile: "", area_id: "", city_id: "", shop_address: "" });
+  const [profileForm, setProfileForm] = useState({ email: "", mobile: "", area_id: "", city_id: "", shop_address: "", shop_latitude: "" as string | number, shop_longitude: "" as string | number });
+  const [detectingLoc, setDetectingLoc] = useState(false);
+
+  const detectLocation = async () => {
+    setDetectingLoc(true);
+    try {
+      const coords = await getLocation();
+      if (!coords) { toast.error("Couldn't read your location."); return; }
+      let address = profileForm.shop_address;
+      try {
+        const { data: kv } = await supabase.from("platform_variables").select("value").eq("key", "GOOGLE_MAPS_API_KEY").maybeSingle();
+        const apiKey = kv?.value || "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
+        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${apiKey}`);
+        const data = await res.json();
+        if (data.status === "OK" && data.results?.[0]) address = data.results[0].formatted_address;
+      } catch {}
+      setProfileForm(f => ({ ...f, shop_latitude: coords.lat, shop_longitude: coords.lng, shop_address: address }));
+      toast.success("Location captured");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not detect location");
+    } finally {
+      setDetectingLoc(false);
+    }
+  };
 
   const saveProfileMutation = useMutation({
     mutationFn: async () => {
+      const lat = profileForm.shop_latitude === "" ? null : Number(profileForm.shop_latitude);
+      const lng = profileForm.shop_longitude === "" ? null : Number(profileForm.shop_longitude);
       const { error } = await supabase.from("vendors").update({
         email: profileForm.email,
         mobile: profileForm.mobile,
         shop_address: profileForm.shop_address,
+        shop_latitude: lat,
+        shop_longitude: lng,
       } as any).eq("id", vendorId);
       if (error) throw error;
     },
