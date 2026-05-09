@@ -84,7 +84,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
 
   const handleSearch = async (query: string) => {
     if (socialMode || location.pathname.startsWith('/app/social')) return;
-    const term = query.trim();
+    const term = query.replace(/[%,]/g, "").trim();
     if (!term) return;
     try {
       const [{ data: matchingServices }, { data: matchingServiceCategories }] = await Promise.all([
