@@ -206,7 +206,7 @@ export default function CustomerServicesPage() {
           <div className="flex items-baseline justify-between gap-2 min-w-0">
             <h1 className="text-xl font-bold truncate min-w-0 flex items-center gap-2">
               <Wrench className="h-5 w-5 text-primary" />
-              {categoryFilter || "All Services"}
+              {searchFilter || categoryFilter || "All Services"}
             </h1>
             <p className="text-xs text-muted-foreground shrink-0">
               {filteredServices.length} service{filteredServices.length === 1 ? '' : 's'}
@@ -285,6 +285,11 @@ export default function CustomerServicesPage() {
               <SelectItem value="rating">Highest Rated</SelectItem>
             </SelectContent>
           </Select>
+
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => applyCurrentLocation(true)} disabled={locating}>
+            {locating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Navigation className="h-3.5 w-3.5" />}
+            Use GPS
+          </Button>
         </div>
 
         {/* Category chips (parents) */}
