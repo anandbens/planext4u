@@ -994,7 +994,32 @@ export const api = {
       return true;
     });
 
-    return filtered as unknown as Service[];
+    // Attach distance (km) from user → vendor shop when we have user coords.
+    const withDistance = filtered.map((s: any) => {
+      const vendor = vendorMap[s.vendor_id];
+      const sLat = Number(vendor?.shop_latitude) || 0;
+      const sLng = Number(vendor?.shop_longitude) || 0;
+      let distance_km: number | null = null;
+      if (userLat && userLng && sLat && sLng) {
+        distance_km = Math.round(haversine(userLat, userLng, sLat, sLng) * 10) / 10;
+      }
+      return { ...s, distance_km };
+    });
+
+    // When no explicit sort (or "nearest"/"popular"), prioritize closer services.
+    // Services without a known distance fall to the bottom.
+    if (!params.sort || params.sort === 'popular' || params.sort === 'nearest') {
+      if (userLat && userLng) {
+        withDistance.sort((a: any, b: any) => {
+          const da = a.distance_km ?? Number.POSITIVE_INFINITY;
+          const db = b.distance_km ?? Number.POSITIVE_INFINITY;
+          if (da !== db) return da - db;
+          return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+        });
+      }
+    }
+
+    return withDistance as unknown as Service[];
   },
 
   getServiceCategories: async (includeInactive = false) => {
