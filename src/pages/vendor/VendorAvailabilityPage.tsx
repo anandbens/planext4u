@@ -14,12 +14,14 @@ import { toast } from "sonner";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+interface TimeSlot { start: string; end: string }
 interface DayAvailability {
   day_of_week: number;
   is_available: boolean;
   start_time: string;
   end_time: string;
   buffer_minutes: number;
+  time_slots: TimeSlot[];
 }
 
 const defaultSchedule = (): DayAvailability[] =>
@@ -29,7 +31,16 @@ const defaultSchedule = (): DayAvailability[] =>
     start_time: "09:00",
     end_time: "18:00",
     buffer_minutes: 30,
+    time_slots: [],
   }));
+
+const fmt12 = (t: string) => {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hh = ((h + 11) % 12) + 1;
+  return `${hh}:${String(m).padStart(2, "0")} ${period}`;
+};
 
 export default function VendorAvailabilityPage() {
   const { vendorUser } = useAuth();
