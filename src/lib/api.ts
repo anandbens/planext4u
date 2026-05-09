@@ -80,6 +80,7 @@ export interface Service {
   status: 'active' | 'inactive' | 'draft' | 'pending_approval' | 'rejected';
   vendor_name?: string; category_name?: string; emoji?: string; image?: string;
   rating?: number; reviews?: number; service_area?: string; duration?: string;
+  latitude?: number | null; longitude?: number | null; location_address?: string | null; distance_km?: number | null;
   created_at?: string; updated_at?: string;
   short_description?: string; long_description?: string;
   meta_title?: string; meta_description?: string; slug?: string;
@@ -927,7 +928,12 @@ export const api = {
         query = query.ilike('category_name', `%${params.category}%`);
       }
     }
-    if (params.search) query = query.ilike('title', `%${params.search}%`);
+    if (params.search) {
+      const term = params.search.replace(/[%,]/g, '').trim();
+      if (term) {
+        query = query.or(`title.ilike.%${term}%,description.ilike.%${term}%,category_name.ilike.%${term}%,subcategory_name.ilike.%${term}%,service_area.ilike.%${term}%`);
+      }
+    }
     if (params.sort === 'price_low') query = query.order('price', { ascending: true });
     else if (params.sort === 'price_high') query = query.order('price', { ascending: false });
     else if (params.sort === 'rating') query = query.order('rating', { ascending: false });
@@ -939,13 +945,22 @@ export const api = {
     const vendorIds = [...new Set(services.map((s: any) => s.vendor_id).filter(Boolean))];
     if (!vendorIds.length) return services as unknown as Service[];
 
-    const { data: vendors } = await supabase
+    const { data: serviceVendors } = await supabase
       .from('service_vendors')
-      .select('id, plan_id, shop_latitude, shop_longitude, city_id, status')
+      .select('id, plan_id, shop_address, shop_latitude, shop_longitude, city_id, status')
       .in('id', vendorIds)
       .in('status', ['active', 'verified']);
 
-    if (!vendors?.length) return [] as unknown as Service[];
+    const { data: vendorProfiles } = await supabase
+      .from('vendors')
+      .select('id, plan_id, shop_address, shop_latitude, shop_longitude, city_id, status')
+      .in('id', vendorIds)
+      .in('status', ['verified', 'active', 'level2_approved']);
+
+    const vendors = [...(serviceVendors || []), ...(vendorProfiles || [])]
+      .reduce((acc: any[], v: any) => acc.some((x) => x.id === v.id) ? acc : [...acc, v], []);
+
+    if (!vendors.length) return [] as unknown as Service[];
 
     const verifiedVendorIds = new Set(vendors.map((v: any) => v.id));
     const filteredServices = services.filter((s: any) => verifiedVendorIds.has(s.vendor_id));
@@ -960,8 +975,8 @@ export const api = {
     const vendorMap: Record<string, any> = {};
     vendors.forEach((v: any) => { vendorMap[v.id] = v; });
 
-    const userLat = params.userLat || 0;
-    const userLng = params.userLng || 0;
+    const userLat = params.userLat ?? 0;
+    const userLng = params.userLng ?? 0;
 
     const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
       const R = 6371;
@@ -969,6 +984,16 @@ export const api = {
       const dLon = (lon2 - lon1) * Math.PI / 180;
       const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
+    const getServiceCoords = (service: any, vendor?: any) => {
+      const rawLat = Number(service.latitude);
+      const rawLng = Number(service.longitude);
+      const vendorLat = Number(vendor?.shop_latitude);
+      const vendorLng = Number(vendor?.shop_longitude);
+      const lat = Number.isFinite(rawLat) && rawLat !== 0 ? rawLat : (Number.isFinite(vendorLat) ? vendorLat : 0);
+      const lng = Number.isFinite(rawLng) && rawLng !== 0 ? rawLng : (Number.isFinite(vendorLng) ? vendorLng : 0);
+      return { lat, lng };
     };
 
     const filtered = filteredServices.filter((s: any) => {
@@ -982,8 +1007,7 @@ export const api = {
       if (plan.visibility_type === 'pan_india') return true;
       if (!userLat || !userLng) return true;
       if (plan.visibility_type === 'radius_based') {
-        const sLat = Number(vendor.shop_latitude) || 0;
-        const sLng = Number(vendor.shop_longitude) || 0;
+        const { lat: sLat, lng: sLng } = getServiceCoords(s, vendor);
         // Treat (0,0) / null shop coords as unset → don't hide the vendor's
         // catalog. They'll get proper geo-filtering once they set a location.
         if (!sLat || !sLng) return true;
@@ -997,13 +1021,12 @@ export const api = {
     // Attach distance (km) from user → vendor shop when we have user coords.
     const withDistance = filtered.map((s: any) => {
       const vendor = vendorMap[s.vendor_id];
-      const sLat = Number(vendor?.shop_latitude) || 0;
-      const sLng = Number(vendor?.shop_longitude) || 0;
+      const { lat: sLat, lng: sLng } = getServiceCoords(s, vendor);
       let distance_km: number | null = null;
       if (userLat && userLng && sLat && sLng) {
         distance_km = Math.round(haversine(userLat, userLng, sLat, sLng) * 10) / 10;
       }
-      return { ...s, distance_km };
+      return { ...s, latitude: sLat || s.latitude, longitude: sLng || s.longitude, location_address: s.location_address || vendor?.shop_address || s.service_area, distance_km };
     });
 
     // When no explicit sort (or "nearest"/"popular"), prioritize closer services.

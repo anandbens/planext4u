@@ -6261,7 +6261,10 @@ export type Database = {
           id: string
           image: string | null
           images: Json | null
+          latitude: number | null
+          location_address: string | null
           long_description: string | null
+          longitude: number | null
           max_bookings_per_slot: number | null
           max_points_redeemable: number
           max_redemption_percentage: number | null
@@ -6304,7 +6307,10 @@ export type Database = {
           id: string
           image?: string | null
           images?: Json | null
+          latitude?: number | null
+          location_address?: string | null
           long_description?: string | null
+          longitude?: number | null
           max_bookings_per_slot?: number | null
           max_points_redeemable?: number
           max_redemption_percentage?: number | null
@@ -6347,7 +6353,10 @@ export type Database = {
           id?: string
           image?: string | null
           images?: Json | null
+          latitude?: number | null
+          location_address?: string | null
           long_description?: string | null
+          longitude?: number | null
           max_bookings_per_slot?: number | null
           max_points_redeemable?: number
           max_redemption_percentage?: number | null

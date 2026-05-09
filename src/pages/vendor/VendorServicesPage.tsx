@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, MoreVertical, Edit, Trash2, Image, X } from "lucide-react";
+import { Plus, Search, MoreVertical, Edit, Trash2, MapPin, Navigation, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
+import { getLocation } from "@/lib/device-service";
 
 const statusStyle: Record<string, string> = {
   active: "bg-success/10 text-success",
@@ -32,6 +33,7 @@ interface ServiceForm {
   emoji: string; status: string;
   image: string; working_days: string; workers: string;
   service_duration_minutes: string;
+  latitude: string; longitude: string; location_address: string;
 }
 
 const emptyForm: ServiceForm = {
@@ -40,6 +42,7 @@ const emptyForm: ServiceForm = {
   emoji: "🔧", status: "pending_approval",
   image: "", working_days: "Mon-Sat", workers: "1",
   service_duration_minutes: "60",
+  latitude: "", longitude: "", location_address: "",
 };
 
 export default function VendorServicesPage() {
@@ -51,6 +54,29 @@ export default function VendorServicesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ServiceForm>(emptyForm);
+  const [detectingLoc, setDetectingLoc] = useState(false);
+
+  const detectServiceLocation = async () => {
+    setDetectingLoc(true);
+    try {
+      const coords = await getLocation();
+      if (!coords) throw new Error("Couldn't read your location");
+      let address = form.location_address || form.service_area;
+      try {
+        const { data: kv } = await supabase.from("platform_variables").select("value").eq("key", "GOOGLE_MAPS_API_KEY").maybeSingle();
+        const apiKey = kv?.value || "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
+        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${apiKey}`);
+        const data = await res.json();
+        if (data.status === "OK" && data.results?.[0]) address = data.results[0].formatted_address;
+      } catch {}
+      setForm(f => ({ ...f, latitude: String(coords.lat), longitude: String(coords.lng), location_address: address, service_area: f.service_area || address }));
+      toast.success("Exact service location captured");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not detect service location");
+    } finally {
+      setDetectingLoc(false);
+    }
+  };
 
   const { data: services, isLoading } = useQuery({
     queryKey: ["vendorServices", vendorId],
@@ -100,18 +126,28 @@ export default function VendorServicesPage() {
   // Check if vendor exists in service_vendors, create if not
   const ensureServiceVendor = async () => {
     const { data } = await supabase.from("service_vendors").select("id").eq("id", vendorId).maybeSingle();
+    const { data: vendor } = await supabase.from("vendors").select("*").eq("id", vendorId).maybeSingle();
     if (!data) {
-      const { data: vendor } = await supabase.from("vendors").select("*").eq("id", vendorId).maybeSingle();
       const { error } = await supabase.from("service_vendors").insert({
         id: vendorId,
         name: vendor?.name || vendorUser?.name || "Vendor",
         business_name: vendor?.business_name || "",
         mobile: vendor?.mobile || "",
         email: vendor?.email || "",
+        shop_address: (vendor as any)?.shop_address || "",
+        shop_latitude: (vendor as any)?.shop_latitude || null,
+        shop_longitude: (vendor as any)?.shop_longitude || null,
         status: "verified",
       });
       if (error) console.error("ensureServiceVendor error:", error.message);
+    } else if ((vendor as any)?.shop_latitude && (vendor as any)?.shop_longitude) {
+      await supabase.from("service_vendors").update({
+        shop_address: (vendor as any)?.shop_address || null,
+        shop_latitude: (vendor as any)?.shop_latitude,
+        shop_longitude: (vendor as any)?.shop_longitude,
+      } as any).eq("id", vendorId);
     }
+    return vendor;
   };
 
   const validateServiceForm = (f: ServiceForm): string | null => {
@@ -130,7 +166,7 @@ export default function VendorServicesPage() {
       const err = validateServiceForm(formData);
       if (err) throw new Error(err);
       // Ensure vendor exists in service_vendors table first
-      await ensureServiceVendor();
+      const vendor = await ensureServiceVendor();
 
       const parentCat = (allCategoriesFlat || []).find(c => c.id === formData.category_id);
       const subCat = (allCategoriesFlat || []).find(c => c.id === formData.subcategory_id);
@@ -140,12 +176,20 @@ export default function VendorServicesPage() {
       const isResubmit = editingId && (formData.status === 'rejected' || formData.status === 'pending_approval');
       const finalStatus = !editingId ? 'pending_approval' : (isResubmit ? 'pending_approval' : formData.status);
 
+      const lat = formData.latitude ? Number(formData.latitude) : Number((vendor as any)?.shop_latitude || 0);
+      const lng = formData.longitude ? Number(formData.longitude) : Number((vendor as any)?.shop_longitude || 0);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) {
+        throw new Error("Capture exact service location using GPS or enter map coordinates before submitting");
+      }
       const payload: any = {
         title: formData.title, description: formData.description,
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
         discount: parseFloat(formData.discount) || 0, duration: formData.duration,
         service_duration_minutes: Math.max(15, parseInt(formData.service_duration_minutes) || 60),
         service_area: formData.service_area,
+        latitude: Number.isFinite(lat) && lat !== 0 ? lat : null,
+        longitude: Number.isFinite(lng) && lng !== 0 ? lng : null,
+        location_address: formData.location_address || formData.service_area || (vendor as any)?.shop_address || null,
         category_id: formData.category_id || null,
         category_name: parentCat?.name || "",
         subcategory_id: formData.subcategory_id || null,
@@ -191,6 +235,8 @@ export default function VendorServicesPage() {
       emoji: s.emoji || "🔧", status: s.status,
       image: s.image || "", working_days: "Mon-Sat", workers: "1",
       service_duration_minutes: String(s.service_duration_minutes || 60),
+      latitude: String((s as any).latitude || ""), longitude: String((s as any).longitude || ""),
+      location_address: (s as any).location_address || s.service_area || "",
     });
     setModalOpen(true);
   };
@@ -298,6 +344,25 @@ export default function VendorServicesPage() {
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Approx Duration (display)</Label><Input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} placeholder="e.g. 2 hrs" /></div>
               <div><Label>Service Area</Label><Input value={form.service_area} onChange={(e) => setForm({ ...form, service_area: e.target.value })} placeholder="e.g. Coimbatore" /></div>
+            </div>
+            <div className="space-y-2 rounded-xl border border-border/60 bg-secondary/20 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-xs font-semibold">Exact Service Location *</Label>
+                <Button type="button" variant="outline" size="sm" onClick={detectServiceLocation} disabled={detectingLoc} className="h-8 text-xs">
+                  {detectingLoc ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Navigation className="h-3.5 w-3.5 mr-1" />}
+                  Use GPS
+                </Button>
+              </div>
+              <Input value={form.location_address} onChange={(e) => setForm({ ...form, location_address: e.target.value })} placeholder="Exact address from GPS or map" className="h-9" />
+              <div className="grid grid-cols-2 gap-2">
+                <Input type="number" step="any" placeholder="Latitude" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} className="h-9" />
+                <Input type="number" step="any" placeholder="Longitude" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} className="h-9" />
+              </div>
+              <Button type="button" variant="ghost" size="sm" asChild className="h-8 px-0 text-xs">
+                <a href={`https://www.google.com/maps${form.latitude && form.longitude ? `/@${form.latitude},${form.longitude},18z` : ""}`} target="_blank" rel="noreferrer">
+                  <MapPin className="h-3.5 w-3.5 mr-1" /> Pick pin on map and paste coordinates
+                </a>
+              </Button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
