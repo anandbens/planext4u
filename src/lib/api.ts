@@ -80,6 +80,7 @@ export interface Service {
   status: 'active' | 'inactive' | 'draft' | 'pending_approval' | 'rejected';
   vendor_name?: string; category_name?: string; emoji?: string; image?: string;
   rating?: number; reviews?: number; service_area?: string; duration?: string;
+  latitude?: number | null; longitude?: number | null; location_address?: string | null; distance_km?: number | null;
   created_at?: string; updated_at?: string;
   short_description?: string; long_description?: string;
   meta_title?: string; meta_description?: string; slug?: string;
@@ -927,7 +928,12 @@ export const api = {
         query = query.ilike('category_name', `%${params.category}%`);
       }
     }
-    if (params.search) query = query.ilike('title', `%${params.search}%`);
+    if (params.search) {
+      const term = params.search.replace(/[%,]/g, '').trim();
+      if (term) {
+        query = query.or(`title.ilike.%${term}%,description.ilike.%${term}%,category_name.ilike.%${term}%,subcategory_name.ilike.%${term}%,service_area.ilike.%${term}%`);
+      }
+    }
     if (params.sort === 'price_low') query = query.order('price', { ascending: true });
     else if (params.sort === 'price_high') query = query.order('price', { ascending: false });
     else if (params.sort === 'rating') query = query.order('rating', { ascending: false });
@@ -939,13 +945,22 @@ export const api = {
     const vendorIds = [...new Set(services.map((s: any) => s.vendor_id).filter(Boolean))];
     if (!vendorIds.length) return services as unknown as Service[];
 
-    const { data: vendors } = await supabase
+    const { data: serviceVendors } = await supabase
       .from('service_vendors')
-      .select('id, plan_id, shop_latitude, shop_longitude, city_id, status')
+      .select('id, plan_id, shop_address, shop_latitude, shop_longitude, city_id, status')
       .in('id', vendorIds)
       .in('status', ['active', 'verified']);
 
-    if (!vendors?.length) return [] as unknown as Service[];
+    const { data: vendorProfiles } = await supabase
+      .from('vendors')
+      .select('id, plan_id, shop_address, shop_latitude, shop_longitude, city_id, status')
+      .in('id', vendorIds)
+      .in('status', ['verified', 'active', 'level2_approved']);
+
+    const vendors = [...(serviceVendors || []), ...(vendorProfiles || [])]
+      .reduce((acc: any[], v: any) => acc.some((x) => x.id === v.id) ? acc : [...acc, v], []);
+
+    if (!vendors.length) return [] as unknown as Service[];
 
     const verifiedVendorIds = new Set(vendors.map((v: any) => v.id));
     const filteredServices = services.filter((s: any) => verifiedVendorIds.has(s.vendor_id));
