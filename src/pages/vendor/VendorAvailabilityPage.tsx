@@ -184,8 +184,8 @@ export default function VendorAvailabilityPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-lg font-semibold">Weekly Schedule</h2>
-              <p className="text-sm text-muted-foreground">Set working hours and travel buffer per day</p>
+              <h2 className="text-lg font-semibold">Manage Time Slots</h2>
+              <p className="text-sm text-muted-foreground">Working hours per day, plus optional custom slots customers can book</p>
             </div>
             <Button onClick={() => saveMutation.mutate()} disabled={!hasChanges || saveMutation.isPending}>
               <Save className="h-4 w-4 mr-1" />
