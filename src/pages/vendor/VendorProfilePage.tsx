@@ -213,7 +213,7 @@ export default function VendorProfilePage() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Business Details</h3>
             {!editingProfile ? (
-              <Button variant="ghost" size="sm" onClick={() => { setEditingProfile(true); setProfileForm({ email: vendor?.email || "", mobile: vendor?.mobile || "", area_id: vendor?.area_id || "", city_id: vendor?.city_id || "", shop_address: (vendor as any)?.shop_address || "" }); }}>
+              <Button variant="ghost" size="sm" onClick={() => { setEditingProfile(true); setProfileForm({ email: vendor?.email || "", mobile: vendor?.mobile || "", area_id: vendor?.area_id || "", city_id: vendor?.city_id || "", shop_address: (vendor as any)?.shop_address || "", shop_latitude: (vendor as any)?.shop_latitude ?? "", shop_longitude: (vendor as any)?.shop_longitude ?? "" }); }}>
                 <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
               </Button>
             ) : (
@@ -230,6 +230,25 @@ export default function VendorProfilePage() {
               <div><Label className="text-xs">Email</Label><Input value={profileForm.email} onChange={e => setProfileForm(f => ({...f, email: e.target.value}))} className="h-9" /></div>
               <div><Label className="text-xs">Phone</Label><Input value={profileForm.mobile} onChange={e => setProfileForm(f => ({...f, mobile: e.target.value}))} className="h-9" /></div>
               <div><Label className="text-xs">Shop Address</Label><Input value={profileForm.shop_address} onChange={e => setProfileForm(f => ({...f, shop_address: e.target.value}))} className="h-9" /></div>
+              <div className="space-y-2">
+                <Label className="text-xs">Exact Shop Coordinates (used for nearby search)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Latitude" value={profileForm.shop_latitude} onChange={e => setProfileForm(f => ({...f, shop_latitude: e.target.value}))} className="h-9" />
+                  <Input placeholder="Longitude" value={profileForm.shop_longitude} onChange={e => setProfileForm(f => ({...f, shop_longitude: e.target.value}))} className="h-9" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={detectLocation} disabled={detectingLoc}>
+                    {detectingLoc ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Navigation className="h-3.5 w-3.5 mr-1" />}
+                    Use Current Location
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" asChild>
+                    <a href={`https://www.google.com/maps${profileForm.shop_latitude && profileForm.shop_longitude ? `/@${profileForm.shop_latitude},${profileForm.shop_longitude},18z` : ""}`} target="_blank" rel="noreferrer">
+                      <MapPin className="h-3.5 w-3.5 mr-1" /> Pick on Map
+                    </a>
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">Tip: Open Google Maps, long-press your shop, and copy the lat,lng into the fields above.</p>
+              </div>
             </div>
           ) : (
             [
