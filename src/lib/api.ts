@@ -975,8 +975,8 @@ export const api = {
     const vendorMap: Record<string, any> = {};
     vendors.forEach((v: any) => { vendorMap[v.id] = v; });
 
-    const userLat = params.userLat || 0;
-    const userLng = params.userLng || 0;
+    const userLat = params.userLat ?? 0;
+    const userLng = params.userLng ?? 0;
 
     const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
       const R = 6371;
