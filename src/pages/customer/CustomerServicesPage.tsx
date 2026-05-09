@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Star, Clock, MapPin, Heart, SlidersHorizontal, Wrench, ChevronRight } from "lucide-react";
+import { Star, Clock, MapPin, Heart, SlidersHorizontal, Wrench, ChevronRight, Navigation, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { useCurrency } from "@/lib/country-context";
 import { getCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { getServiceImage } from "@/lib/service-image";
 import { loadSelectedCoords, LOCATION_CHANGED_EVENT } from "@/components/customer/LocationModal";
+import { getLocation } from "@/lib/device-service";
 
 function useServiceWishlist() {
   const getList = () => { try { return JSON.parse(localStorage.getItem('app_db_service_wishlist') || '[]'); } catch { return []; } };
@@ -39,11 +40,13 @@ export default function CustomerServicesPage() {
   const [searchParams] = useSearchParams();
   const [sortBy, setSortBy] = useState("nearest");
   const categoryFilter = searchParams.get("category") || undefined;
+  const searchFilter = searchParams.get("search") || undefined;
   const { list: wishlist, toggle: toggleWishlist } = useServiceWishlist();
   const { customerUser } = useAuth();
   const { format: fmt } = useCurrency();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
   const [radiusInfo, setRadiusInfo] = useState<string>("");
+  const [locating, setLocating] = useState(false);
 
   // Filters
   const [filtersOpen, setFiltersOpen] = useState(false);
