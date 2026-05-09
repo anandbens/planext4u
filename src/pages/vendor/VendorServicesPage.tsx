@@ -56,6 +56,28 @@ export default function VendorServicesPage() {
   const [form, setForm] = useState<ServiceForm>(emptyForm);
   const [detectingLoc, setDetectingLoc] = useState(false);
 
+  const detectServiceLocation = async () => {
+    setDetectingLoc(true);
+    try {
+      const coords = await getLocation();
+      if (!coords) throw new Error("Couldn't read your location");
+      let address = form.location_address || form.service_area;
+      try {
+        const { data: kv } = await supabase.from("platform_variables").select("value").eq("key", "GOOGLE_MAPS_API_KEY").maybeSingle();
+        const apiKey = kv?.value || "AIzaSyAoz0ZK26oE1qZSKK8pG1Ebh9sTTeaOl7M";
+        const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.lat},${coords.lng}&key=${apiKey}`);
+        const data = await res.json();
+        if (data.status === "OK" && data.results?.[0]) address = data.results[0].formatted_address;
+      } catch {}
+      setForm(f => ({ ...f, latitude: String(coords.lat), longitude: String(coords.lng), location_address: address, service_area: f.service_area || address }));
+      toast.success("Exact service location captured");
+    } catch (e: any) {
+      toast.error(e?.message || "Could not detect service location");
+    } finally {
+      setDetectingLoc(false);
+    }
+  };
+
   const { data: services, isLoading } = useQuery({
     queryKey: ["vendorServices", vendorId],
     queryFn: async () => {
@@ -104,18 +126,28 @@ export default function VendorServicesPage() {
   // Check if vendor exists in service_vendors, create if not
   const ensureServiceVendor = async () => {
     const { data } = await supabase.from("service_vendors").select("id").eq("id", vendorId).maybeSingle();
+    const { data: vendor } = await supabase.from("vendors").select("*").eq("id", vendorId).maybeSingle();
     if (!data) {
-      const { data: vendor } = await supabase.from("vendors").select("*").eq("id", vendorId).maybeSingle();
       const { error } = await supabase.from("service_vendors").insert({
         id: vendorId,
         name: vendor?.name || vendorUser?.name || "Vendor",
         business_name: vendor?.business_name || "",
         mobile: vendor?.mobile || "",
         email: vendor?.email || "",
+        shop_address: (vendor as any)?.shop_address || "",
+        shop_latitude: (vendor as any)?.shop_latitude || null,
+        shop_longitude: (vendor as any)?.shop_longitude || null,
         status: "verified",
       });
       if (error) console.error("ensureServiceVendor error:", error.message);
+    } else if ((vendor as any)?.shop_latitude && (vendor as any)?.shop_longitude) {
+      await supabase.from("service_vendors").update({
+        shop_address: (vendor as any)?.shop_address || null,
+        shop_latitude: (vendor as any)?.shop_latitude,
+        shop_longitude: (vendor as any)?.shop_longitude,
+      } as any).eq("id", vendorId);
     }
+    return vendor;
   };
 
   const validateServiceForm = (f: ServiceForm): string | null => {
