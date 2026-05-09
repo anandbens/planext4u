@@ -103,7 +103,7 @@ export default function VendorAvailabilityPage() {
         start_time: d.start_time,
         end_time: d.end_time,
         buffer_minutes: Math.max(15, d.buffer_minutes || 30),
-        time_slots: [],
+        time_slots: (d.time_slots || []).filter((s) => s.start && s.end && s.end > s.start),
       }));
       const { error } = await supabase
         .from("vendor_availability" as any)
