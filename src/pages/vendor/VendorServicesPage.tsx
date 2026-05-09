@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, MoreVertical, Edit, Trash2, Image, X } from "lucide-react";
+import { Plus, Search, MoreVertical, Edit, Trash2, MapPin, Navigation, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
+import { getLocation } from "@/lib/device-service";
 
 const statusStyle: Record<string, string> = {
   active: "bg-success/10 text-success",
@@ -32,6 +33,7 @@ interface ServiceForm {
   emoji: string; status: string;
   image: string; working_days: string; workers: string;
   service_duration_minutes: string;
+  latitude: string; longitude: string; location_address: string;
 }
 
 const emptyForm: ServiceForm = {
@@ -40,6 +42,7 @@ const emptyForm: ServiceForm = {
   emoji: "🔧", status: "pending_approval",
   image: "", working_days: "Mon-Sat", workers: "1",
   service_duration_minutes: "60",
+  latitude: "", longitude: "", location_address: "",
 };
 
 export default function VendorServicesPage() {
@@ -51,6 +54,7 @@ export default function VendorServicesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ServiceForm>(emptyForm);
+  const [detectingLoc, setDetectingLoc] = useState(false);
 
   const { data: services, isLoading } = useQuery({
     queryKey: ["vendorServices", vendorId],
