@@ -14,12 +14,14 @@ import { toast } from "sonner";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+interface TimeSlot { start: string; end: string }
 interface DayAvailability {
   day_of_week: number;
   is_available: boolean;
   start_time: string;
   end_time: string;
   buffer_minutes: number;
+  time_slots: TimeSlot[];
 }
 
 const defaultSchedule = (): DayAvailability[] =>
@@ -29,7 +31,16 @@ const defaultSchedule = (): DayAvailability[] =>
     start_time: "09:00",
     end_time: "18:00",
     buffer_minutes: 30,
+    time_slots: [],
   }));
+
+const fmt12 = (t: string) => {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hh = ((h + 11) % 12) + 1;
+  return `${hh}:${String(m).padStart(2, "0")} ${period}`;
+};
 
 export default function VendorAvailabilityPage() {
   const { vendorUser } = useAuth();
@@ -59,6 +70,7 @@ export default function VendorAvailabilityPage() {
                 start_time: (f.start_time || "09:00:00").slice(0, 5),
                 end_time: (f.end_time || "18:00:00").slice(0, 5),
                 buffer_minutes: f.buffer_minutes ?? 30,
+                time_slots: Array.isArray(f.time_slots) ? f.time_slots : [],
               }
             : def;
         });
@@ -91,7 +103,7 @@ export default function VendorAvailabilityPage() {
         start_time: d.start_time,
         end_time: d.end_time,
         buffer_minutes: Math.max(15, d.buffer_minutes || 30),
-        time_slots: [],
+        time_slots: (d.time_slots || []).filter((s) => s.start && s.end && s.end > s.start),
       }));
       const { error } = await supabase
         .from("vendor_availability" as any)
@@ -172,8 +184,8 @@ export default function VendorAvailabilityPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-lg font-semibold">Weekly Schedule</h2>
-              <p className="text-sm text-muted-foreground">Set working hours and travel buffer per day</p>
+              <h2 className="text-lg font-semibold">Manage Time Slots</h2>
+              <p className="text-sm text-muted-foreground">Working hours per day, plus optional custom slots customers can book</p>
             </div>
             <Button onClick={() => saveMutation.mutate()} disabled={!hasChanges || saveMutation.isPending}>
               <Save className="h-4 w-4 mr-1" />
@@ -209,6 +221,82 @@ export default function VendorAvailabilityPage() {
                       </>
                     )}
                   </div>
+
+                  {day.is_available && (
+                    <div className="mt-3 pt-3 border-t border-border/60">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <Label className="text-xs font-semibold">Custom Time Slots</Label>
+                          <p className="text-[11px] text-muted-foreground">
+                            {day.time_slots.length === 0
+                              ? "Auto-generated from working hours + service duration"
+                              : "Customers will only see these exact slots"}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() =>
+                            updateDay(day.day_of_week, {
+                              time_slots: [
+                                ...day.time_slots,
+                                { start: day.start_time, end: day.end_time },
+                              ],
+                            })
+                          }
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Add Slot
+                        </Button>
+                      </div>
+                      {day.time_slots.length > 0 && (
+                        <div className="space-y-1.5">
+                          {day.time_slots.map((slot, idx) => (
+                            <div key={idx} className="flex items-center gap-2 flex-wrap">
+                              <Input
+                                type="time"
+                                value={slot.start}
+                                onChange={(e) => {
+                                  const next = [...day.time_slots];
+                                  next[idx] = { ...next[idx], start: e.target.value };
+                                  updateDay(day.day_of_week, { time_slots: next });
+                                }}
+                                className="h-8 w-[110px] text-xs"
+                              />
+                              <span className="text-xs text-muted-foreground">to</span>
+                              <Input
+                                type="time"
+                                value={slot.end}
+                                onChange={(e) => {
+                                  const next = [...day.time_slots];
+                                  next[idx] = { ...next[idx], end: e.target.value };
+                                  updateDay(day.day_of_week, { time_slots: next });
+                                }}
+                                className="h-8 w-[110px] text-xs"
+                              />
+                              <span className="text-[11px] text-muted-foreground flex-1">
+                                {slot.start && slot.end ? `${fmt12(slot.start)} – ${fmt12(slot.end)}` : ""}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive"
+                                onClick={() =>
+                                  updateDay(day.day_of_week, {
+                                    time_slots: day.time_slots.filter((_, i) => i !== idx),
+                                  })
+                                }
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>
