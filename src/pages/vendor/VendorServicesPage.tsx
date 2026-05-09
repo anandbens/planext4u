@@ -178,6 +178,9 @@ export default function VendorServicesPage() {
 
       const lat = formData.latitude ? Number(formData.latitude) : Number((vendor as any)?.shop_latitude || 0);
       const lng = formData.longitude ? Number(formData.longitude) : Number((vendor as any)?.shop_longitude || 0);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat === 0 || lng === 0) {
+        throw new Error("Capture exact service location using GPS or enter map coordinates before submitting");
+      }
       const payload: any = {
         title: formData.title, description: formData.description,
         price: parseFloat(formData.price) || 0, tax: parseFloat(formData.tax) || 0,
@@ -341,6 +344,25 @@ export default function VendorServicesPage() {
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Approx Duration (display)</Label><Input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} placeholder="e.g. 2 hrs" /></div>
               <div><Label>Service Area</Label><Input value={form.service_area} onChange={(e) => setForm({ ...form, service_area: e.target.value })} placeholder="e.g. Coimbatore" /></div>
+            </div>
+            <div className="space-y-2 rounded-xl border border-border/60 bg-secondary/20 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-xs font-semibold">Exact Service Location *</Label>
+                <Button type="button" variant="outline" size="sm" onClick={detectServiceLocation} disabled={detectingLoc} className="h-8 text-xs">
+                  {detectingLoc ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Navigation className="h-3.5 w-3.5 mr-1" />}
+                  Use GPS
+                </Button>
+              </div>
+              <Input value={form.location_address} onChange={(e) => setForm({ ...form, location_address: e.target.value })} placeholder="Exact address from GPS or map" className="h-9" />
+              <div className="grid grid-cols-2 gap-2">
+                <Input type="number" step="any" placeholder="Latitude" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} className="h-9" />
+                <Input type="number" step="any" placeholder="Longitude" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} className="h-9" />
+              </div>
+              <Button type="button" variant="ghost" size="sm" asChild className="h-8 px-0 text-xs">
+                <a href={`https://www.google.com/maps${form.latitude && form.longitude ? `/@${form.latitude},${form.longitude},18z` : ""}`} target="_blank" rel="noreferrer">
+                  <MapPin className="h-3.5 w-3.5 mr-1" /> Pick pin on map and paste coordinates
+                </a>
+              </Button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
