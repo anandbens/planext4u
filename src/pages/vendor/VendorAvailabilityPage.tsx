@@ -221,6 +221,82 @@ export default function VendorAvailabilityPage() {
                       </>
                     )}
                   </div>
+
+                  {day.is_available && (
+                    <div className="mt-3 pt-3 border-t border-border/60">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <Label className="text-xs font-semibold">Custom Time Slots</Label>
+                          <p className="text-[11px] text-muted-foreground">
+                            {day.time_slots.length === 0
+                              ? "Auto-generated from working hours + service duration"
+                              : "Customers will only see these exact slots"}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() =>
+                            updateDay(day.day_of_week, {
+                              time_slots: [
+                                ...day.time_slots,
+                                { start: day.start_time, end: day.end_time },
+                              ],
+                            })
+                          }
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Add Slot
+                        </Button>
+                      </div>
+                      {day.time_slots.length > 0 && (
+                        <div className="space-y-1.5">
+                          {day.time_slots.map((slot, idx) => (
+                            <div key={idx} className="flex items-center gap-2 flex-wrap">
+                              <Input
+                                type="time"
+                                value={slot.start}
+                                onChange={(e) => {
+                                  const next = [...day.time_slots];
+                                  next[idx] = { ...next[idx], start: e.target.value };
+                                  updateDay(day.day_of_week, { time_slots: next });
+                                }}
+                                className="h-8 w-[110px] text-xs"
+                              />
+                              <span className="text-xs text-muted-foreground">to</span>
+                              <Input
+                                type="time"
+                                value={slot.end}
+                                onChange={(e) => {
+                                  const next = [...day.time_slots];
+                                  next[idx] = { ...next[idx], end: e.target.value };
+                                  updateDay(day.day_of_week, { time_slots: next });
+                                }}
+                                className="h-8 w-[110px] text-xs"
+                              />
+                              <span className="text-[11px] text-muted-foreground flex-1">
+                                {slot.start && slot.end ? `${fmt12(slot.start)} – ${fmt12(slot.end)}` : ""}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive"
+                                onClick={() =>
+                                  updateDay(day.day_of_week, {
+                                    time_slots: day.time_slots.filter((_, i) => i !== idx),
+                                  })
+                                }
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>
