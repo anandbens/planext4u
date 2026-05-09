@@ -986,6 +986,16 @@ export const api = {
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     };
 
+    const getServiceCoords = (service: any, vendor?: any) => {
+      const rawLat = Number(service.latitude);
+      const rawLng = Number(service.longitude);
+      const vendorLat = Number(vendor?.shop_latitude);
+      const vendorLng = Number(vendor?.shop_longitude);
+      const lat = Number.isFinite(rawLat) && rawLat !== 0 ? rawLat : (Number.isFinite(vendorLat) ? vendorLat : 0);
+      const lng = Number.isFinite(rawLng) && rawLng !== 0 ? rawLng : (Number.isFinite(vendorLng) ? vendorLng : 0);
+      return { lat, lng };
+    };
+
     const filtered = filteredServices.filter((s: any) => {
       const vendor = vendorMap[s.vendor_id];
       if (!vendor) return false;
@@ -997,8 +1007,7 @@ export const api = {
       if (plan.visibility_type === 'pan_india') return true;
       if (!userLat || !userLng) return true;
       if (plan.visibility_type === 'radius_based') {
-        const sLat = Number(vendor.shop_latitude) || 0;
-        const sLng = Number(vendor.shop_longitude) || 0;
+        const { lat: sLat, lng: sLng } = getServiceCoords(s, vendor);
         // Treat (0,0) / null shop coords as unset → don't hide the vendor's
         // catalog. They'll get proper geo-filtering once they set a location.
         if (!sLat || !sLng) return true;
@@ -1012,13 +1021,12 @@ export const api = {
     // Attach distance (km) from user → vendor shop when we have user coords.
     const withDistance = filtered.map((s: any) => {
       const vendor = vendorMap[s.vendor_id];
-      const sLat = Number(vendor?.shop_latitude) || 0;
-      const sLng = Number(vendor?.shop_longitude) || 0;
+      const { lat: sLat, lng: sLng } = getServiceCoords(s, vendor);
       let distance_km: number | null = null;
       if (userLat && userLng && sLat && sLng) {
         distance_km = Math.round(haversine(userLat, userLng, sLat, sLng) * 10) / 10;
       }
-      return { ...s, distance_km };
+      return { ...s, latitude: sLat || s.latitude, longitude: sLng || s.longitude, location_address: s.location_address || vendor?.shop_address || s.service_area, distance_km };
     });
 
     // When no explicit sort (or "nearest"/"popular"), prioritize closer services.
