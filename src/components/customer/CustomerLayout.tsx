@@ -82,9 +82,21 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const handleSearch = (query: string) => {
+  const handleSearch = async (query: string) => {
     if (socialMode || location.pathname.startsWith('/app/social')) return;
-    navigate(`/app/browse?search=${encodeURIComponent(query)}`);
+    const term = query.trim();
+    if (!term) return;
+    try {
+      const [{ data: matchingServices }, { data: matchingServiceCategories }] = await Promise.all([
+        supabase.from("services").select("id").eq("status", "active").or(`title.ilike.%${term}%,category_name.ilike.%${term}%,subcategory_name.ilike.%${term}%`).limit(1),
+        supabase.from("service_categories").select("id").eq("status", "active").ilike("name", `%${term}%`).limit(1),
+      ]);
+      if ((matchingServices?.length || 0) > 0 || (matchingServiceCategories?.length || 0) > 0) {
+        navigate(`/app/services?search=${encodeURIComponent(term)}`);
+        return;
+      }
+    } catch {}
+    navigate(`/app/browse?search=${encodeURIComponent(term)}`);
   };
 
   const handleLogout = () => {
