@@ -382,7 +382,11 @@ export default function CustomerServicesPage() {
                       <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground flex-wrap">
                         <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-warning text-warning" />{s.rating || 0} ({s.reviews || 0})</span>
                         {s.duration && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{s.duration}</span>}
-                        {s.service_area && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{s.service_area}</span>}
+                        {(s as any).distance_km != null ? (
+                          <span className="flex items-center gap-1 text-primary font-medium"><MapPin className="h-3 w-3" />{(s as any).distance_km < 1 ? `${Math.round((s as any).distance_km * 1000)} m away` : `${(s as any).distance_km} km away`}</span>
+                        ) : s.service_area && (
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{s.service_area}</span>
+                        )}
                       </div>
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center gap-2">
