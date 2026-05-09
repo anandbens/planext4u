@@ -70,6 +70,7 @@ export default function VendorAvailabilityPage() {
                 start_time: (f.start_time || "09:00:00").slice(0, 5),
                 end_time: (f.end_time || "18:00:00").slice(0, 5),
                 buffer_minutes: f.buffer_minutes ?? 30,
+                time_slots: Array.isArray(f.time_slots) ? f.time_slots : [],
               }
             : def;
         });
