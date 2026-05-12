@@ -250,7 +250,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           </div>
 
           {/* Row 3: Search bar */}
-          <SearchAutocomplete onSearch={handleSearch} socialMode={socialMode || location.pathname.startsWith('/app/social')} placeholder={(socialMode || location.pathname.startsWith('/app/social')) ? 'Search user' : 'Search for "Groceries"'} />
+          <SearchAutocomplete onSearch={handleSearch} socialMode={socialMode || location.pathname.startsWith('/app/social')} servicesMode={location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/')} placeholder={(socialMode || location.pathname.startsWith('/app/social')) ? 'Search user' : (location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/')) ? 'Search Services' : 'Search for "Groceries"'} />
         </div>
       </header>
 
@@ -268,7 +268,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               <span className="text-primary-foreground/80 text-xs truncate max-w-[140px]">{selectedLocation}</span>
             </button>
 
-            <SearchAutocomplete onSearch={handleSearch} socialMode={socialMode || location.pathname.startsWith('/app/social')} placeholder={(socialMode || location.pathname.startsWith('/app/social')) ? 'Search user' : undefined} className="flex-1 max-w-xl" />
+            <SearchAutocomplete onSearch={handleSearch} socialMode={socialMode || location.pathname.startsWith('/app/social')} servicesMode={location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/')} placeholder={(socialMode || location.pathname.startsWith('/app/social')) ? 'Search user' : (location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/')) ? 'Search Services' : undefined} className="flex-1 max-w-xl" />
 
             <div className="flex items-center gap-1 ml-auto">
               <Link to="/app/vendor-register" className="hidden lg:block">

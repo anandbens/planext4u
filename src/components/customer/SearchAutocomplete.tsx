@@ -25,6 +25,7 @@ interface SearchAutocompleteProps {
   placeholder?: string;
   className?: string;
   socialMode?: boolean;
+  servicesMode?: boolean;
 }
 
 interface SocialUser {
@@ -36,9 +37,9 @@ interface SocialUser {
   is_verified: boolean | null;
 }
 
-export function SearchAutocomplete({ onSearch, placeholder, className, socialMode }: SearchAutocompleteProps) {
+export function SearchAutocomplete({ onSearch, placeholder, className, socialMode, servicesMode }: SearchAutocompleteProps) {
   const navigate = useNavigate();
-  const effectivePlaceholder = placeholder ?? (socialMode ? "Search user" : 'Search for "Electronics"');
+  const effectivePlaceholder = placeholder ?? (socialMode ? "Search user" : servicesMode ? "Search Services" : 'Search for "Electronics"');
   const recentKey = socialMode ? SOCIAL_RECENT_SEARCH_KEY : RECENT_SEARCH_KEY;
 
   function loadRecent(): string[] {
@@ -73,6 +74,11 @@ export function SearchAutocomplete({ onSearch, placeholder, className, socialMod
   useEffect(() => {
     if (socialMode) return;
     async function loadItems() {
+      if (servicesMode) {
+        const { data: srvs } = await supabase.from("services").select("title").eq("status", "active").limit(100);
+        setSearchItems((srvs || []).map((s: any) => s.title));
+        return;
+      }
       const [{ data: cats }, { data: prods }, { data: srvs }] = await Promise.all([
         supabase.from("categories").select("name").limit(50),
         supabase.from("products").select("title").eq("status", "active").limit(100),
@@ -86,7 +92,7 @@ export function SearchAutocomplete({ onSearch, placeholder, className, socialMod
       setSearchItems(items);
     }
     loadItems();
-  }, [socialMode]);
+  }, [socialMode, servicesMode]);
 
   // Social mode: live user search by username/display_name
   useEffect(() => {
