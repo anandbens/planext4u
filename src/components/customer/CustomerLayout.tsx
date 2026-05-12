@@ -250,7 +250,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           </div>
 
           {/* Row 3: Search bar */}
-          <SearchAutocomplete onSearch={handleSearch} socialMode={socialMode || location.pathname.startsWith('/app/social')} placeholder={(socialMode || location.pathname.startsWith('/app/social')) ? 'Search user' : 'Search for "Groceries"'} />
+          <SearchAutocomplete onSearch={handleSearch} socialMode={socialMode || location.pathname.startsWith('/app/social')} servicesMode={location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/')} placeholder={(socialMode || location.pathname.startsWith('/app/social')) ? 'Search user' : (location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/')) ? 'Search Services' : 'Search for "Groceries"'} />
         </div>
       </header>
 
