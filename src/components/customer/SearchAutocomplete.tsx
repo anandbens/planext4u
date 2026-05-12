@@ -25,6 +25,7 @@ interface SearchAutocompleteProps {
   placeholder?: string;
   className?: string;
   socialMode?: boolean;
+  servicesMode?: boolean;
 }
 
 interface SocialUser {
