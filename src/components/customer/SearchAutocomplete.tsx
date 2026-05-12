@@ -37,9 +37,9 @@ interface SocialUser {
   is_verified: boolean | null;
 }
 
-export function SearchAutocomplete({ onSearch, placeholder, className, socialMode }: SearchAutocompleteProps) {
+export function SearchAutocomplete({ onSearch, placeholder, className, socialMode, servicesMode }: SearchAutocompleteProps) {
   const navigate = useNavigate();
-  const effectivePlaceholder = placeholder ?? (socialMode ? "Search user" : 'Search for "Electronics"');
+  const effectivePlaceholder = placeholder ?? (socialMode ? "Search user" : servicesMode ? "Search Services" : 'Search for "Electronics"');
   const recentKey = socialMode ? SOCIAL_RECENT_SEARCH_KEY : RECENT_SEARCH_KEY;
 
   function loadRecent(): string[] {
