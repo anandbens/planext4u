@@ -86,6 +86,11 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
     if (socialMode || location.pathname.startsWith('/app/social')) return;
     const term = query.replace(/[%,]/g, "").trim();
     if (!term) return;
+    // When on the Services page, restrict the header search to services only.
+    if (location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/')) {
+      navigate(`/app/services?search=${encodeURIComponent(term)}`);
+      return;
+    }
     try {
       const [{ data: matchingServices }, { data: matchingServiceCategories }] = await Promise.all([
         supabase.from("services").select("id").eq("status", "active").or(`title.ilike.%${term}%,category_name.ilike.%${term}%,subcategory_name.ilike.%${term}%`).limit(1),
