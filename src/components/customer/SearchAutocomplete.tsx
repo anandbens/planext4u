@@ -74,6 +74,11 @@ export function SearchAutocomplete({ onSearch, placeholder, className, socialMod
   useEffect(() => {
     if (socialMode) return;
     async function loadItems() {
+      if (servicesMode) {
+        const { data: srvs } = await supabase.from("services").select("title").eq("status", "active").limit(100);
+        setSearchItems((srvs || []).map((s: any) => s.title));
+        return;
+      }
       const [{ data: cats }, { data: prods }, { data: srvs }] = await Promise.all([
         supabase.from("categories").select("name").limit(50),
         supabase.from("products").select("title").eq("status", "active").limit(100),
@@ -87,7 +92,7 @@ export function SearchAutocomplete({ onSearch, placeholder, className, socialMod
       setSearchItems(items);
     }
     loadItems();
-  }, [socialMode]);
+  }, [socialMode, servicesMode]);
 
   // Social mode: live user search by username/display_name
   useEffect(() => {
