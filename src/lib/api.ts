@@ -999,23 +999,13 @@ export const api = {
     const filtered = filteredServices.filter((s: any) => {
       const vendor = vendorMap[s.vendor_id];
       if (!vendor) return false;
-      // Mirrors browseProducts: only enforce geo when the vendor has an
-      // active plan with radius-based visibility. Otherwise show everywhere.
-      if (!vendor.plan_id) return true;
-      const plan = plansMap[vendor.plan_id];
-      if (!plan || !plan.is_active) return true;
-      if (plan.visibility_type === 'pan_india') return true;
-      if (!userLat || !userLng) return true;
-      if (plan.visibility_type === 'radius_based') {
-        const { lat: sLat, lng: sLng } = getServiceCoords(s, vendor);
-        // Treat (0,0) / null shop coords as unset → don't hide the vendor's
-        // catalog. They'll get proper geo-filtering once they set a location.
-        if (!sLat || !sLng) return true;
-        const dist = haversine(userLat, userLng, sLat, sLng);
-        return dist <= (plan.radius_km || 5);
-      }
-      // city/state visibility — show if we can't determine
-      return true;
+      const effRadius = getEffectiveRadiusKm(vendor.plan_id ? plansMap[vendor.plan_id] : null);
+      if (effRadius === Infinity) return true;
+      if (!userLat || !userLng) return true; // no user GPS → don't hide
+      const { lat: sLat, lng: sLng } = getServiceCoords(s, vendor);
+      if (!sLat || !sLng) return true; // vendor hasn't set coords yet → don't penalise
+      const dist = haversine(userLat, userLng, sLat, sLng);
+      return dist <= effRadius;
     });
 
     // Attach distance (km) from user → vendor shop when we have user coords.
