@@ -974,7 +974,7 @@ export const api = {
 
     const { data: vendorProfiles } = await supabase
       .from('vendors')
-      .select('id, plan_id, shop_address, shop_latitude, shop_longitude, city_id, status')
+      .select('id, plan_id, plan_end_date, shop_address, shop_latitude, shop_longitude, city_id, status')
       .in('id', vendorIds)
       .in('status', ['verified', 'active', 'level2_approved']);
 
