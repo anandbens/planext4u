@@ -2210,7 +2210,9 @@ export const api = {
     const filtered = filteredProducts.filter(p => {
       const vendor = vendorMap[p.vendor_id];
       if (!vendor) return false;
-      const effRadius = getEffectiveRadiusKm(vendor.plan_id ? plansMap[vendor.plan_id] : null);
+      const planExpired = vendor.plan_end_date && new Date(vendor.plan_end_date) < new Date();
+      const plan = vendor.plan_id && !planExpired ? plansMap[vendor.plan_id] : null;
+      const effRadius = getEffectiveRadiusKm(plan);
       if (effRadius === Infinity) return true;
       if (!userLat || !userLng) return true;
       const sLat = Number(vendor.shop_latitude) || 0;
