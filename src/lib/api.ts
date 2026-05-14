@@ -20,6 +20,23 @@ export async function sendEmail(payload: {
   return { success: true };
 }
 
+// ===== Vendor plan visibility =====
+// Resolve effective visibility radius (km) for a vendor's plan.
+// Falls back to Basic (2 km) when plan is missing, inactive, or expired.
+// city → max(plan.radius, 25 km), state → max(plan.radius, 200 km),
+// pan_india / VIP → unlimited. Honours admin-configured radius_km.
+export function getEffectiveRadiusKm(plan: any | null | undefined): number {
+  if (!plan || plan.is_active === false) return 2; // Basic fallback
+  const r = Number(plan.radius_km) || 0;
+  switch (plan.visibility_type) {
+    case 'pan_india': return Infinity;
+    case 'state': return Math.max(r, 200);
+    case 'city': return Math.max(r, 25);
+    case 'radius_based':
+    default: return r > 0 ? r : 2;
+  }
+}
+
 // Types
 export interface User {
   id: string; name: string; mobile: string; email: string;
