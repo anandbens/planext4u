@@ -20,6 +20,23 @@ export async function sendEmail(payload: {
   return { success: true };
 }
 
+// ===== Vendor plan visibility =====
+// Resolve effective visibility radius (km) for a vendor's plan.
+// Falls back to Basic (2 km) when plan is missing, inactive, or expired.
+// city → max(plan.radius, 25 km), state → max(plan.radius, 200 km),
+// pan_india / VIP → unlimited. Honours admin-configured radius_km.
+export function getEffectiveRadiusKm(plan: any | null | undefined): number {
+  if (!plan || plan.is_active === false) return 2; // Basic fallback
+  const r = Number(plan.radius_km) || 0;
+  switch (plan.visibility_type) {
+    case 'pan_india': return Infinity;
+    case 'state': return Math.max(r, 200);
+    case 'city': return Math.max(r, 25);
+    case 'radius_based':
+    default: return r > 0 ? r : 2;
+  }
+}
+
 // Types
 export interface User {
   id: string; name: string; mobile: string; email: string;
@@ -908,6 +925,10 @@ export const api = {
     return data as any;
   },
 
+  // Resolve effective visibility radius (km) for a vendor plan.
+  // Falls back to Basic (2 km) when plan is missing, inactive, or expired.
+  // City → 25 km, State → 200 km, Pan-India / VIP → unlimited.
+  // Honours admin-configured radius_km when larger than the type default.
   browseServices: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number }) => {
     let query = supabase.from('services').select('*').eq('status', 'active');
     if (params.category) {
@@ -953,7 +974,7 @@ export const api = {
 
     const { data: vendorProfiles } = await supabase
       .from('vendors')
-      .select('id, plan_id, shop_address, shop_latitude, shop_longitude, city_id, status')
+      .select('id, plan_id, plan_end_date, shop_address, shop_latitude, shop_longitude, city_id, status')
       .in('id', vendorIds)
       .in('status', ['verified', 'active', 'level2_approved']);
 
@@ -999,23 +1020,15 @@ export const api = {
     const filtered = filteredServices.filter((s: any) => {
       const vendor = vendorMap[s.vendor_id];
       if (!vendor) return false;
-      // Mirrors browseProducts: only enforce geo when the vendor has an
-      // active plan with radius-based visibility. Otherwise show everywhere.
-      if (!vendor.plan_id) return true;
-      const plan = plansMap[vendor.plan_id];
-      if (!plan || !plan.is_active) return true;
-      if (plan.visibility_type === 'pan_india') return true;
+      const planExpired = vendor.plan_end_date && new Date(vendor.plan_end_date) < new Date();
+      const plan = vendor.plan_id && !planExpired ? plansMap[vendor.plan_id] : null;
+      const effRadius = getEffectiveRadiusKm(plan);
+      if (effRadius === Infinity) return true;
       if (!userLat || !userLng) return true;
-      if (plan.visibility_type === 'radius_based') {
-        const { lat: sLat, lng: sLng } = getServiceCoords(s, vendor);
-        // Treat (0,0) / null shop coords as unset → don't hide the vendor's
-        // catalog. They'll get proper geo-filtering once they set a location.
-        if (!sLat || !sLng) return true;
-        const dist = haversine(userLat, userLng, sLat, sLng);
-        return dist <= (plan.radius_km || 5);
-      }
-      // city/state visibility — show if we can't determine
-      return true;
+      const { lat: sLat, lng: sLng } = getServiceCoords(s, vendor);
+      if (!sLat || !sLng) return true;
+      const dist = haversine(userLat, userLng, sLat, sLng);
+      return dist <= effRadius;
     });
 
     // Attach distance (km) from user → vendor shop when we have user coords.
@@ -2162,7 +2175,7 @@ export const api = {
     const vendorIds = [...new Set(products.map(p => p.vendor_id))];
     const { data: vendors } = await supabase
       .from('vendors')
-      .select('id, plan_id, shop_latitude, shop_longitude, city_id, status')
+      .select('id, plan_id, plan_end_date, shop_latitude, shop_longitude, city_id, status')
       .in('id', vendorIds)
       .in('status', ['active', 'verified']);
 
@@ -2196,24 +2209,17 @@ export const api = {
 
     const filtered = filteredProducts.filter(p => {
       const vendor = vendorMap[p.vendor_id];
-      if (!vendor?.plan_id) return true; // no plan = show everywhere (basic)
-      const plan = plansMap[vendor.plan_id];
-      if (!plan || !plan.is_active) return true;
-      // Check plan expiry on vendor
-      if (plan.visibility_type === 'pan_india') return true;
-      if (!userLat || !userLng) return true; // no user location = show all
-      if (plan.visibility_type === 'radius_based') {
-        const sLat = Number(vendor.shop_latitude) || 0;
-        const sLng = Number(vendor.shop_longitude) || 0;
-        // Treat (0,0) or null/undefined shop coords as "unset" → don't penalise the
-        // vendor by hiding their entire catalog. Show the products and let the
-        // vendor add a shop location to enable proper geo-filtering.
-        if (!sLat || !sLng) return true;
-        const dist = haversine(userLat, userLng, sLat, sLng);
-        return dist <= (plan.radius_km || 5);
-      }
-      // city/state visibility - show all if we can't determine
-      return true;
+      if (!vendor) return false;
+      const planExpired = vendor.plan_end_date && new Date(vendor.plan_end_date) < new Date();
+      const plan = vendor.plan_id && !planExpired ? plansMap[vendor.plan_id] : null;
+      const effRadius = getEffectiveRadiusKm(plan);
+      if (effRadius === Infinity) return true;
+      if (!userLat || !userLng) return true;
+      const sLat = Number(vendor.shop_latitude) || 0;
+      const sLng = Number(vendor.shop_longitude) || 0;
+      if (!sLat || !sLng) return true;
+      const dist = haversine(userLat, userLng, sLat, sLng);
+      return dist <= effRadius;
     });
 
     return filtered as Product[];
