@@ -2186,24 +2186,15 @@ export const api = {
 
     const filtered = filteredProducts.filter(p => {
       const vendor = vendorMap[p.vendor_id];
-      if (!vendor?.plan_id) return true; // no plan = show everywhere (basic)
-      const plan = plansMap[vendor.plan_id];
-      if (!plan || !plan.is_active) return true;
-      // Check plan expiry on vendor
-      if (plan.visibility_type === 'pan_india') return true;
-      if (!userLat || !userLng) return true; // no user location = show all
-      if (plan.visibility_type === 'radius_based') {
-        const sLat = Number(vendor.shop_latitude) || 0;
-        const sLng = Number(vendor.shop_longitude) || 0;
-        // Treat (0,0) or null/undefined shop coords as "unset" → don't penalise the
-        // vendor by hiding their entire catalog. Show the products and let the
-        // vendor add a shop location to enable proper geo-filtering.
-        if (!sLat || !sLng) return true;
-        const dist = haversine(userLat, userLng, sLat, sLng);
-        return dist <= (plan.radius_km || 5);
-      }
-      // city/state visibility - show all if we can't determine
-      return true;
+      if (!vendor) return false;
+      const effRadius = getEffectiveRadiusKm(vendor.plan_id ? plansMap[vendor.plan_id] : null);
+      if (effRadius === Infinity) return true;
+      if (!userLat || !userLng) return true;
+      const sLat = Number(vendor.shop_latitude) || 0;
+      const sLng = Number(vendor.shop_longitude) || 0;
+      if (!sLat || !sLng) return true;
+      const dist = haversine(userLat, userLng, sLat, sLng);
+      return dist <= effRadius;
     });
 
     return filtered as Product[];
