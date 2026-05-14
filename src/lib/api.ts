@@ -2175,7 +2175,7 @@ export const api = {
     const vendorIds = [...new Set(products.map(p => p.vendor_id))];
     const { data: vendors } = await supabase
       .from('vendors')
-      .select('id, plan_id, shop_latitude, shop_longitude, city_id, status')
+      .select('id, plan_id, plan_end_date, shop_latitude, shop_longitude, city_id, status')
       .in('id', vendorIds)
       .in('status', ['active', 'verified']);
 
