@@ -908,6 +908,10 @@ export const api = {
     return data as any;
   },
 
+  // Resolve effective visibility radius (km) for a vendor plan.
+  // Falls back to Basic (2 km) when plan is missing, inactive, or expired.
+  // City → 25 km, State → 200 km, Pan-India / VIP → unlimited.
+  // Honours admin-configured radius_km when larger than the type default.
   browseServices: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number }) => {
     let query = supabase.from('services').select('*').eq('status', 'active');
     if (params.category) {
