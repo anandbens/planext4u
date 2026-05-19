@@ -191,7 +191,7 @@ export default function SocialPostDetailPage() {
       <div className="relative aspect-square bg-muted overflow-hidden">
         {mediaItems.length > 0 ? (
           mediaItems[carouselIdx]?.type === 'video' ? (
-            <video src={mediaItems[carouselIdx]?.url} className="w-full h-full object-cover" controls muted playsInline />
+            <video src={mediaItems[carouselIdx]?.url} className="w-full h-full object-cover" controls playsInline preload="metadata" {...({ "webkit-playsinline": "true" } as Record<string, string>)} />
           ) : (
             <img src={mediaItems[carouselIdx]?.mediumUrl || mediaItems[carouselIdx]?.url} alt="" className="w-full h-full object-cover" loading="eager" decoding="async" fetchPriority={"high" as any} />
           )
