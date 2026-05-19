@@ -152,7 +152,7 @@ export default function SocialCreatePostPage() {
 
           hasVideo = true;
 
-          // Use the video upload pipeline with browser H.264 compression
+          // Upload the original video so the camera audio track is preserved
           const result = await uploadVideoWithProcessing(
             file,
             authUserId,
@@ -175,7 +175,7 @@ export default function SocialCreatePostPage() {
 
           setUploadProgress({
             stage: 'complete', percent: 100, originalSize: file.size,
-            savedText: `Video compressed & uploaded ✓`,
+            savedText: `Video uploaded with audio ✓`,
           });
         } else {
           // Image compression & upload
