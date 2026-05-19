@@ -9,9 +9,11 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from "lucide-react";
 
 export default function AdvertisementsPage() {
+  const [tab, setTab] = useState<"all" | "socio">("all");
   const [data, setData] = useState<any>(null);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
@@ -30,11 +32,12 @@ export default function AdvertisementsPage() {
     if (statusFilter && statusFilter !== "all") query = query.eq("status", statusFilter);
     if (dateFrom) query = query.gte("created_at", dateFrom);
     if (dateTo) query = query.lte("created_at", dateTo + "T23:59:59Z");
+    if (tab === "socio") query = query.contains("placements", ["socio"]);
     query = query.order("created_at", { ascending: false }).range(from, to);
     const { data: rows, count, error } = await query;
     if (error) { toast.error("Failed to load ads"); return; }
     setData({ data: rows || [], total: count || 0, page, per_page: perPage, total_pages: Math.ceil((count || 0) / perPage) });
-  }, [page, statusFilter, dateFrom, dateTo]);
+  }, [page, statusFilter, dateFrom, dateTo, tab]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -81,10 +84,20 @@ export default function AdvertisementsPage() {
           <h1 className="page-title">Advertisements</h1>
           <p className="page-description">{data.total} ad campaigns</p>
         </div>
-        <Button onClick={() => { setSelectedAd(null); setModalMode("create"); setModalOpen(true); }} className="gap-1">
-          <Plus className="h-4 w-4" /> New Ad
+        <Button onClick={() => {
+          setSelectedAd(tab === "socio" ? { placements: ["socio"], link_type: "product", type: "sponsored" } : null);
+          setModalMode("create");
+          setModalOpen(true);
+        }} className="gap-1">
+          <Plus className="h-4 w-4" /> {tab === "socio" ? "New Socio Ad" : "New Ad"}
         </Button>
       </div>
+      <Tabs value={tab} onValueChange={(v) => { setTab(v as any); setPage(1); }} className="mb-3">
+        <TabsList>
+          <TabsTrigger value="all">All Ads</TabsTrigger>
+          <TabsTrigger value="socio">Socio Advertisements</TabsTrigger>
+        </TabsList>
+      </Tabs>
       <DataTable
         columns={[
           { key: "id", label: "ID" },

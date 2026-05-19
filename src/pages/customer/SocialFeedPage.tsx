@@ -1163,14 +1163,18 @@ export default function SocialFeedPage() {
 
       {/* Feed */}
       <div className="pb-28 md:pb-8">
-        {posts.map((post: any, idx: number) => (
-          <div key={post.id}>
-            <PostCard post={post} />
-            {socioAds.length > 0 && (idx + 1) % 4 === 0 && (
-              <SocialFeedAd ad={socioAds[(Math.floor(idx / 4)) % socioAds.length]} />
-            )}
-          </div>
-        ))}
+        {posts.map((post: any, idx: number) => {
+          const showAd = socioAds.length > 0 && (idx + 1) % 5 === 0;
+          const slot = Math.floor(idx / 5);
+          // Rotate ads by priority order; if multiple ads share a slot bucket, cycle through them.
+          const ad = showAd ? socioAds[slot % socioAds.length] : null;
+          return (
+            <div key={post.id}>
+              <PostCard post={post} />
+              {ad && <SocialFeedAd ad={ad} />}
+            </div>
+          );
+        })}
         <div className="py-6 px-4 text-center">
           <p className="text-sm font-semibold mb-1">You're All Caught Up</p>
           <p className="text-xs text-muted-foreground">You've seen all new posts from the last 3 days.</p>
