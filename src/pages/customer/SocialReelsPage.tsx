@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Music2, Plus, Search, Home, Film, ShoppingBag, Pencil, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Music2, Plus, Search, Home, Film, ShoppingBag, Pencil, Trash2, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
@@ -231,10 +231,47 @@ function ReelCard({ reel }: { reel: any }) {
     }
   };
 
+  // Persist mute preference across reels for the session. Default muted so autoplay works.
+  const [muted, setMuted] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    return sessionStorage.getItem('p4u_reels_muted') !== '0';
+  });
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = !muted;
+    setMuted(next);
+    sessionStorage.setItem('p4u_reels_muted', next ? '1' : '0');
+    const v = videoRef.current;
+    if (v) {
+      v.muted = next;
+      if (!next) v.play().catch(() => {});
+    }
+  };
+
   return (
     <div className="relative h-full w-full snap-start snap-always flex items-center justify-center" style={{ scrollSnapAlign: 'start' }}>
-      <video src={reel.videoUrl} className="absolute inset-0 w-full h-full object-cover" autoPlay loop muted playsInline onDoubleClick={() => toggleLike.mutate()} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
+      <video
+        ref={videoRef}
+        src={reel.videoUrl}
+        className="absolute inset-0 w-full h-full object-cover"
+        autoPlay
+        loop
+        muted={muted}
+        playsInline
+        {...({ "webkit-playsinline": "true" } as Record<string, string>)}
+        onClick={toggleMute}
+        onDoubleClick={() => toggleLike.mutate()}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
+      <button
+        onClick={toggleMute}
+        aria-label={muted ? 'Unmute' : 'Mute'}
+        className="absolute top-4 right-4 z-20 h-10 w-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
+      >
+        {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+      </button>
+
 
       {/* Right action bar */}
       <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5 z-10">
