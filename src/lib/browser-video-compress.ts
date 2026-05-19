@@ -25,7 +25,10 @@ export async function compressVideoBrowser(
   onProgress?.({ stage: "loading", percent: 0, message: "Loading video…" });
 
   const video = document.createElement("video");
-  video.muted = true;
+  // Keep the element unmuted while recording. Muting the source element makes
+  // MediaElementAudioSourceNode record a silent audio track in Chromium/WebView.
+  video.muted = false;
+  video.volume = 1;
   video.playsInline = true;
   video.preload = "auto";
 
@@ -74,15 +77,23 @@ export async function compressVideoBrowser(
 
     // Set up MediaRecorder with H.264 if supported
     const stream = canvas.captureStream(30);
+    let audioCtx: AudioContext | null = null;
 
-    // Try to capture audio too
+    // Capture audio without playing it through the speakers. The previous
+    // implementation muted the video element, which preserved an audio track
+    // container but recorded silence. Route the unmuted source into the
+    // recorder and a zero-gain output so the browser keeps the graph alive.
     try {
-      const audioCtx = new AudioContext();
+      audioCtx = new AudioContext();
       const source = audioCtx.createMediaElementSource(video);
       const dest = audioCtx.createMediaStreamDestination();
+      const silentOutput = audioCtx.createGain();
+      silentOutput.gain.value = 0;
       source.connect(dest);
-      source.connect(audioCtx.destination); // keep audio playing
+      source.connect(silentOutput);
+      silentOutput.connect(audioCtx.destination);
       dest.stream.getAudioTracks().forEach((t) => stream.addTrack(t));
+      await audioCtx.resume();
     } catch {
       // No audio track or audio capture not supported — continue without audio
     }
@@ -91,6 +102,7 @@ export async function compressVideoBrowser(
     const recorder = new MediaRecorder(stream, {
       mimeType,
       videoBitsPerSecond: VIDEO_BITRATE,
+      audioBitsPerSecond: 128_000,
     });
 
     const chunks: Blob[] = [];
@@ -130,6 +142,7 @@ export async function compressVideoBrowser(
 
     recorder.stop();
     stream.getTracks().forEach((t) => t.stop());
+    if (audioCtx) await audioCtx.close().catch(() => undefined);
 
     const blob = await recordingDone;
 
