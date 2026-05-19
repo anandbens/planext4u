@@ -84,10 +84,20 @@ export default function AdvertisementsPage() {
           <h1 className="page-title">Advertisements</h1>
           <p className="page-description">{data.total} ad campaigns</p>
         </div>
-        <Button onClick={() => { setSelectedAd(null); setModalMode("create"); setModalOpen(true); }} className="gap-1">
-          <Plus className="h-4 w-4" /> New Ad
+        <Button onClick={() => {
+          setSelectedAd(tab === "socio" ? { placements: ["socio"], link_type: "product", type: "sponsored" } : null);
+          setModalMode("create");
+          setModalOpen(true);
+        }} className="gap-1">
+          <Plus className="h-4 w-4" /> {tab === "socio" ? "New Socio Ad" : "New Ad"}
         </Button>
       </div>
+      <Tabs value={tab} onValueChange={(v) => { setTab(v as any); setPage(1); }} className="mb-3">
+        <TabsList>
+          <TabsTrigger value="all">All Ads</TabsTrigger>
+          <TabsTrigger value="socio">Socio Advertisements</TabsTrigger>
+        </TabsList>
+      </Tabs>
       <DataTable
         columns={[
           { key: "id", label: "ID" },
