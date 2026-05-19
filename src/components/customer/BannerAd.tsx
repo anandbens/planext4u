@@ -175,17 +175,35 @@ export function SocialFeedAd({ ad }: { ad: Ad }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [dismissed, setDismissed] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const trackedRef = useRef(false);
 
-  // Track impression once per mount
+  // Track impression when the ad becomes visible in the viewport (≥50%),
+  // once per ad per browser session, regardless of how many feed re-renders.
   useEffect(() => {
-    supabase.from("advertisements").update({ impressions: ((ad as any).impressions || 0) + 1 } as any).eq("id", ad.id).then(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!rootRef.current) return;
+    if (trackedRef.current) return;
+    if (alreadyCountedImpression(ad.id)) { trackedRef.current = true; return; }
+
+    const el = rootRef.current;
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.5 && !trackedRef.current) {
+          trackedRef.current = true;
+          supabase.rpc("track_ad_impression" as any, { _ad_id: ad.id }).then(() => {});
+          io.disconnect();
+          break;
+        }
+      }
+    }, { threshold: [0.5] });
+    io.observe(el);
+    return () => io.disconnect();
   }, [ad.id]);
 
   if (dismissed) return null;
 
   const handleClick = () => {
-    supabase.from("advertisements").update({ clicks: ((ad as any).clicks || 0) + 1 } as any).eq("id", ad.id).then(() => {});
+    supabase.rpc("track_ad_click" as any, { _ad_id: ad.id }).then(() => {});
     switch (ad.link_type) {
       case "product": navigate(`/app/product/${ad.link_target_id}`); break;
       case "category": navigate(`/app/browse?category=${ad.link_target_id}`); break;
@@ -199,9 +217,11 @@ export function SocialFeedAd({ ad }: { ad: Ad }) {
   };
 
   const imgSrc = isMobile && ad.mobile_image_url ? ad.mobile_image_url : ad.image_url;
+  const cleanDescription = cleanAdText(ad.description);
+  const cleanTitle = cleanAdText(ad.title);
 
   return (
-    <div className="bg-card border-b border-border">
+    <div ref={rootRef} className="bg-card border-b border-border">
       <div className="flex items-center justify-between px-4 py-2">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -216,16 +236,16 @@ export function SocialFeedAd({ ad }: { ad: Ad }) {
       </div>
       <div className="relative aspect-square bg-muted overflow-hidden cursor-pointer" onClick={handleClick}>
         {imgSrc ? (
-          <img src={imgSrc} alt={ad.title} className="w-full h-full object-cover" loading="lazy" />
+          <img src={imgSrc} alt={cleanTitle} className="w-full h-full object-cover" loading="lazy" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/5 flex items-center justify-center">
-            <span className="text-xl font-bold text-primary">{ad.title}</span>
+            <span className="text-xl font-bold text-primary">{cleanTitle}</span>
           </div>
         )}
       </div>
       <div className="px-4 py-3 cursor-pointer" onClick={handleClick}>
-        <p className="text-sm font-semibold">{ad.title}</p>
-        {ad.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{ad.description}</p>}
+        <p className="text-sm font-semibold">{cleanTitle}</p>
+        {cleanDescription && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{cleanDescription}</p>}
         <button className="mt-1 text-xs font-semibold text-primary">Learn More →</button>
       </div>
     </div>
