@@ -8685,6 +8685,8 @@ export type Database = {
         Args: { _review_id: string }
         Returns: Json
       }
+      track_ad_click: { Args: { _ad_id: string }; Returns: undefined }
+      track_ad_impression: { Args: { _ad_id: string }; Returns: undefined }
       validate_food_coupon: {
         Args: {
           _code: string
