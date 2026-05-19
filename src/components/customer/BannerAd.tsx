@@ -1,8 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+
+// Strip HTML tags + collapse whitespace for clean plain-text rendering of
+// editor-authored ad descriptions (removes data-start/data-end markup, etc.)
+function cleanAdText(input?: string | null): string {
+  if (!input) return "";
+  // Remove tags, decode a few common entities, collapse whitespace
+  const noTags = String(input).replace(/<[^>]*>/g, " ");
+  const decoded = noTags
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+  return decoded.replace(/\s+/g, " ").trim();
+}
+
+// Track impressions only once per ad per browser session to avoid inflation
+const impressionSessionKey = (id: string) => `ad_imp_${id}`;
+function alreadyCountedImpression(id: string): boolean {
+  try {
+    if (sessionStorage.getItem(impressionSessionKey(id))) return true;
+    sessionStorage.setItem(impressionSessionKey(id), "1");
+    return false;
+  } catch { return false; }
+}
 
 interface Ad {
   id: string;
