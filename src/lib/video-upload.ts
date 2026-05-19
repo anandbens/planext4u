@@ -6,6 +6,7 @@
  * 2. Generate client-side thumbnail
  */
 
+import { supabase } from "@/integrations/supabase/client";
 import { extractVideoThumbnail } from "@/lib/media-compression";
 import { uploadToB2 } from "@/lib/b2-upload";
 
