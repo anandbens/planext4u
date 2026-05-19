@@ -191,6 +191,21 @@ function FollowButton({ targetUserId }: { targetUserId: string }) {
   );
 }
 
+function SocialVideo({ src, className, onClick }: { src?: string; className?: string; onClick?: () => void }) {
+  const playableSrc = usePlayableVideoSource(src);
+  return (
+    <video
+      src={playableSrc}
+      className={className}
+      controls
+      playsInline
+      preload="metadata"
+      {...({ "webkit-playsinline": "true" } as Record<string, string>)}
+      onClick={onClick}
+    />
+  );
+}
+
 function PostCard({ post }: { post: any }) {
   const navigate = useNavigate();
   const { customerUser } = useAuth();
