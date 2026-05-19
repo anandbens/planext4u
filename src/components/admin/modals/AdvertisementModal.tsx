@@ -60,7 +60,11 @@ export function AdvertisementModal({ ad, open, onOpenChange, mode, onSave, onCre
   const [vendors, setVendors] = useState<any[]>([]);
 
   useEffect(() => {
-    if (isCreate) { setForm(emptyForm); setEditMode(true); }
+    if (isCreate) {
+      // Allow caller to pre-seed defaults (e.g. Socio tab pre-fills placements/link_type)
+      setForm({ ...emptyForm, ...(ad || {}) } as any);
+      setEditMode(true);
+    }
     else if (ad) {
       setForm({
         title: ad.title || "", advertiser: ad.advertiser || "", description: ad.description || "",
