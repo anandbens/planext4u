@@ -477,7 +477,7 @@ function PostCard({ post }: { post: any }) {
             {mediaItems.map((m: any, i: number) => (
               <div key={i} className="shrink-0 w-full h-full snap-center snap-always">
                 {m?.type === 'video' ? (
-                  <SocialVideo src={m?.url || ''} className="w-full h-full object-contain cursor-pointer" onClick={() => setFullscreenImg(m?.url || '')} />
+                  <PlayableVideo ref={i === 0 ? videoRef : undefined} src={m?.url || ''} className="w-full h-full object-contain cursor-pointer" controls onClick={() => setFullscreenImg(m?.url || '')} />
                 ) : (
                   <img
                     src={m?.mediumUrl || m?.url || ''}
@@ -595,7 +595,7 @@ function PostCard({ post }: { post: any }) {
           </button>
           {fullscreenImg && (
             fullscreenImg.includes('video') || fullscreenImg.endsWith('.mp4') ? (
-              <SocialVideo src={fullscreenImg} className="w-full h-full object-contain max-h-[90vh]" />
+              <PlayableVideo src={fullscreenImg} className="w-full h-full object-contain max-h-[90vh]" controls autoPlay />
             ) : (
               <img src={fullscreenImg} alt="" className="w-full h-full object-contain max-h-[90vh]" />
             )
