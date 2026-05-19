@@ -9,9 +9,11 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/friendly-error";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from "lucide-react";
 
 export default function AdvertisementsPage() {
+  const [tab, setTab] = useState<"all" | "socio">("all");
   const [data, setData] = useState<any>(null);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
