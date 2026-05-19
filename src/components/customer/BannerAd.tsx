@@ -151,10 +151,16 @@ export function SocialFeedAd({ ad }: { ad: Ad }) {
   const isMobile = useIsMobile();
   const [dismissed, setDismissed] = useState(false);
 
+  // Track impression once per mount
+  useEffect(() => {
+    supabase.from("advertisements").update({ impressions: ((ad as any).impressions || 0) + 1 } as any).eq("id", ad.id).then(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ad.id]);
+
   if (dismissed) return null;
 
   const handleClick = () => {
-    supabase.from("advertisements").update({ clicks: 1 } as any).eq("id", ad.id);
+    supabase.from("advertisements").update({ clicks: ((ad as any).clicks || 0) + 1 } as any).eq("id", ad.id).then(() => {});
     switch (ad.link_type) {
       case "product": navigate(`/app/product/${ad.link_target_id}`); break;
       case "category": navigate(`/app/browse?category=${ad.link_target_id}`); break;
