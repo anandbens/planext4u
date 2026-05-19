@@ -480,7 +480,10 @@ function PostCard({ post }: { post: any }) {
                     ref={i === 0 ? videoRef : undefined}
                     src={m?.url || ''}
                     className="w-full h-full object-contain cursor-pointer"
-                    controls muted playsInline
+                    controls
+                    playsInline
+                    preload="metadata"
+                    {...({ "webkit-playsinline": "true" } as Record<string, string>)}
                     onClick={() => setFullscreenImg(m?.url || '')}
                   />
                 ) : (
