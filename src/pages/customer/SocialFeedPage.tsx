@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import PeopleYouMayKnow from "@/components/social/PeopleYouMayKnow";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePlacementAds, SocialFeedAd } from "@/components/customer/BannerAd";
+import { usePlayableVideoSource } from "@/hooks/usePlayableVideoSource";
 
 const FALLBACK_POSTS = [
   {
