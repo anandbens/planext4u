@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Music2, Plus, Search, Home, Film, ShoppingBag, Pencil, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Music2, Plus, Search, Home, Film, ShoppingBag, Pencil, Trash2, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
