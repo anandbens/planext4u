@@ -32,11 +32,12 @@ export default function AdvertisementsPage() {
     if (statusFilter && statusFilter !== "all") query = query.eq("status", statusFilter);
     if (dateFrom) query = query.gte("created_at", dateFrom);
     if (dateTo) query = query.lte("created_at", dateTo + "T23:59:59Z");
+    if (tab === "socio") query = query.contains("placements", ["socio"]);
     query = query.order("created_at", { ascending: false }).range(from, to);
     const { data: rows, count, error } = await query;
     if (error) { toast.error("Failed to load ads"); return; }
     setData({ data: rows || [], total: count || 0, page, per_page: perPage, total_pages: Math.ceil((count || 0) / perPage) });
-  }, [page, statusFilter, dateFrom, dateTo]);
+  }, [page, statusFilter, dateFrom, dateTo, tab]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
