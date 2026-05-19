@@ -1,7 +1,7 @@
-import { forwardRef } from "react";
+import { forwardRef, type VideoHTMLAttributes } from "react";
 import { usePlayableVideoSource } from "@/hooks/usePlayableVideoSource";
 
-type PlayableVideoProps = Omit<React.VideoHTMLAttributes<HTMLVideoElement>, "src"> & {
+type PlayableVideoProps = Omit<VideoHTMLAttributes<HTMLVideoElement>, "src"> & {
   src?: string;
 };
 
