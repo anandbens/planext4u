@@ -175,7 +175,7 @@ export default function SocialCreatePostPage() {
 
           setUploadProgress({
             stage: 'complete', percent: 100, originalSize: file.size,
-            savedText: `Video compressed & uploaded ✓`,
+            savedText: `Video uploaded with audio ✓`,
           });
         } else {
           // Image compression & upload
