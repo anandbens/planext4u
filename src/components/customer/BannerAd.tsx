@@ -157,7 +157,7 @@ export function BannerAd({ placement, className = "", variant = "banner" }: Bann
         <div className="w-full h-20 md:h-40 bg-gradient-to-r from-primary to-primary/60 flex items-center justify-center">
           <div className="text-center text-primary-foreground px-2">
             <p className="font-bold text-sm md:text-lg leading-tight">{ad.title}</p>
-            {ad.description && <p className="text-[11px] md:text-sm opacity-90 line-clamp-1">{ad.description}</p>}
+            {ad.description && <p className="text-[11px] md:text-sm opacity-90 line-clamp-1">{cleanAdText(ad.description)}</p>}
           </div>
         </div>
       )}
