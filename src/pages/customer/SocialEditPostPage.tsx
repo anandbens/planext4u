@@ -25,6 +25,7 @@ import { useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import SocialLayout from "@/components/social/SocialLayout";
+import PlayableVideo from "@/components/social/PlayableVideo";
 
 export default function SocialEditPostPage() {
   const { postId } = useParams();
@@ -191,7 +192,7 @@ export default function SocialEditPostPage() {
           <div className="relative aspect-square bg-muted rounded-xl overflow-hidden">
             {mediaItems.length > 0 ? (
               mediaItems[0]?.type === "video" ? (
-                <video src={mediaItems[0]?.url} className="w-full h-full object-cover" muted playsInline controls />
+                <PlayableVideo src={mediaItems[0]?.url} className="w-full h-full object-cover" controls />
               ) : (
                 <img
                   src={mediaItems[0]?.mediumUrl || mediaItems[0]?.url}
