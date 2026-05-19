@@ -91,9 +91,8 @@ export function BannerAd({ placement, className = "", variant = "banner" }: Bann
   const ad = visibleAds[Math.floor(pickIndex * visibleAds.length)];
 
   const handleClick = async () => {
-    // Track click
-    supabase.from("advertisements").update({ clicks: (ad as any).clicks + 1 } as any).eq("id", ad.id).then(() => {});
-    // Increment impressions via raw rpc not needed, just navigate
+    // Track click via SECURITY DEFINER RPC (works for anon viewers)
+    supabase.rpc("track_ad_click" as any, { _ad_id: ad.id }).then(() => {});
     switch (ad.link_type) {
       case "product":
         navigate(`/app/product/${ad.link_target_id}`);
