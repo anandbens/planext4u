@@ -136,7 +136,7 @@ export function BannerAd({ placement, className = "", variant = "banner" }: Bann
         <div className="p-3">
           <p className="text-xs text-muted-foreground">{ad.advertiser}</p>
           <p className="text-sm font-semibold line-clamp-1">{ad.title}</p>
-          {ad.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{ad.description}</p>}
+          {ad.description && <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{cleanAdText(ad.description)}</p>}
           <button className="mt-2 text-xs font-semibold text-primary">Learn More →</button>
         </div>
       </div>
