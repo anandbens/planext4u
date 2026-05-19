@@ -12,6 +12,7 @@ import { isSocialModerator } from "@/lib/social-moderator";
 import { toast } from "sonner";
 import { useState } from "react";
 import SocialLayout from "@/components/social/SocialLayout";
+import PlayableVideo from "@/components/social/PlayableVideo";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -191,7 +192,7 @@ export default function SocialPostDetailPage() {
       <div className="relative aspect-square bg-muted overflow-hidden">
         {mediaItems.length > 0 ? (
           mediaItems[carouselIdx]?.type === 'video' ? (
-            <video src={mediaItems[carouselIdx]?.url} className="w-full h-full object-cover" controls playsInline preload="metadata" {...({ "webkit-playsinline": "true" } as Record<string, string>)} />
+            <PlayableVideo src={mediaItems[carouselIdx]?.url} className="w-full h-full object-cover" controls />
           ) : (
             <img src={mediaItems[carouselIdx]?.mediumUrl || mediaItems[carouselIdx]?.url} alt="" className="w-full h-full object-cover" loading="eager" decoding="async" fetchPriority={"high" as any} />
           )

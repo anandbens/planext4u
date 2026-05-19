@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import PlayableVideo from "@/components/social/PlayableVideo";
 
 import { isSocialModerator } from "@/lib/social-moderator";
 
@@ -225,7 +226,7 @@ export default function SocialStoryViewerPage() {
         {/* Story content */}
         {story.media_url ? (
           story.media_type === 'video' || story.media_url.match(/\.(mp4|webm|mov)/i) ? (
-            <video src={story.media_url} className="w-full h-full object-cover" autoPlay muted playsInline loop
+            <PlayableVideo src={story.media_url} className="w-full h-full object-cover" autoPlay loop controls
               onMouseDown={() => setIsPaused(true)} onMouseUp={() => setIsPaused(false)}
               onTouchStart={() => setIsPaused(true)} onTouchEnd={() => setIsPaused(false)} />
           ) : (

@@ -15,6 +15,7 @@ import { isSocialModerator } from "@/lib/social-moderator";
 import { toast } from "sonner";
 import { useState, useRef, useEffect } from "react";
 import SocialLayout from "@/components/social/SocialLayout";
+import PlayableVideo from "@/components/social/PlayableVideo";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -122,7 +123,7 @@ function SinglePostCard({ post, profile, isFirst }: { post: any; profile: any; i
       <div className="relative aspect-square bg-muted overflow-hidden">
         {mediaItems.length > 0 ? (
           mediaItems[carouselIdx]?.type === 'video' ? (
-            <video ref={videoRef} src={mediaItems[carouselIdx]?.url} className="w-full h-full object-cover" controls muted playsInline />
+            <PlayableVideo ref={videoRef} src={mediaItems[carouselIdx]?.url} className="w-full h-full object-cover" controls />
           ) : (
             <img src={mediaItems[carouselIdx]?.mediumUrl || mediaItems[carouselIdx]?.url} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
           )

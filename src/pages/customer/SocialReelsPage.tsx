@@ -10,6 +10,7 @@ import SocialLayout from "@/components/social/SocialLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFollow } from "@/hooks/use-social-interactions";
+import { usePlayableVideoSource } from "@/hooks/usePlayableVideoSource";
 
 function FollowBtn({ targetUserId, isMock }: { targetUserId: string; isMock: boolean }) {
   const { isFollowing, toggleFollow } = useFollow(targetUserId);
@@ -162,6 +163,7 @@ function ReelCard({ reel }: { reel: any }) {
   const qc = useQueryClient();
   const userId = customerUser?.supabase_uid || customerUser?.id;
   const isMock = false;
+  const videoUrl = usePlayableVideoSource(reel.videoUrl);
 
   const { data: isLiked = reel.isLiked } = useQuery({
     queryKey: ['social-like', reel.id, userId],
@@ -253,7 +255,7 @@ function ReelCard({ reel }: { reel: any }) {
     <div className="relative h-full w-full snap-start snap-always flex items-center justify-center" style={{ scrollSnapAlign: 'start' }}>
       <video
         ref={videoRef}
-        src={reel.videoUrl}
+        src={videoUrl}
         className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         loop
