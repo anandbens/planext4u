@@ -15,7 +15,6 @@ import { supabase } from "@/integrations/supabase/client";
 import PeopleYouMayKnow from "@/components/social/PeopleYouMayKnow";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePlacementAds, SocialFeedAd } from "@/components/customer/BannerAd";
-import { usePlayableVideoSource } from "@/hooks/usePlayableVideoSource";
 import PlayableVideo from "@/components/social/PlayableVideo";
 
 const FALLBACK_POSTS = [
@@ -189,21 +188,6 @@ function FollowButton({ targetUserId }: { targetUserId: string }) {
     >
       {isFollowing ? 'Following' : 'Follow'}
     </button>
-  );
-}
-
-function SocialVideo({ src, className, onClick }: { src?: string; className?: string; onClick?: () => void }) {
-  const playableSrc = usePlayableVideoSource(src);
-  return (
-    <video
-      src={playableSrc}
-      className={className}
-      controls
-      playsInline
-      preload="metadata"
-      {...({ "webkit-playsinline": "true" } as Record<string, string>)}
-      onClick={onClick}
-    />
   );
 }
 
