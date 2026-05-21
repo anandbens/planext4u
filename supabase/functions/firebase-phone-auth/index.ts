@@ -29,6 +29,58 @@ function respond(ok: boolean, payload: Record<string, unknown>): Response {
   );
 }
 
+/**
+ * Find an auth user by email or phone. `auth.admin.listUsers()` only returns
+ * the first page (default 50), so once the project has more users than that
+ * the existing user is missed and the caller tries to recreate it — which
+ * then fails with "email already registered" (422) and surfaces as a generic
+ * error to the client. We paginate up to 50k users to be safe.
+ */
+async function findAuthUserByEmailOrPhone(
+  client: any,
+  email: string,
+  phone: string,
+): Promise<any | null> {
+  const perPage = 1000;
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await client.auth.admin.listUsers({ page, perPage });
+    if (error) { console.error("listUsers error:", error.message); return null; }
+    const users = data?.users || [];
+    const found = users.find((u: any) => u.email === email || u.phone === phone);
+    if (found) return found;
+    if (users.length < perPage) return null;
+  }
+  return null;
+}
+
+/**
+ * Create an auth user, or return the existing one if it was created
+ * concurrently / found later. Prevents "email already registered" from
+ * bubbling up as a fatal error.
+ */
+async function createOrGetAuthUser(
+  client: any,
+  email: string,
+  phone: string,
+): Promise<any | null> {
+  const { data: newUser, error: createError } = await client.auth.admin.createUser({
+    email,
+    phone,
+    email_confirm: true,
+    phone_confirm: true,
+    password: crypto.randomUUID(),
+    user_metadata: { phone, login_method: "firebase_phone" },
+  });
+  if (!createError && newUser?.user) return newUser.user;
+  const msg = (createError?.message || "").toLowerCase();
+  if (createError && (msg.includes("already") || msg.includes("registered") || (createError as any).code === "email_exists")) {
+    console.log("createUser hit duplicate, falling back to lookup for", email);
+    return await findAuthUserByEmailOrPhone(client, email, phone);
+  }
+  if (createError) throw createError;
+  return null;
+}
+
 function normalizeBase64Url(value: string): string {
   const padded = value.replace(/-/g, "+").replace(/_/g, "/");
   return padded + "=".repeat((4 - (padded.length % 4)) % 4);
@@ -234,10 +286,7 @@ Deno.serve(async (req) => {
         // If auth user already exists (orphan from previous failed attempt), reuse it
         if (createErr.message?.includes("already been registered") || (createErr as any).code === "email_exists") {
           console.log("Auth user already exists, reusing for registration");
-          const { data: existingUsers } = await supabase.auth.admin.listUsers();
-          const found = existingUsers?.users?.find(
-            (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
-          );
+          const found = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
           if (!found) {
             return respond(false, { error: "Unable to create your account. Please try again later." });
           }
@@ -466,23 +515,13 @@ Deno.serve(async (req) => {
 
       console.log("Found registered vendor:", existingVendor.id);
 
-      // Find or create Supabase auth user
-      const { data: allUsers } = await supabase.auth.admin.listUsers();
-      let supabaseUser = allUsers?.users?.find(
-        (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
-      );
-
+      // Find or create Supabase auth user (paginated lookup; tolerates duplicates)
+      let supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
       if (!supabaseUser) {
-        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-          email: phoneEmail,
-          phone: normalizedPhone,
-          email_confirm: true,
-          phone_confirm: true,
-          password: crypto.randomUUID(),
-          user_metadata: { phone: normalizedPhone, login_method: "firebase_phone" },
-        });
-        if (createError) throw createError;
-        supabaseUser = newUser.user;
+        supabaseUser = await createOrGetAuthUser(supabase, phoneEmail, normalizedPhone);
+      }
+      if (!supabaseUser) {
+        return respond(false, { error: "Could not resolve vendor auth account. Please try again.", code: "AUTH_RESOLVE_FAILED" });
       }
 
       // Ensure vendor user_roles entry exists and points to the correct vendor record
@@ -543,22 +582,12 @@ Deno.serve(async (req) => {
     }
 
     console.log("Found registered customer:", existingCustomer.id);
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    let supabaseUser = existingUsers?.users?.find(
-      (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
-    );
-
+    let supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
     if (!supabaseUser) {
-      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email: phoneEmail,
-        phone: normalizedPhone,
-        email_confirm: true,
-        phone_confirm: true,
-        password: crypto.randomUUID(),
-        user_metadata: { phone: normalizedPhone, login_method: "firebase_phone" },
-      });
-      if (createError) throw createError;
-      supabaseUser = newUser.user;
+      supabaseUser = await createOrGetAuthUser(supabase, phoneEmail, normalizedPhone);
+    }
+    if (!supabaseUser) {
+      return respond(false, { error: "Could not resolve customer auth account. Please try again.", code: "AUTH_RESOLVE_FAILED" });
     }
 
     // Always ensure a customer user_role exists for this auth user.
