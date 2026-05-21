@@ -286,10 +286,7 @@ Deno.serve(async (req) => {
         // If auth user already exists (orphan from previous failed attempt), reuse it
         if (createErr.message?.includes("already been registered") || (createErr as any).code === "email_exists") {
           console.log("Auth user already exists, reusing for registration");
-          const { data: existingUsers } = await supabase.auth.admin.listUsers();
-          const found = existingUsers?.users?.find(
-            (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
-          );
+          const found = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
           if (!found) {
             return respond(false, { error: "Unable to create your account. Please try again later." });
           }
