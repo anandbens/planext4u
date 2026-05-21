@@ -585,22 +585,12 @@ Deno.serve(async (req) => {
     }
 
     console.log("Found registered customer:", existingCustomer.id);
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    let supabaseUser = existingUsers?.users?.find(
-      (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
-    );
-
+    let supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
     if (!supabaseUser) {
-      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email: phoneEmail,
-        phone: normalizedPhone,
-        email_confirm: true,
-        phone_confirm: true,
-        password: crypto.randomUUID(),
-        user_metadata: { phone: normalizedPhone, login_method: "firebase_phone" },
-      });
-      if (createError) throw createError;
-      supabaseUser = newUser.user;
+      supabaseUser = await createOrGetAuthUser(supabase, phoneEmail, normalizedPhone);
+    }
+    if (!supabaseUser) {
+      return respond(false, { error: "Could not resolve customer auth account. Please try again.", code: "AUTH_RESOLVE_FAILED" });
     }
 
     // Always ensure a customer user_role exists for this auth user.
