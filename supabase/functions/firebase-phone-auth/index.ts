@@ -518,23 +518,13 @@ Deno.serve(async (req) => {
 
       console.log("Found registered vendor:", existingVendor.id);
 
-      // Find or create Supabase auth user
-      const { data: allUsers } = await supabase.auth.admin.listUsers();
-      let supabaseUser = allUsers?.users?.find(
-        (u: any) => u.email === phoneEmail || u.phone === normalizedPhone
-      );
-
+      // Find or create Supabase auth user (paginated lookup; tolerates duplicates)
+      let supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
       if (!supabaseUser) {
-        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-          email: phoneEmail,
-          phone: normalizedPhone,
-          email_confirm: true,
-          phone_confirm: true,
-          password: crypto.randomUUID(),
-          user_metadata: { phone: normalizedPhone, login_method: "firebase_phone" },
-        });
-        if (createError) throw createError;
-        supabaseUser = newUser.user;
+        supabaseUser = await createOrGetAuthUser(supabase, phoneEmail, normalizedPhone);
+      }
+      if (!supabaseUser) {
+        return respond(false, { error: "Could not resolve vendor auth account. Please try again.", code: "AUTH_RESOLVE_FAILED" });
       }
 
       // Ensure vendor user_roles entry exists and points to the correct vendor record
