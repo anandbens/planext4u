@@ -967,7 +967,7 @@ export const api = {
   // Falls back to Basic (2 km) when plan is missing, inactive, or expired.
   // City → 25 km, State → 200 km, Pan-India / VIP → unlimited.
   // Honours admin-configured radius_km when larger than the type default.
-  browseServices: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number }) => {
+  browseServices: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number; userCityId?: string | null }) => {
     let query = supabase.from('services').select('*').eq('status', 'active');
     if (params.category) {
       // Resolve whether the supplied name is a parent service category or a subcategory.
@@ -2148,7 +2148,7 @@ export const api = {
     };
   },
 
-  browseProducts: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number }) => {
+  browseProducts: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number; userCityId?: string | null }) => {
     let query = supabase.from('products').select('*').eq('status', 'active');
     if (params.category) {
       // Resolve whether the supplied name is a parent category or a subcategory.
