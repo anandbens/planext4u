@@ -316,9 +316,24 @@ function FeaturedVendorsWidget({ title, config }: { title?: string; config: Reco
   const { data: vendors = [] } = useQuery({
     queryKey: ["wb_vendors_featured", limit],
     queryFn: async () => {
-      const { data } = await supabase.from("vendors").select("id,business_name,name,shop_photo_url,background_image,rating,total_orders,city")
-        .in("status", ["active", "verified"]).order("total_orders", { ascending: false }).limit(limit);
-      return data || [];
+      const { isVendorVisibleToCustomer } = await import("@/lib/api");
+      const { loadSelectedCoords } = await import("@/components/customer/LocationModal");
+      const coords = loadSelectedCoords();
+      const userLat = coords?.lat || 0;
+      const userLng = coords?.lng || 0;
+      // Fetch a wider pool, then plan-radius filter and trim to limit
+      const { data } = await supabase.from("vendors")
+        .select("id,business_name,name,shop_photo_url,background_image,rating,total_orders,city,city_id,shop_latitude,shop_longitude,plan_id,plan_end_date")
+        .in("status", ["active", "verified"]).order("total_orders", { ascending: false }).limit(Math.max(limit * 4, 32));
+      const rows = data || [];
+      const planIds = [...new Set(rows.filter((v: any) => v.plan_id).map((v: any) => v.plan_id))];
+      const plansMap: Record<string, any> = {};
+      if (planIds.length) {
+        const { data: plans } = await supabase.from("vendor_plans").select("*").in("id", planIds);
+        plans?.forEach((p: any) => { plansMap[p.id] = p; });
+      }
+      const filtered = rows.filter((v: any) => isVendorVisibleToCustomer(v, plansMap, userLat, userLng));
+      return filtered.slice(0, limit);
     },
   });
   if (!vendors.length) return null;

@@ -37,6 +37,44 @@ export function getEffectiveRadiusKm(plan: any | null | undefined): number {
   }
 }
 
+/**
+ * Plan-aware visibility check for a vendor relative to a customer location.
+ * - pan_india → always visible
+ * - city → same city_id (when both available) else radius fallback
+ * - state / radius_based → distance ≤ effective radius
+ * - expired / inactive / missing plan → Basic fallback (2km)
+ * If the user has no coordinates, we don't filter (return true) — caller decides.
+ */
+export function isVendorVisibleToCustomer(
+  vendor: { shop_latitude?: number | null; shop_longitude?: number | null; city_id?: string | null; plan_id?: string | null; plan_end_date?: string | null } | null | undefined,
+  plansMap: Record<string, any>,
+  userLat: number,
+  userLng: number,
+  userCityId?: string | null,
+): boolean {
+  if (!vendor) return false;
+  const planExpired = vendor.plan_end_date && new Date(vendor.plan_end_date) < new Date();
+  const plan = vendor.plan_id && !planExpired ? plansMap[vendor.plan_id] : null;
+  // Pan-India always visible
+  if (plan?.visibility_type === 'pan_india') return true;
+  // City visibility: prefer exact city_id match
+  if (plan?.visibility_type === 'city' && userCityId && vendor.city_id) {
+    return vendor.city_id === userCityId;
+  }
+  const effRadius = getEffectiveRadiusKm(plan);
+  if (effRadius === Infinity) return true;
+  if (!userLat || !userLng) return true;
+  const sLat = Number(vendor.shop_latitude) || 0;
+  const sLng = Number(vendor.shop_longitude) || 0;
+  if (!sLat || !sLng) return true;
+  const R = 6371;
+  const dLat = (sLat - userLat) * Math.PI / 180;
+  const dLon = (sLng - userLng) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(userLat * Math.PI / 180) * Math.cos(sLat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return dist <= effRadius;
+}
+
 // Types
 export interface User {
   id: string; name: string; mobile: string; email: string;
@@ -929,7 +967,7 @@ export const api = {
   // Falls back to Basic (2 km) when plan is missing, inactive, or expired.
   // City → 25 km, State → 200 km, Pan-India / VIP → unlimited.
   // Honours admin-configured radius_km when larger than the type default.
-  browseServices: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number }) => {
+  browseServices: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number; userCityId?: string | null }) => {
     let query = supabase.from('services').select('*').eq('status', 'active');
     if (params.category) {
       // Resolve whether the supplied name is a parent service category or a subcategory.
@@ -1019,16 +1057,7 @@ export const api = {
 
     const filtered = filteredServices.filter((s: any) => {
       const vendor = vendorMap[s.vendor_id];
-      if (!vendor) return false;
-      const planExpired = vendor.plan_end_date && new Date(vendor.plan_end_date) < new Date();
-      const plan = vendor.plan_id && !planExpired ? plansMap[vendor.plan_id] : null;
-      const effRadius = getEffectiveRadiusKm(plan);
-      if (effRadius === Infinity) return true;
-      if (!userLat || !userLng) return true;
-      const { lat: sLat, lng: sLng } = getServiceCoords(s, vendor);
-      if (!sLat || !sLng) return true;
-      const dist = haversine(userLat, userLng, sLat, sLng);
-      return dist <= effRadius;
+      return isVendorVisibleToCustomer(vendor, plansMap, userLat, userLng, (params as any).userCityId);
     });
 
     // Attach distance (km) from user → vendor shop when we have user coords.
@@ -2119,7 +2148,7 @@ export const api = {
     };
   },
 
-  browseProducts: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number }) => {
+  browseProducts: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number; userCityId?: string | null }) => {
     let query = supabase.from('products').select('*').eq('status', 'active');
     if (params.category) {
       // Resolve whether the supplied name is a parent category or a subcategory.
@@ -2209,17 +2238,7 @@ export const api = {
 
     const filtered = filteredProducts.filter(p => {
       const vendor = vendorMap[p.vendor_id];
-      if (!vendor) return false;
-      const planExpired = vendor.plan_end_date && new Date(vendor.plan_end_date) < new Date();
-      const plan = vendor.plan_id && !planExpired ? plansMap[vendor.plan_id] : null;
-      const effRadius = getEffectiveRadiusKm(plan);
-      if (effRadius === Infinity) return true;
-      if (!userLat || !userLng) return true;
-      const sLat = Number(vendor.shop_latitude) || 0;
-      const sLng = Number(vendor.shop_longitude) || 0;
-      if (!sLat || !sLng) return true;
-      const dist = haversine(userLat, userLng, sLat, sLng);
-      return dist <= effRadius;
+      return isVendorVisibleToCustomer(vendor, plansMap, userLat, userLng, (params as any).userCityId);
     });
 
     return filtered as Product[];
