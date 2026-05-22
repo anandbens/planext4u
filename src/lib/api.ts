@@ -1057,16 +1057,7 @@ export const api = {
 
     const filtered = filteredServices.filter((s: any) => {
       const vendor = vendorMap[s.vendor_id];
-      if (!vendor) return false;
-      const planExpired = vendor.plan_end_date && new Date(vendor.plan_end_date) < new Date();
-      const plan = vendor.plan_id && !planExpired ? plansMap[vendor.plan_id] : null;
-      const effRadius = getEffectiveRadiusKm(plan);
-      if (effRadius === Infinity) return true;
-      if (!userLat || !userLng) return true;
-      const { lat: sLat, lng: sLng } = getServiceCoords(s, vendor);
-      if (!sLat || !sLng) return true;
-      const dist = haversine(userLat, userLng, sLat, sLng);
-      return dist <= effRadius;
+      return isVendorVisibleToCustomer(vendor, plansMap, userLat, userLng, (params as any).userCityId);
     });
 
     // Attach distance (km) from user → vendor shop when we have user coords.
