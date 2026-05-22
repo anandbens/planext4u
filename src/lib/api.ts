@@ -2247,17 +2247,7 @@ export const api = {
 
     const filtered = filteredProducts.filter(p => {
       const vendor = vendorMap[p.vendor_id];
-      if (!vendor) return false;
-      const planExpired = vendor.plan_end_date && new Date(vendor.plan_end_date) < new Date();
-      const plan = vendor.plan_id && !planExpired ? plansMap[vendor.plan_id] : null;
-      const effRadius = getEffectiveRadiusKm(plan);
-      if (effRadius === Infinity) return true;
-      if (!userLat || !userLng) return true;
-      const sLat = Number(vendor.shop_latitude) || 0;
-      const sLng = Number(vendor.shop_longitude) || 0;
-      if (!sLat || !sLng) return true;
-      const dist = haversine(userLat, userLng, sLat, sLng);
-      return dist <= effRadius;
+      return isVendorVisibleToCustomer(vendor, plansMap, userLat, userLng, (params as any).userCityId);
     });
 
     return filtered as Product[];
