@@ -2241,7 +2241,53 @@ export const api = {
       return isVendorVisibleToCustomer(vendor, plansMap, userLat, userLng, (params as any).userCityId);
     });
 
-    return filtered as Product[];
+    // Priority category ordering — products from Groceries, Bio Enzyme, Combo Offers
+    // (and their subcategories) always come first, preserving the user's chosen sort
+    // order within each group. Resolved dynamically by name; no hardcoded IDs.
+    const PRIORITY_NAMES = ['Groceries', 'Bio Enzyme', 'Combo Offers'];
+    const priorityRankById = new Map<string, number>();
+    const priorityNameRank = new Map<string, number>(
+      PRIORITY_NAMES.map((n, i) => [n.toLowerCase(), i])
+    );
+    try {
+      const { data: catRows } = await supabase
+        .from('categories')
+        .select('id, name, parent_id')
+        .or(PRIORITY_NAMES.map(n => `name.ilike.${n}`).join(','));
+      const parents: string[] = [];
+      (catRows || []).forEach((c: any) => {
+        const rank = priorityNameRank.get(String(c.name || '').toLowerCase());
+        if (rank !== undefined) {
+          priorityRankById.set(c.id, rank);
+          parents.push(c.id);
+        }
+      });
+      if (parents.length) {
+        const { data: subRows } = await supabase
+          .from('categories')
+          .select('id, parent_id')
+          .in('parent_id', parents);
+        (subRows || []).forEach((s: any) => {
+          const r = priorityRankById.get(s.parent_id);
+          if (r !== undefined) priorityRankById.set(s.id, r);
+        });
+      }
+    } catch {}
+
+    const rankFor = (p: any): number => {
+      const byId = (p.category_id && priorityRankById.get(p.category_id))
+        ?? (p.subcategory_id && priorityRankById.get(p.subcategory_id));
+      if (typeof byId === 'number') return byId;
+      const byName = priorityNameRank.get(String(p.category_name || '').toLowerCase());
+      if (typeof byName === 'number') return byName;
+      const bySubName = priorityNameRank.get(String(p.subcategory_name || '').toLowerCase());
+      if (typeof bySubName === 'number') return bySubName;
+      return PRIORITY_NAMES.length;
+    };
+
+    const indexed = filtered.map((p, i) => ({ p, i, rank: rankFor(p) }));
+    indexed.sort((a, b) => a.rank - b.rank || a.i - b.i);
+    return indexed.map(x => x.p) as Product[];
   },
 
   getCustomerOrders: async (customerId: string) => {
