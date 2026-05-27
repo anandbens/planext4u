@@ -191,7 +191,7 @@ function CategoryGridWidget({ title, config }: { title?: string; config: Record<
     queryKey: ["wb_categories", limit],
     queryFn: async () => {
       const { data } = await supabase.from("categories").select("*")
-        .eq("status", "active").is("parent_id", null).order("display_order").limit(limit);
+        .eq("status", "active").is("parent_id", null).neq("show_on_homepage", false).order("display_order").limit(limit);
       return data || [];
     },
   });
