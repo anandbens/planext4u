@@ -16,7 +16,12 @@ interface ShopProduct {
   rating: number | null;
   reviews: number | null;
   category: string | null;
+  category_id: string | null;
+  subcategory_id: string | null;
 }
+
+// Priority category NAMES (dynamic — resolved to IDs at runtime, no hardcoded product IDs).
+const PRIORITY_CATEGORY_NAMES = ["Groceries", "Bio Enzyme", "Combo Offers"];
 
 /**
  * Socio Shop surface. Previously rendered a static MOCK_PRODUCTS / MOCK_COLLECTIONS
@@ -34,15 +39,50 @@ export default function SocialShopPage() {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<ShopProduct | null>(null);
 
-  const PRIORITY_CATEGORIES = ["Groceries", "Bio Enzyme", "Combo Offers"];
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        // 1) Resolve priority category IDs dynamically by name (case-insensitive).
+        //    Include any subcategories whose parent is one of the priority categories
+        //    so products tagged at the subcategory level are also prioritized.
+        const priorityIds = new Set<string>();
+        const priorityRankById = new Map<string, number>();
+        const { data: catRows } = await supabase
+          .from("categories")
+          .select("id, name, parent_id")
+          .or(
+            PRIORITY_CATEGORY_NAMES.map((n) => `name.ilike.${n}`).join(",")
+          );
+        const matchedParents: { id: string; name: string }[] = [];
+        (catRows || []).forEach((c: any) => {
+          const idx = PRIORITY_CATEGORY_NAMES.findIndex(
+            (n) => n.toLowerCase() === String(c.name || "").toLowerCase()
+          );
+          if (idx !== -1) {
+            priorityIds.add(c.id);
+            priorityRankById.set(c.id, idx);
+            matchedParents.push({ id: c.id, name: c.name });
+          }
+        });
+        if (matchedParents.length > 0) {
+          const { data: subRows } = await supabase
+            .from("categories")
+            .select("id, parent_id")
+            .in("parent_id", matchedParents.map((p) => p.id));
+          (subRows || []).forEach((s: any) => {
+            const parentRank = priorityRankById.get(s.parent_id);
+            if (parentRank !== undefined) {
+              priorityIds.add(s.id);
+              priorityRankById.set(s.id, parentRank);
+            }
+          });
+        }
+
+        // 2) Fetch products (no hardcoded IDs).
         const { data } = await supabase
           .from("products")
-          .select("id, title, price, image, rating, reviews, category_name, status")
+          .select("id, title, price, image, rating, reviews, category_id, category_name, subcategory_id, status")
           .eq("status", "active")
           .order("rating", { ascending: false, nullsFirst: false })
           .limit(40);
@@ -55,23 +95,37 @@ export default function SocialShopPage() {
           rating: p.rating ?? null,
           reviews: p.reviews ?? null,
           category: p.category_name ?? null,
+          category_id: p.category_id ?? null,
+          subcategory_id: p.subcategory_id ?? null,
         }));
-        // Prioritize products in PRIORITY_CATEGORIES first (stable within rating order)
-        const priorityRank = (cat: string | null) => {
-          if (!cat) return PRIORITY_CATEGORIES.length;
-          const idx = PRIORITY_CATEGORIES.findIndex(
-            (c) => c.toLowerCase() === cat.toLowerCase()
-          );
-          return idx === -1 ? PRIORITY_CATEGORIES.length : idx;
+
+        // 3) Rank: priority products first (ordered by Groceries → Bio Enzyme → Combo Offers),
+        //    everything else after, preserving the rating-based order from the query.
+        const rankFor = (p: ShopProduct): number => {
+          const byId =
+            (p.category_id && priorityRankById.get(p.category_id)) ??
+            (p.subcategory_id && priorityRankById.get(p.subcategory_id));
+          if (typeof byId === "number") return byId;
+          // Fallback: match by category_name string (for products missing category_id)
+          if (p.category) {
+            const idx = PRIORITY_CATEGORY_NAMES.findIndex(
+              (n) => n.toLowerCase() === p.category!.toLowerCase()
+            );
+            if (idx !== -1) return idx;
+          }
+          return PRIORITY_CATEGORY_NAMES.length;
         };
-        rows.sort((a, b) => priorityRank(a.category) - priorityRank(b.category));
-        setProducts(rows);
+        // Stable sort by rank only — ties keep original (rating-desc) order.
+        const indexed = rows.map((r, i) => ({ r, i, rank: rankFor(r) }));
+        indexed.sort((a, b) => a.rank - b.rank || a.i - b.i);
+        setProducts(indexed.map((x) => x.r));
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
   }, []);
+
 
   const content = (
     <div className="pb-28 md:pb-8">
