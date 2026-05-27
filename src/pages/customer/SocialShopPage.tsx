@@ -34,6 +34,8 @@ export default function SocialShopPage() {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<ShopProduct | null>(null);
 
+  const PRIORITY_CATEGORIES = ["Groceries", "Bio Enzyme", "Combo Offers"];
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -54,6 +56,15 @@ export default function SocialShopPage() {
           reviews: p.reviews ?? null,
           category: p.category_name ?? null,
         }));
+        // Prioritize products in PRIORITY_CATEGORIES first (stable within rating order)
+        const priorityRank = (cat: string | null) => {
+          if (!cat) return PRIORITY_CATEGORIES.length;
+          const idx = PRIORITY_CATEGORIES.findIndex(
+            (c) => c.toLowerCase() === cat.toLowerCase()
+          );
+          return idx === -1 ? PRIORITY_CATEGORIES.length : idx;
+        };
+        rows.sort((a, b) => priorityRank(a.category) - priorityRank(b.category));
         setProducts(rows);
       } finally {
         if (!cancelled) setLoading(false);
