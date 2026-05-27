@@ -389,9 +389,9 @@ export default function CustomerHomePage() {
   const handleSplashComplete = useCallback(() => { setShowSplash(false); sessionStorage.setItem("p4u_splash_shown", "1"); }, []);
 
   const allCategories = (data?.categories || []) as any[];
-  // Homepage parent categories: ALL active main categories, sorted by display_order
+  // Homepage parent categories: active main categories opted-in via admin "Show on Homepage"
   const homepageParents = allCategories
-    .filter((c) => !c.parent_id && c.status === 'active')
+    .filter((c) => !c.parent_id && c.status === 'active' && c.show_on_homepage !== false)
     .sort((a, b) => (a.display_order ?? 999) - (b.display_order ?? 999) || a.name.localeCompare(b.name));
   // Full list of active main categories for "Shop by Category" (no opt-in / limit)
   const allActiveParents = homepageParents;
