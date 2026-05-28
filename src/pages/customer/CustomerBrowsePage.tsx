@@ -370,7 +370,7 @@ export default function CustomerBrowsePage() {
                 <span className={`text-[11px] font-medium ${!categoryFilter ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>All</span>
               </div>
             </Link>
-            {categories?.map((c) => {
+            {categories?.filter((c) => c.name?.toLowerCase() !== 'ambulance').map((c) => {
               const active = categoryFilter === c.name;
               const chipStyle: React.CSSProperties | undefined = (c as any).theme_color
                 ? ({ ["--cat-primary" as any]: (c as any).theme_color } as React.CSSProperties)
