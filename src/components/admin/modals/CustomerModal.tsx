@@ -28,7 +28,7 @@ interface CustomerModalProps {
   onDelete?: (id: string) => Promise<void>;
 }
 
-const emptyForm = { name: "", email: "", mobile: "", status: "active" as User["status"], occupation: "", city_id: "1", area_id: "1" };
+const emptyForm = { name: "", email: "", mobile: "", status: "active" as User["status"], occupation: "", city_id: "CTY0000000", area_id: "ARE0000000" };
 
 // Occupation options from master data
 
