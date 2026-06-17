@@ -512,13 +512,20 @@ export const api = {
       if (dupVE) throw new Error(`This email (${email}) is already registered as a vendor.`);
     }
 
+    // city_id / area_id must reference existing rows in cities/areas (FK).
+    // Fall back to the seeded "UNCATEGORIZED" rows when the admin doesn't pick one.
+    const FALLBACK_CITY_ID = 'CTY0000000';
+    const FALLBACK_AREA_ID = 'ARE0000000';
+    const pickedCity = (data.city_id && String(data.city_id).trim() && String(data.city_id) !== '1') ? data.city_id : FALLBACK_CITY_ID;
+    const pickedArea = (data.area_id && String(data.area_id).trim() && String(data.area_id) !== '1') ? data.area_id : FALLBACK_AREA_ID;
+
     const newCustomer = {
       id: newId,
       name: data.name || '',
       email: data.email || '',
       mobile: data.mobile || '',
-      city_id: data.city_id || '1',
-      area_id: data.area_id || '1',
+      city_id: pickedCity,
+      area_id: pickedArea,
       latitude: data.latitude || 0,
       longitude: data.longitude || 0,
       wallet_points: initialPoints,
