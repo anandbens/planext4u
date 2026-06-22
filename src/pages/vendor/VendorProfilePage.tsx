@@ -14,6 +14,29 @@ import { api } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type StaticPlan = {
+  key: string;
+  name: string;
+  price: number;
+  validity_days: number;
+  visibility: string;
+  description: string;
+  group: "local" | "premium";
+};
+
+const STATIC_PLANS: StaticPlan[] = [
+  { key: "basic",    name: "Basic",    price: 0,      validity_days: 30,  visibility: "Radius Based (2km)", description: "Free local listing",          group: "local" },
+  { key: "standard", name: "Standard", price: 999,    validity_days: 30,  visibility: "Radius Based (5km)", description: "Extended 5km reach",          group: "local" },
+  { key: "premium",  name: "Premium",  price: 2499,   validity_days: 30,  visibility: "City",               description: "City-wide visibility",        group: "local" },
+  { key: "bronze",   name: "Bronze",   price: 9999,   validity_days: 90,  visibility: "City",               description: "VIP city presence",           group: "premium" },
+  { key: "silver",   name: "Silver",   price: 24999,  validity_days: 180, visibility: "State",              description: "State-wide visibility",       group: "premium" },
+  { key: "gold",     name: "Gold",     price: 49999,  validity_days: 365, visibility: "State",              description: "Premium state coverage",      group: "premium" },
+  { key: "diamond",  name: "Diamond",  price: 99999,  validity_days: 365, visibility: "Pan India",          description: "Pan India visibility",        group: "premium" },
+  { key: "platinum", name: "Platinum", price: 199999, validity_days: 365, visibility: "Pan India",          description: "Ultimate maximum visibility", group: "premium" },
+];
+
+const formatINR = (n: number) => new Intl.NumberFormat("en-IN").format(n);
+
 export default function VendorProfilePage() {
   const { vendorUser } = useAuth();
   const vendorId = vendorUser?.vendor_id || "VND-001";
@@ -24,6 +47,8 @@ export default function VendorProfilePage() {
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ email: "", mobile: "", area_id: "", city_id: "", shop_address: "", shop_latitude: "" as string | number, shop_longitude: "" as string | number });
   const [detectingLoc, setDetectingLoc] = useState(false);
+  const [selectedPlanKey, setSelectedPlanKey] = useState<string>("basic");
+
 
   const detectLocation = async () => {
     setDetectingLoc(true);
