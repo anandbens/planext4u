@@ -145,21 +145,37 @@ export default function VendorProfilePage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const selectedPlan = STATIC_PLANS.find(p => p.key === selectedPlanKey) || STATIC_PLANS[0];
+
+  useEffect(() => {
+    const m = (vendor as any)?.membership;
+    if (m && STATIC_PLANS.some(p => p.key === m)) setSelectedPlanKey(m);
+  }, [vendor]);
+
   const handleRazorpayPayment = async () => {
-    if (!vendorPlan) return;
-    // Load Razorpay
+    if (!selectedPlan) return;
+    if (selectedPlan.price === 0) {
+      await supabase.from("vendors").update({
+        membership: selectedPlan.key,
+        plan_payment_status: "paid",
+      }).eq("id", vendorId);
+      toast.success(`${selectedPlan.name} plan activated`);
+      queryClient.invalidateQueries({ queryKey: ["vendorProfile"] });
+      return;
+    }
     const { data: vars } = await supabase.from("platform_variables").select("*").in("key", ["razorpay_key_id"]);
     const razorpayKey = vars?.find(v => v.key === "razorpay_key_id")?.value;
     if (!razorpayKey) { toast.error("Payment gateway not configured"); return; }
 
     const options = {
       key: razorpayKey,
-      amount: Number(vendorPlan.price) * 100,
+      amount: selectedPlan.price * 100,
       currency: "INR",
       name: "Planext4U",
-      description: `${vendorPlan.plan_name} Plan`,
+      description: `${selectedPlan.name} Plan`,
       handler: async (response: any) => {
         await supabase.from("vendors").update({
+          membership: selectedPlan.key,
           plan_payment_status: "paid",
           plan_transaction_id: response.razorpay_payment_id,
         }).eq("id", vendorId);
@@ -171,6 +187,7 @@ export default function VendorProfilePage() {
     const rzp = new (window as any).Razorpay(options);
     rzp.open();
   };
+
 
   const getVar = (key: string) => platformVars.find(v => v.key === key)?.value || "";
   const paymentStatus = (vendor as any)?.plan_payment_status || "unpaid";
