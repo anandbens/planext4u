@@ -14,6 +14,29 @@ import { api } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+type StaticPlan = {
+  key: string;
+  name: string;
+  price: number;
+  validity_days: number;
+  visibility: string;
+  description: string;
+  group: "local" | "premium";
+};
+
+const STATIC_PLANS: StaticPlan[] = [
+  { key: "basic",    name: "Basic",    price: 0,      validity_days: 30,  visibility: "Radius Based (2km)", description: "Free local listing",          group: "local" },
+  { key: "standard", name: "Standard", price: 999,    validity_days: 30,  visibility: "Radius Based (5km)", description: "Extended 5km reach",          group: "local" },
+  { key: "premium",  name: "Premium",  price: 2499,   validity_days: 30,  visibility: "City",               description: "City-wide visibility",        group: "local" },
+  { key: "bronze",   name: "Bronze",   price: 9999,   validity_days: 90,  visibility: "City",               description: "VIP city presence",           group: "premium" },
+  { key: "silver",   name: "Silver",   price: 24999,  validity_days: 180, visibility: "State",              description: "State-wide visibility",       group: "premium" },
+  { key: "gold",     name: "Gold",     price: 49999,  validity_days: 365, visibility: "State",              description: "Premium state coverage",      group: "premium" },
+  { key: "diamond",  name: "Diamond",  price: 99999,  validity_days: 365, visibility: "Pan India",          description: "Pan India visibility",        group: "premium" },
+  { key: "platinum", name: "Platinum", price: 199999, validity_days: 365, visibility: "Pan India",          description: "Ultimate maximum visibility", group: "premium" },
+];
+
+const formatINR = (n: number) => new Intl.NumberFormat("en-IN").format(n);
+
 export default function VendorProfilePage() {
   const { vendorUser } = useAuth();
   const vendorId = vendorUser?.vendor_id || "VND-001";
@@ -24,6 +47,8 @@ export default function VendorProfilePage() {
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({ email: "", mobile: "", area_id: "", city_id: "", shop_address: "", shop_latitude: "" as string | number, shop_longitude: "" as string | number });
   const [detectingLoc, setDetectingLoc] = useState(false);
+  const [selectedPlanKey, setSelectedPlanKey] = useState<string>("basic");
+
 
   const detectLocation = async () => {
     setDetectingLoc(true);
@@ -109,9 +134,11 @@ export default function VendorProfilePage() {
     mutationFn: async () => {
       if (!txnId.trim()) throw new Error("Enter transaction ID");
       await supabase.from("vendors").update({
+        membership: selectedPlanKey,
         plan_transaction_id: txnId.trim(),
         plan_payment_status: "offline_pending",
       }).eq("id", vendorId);
+
     },
     onSuccess: () => {
       toast.success("Transaction ID submitted. Admin will verify.");
@@ -120,21 +147,37 @@ export default function VendorProfilePage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const selectedPlan = STATIC_PLANS.find(p => p.key === selectedPlanKey) || STATIC_PLANS[0];
+
+  useEffect(() => {
+    const m = (vendor as any)?.membership;
+    if (m && STATIC_PLANS.some(p => p.key === m)) setSelectedPlanKey(m);
+  }, [vendor]);
+
   const handleRazorpayPayment = async () => {
-    if (!vendorPlan) return;
-    // Load Razorpay
+    if (!selectedPlan) return;
+    if (selectedPlan.price === 0) {
+      await supabase.from("vendors").update({
+        membership: selectedPlan.key,
+        plan_payment_status: "paid",
+      }).eq("id", vendorId);
+      toast.success(`${selectedPlan.name} plan activated`);
+      queryClient.invalidateQueries({ queryKey: ["vendorProfile"] });
+      return;
+    }
     const { data: vars } = await supabase.from("platform_variables").select("*").in("key", ["razorpay_key_id"]);
     const razorpayKey = vars?.find(v => v.key === "razorpay_key_id")?.value;
     if (!razorpayKey) { toast.error("Payment gateway not configured"); return; }
 
     const options = {
       key: razorpayKey,
-      amount: Number(vendorPlan.price) * 100,
+      amount: selectedPlan.price * 100,
       currency: "INR",
       name: "Planext4U",
-      description: `${vendorPlan.plan_name} Plan`,
+      description: `${selectedPlan.name} Plan`,
       handler: async (response: any) => {
         await supabase.from("vendors").update({
+          membership: selectedPlan.key,
           plan_payment_status: "paid",
           plan_transaction_id: response.razorpay_payment_id,
         }).eq("id", vendorId);
@@ -146,6 +189,7 @@ export default function VendorProfilePage() {
     const rzp = new (window as any).Razorpay(options);
     rzp.open();
   };
+
 
   const getVar = (key: string) => platformVars.find(v => v.key === key)?.value || "";
   const paymentStatus = (vendor as any)?.plan_payment_status || "unpaid";
@@ -267,37 +311,70 @@ export default function VendorProfilePage() {
 
         {/* Plan & Payment Section */}
         <Card className="p-5 space-y-4">
-          <h3 className="text-sm font-semibold flex items-center gap-2"><Crown className="h-4 w-4 text-primary" /> Plan & Payment</h3>
-
-          <div className="flex items-center justify-between bg-primary/5 rounded-xl p-4">
-            <div>
-              <p className="text-sm font-bold text-primary">{vendorPlan?.plan_name || vendor?.membership === 'premium' ? 'Premium Plan' : 'Basic Plan'}</p>
-              <p className="text-xs text-muted-foreground">{vendorPlan ? `₹${vendorPlan.price} · ${vendorPlan.validity_days} days · ${vendorPlan.visibility_type.replace(/_/g, " ")}` : 'Standard commission rates'}</p>
-            </div>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-2"><Crown className="h-4 w-4 text-primary" /> Plans & Payment</h3>
             <Badge className={`border-0 ${paymentStatus === 'paid' ? 'bg-success/10 text-success' : paymentStatus === 'offline_pending' ? 'bg-warning/10 text-warning' : 'bg-destructive/10 text-destructive'}`}>
               <CreditCard className="h-3 w-3 mr-1" />
               {paymentStatus === 'offline_pending' ? 'Verification Pending' : paymentStatus}
             </Badge>
           </div>
 
-          {paymentStatus !== 'paid' && vendorPlan && (
-            <>
-              {/* Online Payment */}
-              {(vendorPlan.payment_mode === 'online' || vendorPlan.payment_mode === 'both') && (
-                <div className="p-4 rounded-lg border border-primary/20 bg-primary/5">
-                  <h4 className="text-sm font-semibold mb-2">Pay Online via Razorpay</h4>
-                  <p className="text-xs text-muted-foreground mb-3">Instant activation after payment of ₹{vendorPlan.price}</p>
-                  <Button onClick={handleRazorpayPayment} className="w-full gap-2">
-                    <CreditCard className="h-4 w-4" /> Pay ₹{vendorPlan.price} Now
-                  </Button>
-                  {vendorPlan.payment_mode === 'both' && (
-                    <p className="text-[10px] text-center text-muted-foreground mt-2">Or pay offline using bank transfer below</p>
-                  )}
-                </div>
-              )}
+          {(["local", "premium"] as const).map((grp) => (
+            <div key={grp} className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {grp === "local" ? "Local Plans" : "Premium Plans"}
+              </h4>
+              <div className="space-y-2">
+                {STATIC_PLANS.filter(p => p.group === grp).map((plan) => {
+                  const selected = selectedPlanKey === plan.key;
+                  return (
+                    <label
+                      key={plan.key}
+                      className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${selected ? "border-primary bg-primary/5" : "border-muted hover:bg-secondary/30"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="vendor-plan"
+                        className="mt-1 h-4 w-4 accent-primary cursor-pointer"
+                        checked={selected}
+                        onChange={() => setSelectedPlanKey(plan.key)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold">{plan.name}</p>
+                          <p className="text-sm font-bold text-primary">₹{formatINR(plan.price)}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px] text-muted-foreground">
+                          <span>Validity: <span className="font-medium text-foreground">{plan.validity_days} days</span></span>
+                          <span>Visibility: <span className="font-medium text-foreground">{plan.visibility}</span></span>
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
 
-              {/* Offline Payment */}
-              {(vendorPlan.payment_mode === 'offline' || vendorPlan.payment_mode === 'both') && (
+          {paymentStatus !== 'paid' && (
+            <>
+              <div className="p-4 rounded-lg border border-primary/20 bg-primary/5">
+                <h4 className="text-sm font-semibold mb-2">Pay Online via Razorpay</h4>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {selectedPlan.price === 0
+                    ? `Activate ${selectedPlan.name} plan instantly (free)`
+                    : `Instant activation after payment of ₹${formatINR(selectedPlan.price)}`}
+                </p>
+                <Button onClick={handleRazorpayPayment} className="w-full gap-2">
+                  <CreditCard className="h-4 w-4" /> Pay ₹{formatINR(selectedPlan.price)} Now
+                </Button>
+                {selectedPlan.price > 0 && (
+                  <p className="text-[10px] text-center text-muted-foreground mt-2">Or pay offline using bank transfer below</p>
+                )}
+              </div>
+
+              {selectedPlan.price > 0 && (
                 <div className="p-4 rounded-lg border border-muted bg-secondary/30">
                   <h4 className="text-sm font-semibold flex items-center gap-2 mb-3"><Building2 className="h-4 w-4" /> Offline Bank Transfer</h4>
                   <div className="grid grid-cols-2 gap-2 text-xs mb-3">
@@ -306,6 +383,9 @@ export default function VendorProfilePage() {
                     <div><span className="text-muted-foreground">IFSC:</span> <span className="font-mono font-medium">{getVar("company_ifsc") || "SBIN0001234"}</span></div>
                     <div><span className="text-muted-foreground">Bank:</span> <span className="font-medium">{getVar("company_bank_name") || "State Bank of India"}</span></div>
                   </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Transfer ₹{formatINR(selectedPlan.price)} for the <span className="font-medium text-foreground">{selectedPlan.name}</span> plan, then submit your UTR below.
+                  </p>
                   <Label className="text-xs">Enter Transaction / UTR ID after payment</Label>
                   <div className="flex gap-2 mt-1">
                     <Input value={txnId} onChange={(e) => setTxnId(e.target.value)} placeholder="Transaction ID / UTR number" />
@@ -324,6 +404,7 @@ export default function VendorProfilePage() {
             </div>
           )}
         </Card>
+
 
         <Card className="p-5">
           <h3 className="text-sm font-semibold mb-3">Performance</h3>
