@@ -311,37 +311,70 @@ export default function VendorProfilePage() {
 
         {/* Plan & Payment Section */}
         <Card className="p-5 space-y-4">
-          <h3 className="text-sm font-semibold flex items-center gap-2"><Crown className="h-4 w-4 text-primary" /> Plan & Payment</h3>
-
-          <div className="flex items-center justify-between bg-primary/5 rounded-xl p-4">
-            <div>
-              <p className="text-sm font-bold text-primary">{vendorPlan?.plan_name || vendor?.membership === 'premium' ? 'Premium Plan' : 'Basic Plan'}</p>
-              <p className="text-xs text-muted-foreground">{vendorPlan ? `₹${vendorPlan.price} · ${vendorPlan.validity_days} days · ${vendorPlan.visibility_type.replace(/_/g, " ")}` : 'Standard commission rates'}</p>
-            </div>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold flex items-center gap-2"><Crown className="h-4 w-4 text-primary" /> Plans & Payment</h3>
             <Badge className={`border-0 ${paymentStatus === 'paid' ? 'bg-success/10 text-success' : paymentStatus === 'offline_pending' ? 'bg-warning/10 text-warning' : 'bg-destructive/10 text-destructive'}`}>
               <CreditCard className="h-3 w-3 mr-1" />
               {paymentStatus === 'offline_pending' ? 'Verification Pending' : paymentStatus}
             </Badge>
           </div>
 
-          {paymentStatus !== 'paid' && vendorPlan && (
-            <>
-              {/* Online Payment */}
-              {(vendorPlan.payment_mode === 'online' || vendorPlan.payment_mode === 'both') && (
-                <div className="p-4 rounded-lg border border-primary/20 bg-primary/5">
-                  <h4 className="text-sm font-semibold mb-2">Pay Online via Razorpay</h4>
-                  <p className="text-xs text-muted-foreground mb-3">Instant activation after payment of ₹{vendorPlan.price}</p>
-                  <Button onClick={handleRazorpayPayment} className="w-full gap-2">
-                    <CreditCard className="h-4 w-4" /> Pay ₹{vendorPlan.price} Now
-                  </Button>
-                  {vendorPlan.payment_mode === 'both' && (
-                    <p className="text-[10px] text-center text-muted-foreground mt-2">Or pay offline using bank transfer below</p>
-                  )}
-                </div>
-              )}
+          {(["local", "premium"] as const).map((grp) => (
+            <div key={grp} className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {grp === "local" ? "Local Plans" : "Premium Plans"}
+              </h4>
+              <div className="space-y-2">
+                {STATIC_PLANS.filter(p => p.group === grp).map((plan) => {
+                  const selected = selectedPlanKey === plan.key;
+                  return (
+                    <label
+                      key={plan.key}
+                      className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${selected ? "border-primary bg-primary/5" : "border-muted hover:bg-secondary/30"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="vendor-plan"
+                        className="mt-1 h-4 w-4 accent-primary cursor-pointer"
+                        checked={selected}
+                        onChange={() => setSelectedPlanKey(plan.key)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold">{plan.name}</p>
+                          <p className="text-sm font-bold text-primary">₹{formatINR(plan.price)}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px] text-muted-foreground">
+                          <span>Validity: <span className="font-medium text-foreground">{plan.validity_days} days</span></span>
+                          <span>Visibility: <span className="font-medium text-foreground">{plan.visibility}</span></span>
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
 
-              {/* Offline Payment */}
-              {(vendorPlan.payment_mode === 'offline' || vendorPlan.payment_mode === 'both') && (
+          {paymentStatus !== 'paid' && (
+            <>
+              <div className="p-4 rounded-lg border border-primary/20 bg-primary/5">
+                <h4 className="text-sm font-semibold mb-2">Pay Online via Razorpay</h4>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {selectedPlan.price === 0
+                    ? `Activate ${selectedPlan.name} plan instantly (free)`
+                    : `Instant activation after payment of ₹${formatINR(selectedPlan.price)}`}
+                </p>
+                <Button onClick={handleRazorpayPayment} className="w-full gap-2">
+                  <CreditCard className="h-4 w-4" /> Pay ₹{formatINR(selectedPlan.price)} Now
+                </Button>
+                {selectedPlan.price > 0 && (
+                  <p className="text-[10px] text-center text-muted-foreground mt-2">Or pay offline using bank transfer below</p>
+                )}
+              </div>
+
+              {selectedPlan.price > 0 && (
                 <div className="p-4 rounded-lg border border-muted bg-secondary/30">
                   <h4 className="text-sm font-semibold flex items-center gap-2 mb-3"><Building2 className="h-4 w-4" /> Offline Bank Transfer</h4>
                   <div className="grid grid-cols-2 gap-2 text-xs mb-3">
@@ -350,6 +383,9 @@ export default function VendorProfilePage() {
                     <div><span className="text-muted-foreground">IFSC:</span> <span className="font-mono font-medium">{getVar("company_ifsc") || "SBIN0001234"}</span></div>
                     <div><span className="text-muted-foreground">Bank:</span> <span className="font-medium">{getVar("company_bank_name") || "State Bank of India"}</span></div>
                   </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Transfer ₹{formatINR(selectedPlan.price)} for the <span className="font-medium text-foreground">{selectedPlan.name}</span> plan, then submit your UTR below.
+                  </p>
                   <Label className="text-xs">Enter Transaction / UTR ID after payment</Label>
                   <div className="flex gap-2 mt-1">
                     <Input value={txnId} onChange={(e) => setTxnId(e.target.value)} placeholder="Transaction ID / UTR number" />
@@ -368,6 +404,7 @@ export default function VendorProfilePage() {
             </div>
           )}
         </Card>
+
 
         <Card className="p-5">
           <h3 className="text-sm font-semibold mb-3">Performance</h3>
