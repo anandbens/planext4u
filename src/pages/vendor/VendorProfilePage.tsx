@@ -134,9 +134,11 @@ export default function VendorProfilePage() {
     mutationFn: async () => {
       if (!txnId.trim()) throw new Error("Enter transaction ID");
       await supabase.from("vendors").update({
+        membership: selectedPlanKey,
         plan_transaction_id: txnId.trim(),
         plan_payment_status: "offline_pending",
       }).eq("id", vendorId);
+
     },
     onSuccess: () => {
       toast.success("Transaction ID submitted. Admin will verify.");
