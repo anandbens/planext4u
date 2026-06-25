@@ -623,7 +623,7 @@ export const api = {
       'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue',
       'shop_latitude', 'shop_longitude', 'shop_address', 'plan_id', 'plan_start_date', 'plan_end_date',
       'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'background_image', 'max_redemption_percentage', 'referred_by',
-      'gstin', 'pan', 'state_name', 'state_code', 'rejection_reason'];
+      'gstin', 'pan', 'state_name', 'state_code'];
     // UUID columns that must be null instead of empty string
     const uuidFields = ['plan_id', 'category_id', 'city_id', 'area_id'];
     // Valid columns for the `service_vendors` table (now includes plan/shop/payment cols)
@@ -631,7 +631,7 @@ export const api = {
       'commission_rate', 'membership', 'status', 'rating', 'total_products', 'total_orders', 'total_revenue',
       'plan_id', 'plan_payment_status', 'plan_transaction_id', 'shop_photo_url', 'max_redemption_percentage', 'kyc_status', 'referred_by',
       'shop_latitude', 'shop_longitude', 'shop_address', 'background_image', 'plan_start_date', 'plan_end_date',
-      'gstin', 'pan', 'state_name', 'state_code', 'rejection_reason'];
+      'gstin', 'pan', 'state_name', 'state_code'];
 
     // ── Mobile validation: exactly 10 digits ───────────────────────────────
     if ('mobile' in data) {
