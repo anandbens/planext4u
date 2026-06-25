@@ -650,9 +650,20 @@ export const api = {
     }
 
     // ── Duplicate detection across BOTH vendor tables ──────────────────────
+    // Only check when the value actually changes — otherwise an unchanged mobile/email
+    // on a vendor that exists in both tables (or has any historical duplicate row)
+    // would falsely trip the "already in use" guard and block the update.
+    const [{ data: curV }, { data: curSV }] = await Promise.all([
+      supabase.from('vendors').select('email, mobile').eq('id', id).maybeSingle(),
+      supabase.from('service_vendors').select('email, mobile').eq('id', id).maybeSingle(),
+    ]);
+    const existing = curV || curSV;
     const newEmail = (data as any).email;
     const newMobile = (data as any).mobile;
-    if (newEmail) {
+    const emailChanged = newEmail && existing && String(existing.email || '').toLowerCase() !== String(newEmail).toLowerCase();
+    const mobileChanged = newMobile && existing && String(existing.mobile || '') !== String(newMobile);
+
+    if (newEmail && (!existing || emailChanged)) {
       const [{ data: a }, { data: b }] = await Promise.all([
         supabase.from('vendors').select('id').eq('email', newEmail).neq('id', id).is('deleted_at', null).limit(1),
         supabase.from('service_vendors').select('id').eq('email', newEmail).neq('id', id).limit(1),
@@ -661,7 +672,7 @@ export const api = {
         throw new Error("This email is already used by another vendor.");
       }
     }
-    if (newMobile) {
+    if (newMobile && (!existing || mobileChanged)) {
       const [{ data: a }, { data: b }] = await Promise.all([
         supabase.from('vendors').select('id').eq('mobile', newMobile).neq('id', id).is('deleted_at', null).limit(1),
         supabase.from('service_vendors').select('id').eq('mobile', newMobile).neq('id', id).limit(1),
