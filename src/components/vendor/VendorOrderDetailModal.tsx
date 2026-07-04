@@ -120,6 +120,12 @@ export function VendorOrderDetailModal({ order, onClose }: Props) {
                     <span>-₹{Number(o.discount).toLocaleString()}</span>
                   </div>
                 )}
+                {Number((o as any).coupon_discount || 0) > 0 && (
+                  <div className="flex justify-between text-success">
+                    <span>Coupon <span className="font-mono text-xs opacity-70">({(o as any).coupon_code})</span></span>
+                    <span>-₹{Number((o as any).coupon_discount).toLocaleString()}</span>
+                  </div>
+                )}
                 {Array.isArray(o.applied_cart_rules) && o.applied_cart_rules.length > 0 && (
                   <CartRuleBreakup
                     rules={o.applied_cart_rules as AppliedCartRule[]}
