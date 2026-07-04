@@ -42,6 +42,7 @@ export default function CustomerCartPage() {
   const [placing] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [couponInfo, setCouponInfo] = useState<{ campaign_id: string; discount_amount: number; product_id: string; name: string; code: string } | null>(null);
   const [pointsUsed, setPointsUsed] = useState(0);
   const [walletPoints, setWalletPoints] = useState(0);
   const [deliveryMode, setDeliveryMode] = useState<"anytime" | "scheduled">("anytime");
