@@ -42,6 +42,7 @@ export default function CustomerCartPage() {
   const [placing] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
+  const [couponInfo, setCouponInfo] = useState<{ campaign_id: string; discount_amount: number; product_id: string; name: string; code: string } | null>(null);
   const [pointsUsed, setPointsUsed] = useState(0);
   const [walletPoints, setWalletPoints] = useState(0);
   const [deliveryMode, setDeliveryMode] = useState<"anytime" | "scheduled">("anytime");
@@ -230,8 +231,11 @@ export default function CustomerCartPage() {
   const platformFee = referralCountThisMonth >= 4 ? 0 : platformFeeValue;
   const gstOnPlatformFee = Math.round(platformFee * platformFeeGst / 100 * 100) / 100;
   const tax = cart.reduce((sum, item) => sum + item.tax * item.qty, 0);
-  const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
-  const maxPoints = Math.min(walletPoints, perItemMaxPoints.reduce((s, i) => s + i.maxRedeemable, 0));
+  const discount = couponInfo?.discount_amount || 0;
+  // Block wallet redemption on the coupon-tagged product's max
+  const maxPoints = couponInfo
+    ? Math.min(walletPoints, perItemMaxPoints.filter(i => i.id !== couponInfo.product_id).reduce((s, i) => s + i.maxRedeemable, 0))
+    : Math.min(walletPoints, perItemMaxPoints.reduce((s, i) => s + i.maxRedeemable, 0));
   const total = subtotal + platformFee + gstOnPlatformFee - discount - cartRuleDiscount - pointsUsed;
   const savings = totalDiscount + discount + cartRuleDiscount + pointsUsed;
 
@@ -267,9 +271,42 @@ export default function CustomerCartPage() {
       });
   }, [customerId, subtotal, cart]);
 
-  const applyCoupon = () => {
-    if (coupon === "WELCOME") { setCouponApplied(true); toast.success("Coupon applied! 10% discount"); }
-    else { toast.error("Invalid coupon code"); }
+  const applyCoupon = async () => {
+    if (!coupon.trim()) { toast.error("Enter a coupon code"); return; }
+    // best-effort geo
+    let lat: number | null = null, lng: number | null = null;
+    try {
+      const pos = await new Promise<GeolocationPosition>((res, rej) => {
+        if (!("geolocation" in navigator)) return rej();
+        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 3000 });
+      });
+      lat = pos.coords.latitude; lng = pos.coords.longitude;
+    } catch {}
+    const items = cart.map((c: any) => ({ id: c.id, vendor_id: c.vendor_id, qty: c.qty, price: c.price }));
+    const { data, error } = await (supabase.rpc as any)("validate_coupon_code", {
+      _code: coupon.trim().toUpperCase(),
+      _customer_id: customerId,
+      _cart_items: items,
+      _subtotal: subtotal,
+      _lat: lat, _lng: lng,
+    });
+    if (error) { toast.error(error.message || "Could not validate coupon"); return; }
+    if (!data?.valid) { toast.error(data?.reason || "Invalid coupon"); return; }
+    setCouponInfo({
+      campaign_id: data.campaign_id,
+      discount_amount: Number(data.discount_amount) || 0,
+      product_id: data.product_id,
+      name: data.name,
+      code: data.code,
+    });
+    setCouponApplied(true);
+    toast.success(`Coupon applied: ${data.name} — saved ₹${Number(data.discount_amount).toFixed(2)}`);
+  };
+
+  const removeCoupon = () => {
+    setCouponApplied(false);
+    setCouponInfo(null);
+    setCoupon("");
   };
 
   const applyPoints = () => {
@@ -314,6 +351,7 @@ export default function CustomerCartPage() {
       state: {
         cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings,
         appliedCartRules, cartRuleDiscount,
+        couponInfo,
         selectedAddress: addresses.find(a => a.id === selectedAddressId),
         deliveryMode,
         deliveryDate: deliveryMode === "scheduled" ? selectedDate?.toISOString() : null,
@@ -611,8 +649,17 @@ export default function CustomerCartPage() {
                   <div className="flex items-center gap-2">
                     <Tag className="h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Enter coupon code" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} className="h-10 flex-1" disabled={couponApplied} />
-                    <Button variant="secondary" className="h-10" onClick={applyCoupon} disabled={couponApplied}>{couponApplied ? '✓' : 'Apply'}</Button>
+                    {couponApplied ? (
+                      <Button variant="outline" className="h-10" onClick={removeCoupon}>Remove</Button>
+                    ) : (
+                      <Button variant="secondary" className="h-10" onClick={applyCoupon}>Apply</Button>
+                    )}
                   </div>
+                  {couponInfo && (
+                    <div className="mt-2 p-2 bg-success/5 rounded border border-success/20 text-[11px]">
+                      <span className="text-success font-semibold">✓ {couponInfo.name}</span> — saved {fmt(couponInfo.discount_amount)}. Wallet points can't be used on this product.
+                    </div>
+                  )}
                 </Card>
                 <Card className="p-4">
                   <h3 className="text-sm font-semibold mb-3">Bill Details</h3>

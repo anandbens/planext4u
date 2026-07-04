@@ -1044,6 +1044,252 @@ export type Database = {
           },
         ]
       }
+      coupon_campaigns: {
+        Row: {
+          center_lat: number | null
+          center_lng: number | null
+          code_mode: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          district_ids: string[]
+          expires_at: string | null
+          first_time_only: boolean
+          id: string
+          is_active: boolean
+          max_discount: number | null
+          min_order_amount: number
+          name: string
+          per_customer_limit: number
+          popup_description: string | null
+          popup_enabled: boolean
+          popup_image_url: string | null
+          popup_target: string
+          popup_title: string | null
+          product_ids: string[]
+          qty_limit: number
+          radius_km: number | null
+          shared_code: string | null
+          starts_at: string
+          total_codes_generated: number
+          total_codes_target: number
+          total_codes_used: number
+          updated_at: string
+          use_geo_radius: boolean
+          vendor_id: string | null
+        }
+        Insert: {
+          center_lat?: number | null
+          center_lng?: number | null
+          code_mode?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          district_ids?: string[]
+          expires_at?: string | null
+          first_time_only?: boolean
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          min_order_amount?: number
+          name: string
+          per_customer_limit?: number
+          popup_description?: string | null
+          popup_enabled?: boolean
+          popup_image_url?: string | null
+          popup_target?: string
+          popup_title?: string | null
+          product_ids?: string[]
+          qty_limit?: number
+          radius_km?: number | null
+          shared_code?: string | null
+          starts_at?: string
+          total_codes_generated?: number
+          total_codes_target?: number
+          total_codes_used?: number
+          updated_at?: string
+          use_geo_radius?: boolean
+          vendor_id?: string | null
+        }
+        Update: {
+          center_lat?: number | null
+          center_lng?: number | null
+          code_mode?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          district_ids?: string[]
+          expires_at?: string | null
+          first_time_only?: boolean
+          id?: string
+          is_active?: boolean
+          max_discount?: number | null
+          min_order_amount?: number
+          name?: string
+          per_customer_limit?: number
+          popup_description?: string | null
+          popup_enabled?: boolean
+          popup_image_url?: string | null
+          popup_target?: string
+          popup_title?: string | null
+          product_ids?: string[]
+          qty_limit?: number
+          radius_km?: number | null
+          shared_code?: string | null
+          starts_at?: string
+          total_codes_generated?: number
+          total_codes_target?: number
+          total_codes_used?: number
+          updated_at?: string
+          use_geo_radius?: boolean
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_campaigns_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_codes: {
+        Row: {
+          campaign_id: string
+          code: string
+          created_at: string
+          id: string
+          status: string
+          used_at: string | null
+          used_by_customer_id: string | null
+          used_by_mobile: string | null
+          used_order_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          code: string
+          created_at?: string
+          id?: string
+          status?: string
+          used_at?: string | null
+          used_by_customer_id?: string | null
+          used_by_mobile?: string | null
+          used_order_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          code?: string
+          created_at?: string
+          id?: string
+          status?: string
+          used_at?: string | null
+          used_by_customer_id?: string | null
+          used_by_mobile?: string | null
+          used_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_codes_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_popup_dismissals: {
+        Row: {
+          campaign_id: string
+          customer_id: string
+          dismissed_permanently: boolean
+          id: string
+          last_dismissed_at: string
+        }
+        Insert: {
+          campaign_id: string
+          customer_id: string
+          dismissed_permanently?: boolean
+          id?: string
+          last_dismissed_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          customer_id?: string
+          dismissed_permanently?: boolean
+          id?: string
+          last_dismissed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_popup_dismissals_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_redemptions: {
+        Row: {
+          campaign_id: string
+          code: string
+          coupon_code_id: string | null
+          customer_id: string
+          customer_mobile: string | null
+          discount_amount: number
+          id: string
+          order_id: string | null
+          product_id: string | null
+          redeemed_at: string
+        }
+        Insert: {
+          campaign_id: string
+          code: string
+          coupon_code_id?: string | null
+          customer_id: string
+          customer_mobile?: string | null
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          redeemed_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          code?: string
+          coupon_code_id?: string | null
+          customer_id?: string
+          customer_mobile?: string | null
+          discount_amount?: number
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          redeemed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_redemptions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_redemptions_coupon_code_id_fkey"
+            columns: ["coupon_code_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       credit_notes: {
         Row: {
           cgst_amount: number
@@ -3765,6 +4011,10 @@ export type Database = {
           cgst_amount: number | null
           commission_source: string | null
           country_code: string
+          coupon_campaign_id: string | null
+          coupon_code: string | null
+          coupon_discount: number
+          coupon_snapshot: Json | null
           courier_name: string | null
           created_at: string
           currency_code: string
@@ -3818,6 +4068,10 @@ export type Database = {
           cgst_amount?: number | null
           commission_source?: string | null
           country_code?: string
+          coupon_campaign_id?: string | null
+          coupon_code?: string | null
+          coupon_discount?: number
+          coupon_snapshot?: Json | null
           courier_name?: string | null
           created_at?: string
           currency_code?: string
@@ -3871,6 +4125,10 @@ export type Database = {
           cgst_amount?: number | null
           commission_source?: string | null
           country_code?: string
+          coupon_campaign_id?: string | null
+          coupon_code?: string | null
+          coupon_discount?: number
+          coupon_snapshot?: Json | null
           courier_name?: string | null
           created_at?: string
           currency_code?: string
@@ -3919,6 +4177,13 @@ export type Database = {
           vendor_state?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_coupon_campaign_id_fkey"
+            columns: ["coupon_campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_customer_id_fkey"
             columns: ["customer_id"]
@@ -8535,6 +8800,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      generate_coupon_codes: {
+        Args: { _campaign_id: string; _count: number; _length?: number }
+        Returns: {
+          code: string
+        }[]
+      }
+      generate_random_coupon_code: { Args: { _len: number }; Returns: string }
       generate_service_slots: {
         Args: { _date: string; _service_id: string }
         Returns: {
@@ -8545,6 +8817,25 @@ export type Database = {
       }
       get_active_country: { Args: never; Returns: Json }
       get_active_country_code: { Args: never; Returns: string }
+      get_customer_available_coupons: {
+        Args: { _customer_id: string; _lat?: number; _lng?: number }
+        Returns: {
+          campaign_id: string
+          code: string
+          code_mode: string
+          description: string
+          discount_type: string
+          discount_value: number
+          expires_at: string
+          max_discount: number
+          min_order_amount: number
+          name: string
+          popup_image_url: string
+          product_ids: string[]
+          qty_limit: number
+          vendor_id: string
+        }[]
+      }
       get_customer_id: { Args: { _user_id: string }; Returns: string }
       get_feed_with_meta: {
         Args: {
@@ -8663,6 +8954,16 @@ export type Database = {
           read_ct: number
         }[]
       }
+      redeem_coupon_code: {
+        Args: {
+          _code: string
+          _customer_id: string
+          _discount_amount: number
+          _order_id: string
+          _product_id: string
+        }
+        Returns: Json
+      }
       refresh_menu_item_order_counts: { Args: never; Returns: undefined }
       refresh_social_post_counts: {
         Args: { _post_id: string }
@@ -8687,6 +8988,17 @@ export type Database = {
       }
       track_ad_click: { Args: { _ad_id: string }; Returns: undefined }
       track_ad_impression: { Args: { _ad_id: string }; Returns: undefined }
+      validate_coupon_code: {
+        Args: {
+          _cart_items: Json
+          _code: string
+          _customer_id: string
+          _lat?: number
+          _lng?: number
+          _subtotal: number
+        }
+        Returns: Json
+      }
       validate_food_coupon: {
         Args: {
           _code: string

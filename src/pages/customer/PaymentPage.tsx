@@ -28,7 +28,7 @@ export default function PaymentPage() {
   // silently fails the insert, so we surface that case instead.
   const customerId = customerUser?.customer_id || customerUser?.id || '';
 
-  const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress, itemRedemptionMap, isServiceBooking, bookingDate, bookingSlot } = location.state || {};
+  const { cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings, selectedAddress, itemRedemptionMap, isServiceBooking, bookingDate, bookingSlot, couponInfo } = location.state || {};
 
   const [paymentState, setPaymentState] = useState<PaymentState>('select');
   const [orderId, setOrderId] = useState('');
@@ -317,7 +317,15 @@ export default function PaymentPage() {
           redemptionSource = cascade.redemptionSource;
         } catch (e) { console.error('Cascade error:', e); }
 
-        const orderData = {
+        // Attach coupon only to the vendor whose product it applies to.
+        const couponAppliesHere = !!couponInfo && items.some((i: any) =>
+          !couponInfo.product_id ? true : String(i.id) === String(couponInfo.product_id)
+        );
+        const couponDiscForOrder = couponAppliesHere ? Number(couponInfo.discount_amount || 0) : 0;
+        // Legacy `discount` column holds only the non-coupon portion (e.g. a future coupon-independent discount).
+        const legacyDiscount = 0;
+
+        const orderData: any = {
           id: newOrderId + '-' + vendorId.slice(-3),
           customer_id: customerId,
           customer_name: customerUser?.name || 'Customer',
@@ -326,11 +334,15 @@ export default function PaymentPage() {
           items: items.map((i: any) => ({ id: i.id, title: i.title, qty: i.qty, price: i.price, image: i.image, selected_attributes: i.selected_attributes || null, variant_id: i.variant_id || null })),
           subtotal: itemTotal,
           tax: items.reduce((s: number, i: any) => s + (i.tax || 0) * i.qty, 0),
-          discount: discount || 0,
+          discount: legacyDiscount,
+          coupon_code: couponAppliesHere ? couponInfo.code : null,
+          coupon_campaign_id: couponAppliesHere ? couponInfo.campaign_id : null,
+          coupon_discount: couponDiscForOrder,
+          coupon_snapshot: couponAppliesHere ? couponInfo : null,
           points_used: pointsUsed || 0,
           platform_fee: pf,
           gst_on_platform_fee: Math.round(gstPf * 100) / 100,
-          total: total || (itemTotal + pf + gstPf - (discount || 0)),
+          total: itemTotal + pf + gstPf - couponDiscForOrder - (pointsUsed || 0),
           status: 'placed',
           payment_reference_id: paymentId || null,
           razorpay_order_id: rzpOrderId || null,
@@ -343,6 +355,19 @@ export default function PaymentPage() {
         if (insertErr) {
           console.error('Order insert error:', insertErr);
           throw new Error(insertErr.message || 'Could not save your order');
+        }
+
+        // Redeem coupon (mark code used) — only for the matching vendor's order
+        if (couponAppliesHere && couponInfo) {
+          try {
+            await (supabase.rpc as any)('redeem_coupon_code', {
+              _code: couponInfo.code,
+              _customer_id: customerId,
+              _order_id: orderData.id,
+              _product_id: couponInfo.product_id || null,
+              _discount_amount: couponDiscForOrder,
+            });
+          } catch (e) { console.error('Coupon redeem failed', e); }
         }
         return orderData;
       });

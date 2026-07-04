@@ -221,6 +221,9 @@ const AdminFoodOrdersPage = lazy(() => import("./pages/admin/AdminFoodOrdersPage
 const AdminFoodCouponsPage = lazy(() => import("./pages/admin/AdminFoodCouponsPage"));
 const AdminDropshippingPage = lazy(() => import("./pages/admin/AdminDropshippingPage"));
 const VendorDropshippingPage = lazy(() => import("./pages/vendor/VendorDropshippingPage"));
+const AdminCouponsPage = lazy(() => import("./pages/admin/AdminCouponsPage"));
+const VendorCouponsPage = lazy(() => import("./pages/vendor/VendorCouponsPage"));
+const CustomerCouponsPage = lazy(() => import("./pages/customer/CustomerCouponsPage"));
 const CallsPage = lazy(() => import("./pages/customer/CallsPage"));
 
 // React Query defaults tuned for this app:
@@ -625,7 +628,10 @@ const AppRoutes = () => {
           <Route path="/admin/food-orders" element={<SalesPage><AdminFoodOrdersPage /></SalesPage>} />
           <Route path="/admin/food-coupons" element={<SalesPage><AdminFoodCouponsPage /></SalesPage>} />
           <Route path="/admin/dropshipping" element={<AdminOnlyPage><AdminDropshippingPage /></AdminOnlyPage>} />
+          <Route path="/admin/coupons" element={<AdminOnlyPage><AdminCouponsPage /></AdminOnlyPage>} />
           <Route path="/vendor/dropshipping" element={<VendorPage><VendorDropshippingPage /></VendorPage>} />
+          <Route path="/vendor/coupons" element={<VendorPage><VendorCouponsPage /></VendorPage>} />
+          <Route path="/app/coupons" element={<CustomerPage><CustomerCouponsPage /></CustomerPage>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
