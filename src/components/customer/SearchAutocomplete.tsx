@@ -129,8 +129,8 @@ export function SearchAutocomplete({ onSearch, placeholder, className, socialMod
     return () => { cancelled = true; clearTimeout(handle); };
   }, [query, socialMode]);
 
-  const suggestions = !socialMode && query.length >= 2
-    ? searchItems.filter(s => s.toLowerCase().includes(query.toLowerCase())).slice(0, 6)
+  const suggestions = !socialMode && query.trim().length >= 2
+    ? searchItems.slice(0, 8)
     : [];
 
   const handleSubmit = (q: string) => {
