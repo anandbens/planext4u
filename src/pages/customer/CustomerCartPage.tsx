@@ -351,6 +351,7 @@ export default function CustomerCartPage() {
       state: {
         cart, subtotal, mrpTotal, totalDiscount, platformFee, gstOnPlatformFee, discount, pointsUsed, total, savings,
         appliedCartRules, cartRuleDiscount,
+        couponInfo,
         selectedAddress: addresses.find(a => a.id === selectedAddressId),
         deliveryMode,
         deliveryDate: deliveryMode === "scheduled" ? selectedDate?.toISOString() : null,
