@@ -220,6 +220,12 @@ export default function CustomerOrderDetailPage() {
                 <span>- {fmt(order.discount, { decimals: 0 })}</span>
               </div>
             )}
+            {Number((order as any).coupon_discount || 0) > 0 && (
+              <div className="flex justify-between text-success">
+                <span>Coupon <span className="font-mono text-xs opacity-70">({(order as any).coupon_code})</span></span>
+                <span>- {fmt(Number((order as any).coupon_discount))}</span>
+              </div>
+            )}
             {order.points_used > 0 && (
               <div className="flex justify-between text-success">
                 <span>Points Redeemed</span>
