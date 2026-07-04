@@ -542,7 +542,7 @@ export default function CustomerCartPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="text-sm font-semibold truncate">{item.title}</h3>
-                            <p className="text-sm font-bold mt-0.5">{fmt(item.price, { decimals: 0 })}</p>
+                            <p className="text-sm font-bold mt-0.5">{fmt(item.price)}</p>
                           </div>
                           <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => moveToCart(item)}>Move to Cart</Button>
                         </Card>
