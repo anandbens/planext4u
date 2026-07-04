@@ -40,6 +40,7 @@ function buildSidebarItems(flags: VendorMenuFlags) {
     { label: "Settlements", to: "/vendor/settlements", icon: DollarSign },
     { label: "Payment History", to: "/vendor/payments", icon: History },
     { label: "Bank Account", to: "/vendor/bank", icon: CreditCard },
+    { label: "Coupons", to: "/vendor/coupons", icon: Tag },
     { label: "Profile & Settings", to: "/vendor/profile", icon: User },
     { label: "Media Library", to: "/vendor/media", icon: ImageIcon },
     { label: "KYC Verification", to: "/vendor/kyc", icon: ShieldCheck },
