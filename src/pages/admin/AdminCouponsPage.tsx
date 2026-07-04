@@ -68,6 +68,8 @@ export default function AdminCouponsPage() {
       total_codes_target: 100,
       starts_at: new Date().toISOString(),
       expires_at: null,
+      rollback_policy: "always_restore",
+      rollback_window_minutes: null,
       is_active: true,
     });
     setProducts([]);
