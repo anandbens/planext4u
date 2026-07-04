@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, DollarSign, User, Wrench,
   Bell, Menu, X, LogOut, CreditCard, History, ChevronRight, Store,
   ArrowLeft, Settings, HelpCircle, Shield, MapPin, TrendingUp, BarChart3,
-  ImageIcon, CalendarClock, ShieldCheck, UtensilsCrossed, Truck
+  ImageIcon, CalendarClock, ShieldCheck, UtensilsCrossed, Truck, Tag
 } from "lucide-react";
 import { VendorNotificationBell } from "@/components/vendor/VendorNotificationBell";
 import { supabase } from "@/integrations/supabase/client";
