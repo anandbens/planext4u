@@ -115,8 +115,8 @@ export default function CustomerWishlistPage() {
                       <div className="p-3">
                         <h3 className="text-xs font-semibold truncate">{p.title}</h3>
                         <div className="flex items-center gap-1 mt-1">
-                          <span className="text-sm font-bold text-primary">{fmt(Number(p.price) - Number(p.discount || 0), { decimals: 0 })}</span>
-                          {Number(p.discount) > 0 && <span className="text-[10px] text-muted-foreground line-through">{fmt(Number(p.price), { decimals: 0 })}</span>}
+                          <span className="text-sm font-bold text-primary">{fmt(Number(p.price) - Number(p.discount || 0))}</span>
+                          {Number(p.discount) > 0 && <span className="text-[10px] text-muted-foreground line-through">{fmt(Number(p.price))}</span>}
                         </div>
                         <Button size="sm" className="w-full mt-2 h-8 text-xs gap-1" onClick={() => addToCart(p)}>
                           <ShoppingCart className="h-3 w-3" /> Add to Cart
@@ -140,7 +140,7 @@ export default function CustomerWishlistPage() {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold truncate">{s.title || s.name}</h3>
                         <p className="text-xs text-muted-foreground">{s.vendor_name || 'Vendor'}</p>
-                        <p className="text-sm font-bold text-primary mt-1">{fmt(Number(s.price || 0), { decimals: 0 })}</p>
+                        <p className="text-sm font-bold text-primary mt-1">{fmt(Number(s.price || 0))}</p>
                       </div>
                       <button onClick={() => removeItem(s.id, 'services')} className="shrink-0">
                         <Trash2 className="h-4 w-4 text-destructive" />

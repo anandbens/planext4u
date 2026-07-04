@@ -158,7 +158,7 @@ export function ReorderTiles({ categoryName, includeCategoryNames, title = "Buy 
                 <div className="p-2">
                   <p className="text-[10px] text-muted-foreground truncate">{p.vendor_name}</p>
                   <h3 className="text-xs font-medium line-clamp-2 leading-snug min-h-[2.4em]">{p.title}</h3>
-                  <p className="text-sm font-bold mt-1">{fmt(p.price, { decimals: 0 })}</p>
+                  <p className="text-sm font-bold mt-1">{fmt(p.price)}</p>
                 </div>
               </Link>
               <Button
