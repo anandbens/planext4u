@@ -501,8 +501,8 @@ export default function CustomerCartPage() {
                                 <p className="text-xs text-primary flex items-center gap-0.5 shrink-0 whitespace-nowrap"><Clock className="h-2.5 w-2.5" /> Delivery in 30 Mins</p>
                               </div>
                               <div className="flex items-center gap-2 mt-1.5">
-                                {item.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">{fmt(item.price + item.discount, { decimals: 0 })}</span>}
-                                <span className="text-sm font-bold">{fmt(item.price, { decimals: 0 })}</span>
+                                {item.discount > 0 && <span className="text-[10px] text-muted-foreground line-through">{fmt(item.price + item.discount)}</span>}
+                                <span className="text-sm font-bold">{fmt(item.price)}</span>
                                 {discountPct > 0 && <span className="text-[10px] text-success font-medium">{discountPct}% Off</span>}
                               </div>
                               <p className="text-[10px] text-success mt-0.5">Eligible for FREE Shipping</p>
