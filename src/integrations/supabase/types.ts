@@ -1044,6 +1044,54 @@ export type Database = {
           },
         ]
       }
+      coupon_audit_log: {
+        Row: {
+          actor: string | null
+          campaign_id: string | null
+          code: string | null
+          coupon_code_id: string | null
+          created_at: string
+          customer_id: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          new_status: string | null
+          order_id: string | null
+          previous_status: string | null
+          reason: string | null
+        }
+        Insert: {
+          actor?: string | null
+          campaign_id?: string | null
+          code?: string | null
+          coupon_code_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          order_id?: string | null
+          previous_status?: string | null
+          reason?: string | null
+        }
+        Update: {
+          actor?: string | null
+          campaign_id?: string | null
+          code?: string | null
+          coupon_code_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string | null
+          order_id?: string | null
+          previous_status?: string | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
       coupon_campaigns: {
         Row: {
           center_lat: number | null
@@ -1071,8 +1119,11 @@ export type Database = {
           product_ids: string[]
           qty_limit: number
           radius_km: number | null
+          rollback_policy: string
+          rollback_window_minutes: number | null
           shared_code: string | null
           starts_at: string
+          status: string
           total_codes_generated: number
           total_codes_target: number
           total_codes_used: number
@@ -1106,8 +1157,11 @@ export type Database = {
           product_ids?: string[]
           qty_limit?: number
           radius_km?: number | null
+          rollback_policy?: string
+          rollback_window_minutes?: number | null
           shared_code?: string | null
           starts_at?: string
+          status?: string
           total_codes_generated?: number
           total_codes_target?: number
           total_codes_used?: number
@@ -1141,8 +1195,11 @@ export type Database = {
           product_ids?: string[]
           qty_limit?: number
           radius_km?: number | null
+          rollback_policy?: string
+          rollback_window_minutes?: number | null
           shared_code?: string | null
           starts_at?: string
+          status?: string
           total_codes_generated?: number
           total_codes_target?: number
           total_codes_used?: number
@@ -1248,6 +1305,11 @@ export type Database = {
           order_id: string | null
           product_id: string | null
           redeemed_at: string
+          rollback_event: string | null
+          rollback_reason: string | null
+          rolled_back: boolean
+          rolled_back_at: string | null
+          rolled_back_by: string | null
         }
         Insert: {
           campaign_id: string
@@ -1260,6 +1322,11 @@ export type Database = {
           order_id?: string | null
           product_id?: string | null
           redeemed_at?: string
+          rollback_event?: string | null
+          rollback_reason?: string | null
+          rolled_back?: boolean
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
         }
         Update: {
           campaign_id?: string
@@ -1272,6 +1339,11 @@ export type Database = {
           order_id?: string | null
           product_id?: string | null
           redeemed_at?: string
+          rollback_event?: string | null
+          rollback_reason?: string | null
+          rolled_back?: boolean
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
         }
         Relationships: [
           {
@@ -8791,6 +8863,7 @@ export type Database = {
         }
         Returns: Json
       }
+      expire_coupons_and_campaigns: { Args: never; Returns: Json }
       fire_push_to_user: {
         Args: {
           _body: string
@@ -8974,6 +9047,15 @@ export type Database = {
         Returns: undefined
       }
       rider_pending_balance: { Args: { _rider_id: string }; Returns: number }
+      rollback_coupon_for_order: {
+        Args: {
+          p_actor?: string
+          p_event: string
+          p_order_id: string
+          p_reason?: string
+        }
+        Returns: Json
+      }
       save_device_token: {
         Args: { _platform?: string; _token: string; _user_id: string }
         Returns: undefined
