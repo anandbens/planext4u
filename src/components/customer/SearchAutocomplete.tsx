@@ -70,29 +70,47 @@ export function SearchAutocomplete({ onSearch, placeholder, className, socialMod
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Load search items from DB on mount (non-social mode only)
+  // Live suggestions: query DB for matching categories/products/services based on typed term.
   useEffect(() => {
     if (socialMode) return;
-    async function loadItems() {
+    if (query.trim().length < 2) { setSearchItems([]); return; }
+    let cancelled = false;
+    const handle = setTimeout(async () => {
+      const term = query.trim().replace(/[%,]/g, "");
+      const like = `%${term}%`;
       if (servicesMode) {
-        const { data: srvs } = await supabase.from("services").select("title").eq("status", "active").limit(100);
-        setSearchItems((srvs || []).map((s: any) => s.title));
+        const { data: srvs } = await supabase
+          .from("services")
+          .select("title")
+          .eq("status", "active")
+          .ilike("title", like)
+          .limit(10);
+        if (!cancelled) setSearchItems((srvs || []).map((s: any) => s.title));
         return;
       }
       const [{ data: cats }, { data: prods }, { data: srvs }] = await Promise.all([
-        supabase.from("categories").select("name").limit(50),
-        supabase.from("products").select("title").eq("status", "active").limit(100),
-        supabase.from("services").select("title").eq("status", "active").limit(50),
+        supabase.from("categories").select("name").ilike("name", like).limit(10),
+        supabase.from("products").select("title").eq("status", "active").ilike("title", like).limit(10),
+        supabase.from("services").select("title").eq("status", "active").ilike("title", like).limit(10),
       ]);
       const items = [
         ...(cats || []).map((c: any) => c.name),
         ...(prods || []).map((p: any) => p.title),
         ...(srvs || []).map((s: any) => s.title),
       ];
-      setSearchItems(items);
-    }
-    loadItems();
-  }, [socialMode, servicesMode]);
+      // De-duplicate case-insensitively while preserving order.
+      const seen = new Set<string>();
+      const unique: string[] = [];
+      for (const it of items) {
+        const key = String(it || "").toLowerCase();
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        unique.push(it);
+      }
+      if (!cancelled) setSearchItems(unique);
+    }, 200);
+    return () => { cancelled = true; clearTimeout(handle); };
+  }, [query, socialMode, servicesMode]);
 
   // Social mode: live user search by username/display_name
   useEffect(() => {
