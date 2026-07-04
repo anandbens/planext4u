@@ -231,8 +231,11 @@ export default function CustomerCartPage() {
   const platformFee = referralCountThisMonth >= 4 ? 0 : platformFeeValue;
   const gstOnPlatformFee = Math.round(platformFee * platformFeeGst / 100 * 100) / 100;
   const tax = cart.reduce((sum, item) => sum + item.tax * item.qty, 0);
-  const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
-  const maxPoints = Math.min(walletPoints, perItemMaxPoints.reduce((s, i) => s + i.maxRedeemable, 0));
+  const discount = couponInfo?.discount_amount || 0;
+  // Block wallet redemption on the coupon-tagged product's max
+  const maxPoints = couponInfo
+    ? Math.min(walletPoints, perItemMaxPoints.filter(i => i.id !== couponInfo.product_id).reduce((s, i) => s + i.maxRedeemable, 0))
+    : Math.min(walletPoints, perItemMaxPoints.reduce((s, i) => s + i.maxRedeemable, 0));
   const total = subtotal + platformFee + gstOnPlatformFee - discount - cartRuleDiscount - pointsUsed;
   const savings = totalDiscount + discount + cartRuleDiscount + pointsUsed;
 
