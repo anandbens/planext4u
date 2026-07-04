@@ -115,8 +115,8 @@ export default function CustomerWishlistPage() {
                       <div className="p-3">
                         <h3 className="text-xs font-semibold truncate">{p.title}</h3>
                         <div className="flex items-center gap-1 mt-1">
-                          <span className="text-sm font-bold text-primary">{fmt(Number(p.price) - Number(p.discount || 0), { decimals: 0 })}</span>
-                          {Number(p.discount) > 0 && <span className="text-[10px] text-muted-foreground line-through">{fmt(Number(p.price), { decimals: 0 })}</span>}
+                          <span className="text-sm font-bold text-primary">{fmt(Number(p.price) - Number(p.discount || 0))}</span>
+                          {Number(p.discount) > 0 && <span className="text-[10px] text-muted-foreground line-through">{fmt(Number(p.price))}</span>}
                         </div>
                         <Button size="sm" className="w-full mt-2 h-8 text-xs gap-1" onClick={() => addToCart(p)}>
                           <ShoppingCart className="h-3 w-3" /> Add to Cart
