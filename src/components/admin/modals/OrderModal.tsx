@@ -178,6 +178,12 @@ export function OrderModal({ order, open, onOpenChange, mode, onSave }: OrderMod
               <span className="text-success">-₹{order.discount.toLocaleString()}</span>
             </div>
           )}
+          {Number((order as any).coupon_discount || 0) > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Coupon Discount <span className="font-mono text-xs">({(order as any).coupon_code})</span></span>
+              <span className="text-success">-₹{Number((order as any).coupon_discount).toLocaleString()}</span>
+            </div>
+          )}
           {Array.isArray((order as any).applied_cart_rules) && (order as any).applied_cart_rules.length > 0 && (
             <CartRuleBreakup
               rules={(order as any).applied_cart_rules as AppliedCartRule[]}
