@@ -527,8 +527,8 @@ export default function CustomerBrowsePage() {
                             <span className="text-[10px] text-muted-foreground">({p.reviews})</span>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-sm font-bold">{fmt(p.price, { decimals: 0 })}</span>
-                            {discountPct > 0 && <span className="text-xs text-muted-foreground line-through">{fmt(p.price + p.discount, { decimals: 0 })}</span>}
+                            <span className="text-sm font-bold">{fmt(p.price)}</span>
+                            {discountPct > 0 && <span className="text-xs text-muted-foreground line-through">{fmt(p.price + p.discount)}</span>}
                           </div>
                         </div>
                       </Link>
