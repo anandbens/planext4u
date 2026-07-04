@@ -140,7 +140,7 @@ export default function CustomerWishlistPage() {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold truncate">{s.title || s.name}</h3>
                         <p className="text-xs text-muted-foreground">{s.vendor_name || 'Vendor'}</p>
-                        <p className="text-sm font-bold text-primary mt-1">{fmt(Number(s.price || 0), { decimals: 0 })}</p>
+                        <p className="text-sm font-bold text-primary mt-1">{fmt(Number(s.price || 0))}</p>
                       </div>
                       <button onClick={() => removeItem(s.id, 'services')} className="shrink-0">
                         <Trash2 className="h-4 w-4 text-destructive" />
