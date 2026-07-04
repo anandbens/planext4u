@@ -199,8 +199,8 @@ export default function CustomerListingPage({ mode }: { mode: Mode }) {
                           <span className="text-[10px] text-muted-foreground">({p.reviews || 0})</span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-sm font-bold">{fmt(Number(p.price), { decimals: 0 })}</span>
-                          {discountPct > 0 && <span className="text-xs text-muted-foreground line-through">{fmt(Number(p.price) + Number(p.discount), { decimals: 0 })}</span>}
+                          <span className="text-sm font-bold">{fmt(Number(p.price))}</span>
+                          {discountPct > 0 && <span className="text-xs text-muted-foreground line-through">{fmt(Number(p.price) + Number(p.discount))}</span>}
                         </div>
                       </div>
                     </Link>
