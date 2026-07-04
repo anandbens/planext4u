@@ -805,6 +805,9 @@ export default function CustomerHomePage() {
 
       {/* Rating popup */}
       {customerUser?.supabase_uid && <RatingPopup customerId={customerUser.id} userId={customerUser.supabase_uid} />}
+
+      {/* Coupon popup for first-time / eligible users */}
+      {customerUser?.id && <CouponPopup customerId={customerUser.customer_id || customerUser.id} />}
     </CustomerLayout>
   );
 }
