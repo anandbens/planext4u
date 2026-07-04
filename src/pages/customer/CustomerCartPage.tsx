@@ -648,8 +648,17 @@ export default function CustomerCartPage() {
                   <div className="flex items-center gap-2">
                     <Tag className="h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Enter coupon code" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} className="h-10 flex-1" disabled={couponApplied} />
-                    <Button variant="secondary" className="h-10" onClick={applyCoupon} disabled={couponApplied}>{couponApplied ? '✓' : 'Apply'}</Button>
+                    {couponApplied ? (
+                      <Button variant="outline" className="h-10" onClick={removeCoupon}>Remove</Button>
+                    ) : (
+                      <Button variant="secondary" className="h-10" onClick={applyCoupon}>Apply</Button>
+                    )}
                   </div>
+                  {couponInfo && (
+                    <div className="mt-2 p-2 bg-success/5 rounded border border-success/20 text-[11px]">
+                      <span className="text-success font-semibold">✓ {couponInfo.name}</span> — saved {fmt(couponInfo.discount_amount)}. Wallet points can't be used on this product.
+                    </div>
+                  )}
                 </Card>
                 <Card className="p-4">
                   <h3 className="text-sm font-semibold mb-3">Bill Details</h3>
