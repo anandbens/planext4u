@@ -21,6 +21,7 @@ import { getLocation } from "@/lib/device-service";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { RatingPopup } from "@/components/customer/RatingPopup";
+import { CouponPopup } from "@/components/customer/CouponPopup";
 import { BannerAd } from "@/components/customer/BannerAd";
 import { VideoAdOverlay } from "@/components/customer/VideoAdOverlay";
 import { FloatingVideoAd } from "@/components/customer/FloatingVideoAd";
