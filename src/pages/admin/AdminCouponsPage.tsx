@@ -287,6 +287,27 @@ export default function AdminCouponsPage() {
               <div><Label>Starts</Label><Input type="datetime-local" value={editing.starts_at ? new Date(editing.starts_at).toISOString().slice(0, 16) : ""} onChange={e => setEditing({ ...editing, starts_at: e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString() })} /></div>
               <div><Label>Expires</Label><Input type="datetime-local" value={editing.expires_at ? new Date(editing.expires_at).toISOString().slice(0, 16) : ""} onChange={e => setEditing({ ...editing, expires_at: e.target.value ? new Date(e.target.value).toISOString() : null })} /></div>
 
+              <div>
+                <Label>Rollback Policy (on cancel / refund)</Label>
+                <Select value={editing.rollback_policy || "always_restore"} onValueChange={v => setEditing({ ...editing, rollback_policy: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="never">Never restore</SelectItem>
+                    <SelectItem value="always_restore">Restore on any cancel / refund</SelectItem>
+                    <SelectItem value="before_payment">Restore only before payment</SelectItem>
+                    <SelectItem value="payment_failed">Restore only on payment failure</SelectItem>
+                    <SelectItem value="before_vendor_accept">Restore before vendor accepts</SelectItem>
+                    <SelectItem value="before_shipment">Restore before shipment</SelectItem>
+                    <SelectItem value="refund_approved">Restore only when refund approved</SelectItem>
+                    <SelectItem value="full_cancellation_only">Restore only on full cancellation</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Rollback Window (minutes, blank = no limit)</Label>
+                <Input type="number" min={0} value={editing.rollback_window_minutes ?? ""} onChange={e => setEditing({ ...editing, rollback_window_minutes: e.target.value === "" ? null : Number(e.target.value) })} />
+              </div>
+
               <div className="sm:col-span-2 border-t pt-3 space-y-3">
                 <div className="flex items-center gap-2"><Switch checked={!!editing.popup_enabled} onCheckedChange={v => setEditing({ ...editing, popup_enabled: v })} /><Label className="!m-0">Show popup to eligible customers on Home</Label></div>
                 {editing.popup_enabled && (
