@@ -509,7 +509,7 @@ export default function CustomerCartPage() {
                               {(() => {
                                 const pim = perItemMaxPoints.find(p => p.id === item.id);
                                 return pim && pim.maxRedeemable > 0 ? (
-                                  <p className="text-[10px] text-primary mt-0.5">🎁 Up to {fmt(pim.maxRedeemable, { decimals: 0 })} redeemable via points ({pim.redemptionPct}%)</p>
+                                  <p className="text-[10px] text-primary mt-0.5">🎁 Up to {fmt(pim.maxRedeemable)} redeemable via points ({pim.redemptionPct}%)</p>
                                 ) : null;
                               })()}
                               <div className="flex items-center gap-3 mt-2 flex-wrap">
@@ -581,12 +581,12 @@ export default function CustomerCartPage() {
                   </div>
                   {maxPoints > 0 && (
                     <p className="text-[10px] text-muted-foreground mt-2 bg-secondary/30 rounded-lg p-2">
-                      💡 You can redeem between <strong>1</strong> and <strong>{maxPoints.toLocaleString()}</strong> points (1 point = {fmt(1, { decimals: 0 })}). Max is calculated based on each product's redemption % limit.
+                      💡 You can redeem between <strong>1</strong> and <strong>{maxPoints.toLocaleString()}</strong> points (1 point = {fmt(1)}). Max is calculated based on each product's redemption % limit.
                     </p>
                   )}
                   {pointsUsed > 0 && pointsUsed <= maxPoints && (
                     <div className="mt-2 p-2 bg-success/5 rounded-lg border border-success/20">
-                      <p className="text-[10px] text-success font-semibold">✅ {pointsUsed} points applied = {fmt(pointsUsed, { decimals: 0 })} discount</p>
+                      <p className="text-[10px] text-success font-semibold">✅ {pointsUsed} points applied = {fmt(pointsUsed)} discount</p>
                     </div>
                   )}
                   {pointsUsed > maxPoints && (
@@ -600,7 +600,7 @@ export default function CustomerCartPage() {
                         {perItemMaxPoints.map(p => (
                           <div key={p.id} className="flex justify-between text-[10px]">
                             <span className="text-muted-foreground truncate max-w-[60%]">{p.title}</span>
-                            <span>{fmt(p.maxRedeemable, { decimals: 0 })} ({p.redemptionPct}%)</span>
+                            <span>{fmt(p.maxRedeemable)} ({p.redemptionPct}%)</span>
                           </div>
                         ))}
                       </div>
@@ -617,14 +617,14 @@ export default function CustomerCartPage() {
                 <Card className="p-4">
                   <h3 className="text-sm font-semibold mb-3">Bill Details</h3>
                   <div className="space-y-2.5 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>{fmt(mrpTotal, { decimals: 0 })}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Item Total (MRP)</span><span>{fmt(mrpTotal)}</span></div>
                     {totalDiscount > 0 && (
                       <div className="flex justify-between pl-3 border-l-2 border-success/30 text-success">
-                        <span>Product Discount</span><span>- {fmt(totalDiscount, { decimals: 0 })}</span>
+                        <span>Product Discount</span><span>- {fmt(totalDiscount)}</span>
                       </div>
                     )}
                     <div className="flex justify-between pl-3 border-l-2 border-border/50">
-                      <span className="text-muted-foreground font-medium">Subtotal</span><span className="font-medium">{fmt(subtotal, { decimals: 0 })}</span>
+                      <span className="text-muted-foreground font-medium">Subtotal</span><span className="font-medium">{fmt(subtotal)}</span>
                     </div>
                     {(platformFee > 0 || referralCountThisMonth >= 4) && (
                       <div className="flex justify-between pl-3 border-l-2 border-border/50">
@@ -636,7 +636,7 @@ export default function CustomerCartPage() {
                         </div>
                         <span>
                           {referralCountThisMonth >= 4
-                            ? <span className="line-through text-muted-foreground">{fmt(platformFeeValue + Math.round(platformFeeValue * platformFeeGst) / 100, { decimals: 0 })}</span>
+                            ? <span className="line-through text-muted-foreground">{fmt(platformFeeValue + Math.round(platformFeeValue * platformFeeGst) / 100)}</span>
                             : `+ ${fmt(platformFee + gstOnPlatformFee)}`}
                         </span>
                       </div>
@@ -645,12 +645,12 @@ export default function CustomerCartPage() {
                       <div className="flex justify-between pl-3 border-l-2 border-success/30 text-success">
                         <div>
                           <span>Wallet Points Redeemed</span>
-                          <p className="text-[10px] text-success/70">{pointsUsed} pts × 1 = {fmt(pointsUsed, { decimals: 0 })}</p>
+                          <p className="text-[10px] text-success/70">{pointsUsed} pts × 1 = {fmt(pointsUsed)}</p>
                         </div>
-                        <span>- {fmt(pointsUsed, { decimals: 0 })}</span>
+                        <span>- {fmt(pointsUsed)}</span>
                       </div>
                     )}
-                    {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>- {fmt(discount, { decimals: 0 })}</span></div>}
+                    {discount > 0 && <div className="flex justify-between text-success"><span>Coupon Discount</span><span>- {fmt(discount)}</span></div>}
                     {appliedCartRules.length > 0 && (
                       <div className="pt-1">
                         <CartRuleBreakup
@@ -661,11 +661,11 @@ export default function CustomerCartPage() {
                       </div>
                     )}
                     <div className="border-t-2 border-dashed border-border/50 my-1" />
-                    <div className="flex justify-between font-bold bg-success/5 rounded-lg px-3 py-2 -mx-1"><span>Total Amount</span><span className="text-success">{fmt(total, { decimals: 0 })}</span></div>
+                    <div className="flex justify-between font-bold bg-success/5 rounded-lg px-3 py-2 -mx-1"><span>Total Amount</span><span className="text-success">{fmt(total)}</span></div>
                   </div>
                   {savings > 0 && (
                     <div className="mt-2 p-2 bg-success/5 rounded-lg border border-success/20">
-                      <p className="text-xs text-success font-semibold text-center">🎉 You save {fmt(savings, { decimals: 0 })} on this order!</p>
+                      <p className="text-xs text-success font-semibold text-center">🎉 You save {fmt(savings)} on this order!</p>
                     </div>
                   )}
 
@@ -687,7 +687,7 @@ export default function CustomerCartPage() {
         <div className="fixed left-0 right-0 z-30 bg-card border-t border-border/50 px-4 py-3 md:hidden safe-area-bottom" style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 3.5rem)' }}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs text-muted-foreground">{cart.reduce((s, i) => s + i.qty, 0)} item(s)</span>
-            <span className="text-sm font-bold">{fmt(total, { decimals: 0 })}</span>
+            <span className="text-sm font-bold">{fmt(total)}</span>
           </div>
           <Button className="w-full h-12 rounded-xl text-base font-semibold" onClick={placeOrder} disabled={placing}>
             {placing ? <div className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" /> : "Proceed To Checkout"}
