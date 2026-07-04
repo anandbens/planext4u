@@ -271,9 +271,42 @@ export default function CustomerCartPage() {
       });
   }, [customerId, subtotal, cart]);
 
-  const applyCoupon = () => {
-    if (coupon === "WELCOME") { setCouponApplied(true); toast.success("Coupon applied! 10% discount"); }
-    else { toast.error("Invalid coupon code"); }
+  const applyCoupon = async () => {
+    if (!coupon.trim()) { toast.error("Enter a coupon code"); return; }
+    // best-effort geo
+    let lat: number | null = null, lng: number | null = null;
+    try {
+      const pos = await new Promise<GeolocationPosition>((res, rej) => {
+        if (!("geolocation" in navigator)) return rej();
+        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 3000 });
+      });
+      lat = pos.coords.latitude; lng = pos.coords.longitude;
+    } catch {}
+    const items = cart.map((c: any) => ({ id: c.id, vendor_id: c.vendor_id, qty: c.qty, price: c.price }));
+    const { data, error } = await (supabase.rpc as any)("validate_coupon_code", {
+      _code: coupon.trim().toUpperCase(),
+      _customer_id: customerId,
+      _cart_items: items,
+      _subtotal: subtotal,
+      _lat: lat, _lng: lng,
+    });
+    if (error) { toast.error(error.message || "Could not validate coupon"); return; }
+    if (!data?.valid) { toast.error(data?.reason || "Invalid coupon"); return; }
+    setCouponInfo({
+      campaign_id: data.campaign_id,
+      discount_amount: Number(data.discount_amount) || 0,
+      product_id: data.product_id,
+      name: data.name,
+      code: data.code,
+    });
+    setCouponApplied(true);
+    toast.success(`Coupon applied: ${data.name} — saved ₹${Number(data.discount_amount).toFixed(2)}`);
+  };
+
+  const removeCoupon = () => {
+    setCouponApplied(false);
+    setCouponInfo(null);
+    setCoupon("");
   };
 
   const applyPoints = () => {
