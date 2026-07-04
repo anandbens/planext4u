@@ -206,8 +206,8 @@ function ProductSlider({ title, products, bgClass }: { title: string; products: 
                   </div>
                   <div className="p-2.5">
                     <p className="text-[11px] font-semibold truncate leading-tight">{p.title}</p>
-                    <p className="text-xs font-bold text-primary mt-1">{fmt(p.price - (p.discount || 0), { decimals: 0 })}</p>
-                    {p.discount > 0 && <p className="text-[10px] text-muted-foreground line-through">{fmt(p.price, { decimals: 0 })}</p>}
+                    <p className="text-xs font-bold text-primary mt-1">{fmt(p.price - (p.discount || 0))}</p>
+                    {p.discount > 0 && <p className="text-[10px] text-muted-foreground line-through">{fmt(p.price)}</p>}
                   </div>
                 </Card>
               </Link>
