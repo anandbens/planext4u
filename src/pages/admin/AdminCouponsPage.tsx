@@ -373,6 +373,7 @@ export default function AdminCouponsPage() {
               <div className="flex items-center gap-2"><Switch checked={!!editing.first_time_only} onCheckedChange={v => setEditing({ ...editing, first_time_only: v })} /><Label className="!m-0">First-time users only</Label></div>
               <div><Label>Qty Limit / order</Label><Input type="number" value={editing.qty_limit ?? 1} onChange={e => setEditing({ ...editing, qty_limit: Number(e.target.value) })} /></div>
               <div><Label>Per-customer limit</Label><Input type="number" value={editing.per_customer_limit ?? 1} onChange={e => setEditing({ ...editing, per_customer_limit: Number(e.target.value) })} /></div>
+              <div><Label>Daily usage limit (0 = unlimited)</Label><Input type="number" value={editing.daily_usage_limit ?? 0} onChange={e => setEditing({ ...editing, daily_usage_limit: Number(e.target.value) || null })} /></div>
 
               <div className="sm:col-span-2"><Label>Code Mode</Label>
                 <Select value={editing.code_mode} onValueChange={v => setEditing({ ...editing, code_mode: v })}>
