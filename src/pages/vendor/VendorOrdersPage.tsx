@@ -9,8 +9,9 @@ import { VendorLayout } from "@/components/vendor/VendorLayout";
 import { useAuth } from "@/lib/auth";
 import { api, Order } from "@/lib/api";
 import { toast } from "sonner";
-import { Package, Truck, CheckCircle, Clock, Eye, Pencil } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock, Eye, Pencil, FileDown } from "lucide-react";
 import { OrderModal } from "@/components/admin/modals/OrderModal";
+import { downloadOrdersSummaryPdf } from "@/lib/orders-summary-pdf";
 
 const statusStyle: Record<string, string> = {
   placed: "bg-primary/10 text-primary", paid: "bg-info/10 text-info", accepted: "bg-info/10 text-info",
@@ -118,6 +119,33 @@ export default function VendorOrdersPage() {
   return (
     <VendorLayout title={`Orders (${orders?.length || 0})`}>
       <div className="max-w-5xl mx-auto px-4 py-6">
+        <div className="flex justify-end mb-3">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isLoading || !orders || orders.length === 0}
+            onClick={() => downloadOrdersSummaryPdf(
+              (orders || []).map((o: any) => ({
+                id: o.id, date: o.created_at,
+                customer_name: o.customer_name,
+                coupon_code: o.coupon_code ?? null,
+                subtotal: Number(o.subtotal || 0),
+                discount: Number(o.discount || 0) + Number(o.points_used || 0),
+                total: Number(o.total || 0),
+                status: o.status,
+              })),
+              {
+                title: "My Orders Summary",
+                subtitle: vendorUser?.name ? `Vendor: ${vendorUser.name}` : `Vendor: ${vendorId}`,
+                showVendorColumn: false,
+                showCustomerColumn: true,
+                filename: `p4u-vendor-orders-${vendorId}`,
+              }
+            )}
+          >
+            <FileDown className="h-4 w-4 mr-2" /> Download PDF
+          </Button>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <Card className="p-3">
             <div className="flex items-center gap-2 mb-1"><Clock className="h-4 w-4 text-primary" /><span className="text-xs text-muted-foreground">Today</span></div>

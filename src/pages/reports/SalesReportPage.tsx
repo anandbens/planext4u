@@ -3,16 +3,19 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, ShoppingCart, TrendingUp, Percent } from "lucide-react";
+import { DollarSign, ShoppingCart, TrendingUp, Percent, FileDown } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import ReportDataGrid, { Column } from "@/components/admin/ReportDataGrid";
+import { Button } from "@/components/ui/button";
+import { downloadOrdersSummaryPdf } from "@/lib/orders-summary-pdf";
 
 interface OrderRow {
   id: string; created_at: string; customer_name: string; vendor_name: string;
   status: string; subtotal: number; discount: number; tax: number;
   platform_fee: number; gst_on_platform_fee: number; total: number;
   points_used: number; payment_reference_id: string; items_count: number;
+  coupon_code: string | null;
 }
 
 const statusColors: Record<string, string> = {
@@ -33,7 +36,7 @@ export default function SalesReportPage() {
     const fetchData = async () => {
       setLoading(true);
       let q = supabase.from("orders")
-        .select("id, created_at, customer_name, vendor_name, status, subtotal, discount, tax, platform_fee, gst_on_platform_fee, total, points_used, payment_reference_id, items")
+        .select("id, created_at, customer_name, vendor_name, status, subtotal, discount, tax, platform_fee, gst_on_platform_fee, total, points_used, payment_reference_id, items, coupon_code")
         .gte("created_at", startOfDay(dateFrom).toISOString())
         .lte("created_at", endOfDay(dateTo).toISOString())
         .order("created_at", { ascending: false });
@@ -99,13 +102,42 @@ export default function SalesReportPage() {
         }}
         exportFilename="sales_report"
         summaryCards={
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) : (<>
-              <MiniStat icon={DollarSign} label="Total Revenue" value={`₹${totalRevenue.toLocaleString("en-IN")}`} />
-              <MiniStat icon={ShoppingCart} label="Total Orders" value={totalOrders.toLocaleString()} />
-              <MiniStat icon={TrendingUp} label="Avg Order Value" value={`₹${avgOrder.toLocaleString("en-IN")}`} />
-              <MiniStat icon={Percent} label="Completion Rate" value={`${completionRate}%`} />
-            </>)}
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />) : (<>
+                <MiniStat icon={DollarSign} label="Total Revenue" value={`₹${totalRevenue.toLocaleString("en-IN")}`} />
+                <MiniStat icon={ShoppingCart} label="Total Orders" value={totalOrders.toLocaleString()} />
+                <MiniStat icon={TrendingUp} label="Avg Order Value" value={`₹${avgOrder.toLocaleString("en-IN")}`} />
+                <MiniStat icon={Percent} label="Completion Rate" value={`${completionRate}%`} />
+              </>)}
+            </div>
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={loading || rows.length === 0}
+                onClick={() => downloadOrdersSummaryPdf(
+                  rows.map(r => ({
+                    id: r.id, date: r.created_at,
+                    customer_name: r.customer_name, vendor_name: r.vendor_name,
+                    coupon_code: r.coupon_code,
+                    subtotal: Number(r.subtotal || 0),
+                    discount: Number(r.discount || 0),
+                    total: Number(r.total || 0),
+                    status: r.status,
+                  })),
+                  {
+                    title: "Sales Summary",
+                    subtitle: `${format(dateFrom, "dd MMM yyyy")} — ${format(dateTo, "dd MMM yyyy")}`,
+                    showVendorColumn: true,
+                    showCustomerColumn: true,
+                    filename: "p4u-sales-summary",
+                  }
+                )}
+              >
+                <FileDown className="h-4 w-4 mr-2" /> Download PDF
+              </Button>
+            </div>
           </div>
         }
       />
