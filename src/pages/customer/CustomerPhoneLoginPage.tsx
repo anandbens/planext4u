@@ -10,6 +10,7 @@ import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 const OTP_SEND_TIMEOUT_MS = 18000;
+const OTP_GATE_TIMEOUT_MS = 6000;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -68,10 +69,10 @@ export default function CustomerPhoneLoginPage() {
     try {
       const fullPhone = `${countryCode}${cleaned}`;
 
-      const [statusRes, rateRes] = await Promise.all([
+      const [statusRes, rateRes] = await withTimeout(Promise.all([
         supabase.rpc('check_phone_login_status' as any, { _phone: cleaned }),
         checkOtpRateLimit(fullPhone),
-      ]);
+      ]), OTP_GATE_TIMEOUT_MS);
 
       const ls = (statusRes.data || {}) as { found?: boolean; status?: string };
       const s = (ls.status || '').toLowerCase();
@@ -116,6 +117,8 @@ export default function CustomerPhoneLoginPage() {
         toast.error("Security check failed. Please refresh and try again.");
       } else if (err.code === "auth/recaptcha-timeout" || err.code === "auth/otp-timeout") {
         toast.error("OTP is taking too long. Please try again.", { duration: 6000 });
+      } else if (err.code === "auth/otp-gate-timeout") {
+        toast.error("Unable to verify this number right now. Please try again.", { duration: 6000 });
       } else {
         toast.error(err.message || "Failed to send OTP. Please try again.");
       }
