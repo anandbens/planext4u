@@ -15,6 +15,7 @@ import { friendlyError } from "@/lib/friendly-error";
 import { Plus, Pencil, Trash2, Tag, Download, Ticket, FileDown } from "lucide-react";
 import { CouponExportDialog } from "@/components/admin/CouponExportDialog";
 import { CouponEligibilityPreview } from "@/components/admin/CouponEligibilityPreview";
+import { CouponGenerateConfirm } from "@/components/admin/CouponGenerateConfirm";
 
 type Campaign = any;
 
@@ -38,6 +39,7 @@ export default function AdminCouponsPage() {
   const [bulkCount, setBulkCount] = useState(100);
   const [bulkLen, setBulkLen] = useState(8);
   const [exportOpen, setExportOpen] = useState(false);
+  const [confirmGen, setConfirmGen] = useState<{ campaign: Campaign; count: number; length: number } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -371,10 +373,12 @@ export default function AdminCouponsPage() {
                   <>
                     <div><Label>Count</Label><Input type="number" className="w-24" value={bulkCount} onChange={e => setBulkCount(Number(e.target.value))} /></div>
                     <div><Label>Length</Label><Input type="number" className="w-20" value={bulkLen} onChange={e => setBulkLen(Number(e.target.value))} min={6} max={8} /></div>
-                    <Button onClick={() => generate(codesView.campaign, bulkCount, bulkLen)}><Plus className="w-4 h-4 mr-1" />Generate</Button>
+                    <Button onClick={() => setConfirmGen({ campaign: codesView.campaign, count: bulkCount, length: bulkLen })}>
+                      <Plus className="w-4 h-4 mr-1" />Generate
+                    </Button>
                   </>
                 ) : (
-                  <Button onClick={() => generate(codesView.campaign, 1, bulkLen)}>
+                  <Button onClick={() => setConfirmGen({ campaign: codesView.campaign, count: 1, length: bulkLen })}>
                     Generate shared code {codesView.campaign.shared_code ? `(current: ${codesView.campaign.shared_code})` : ""}
                   </Button>
                 )}
@@ -415,6 +419,23 @@ export default function AdminCouponsPage() {
           <DialogFooter><Button variant="outline" onClick={() => setCodesView(null)}>Close</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CouponGenerateConfirm
+        open={!!confirmGen}
+        onClose={() => setConfirmGen(null)}
+        onConfirm={async () => {
+          if (!confirmGen) return;
+          await generate(confirmGen.campaign, confirmGen.count, confirmGen.length);
+          setConfirmGen(null);
+        }}
+        campaign={confirmGen?.campaign}
+        count={confirmGen?.count || 0}
+        length={confirmGen?.length || 8}
+        vendorName={vendors.find(v => v.id === confirmGen?.campaign?.vendor_id)?.business_name || (confirmGen?.campaign?.vendor_id ? undefined : "Any vendor")}
+        eligibleDistricts={confirmGen?.campaign?.district_ids?.length || districts.length}
+        eligibleVendors={confirmGen?.campaign?.vendor_id ? 1 : vendors.length}
+        eligibleProducts={confirmGen?.campaign?.product_ids?.length || undefined}
+      />
     </AdminLayout>
   );
 }
