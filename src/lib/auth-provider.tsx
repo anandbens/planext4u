@@ -594,7 +594,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       lastAuthErrorRef.current = null;
       throw new Error(msg);
     }
-    logActivity('login', `Customer logged in with ${email}`);
+    void logActivity('login', `Customer logged in with ${email}`).catch((error) => {
+      console.warn('[auth] customer activity log skipped:', error?.message || error);
+    });
   };
 
   const vendorLogin = async (email: string, password: string) => {
