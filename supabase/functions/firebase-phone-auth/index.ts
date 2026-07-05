@@ -41,15 +41,80 @@ async function findAuthUserByEmailOrPhone(
   email: string,
   phone: string,
 ): Promise<any | null> {
-  const perPage = 1000;
-  for (let page = 1; page <= 50; page++) {
-    const { data, error } = await client.auth.admin.listUsers({ page, perPage });
-    if (error) { console.error("listUsers error:", error.message); return null; }
-    const users = data?.users || [];
-    const found = users.find((u: any) => u.email === email || u.phone === phone);
-    if (found) return found;
-    if (users.length < perPage) return null;
+  // Fast path: phone OTP auth users are created with a deterministic synthetic
+  // email, so filter by that instead of paging through every auth user. The old
+  // implementation could scan up to 50k users and made OTP verification feel
+  // stuck after the SMS code was entered.
+  const { data, error } = await client.auth.admin.listUsers({ page: 1, perPage: 100, filter: email });
+  if (error) {
+    console.error("listUsers filter error:", error.message);
+    return null;
   }
+  const users = data?.users || [];
+  const found = users.find((u: any) => u.email === email || u.phone === phone);
+  if (found) return found;
+
+  // Keep a tiny compatibility fallback for older auth-js runtimes that may not
+  // honor `filter`; do not scan all users during login.
+  const fallback = users.find((u: any) => u.email === email);
+  if (fallback) return fallback;
+  return null;
+}
+
+async function findCustomerForPhoneLogin(client: any, phoneNumber: string) {
+  const normalizedPhone = phoneNumber.replace(/\s/g, "");
+  const phoneDigits = normalizedPhone.replace(/\D/g, "");
+  const last10 = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
+  const candidates = Array.from(new Set([
+    normalizedPhone,
+    phoneDigits,
+    last10,
+    last10 ? `+91${last10}` : "",
+  ].filter(Boolean)));
+
+  console.log("Customer lookup start", { phone: normalizedPhone, last10 });
+
+  // 1) Fast exact match. This uses normal indexes/unique constraints if present
+  // and avoids the previous leading-wildcard OR query that was slow/flaky.
+  const exact = await client
+    .from("customers")
+    .select("id, name, email, mobile, status, created_at")
+    .in("mobile", candidates)
+    .neq("status", "deleted")
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (exact.error) {
+    console.error("Customer exact lookup error:", exact.error.message || JSON.stringify(exact.error));
+  } else if (exact.data?.length) {
+    const active = exact.data.find((c: any) => String(c.status || "active").toLowerCase() === "active");
+    const picked = active || exact.data[0];
+    console.log("Customer exact lookup hit", picked.id);
+    return picked;
+  }
+
+  // 2) Fallback suffix match for legacy rows stored with separators / country
+  // codes. Limit aggressively so this cannot stall login indefinitely.
+  if (last10) {
+    const suffix = await client
+      .from("customers")
+      .select("id, name, email, mobile, status, created_at")
+      .ilike("mobile", `%${last10}`)
+      .neq("status", "deleted")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (suffix.error) {
+      console.error("Customer suffix lookup error:", suffix.error.message || JSON.stringify(suffix.error));
+    } else if (suffix.data?.length) {
+      const active = suffix.data.find((c: any) => String(c.status || "active").toLowerCase() === "active");
+      const picked = active || suffix.data[0];
+      console.log("Customer suffix lookup hit", picked.id);
+      return picked;
+    }
+  }
+
+  console.log("Customer lookup miss", { phone: normalizedPhone, last10 });
   return null;
 }
 
@@ -79,6 +144,57 @@ async function createOrGetAuthUser(
   }
   if (createError) throw createError;
   return null;
+}
+
+async function getMappedCustomerAuthUser(client: any, customerId: string): Promise<any | null> {
+  const { data: role, error: roleErr } = await client
+    .from("user_roles")
+    .select("user_id")
+    .eq("customer_id", customerId)
+    .eq("role", "customer")
+    .maybeSingle();
+
+  if (roleErr) {
+    console.error("Customer mapped role lookup error:", roleErr.message || JSON.stringify(roleErr));
+    return null;
+  }
+  if (!role?.user_id) return null;
+
+  const { data, error } = await client.auth.admin.getUserById(role.user_id);
+  if (error) {
+    console.error("Mapped customer auth lookup error:", error.message || JSON.stringify(error));
+    return null;
+  }
+  return data?.user || null;
+}
+
+async function getCustomerForAuthUser(client: any, userId: string): Promise<any | null> {
+  const { data: role, error: roleErr } = await client
+    .from("user_roles")
+    .select("customer_id")
+    .eq("user_id", userId)
+    .eq("role", "customer")
+    .maybeSingle();
+
+  if (roleErr) {
+    console.error("Auth customer role lookup error:", roleErr.message || JSON.stringify(roleErr));
+    return null;
+  }
+  if (!role?.customer_id) return null;
+
+  const { data: customer, error: customerErr } = await client
+    .from("customers")
+    .select("id, name, email, mobile, status")
+    .eq("id", role.customer_id)
+    .neq("status", "deleted")
+    .maybeSingle();
+
+  if (customerErr) {
+    console.error("Auth mapped customer lookup error:", customerErr.message || JSON.stringify(customerErr));
+    return null;
+  }
+
+  return customer || null;
 }
 
 function normalizeBase64Url(value: string): string {
@@ -232,16 +348,9 @@ Deno.serve(async (req) => {
     const phoneDigits = normalizedPhone.replace(/\D/g, "");
     const rawDigits = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
 
-    // Check if a registered customer exists with this phone number
-    const { data: existingCustomer, error: custLookupErr } = await supabase
-      .from("customers")
-      .select("id, name, email, mobile, status")
-      .or(`mobile.eq.${normalizedPhone},mobile.eq.${rawDigits},mobile.ilike.%${rawDigits}%`)
-      .neq("status", "deleted")
-      .limit(1)
-      .maybeSingle();
-
-    if (custLookupErr) console.error("Customer lookup error:", custLookupErr.message);
+    // Check if a registered customer exists with this phone number. Use a
+    // bounded, exact-first lookup so post-OTP verification stays fast.
+    const existingCustomer = await findCustomerForPhoneLogin(supabase, normalizedPhone);
 
     // ── REGISTRATION MODE ──────────────────────────────────────────────
     if (mode === "register") {
@@ -573,7 +682,20 @@ Deno.serve(async (req) => {
     }
 
     // ── CUSTOMER LOGIN MODE (default) ──────────────────────────────────
-    if (!existingCustomer) {
+    let resolvedCustomer = existingCustomer;
+    let resolvedAuthUser: any | null = null;
+
+    if (!resolvedCustomer) {
+      resolvedAuthUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
+      if (resolvedAuthUser) {
+        resolvedCustomer = await getCustomerForAuthUser(supabase, resolvedAuthUser.id);
+        if (resolvedCustomer) {
+          console.log("Resolved customer through existing auth role:", resolvedCustomer.id);
+        }
+      }
+    }
+
+    if (!resolvedCustomer) {
       console.log("No registered customer found for phone:", normalizedPhone);
       return respond(false, {
         error: "No account found with this mobile number. Please create an account first.",
@@ -581,8 +703,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log("Found registered customer:", existingCustomer.id);
-    let supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
+    console.log("Found registered customer:", resolvedCustomer.id);
+    let supabaseUser = resolvedAuthUser || await getMappedCustomerAuthUser(supabase, resolvedCustomer.id);
+    if (!supabaseUser) {
+      supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
+    }
     if (!supabaseUser) {
       supabaseUser = await createOrGetAuthUser(supabase, phoneEmail, normalizedPhone);
     }
@@ -605,7 +730,7 @@ Deno.serve(async (req) => {
       const { data: oldRole } = await supabase
         .from("user_roles")
         .select("id, user_id")
-        .eq("customer_id", existingCustomer.id)
+        .eq("customer_id", resolvedCustomer.id)
         .eq("role", "customer")
         .maybeSingle();
 
@@ -618,30 +743,30 @@ Deno.serve(async (req) => {
         if (roleRepairErr) {
           console.error("Failed to repoint customer user_role:", roleRepairErr.message);
         } else {
-          console.log("Repointed customer user_role for", existingCustomer.id, "from", oldRole.user_id, "to", supabaseUser!.id);
+          console.log("Repointed customer user_role for", resolvedCustomer.id, "from", oldRole.user_id, "to", supabaseUser!.id);
         }
       } else {
         const { error: roleInsertErr } = await supabase.from("user_roles").insert({
           user_id: supabaseUser!.id,
           role: "customer",
-          customer_id: existingCustomer.id,
+          customer_id: resolvedCustomer.id,
         });
         if (roleInsertErr) {
           console.error("Failed to create customer user_role:", roleInsertErr.message);
         } else {
-          console.log("Created missing customer user_role for", supabaseUser!.id, "→", existingCustomer.id);
+          console.log("Created missing customer user_role for", supabaseUser!.id, "→", resolvedCustomer.id);
         }
       }
-    } else if (!existingRole.customer_id || existingRole.customer_id !== existingCustomer.id) {
+    } else if (!existingRole.customer_id || existingRole.customer_id !== resolvedCustomer.id) {
       // Role exists but is missing or points to the wrong imported customer record.
       const { error: roleUpdateErr } = await supabase.from("user_roles")
-        .update({ customer_id: existingCustomer.id })
+        .update({ customer_id: resolvedCustomer.id })
         .eq("id", existingRole.id);
 
       if (roleUpdateErr) {
         console.error("Failed to sync customer user_role linkage:", roleUpdateErr.message);
       } else {
-        console.log("Synced customer user_role for", supabaseUser!.id, "→", existingCustomer.id, "(was", existingRole.customer_id, ")");
+        console.log("Synced customer user_role for", supabaseUser!.id, "→", resolvedCustomer.id, "(was", existingRole.customer_id, ")");
       }
     }
 

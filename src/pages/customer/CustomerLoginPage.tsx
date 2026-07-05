@@ -17,6 +17,9 @@ const OTP_SEND_TIMEOUT_MS = 22000;
 const OTP_GATE_GRACE_MS = 500;
 const OTP_GATE_HARD_TIMEOUT_MS = 2500;
 const OTP_WATCHDOG_MS = 30000;
+const OTP_VERIFY_FIREBASE_TIMEOUT_MS = 8000;
+const OTP_VERIFY_BACKEND_TIMEOUT_MS = 12000;
+const OTP_VERIFY_SESSION_TIMEOUT_MS = 8000;
 
 type OtpGateResult =
   | { allowed: true }
@@ -245,15 +248,19 @@ export default function CustomerLoginPage() {
 
     try {
       stepMs("1:firebaseVerify:start");
-      await verifyOTP(otp);
+      await withTimeout(verifyOTP(otp), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-verify-timeout");
       stepMs("1:firebaseVerify:done");
 
       stepMs("2:idToken:start");
-      const idToken = await getFirebaseIdToken();
+      const idToken = await withTimeout(getFirebaseIdToken(), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-token-timeout");
       stepMs("2:idToken:done");
 
       stepMs("3:edgeInvoke:start");
-      const { data, error } = await supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken } });
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken } }),
+        OTP_VERIFY_BACKEND_TIMEOUT_MS,
+        "auth/backend-auth-timeout",
+      );
       stepMs("3:edgeInvoke:done");
       otpLog("verify:edgeResponse", { ok: !!(data?.success || data?.ok), code: data?.code, errMsg: error?.message });
 
@@ -265,7 +272,11 @@ export default function CustomerLoginPage() {
       }
 
       stepMs("4:supabaseVerify:start");
-      const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
+      const { error: verifyError } = await withTimeout(
+        supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" }),
+        OTP_VERIFY_SESSION_TIMEOUT_MS,
+        "auth/session-verify-timeout",
+      );
       stepMs("4:supabaseVerify:done");
       if (verifyError) throw new Error(verifyError.message);
 
@@ -278,6 +289,7 @@ export default function CustomerLoginPage() {
       otpLog("verify:error", { code: err?.code, msg: err?.message, elapsedMs: Math.round(performance.now() - t0) });
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
       else if (err.code === "auth/code-expired") toast.error("OTP expired. Please resend.");
+      else if (err.code === "auth/otp-verify-timeout" || err.code === "auth/backend-auth-timeout" || err.code === "auth/session-verify-timeout") toast.error("Login verification is taking too long. Please retry OTP.", { duration: 6000 });
       else toast.error(err.message || "Verification failed");
     } finally {
       clearWatchdog();
