@@ -9,8 +9,9 @@ import { VendorLayout } from "@/components/vendor/VendorLayout";
 import { useAuth } from "@/lib/auth";
 import { api, Order } from "@/lib/api";
 import { toast } from "sonner";
-import { Package, Truck, CheckCircle, Clock, Eye, Pencil } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock, Eye, Pencil, FileDown } from "lucide-react";
 import { OrderModal } from "@/components/admin/modals/OrderModal";
+import { downloadOrdersSummaryPdf } from "@/lib/orders-summary-pdf";
 
 const statusStyle: Record<string, string> = {
   placed: "bg-primary/10 text-primary", paid: "bg-info/10 text-info", accepted: "bg-info/10 text-info",
