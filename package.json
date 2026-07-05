@@ -78,7 +78,7 @@
     "dompurify": "^3.4.0",
     "emailjs": "4.0.3",
     "embla-carousel-react": "^8.6.0",
-    "firebase": "^12.11.0",
+    "firebase": "11.10.0",
     "framer-motion": "^12.36.0",
     "input-otp": "^1.4.2",
     "jspdf": "^4.2.1",

@@ -13,6 +13,29 @@ import { isNativePlatform } from "@/lib/capacitor-auth";
 import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
+const OTP_SEND_TIMEOUT_MS = 18000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      reject(Object.assign(new Error("OTP request timed out. Please try again."), {
+        code: "auth/otp-timeout",
+      }));
+    }, timeoutMs);
+
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 export default function CustomerLoginPage() {
   const { customerLogin, customerUser } = useAuth();
   const navigate = useNavigate();
@@ -96,7 +119,7 @@ export default function CustomerLoginPage() {
         return;
       }
 
-      await sendOTP(`${countryCode}${cleaned}`);
+      await withTimeout(sendOTP(`${countryCode}${cleaned}`), OTP_SEND_TIMEOUT_MS);
       setOtpSent(true);
       setTimer(30);
       toast.success("OTP sent successfully!");
@@ -106,6 +129,8 @@ export default function CustomerLoginPage() {
         toast.error("OTP limit reached. Please wait 2-3 minutes before retrying.", { duration: 6000 });
         setTimer(120);
       } else if (err.code === "auth/invalid-phone-number") toast.error("Invalid phone number.");
+      else if (err.code === "auth/captcha-check-failed") toast.error("Security check failed. Please refresh and try again.");
+      else if (err.code === "auth/recaptcha-timeout" || err.code === "auth/otp-timeout") toast.error("OTP is taking too long. Please try again.", { duration: 6000 });
       else toast.error(err.message || "Failed to send OTP");
       clearRecaptcha();
     } finally { setLoading(false); }
