@@ -517,7 +517,9 @@ export default function CustomerCartPage() {
           <ChevronLeft className="h-4 w-4" />
         </button>
         <h1 className="text-base font-semibold">Cart</h1>
-        <div className="w-8" />
+        <Link to="/app/coupons" className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1">
+          <Tag className="h-3.5 w-3.5" /> My Coupons
+        </Link>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-4 pb-44 md:pb-6">
