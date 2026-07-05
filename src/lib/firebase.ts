@@ -30,13 +30,22 @@ function isAllowedHostname(host: string): boolean {
 }
 const PRODUCTION_URL = PUBLISHED_APP_URL;
 const RECAPTCHA_RENDER_TIMEOUT_MS = 4500;
+const SIGN_IN_WITH_PHONE_TIMEOUT_MS = 15000;
+const MAX_OTP_ATTEMPTS = 2;
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+export function otpLog(step: string, meta: Record<string, unknown> = {}) {
+  try {
+    // eslint-disable-next-line no-console
+    console.log(`[OTP ${new Date().toISOString()}] ${step}`, meta);
+  } catch {
+    // ignore
+  }
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, code = "auth/recaptcha-timeout", message = "Security check timed out. Please try again."): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(() => {
-      reject(Object.assign(new Error("Security check timed out. Please try again."), {
-        code: "auth/recaptcha-timeout",
-      }));
+      reject(Object.assign(new Error(message), { code }));
     }, timeoutMs);
 
     promise.then(
@@ -50,6 +59,28 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
       },
     );
   });
+}
+
+const TRANSIENT_OTP_CODES = new Set([
+  "auth/network-request-failed",
+  "auth/internal-error",
+  "auth/timeout",
+  "auth/captcha-check-failed",
+  "auth/recaptcha-timeout",
+  "auth/otp-signin-timeout",
+  "auth/web-storage-unsupported",
+]);
+
+function isTransientOtpError(err: any): boolean {
+  if (!err) return false;
+  const code = err.code || "";
+  if (TRANSIENT_OTP_CODES.has(code)) return true;
+  const msg = String(err.message || "").toLowerCase();
+  return msg.includes("network") || msg.includes("timeout") || msg.includes("captcha");
+}
+
+function sleep(ms: number) {
+  return new Promise((r) => window.setTimeout(r, ms));
 }
 
 function getAuthorizedFirebaseUrl(): string {
