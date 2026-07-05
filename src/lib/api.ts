@@ -2312,6 +2312,15 @@ export const api = {
   },
 
   getCustomerOrders: async (customerId: string) => {
+    // Prefer the SECURITY DEFINER RPC — it also picks up orders placed under
+    // duplicate customer records that share the same mobile/email, so the
+    // customer sees ALL of their historical orders even after account
+    // dedupe/renumber events.
+    const { data: rpcData, error: rpcErr } = await (supabase.rpc as any)('get_my_customer_orders');
+    if (!rpcErr && Array.isArray(rpcData) && rpcData.length > 0) {
+      return rpcData as unknown as Order[];
+    }
+    // Fallback: legacy direct query on the current customer_id.
     const { data } = await supabase.from('orders').select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
     return (data || []) as unknown as Order[];
   },
