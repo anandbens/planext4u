@@ -227,6 +227,7 @@ const CouponInventoryPage = lazy(() => import("./pages/admin/coupons/CouponInven
 const CouponAuditLogPage = lazy(() => import("./pages/admin/coupons/CouponAuditLogPage"));
 const CouponAnalyticsPage = lazy(() => import("./pages/admin/coupons/CouponAnalyticsPage"));
 const CouponReportsPage = lazy(() => import("./pages/admin/coupons/CouponReportsPage"));
+const CouponGeneratePage = lazy(() => import("./pages/admin/coupons/CouponGeneratePage"));
 const VendorCouponsPage = lazy(() => import("./pages/vendor/VendorCouponsPage"));
 const CustomerCouponsPage = lazy(() => import("./pages/customer/CustomerCouponsPage"));
 const CallsPage = lazy(() => import("./pages/customer/CallsPage"));
