@@ -345,19 +345,43 @@ Deno.serve(async (req) => {
     const role = body?.role || "customer"; // "customer" | "vendor"
     const registerData = body?.register_data; // { name, email, mobile, occupation?, referral_code? }
 
-    if (!firebase_id_token) {
-      return respond(false, { error: "Missing firebase_id_token" });
-    }
+    // ── DEV/TEST BYPASS OTP ─────────────────────────────────────────────
+    // Allows internal QA to skip Firebase SMS when a fixed bypass code is
+    // entered. Vendor bypass: 000007. Customer bypass: 000009.
+    // Requires the phone number of a REGISTERED account — no auto-provisioning.
+    const BYPASS_CODES: Record<string, string> = {
+      vendor: "000007",
+      customer: "000009",
+    };
+    const isBypass = body?.bypass_otp === true;
+    let phoneNumber: string;
 
-    console.log("Verifying Firebase token...");
-    const firebaseClaims = await verifyFirebaseToken(firebase_id_token);
-    const phoneNumber = firebaseClaims.phone_number;
+    if (isBypass) {
+      const submitted = String(body?.bypass_code || "").trim();
+      const bypassPhone = String(body?.phone || "").trim();
+      const expected = BYPASS_CODES[role];
+      if (!expected || submitted !== expected) {
+        return respond(false, { error: "Invalid bypass code.", code: "BYPASS_INVALID" });
+      }
+      if (!bypassPhone) {
+        return respond(false, { error: "Phone number required for bypass login.", code: "BYPASS_NO_PHONE" });
+      }
+      phoneNumber = bypassPhone.startsWith("+") ? bypassPhone : `+${bypassPhone.replace(/\D/g, "")}`;
+      console.log("[BYPASS] role:", role, "phone:", phoneNumber);
+    } else {
+      if (!firebase_id_token) {
+        return respond(false, { error: "Missing firebase_id_token" });
+      }
+      console.log("Verifying Firebase token...");
+      const firebaseClaims = await verifyFirebaseToken(firebase_id_token);
+      phoneNumber = firebaseClaims.phone_number;
 
-    if (!phoneNumber) {
-      return new Response(JSON.stringify({ error: "No phone number in Firebase token" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      if (!phoneNumber) {
+        return new Response(JSON.stringify({ error: "No phone number in Firebase token" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
     }
 
     console.log("Phone:", phoneNumber);
