@@ -1199,6 +1199,10 @@ export type Database = {
           product_ids: string[]
           qty_limit: number
           radius_km: number | null
+          release_on_payment_failure: boolean
+          reservation_enabled: boolean
+          reservation_timeout_minutes: number
+          reservation_trigger: string
           rollback_policy: string
           rollback_window_minutes: number | null
           shared_code: string | null
@@ -1257,6 +1261,10 @@ export type Database = {
           product_ids?: string[]
           qty_limit?: number
           radius_km?: number | null
+          release_on_payment_failure?: boolean
+          reservation_enabled?: boolean
+          reservation_timeout_minutes?: number
+          reservation_trigger?: string
           rollback_policy?: string
           rollback_window_minutes?: number | null
           shared_code?: string | null
@@ -1315,6 +1323,10 @@ export type Database = {
           product_ids?: string[]
           qty_limit?: number
           radius_km?: number | null
+          release_on_payment_failure?: boolean
+          reservation_enabled?: boolean
+          reservation_timeout_minutes?: number
+          reservation_trigger?: string
           rollback_policy?: string
           rollback_window_minutes?: number | null
           shared_code?: string | null
@@ -1790,6 +1802,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      coupon_reservations: {
+        Row: {
+          campaign_id: string
+          cart_id: string | null
+          code: string
+          coupon_code_id: string | null
+          created_at: string
+          customer_id: string
+          device: string | null
+          expires_at: string
+          id: string
+          ip_address: string | null
+          order_id: string | null
+          payment_reference: string | null
+          redeemed_at: string | null
+          release_reason: string | null
+          released_at: string | null
+          reserved_at: string
+          status: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          campaign_id: string
+          cart_id?: string | null
+          code: string
+          coupon_code_id?: string | null
+          created_at?: string
+          customer_id: string
+          device?: string | null
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          order_id?: string | null
+          payment_reference?: string | null
+          redeemed_at?: string | null
+          release_reason?: string | null
+          released_at?: string | null
+          reserved_at?: string
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          cart_id?: string | null
+          code?: string
+          coupon_code_id?: string | null
+          created_at?: string
+          customer_id?: string
+          device?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          order_id?: string | null
+          payment_reference?: string | null
+          redeemed_at?: string | null
+          release_reason?: string | null
+          released_at?: string | null
+          reserved_at?: string
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       coupon_rollback_history: {
         Row: {
@@ -9497,6 +9575,7 @@ export type Database = {
         }
         Returns: Json
       }
+      expire_coupon_reservations: { Args: never; Returns: number }
       expire_coupons_and_campaigns: { Args: never; Returns: Json }
       fire_push_to_user: {
         Args: {
@@ -9540,6 +9619,18 @@ export type Database = {
       }
       get_active_country: { Args: never; Returns: Json }
       get_active_country_code: { Args: never; Returns: string }
+      get_active_coupon_reservation: {
+        Args: { _customer_id: string }
+        Returns: {
+          campaign_id: string
+          code: string
+          expires_at: string
+          reservation_id: string
+          reserved_at: string
+          seconds_remaining: number
+          status: string
+        }[]
+      }
       get_customer_available_coupons: {
         Args: { _customer_id: string; _lat?: number; _lng?: number }
         Returns: {
@@ -9687,6 +9778,16 @@ export type Database = {
         }
         Returns: Json
       }
+      redeem_coupon_reservation: {
+        Args: {
+          _customer_id: string
+          _discount_amount?: number
+          _order_id: string
+          _payment_reference?: string
+          _reservation_id: string
+        }
+        Returns: Json
+      }
       refresh_menu_item_order_counts: { Args: never; Returns: undefined }
       refresh_social_post_counts: {
         Args: { _post_id: string }
@@ -9695,6 +9796,27 @@ export type Database = {
       refresh_social_profile_counts: {
         Args: { _user_id: string }
         Returns: undefined
+      }
+      release_coupon_reservation: {
+        Args: {
+          _customer_id: string
+          _reason?: string
+          _reservation_id: string
+        }
+        Returns: Json
+      }
+      reserve_coupon: {
+        Args: {
+          _cart_id?: string
+          _code: string
+          _customer_id: string
+          _device?: string
+          _ip?: string
+          _lat?: number
+          _lng?: number
+          _user_agent?: string
+        }
+        Returns: Json
       }
       rider_pending_balance: { Args: { _rider_id: string }; Returns: number }
       rollback_coupon_for_order: {
