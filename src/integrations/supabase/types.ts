@@ -9452,6 +9452,22 @@ export type Database = {
           code: string
         }[]
       }
+      generate_coupon_codes_v2: {
+        Args: {
+          _batch_number?: string
+          _campaign_id: string
+          _charset?: string
+          _count: number
+          _length?: number
+          _prefix?: string
+          _separator?: string
+          _suffix?: string
+        }
+        Returns: {
+          batch_number: string
+          code: string
+        }[]
+      }
       generate_random_coupon_code: { Args: { _len: number }; Returns: string }
       generate_service_slots: {
         Args: { _date: string; _service_id: string }
