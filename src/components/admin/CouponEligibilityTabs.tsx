@@ -316,3 +316,131 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
     </div>
   );
 }
+
+/**
+ * ProductAutosuggest — searches `products` live as the admin types.
+ * Depends on the selected `vendorIds`: if any vendors are selected we
+ * scope the search to those vendors, otherwise we search across all
+ * active products. Debounced, capped to 20 rows, keyboard-friendly.
+ */
+function ProductAutosuggest({
+  vendorIds, selectedIds, onToggle, onClear,
+}: {
+  vendorIds: string[];
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+  onClear: () => void;
+}) {
+  const [q, setQ] = useState("");
+  const [rows, setRows] = useState<{ id: string; title: string; vendor_name?: string }[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Record<string, { id: string; title: string; vendor_name?: string }>>({});
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  // Fetch labels for already-selected product IDs so chips render properly on edit
+  useEffect(() => {
+    const missing = selectedIds.filter(id => !selectedRows[id]);
+    if (missing.length === 0) return;
+    supabase.from("products").select("id, title, vendor_name").in("id", missing).then(({ data }) => {
+      if (!data) return;
+      setSelectedRows(prev => {
+        const next = { ...prev };
+        for (const r of data as any[]) next[r.id] = r;
+        return next;
+      });
+    });
+  }, [selectedIds]); // eslint-disable-line
+
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      let query = supabase.from("products").select("id, title, vendor_name, vendor_id").eq("status", "active").order("title").limit(20);
+      if (vendorIds.length > 0) query = query.in("vendor_id", vendorIds);
+      if (q.trim()) query = query.ilike("title", `%${q.trim()}%`);
+      const { data } = await query;
+      setRows((data as any) || []);
+      setLoading(false);
+    }, 220);
+    return () => clearTimeout(t);
+  }, [q, vendorIds.join(","), open]);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  const scopeLabel = vendorIds.length > 0
+    ? `Searching products of ${vendorIds.length} selected vendor(s)`
+    : "Searching all active products (no vendors selected)";
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-xs">Applicable Products {selectedIds.length > 0 && <Badge variant="secondary" className="ml-1 text-[10px]">{selectedIds.length}</Badge>}</Label>
+        {selectedIds.length > 0 && (
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={onClear}>
+            <X className="w-3 h-3 mr-0.5" />Clear
+          </Button>
+        )}
+      </div>
+
+      <div ref={boxRef} className="relative">
+        <div className="relative">
+          <Search className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={q}
+            onFocus={() => setOpen(true)}
+            onChange={e => { setQ(e.target.value); setOpen(true); }}
+            placeholder={vendorIds.length ? "Type to search this vendor's products…" : "Type to search products…"}
+            className="h-8 pl-6 text-xs"
+          />
+        </div>
+        {open && (
+          <div className="absolute z-30 left-0 right-0 mt-1 rounded-md border bg-popover shadow-md max-h-56 overflow-auto">
+            {loading && <p className="text-[11px] text-muted-foreground px-3 py-2">Searching…</p>}
+            {!loading && rows.length === 0 && <p className="text-[11px] text-muted-foreground px-3 py-2">No products found</p>}
+            {rows.map(r => {
+              const on = selectedIds.includes(r.id);
+              return (
+                <button key={r.id} type="button"
+                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted flex items-center gap-2 ${on ? "bg-primary/10" : ""}`}
+                  onClick={() => {
+                    onToggle(r.id);
+                    setSelectedRows(prev => ({ ...prev, [r.id]: r }));
+                  }}>
+                  <input type="checkbox" checked={on} readOnly />
+                  <span className="flex-1 truncate">{r.title}</span>
+                  {r.vendor_name && <span className="text-[10px] text-muted-foreground truncate">{r.vendor_name}</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <p className="text-[10px] text-muted-foreground mt-1">{scopeLabel}</p>
+
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {selectedIds.map(id => {
+            const r = selectedRows[id];
+            return (
+              <Badge key={id} variant="secondary" className="text-[10px] pr-1">
+                {r?.title || id.slice(0, 8)}
+                <button type="button" className="ml-1 hover:text-destructive" onClick={() => onToggle(id)}>
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
