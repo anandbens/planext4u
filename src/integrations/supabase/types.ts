@@ -9907,6 +9907,10 @@ export type Database = {
         }
         Returns: Json
       }
+      evaluate_coupon_rollback: {
+        Args: { p_event: string; p_order_id: string; p_product_id?: string }
+        Returns: Json
+      }
       expire_coupon_reservations: { Args: never; Returns: number }
       expire_coupons_and_campaigns: { Args: never; Returns: Json }
       fire_push_to_user: {
@@ -10048,6 +10052,21 @@ export type Database = {
         }[]
       }
       get_customer_id: { Args: { _user_id: string }; Returns: string }
+      get_customer_rollback_history: {
+        Args: { p_customer_id: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          campaign_id: string
+          campaign_name: string
+          code: string
+          new_status: string
+          old_status: string
+          order_id: string
+          refund_id: string
+          rollback_id: string
+          rollback_reason: string
+          rolled_back_at: string
+        }[]
+      }
       get_feed_with_meta: {
         Args: {
           _limit?: number
@@ -10124,6 +10143,21 @@ export type Database = {
         }[]
       }
       get_vendor_id: { Args: { _user_id: string }; Returns: string }
+      get_vendor_rollback_history: {
+        Args: { p_limit?: number; p_offset?: number; p_vendor_id: string }
+        Returns: {
+          campaign_id: string
+          campaign_name: string
+          code: string
+          customer_id: string
+          new_status: string
+          old_status: string
+          order_id: string
+          rollback_id: string
+          rollback_reason: string
+          rolled_back_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -10248,15 +10282,31 @@ export type Database = {
         Returns: Json
       }
       rider_pending_balance: { Args: { _rider_id: string }; Returns: number }
-      rollback_coupon_for_order: {
-        Args: {
-          p_actor?: string
-          p_event: string
-          p_order_id: string
-          p_reason?: string
-        }
-        Returns: Json
-      }
+      rollback_coupon_for_order:
+        | {
+            Args: {
+              p_actor?: string
+              p_event: string
+              p_order_id: string
+              p_reason?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_actor?: string
+              p_device?: string
+              p_event: string
+              p_force?: boolean
+              p_ip?: string
+              p_order_id: string
+              p_product_id?: string
+              p_reason?: string
+              p_refund_id?: string
+              p_user_agent?: string
+            }
+            Returns: Json
+          }
       save_device_token: {
         Args: { _platform?: string; _token: string; _user_id: string }
         Returns: undefined
