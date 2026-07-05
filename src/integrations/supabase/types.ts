@@ -3549,6 +3549,338 @@ export type Database = {
           },
         ]
       }
+      fraud_alerts: {
+        Row: {
+          campaign_id: string | null
+          code: string | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          device_fingerprint: string | null
+          evaluation_id: string | null
+          event: string
+          id: string
+          ip_address: string | null
+          metadata: Json
+          mobile: string | null
+          order_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          score: number
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          code?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          device_fingerprint?: string | null
+          evaluation_id?: string | null
+          event: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          mobile?: string | null
+          order_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          score?: number
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          code?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          device_fingerprint?: string | null
+          evaluation_id?: string | null
+          event?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          mobile?: string | null
+          order_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          score?: number
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_alerts_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "fraud_evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fraud_blacklist: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entity_type: string
+          entity_value: string
+          expires_at: string | null
+          id: string
+          metadata: Json
+          reason: string | null
+          severity: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entity_type: string
+          entity_value: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          reason?: string | null
+          severity?: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entity_type?: string
+          entity_value?: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          reason?: string | null
+          severity?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fraud_device_fingerprints: {
+        Row: {
+          app_version: string | null
+          browser: string | null
+          created_at: string
+          customer_id: string | null
+          device_model: string | null
+          fingerprint: string
+          first_seen_at: string
+          hardware_id: string | null
+          id: string
+          ip_address: string | null
+          language: string | null
+          last_seen_at: string
+          metadata: Json
+          mobile: string | null
+          os_name: string | null
+          os_version: string | null
+          screen: string | null
+          seen_count: number
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          app_version?: string | null
+          browser?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_model?: string | null
+          fingerprint: string
+          first_seen_at?: string
+          hardware_id?: string | null
+          id?: string
+          ip_address?: string | null
+          language?: string | null
+          last_seen_at?: string
+          metadata?: Json
+          mobile?: string | null
+          os_name?: string | null
+          os_version?: string | null
+          screen?: string | null
+          seen_count?: number
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          app_version?: string | null
+          browser?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_model?: string | null
+          fingerprint?: string
+          first_seen_at?: string
+          hardware_id?: string | null
+          id?: string
+          ip_address?: string | null
+          language?: string | null
+          last_seen_at?: string
+          metadata?: Json
+          mobile?: string | null
+          os_name?: string | null
+          os_version?: string | null
+          screen?: string | null
+          seen_count?: number
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fraud_evaluations: {
+        Row: {
+          action: string
+          campaign_id: string | null
+          code: string | null
+          created_at: string
+          customer_id: string | null
+          device_fingerprint: string | null
+          event: string
+          id: string
+          ip_address: string | null
+          lat: number | null
+          lng: number | null
+          matched_rules: Json
+          metadata: Json
+          mobile: string | null
+          order_id: string | null
+          score: number
+        }
+        Insert: {
+          action?: string
+          campaign_id?: string | null
+          code?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_fingerprint?: string | null
+          event: string
+          id?: string
+          ip_address?: string | null
+          lat?: number | null
+          lng?: number | null
+          matched_rules?: Json
+          metadata?: Json
+          mobile?: string | null
+          order_id?: string | null
+          score?: number
+        }
+        Update: {
+          action?: string
+          campaign_id?: string | null
+          code?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device_fingerprint?: string | null
+          event?: string
+          id?: string
+          ip_address?: string | null
+          lat?: number | null
+          lng?: number | null
+          matched_rules?: Json
+          metadata?: Json
+          mobile?: string | null
+          order_id?: string | null
+          score?: number
+        }
+        Relationships: []
+      }
+      fraud_rate_limits: {
+        Row: {
+          action: string
+          blocked_until: string | null
+          hits: number
+          id: string
+          key: string
+          updated_at: string
+          window_seconds: number
+          window_start: string
+        }
+        Insert: {
+          action: string
+          blocked_until?: string | null
+          hits?: number
+          id?: string
+          key: string
+          updated_at?: string
+          window_seconds?: number
+          window_start?: string
+        }
+        Update: {
+          action?: string
+          blocked_until?: string | null
+          hits?: number
+          id?: string
+          key?: string
+          updated_at?: string
+          window_seconds?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
+      fraud_rules: {
+        Row: {
+          action: string
+          category: string
+          code: string
+          config: Json
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          priority: number
+          score: number
+          severity: string
+          threshold: number
+          updated_at: string
+          window_seconds: number
+        }
+        Insert: {
+          action?: string
+          category?: string
+          code: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          priority?: number
+          score?: number
+          severity?: string
+          threshold?: number
+          updated_at?: string
+          window_seconds?: number
+        }
+        Update: {
+          action?: string
+          category?: string
+          code?: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          priority?: number
+          score?: number
+          severity?: string
+          threshold?: number
+          updated_at?: string
+          window_seconds?: number
+        }
+        Relationships: []
+      }
       homepage_analytics: {
         Row: {
           created_at: string
@@ -9585,6 +9917,55 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      fraud_blacklist_add: {
+        Args: {
+          p_entity_type: string
+          p_entity_value: string
+          p_expires_at?: string
+          p_metadata?: Json
+          p_reason?: string
+          p_severity?: string
+          p_source?: string
+        }
+        Returns: string
+      }
+      fraud_blacklist_check: {
+        Args: { p_entity_type: string; p_entity_value: string }
+        Returns: boolean
+      }
+      fraud_evaluate: {
+        Args: {
+          p_campaign_id?: string
+          p_code?: string
+          p_customer_id?: string
+          p_device_fingerprint?: string
+          p_event: string
+          p_ip_address?: string
+          p_lat?: number
+          p_lng?: number
+          p_metadata?: Json
+          p_mobile?: string
+          p_order_id?: string
+        }
+        Returns: Json
+      }
+      fraud_rate_limit_hit: {
+        Args: {
+          p_action: string
+          p_key: string
+          p_max: number
+          p_window_seconds: number
+        }
+        Returns: Json
+      }
+      fraud_track_device: {
+        Args: {
+          p_customer_id?: string
+          p_fingerprint: string
+          p_metadata?: Json
+        }
+        Returns: string
       }
       generate_coupon_codes: {
         Args: { _campaign_id: string; _count: number; _length?: number }

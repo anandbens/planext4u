@@ -228,6 +228,7 @@ const CouponAuditLogPage = lazy(() => import("./pages/admin/coupons/CouponAuditL
 const CouponAnalyticsPage = lazy(() => import("./pages/admin/coupons/CouponAnalyticsPage"));
 const CouponReportsPage = lazy(() => import("./pages/admin/coupons/CouponReportsPage"));
 const CouponGeneratePage = lazy(() => import("./pages/admin/coupons/CouponGeneratePage"));
+const AdminFraudPage = lazy(() => import("./pages/admin/coupons/AdminFraudPage"));
 const VendorCouponsPage = lazy(() => import("./pages/vendor/VendorCouponsPage"));
 const CustomerCouponsPage = lazy(() => import("./pages/customer/CustomerCouponsPage"));
 const CallsPage = lazy(() => import("./pages/customer/CallsPage"));
@@ -641,6 +642,7 @@ const AppRoutes = () => {
           <Route path="/admin/coupons/analytics" element={<AdminOnlyPage><CouponAnalyticsPage /></AdminOnlyPage>} />
           <Route path="/admin/coupons/reports" element={<AdminOnlyPage><CouponReportsPage /></AdminOnlyPage>} />
           <Route path="/admin/coupons/generate" element={<AdminOnlyPage><CouponGeneratePage /></AdminOnlyPage>} />
+          <Route path="/admin/coupons/fraud" element={<AdminOnlyPage><AdminFraudPage /></AdminOnlyPage>} />
           <Route path="/vendor/dropshipping" element={<VendorPage><VendorDropshippingPage /></VendorPage>} />
           <Route path="/vendor/coupons" element={<VendorPage><VendorCouponsPage /></VendorPage>} />
           <Route path="/app/coupons" element={<CustomerPage><CustomerCouponsPage /></CustomerPage>} />

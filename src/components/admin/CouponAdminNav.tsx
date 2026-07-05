@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Tag, Ticket, CheckCircle2, XCircle, Clock, BarChart3, FileText, ClipboardList, Plus,
+  LayoutDashboard, Tag, Ticket, CheckCircle2, XCircle, Clock, BarChart3, FileText, ClipboardList, Plus, ShieldAlert,
 } from "lucide-react";
 
 const items = [
@@ -15,6 +15,7 @@ const items = [
   { title: "Reports", url: "/admin/coupons/reports", icon: FileText },
   { title: "Analytics", url: "/admin/coupons/analytics", icon: BarChart3 },
   { title: "Audit Logs", url: "/admin/coupons/audit", icon: ClipboardList },
+  { title: "Fraud", url: "/admin/coupons/fraud", icon: ShieldAlert },
 ];
 
 export function CouponAdminNav() {
