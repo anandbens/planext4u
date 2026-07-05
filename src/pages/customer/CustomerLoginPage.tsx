@@ -233,59 +233,58 @@ export default function CustomerLoginPage() {
   const handleVerifyOTP = async () => {
     if (otp.length !== 6) { toast.error("Please enter the 6-digit OTP"); return; }
     setLoading(true);
-    try {
-      await verifyOTP(otp);
-      const idToken = await getFirebaseIdToken();
-      const { data, error } = await supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken } });
-      if (error) throw new Error(error.message || "Network error");
-      if (!data?.success && !data?.ok) throw new Error(data?.code === "NOT_REGISTERED" ? "Only registered users must be able to trigger OTP and login." : (data?.error || "Authentication failed"));
+    const t0 = performance.now();
+    const stepMs = (label: string) => otpLog(`verify:${label}`, { elapsedMs: Math.round(performance.now() - t0) });
 
+    clearWatchdog();
+    watchdogRef.current = window.setTimeout(() => {
+      otpLog("verify:watchdogTripped", { ms: 25000 });
+      setLoading(false);
+      toast.error("Login is taking too long. Please try again.", { duration: 6000 });
+    }, 25000);
+
+    try {
+      stepMs("1:firebaseVerify:start");
+      await verifyOTP(otp);
+      stepMs("1:firebaseVerify:done");
+
+      stepMs("2:idToken:start");
+      const idToken = await getFirebaseIdToken();
+      stepMs("2:idToken:done");
+
+      stepMs("3:edgeInvoke:start");
+      const { data, error } = await supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken } });
+      stepMs("3:edgeInvoke:done");
+      otpLog("verify:edgeResponse", { ok: !!(data?.success || data?.ok), code: data?.code, errMsg: error?.message });
+
+      if (error) throw new Error(error.message || "Network error");
+      if (!data?.success && !data?.ok) {
+        throw new Error(data?.code === "NOT_REGISTERED"
+          ? "Only registered users must be able to trigger OTP and login."
+          : (data?.error || "Authentication failed"));
+      }
+
+      stepMs("4:supabaseVerify:start");
       const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
+      stepMs("4:supabaseVerify:done");
       if (verifyError) throw new Error(verifyError.message);
 
       toast.success("Login successful! 🎉");
-
-      // Wait for the AuthProvider to finish loading the customer profile,
-      // not just the raw auth session, before entering protected routes.
-      // Wait for the AuthProvider to hydrate the customer profile. Tight
-      // 75 ms polling instead of 200 ms so users don't stare at a spinner
-      // while the profile fetch has already resolved.
-      const waitForCustomer = () => new Promise<boolean>((resolve) => {
-        let attempts = 0;
-        const MAX_ATTEMPTS = 100; // 100 × 75ms ≈ 7.5s upper bound
-        const check = () => {
-          try {
-            const saved = localStorage.getItem("customer_user");
-            if (saved) {
-              JSON.parse(saved);
-              resolve(true);
-              return;
-            }
-          } catch {
-            // Ignore malformed cache and keep polling until AuthProvider rewrites it.
-          }
-
-          if (attempts >= MAX_ATTEMPTS) {
-            resolve(false);
-            return;
-          }
-
-          attempts += 1;
-          setTimeout(check, 75);
-        };
-
-        check();
-      });
-
-      const hydrated = await waitForCustomer();
-      if (!hydrated) throw new Error("Login is taking longer than expected. Please try once more.");
+      stepMs("5:navigate");
+      // Navigate immediately — CustomerProtectedRoute will hold the spinner
+      // for the ~few hundred ms AuthProvider needs to hydrate the profile.
       navigate(data.has_address ? "/app" : "/app/set-location", { replace: true });
     } catch (err: any) {
+      otpLog("verify:error", { code: err?.code, msg: err?.message, elapsedMs: Math.round(performance.now() - t0) });
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP.");
       else if (err.code === "auth/code-expired") toast.error("OTP expired. Please resend.");
       else toast.error(err.message || "Verification failed");
-    } finally { setLoading(false); }
+    } finally {
+      clearWatchdog();
+      setLoading(false);
+    }
   };
+
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
