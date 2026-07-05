@@ -43,10 +43,17 @@ export default function CustomerPhoneLoginPage() {
     if (!ensureFirebaseHostname()) return;
     setLoading(true);
     try {
-      // Check if user is registered + account status (SECURITY DEFINER bypasses RLS)
       const fullPhone = `${countryCode}${cleaned}`;
-      const { data: loginStatus } = await supabase.rpc('check_phone_login_status' as any, { _phone: cleaned });
-      const ls = (loginStatus || {}) as { found?: boolean; status?: string };
+
+      // Run the registration/status check AND the rate-limit check in parallel.
+      // They're independent RPCs — running them sequentially wasted ~200–400ms
+      // of round-trip time on every OTP request.
+      const [statusRes, rateRes] = await Promise.all([
+        supabase.rpc('check_phone_login_status' as any, { _phone: cleaned }),
+        checkOtpRateLimit(fullPhone),
+      ]);
+
+      const ls = (statusRes.data || {}) as { found?: boolean; status?: string };
       if (!ls.found) {
         setLoading(false);
         toast.error("No account found with this mobile number. Please create an account first.", { duration: 5000 });
@@ -67,16 +74,14 @@ export default function CustomerPhoneLoginPage() {
         return;
       }
 
-      // Rate limit check before Firebase OTP
-      const rateCheck = await checkOtpRateLimit(`${countryCode}${cleaned}`);
-      if (!rateCheck.allowed) {
+      if (!rateRes.allowed) {
         setLoading(false);
         toast.error("Too many OTP requests. Please try again after 5 minutes.", { duration: 6000 });
-        setTimer(rateCheck.retry_after);
+        setTimer(rateRes.retry_after);
         return;
       }
 
-      await sendOTP(`${countryCode}${cleaned}`);
+      await sendOTP(fullPhone);
       setOtpSent(true);
       setTimer(30);
       toast.success("OTP sent successfully!");

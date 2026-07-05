@@ -308,6 +308,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     const isNative = Capacitor.isNativePlatform();
 
+    // Hard safety net: if no auth event fires within a short window (e.g. slow
+    // network on cold start), still flip isLoading=false so the router can
+    // render the login screen instead of an infinite spinner. Any subsequent
+    // SIGNED_IN / INITIAL_SESSION event will still hydrate the user normally.
+    const loadingFallback = setTimeout(() => {
+      if (!cancelled) setIsLoading(false);
+    }, isNative ? 1500 : 800);
+
     // Restore cached profiles ONLY if they belong to the current Supabase session.
     // Without this guard, a stale cache from a previous user can be displayed
     // while queries actually run as the new user (silent account-switch).
@@ -416,7 +424,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 800);
     }
 
-    return () => { cancelled = true; subscription.unsubscribe(); };
+    return () => { cancelled = true; clearTimeout(loadingFallback); subscription.unsubscribe(); };
   }, [loadUserRole, purgeMismatchedCaches]);
 
   const login = async (email: string, password: string) => {
