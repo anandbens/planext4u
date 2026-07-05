@@ -7,7 +7,7 @@ import {
 const items = [
   { title: "Dashboard", url: "/admin/coupons/dashboard", icon: LayoutDashboard },
   { title: "Campaigns", url: "/admin/coupons", icon: Tag, end: true },
-  { title: "Generate", url: "/admin/coupons?generate=1", icon: Plus, matchStart: "/admin/coupons?" },
+  { title: "Generate", url: "/admin/coupons/generate", icon: Plus },
   { title: "Inventory", url: "/admin/coupons/inventory", icon: Ticket },
   { title: "Active", url: "/admin/coupons/inventory?status=available", icon: CheckCircle2, matchStart: "/admin/coupons/inventory?status=available" },
   { title: "Used", url: "/admin/coupons/inventory?status=used", icon: XCircle, matchStart: "/admin/coupons/inventory?status=used" },
