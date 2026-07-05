@@ -28,8 +28,9 @@ const FAR_AWAY = { lat: 28.6139, lng: 77.209 }; // New Delhi — > 25 km away
 const NEW_CUSTOMER_ID = "CUST0012287";
 // Real customer row with 15 completed orders — should fail first_time_only.
 const REPEAT_CUSTOMER_ID = "CUST0000231";
-const PRODUCT_ID = "PROD0002026";
-const VENDOR_ID = "VEND0000184";
+// Product and vendor that ARE in the Namakkal campaign scope
+const PRODUCT_ID = "PRD-799-jf66";
+const VENDOR_ID = "VND-1783155348596";
 
 async function rpc<T = any>(name: string, body: Record<string, unknown>): Promise<{ status: number; body: T }> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
