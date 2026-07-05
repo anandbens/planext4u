@@ -116,7 +116,10 @@ export function CouponPopup({ customerId }: Props) {
             try {
               const pids: string[] = campaign.product_ids || [];
               if (pids.length === 0) { toast.error("No product configured for this offer"); return; }
-              const { data: prod } = await sb.from("products").select("*").in("id", pids).eq("status","active").limit(1).maybeSingle();
+              // Prefer Petrol/Petroleum over Diesel when multiple products are attached to the campaign
+              const { data: prods } = await sb.from("products").select("*").in("id", pids).eq("status","active");
+              const list = (prods as any[]) || [];
+              const prod = list.find(p => /petrol/i.test(p.title || "")) || list[0];
               if (!prod) { toast.error("Offer product unavailable right now"); return; }
               const res = await api.addToCart(prod as any, 1);
               if (!res?.success) { toast.error(res?.message || "Could not add to cart"); return; }
