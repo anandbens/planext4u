@@ -324,6 +324,10 @@ export default function AdminCouponsPage() {
                 <Label>Rollback Window (minutes, blank = no limit)</Label>
                 <Input type="number" min={0} value={editing.rollback_window_minutes ?? ""} onChange={e => setEditing({ ...editing, rollback_window_minutes: e.target.value === "" ? null : Number(e.target.value) })} />
               </div>
+              <div>
+                <Label>Auto-archive after (days, blank = keep forever)</Label>
+                <Input type="number" min={0} value={editing.archive_retention_days ?? ""} onChange={e => setEditing({ ...editing, archive_retention_days: e.target.value === "" ? null : Number(e.target.value) })} />
+              </div>
 
               <div className="sm:col-span-2 border-t pt-3 space-y-3">
                 <div className="flex items-center gap-2"><Switch checked={!!editing.popup_enabled} onCheckedChange={v => setEditing({ ...editing, popup_enabled: v })} /><Label className="!m-0">Show popup to eligible customers on Home</Label></div>
