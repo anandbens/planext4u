@@ -55,6 +55,12 @@ export default function AdminCouponsPage() {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("generate") === "1") {
+      openNew();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadProductsForVendor = async (vendorId: string | null | undefined) => {
     if (!vendorId) { setProducts([]); return; }
