@@ -78,7 +78,9 @@ export function CouponEligibilityPreview({ editing, vendors, districts }: Props)
     const eligibleStateIds = new Set(eligibleDistricts.map(d => d.state_id).filter(Boolean) as string[]);
 
     let elVendors = vendors;
+    const selectedVendorIds: string[] = editing?.vendor_ids || [];
     if (editing?.vendor_id) elVendors = elVendors.filter(v => v.id === editing.vendor_id);
+    if (selectedVendorIds.length) elVendors = elVendors.filter(v => selectedVendorIds.includes(v.id));
 
     let excludedByRadius = 0;
     if (editing?.use_geo_radius && editing?.center_lat != null && editing?.center_lng != null && editing?.radius_km) {
