@@ -784,6 +784,12 @@ export default function CustomerCartPage() {
                       <Button variant="secondary" className="h-10" onClick={applyCoupon}>Apply</Button>
                     )}
                   </div>
+                  <div className="mt-2 flex items-center justify-between text-[11px]">
+                    <span className="text-muted-foreground">Missed a coupon?</span>
+                    <Link to="/app/coupons" className="text-primary font-semibold hover:underline inline-flex items-center gap-1">
+                      View My Coupons →
+                    </Link>
+                  </div>
                   {couponInfo && (
                     <div className="mt-2 p-2 bg-success/5 rounded border border-success/20 text-[11px]">
                       <span className="text-success font-semibold">✓ {couponInfo.name}</span> — saved {fmt(couponInfo.discount_amount)}. Wallet points can't be used on this product.
