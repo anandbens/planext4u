@@ -765,7 +765,16 @@ export default function CustomerCartPage() {
                     </details>
                   )}
                 </Card>
+                <AvailableCouponsPanel
+                  loading={recoLoading}
+                  coupons={recoCoupons}
+                  bestCampaignId={bestCampaignId}
+                  appliedCampaignId={couponInfo?.campaign_id ?? null}
+                  onApply={applyRecommendedCoupon}
+                  onRemove={removeRecommendedCoupon}
+                />
                 <Card className="p-4">
+                  <p className="text-[11px] text-muted-foreground mb-2">Have a code? Enter it manually.</p>
                   <div className="flex items-center gap-2">
                     <Tag className="h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Enter coupon code" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} className="h-10 flex-1" disabled={couponApplied} />
