@@ -16,31 +16,23 @@
 
 type Importer = () => Promise<unknown>;
 
+// Keep the prefetch list SMALL. Every entry pulls in its transitive chunks
+// too, so 9 pages effectively downloads a big slice of the app during idle
+// and can starve the network on slower connections / dev preview.
 const CUSTOMER_ROUTES: Importer[] = [
   () => import("@/pages/customer/CustomerHomePage"),
   () => import("@/pages/customer/CustomerBrowsePage"),
   () => import("@/pages/customer/CustomerCartPage"),
-  () => import("@/pages/customer/CustomerProductPage"),
-  () => import("@/pages/customer/CustomerVendorPage"),
-  () => import("@/pages/customer/CustomerOrdersPage"),
-  () => import("@/pages/customer/CustomerProfilePage"),
-  () => import("@/pages/customer/CustomerWishlistPage"),
-  () => import("@/pages/customer/CustomerWalletPage"),
 ];
 
 const VENDOR_ROUTES: Importer[] = [
   () => import("@/pages/vendor/VendorOrdersPage"),
   () => import("@/pages/vendor/VendorProductsPage"),
-  () => import("@/pages/vendor/VendorServicesPage"),
-  () => import("@/pages/vendor/VendorProfilePage"),
 ];
 
 const ADMIN_ROUTES: Importer[] = [
   () => import("@/pages/DashboardPage"),
   () => import("@/pages/OrdersPage"),
-  () => import("@/pages/CustomersPage"),
-  () => import("@/pages/VendorsPage"),
-  () => import("@/pages/ProductsPage"),
 ];
 
 function pickBundle(): Importer[] {
@@ -49,7 +41,6 @@ function pickBundle(): Importer[] {
   const search = window.location.search || "";
   if (path.startsWith("/vendor") || search.includes("portal=vendor")) return VENDOR_ROUTES;
   if (path.startsWith("/admin")) return ADMIN_ROUTES;
-  // Everything under /app or the marketing root belongs to the customer app.
   return CUSTOMER_ROUTES;
 }
 
@@ -58,9 +49,9 @@ function schedule(cb: () => void) {
     requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
   };
   if (typeof w.requestIdleCallback === "function") {
-    w.requestIdleCallback(cb, { timeout: 3000 });
+    w.requestIdleCallback(cb, { timeout: 6000 });
   } else {
-    setTimeout(cb, 1500);
+    setTimeout(cb, 4000);
   }
 }
 
@@ -70,19 +61,21 @@ export function prefetchLikelyRoutes(): void {
   if (started || typeof window === "undefined") return;
   started = true;
 
-  // Respect users on slow / metered connections and low-data mode.
+  // Respect users on slow / metered connections.
   const conn = (navigator as unknown as { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
   if (conn?.saveData) return;
-  if (conn?.effectiveType && /(^|-)2g$/i.test(conn.effectiveType)) return;
+  if (conn?.effectiveType && /(^|-)(2g|slow-2g|3g)$/i.test(conn.effectiveType)) return;
+
+  // Skip prefetch entirely in dev (Vite dev-server serves modules on demand
+  // and prefetching thrashes the transform cache, making the first paint slow).
+  if (import.meta.env?.DEV) return;
 
   schedule(() => {
     const routes = pickBundle();
-    // Fire the imports serially with a micro-gap so we don't block a burst of
-    // real user-driven fetches.
     routes.forEach((imp, i) => {
       setTimeout(() => {
         try { imp().catch(() => { /* stale chunk handler in main.tsx */ }); } catch { /* ignore */ }
-      }, i * 120);
+      }, i * 400);
     });
   });
 }
