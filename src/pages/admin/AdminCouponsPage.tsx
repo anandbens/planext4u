@@ -373,10 +373,12 @@ export default function AdminCouponsPage() {
                   <>
                     <div><Label>Count</Label><Input type="number" className="w-24" value={bulkCount} onChange={e => setBulkCount(Number(e.target.value))} /></div>
                     <div><Label>Length</Label><Input type="number" className="w-20" value={bulkLen} onChange={e => setBulkLen(Number(e.target.value))} min={6} max={8} /></div>
-                    <Button onClick={() => generate(codesView.campaign, bulkCount, bulkLen)}><Plus className="w-4 h-4 mr-1" />Generate</Button>
+                    <Button onClick={() => setConfirmGen({ campaign: codesView.campaign, count: bulkCount, length: bulkLen })}>
+                      <Plus className="w-4 h-4 mr-1" />Generate
+                    </Button>
                   </>
                 ) : (
-                  <Button onClick={() => generate(codesView.campaign, 1, bulkLen)}>
+                  <Button onClick={() => setConfirmGen({ campaign: codesView.campaign, count: 1, length: bulkLen })}>
                     Generate shared code {codesView.campaign.shared_code ? `(current: ${codesView.campaign.shared_code})` : ""}
                   </Button>
                 )}
