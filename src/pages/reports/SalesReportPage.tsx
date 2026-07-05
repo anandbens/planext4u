@@ -15,6 +15,7 @@ interface OrderRow {
   status: string; subtotal: number; discount: number; tax: number;
   platform_fee: number; gst_on_platform_fee: number; total: number;
   points_used: number; payment_reference_id: string; items_count: number;
+  coupon_code: string | null;
 }
 
 const statusColors: Record<string, string> = {
