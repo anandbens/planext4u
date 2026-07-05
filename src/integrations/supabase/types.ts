@@ -1044,6 +1044,62 @@ export type Database = {
           },
         ]
       }
+      coupon_analytics: {
+        Row: {
+          campaign_id: string
+          coupons_available: number
+          coupons_expired: number
+          coupons_generated: number
+          coupons_rolled_back: number
+          coupons_used: number
+          created_at: string
+          discount_given: number
+          id: string
+          last_refreshed_at: string
+          revenue: number
+          roi: number
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          coupons_available?: number
+          coupons_expired?: number
+          coupons_generated?: number
+          coupons_rolled_back?: number
+          coupons_used?: number
+          created_at?: string
+          discount_given?: number
+          id?: string
+          last_refreshed_at?: string
+          revenue?: number
+          roi?: number
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          coupons_available?: number
+          coupons_expired?: number
+          coupons_generated?: number
+          coupons_rolled_back?: number
+          coupons_used?: number
+          created_at?: string
+          discount_given?: number
+          id?: string
+          last_refreshed_at?: string
+          revenue?: number
+          roi?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_analytics_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: true
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coupon_audit_log: {
         Row: {
           actor: string | null
@@ -1052,13 +1108,16 @@ export type Database = {
           coupon_code_id: string | null
           created_at: string
           customer_id: string | null
+          device: string | null
           event_type: string
           id: string
+          ip_address: string | null
           metadata: Json | null
           new_status: string | null
           order_id: string | null
           previous_status: string | null
           reason: string | null
+          user_agent: string | null
         }
         Insert: {
           actor?: string | null
@@ -1067,13 +1126,16 @@ export type Database = {
           coupon_code_id?: string | null
           created_at?: string
           customer_id?: string | null
+          device?: string | null
           event_type: string
           id?: string
+          ip_address?: string | null
           metadata?: Json | null
           new_status?: string | null
           order_id?: string | null
           previous_status?: string | null
           reason?: string | null
+          user_agent?: string | null
         }
         Update: {
           actor?: string | null
@@ -1082,13 +1144,16 @@ export type Database = {
           coupon_code_id?: string | null
           created_at?: string
           customer_id?: string | null
+          device?: string | null
           event_type?: string
           id?: string
+          ip_address?: string | null
           metadata?: Json | null
           new_status?: string | null
           order_id?: string | null
           previous_status?: string | null
           reason?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -1101,6 +1166,7 @@ export type Database = {
           code_mode: string
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           description: string | null
           discount_type: string
           discount_value: number
@@ -1130,6 +1196,7 @@ export type Database = {
           total_codes_target: number
           total_codes_used: number
           updated_at: string
+          updated_by: string | null
           use_geo_radius: boolean
           vendor_id: string | null
         }
@@ -1141,6 +1208,7 @@ export type Database = {
           code_mode?: string
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           description?: string | null
           discount_type: string
           discount_value: number
@@ -1170,6 +1238,7 @@ export type Database = {
           total_codes_target?: number
           total_codes_used?: number
           updated_at?: string
+          updated_by?: string | null
           use_geo_radius?: boolean
           vendor_id?: string | null
         }
@@ -1181,6 +1250,7 @@ export type Database = {
           code_mode?: string
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           description?: string | null
           discount_type?: string
           discount_value?: number
@@ -1210,6 +1280,7 @@ export type Database = {
           total_codes_target?: number
           total_codes_used?: number
           updated_at?: string
+          updated_by?: string | null
           use_geo_radius?: boolean
           vendor_id?: string | null
         }
@@ -1225,33 +1296,51 @@ export type Database = {
       }
       coupon_codes: {
         Row: {
+          assigned_customer_id: string | null
+          batch_number: string | null
           campaign_id: string
           code: string
           created_at: string
+          deleted_at: string | null
+          expires_at: string | null
           id: string
+          redemption_count: number
           status: string
+          updated_at: string
           used_at: string | null
           used_by_customer_id: string | null
           used_by_mobile: string | null
           used_order_id: string | null
         }
         Insert: {
+          assigned_customer_id?: string | null
+          batch_number?: string | null
           campaign_id: string
           code: string
           created_at?: string
+          deleted_at?: string | null
+          expires_at?: string | null
           id?: string
+          redemption_count?: number
           status?: string
+          updated_at?: string
           used_at?: string | null
           used_by_customer_id?: string | null
           used_by_mobile?: string | null
           used_order_id?: string | null
         }
         Update: {
+          assigned_customer_id?: string | null
+          batch_number?: string | null
           campaign_id?: string
           code?: string
           created_at?: string
+          deleted_at?: string | null
+          expires_at?: string | null
           id?: string
+          redemption_count?: number
           status?: string
+          updated_at?: string
           used_at?: string | null
           used_by_customer_id?: string | null
           used_by_mobile?: string | null
@@ -1262,6 +1351,241 @@ export type Database = {
             foreignKeyName: "coupon_codes_campaign_id_fkey"
             columns: ["campaign_id"]
             isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_customer_mapping: {
+        Row: {
+          assignment_date: string
+          campaign_id: string
+          coupon_code_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          deleted_at: string | null
+          id: string
+          updated_at: string
+          usage_status: string
+        }
+        Insert: {
+          assignment_date?: string
+          campaign_id: string
+          coupon_code_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          deleted_at?: string | null
+          id?: string
+          updated_at?: string
+          usage_status?: string
+        }
+        Update: {
+          assignment_date?: string
+          campaign_id?: string
+          coupon_code_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          deleted_at?: string | null
+          id?: string
+          updated_at?: string
+          usage_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_customer_mapping_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_customer_mapping_coupon_code_id_fkey"
+            columns: ["coupon_code_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_geo_mapping: {
+        Row: {
+          campaign_id: string
+          city: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          district: string | null
+          id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          pincode: string | null
+          radius_km: number | null
+          state: string | null
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          district?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          pincode?: string | null
+          radius_km?: number | null
+          state?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          district?: string | null
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          pincode?: string | null
+          radius_km?: number | null
+          state?: string | null
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_geo_mapping_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_notifications: {
+        Row: {
+          campaign_id: string | null
+          coupon_code_id: string | null
+          created_at: string
+          customer_id: string | null
+          email_status: string
+          id: string
+          notification_type: string
+          payload: Json
+          push_status: string
+          sent_at: string | null
+          sms_status: string
+          updated_at: string
+          whatsapp_status: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          coupon_code_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          email_status?: string
+          id?: string
+          notification_type: string
+          payload?: Json
+          push_status?: string
+          sent_at?: string | null
+          sms_status?: string
+          updated_at?: string
+          whatsapp_status?: string
+        }
+        Update: {
+          campaign_id?: string | null
+          coupon_code_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          email_status?: string
+          id?: string
+          notification_type?: string
+          payload?: Json
+          push_status?: string
+          sent_at?: string | null
+          sms_status?: string
+          updated_at?: string
+          whatsapp_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_notifications_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_notifications_coupon_code_id_fkey"
+            columns: ["coupon_code_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_popup_config: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          dismiss_allowed: boolean
+          display_priority: number
+          id: string
+          is_active: boolean
+          popup_description: string | null
+          popup_frequency: string
+          popup_image_url: string | null
+          popup_title: string | null
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          dismiss_allowed?: boolean
+          display_priority?: number
+          id?: string
+          is_active?: boolean
+          popup_description?: string | null
+          popup_frequency?: string
+          popup_image_url?: string | null
+          popup_title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          dismiss_allowed?: boolean
+          display_priority?: number
+          id?: string
+          is_active?: boolean
+          popup_description?: string | null
+          popup_frequency?: string
+          popup_image_url?: string | null
+          popup_title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_popup_config_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: true
             referencedRelation: "coupon_campaigns"
             referencedColumns: ["id"]
           },
@@ -1295,6 +1619,57 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_product_mapping: {
+        Row: {
+          campaign_id: string
+          coupon_code_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          coupon_code_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          coupon_code_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_product_mapping_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_product_mapping_coupon_code_id_fkey"
+            columns: ["coupon_code_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_codes"
             referencedColumns: ["id"]
           },
         ]
@@ -1361,6 +1736,198 @@ export type Database = {
           },
           {
             foreignKeyName: "coupon_redemptions_coupon_code_id_fkey"
+            columns: ["coupon_code_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_rollback_history: {
+        Row: {
+          campaign_id: string | null
+          code: string | null
+          coupon_code_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          new_status: string | null
+          old_status: string | null
+          order_id: string | null
+          refund_id: string | null
+          rollback_reason: string | null
+          rolled_back_at: string
+          rolled_back_by: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          code?: string | null
+          coupon_code_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          new_status?: string | null
+          old_status?: string | null
+          order_id?: string | null
+          refund_id?: string | null
+          rollback_reason?: string | null
+          rolled_back_at?: string
+          rolled_back_by?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          code?: string | null
+          coupon_code_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          new_status?: string | null
+          old_status?: string | null
+          order_id?: string | null
+          refund_id?: string | null
+          rollback_reason?: string | null
+          rolled_back_at?: string
+          rolled_back_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_rollback_history_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_rollback_history_coupon_code_id_fkey"
+            columns: ["coupon_code_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_usage_history: {
+        Row: {
+          applied_at: string | null
+          campaign_id: string | null
+          code: string | null
+          coupon_code_id: string | null
+          created_at: string
+          customer_id: string | null
+          deleted_at: string | null
+          discount_amount: number
+          discount_percent: number | null
+          id: string
+          metadata: Json
+          order_amount: number
+          order_id: string | null
+          product_id: string | null
+          redeemed_at: string | null
+          status: string
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          applied_at?: string | null
+          campaign_id?: string | null
+          code?: string | null
+          coupon_code_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          deleted_at?: string | null
+          discount_amount?: number
+          discount_percent?: number | null
+          id?: string
+          metadata?: Json
+          order_amount?: number
+          order_id?: string | null
+          product_id?: string | null
+          redeemed_at?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          applied_at?: string | null
+          campaign_id?: string | null
+          code?: string | null
+          coupon_code_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          deleted_at?: string | null
+          discount_amount?: number
+          discount_percent?: number | null
+          id?: string
+          metadata?: Json
+          order_amount?: number
+          order_id?: string | null
+          product_id?: string | null
+          redeemed_at?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_usage_history_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_usage_history_coupon_code_id_fkey"
+            columns: ["coupon_code_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_vendor_mapping: {
+        Row: {
+          campaign_id: string
+          coupon_code_id: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          campaign_id: string
+          coupon_code_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          campaign_id?: string
+          coupon_code_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_vendor_mapping_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "coupon_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_vendor_mapping_coupon_code_id_fkey"
             columns: ["coupon_code_id"]
             isOneToOne: false
             referencedRelation: "coupon_codes"
