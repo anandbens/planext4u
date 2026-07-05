@@ -297,16 +297,9 @@ Deno.serve(async (req) => {
     const phoneDigits = normalizedPhone.replace(/\D/g, "");
     const rawDigits = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
 
-    // Check if a registered customer exists with this phone number
-    const { data: existingCustomer, error: custLookupErr } = await supabase
-      .from("customers")
-      .select("id, name, email, mobile, status")
-      .or(`mobile.eq.${normalizedPhone},mobile.eq.${rawDigits},mobile.ilike.%${rawDigits}%`)
-      .neq("status", "deleted")
-      .limit(1)
-      .maybeSingle();
-
-    if (custLookupErr) console.error("Customer lookup error:", custLookupErr.message);
+    // Check if a registered customer exists with this phone number. Use a
+    // bounded, exact-first lookup so post-OTP verification stays fast.
+    const existingCustomer = await findCustomerForPhoneLogin(supabase, normalizedPhone);
 
     // ── REGISTRATION MODE ──────────────────────────────────────────────
     if (mode === "register") {
