@@ -9,6 +9,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
+const OTP_SEND_TIMEOUT_MS = 18000;
+const OTP_GATE_TIMEOUT_MS = 6000;
+
+function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, code = "auth/otp-timeout"): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      reject(Object.assign(new Error("OTP request timed out. Please try again."), {
+        code,
+      }));
+    }, timeoutMs);
+
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 export default function CustomerPhoneLoginPage() {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
@@ -45,35 +69,19 @@ export default function CustomerPhoneLoginPage() {
     try {
       const fullPhone = `${countryCode}${cleaned}`;
 
-      // Fire ALL three in parallel: status check, rate-limit check, and the
-      // Firebase OTP send itself. Previously we waited for both RPCs before
-      // even starting signInWithPhoneNumber, which added a full round-trip
-      // (~400–800ms) of dead time before the SMS pipeline began. Now the
-      // Firebase call starts immediately while checks run concurrently.
-      const statusPromise = supabase.rpc('check_phone_login_status' as any, { _phone: cleaned });
-      const ratePromise = checkOtpRateLimit(fullPhone);
-      const otpPromise = sendOTP(fullPhone).catch((e) => ({ __error: e }));
-
-      const [statusRes, rateRes] = await Promise.all([statusPromise, ratePromise]);
+      const [statusRes, rateRes] = await withTimeout(Promise.all([
+        supabase.rpc('check_phone_login_status' as any, { _phone: cleaned }),
+        checkOtpRateLimit(fullPhone),
+      ]), OTP_GATE_TIMEOUT_MS, "auth/otp-gate-timeout");
 
       const ls = (statusRes.data || {}) as { found?: boolean; status?: string };
       const s = (ls.status || '').toLowerCase();
 
-      // Helper: reject the in-flight OTP if a gate fails
-      const abortOtp = async () => {
-        try { await otpPromise; } catch { /* ignore */ }
-        try { const { resetPhoneAuth } = await import("@/lib/firebase"); await resetPhoneAuth(); } catch { /* ignore */ }
-      };
-
       if (!ls.found) {
-        setLoading(false);
-        void abortOtp();
         toast.error("No account found with this mobile number. Please create an account first.", { duration: 5000 });
         return;
       }
       if (s !== 'active') {
-        setLoading(false);
-        void abortOtp();
         if (s === 'deleted') {
           toast.error("Your account has been deleted. Please contact support if this is a mistake.", { duration: 6000 });
         } else if (s === 'suspended') {
@@ -87,16 +95,12 @@ export default function CustomerPhoneLoginPage() {
       }
 
       if (!rateRes.allowed) {
-        setLoading(false);
-        void abortOtp();
         toast.error("Too many OTP requests. Please try again after 5 minutes.", { duration: 6000 });
         setTimer(rateRes.retry_after);
         return;
       }
 
-      // Gates passed — await the already-in-flight OTP call.
-      const otpResult: any = await otpPromise;
-      if (otpResult && otpResult.__error) throw otpResult.__error;
+      await withTimeout(sendOTP(fullPhone), OTP_SEND_TIMEOUT_MS);
 
       setOtpSent(true);
       setTimer(30);
@@ -111,6 +115,10 @@ export default function CustomerPhoneLoginPage() {
         toast.error("Invalid phone number. Check and try again.");
       } else if (err.code === "auth/captcha-check-failed") {
         toast.error("Security check failed. Please refresh and try again.");
+      } else if (err.code === "auth/recaptcha-timeout" || err.code === "auth/otp-timeout") {
+        toast.error("OTP is taking too long. Please try again.", { duration: 6000 });
+      } else if (err.code === "auth/otp-gate-timeout") {
+        toast.error("Unable to verify this number right now. Please try again.", { duration: 6000 });
       } else {
         toast.error(err.message || "Failed to send OTP. Please try again.");
       }

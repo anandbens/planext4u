@@ -6,13 +6,9 @@ const PUBLISHED_APP_URL = "https://www.planext4u.net";
 const FIREBASE_FALLBACK_AUTH_DOMAIN = "p4u-console.firebaseapp.com";
 const PLANEXT_HOSTNAMES = ["www.planext4u.net", "planext4u.net"];
 
-const currentHostname = typeof window !== "undefined" ? window.location.hostname : "";
-const isLocalhost = currentHostname === "localhost" || currentHostname === "127.0.0.1";
-const useCustomAuthDomain = PLANEXT_HOSTNAMES.includes(currentHostname);
-
 const firebaseConfig = {
   apiKey: "AIzaSyDfQ-0baPOXaa31xnQXranIIwvHC2zbmiE",
-  authDomain: isLocalhost ? FIREBASE_FALLBACK_AUTH_DOMAIN : (useCustomAuthDomain ? currentHostname : FIREBASE_FALLBACK_AUTH_DOMAIN),
+  authDomain: FIREBASE_FALLBACK_AUTH_DOMAIN,
   projectId: "p4u-console",
   storageBucket: "p4u-console.appspot.com",
   messagingSenderId: "784503032650",
@@ -33,6 +29,28 @@ function isAllowedHostname(host: string): boolean {
   return WEB_ALLOWED_HOSTNAMES.includes(host);
 }
 const PRODUCTION_URL = PUBLISHED_APP_URL;
+const RECAPTCHA_RENDER_TIMEOUT_MS = 4500;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      reject(Object.assign(new Error("Security check timed out. Please try again."), {
+        code: "auth/recaptcha-timeout",
+      }));
+    }, timeoutMs);
+
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
 
 function getAuthorizedFirebaseUrl(): string {
   return `${PRODUCTION_URL}${window.location.pathname}${window.location.search}${window.location.hash}`;
@@ -131,10 +149,10 @@ export async function sendOTP(phoneNumber: string) {
 
   let appVerifier = (window as any).recaptchaVerifier;
   if (appVerifier && recaptchaReady) {
-    await recaptchaReady;
+    await withTimeout(recaptchaReady, RECAPTCHA_RENDER_TIMEOUT_MS);
   } else {
     appVerifier = setupRecaptcha();
-    if (recaptchaReady) await recaptchaReady;
+    if (recaptchaReady) await withTimeout(recaptchaReady, RECAPTCHA_RENDER_TIMEOUT_MS);
   }
 
   const result = await signInWithPhoneNumber(firebaseAuth, phoneNumber, appVerifier);
