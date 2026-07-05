@@ -276,7 +276,11 @@ export default function AdminCouponsPage() {
               <div className="sm:col-span-2">
                 <CouponEligibilityPreview editing={editing} vendors={vendors as any} districts={districts as any} />
               </div>
-              <div className="sm:col-span-2">
+              {editing?.id && (
+                <div className="sm:col-span-2">
+                  <CouponEligibilityDiagnostics campaignId={editing.id} />
+                </div>
+              )}
                 <CouponEligibilityTabs
                   editing={editing}
                   onChange={(patch) => setEditing({ ...editing, ...patch })}
