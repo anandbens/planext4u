@@ -10,6 +10,52 @@ import type { AuthUser, CustomerUser, VendorUser, UserRole, AppRole } from "@/li
 
 const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
 const VENDOR_PROFILE_SELECT = "id, name, business_name, email, mobile, status";
+const AUTH_QUERY_TIMEOUT_MS = 7000;
+const AUTH_QUERY_RETRY_DELAY_MS = 700;
+
+function isTransientAuthError(error: unknown): boolean {
+  const message = String((error as { message?: string })?.message || error || "").toLowerCase();
+  return (
+    message.includes("failed to fetch") ||
+    message.includes("network") ||
+    message.includes("timeout") ||
+    message.includes("timed out") ||
+    message.includes("connection") ||
+    message.includes("544") ||
+    message.includes("522") ||
+    message.includes("503") ||
+    message.includes("504")
+  );
+}
+
+function authTimeoutError(label: string) {
+  return Object.assign(new Error(`${label} timed out. Please try again in a moment.`), { code: "auth/query-timeout" });
+}
+
+async function withAuthTimeout<T>(promise: PromiseLike<T>, label: string, timeoutMs = AUTH_QUERY_TIMEOUT_MS): Promise<T> {
+  let timer: number | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve(promise),
+      new Promise<T>((_, reject) => {
+        timer = window.setTimeout(() => reject(authTimeoutError(label)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) window.clearTimeout(timer);
+  }
+}
+
+async function withAuthRetry<T>(label: string, task: () => PromiseLike<T>): Promise<T> {
+  try {
+    return await withAuthTimeout(task(), label);
+  } catch (error) {
+    if (!isTransientAuthError(error)) throw error;
+    console.warn(`[auth] ${label} failed; retrying once`, error);
+    await new Promise((resolve) => window.setTimeout(resolve, AUTH_QUERY_RETRY_DELAY_MS));
+    return await withAuthTimeout(task(), `${label} retry`);
+  }
+}
 
 const buildVendorAuthEmailCandidates = (value: string) => {
   const trimmed = value.trim().toLowerCase();
@@ -42,10 +88,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const getVendorProfile = useCallback(async (vendorId: string) => {
-    const [{ data: productVendor }, { data: serviceVendor }] = await Promise.all([
-      supabase.from("vendors").select(VENDOR_PROFILE_SELECT).eq("id", vendorId).maybeSingle(),
-      supabase.from("service_vendors" as any).select(VENDOR_PROFILE_SELECT).eq("id", vendorId).maybeSingle(),
-    ]);
+    const [{ data: productVendor, error: productError }, { data: serviceVendor, error: serviceError }] = await withAuthRetry(
+      "vendor profile lookup",
+      () => Promise.all([
+        supabase.from("vendors").select(VENDOR_PROFILE_SELECT).eq("id", vendorId).maybeSingle(),
+        supabase.from("service_vendors" as any).select(VENDOR_PROFILE_SELECT).eq("id", vendorId).maybeSingle(),
+      ]),
+    );
+
+    if (productError && serviceError) {
+      throw new Error(productError.message || serviceError.message || "Unable to load vendor profile.");
+    }
 
     return (productVendor || serviceVendor || null) as {
       id: string;
@@ -119,7 +172,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('[auth] customer role has no customer_id — orphan record');
         return 'orphan_role';
       }
-      const { data: customer } = await supabase.from("customers").select("id, name, email, mobile, status").eq("id", customerId).maybeSingle();
+      const { data: customer, error: customerError } = await withAuthRetry(
+        "customer profile lookup",
+        () => supabase.from("customers").select("id, name, email, mobile, status").eq("id", customerId).maybeSingle(),
+      );
+
+      if (customerError) {
+        throw new Error(customerError.message || "Unable to load customer profile.");
+      }
 
       // Orphan: role row exists but customer record is missing → signal caller to try other roles
       if (!customer) {
@@ -235,10 +295,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [processRole, pickPreferredRole]);
 
   const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string, isFreshLogin: boolean) => {
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role, vendor_id, customer_id, password_set")
-      .eq("user_id", supabaseUid);
+    const { data: roles, error: rolesError } = await withAuthRetry(
+      "role lookup",
+      () => supabase
+        .from("user_roles")
+        .select("role, vendor_id, customer_id, password_set")
+        .eq("user_id", supabaseUid),
+    );
+
+    if (rolesError) {
+      console.error('[auth] role lookup failed:', rolesError.message || rolesError);
+      lastAuthErrorRef.current = "Login was accepted, but your role could not be loaded. Please try again in a moment.";
+      return 'role_lookup_failed';
+    }
 
     if (!roles || roles.length === 0) {
       const { data: { session } } = await supabase.auth.getSession();
@@ -248,10 +317,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const { data: linkData } = await supabase.functions.invoke("google-oauth-link");
           if (linkData?.success && linkData?.registered) {
-            const { data: newRoles } = await supabase
-              .from("user_roles")
-              .select("role, vendor_id, customer_id, password_set")
-              .eq("user_id", supabaseUid);
+            const { data: newRoles, error: newRolesError } = await withAuthRetry(
+              "linked role lookup",
+              () => supabase
+                .from("user_roles")
+                .select("role, vendor_id, customer_id, password_set")
+                .eq("user_id", supabaseUid),
+            );
+            if (newRolesError) {
+              console.error('[auth] linked role lookup failed:', newRolesError.message || newRolesError);
+              lastAuthErrorRef.current = "Login was accepted, but your role could not be loaded. Please try again in a moment.";
+              return 'role_lookup_failed';
+            }
             if (newRoles && newRoles.length > 0) {
               const portal = detectActivePortal();
               return await tryRolesWithFallback(newRoles, portal, supabaseUid, email, name, isFreshLogin);
@@ -374,7 +451,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const isFreshLogin = isFreshLoginRef.current;
         isFreshLoginRef.current = false;
         setTimeout(async () => {
-          await loadUserRole(id, email || '', name, isFreshLogin);
+          try {
+            const result = await loadUserRole(id, email || '', name, isFreshLogin);
+            if (result === 'role_lookup_failed') {
+              await supabase.auth.signOut();
+            }
+          } catch (error: any) {
+            console.error('[auth] role hydration failed:', error?.message || error);
+            lastAuthErrorRef.current = isTransientAuthError(error)
+              ? "Login was accepted, but the backend is taking too long to load your role. Please try again."
+              : (error?.message || "Login failed while loading your role.");
+            await supabase.auth.signOut();
+          }
           setIsLoading(false);
           initPushNotifications(id);
           linkPushTokenToUser(id);
@@ -438,7 +526,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(error.message);
     }
     if (signInData?.user) {
-      await supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id);
+      withAuthTimeout(
+        supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id),
+        "password flag update",
+        2500,
+      ).catch((error) => console.warn('[auth] password flag update skipped:', error?.message || error));
     }
     await new Promise<void>((resolve) => {
       loginResolveRef.current = resolve;
@@ -462,7 +554,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(error.message);
     }
     if (signInData?.user) {
-      await supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id);
+      withAuthTimeout(
+        supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id),
+        "password flag update",
+        2500,
+      ).catch((error) => console.warn('[auth] password flag update skipped:', error?.message || error));
     }
     await new Promise<void>((resolve) => {
       loginResolveRef.current = resolve;
@@ -500,7 +596,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (signInData?.user) {
-      await supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id);
+      withAuthTimeout(
+        supabase.from("user_roles").update({ password_set: true } as any).eq("user_id", signInData.user.id),
+        "password flag update",
+        2500,
+      ).catch((error) => console.warn('[auth] password flag update skipped:', error?.message || error));
     }
     await new Promise<void>((resolve) => {
       loginResolveRef.current = resolve;
