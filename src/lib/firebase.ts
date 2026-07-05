@@ -172,8 +172,13 @@ export async function verifyOTP(otp: string) {
 export async function getFirebaseIdToken(): Promise<string> {
   const user = firebaseAuth.currentUser;
   if (!user) throw new Error("No Firebase user signed in");
-  return user.getIdToken(true);
+  // Do NOT force-refresh — Firebase just minted a fresh token during
+  // confirmationResult.confirm(). Forcing a refresh here adds a second network
+  // round-trip to Google's token endpoint on every OTP login (300–800 ms on
+  // mobile), for zero benefit.
+  return user.getIdToken(false);
 }
+
 
 export async function resetPhoneAuth() {
   confirmationResultGlobal = null;
