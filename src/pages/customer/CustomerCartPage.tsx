@@ -517,7 +517,9 @@ export default function CustomerCartPage() {
           <ChevronLeft className="h-4 w-4" />
         </button>
         <h1 className="text-base font-semibold">Cart</h1>
-        <div className="w-8" />
+        <Link to="/app/coupons" className="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1">
+          <Tag className="h-3.5 w-3.5" /> My Coupons
+        </Link>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-4 pb-44 md:pb-6">
@@ -531,12 +533,17 @@ export default function CustomerCartPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-4">
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Link to="/app" className="hover:text-foreground">Home</Link>
-                <ChevronRight className="h-3 w-3" />
-                <Link to="/app/browse" className="hover:text-foreground">Shop</Link>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground font-medium">Cart</span>
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Link to="/app" className="hover:text-foreground">Home</Link>
+                  <ChevronRight className="h-3 w-3" />
+                  <Link to="/app/browse" className="hover:text-foreground">Shop</Link>
+                  <ChevronRight className="h-3 w-3" />
+                  <span className="text-foreground font-medium">Cart</span>
+                </div>
+                <Link to="/app/coupons" className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1 whitespace-nowrap">
+                  <Tag className="h-3.5 w-3.5" /> My Coupons →
+                </Link>
               </div>
 
               <Tabs defaultValue="shop">
