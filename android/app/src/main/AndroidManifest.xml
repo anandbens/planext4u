@@ -74,5 +74,40 @@
         <package android:name="com.whatsapp" />                                 <!-- WhatsApp Pay -->
         <package android:name="com.mobikwik_new" />                             <!-- MobiKwik -->
         <package android:name="com.freecharge.android" />                       <!-- Freecharge -->
+
+        <!--
+          Android 11+ package visibility for the share sheet (@capacitor/share).
+          Without a declared <intent> for ACTION_SEND text/plain, PackageManager
+          returns an empty resolver list on many OEM builds and the chooser
+          appears empty. Also allowlist common share targets.
+        -->
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
+        </intent>
+        <package android:name="com.whatsapp.w4b" />                             <!-- WhatsApp Business -->
+        <package android:name="com.facebook.katana" />                          <!-- Facebook -->
+        <package android:name="com.facebook.orca" />                            <!-- Messenger -->
+        <package android:name="com.facebook.lite" />                            <!-- FB Lite -->
+        <package android:name="com.instagram.android" />                        <!-- Instagram -->
+        <package android:name="com.twitter.android" />                          <!-- X/Twitter -->
+        <package android:name="com.google.android.gm" />                        <!-- Gmail -->
+        <package android:name="com.google.android.apps.messaging" />            <!-- Google Messages -->
+        <package android:name="org.telegram.messenger" />                       <!-- Telegram -->
+        <package android:name="com.linkedin.android" />                         <!-- LinkedIn -->
+        <package android:name="com.snapchat.android" />                         <!-- Snapchat -->
+        <package android:name="com.microsoft.office.outlook" />                 <!-- Outlook -->
     </queries>
 </manifest>
