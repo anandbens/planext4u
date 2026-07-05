@@ -47,14 +47,36 @@ export default function CustomerReferralPage() {
               </div>
               <Button size="icon" variant="outline" onClick={copyCode}><Copy className="h-4 w-4" /></Button>
             </div>
-            <Button className="mt-4 gap-2 bg-warning text-warning-foreground hover:bg-warning/90" onClick={() => {
+            <Button className="mt-4 gap-2 bg-warning text-warning-foreground hover:bg-warning/90" onClick={async () => {
               const code = profile?.referral_code || 'REF0001';
-              const text = `Join P4U and get 200 bonus points! Use my referral code: ${code}`;
-              if (navigator.share) {
-                navigator.share({ title: 'Join P4U', text }).catch(() => {});
-              } else {
-                navigator.clipboard.writeText(text);
-                toast.success("Referral message copied to clipboard!");
+              const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.p4u_customer';
+              const title = 'Join P4U — Get 200 bonus points!';
+              const text = `Join P4U and get 200 bonus points! 🎁\n\nUse my referral code: ${code}\n\nDownload the app: ${playStoreUrl}`;
+
+              // On native (Capacitor Android/iOS), open the system share sheet with app list
+              try {
+                const { Capacitor } = await import('@capacitor/core');
+                if (Capacitor.isNativePlatform()) {
+                  const { Share } = await import('@capacitor/share');
+                  await Share.share({ title, text, url: playStoreUrl, dialogTitle: 'Share P4U referral' });
+                  return;
+                }
+              } catch (e) { /* fall through to web */ }
+
+              // Web: prefer native Web Share API (mobile browsers show the app list)
+              if (typeof navigator !== 'undefined' && (navigator as any).share) {
+                try {
+                  await (navigator as any).share({ title, text, url: playStoreUrl });
+                  return;
+                } catch { /* user cancelled or unsupported */ }
+              }
+
+              // Fallback: copy full message with link
+              try {
+                await navigator.clipboard.writeText(text);
+                toast.success("Referral message copied! Paste it in any app to share.");
+              } catch {
+                toast.error("Unable to share. Please copy your code manually.");
               }
             }}>
               <Users className="h-4 w-4" /> Share with Friends
