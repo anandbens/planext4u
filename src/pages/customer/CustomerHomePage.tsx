@@ -23,6 +23,7 @@ import { useCurrency } from "@/lib/country-context";
 import { RatingPopup } from "@/components/customer/RatingPopup";
 import { CouponPopup } from "@/components/customer/CouponPopup";
 import { BannerAd } from "@/components/customer/BannerAd";
+import { SpecialOffersWidget } from "@/components/customer/SpecialOffersWidget";
 import { VideoAdOverlay } from "@/components/customer/VideoAdOverlay";
 import { FloatingVideoAd } from "@/components/customer/FloatingVideoAd";
 import { getServiceImage } from "@/lib/service-image";
@@ -463,6 +464,10 @@ export default function CustomerHomePage() {
         {isLoading ? <Skeleton className="h-44 mx-4 rounded-2xl" /> :
           <HeroBannerCarousel banners={data?.banners || []} cmsBanners={cmsBanners} />
         }
+
+        {/* ── Special Offers (personalized coupons) ── */}
+        <SpecialOffersWidget />
+
 
         {/* ── Store Banners (2-row grid, Zepto-style) ── */}
         {data?.storeBanners && data.storeBanners.length > 0 && (
