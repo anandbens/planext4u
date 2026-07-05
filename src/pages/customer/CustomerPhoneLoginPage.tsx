@@ -40,15 +40,30 @@ function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, code = "auth
 }
 
 async function checkOtpGate(cleanedPhone: string, fullPhone: string): Promise<OtpGateResult> {
-  const loginStatusPromise = supabase.rpc('check_phone_login_status' as any, { _phone: cleanedPhone }) as PromiseLike<{
-    data: unknown;
-    error: { message?: string } | null;
-  }>;
-  const rateLimitPromise = checkOtpRateLimit(fullPhone);
+  const loginStatusPromise = withTimeout(
+    supabase.rpc('check_phone_login_status' as any, { _phone: cleanedPhone }) as PromiseLike<{
+      data: unknown;
+      error: { message?: string } | null;
+    }>,
+    OTP_GATE_HARD_TIMEOUT_MS,
+    "auth/otp-gate-timeout",
+  ).catch((err) => {
+    otpLog("gate:loginStatusTimeout", { msg: err?.message });
+    return { data: null, error: { message: err?.message || "gate-timeout" } };
+  });
+
+  const rateLimitPromise = withTimeout(
+    Promise.resolve(checkOtpRateLimit(fullPhone)),
+    OTP_GATE_HARD_TIMEOUT_MS,
+    "auth/otp-rate-timeout",
+  ).catch((err) => {
+    otpLog("gate:rateLimitTimeout", { msg: err?.message });
+    return { allowed: true, remaining: 0, retry_after: 0 };
+  });
 
   const statusRes = await loginStatusPromise;
   if (statusRes.error) {
-    console.warn("OTP login status check failed, continuing with OTP:", statusRes.error.message);
+    otpLog("gate:loginStatusError", { msg: statusRes.error.message });
     return { allowed: true };
   }
 
