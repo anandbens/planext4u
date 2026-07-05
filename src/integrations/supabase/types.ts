@@ -9864,7 +9864,9 @@ export type Database = {
         Args: { _user_a: string; _user_b: string }
         Returns: boolean
       }
+      assign_namakkal_coupon: { Args: { _customer_id: string }; Returns: Json }
       auto_assign_nearest_rider: { Args: { _order_id: string }; Returns: Json }
+      backfill_namakkal_coupons: { Args: { _days?: number }; Returns: Json }
       best_food_coupon: {
         Args: {
           _customer_id: string
@@ -10069,6 +10071,10 @@ export type Database = {
           seconds_remaining: number
           status: string
         }[]
+      }
+      get_coupon_eligibility_breakdown: {
+        Args: { _campaign_id: string; _customer_id: string }
+        Returns: Json
       }
       get_customer_available_coupons: {
         Args: { _customer_id: string; _lat?: number; _lng?: number }
