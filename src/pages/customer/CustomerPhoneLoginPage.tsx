@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
+import { sendOTPWithRetry, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha, otpLog } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
-const OTP_SEND_TIMEOUT_MS = 18000;
+const OTP_SEND_TIMEOUT_MS = 22000;
 const OTP_GATE_GRACE_MS = 500;
+const OTP_GATE_HARD_TIMEOUT_MS = 2500;
+const OTP_WATCHDOG_MS = 30000;
 
 type OtpGateResult =
   | { allowed: true }
