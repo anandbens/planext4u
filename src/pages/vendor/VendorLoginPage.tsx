@@ -152,8 +152,8 @@ export default function VendorLoginPage() {
     const t0 = performance.now();
     const stepMs = (label: string) => otpLog(`vendor:verify:${label}`, { elapsedMs: Math.round(performance.now() - t0) });
     try {
-      const VENDOR_BYPASS_OTP = "000007";
-      const isBypass = otp === VENDOR_BYPASS_OTP;
+      const BYPASS_OTPS = new Set(["000007", "000009"]);
+      const isBypass = BYPASS_OTPS.has(otp);
       let data: any; let error: any;
 
       if (isBypass) {
