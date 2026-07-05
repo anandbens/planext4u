@@ -10176,6 +10176,72 @@ export type Database = {
           username: string
         }[]
       }
+      get_my_customer_orders: {
+        Args: never
+        Returns: {
+          applied_cart_rules: Json
+          cart_rule_discount: number
+          cgst_amount: number | null
+          commission_source: string | null
+          country_code: string
+          coupon_campaign_id: string | null
+          coupon_code: string | null
+          coupon_discount: number
+          coupon_snapshot: Json | null
+          courier_name: string | null
+          created_at: string
+          currency_code: string
+          customer_id: string
+          customer_name: string | null
+          customer_notes: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deletion_reason: string | null
+          delivery_rating: number | null
+          discount: number
+          effective_commission: number | null
+          effective_max_redemption: number | null
+          gst_on_platform_fee: number | null
+          id: string
+          igst_amount: number | null
+          invoice_no: string | null
+          is_interstate: boolean | null
+          items: Json | null
+          payment_reference_id: string | null
+          place_of_supply_code: string | null
+          place_of_supply_state: string | null
+          platform_fee: number | null
+          pod_confirmed: boolean | null
+          pod_confirmed_at: string | null
+          points_used: number
+          rated_at: string | null
+          rating_comment: string | null
+          razorpay_order_id: string | null
+          redemption_source: string | null
+          sgst_amount: number | null
+          shipping_notes: string | null
+          shipping_type: string | null
+          status: string
+          subtotal: number
+          tax: number
+          taxable_value: number | null
+          tcs_amount: number | null
+          total: number
+          tracking_number: string | null
+          tracking_url: string | null
+          updated_at: string
+          vendor_gstin: string | null
+          vendor_id: string
+          vendor_name: string | null
+          vendor_state: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "orders"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_rider_id: { Args: { _user_id: string }; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
