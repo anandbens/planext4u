@@ -18,6 +18,7 @@ import { CouponEligibilityPreview } from "@/components/admin/CouponEligibilityPr
 import { CouponGenerateConfirm } from "@/components/admin/CouponGenerateConfirm";
 import { CouponAdminNav } from "@/components/admin/CouponAdminNav";
 import { CouponEligibilityTabs } from "@/components/admin/CouponEligibilityTabs";
+import { CouponEligibilityDiagnostics } from "@/components/admin/CouponEligibilityDiagnostics";
 
 type Campaign = any;
 
