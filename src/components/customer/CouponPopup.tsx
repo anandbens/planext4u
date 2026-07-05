@@ -7,9 +7,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Tag, X, Copy } from "lucide-react";
+import { Tag, X, Copy, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
+import { supabase as sb } from "@/integrations/supabase/client";
 
 interface Props { customerId: string }
 
