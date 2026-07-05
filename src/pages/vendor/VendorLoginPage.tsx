@@ -6,12 +6,25 @@ import { Input } from "@/components/ui/input";
 import OtpInput from "@/components/auth/OtpInput";
 import { Eye, EyeOff, LogIn, Store, ShoppingBag, Wrench, Phone, ArrowRight, ShieldCheck, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
+import { sendOTPWithRetry, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha, otpLog } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogo from "@/assets/p4u-logo.png";
 
 const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
+const OTP_VERIFY_FIREBASE_TIMEOUT_MS = 8000;
+const OTP_VERIFY_BACKEND_TIMEOUT_MS = 12000;
+const OTP_VERIFY_SESSION_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, code = "auth/otp-timeout"): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(Object.assign(new Error("Request timed out. Please try again."), { code })), timeoutMs);
+    promise.then(
+      (value) => { window.clearTimeout(timer); resolve(value); },
+      (error) => { window.clearTimeout(timer); reject(error); },
+    );
+  });
+}
 
 const normalizePhoneVariants = (phone: string) => {
   const digits = phone.replace(/\D/g, "");
@@ -119,7 +132,7 @@ export default function VendorLoginPage() {
         return;
       }
 
-      await sendOTP(`${countryCode}${cleaned}`);
+      await sendOTPWithRetry(`${countryCode}${cleaned}`);
       setOtpSent(true); setTimer(30);
       toast.success("OTP sent successfully!");
       setTimeout(() => otpRef.current?.focus(), 300);
@@ -136,33 +149,33 @@ export default function VendorLoginPage() {
   const handleVerifyOTP = async () => {
     if (otp.length !== 6) { toast.error("Enter 6-digit OTP"); return; }
     setLoading(true);
+    const t0 = performance.now();
+    const stepMs = (label: string) => otpLog(`vendor:verify:${label}`, { elapsedMs: Math.round(performance.now() - t0) });
     try {
-      await verifyOTP(otp);
-      const idToken = await getFirebaseIdToken();
-      const { data, error } = await supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken, role: "vendor" } });
+      stepMs("1:firebase:start");
+      await withTimeout(verifyOTP(otp), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-verify-timeout");
+      stepMs("1:firebase:done");
+      const idToken = await withTimeout(getFirebaseIdToken(), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-token-timeout");
+      stepMs("2:edge:start");
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken, role: "vendor" } }),
+        OTP_VERIFY_BACKEND_TIMEOUT_MS,
+        "auth/backend-auth-timeout",
+      );
+      stepMs("2:edge:done");
       if (error || !data?.success) throw new Error(data?.error || "Something went wrong. Please try again.");
-      const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
+      const { error: verifyError } = await withTimeout(
+        supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" }),
+        OTP_VERIFY_SESSION_TIMEOUT_MS,
+        "auth/session-verify-timeout",
+      );
+      stepMs("3:session:done");
       if (verifyError) throw new Error("Session verification failed. Please try logging in again.");
       toast.success("Welcome to Vendor Portal! 🎉");
-      // Wait for auth state to propagate (vendor_user written by auth-provider)
-      const waitForVendor = () => new Promise<void>((resolve) => {
-        let attempts = 0;
-        const check = () => {
-          const saved = localStorage.getItem("vendor_user");
-          if (saved || attempts >= 24) { resolve(); return; }
-          attempts++;
-          setTimeout(check, 250);
-        };
-        check();
-      });
-      await waitForVendor();
-      // Hard redirect ensures the session cookie is fully applied and the route
-      // guards in AppRoutes see the freshly hydrated vendorUser, avoiding a
-      // race where React state lags behind localStorage and the user lands on
-      // the 404 fallback route.
-      window.location.replace("/vendor");
+      navigate("/vendor", { replace: true });
     } catch (err: any) {
       if (err.code === "auth/invalid-verification-code") toast.error("Invalid OTP. Please check and try again.");
+      else if (err.code === "auth/otp-verify-timeout" || err.code === "auth/backend-auth-timeout" || err.code === "auth/session-verify-timeout") toast.error("Login is taking too long. Please retry OTP.", { duration: 6000 });
       else toast.error(err.message || "Verification failed. Please try again.");
     } finally { setLoading(false); }
   };

@@ -159,13 +159,40 @@ async function getMappedCustomerAuthUser(client: any, customerId: string): Promi
     return null;
   }
   if (!role?.user_id) return null;
+  return { id: role.user_id };
+}
 
-  const { data, error } = await client.auth.admin.getUserById(role.user_id);
-  if (error) {
-    console.error("Mapped customer auth lookup error:", error.message || JSON.stringify(error));
+async function getMappedVendorAuthUser(client: any, vendorId: string): Promise<any | null> {
+  const { data: role, error: roleErr } = await client
+    .from("user_roles")
+    .select("user_id")
+    .eq("vendor_id", vendorId)
+    .eq("role", "vendor")
+    .maybeSingle();
+
+  if (roleErr) {
+    console.error("Vendor mapped role lookup error:", roleErr.message || JSON.stringify(roleErr));
     return null;
   }
-  return data?.user || null;
+  if (!role?.user_id) return null;
+  return { id: role.user_id };
+}
+
+async function withSoftTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, fallback: T, label: string): Promise<T> {
+  let timer: number | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve(promise),
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => {
+          console.warn(`${label} timed out after ${timeoutMs}ms; continuing`);
+          resolve(fallback);
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
 }
 
 async function getCustomerForAuthUser(client: any, userId: string): Promise<any | null> {
@@ -624,8 +651,12 @@ Deno.serve(async (req) => {
 
       console.log("Found registered vendor:", existingVendor.id);
 
-      // Find or create Supabase auth user (paginated lookup; tolerates duplicates)
-      let supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
+      // Prefer the already-mapped role row. Calling the Auth Admin API here is
+      // often the slowest step, so only fall back to it when no mapping exists.
+      let supabaseUser = await getMappedVendorAuthUser(supabase, existingVendor.id);
+      if (!supabaseUser) {
+        supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
+      }
       if (!supabaseUser) {
         supabaseUser = await createOrGetAuthUser(supabase, phoneEmail, normalizedPhone);
       }
@@ -779,31 +810,23 @@ Deno.serve(async (req) => {
     const tokenHash = linkData?.properties?.hashed_token;
     if (!tokenHash) throw new Error("Failed to generate session token");
 
-    const { data: customerData } = await supabase
-      .from("user_roles")
-      .select("customer_id")
-      .eq("user_id", supabaseUser!.id)
-      .eq("role", "customer")
-      .single();
+    const customerInfo = {
+      id: resolvedCustomer.id,
+      name: resolvedCustomer.name,
+      email: resolvedCustomer.email,
+      mobile: resolvedCustomer.mobile,
+    };
 
-    let customerInfo = null;
-    if (customerData?.customer_id) {
-      const { data: cust } = await supabase
-        .from("customers")
-        .select("id, name, email, mobile")
-        .eq("id", customerData.customer_id)
-        .single();
-      customerInfo = cust;
-    }
-
-    let hasAddress = false;
-    if (customerData?.customer_id) {
-      const { count } = await supabase
+    const addressResult = await withSoftTimeout(
+      supabase
         .from("customer_addresses")
         .select("id", { count: "exact", head: true })
-        .eq("customer_id", customerData.customer_id);
-      hasAddress = (count || 0) > 0;
-    }
+        .eq("customer_id", resolvedCustomer.id),
+      600,
+      { count: 1, error: null },
+      "Customer address check",
+    );
+    const hasAddress = (addressResult?.count || 0) > 0;
 
     console.log("Auth success for", phoneNumber, "hasAddress:", hasAddress);
 
