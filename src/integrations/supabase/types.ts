@@ -1159,8 +1159,10 @@ export type Database = {
       }
       coupon_campaigns: {
         Row: {
+          apply_mode: string
           archive_retention_days: number | null
           archived_at: string | null
+          banner_url: string | null
           category_ids: string[]
           center_lat: number | null
           center_lng: number | null
@@ -1196,6 +1198,7 @@ export type Database = {
           popup_image_url: string | null
           popup_target: string
           popup_title: string | null
+          priority: number
           product_ids: string[]
           qty_limit: number
           radius_km: number | null
@@ -1221,8 +1224,10 @@ export type Database = {
           vendor_ids: string[]
         }
         Insert: {
+          apply_mode?: string
           archive_retention_days?: number | null
           archived_at?: string | null
+          banner_url?: string | null
           category_ids?: string[]
           center_lat?: number | null
           center_lng?: number | null
@@ -1258,6 +1263,7 @@ export type Database = {
           popup_image_url?: string | null
           popup_target?: string
           popup_title?: string | null
+          priority?: number
           product_ids?: string[]
           qty_limit?: number
           radius_km?: number | null
@@ -1283,8 +1289,10 @@ export type Database = {
           vendor_ids?: string[]
         }
         Update: {
+          apply_mode?: string
           archive_retention_days?: number | null
           archived_at?: string | null
+          banner_url?: string | null
           category_ids?: string[]
           center_lat?: number | null
           center_lng?: number | null
@@ -1320,6 +1328,7 @@ export type Database = {
           popup_image_url?: string | null
           popup_target?: string
           popup_title?: string | null
+          priority?: number
           product_ids?: string[]
           qty_limit?: number
           radius_km?: number | null
@@ -1733,6 +1742,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      coupon_recommendation_log: {
+        Row: {
+          campaign_id: string | null
+          cart_snapshot: Json | null
+          coupon_code: string | null
+          created_at: string
+          customer_id: string | null
+          device: string | null
+          event: string
+          id: string
+          ip: string | null
+          savings: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          cart_snapshot?: Json | null
+          coupon_code?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device?: string | null
+          event: string
+          id?: string
+          ip?: string | null
+          savings?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          cart_snapshot?: Json | null
+          coupon_code?: string | null
+          created_at?: string
+          customer_id?: string | null
+          device?: string | null
+          event?: string
+          id?: string
+          ip?: string | null
+          savings?: number | null
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       coupon_redemptions: {
         Row: {
@@ -10213,6 +10264,17 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      recommend_coupons_for_cart: {
+        Args: {
+          _cart_items: Json
+          _customer_id: string
+          _lat?: number
+          _limit?: number
+          _lng?: number
+          _subtotal: number
+        }
+        Returns: Json
       }
       redeem_coupon_code: {
         Args: {

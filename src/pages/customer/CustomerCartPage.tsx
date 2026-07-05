@@ -20,6 +20,12 @@ import { checkCartStock } from "@/lib/stock-check";
 import { getCustomerAddressOwnerContext, requireCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { useCurrency } from "@/lib/country-context";
 import { CartRuleBreakup, type AppliedCartRule } from "@/components/cart/CartRuleBreakup";
+import { AvailableCouponsPanel } from "@/components/customer/AvailableCouponsPanel";
+import {
+  recommendCouponsForCart,
+  logRecommendationEvent,
+  type CouponRecommendation,
+} from "@/lib/coupons/recommendation";
 
 const TIME_SLOTS = [
   { id: "morning", label: "Morning 9 - 11 AM" },
@@ -60,6 +66,11 @@ export default function CustomerCartPage() {
   const [itemRedemptionMap, setItemRedemptionMap] = useState<Record<string, { maxRedemption: number; redemptionSource: string }>>({});
   const [appliedCartRules, setAppliedCartRules] = useState<AppliedCartRule[]>([]);
   const [cartRuleDiscount, setCartRuleDiscount] = useState(0);
+  const [recoCoupons, setRecoCoupons] = useState<CouponRecommendation[]>([]);
+  const [bestCampaignId, setBestCampaignId] = useState<string | null>(null);
+  const [autoApplyCampaignId, setAutoApplyCampaignId] = useState<string | null>(null);
+  const [recoLoading, setRecoLoading] = useState(false);
+
 
   useEffect(() => {
     Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses(), loadPlatformFees()]).then(async ([cartItems, profile]) => {
@@ -270,6 +281,115 @@ export default function CustomerCartPage() {
         setCartRuleDiscount(0);
       });
   }, [customerId, subtotal, cart]);
+
+  // ── Intelligent Coupon Recommendation Engine ─────────────────────────────
+  // Re-evaluate eligible coupons whenever cart contents, subtotal, customer
+  // or delivery address changes. All math happens on the backend.
+  useEffect(() => {
+    let cancelled = false;
+    if (!customerId || cart.length === 0 || subtotal <= 0) {
+      setRecoCoupons([]);
+      setBestCampaignId(null);
+      setAutoApplyCampaignId(null);
+      return;
+    }
+    setRecoLoading(true);
+    recommendCouponsForCart({
+      customerId,
+      cart: cart.map((c: any) => ({ id: c.id, vendor_id: c.vendor_id, qty: c.qty, price: c.price })),
+      subtotal,
+    })
+      .then((res) => {
+        if (cancelled) return;
+        setRecoCoupons(res.coupons);
+        setBestCampaignId(res.best_campaign_id);
+        setAutoApplyCampaignId(res.auto_apply_campaign_id);
+        logRecommendationEvent({
+          customerId,
+          event: "recommended",
+          savings: res.coupons[0]?.discount_amount ?? 0,
+          cart: cart as any,
+        });
+      })
+      .finally(() => !cancelled && setRecoLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [customerId, subtotal, cart, selectedAddressId]);
+
+  // Real-time validation: if the applied coupon is no longer eligible after
+  // a cart change, silently drop it and inform the user.
+  useEffect(() => {
+    if (!couponInfo) return;
+    const stillEligible = recoCoupons.some((c) => c.campaign_id === couponInfo.campaign_id);
+    if (!stillEligible && recoCoupons.length > 0) {
+      setCouponApplied(false);
+      setCouponInfo(null);
+      setCoupon("");
+      toast.info("Coupon removed because the cart no longer qualifies.");
+    }
+  }, [recoCoupons]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-apply the campaign flagged as auto (if none applied yet)
+  useEffect(() => {
+    if (couponApplied || !autoApplyCampaignId) return;
+    const auto = recoCoupons.find((c) => c.campaign_id === autoApplyCampaignId);
+    if (!auto) return;
+    setCouponInfo({
+      campaign_id: auto.campaign_id,
+      discount_amount: auto.discount_amount,
+      product_id: auto.product_id || "",
+      name: auto.campaign_name,
+      code: auto.code,
+    });
+    setCoupon(auto.code);
+    setCouponApplied(true);
+    logRecommendationEvent({
+      customerId,
+      event: "auto_applied",
+      campaignId: auto.campaign_id,
+      code: auto.code,
+      savings: auto.discount_amount,
+    });
+    toast.success(`Coupon auto-applied: ${auto.campaign_name} — you saved ₹${auto.discount_amount.toFixed(2)}`);
+  }, [autoApplyCampaignId, recoCoupons, couponApplied, customerId]);
+
+  const applyRecommendedCoupon = (c: CouponRecommendation) => {
+    setCouponInfo({
+      campaign_id: c.campaign_id,
+      discount_amount: c.discount_amount,
+      product_id: c.product_id || "",
+      name: c.campaign_name,
+      code: c.code,
+    });
+    setCoupon(c.code);
+    setCouponApplied(true);
+    logRecommendationEvent({
+      customerId,
+      event: "applied",
+      campaignId: c.campaign_id,
+      code: c.code,
+      savings: c.discount_amount,
+    });
+    toast.success(`Coupon applied: ${c.campaign_name} — you saved ₹${c.discount_amount.toFixed(2)}`);
+  };
+
+  const removeRecommendedCoupon = () => {
+    const prev = couponInfo;
+    setCouponApplied(false);
+    setCouponInfo(null);
+    setCoupon("");
+    if (prev) {
+      logRecommendationEvent({
+        customerId,
+        event: "removed",
+        campaignId: prev.campaign_id,
+        code: prev.code,
+      });
+    }
+    toast.info("Coupon removed. Original prices restored.");
+  };
+
 
   const applyCoupon = async () => {
     if (!coupon.trim()) { toast.error("Enter a coupon code"); return; }
@@ -645,7 +765,16 @@ export default function CustomerCartPage() {
                     </details>
                   )}
                 </Card>
+                <AvailableCouponsPanel
+                  loading={recoLoading}
+                  coupons={recoCoupons}
+                  bestCampaignId={bestCampaignId}
+                  appliedCampaignId={couponInfo?.campaign_id ?? null}
+                  onApply={applyRecommendedCoupon}
+                  onRemove={removeRecommendedCoupon}
+                />
                 <Card className="p-4">
+                  <p className="text-[11px] text-muted-foreground mb-2">Have a code? Enter it manually.</p>
                   <div className="flex items-center gap-2">
                     <Tag className="h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Enter coupon code" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} className="h-10 flex-1" disabled={couponApplied} />
