@@ -20,6 +20,12 @@ import { checkCartStock } from "@/lib/stock-check";
 import { getCustomerAddressOwnerContext, requireCustomerAddressOwnerContext } from "@/lib/customer-address-auth";
 import { useCurrency } from "@/lib/country-context";
 import { CartRuleBreakup, type AppliedCartRule } from "@/components/cart/CartRuleBreakup";
+import { AvailableCouponsPanel } from "@/components/customer/AvailableCouponsPanel";
+import {
+  recommendCouponsForCart,
+  logRecommendationEvent,
+  type CouponRecommendation,
+} from "@/lib/coupons/recommendation";
 
 const TIME_SLOTS = [
   { id: "morning", label: "Morning 9 - 11 AM" },
