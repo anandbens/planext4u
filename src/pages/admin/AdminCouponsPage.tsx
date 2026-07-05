@@ -281,6 +281,7 @@ export default function AdminCouponsPage() {
                   <CouponEligibilityDiagnostics campaignId={editing.id} />
                 </div>
               )}
+              <div className="sm:col-span-2">
                 <CouponEligibilityTabs
                   editing={editing}
                   onChange={(patch) => setEditing({ ...editing, ...patch })}
