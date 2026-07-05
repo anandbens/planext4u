@@ -26,4 +26,33 @@ installCdnImagePatch();
 // Fire-and-forget: native plugin wiring (no-op on web)
 initNativeBridges();
 
+// Recover from stale chunk errors after a redeploy. When the app tries to
+// dynamically import a route module whose hashed file no longer exists on the
+// server, the browser throws "Failed to fetch dynamically imported module".
+// We reload the page once (guarded by sessionStorage) so the fresh index.html
+// is fetched and the new chunk hashes are picked up. Without this, users see
+// a blank screen or a broken navigation until they manually hard-refresh.
+const isStaleChunkError = (msg: string) =>
+  /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|ChunkLoadError/i.test(msg || "");
+
+const reloadOnce = () => {
+  try {
+    const key = "__stale_chunk_reloaded_at";
+    const last = Number(sessionStorage.getItem(key) || 0);
+    // Only reload once per 60s to avoid infinite loops if the server itself is broken.
+    if (Date.now() - last > 60_000) {
+      sessionStorage.setItem(key, String(Date.now()));
+      window.location.reload();
+    }
+  } catch { /* ignore */ }
+};
+
+window.addEventListener("error", (e) => {
+  if (isStaleChunkError(e?.message || String(e?.error || ""))) reloadOnce();
+});
+window.addEventListener("unhandledrejection", (e) => {
+  const msg = (e?.reason && (e.reason.message || String(e.reason))) || "";
+  if (isStaleChunkError(msg)) reloadOnce();
+});
+
 createRoot(document.getElementById("root")!).render(<App />);
