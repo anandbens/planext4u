@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,9 +6,18 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Radius, Store, Package, User, ShoppingCart, Search } from "lucide-react";
+import { MapPin, Radius, Store, Package, User, ShoppingCart, Search, X } from "lucide-react";
 
-interface Vendor { id: string; business_name?: string; name?: string; category_id?: string; state_name?: string; shop_latitude?: number; shop_longitude?: number }
+interface Vendor {
+  id: string;
+  business_name?: string;
+  name?: string;
+  category_id?: string;
+  state_name?: string;
+  city_id?: string;
+  shop_latitude?: number;
+  shop_longitude?: number;
+}
 interface District { id: string; name: string; state_id?: string }
 interface State { id: string; name: string; code?: string }
 interface Category { id: string; name: string; parent_id?: string }
