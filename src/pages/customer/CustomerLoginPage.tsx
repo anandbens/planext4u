@@ -150,7 +150,7 @@ export default function CustomerLoginPage() {
       const fullPhone = `${countryCode}${cleaned}`;
 
       const gateResult = await getQuickGateResult(checkOtpGate(cleaned, fullPhone));
-      if (gateResult && !gateResult.allowed) {
+      if (gateResult?.allowed === false) {
         showOtpGateBlock(gateResult, setTimer);
         return;
       }
