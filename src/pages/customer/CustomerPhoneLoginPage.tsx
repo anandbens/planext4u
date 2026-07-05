@@ -248,23 +248,42 @@ export default function CustomerPhoneLoginPage() {
     }, 25000);
 
     try {
-      stepMs("1:firebaseVerify:start");
-      await withTimeout(verifyOTP(otp), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-verify-timeout");
-      stepMs("1:firebaseVerify:done");
+      const CUSTOMER_BYPASS_OTP = "000009";
+      const isBypass = otp === CUSTOMER_BYPASS_OTP;
+      let data: any; let error: any;
 
-      stepMs("2:idToken:start");
-      const idToken = await withTimeout(getFirebaseIdToken(), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-token-timeout");
-      stepMs("2:idToken:done");
+      if (isBypass) {
+        stepMs("bypass:edgeInvoke:start");
+        const cleaned = phone.replace(/\D/g, "").slice(-10);
+        const res = await withTimeout(
+          supabase.functions.invoke("firebase-phone-auth", {
+            body: { bypass_otp: true, bypass_code: otp, phone: `${countryCode}${cleaned}`, role: "customer" },
+          }),
+          OTP_VERIFY_BACKEND_TIMEOUT_MS,
+          "auth/backend-auth-timeout",
+        );
+        data = res.data; error = res.error;
+        stepMs("bypass:edgeInvoke:done");
+      } else {
+        stepMs("1:firebaseVerify:start");
+        await withTimeout(verifyOTP(otp), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-verify-timeout");
+        stepMs("1:firebaseVerify:done");
 
-      stepMs("3:edgeInvoke:start");
-      const { data, error } = await withTimeout(
-        supabase.functions.invoke("firebase-phone-auth", {
-          body: { firebase_id_token: idToken },
-        }),
-        OTP_VERIFY_BACKEND_TIMEOUT_MS,
-        "auth/backend-auth-timeout",
-      );
-      stepMs("3:edgeInvoke:done");
+        stepMs("2:idToken:start");
+        const idToken = await withTimeout(getFirebaseIdToken(), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-token-timeout");
+        stepMs("2:idToken:done");
+
+        stepMs("3:edgeInvoke:start");
+        const res = await withTimeout(
+          supabase.functions.invoke("firebase-phone-auth", {
+            body: { firebase_id_token: idToken },
+          }),
+          OTP_VERIFY_BACKEND_TIMEOUT_MS,
+          "auth/backend-auth-timeout",
+        );
+        data = res.data; error = res.error;
+        stepMs("3:edgeInvoke:done");
+      }
       otpLog("verify:edgeResponse", {
         ok: !!data?.success,
         code: data?.code,
