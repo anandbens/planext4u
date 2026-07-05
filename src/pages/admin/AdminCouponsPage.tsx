@@ -12,10 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/friendly-error";
-import { Plus, Pencil, Trash2, Tag, Download, Ticket, FileDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Tag, Download, Ticket, FileDown, Copy, Pause, Play, Archive } from "lucide-react";
 import { CouponExportDialog } from "@/components/admin/CouponExportDialog";
 import { CouponEligibilityPreview } from "@/components/admin/CouponEligibilityPreview";
 import { CouponGenerateConfirm } from "@/components/admin/CouponGenerateConfirm";
+import { CouponAdminNav } from "@/components/admin/CouponAdminNav";
 
 type Campaign = any;
 
