@@ -70,6 +70,7 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
   const [states, setStates] = useState<State[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendorCats, setVendorCats] = useState<Category[]>([]);
+  const [cities, setCities] = useState<{ id: string; name: string; state?: string }[]>([]);
 
   useEffect(() => {
     supabase.from("states").select("id,name,code").order("name").then(({ data }) => setStates((data as any) || []));
@@ -77,6 +78,7 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
       .then(({ data }) => setCategories((data as any) || []));
     supabase.from("categories").select("id,name,parent_id").eq("category_type", "vendor").order("name").limit(200)
       .then(({ data }) => setVendorCats((data as any) || []));
+    supabase.from("cities").select("id,name,state").then(({ data }) => setCities((data as any) || []));
   }, []);
 
   const toggleArr = (field: string, id: string) => {
@@ -90,6 +92,35 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
   };
 
   const num = (v: any) => (v === "" || v === null || v === undefined ? null : Number(v));
+
+  // ── Location-aware vendor filter ─────────────────────────────
+  // Vendors are filtered by the states/districts chosen on the Location tab.
+  // • state_codes stores state NAMES (see the Location tab handler).
+  // • districts don't have a foreign-key on vendors, but cities carry a state
+  //   name; when the admin selects a district, we resolve its state via
+  //   `districts → state_id → states → name` and intersect with the vendor's
+  //   state_name. If no location is chosen, ALL active vendors are shown.
+  const filteredVendors = useMemo(() => {
+    const stateNames = new Set<string>(editing.state_codes || []);
+    const districtIds: string[] = editing.district_ids || [];
+    if (districtIds.length > 0 && states.length > 0) {
+      for (const d of districts) {
+        if (districtIds.includes(d.id)) {
+          const st = states.find(s => s.id === d.state_id);
+          if (st?.name) stateNames.add(st.name);
+        }
+      }
+    }
+    if (stateNames.size === 0) return vendors;
+    return vendors.filter(v => v.state_name && stateNames.has(v.state_name));
+  }, [vendors, editing.state_codes, editing.district_ids, districts, states]);
+
+  const locationLabel = useMemo(() => {
+    const parts: string[] = [];
+    if ((editing.state_codes || []).length) parts.push(`${editing.state_codes.length} state(s)`);
+    if ((editing.district_ids || []).length) parts.push(`${editing.district_ids.length} district(s)`);
+    return parts.length ? parts.join(" · ") : "all locations";
+  }, [editing.state_codes, editing.district_ids]);
 
   return (
     <div className="border rounded-lg p-3 bg-muted/20 space-y-2">
