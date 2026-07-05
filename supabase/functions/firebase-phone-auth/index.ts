@@ -168,6 +168,35 @@ async function getMappedCustomerAuthUser(client: any, customerId: string): Promi
   return data?.user || null;
 }
 
+async function getCustomerForAuthUser(client: any, userId: string): Promise<any | null> {
+  const { data: role, error: roleErr } = await client
+    .from("user_roles")
+    .select("customer_id")
+    .eq("user_id", userId)
+    .eq("role", "customer")
+    .maybeSingle();
+
+  if (roleErr) {
+    console.error("Auth customer role lookup error:", roleErr.message || JSON.stringify(roleErr));
+    return null;
+  }
+  if (!role?.customer_id) return null;
+
+  const { data: customer, error: customerErr } = await client
+    .from("customers")
+    .select("id, name, email, mobile, status")
+    .eq("id", role.customer_id)
+    .neq("status", "deleted")
+    .maybeSingle();
+
+  if (customerErr) {
+    console.error("Auth mapped customer lookup error:", customerErr.message || JSON.stringify(customerErr));
+    return null;
+  }
+
+  return customer || null;
+}
+
 function normalizeBase64Url(value: string): string {
   const padded = value.replace(/-/g, "+").replace(/_/g, "/");
   return padded + "=".repeat((4 - (padded.length % 4)) % 4);
@@ -653,7 +682,20 @@ Deno.serve(async (req) => {
     }
 
     // ── CUSTOMER LOGIN MODE (default) ──────────────────────────────────
-    if (!existingCustomer) {
+    let resolvedCustomer = existingCustomer;
+    let resolvedAuthUser: any | null = null;
+
+    if (!resolvedCustomer) {
+      resolvedAuthUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
+      if (resolvedAuthUser) {
+        resolvedCustomer = await getCustomerForAuthUser(supabase, resolvedAuthUser.id);
+        if (resolvedCustomer) {
+          console.log("Resolved customer through existing auth role:", resolvedCustomer.id);
+        }
+      }
+    }
+
+    if (!resolvedCustomer) {
       console.log("No registered customer found for phone:", normalizedPhone);
       return respond(false, {
         error: "No account found with this mobile number. Please create an account first.",
@@ -661,8 +703,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.log("Found registered customer:", existingCustomer.id);
-    let supabaseUser = await getMappedCustomerAuthUser(supabase, existingCustomer.id);
+    console.log("Found registered customer:", resolvedCustomer.id);
+    let supabaseUser = resolvedAuthUser || await getMappedCustomerAuthUser(supabase, resolvedCustomer.id);
     if (!supabaseUser) {
       supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
     }
@@ -688,7 +730,7 @@ Deno.serve(async (req) => {
       const { data: oldRole } = await supabase
         .from("user_roles")
         .select("id, user_id")
-        .eq("customer_id", existingCustomer.id)
+        .eq("customer_id", resolvedCustomer.id)
         .eq("role", "customer")
         .maybeSingle();
 
@@ -701,30 +743,30 @@ Deno.serve(async (req) => {
         if (roleRepairErr) {
           console.error("Failed to repoint customer user_role:", roleRepairErr.message);
         } else {
-          console.log("Repointed customer user_role for", existingCustomer.id, "from", oldRole.user_id, "to", supabaseUser!.id);
+          console.log("Repointed customer user_role for", resolvedCustomer.id, "from", oldRole.user_id, "to", supabaseUser!.id);
         }
       } else {
         const { error: roleInsertErr } = await supabase.from("user_roles").insert({
           user_id: supabaseUser!.id,
           role: "customer",
-          customer_id: existingCustomer.id,
+          customer_id: resolvedCustomer.id,
         });
         if (roleInsertErr) {
           console.error("Failed to create customer user_role:", roleInsertErr.message);
         } else {
-          console.log("Created missing customer user_role for", supabaseUser!.id, "→", existingCustomer.id);
+          console.log("Created missing customer user_role for", supabaseUser!.id, "→", resolvedCustomer.id);
         }
       }
-    } else if (!existingRole.customer_id || existingRole.customer_id !== existingCustomer.id) {
+    } else if (!existingRole.customer_id || existingRole.customer_id !== resolvedCustomer.id) {
       // Role exists but is missing or points to the wrong imported customer record.
       const { error: roleUpdateErr } = await supabase.from("user_roles")
-        .update({ customer_id: existingCustomer.id })
+        .update({ customer_id: resolvedCustomer.id })
         .eq("id", existingRole.id);
 
       if (roleUpdateErr) {
         console.error("Failed to sync customer user_role linkage:", roleUpdateErr.message);
       } else {
-        console.log("Synced customer user_role for", supabaseUser!.id, "→", existingCustomer.id, "(was", existingRole.customer_id, ")");
+        console.log("Synced customer user_role for", supabaseUser!.id, "→", resolvedCustomer.id, "(was", existingRole.customer_id, ")");
       }
     }
 
