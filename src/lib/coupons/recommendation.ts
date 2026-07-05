@@ -78,11 +78,62 @@ export async function recommendCouponsForCart(params: {
   });
   if (error) {
     console.error("recommend_coupons_for_cart failed", error);
-    return { coupons: [], best_campaign_id: null, auto_apply_campaign_id: null };
   }
+  const recos: CouponRecommendation[] = (data?.coupons as CouponRecommendation[]) || [];
+
+  // Merge in the customer's assigned/available coupons that the cart-matcher
+  // did not surface (e.g. per-user Namakkal codes on carts that already pass
+  // min-order but were filtered out because the campaign wasn't cart-scored).
+  // This lets the checkout page always show the user's usable coupons so they
+  // can pick one and apply.
+  try {
+    const { data: avail } = await (supabase.rpc as any)("get_customer_available_coupons", {
+      _customer_id: params.customerId,
+      _lat: geo.lat,
+      _lng: geo.lng,
+    });
+    const rows: any[] = Array.isArray(avail) ? avail : [];
+    const known = new Set(recos.map((r) => r.campaign_id));
+    for (const r of rows) {
+      if (known.has(r.campaign_id)) continue;
+      // Estimate discount from the campaign's own configured value against the
+      // cart subtotal. Server-side validate_coupon_code re-computes the real
+      // discount on Apply, so this is only for display.
+      const dv = Number(r.discount_value || 0);
+      const est =
+        r.discount_type === "percent" || r.discount_type === "percentage"
+          ? Math.min(
+              r.max_discount != null ? Number(r.max_discount) : Infinity,
+              Math.round(((params.subtotal * dv) / 100) * 100) / 100,
+            )
+          : Math.min(dv, params.subtotal);
+      recos.push({
+        campaign_id: r.campaign_id,
+        campaign_name: r.name,
+        description: r.description ?? null,
+        code: r.code,
+        discount_type: r.discount_type,
+        discount_value: dv,
+        max_discount: r.max_discount ?? null,
+        min_order_amount: r.min_order_amount ?? null,
+        expires_at: r.expires_at ?? null,
+        apply_mode: "manual",
+        priority: 0,
+        banner_url: null,
+        exclusive: false,
+        stackable: false,
+        discount_amount: Number.isFinite(est) ? Math.max(0, est) : 0,
+        product_id: null,
+        validation: {},
+      });
+    }
+  } catch (e) {
+    console.warn("get_customer_available_coupons merge failed", e);
+  }
+
   return {
-    coupons: (data?.coupons as CouponRecommendation[]) || [],
-    best_campaign_id: data?.best_campaign_id ?? null,
+    coupons: recos,
+    best_campaign_id: data?.best_campaign_id ?? (recos[0]?.campaign_id ?? null),
     auto_apply_campaign_id: data?.auto_apply_campaign_id ?? null,
   };
 }
