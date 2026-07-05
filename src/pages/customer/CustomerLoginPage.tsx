@@ -14,7 +14,11 @@ import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 const OTP_SEND_TIMEOUT_MS = 18000;
-const OTP_GATE_TIMEOUT_MS = 6000;
+const OTP_GATE_GRACE_MS = 500;
+
+type OtpGateResult =
+  | { allowed: true }
+  | { allowed: false; reason: "not_found" | "inactive" | "rate_limited"; status?: string; retryAfter?: number };
 
 function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, code = "auth/otp-timeout"): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -35,6 +39,60 @@ function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, code = "auth
       },
     );
   });
+}
+
+async function checkOtpGate(cleanedPhone: string, fullPhone: string): Promise<OtpGateResult> {
+  const loginStatusPromise = supabase.rpc("check_phone_login_status" as any, { _phone: cleanedPhone }) as PromiseLike<{
+    data: unknown;
+    error: { message?: string } | null;
+  }>;
+  const rateLimitPromise = checkOtpRateLimit(fullPhone);
+
+  const statusRes = await loginStatusPromise;
+  if (statusRes.error) {
+    console.warn("OTP login status check failed, continuing with OTP:", statusRes.error.message);
+    return { allowed: true };
+  }
+
+  const ls = (statusRes.data || {}) as { found?: boolean; status?: string };
+  const s = (ls.status || '').toLowerCase();
+
+  if (!ls.found) return { allowed: false, reason: "not_found" };
+  if (s !== 'active') return { allowed: false, reason: "inactive", status: s };
+
+  const rateRes = await rateLimitPromise;
+  if (!rateRes.allowed) return { allowed: false, reason: "rate_limited", retryAfter: rateRes.retry_after };
+
+  return { allowed: true };
+}
+
+function getQuickGateResult(gatePromise: Promise<OtpGateResult>): Promise<OtpGateResult | null> {
+  return Promise.race([
+    gatePromise.catch((error) => {
+      console.warn("OTP gate check failed, continuing with OTP:", error?.message || error);
+      return { allowed: true } as OtpGateResult;
+    }),
+    new Promise<null>((resolve) => window.setTimeout(() => resolve(null), OTP_GATE_GRACE_MS)),
+  ]);
+}
+
+function showOtpGateBlock(result: Extract<OtpGateResult, { allowed: false }>, setTimer: (seconds: number) => void) {
+  if (result.reason === "not_found") {
+    toast.error("No account found with this mobile number. Please create an account first.", { duration: 5000 });
+    return;
+  }
+
+  if (result.reason === "rate_limited") {
+    toast.error("Too many OTP requests. Please try again after 5 minutes.", { duration: 6000 });
+    setTimer(result.retryAfter || 300);
+    return;
+  }
+
+  const s = result.status || "inactive";
+  if (s === 'deleted') toast.error("Your account has been deleted. Please contact support if this is a mistake.", { duration: 6000 });
+  else if (s === 'suspended') toast.error("Your account has been suspended. Please contact support to restore access.", { duration: 6000 });
+  else if (s === 'deactivated' || s === 'inactive') toast.error("Your account is inactive. Please contact support to reactivate.", { duration: 6000 });
+  else toast.error(`Your account is ${s} and cannot sign in. Contact support.`, { duration: 6000 });
 }
 
 export default function CustomerLoginPage() {
@@ -90,39 +148,14 @@ export default function CustomerLoginPage() {
     setLoading(true);
     try {
       const fullPhone = `${countryCode}${cleaned}`;
-      const { data: loginStatus, error: registrationCheckError } = await withTimeout(
-        supabase.rpc("check_phone_login_status" as any, { _phone: cleaned }),
-        OTP_GATE_TIMEOUT_MS,
-        "auth/otp-gate-timeout",
-      ) as { data: any; error: any };
 
-      if (registrationCheckError) {
-        throw new Error("Unable to verify mobile number right now. Please try again.");
-      }
-
-      const ls = (loginStatus || {}) as { found?: boolean; status?: string };
-      if (!ls.found) {
-        toast.error("No account found with this mobile number. Please create an account first.", { duration: 5000 });
-        return;
-      }
-      const s = (ls.status || '').toLowerCase();
-      if (s !== 'active') {
-        if (s === 'deleted') toast.error("Your account has been deleted. Please contact support if this is a mistake.", { duration: 6000 });
-        else if (s === 'suspended') toast.error("Your account has been suspended. Please contact support to restore access.", { duration: 6000 });
-        else if (s === 'deactivated' || s === 'inactive') toast.error("Your account is inactive. Please contact support to reactivate.", { duration: 6000 });
-        else toast.error(`Your account is ${s} and cannot sign in. Contact support.`, { duration: 6000 });
+      const gateResult = await getQuickGateResult(checkOtpGate(cleaned, fullPhone));
+      if (gateResult?.allowed === false) {
+        showOtpGateBlock(gateResult, setTimer);
         return;
       }
 
-      // Rate limit check before Firebase OTP
-      const rateCheck = await withTimeout(checkOtpRateLimit(`${countryCode}${cleaned}`), OTP_GATE_TIMEOUT_MS, "auth/otp-gate-timeout");
-      if (!rateCheck.allowed) {
-        toast.error("Too many OTP requests. Please try again after 5 minutes.", { duration: 6000 });
-        setTimer(rateCheck.retry_after);
-        return;
-      }
-
-      await withTimeout(sendOTP(`${countryCode}${cleaned}`), OTP_SEND_TIMEOUT_MS);
+      await withTimeout(sendOTP(fullPhone), OTP_SEND_TIMEOUT_MS);
       setOtpSent(true);
       setTimer(30);
       toast.success("OTP sent successfully!");
@@ -134,7 +167,6 @@ export default function CustomerLoginPage() {
       } else if (err.code === "auth/invalid-phone-number") toast.error("Invalid phone number.");
       else if (err.code === "auth/captcha-check-failed") toast.error("Security check failed. Please refresh and try again.");
       else if (err.code === "auth/recaptcha-timeout" || err.code === "auth/otp-timeout") toast.error("OTP is taking too long. Please try again.", { duration: 6000 });
-      else if (err.code === "auth/otp-gate-timeout") toast.error("Unable to verify this number right now. Please try again.", { duration: 6000 });
       else toast.error(err.message || "Failed to send OTP");
       clearRecaptcha();
     } finally { setLoading(false); }
