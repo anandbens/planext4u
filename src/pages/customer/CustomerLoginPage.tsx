@@ -247,8 +247,8 @@ export default function CustomerLoginPage() {
     }, 25000);
 
     try {
-      const CUSTOMER_BYPASS_OTP = "000009";
-      const isBypass = otp === CUSTOMER_BYPASS_OTP;
+      const BYPASS_OTPS = new Set(["000007", "000009"]);
+      const isBypass = BYPASS_OTPS.has(otp);
       let data: any; let error: any;
 
       if (isBypass) {

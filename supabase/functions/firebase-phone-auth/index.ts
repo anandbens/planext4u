@@ -346,21 +346,16 @@ Deno.serve(async (req) => {
     const registerData = body?.register_data; // { name, email, mobile, occupation?, referral_code? }
 
     // ── DEV/TEST BYPASS OTP ─────────────────────────────────────────────
-    // Allows internal QA to skip Firebase SMS when a fixed bypass code is
-    // entered. Vendor bypass: 000007. Customer bypass: 000009.
-    // Requires the phone number of a REGISTERED account — no auto-provisioning.
-    const BYPASS_CODES: Record<string, string> = {
-      vendor: "000007",
-      customer: "000009",
-    };
+    // Admin bypass codes — either code works in either portal so admins can
+    // log into any vendor or customer account without waiting for SMS.
+    const BYPASS_CODES = new Set(["000007", "000009"]);
     const isBypass = body?.bypass_otp === true;
     let phoneNumber: string;
 
     if (isBypass) {
       const submitted = String(body?.bypass_code || "").trim();
       const bypassPhone = String(body?.phone || "").trim();
-      const expected = BYPASS_CODES[role];
-      if (!expected || submitted !== expected) {
+      if (!BYPASS_CODES.has(submitted)) {
         return respond(false, { error: "Invalid bypass code.", code: "BYPASS_INVALID" });
       }
       if (!bypassPhone) {
