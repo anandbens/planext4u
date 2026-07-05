@@ -20,11 +20,13 @@ export function VendorProtectedRoute({ children }: { children: React.ReactNode }
   const location = useLocation();
   const [resolved, setResolved] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [sessionGraceExpired, setSessionGraceExpired] = useState(false);
   const settledRef = useRef(false);
 
   useEffect(() => {
     if (vendorUser) { settledRef.current = true; setResolved(true); return; }
     settledRef.current = false;
+    setSessionGraceExpired(false);
 
     const isNative = Capacitor.isNativePlatform();
     const stampValid = isSessionStampValid("vendor");
@@ -50,7 +52,8 @@ export function VendorProtectedRoute({ children }: { children: React.ReactNode }
     });
 
     const t = setTimeout(() => settle(null), hardTimeoutMs);
-    return () => { clearTimeout(t); subscription.unsubscribe(); };
+    const grace = setTimeout(() => setSessionGraceExpired(true), isNative ? 3500 : 1800);
+    return () => { clearTimeout(t); clearTimeout(grace); subscription.unsubscribe(); };
   }, [vendorUser]);
 
   if (isLoading || (!vendorUser && !resolved)) {
@@ -68,7 +71,7 @@ export function VendorProtectedRoute({ children }: { children: React.ReactNode }
     return <VendorFTUXFlow>{children}</VendorFTUXFlow>;
   }
 
-  if (hasSession && isSessionStampValid("vendor")) {
+  if (hasSession && isSessionStampValid("vendor") && !sessionGraceExpired) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />

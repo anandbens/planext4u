@@ -269,6 +269,8 @@ function detectForcedPortal(): "vendor" | "rider" | null {
 function detectForcedVendorPortal() { return detectForcedPortal() === "vendor"; }
 function detectForcedRiderPortal() { return detectForcedPortal() === "rider"; }
 
+const APP_ID_DETECTION_TIMEOUT_MS = 900;
+
 function ProtectedPage({ children }: { children: React.ReactNode }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
 }
@@ -347,7 +349,14 @@ const AppRoutes = () => {
   // Detect native app identity on mount
   useEffect(() => {
     if (!isNativePlatform() || forcedVendorPortal || forcedRiderPortal) return;
+
+    let cancelled = false;
+    const fallback = setTimeout(() => {
+      if (!cancelled) setAppIdReady(true);
+    }, APP_ID_DETECTION_TIMEOUT_MS);
+
     getNativeAppId().then((appId) => {
+      if (cancelled) return;
       const isVendor = appId === "com.p4u.p4u_vendor" || appId === "com.planext4u.vendor" || isVendorAppSync();
       const isRider = appId === "com.planext4u.rider" || isRiderAppSync();
       setIsVendorNativeApp(isVendor);
@@ -355,7 +364,12 @@ const AppRoutes = () => {
       if (isVendor) sessionStorage.setItem(NATIVE_PORTAL_STORAGE_KEY, "vendor");
       if (isRider) sessionStorage.setItem(NATIVE_PORTAL_STORAGE_KEY, "rider");
       setAppIdReady(true);
-    });
+    }).finally(() => clearTimeout(fallback));
+
+    return () => {
+      cancelled = true;
+      clearTimeout(fallback);
+    };
   }, [forcedVendorPortal, forcedRiderPortal]);
 
   useEffect(() => {
@@ -423,6 +437,7 @@ const AppRoutes = () => {
         <Routes>
           {/* Redirect root based on app identity */}
           <Route path="/" element={<Navigate to={rootRedirect} replace />} />
+          <Route path="/index" element={<Navigate to={rootRedirect} replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/admin/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<ProtectedPage><DashboardPage /></ProtectedPage>} />

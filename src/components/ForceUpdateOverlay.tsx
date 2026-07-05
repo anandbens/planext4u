@@ -16,11 +16,9 @@ interface Props {
 export function ForceUpdateOverlay({ children }: Props) {
   const [updateRequired, setUpdateRequired] = useState(false);
   const [storeUrl, setStoreUrl] = useState(CUSTOMER_STORE_URL);
-  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (!isNativePlatform()) {
-      setChecking(false);
       return;
     }
 
@@ -55,12 +53,10 @@ export function ForceUpdateOverlay({ children }: Props) {
         }
       } catch {
         // If check fails, let the user through
-      } finally {
-        if (!cancelled) setChecking(false);
       }
     }
 
-    check();
+    void check();
     return () => {
       cancelled = true;
     };
@@ -73,14 +69,6 @@ export function ForceUpdateOverlay({ children }: Props) {
       window.open(storeUrl, "_blank");
     }
   };
-
-  if (checking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-      </div>
-    );
-  }
 
   if (updateRequired) {
     return (
