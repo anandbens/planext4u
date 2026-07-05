@@ -164,6 +164,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
 
   const menuListItems = [
     { label: "Your Wishlist", icon: Heart, to: "/app/wishlist" },
+    { label: "My Coupons", icon: Tag, to: "/app/coupons" },
     { label: "Wallet & Points", icon: Wallet, to: "/app/wallet" },
     { label: "Referrals", icon: Gift, to: "/app/referrals" },
     { label: "KYC Verification", icon: Shield, to: "/app/kyc" },
