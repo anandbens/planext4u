@@ -12,7 +12,7 @@ import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 const OTP_SEND_TIMEOUT_MS = 18000;
 const OTP_GATE_TIMEOUT_MS = 6000;
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, code = "auth/otp-timeout"): Promise<T> {
+function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, code = "auth/otp-timeout"): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(() => {
       reject(Object.assign(new Error("OTP request timed out. Please try again."), {
