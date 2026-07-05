@@ -39,6 +39,7 @@ export default function AdminCouponsPage() {
   const [bulkCount, setBulkCount] = useState(100);
   const [bulkLen, setBulkLen] = useState(8);
   const [exportOpen, setExportOpen] = useState(false);
+  const [confirmGen, setConfirmGen] = useState<{ campaign: Campaign; count: number; length: number } | null>(null);
 
   const load = async () => {
     setLoading(true);
