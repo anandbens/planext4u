@@ -66,6 +66,11 @@ export default function CustomerCartPage() {
   const [itemRedemptionMap, setItemRedemptionMap] = useState<Record<string, { maxRedemption: number; redemptionSource: string }>>({});
   const [appliedCartRules, setAppliedCartRules] = useState<AppliedCartRule[]>([]);
   const [cartRuleDiscount, setCartRuleDiscount] = useState(0);
+  const [recoCoupons, setRecoCoupons] = useState<CouponRecommendation[]>([]);
+  const [bestCampaignId, setBestCampaignId] = useState<string | null>(null);
+  const [autoApplyCampaignId, setAutoApplyCampaignId] = useState<string | null>(null);
+  const [recoLoading, setRecoLoading] = useState(false);
+
 
   useEffect(() => {
     Promise.all([api.getCart(), api.getCustomerProfile(customerId), loadAddresses(), loadPlatformFees()]).then(async ([cartItems, profile]) => {
