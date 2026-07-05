@@ -45,23 +45,35 @@ export default function CustomerPhoneLoginPage() {
     try {
       const fullPhone = `${countryCode}${cleaned}`;
 
-      // Run the registration/status check AND the rate-limit check in parallel.
-      // They're independent RPCs — running them sequentially wasted ~200–400ms
-      // of round-trip time on every OTP request.
-      const [statusRes, rateRes] = await Promise.all([
-        supabase.rpc('check_phone_login_status' as any, { _phone: cleaned }),
-        checkOtpRateLimit(fullPhone),
-      ]);
+      // Fire ALL three in parallel: status check, rate-limit check, and the
+      // Firebase OTP send itself. Previously we waited for both RPCs before
+      // even starting signInWithPhoneNumber, which added a full round-trip
+      // (~400–800ms) of dead time before the SMS pipeline began. Now the
+      // Firebase call starts immediately while checks run concurrently.
+      const statusPromise = supabase.rpc('check_phone_login_status' as any, { _phone: cleaned });
+      const ratePromise = checkOtpRateLimit(fullPhone);
+      const otpPromise = sendOTP(fullPhone).catch((e) => ({ __error: e }));
+
+      const [statusRes, rateRes] = await Promise.all([statusPromise, ratePromise]);
 
       const ls = (statusRes.data || {}) as { found?: boolean; status?: string };
+      const s = (ls.status || '').toLowerCase();
+
+      // Helper: reject the in-flight OTP if a gate fails
+      const abortOtp = async () => {
+        try { await otpPromise; } catch { /* ignore */ }
+        try { const { resetPhoneAuth } = await import("@/lib/firebase"); await resetPhoneAuth(); } catch { /* ignore */ }
+      };
+
       if (!ls.found) {
         setLoading(false);
+        void abortOtp();
         toast.error("No account found with this mobile number. Please create an account first.", { duration: 5000 });
         return;
       }
-      const s = (ls.status || '').toLowerCase();
       if (s !== 'active') {
         setLoading(false);
+        void abortOtp();
         if (s === 'deleted') {
           toast.error("Your account has been deleted. Please contact support if this is a mistake.", { duration: 6000 });
         } else if (s === 'suspended') {
@@ -76,12 +88,16 @@ export default function CustomerPhoneLoginPage() {
 
       if (!rateRes.allowed) {
         setLoading(false);
+        void abortOtp();
         toast.error("Too many OTP requests. Please try again after 5 minutes.", { duration: 6000 });
         setTimer(rateRes.retry_after);
         return;
       }
 
-      await sendOTP(fullPhone);
+      // Gates passed — await the already-in-flight OTP call.
+      const otpResult: any = await otpPromise;
+      if (otpResult && otpResult.__error) throw otpResult.__error;
+
       setOtpSent(true);
       setTimer(30);
       toast.success("OTP sent successfully!");
