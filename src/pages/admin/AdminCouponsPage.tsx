@@ -36,6 +36,7 @@ export default function AdminCouponsPage() {
   const [codesView, setCodesView] = useState<{ campaign: Campaign; codes: any[] } | null>(null);
   const [bulkCount, setBulkCount] = useState(100);
   const [bulkLen, setBulkLen] = useState(8);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
