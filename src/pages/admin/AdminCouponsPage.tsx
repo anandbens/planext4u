@@ -209,6 +209,7 @@ export default function AdminCouponsPage() {
           <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> New Campaign</Button>
         </div>
       </div>
+      <CouponAdminNav />
 
       <CouponExportDialog
         open={exportOpen}
