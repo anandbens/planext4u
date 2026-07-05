@@ -88,12 +88,13 @@ export async function redeemCouponForOrder(
 
   // Best-effort client audit trail (server already logs the primary audit row)
   void logCouponAudit({
-    event_type: result.ok ? "coupon_redeemed" : "coupon_redeem_failed",
+    event: "coupon_redeemed",
     code: input.code,
-    order_id: input.orderId,
-    customer_id: input.customerId ?? null,
+    orderId: input.orderId,
+    customerId: input.customerId ?? null,
+    reason: result.reason ?? null,
     metadata: {
-      reason: result.reason,
+      ok: result.ok,
       idempotent: result.idempotent,
       redemption_id: result.redemption_id,
       discount_amount: input.discountAmount,
