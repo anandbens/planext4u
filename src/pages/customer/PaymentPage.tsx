@@ -360,6 +360,8 @@ export default function PaymentPage() {
           gst_on_platform_fee: Math.round(gstPf * 100) / 100,
           total: itemTotal + pf + gstPf - couponDiscForOrder - (pointsUsed || 0),
           status: 'placed',
+          payment_status: 'paid',
+          payment_method: paymentId ? 'razorpay' : 'free',
           payment_reference_id: paymentId || null,
           razorpay_order_id: rzpOrderId || null,
           effective_commission: effectiveCommission,
