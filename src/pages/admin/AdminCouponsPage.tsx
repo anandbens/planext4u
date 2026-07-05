@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/friendly-error";
-import { Plus, Pencil, Trash2, Tag, Download, Ticket } from "lucide-react";
+import { Plus, Pencil, Trash2, Tag, Download, Ticket, FileDown } from "lucide-react";
+import { CouponExportDialog } from "@/components/admin/CouponExportDialog";
 
 type Campaign = any;
 
@@ -35,6 +36,7 @@ export default function AdminCouponsPage() {
   const [codesView, setCodesView] = useState<{ campaign: Campaign; codes: any[] } | null>(null);
   const [bulkCount, setBulkCount] = useState(100);
   const [bulkLen, setBulkLen] = useState(8);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -146,8 +148,19 @@ export default function AdminCouponsPage() {
           <h1 className="page-title">Coupons</h1>
           <p className="page-description">{list.length} campaigns · bulk-generate 6-8 digit codes tied to vendors, products, districts</p>
         </div>
-        <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> New Campaign</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setExportOpen(true)}><FileDown className="w-4 h-4 mr-1" /> Export</Button>
+          <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> New Campaign</Button>
+        </div>
       </div>
+
+      <CouponExportDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        campaigns={list}
+        vendors={vendors}
+        districts={districts}
+      />
 
       {loading ? (
         <div className="flex justify-center py-12"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>
