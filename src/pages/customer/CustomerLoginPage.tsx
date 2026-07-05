@@ -128,8 +128,12 @@ export default function CustomerLoginPage() {
 
       // Wait for the AuthProvider to finish loading the customer profile,
       // not just the raw auth session, before entering protected routes.
+      // Wait for the AuthProvider to hydrate the customer profile. Tight
+      // 75 ms polling instead of 200 ms so users don't stare at a spinner
+      // while the profile fetch has already resolved.
       const waitForCustomer = () => new Promise<boolean>((resolve) => {
         let attempts = 0;
+        const MAX_ATTEMPTS = 100; // 100 × 75ms ≈ 7.5s upper bound
         const check = () => {
           try {
             const saved = localStorage.getItem("customer_user");
@@ -142,13 +146,13 @@ export default function CustomerLoginPage() {
             // Ignore malformed cache and keep polling until AuthProvider rewrites it.
           }
 
-          if (attempts >= 40) {
+          if (attempts >= MAX_ATTEMPTS) {
             resolve(false);
             return;
           }
 
           attempts += 1;
-          setTimeout(check, 200);
+          setTimeout(check, 75);
         };
 
         check();
