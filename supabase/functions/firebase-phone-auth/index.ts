@@ -146,6 +146,28 @@ async function createOrGetAuthUser(
   return null;
 }
 
+async function getMappedCustomerAuthUser(client: any, customerId: string): Promise<any | null> {
+  const { data: role, error: roleErr } = await client
+    .from("user_roles")
+    .select("user_id")
+    .eq("customer_id", customerId)
+    .eq("role", "customer")
+    .maybeSingle();
+
+  if (roleErr) {
+    console.error("Customer mapped role lookup error:", roleErr.message || JSON.stringify(roleErr));
+    return null;
+  }
+  if (!role?.user_id) return null;
+
+  const { data, error } = await client.auth.admin.getUserById(role.user_id);
+  if (error) {
+    console.error("Mapped customer auth lookup error:", error.message || JSON.stringify(error));
+    return null;
+  }
+  return data?.user || null;
+}
+
 function normalizeBase64Url(value: string): string {
   const padded = value.replace(/-/g, "+").replace(/_/g, "/");
   return padded + "=".repeat((4 - (padded.length % 4)) % 4);
@@ -640,7 +662,10 @@ Deno.serve(async (req) => {
     }
 
     console.log("Found registered customer:", existingCustomer.id);
-    let supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
+    let supabaseUser = await getMappedCustomerAuthUser(supabase, existingCustomer.id);
+    if (!supabaseUser) {
+      supabaseUser = await findAuthUserByEmailOrPhone(supabase, phoneEmail, normalizedPhone);
+    }
     if (!supabaseUser) {
       supabaseUser = await createOrGetAuthUser(supabase, phoneEmail, normalizedPhone);
     }
