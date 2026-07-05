@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned, Building, Film, Plus, Compass, Users, UtensilsCrossed, Coins } from "lucide-react";
+import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned, Building, Film, Plus, Compass, Users, UtensilsCrossed, Coins, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
@@ -164,6 +164,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
 
   const menuListItems = [
     { label: "Your Wishlist", icon: Heart, to: "/app/wishlist" },
+    { label: "My Coupons", icon: Tag, to: "/app/coupons" },
     { label: "Wallet & Points", icon: Wallet, to: "/app/wallet" },
     { label: "Referrals", icon: Gift, to: "/app/referrals" },
     { label: "KYC Verification", icon: Shield, to: "/app/kyc" },
