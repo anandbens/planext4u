@@ -9650,6 +9650,22 @@ export type Database = {
           vendor_id: string
         }[]
       }
+      get_customer_coupon_history: {
+        Args: { p_customer_id: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          campaign_id: string
+          campaign_name: string
+          code: string
+          discount_amount: number
+          order_amount: number
+          order_id: string
+          product_id: string
+          redeemed_at: string
+          redemption_id: string
+          rolled_back: boolean
+          vendor_id: string
+        }[]
+      }
       get_customer_id: { Args: { _user_id: string }; Returns: string }
       get_feed_with_meta: {
         Args: {
@@ -9710,6 +9726,21 @@ export type Database = {
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_vendor_coupon_history: {
+        Args: { p_limit?: number; p_offset?: number; p_vendor_id: string }
+        Returns: {
+          campaign_id: string
+          campaign_name: string
+          code: string
+          customer_id: string
+          customer_mobile: string
+          discount_amount: number
+          order_amount: number
+          order_id: string
+          redeemed_at: string
+          usage_id: string
+        }[]
       }
       get_vendor_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -9775,6 +9806,23 @@ export type Database = {
           _discount_amount: number
           _order_id: string
           _product_id: string
+        }
+        Returns: Json
+      }
+      redeem_coupon_for_order: {
+        Args: {
+          p_code: string
+          p_customer_id?: string
+          p_device?: string
+          p_discount_amount?: number
+          p_ip?: string
+          p_order_amount?: number
+          p_order_id: string
+          p_payment_reference?: string
+          p_product_id?: string
+          p_require_payment_success?: boolean
+          p_user_agent?: string
+          p_vendor_id?: string
         }
         Returns: Json
       }
