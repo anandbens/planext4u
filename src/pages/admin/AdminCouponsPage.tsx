@@ -419,6 +419,23 @@ export default function AdminCouponsPage() {
           <DialogFooter><Button variant="outline" onClick={() => setCodesView(null)}>Close</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CouponGenerateConfirm
+        open={!!confirmGen}
+        onClose={() => setConfirmGen(null)}
+        onConfirm={async () => {
+          if (!confirmGen) return;
+          await generate(confirmGen.campaign, confirmGen.count, confirmGen.length);
+          setConfirmGen(null);
+        }}
+        campaign={confirmGen?.campaign}
+        count={confirmGen?.count || 0}
+        length={confirmGen?.length || 8}
+        vendorName={vendors.find(v => v.id === confirmGen?.campaign?.vendor_id)?.business_name || (confirmGen?.campaign?.vendor_id ? undefined : "Any vendor")}
+        eligibleDistricts={confirmGen?.campaign?.district_ids?.length || districts.length}
+        eligibleVendors={confirmGen?.campaign?.vendor_id ? 1 : vendors.length}
+        eligibleProducts={confirmGen?.campaign?.product_ids?.length || undefined}
+      />
     </AdminLayout>
   );
 }
