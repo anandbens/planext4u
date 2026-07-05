@@ -640,6 +640,7 @@ const AppRoutes = () => {
           <Route path="/admin/coupons/audit" element={<AdminOnlyPage><CouponAuditLogPage /></AdminOnlyPage>} />
           <Route path="/admin/coupons/analytics" element={<AdminOnlyPage><CouponAnalyticsPage /></AdminOnlyPage>} />
           <Route path="/admin/coupons/reports" element={<AdminOnlyPage><CouponReportsPage /></AdminOnlyPage>} />
+          <Route path="/admin/coupons/generate" element={<AdminOnlyPage><CouponGeneratePage /></AdminOnlyPage>} />
           <Route path="/vendor/dropshipping" element={<VendorPage><VendorDropshippingPage /></VendorPage>} />
           <Route path="/vendor/coupons" element={<VendorPage><VendorCouponsPage /></VendorPage>} />
           <Route path="/app/coupons" element={<CustomerPage><CustomerCouponsPage /></CustomerPage>} />
