@@ -36,7 +36,7 @@ export default function SalesReportPage() {
     const fetchData = async () => {
       setLoading(true);
       let q = supabase.from("orders")
-        .select("id, created_at, customer_name, vendor_name, status, subtotal, discount, tax, platform_fee, gst_on_platform_fee, total, points_used, payment_reference_id, items")
+        .select("id, created_at, customer_name, vendor_name, status, subtotal, discount, tax, platform_fee, gst_on_platform_fee, total, points_used, payment_reference_id, items, coupon_code")
         .gte("created_at", startOfDay(dateFrom).toISOString())
         .lte("created_at", endOfDay(dateTo).toISOString())
         .order("created_at", { ascending: false });
