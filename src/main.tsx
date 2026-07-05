@@ -56,3 +56,9 @@ window.addEventListener("unhandledrejection", (e) => {
 });
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+// After first paint, warm up the most-visited route chunks in the background
+// so the second navigation is instant. Skips on Save-Data / 2G connections.
+import("./lib/prefetch-routes")
+  .then((m) => m.prefetchLikelyRoutes())
+  .catch(() => { /* non-fatal */ });
