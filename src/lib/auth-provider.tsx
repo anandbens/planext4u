@@ -519,10 +519,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     isFreshLoginRef.current = true;
     lastAuthErrorRef.current = null;
-    const hydrationPromise = new Promise<void>((resolve) => {
-      loginResolveRef.current = resolve;
-      setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 7000);
-    });
     const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       loginResolveRef.current = null;
@@ -537,7 +533,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         2500,
       ).catch((error) => console.warn('[auth] password flag update skipped:', error?.message || error));
     }
-    await hydrationPromise;
+    if (signInData?.user) {
+      const name = signInData.user.user_metadata?.name || signInData.user.email?.split('@')[0] || '';
+      const result = await loadUserRole(signInData.user.id, signInData.user.email || email, name, true);
+      isFreshLoginRef.current = false;
+      setIsLoading(false);
+      if (result === 'role_lookup_failed') await supabase.auth.signOut();
+    }
     if (lastAuthErrorRef.current) {
       const msg = lastAuthErrorRef.current;
       lastAuthErrorRef.current = null;
@@ -549,10 +551,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     isFreshLoginRef.current = true;
     lastAuthErrorRef.current = null;
-    const hydrationPromise = new Promise<void>((resolve) => {
-      loginResolveRef.current = resolve;
-      setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 7000);
-    });
     const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       loginResolveRef.current = null;
@@ -567,7 +565,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         2500,
       ).catch((error) => console.warn('[auth] password flag update skipped:', error?.message || error));
     }
-    await hydrationPromise;
+    if (signInData?.user) {
+      const name = signInData.user.user_metadata?.name || signInData.user.email?.split('@')[0] || '';
+      const result = await loadUserRole(signInData.user.id, signInData.user.email || email, name, true);
+      isFreshLoginRef.current = false;
+      setIsLoading(false);
+      if (result === 'role_lookup_failed') await supabase.auth.signOut();
+    }
     if (lastAuthErrorRef.current) {
       const msg = lastAuthErrorRef.current;
       lastAuthErrorRef.current = null;
@@ -580,10 +584,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     isFreshLoginRef.current = true;
     lastAuthErrorRef.current = null;
-    const hydrationPromise = new Promise<void>((resolve) => {
-      loginResolveRef.current = resolve;
-      setTimeout(() => { if (loginResolveRef.current) { loginResolveRef.current(); loginResolveRef.current = null; } }, 7000);
-    });
     let signInData: any = null;
     let lastError: Error | null = null;
 
@@ -611,7 +611,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         2500,
       ).catch((error) => console.warn('[auth] password flag update skipped:', error?.message || error));
     }
-    await hydrationPromise;
+    if (signInData?.user) {
+      const name = signInData.user.user_metadata?.name || signInData.user.email?.split('@')[0] || '';
+      const result = await loadUserRole(signInData.user.id, signInData.user.email || email, name, true);
+      isFreshLoginRef.current = false;
+      setIsLoading(false);
+      if (result === 'role_lookup_failed') await supabase.auth.signOut();
+    }
     if (lastAuthErrorRef.current) {
       const msg = lastAuthErrorRef.current;
       lastAuthErrorRef.current = null;
