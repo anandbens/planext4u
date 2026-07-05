@@ -77,12 +77,8 @@ export function CouponEligibilityPreview({ editing, vendors, districts }: Props)
       setProductCount(pc || 0);
 
       // Customer estimate (by district if any, else all active)
-      let cq = supabase.from("customers").select("id", { count: "exact", head: true }).eq("status", "active");
+      let cq: any = supabase.from("customers").select("id", { count: "exact", head: true }).eq("status", "active");
       if ((editing?.district_ids || []).length) cq = cq.in("district_id", editing.district_ids);
-      if (editing?.first_time_only) {
-        // Rough proxy: order_count = 0
-        cq = cq.eq("order_count", 0);
-      }
       const { count: cc } = await cq;
       setCustomerCount(cc || 0);
 
