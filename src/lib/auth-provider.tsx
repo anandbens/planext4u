@@ -424,7 +424,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 800);
     }
 
-    return () => { cancelled = true; subscription.unsubscribe(); };
+    return () => { cancelled = true; clearTimeout(loadingFallback); subscription.unsubscribe(); };
   }, [loadUserRole, purgeMismatchedCaches]);
 
   const login = async (email: string, password: string) => {
