@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,9 +6,18 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Radius, Store, Package, User, ShoppingCart, Search } from "lucide-react";
+import { MapPin, Radius, Store, Package, User, ShoppingCart, Search, X } from "lucide-react";
 
-interface Vendor { id: string; business_name?: string; name?: string; category_id?: string; state_name?: string; shop_latitude?: number; shop_longitude?: number }
+interface Vendor {
+  id: string;
+  business_name?: string;
+  name?: string;
+  category_id?: string;
+  state_name?: string;
+  city_id?: string;
+  shop_latitude?: number;
+  shop_longitude?: number;
+}
 interface District { id: string; name: string; state_id?: string }
 interface State { id: string; name: string; code?: string }
 interface Category { id: string; name: string; parent_id?: string }
@@ -61,6 +70,7 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
   const [states, setStates] = useState<State[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendorCats, setVendorCats] = useState<Category[]>([]);
+  const [cities, setCities] = useState<{ id: string; name: string; state?: string }[]>([]);
 
   useEffect(() => {
     supabase.from("states").select("id,name,code").order("name").then(({ data }) => setStates((data as any) || []));
@@ -68,6 +78,7 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
       .then(({ data }) => setCategories((data as any) || []));
     supabase.from("categories").select("id,name,parent_id").eq("category_type", "vendor").order("name").limit(200)
       .then(({ data }) => setVendorCats((data as any) || []));
+    supabase.from("cities").select("id,name,state").then(({ data }) => setCities((data as any) || []));
   }, []);
 
   const toggleArr = (field: string, id: string) => {
@@ -81,6 +92,35 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
   };
 
   const num = (v: any) => (v === "" || v === null || v === undefined ? null : Number(v));
+
+  // ── Location-aware vendor filter ─────────────────────────────
+  // Vendors are filtered by the states/districts chosen on the Location tab.
+  // • state_codes stores state NAMES (see the Location tab handler).
+  // • districts don't have a foreign-key on vendors, but cities carry a state
+  //   name; when the admin selects a district, we resolve its state via
+  //   `districts → state_id → states → name` and intersect with the vendor's
+  //   state_name. If no location is chosen, ALL active vendors are shown.
+  const filteredVendors = useMemo(() => {
+    const stateNames = new Set<string>(editing.state_codes || []);
+    const districtIds: string[] = editing.district_ids || [];
+    if (districtIds.length > 0 && states.length > 0) {
+      for (const d of districts) {
+        if (districtIds.includes(d.id)) {
+          const st = states.find(s => s.id === d.state_id);
+          if (st?.name) stateNames.add(st.name);
+        }
+      }
+    }
+    if (stateNames.size === 0) return vendors;
+    return vendors.filter(v => v.state_name && stateNames.has(v.state_name));
+  }, [vendors, editing.state_codes, editing.district_ids, districts, states]);
+
+  const locationLabel = useMemo(() => {
+    const parts: string[] = [];
+    if ((editing.state_codes || []).length) parts.push(`${editing.state_codes.length} state(s)`);
+    if ((editing.district_ids || []).length) parts.push(`${editing.district_ids.length} district(s)`);
+    return parts.length ? parts.join(" · ") : "all locations";
+  }, [editing.state_codes, editing.district_ids]);
 
   return (
     <div className="border rounded-lg p-3 bg-muted/20 space-y-2">
@@ -156,16 +196,24 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
           )}
         </TabsContent>
 
-        {/* VENDORS */}
+        {/* VENDORS — location-aware, vendor picker FIRST */}
         <TabsContent value="vendors" className="space-y-3 mt-3">
-          <div>
-            <Label className="text-xs">Vendor Categories (empty = all)</Label>
-            <CheckList items={vendorCats as any} selected={editing.vendor_category_ids || []}
-              onToggle={(id) => toggleArr("vendor_category_ids", id)} placeholder="Search vendor categories…" />
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-muted-foreground">
+              Showing vendors for <span className="font-medium text-foreground">{locationLabel}</span>
+              {filteredVendors.length !== vendors.length && ` · ${filteredVendors.length} of ${vendors.length}`}
+            </p>
+            {(editing.vendor_ids || []).length > 0 && (
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]"
+                onClick={() => onChange({ vendor_ids: [] })}>
+                <X className="w-3 h-3 mr-0.5" />Clear vendors
+              </Button>
+            )}
           </div>
+
           <div>
-            <Label className="text-xs">Vendors (empty = all active)</Label>
-            <CheckList items={vendors as any} selected={editing.vendor_ids || []}
+            <Label className="text-xs">Vendors (empty = all active in this location)</Label>
+            <CheckList items={filteredVendors as any} selected={editing.vendor_ids || []}
               onToggle={(id) => toggleArr("vendor_ids", id)} placeholder="Search vendors…" />
             {(editing.vendor_ids || []).length > 0 && (
               <p className="text-[11px] text-muted-foreground mt-1">
@@ -173,17 +221,29 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
               </p>
             )}
           </div>
+
+          <div>
+            <Label className="text-xs">Vendor Categories (empty = all)</Label>
+            <CheckList items={vendorCats as any} selected={editing.vendor_category_ids || []}
+              onToggle={(id) => toggleArr("vendor_category_ids", id)} placeholder="Search vendor categories…" />
+          </div>
         </TabsContent>
 
-        {/* PRODUCTS */}
+        {/* PRODUCTS — depend on Vendor selection, autosuggest as you type */}
         <TabsContent value="products" className="space-y-3 mt-3">
+          <ProductAutosuggest
+            vendorIds={editing.vendor_ids || []}
+            selectedIds={editing.product_ids || []}
+            onToggle={(id) => toggleArr("product_ids", id)}
+            onClear={() => onChange({ product_ids: [] })}
+          />
           <div>
             <Label className="text-xs">Product Categories (empty = all)</Label>
             <CheckList items={categories as any} selected={editing.category_ids || []}
               onToggle={(id) => toggleArr("category_ids", id)} placeholder="Search product categories…" />
           </div>
-          <p className="text-[11px] text-muted-foreground">Use the Products picker below (in the main editor) to add specific product IDs.</p>
         </TabsContent>
+
 
         {/* CUSTOMERS */}
         <TabsContent value="customers" className="space-y-3 mt-3">
@@ -256,3 +316,131 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
     </div>
   );
 }
+
+/**
+ * ProductAutosuggest — searches `products` live as the admin types.
+ * Depends on the selected `vendorIds`: if any vendors are selected we
+ * scope the search to those vendors, otherwise we search across all
+ * active products. Debounced, capped to 20 rows, keyboard-friendly.
+ */
+function ProductAutosuggest({
+  vendorIds, selectedIds, onToggle, onClear,
+}: {
+  vendorIds: string[];
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+  onClear: () => void;
+}) {
+  const [q, setQ] = useState("");
+  const [rows, setRows] = useState<{ id: string; title: string; vendor_name?: string }[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Record<string, { id: string; title: string; vendor_name?: string }>>({});
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  // Fetch labels for already-selected product IDs so chips render properly on edit
+  useEffect(() => {
+    const missing = selectedIds.filter(id => !selectedRows[id]);
+    if (missing.length === 0) return;
+    supabase.from("products").select("id, title, vendor_name").in("id", missing).then(({ data }) => {
+      if (!data) return;
+      setSelectedRows(prev => {
+        const next = { ...prev };
+        for (const r of data as any[]) next[r.id] = r;
+        return next;
+      });
+    });
+  }, [selectedIds]); // eslint-disable-line
+
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      let query = supabase.from("products").select("id, title, vendor_name, vendor_id").eq("status", "active").order("title").limit(20);
+      if (vendorIds.length > 0) query = query.in("vendor_id", vendorIds);
+      if (q.trim()) query = query.ilike("title", `%${q.trim()}%`);
+      const { data } = await query;
+      setRows((data as any) || []);
+      setLoading(false);
+    }, 220);
+    return () => clearTimeout(t);
+  }, [q, vendorIds.join(","), open]);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  const scopeLabel = vendorIds.length > 0
+    ? `Searching products of ${vendorIds.length} selected vendor(s)`
+    : "Searching all active products (no vendors selected)";
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-xs">Applicable Products {selectedIds.length > 0 && <Badge variant="secondary" className="ml-1 text-[10px]">{selectedIds.length}</Badge>}</Label>
+        {selectedIds.length > 0 && (
+          <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={onClear}>
+            <X className="w-3 h-3 mr-0.5" />Clear
+          </Button>
+        )}
+      </div>
+
+      <div ref={boxRef} className="relative">
+        <div className="relative">
+          <Search className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={q}
+            onFocus={() => setOpen(true)}
+            onChange={e => { setQ(e.target.value); setOpen(true); }}
+            placeholder={vendorIds.length ? "Type to search this vendor's products…" : "Type to search products…"}
+            className="h-8 pl-6 text-xs"
+          />
+        </div>
+        {open && (
+          <div className="absolute z-30 left-0 right-0 mt-1 rounded-md border bg-popover shadow-md max-h-56 overflow-auto">
+            {loading && <p className="text-[11px] text-muted-foreground px-3 py-2">Searching…</p>}
+            {!loading && rows.length === 0 && <p className="text-[11px] text-muted-foreground px-3 py-2">No products found</p>}
+            {rows.map(r => {
+              const on = selectedIds.includes(r.id);
+              return (
+                <button key={r.id} type="button"
+                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted flex items-center gap-2 ${on ? "bg-primary/10" : ""}`}
+                  onClick={() => {
+                    onToggle(r.id);
+                    setSelectedRows(prev => ({ ...prev, [r.id]: r }));
+                  }}>
+                  <input type="checkbox" checked={on} readOnly />
+                  <span className="flex-1 truncate">{r.title}</span>
+                  {r.vendor_name && <span className="text-[10px] text-muted-foreground truncate">{r.vendor_name}</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <p className="text-[10px] text-muted-foreground mt-1">{scopeLabel}</p>
+
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {selectedIds.map(id => {
+            const r = selectedRows[id];
+            return (
+              <Badge key={id} variant="secondary" className="text-[10px] pr-1">
+                {r?.title || id.slice(0, 8)}
+                <button type="button" className="ml-1 hover:text-destructive" onClick={() => onToggle(id)}>
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+

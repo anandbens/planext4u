@@ -47,7 +47,7 @@ export default function AdminCouponsPage() {
     setLoading(true);
     const [{ data: c }, { data: v }, { data: d }] = await Promise.all([
       supabase.from("coupon_campaigns").select("*").order("created_at", { ascending: false }),
-      supabase.from("vendors").select("id, business_name, name, shop_latitude, shop_longitude").eq("status", "active").order("business_name"),
+      supabase.from("vendors").select("id, business_name, name, state_name, city_id, shop_latitude, shop_longitude").eq("status", "active").order("business_name"),
       supabase.from("districts").select("id, name, state_id").eq("status", "active").order("name"),
     ]);
     setList((c as any) || []);
