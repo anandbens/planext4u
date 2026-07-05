@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/friendly-error";
 import { Plus, Pencil, Trash2, Tag, Download, Ticket, FileDown } from "lucide-react";
 import { CouponExportDialog } from "@/components/admin/CouponExportDialog";
+import { CouponEligibilityPreview } from "@/components/admin/CouponEligibilityPreview";
 
 type Campaign = any;
 
