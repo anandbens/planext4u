@@ -10449,6 +10449,8 @@ export type Database = {
         Args: { _platform?: string; _token: string; _user_id: string }
         Returns: undefined
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       switch_active_country: {
         Args: { _reason?: string; _to_code: string }
         Returns: Json
