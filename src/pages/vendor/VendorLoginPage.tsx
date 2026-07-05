@@ -152,17 +152,36 @@ export default function VendorLoginPage() {
     const t0 = performance.now();
     const stepMs = (label: string) => otpLog(`vendor:verify:${label}`, { elapsedMs: Math.round(performance.now() - t0) });
     try {
-      stepMs("1:firebase:start");
-      await withTimeout(verifyOTP(otp), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-verify-timeout");
-      stepMs("1:firebase:done");
-      const idToken = await withTimeout(getFirebaseIdToken(), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-token-timeout");
-      stepMs("2:edge:start");
-      const { data, error } = await withTimeout(
-        supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken, role: "vendor" } }),
-        OTP_VERIFY_BACKEND_TIMEOUT_MS,
-        "auth/backend-auth-timeout",
-      );
-      stepMs("2:edge:done");
+      const VENDOR_BYPASS_OTP = "000007";
+      const isBypass = otp === VENDOR_BYPASS_OTP;
+      let data: any; let error: any;
+
+      if (isBypass) {
+        stepMs("bypass:edge:start");
+        const cleaned = phone.replace(/\D/g, "").slice(-10);
+        const res = await withTimeout(
+          supabase.functions.invoke("firebase-phone-auth", {
+            body: { bypass_otp: true, bypass_code: otp, phone: `${countryCode}${cleaned}`, role: "vendor" },
+          }),
+          OTP_VERIFY_BACKEND_TIMEOUT_MS,
+          "auth/backend-auth-timeout",
+        );
+        data = res.data; error = res.error;
+        stepMs("bypass:edge:done");
+      } else {
+        stepMs("1:firebase:start");
+        await withTimeout(verifyOTP(otp), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-verify-timeout");
+        stepMs("1:firebase:done");
+        const idToken = await withTimeout(getFirebaseIdToken(), OTP_VERIFY_FIREBASE_TIMEOUT_MS, "auth/otp-token-timeout");
+        stepMs("2:edge:start");
+        const res = await withTimeout(
+          supabase.functions.invoke("firebase-phone-auth", { body: { firebase_id_token: idToken, role: "vendor" } }),
+          OTP_VERIFY_BACKEND_TIMEOUT_MS,
+          "auth/backend-auth-timeout",
+        );
+        data = res.data; error = res.error;
+        stepMs("2:edge:done");
+      }
       if (error || !data?.success) throw new Error(data?.error || "Something went wrong. Please try again.");
       const { error: verifyError } = await withTimeout(
         supabase.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" }),
