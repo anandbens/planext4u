@@ -24,7 +24,10 @@ const CAMPAIGN_ID = "fc6e533e-60e5-472f-8db6-5cb9edf8f235";
 const SHARED_CODE = "NAMAKKAL100";
 const NAMAKKAL = { lat: 11.2189, lng: 78.1674 };
 const FAR_AWAY = { lat: 28.6139, lng: 77.209 }; // New Delhi — > 25 km away
-const NEW_CUSTOMER_ID = "CUST_TEST_NEW_NAMAKKAL"; // synthetic id, has no orders
+// Real customer row with zero orders — behaves as a new user for eligibility checks.
+const NEW_CUSTOMER_ID = "CUST0012287";
+// Real customer row with 15 completed orders — should fail first_time_only.
+const REPEAT_CUSTOMER_ID = "CUST0000231";
 const PRODUCT_ID = "PROD0002026";
 const VENDOR_ID = "VEND0000184";
 
