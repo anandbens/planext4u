@@ -118,6 +118,19 @@ describe("Namakkal Campaign — eligibility", () => {
     expect(r.body?.eligible).toBe(false);
     expect(r.body?.reason).toBe("below_min_order");
   });
+
+  it("customer with prior completed orders is rejected as not_first_time_user", async () => {
+    const r = await rpc("evaluate_coupon_eligibility", {
+      _campaign_id: CAMPAIGN_ID,
+      _customer_id: REPEAT_CUSTOMER_ID,
+      _lat: NAMAKKAL.lat,
+      _lng: NAMAKKAL.lng,
+      _cart_value: 500,
+      _quantity: 1,
+    });
+    expect(r.body?.eligible).toBe(false);
+    expect(r.body?.reason).toBe("not_first_time_user");
+  });
 });
 
 describe("Namakkal Campaign — recommendation & availability", () => {
