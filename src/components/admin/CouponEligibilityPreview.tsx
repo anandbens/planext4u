@@ -159,7 +159,7 @@ export function CouponEligibilityPreview({ editing, vendors, districts }: Props)
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editing?.vendor_id, editing?.district_ids?.length, editing?.product_ids?.length, editing?.first_time_only, editing?.use_geo_radius, editing?.radius_km, editing?.center_lat, editing?.center_lng]);
+  }, [editing?.vendor_id, editing?.vendor_ids?.length, editing?.district_ids?.length, editing?.product_ids?.length, editing?.first_time_only, editing?.use_geo_radius, editing?.radius_km, editing?.center_lat, editing?.center_lng]);
 
   // Interactive map with radius circle
   useEffect(() => {
