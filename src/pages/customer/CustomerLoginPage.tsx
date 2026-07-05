@@ -128,6 +128,14 @@ export default function CustomerLoginPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [timer, setTimer] = useState(0);
   const otpRef = useRef<HTMLInputElement>(null);
+  const watchdogRef = useRef<number | null>(null);
+
+  const clearWatchdog = () => {
+    if (watchdogRef.current !== null) {
+      window.clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }
+  };
 
   // Watch for customerUser to be set and navigate
   useEffect(() => {
@@ -143,7 +151,13 @@ export default function CustomerLoginPage() {
     }
   }, [timer]);
 
-  useEffect(() => { if (ensureFirebaseHostname()) preRenderRecaptcha(); return () => clearRecaptcha(); }, []);
+  useEffect(() => {
+    if (ensureFirebaseHostname()) preRenderRecaptcha();
+    return () => {
+      clearWatchdog();
+      clearRecaptcha();
+    };
+  }, []);
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,31 +177,58 @@ export default function CustomerLoginPage() {
     if (!/^\d{10}$/.test(cleaned)) { toast.error("Please enter a valid 10-digit phone number"); return; }
     if (!ensureFirebaseHostname()) return;
     setLoading(true);
+    otpLog("ui:sendOTP:click", { phone: cleaned.slice(0, 3) + "***" });
+
+    clearWatchdog();
+    watchdogRef.current = window.setTimeout(() => {
+      otpLog("ui:watchdogTripped", { ms: OTP_WATCHDOG_MS });
+      setLoading(false);
+      clearRecaptcha();
+      toast.error("Still waiting for OTP. Tap Send OTP again to retry.", { duration: 6000 });
+    }, OTP_WATCHDOG_MS);
+
     try {
       const fullPhone = `${countryCode}${cleaned}`;
 
+      otpLog("ui:gate:start", {});
       const gateResult = await getQuickGateResult(checkOtpGate(cleaned, fullPhone));
+      otpLog("ui:gate:done", { result: gateResult });
       if (gateResult?.allowed === false) {
         showOtpGateBlock(gateResult, setTimer);
         return;
       }
 
-      await withTimeout(sendOTP(fullPhone), OTP_SEND_TIMEOUT_MS);
+      await withTimeout(
+        sendOTPWithRetry(fullPhone, {
+          onAttempt: (attempt, err) => {
+            otpLog("ui:sendOTP:attempt", { attempt, err: err?.code });
+            if (attempt > 1 && !err) toast.message("Retrying OTP delivery…", { duration: 2500 });
+          },
+        }),
+        OTP_SEND_TIMEOUT_MS,
+        "auth/otp-timeout",
+      );
       setOtpSent(true);
       setTimer(30);
       toast.success("OTP sent successfully!");
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
+      otpLog("ui:sendOTP:error", { code: err?.code, msg: err?.message });
       if (err.code === "auth/too-many-requests") {
         toast.error("OTP limit reached. Please wait 2-3 minutes before retrying.", { duration: 6000 });
         setTimer(120);
       } else if (err.code === "auth/invalid-phone-number") toast.error("Invalid phone number.");
-      else if (err.code === "auth/captcha-check-failed") toast.error("Security check failed. Please refresh and try again.");
-      else if (err.code === "auth/recaptcha-timeout" || err.code === "auth/otp-timeout") toast.error("OTP is taking too long. Please try again.", { duration: 6000 });
+      else if (err.code === "auth/captcha-check-failed") toast.error("Security check failed. Please tap Send OTP again.", { duration: 6000 });
+      else if (err.code === "auth/recaptcha-timeout" || err.code === "auth/otp-timeout" || err.code === "auth/otp-signin-timeout") toast.error("OTP is taking too long. Please try again.", { duration: 6000 });
+      else if (err.code === "auth/network-request-failed") toast.error("Network issue. Check your connection and retry.", { duration: 6000 });
       else toast.error(err.message || "Failed to send OTP");
       clearRecaptcha();
-    } finally { setLoading(false); }
+    } finally {
+      clearWatchdog();
+      setLoading(false);
+    }
   };
+
 
   const handleVerifyOTP = async () => {
     if (otp.length !== 6) { toast.error("Please enter the 6-digit OTP"); return; }
