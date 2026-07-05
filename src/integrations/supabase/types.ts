@@ -1161,24 +1161,36 @@ export type Database = {
         Row: {
           archive_retention_days: number | null
           archived_at: string | null
+          category_ids: string[]
           center_lat: number | null
           center_lng: number | null
+          city_ids: string[]
           code_mode: string
           created_at: string
           created_by: string | null
+          customer_ids: string[]
+          customer_segments: string[]
           deleted_at: string | null
           description: string | null
           discount_type: string
           discount_value: number
           district_ids: string[]
+          exclusive: boolean
           expires_at: string | null
           first_time_only: boolean
           id: string
           is_active: boolean
           max_discount: number | null
+          max_order_amount: number | null
+          max_orders: number | null
+          max_qty: number | null
+          min_lifetime_spend: number | null
           min_order_amount: number
+          min_orders: number | null
+          min_qty: number | null
           name: string
           per_customer_limit: number
+          pincodes: string[]
           popup_description: string | null
           popup_enabled: boolean
           popup_image_url: string | null
@@ -1190,7 +1202,9 @@ export type Database = {
           rollback_policy: string
           rollback_window_minutes: number | null
           shared_code: string | null
+          stackable: boolean
           starts_at: string
+          state_codes: string[]
           status: string
           total_codes_generated: number
           total_codes_target: number
@@ -1198,29 +1212,43 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           use_geo_radius: boolean
+          vendor_category_ids: string[]
           vendor_id: string | null
+          vendor_ids: string[]
         }
         Insert: {
           archive_retention_days?: number | null
           archived_at?: string | null
+          category_ids?: string[]
           center_lat?: number | null
           center_lng?: number | null
+          city_ids?: string[]
           code_mode?: string
           created_at?: string
           created_by?: string | null
+          customer_ids?: string[]
+          customer_segments?: string[]
           deleted_at?: string | null
           description?: string | null
           discount_type: string
           discount_value: number
           district_ids?: string[]
+          exclusive?: boolean
           expires_at?: string | null
           first_time_only?: boolean
           id?: string
           is_active?: boolean
           max_discount?: number | null
+          max_order_amount?: number | null
+          max_orders?: number | null
+          max_qty?: number | null
+          min_lifetime_spend?: number | null
           min_order_amount?: number
+          min_orders?: number | null
+          min_qty?: number | null
           name: string
           per_customer_limit?: number
+          pincodes?: string[]
           popup_description?: string | null
           popup_enabled?: boolean
           popup_image_url?: string | null
@@ -1232,7 +1260,9 @@ export type Database = {
           rollback_policy?: string
           rollback_window_minutes?: number | null
           shared_code?: string | null
+          stackable?: boolean
           starts_at?: string
+          state_codes?: string[]
           status?: string
           total_codes_generated?: number
           total_codes_target?: number
@@ -1240,29 +1270,43 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           use_geo_radius?: boolean
+          vendor_category_ids?: string[]
           vendor_id?: string | null
+          vendor_ids?: string[]
         }
         Update: {
           archive_retention_days?: number | null
           archived_at?: string | null
+          category_ids?: string[]
           center_lat?: number | null
           center_lng?: number | null
+          city_ids?: string[]
           code_mode?: string
           created_at?: string
           created_by?: string | null
+          customer_ids?: string[]
+          customer_segments?: string[]
           deleted_at?: string | null
           description?: string | null
           discount_type?: string
           discount_value?: number
           district_ids?: string[]
+          exclusive?: boolean
           expires_at?: string | null
           first_time_only?: boolean
           id?: string
           is_active?: boolean
           max_discount?: number | null
+          max_order_amount?: number | null
+          max_orders?: number | null
+          max_qty?: number | null
+          min_lifetime_spend?: number | null
           min_order_amount?: number
+          min_orders?: number | null
+          min_qty?: number | null
           name?: string
           per_customer_limit?: number
+          pincodes?: string[]
           popup_description?: string | null
           popup_enabled?: boolean
           popup_image_url?: string | null
@@ -1274,7 +1318,9 @@ export type Database = {
           rollback_policy?: string
           rollback_window_minutes?: number | null
           shared_code?: string | null
+          stackable?: boolean
           starts_at?: string
+          state_codes?: string[]
           status?: string
           total_codes_generated?: number
           total_codes_target?: number
@@ -1282,7 +1328,9 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           use_geo_radius?: boolean
+          vendor_category_ids?: string[]
           vendor_id?: string | null
+          vendor_ids?: string[]
         }
         Relationships: [
           {
@@ -9433,6 +9481,19 @@ export type Database = {
           _items: Json
           _module?: string
           _subtotal: number
+        }
+        Returns: Json
+      }
+      evaluate_coupon_eligibility: {
+        Args: {
+          _campaign_id: string
+          _cart_value?: number
+          _customer_id?: string
+          _lat?: number
+          _lng?: number
+          _product_ids?: string[]
+          _quantity?: number
+          _vendor_id?: string
         }
         Returns: Json
       }
