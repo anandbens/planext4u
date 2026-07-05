@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/friendly-error";
-import { Plus, Pencil, Trash2, Tag, Download, Ticket } from "lucide-react";
+import { Plus, Pencil, Trash2, Tag, Download, Ticket, FileDown } from "lucide-react";
+import { CouponExportDialog } from "@/components/admin/CouponExportDialog";
 
 type Campaign = any;
 
