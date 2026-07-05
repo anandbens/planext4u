@@ -111,10 +111,62 @@ export default function AdminCouponsPage() {
     load();
   };
 
-  const del = async (id: string) => {
-    if (!confirm("Delete this campaign and all its codes?")) return;
-    const { error } = await supabase.from("coupon_campaigns").delete().eq("id", id);
+  const audit = async (event: string, campaign: any, prev?: string, next?: string, reason?: string) => {
+    try {
+      await supabase.from("coupon_audit_log").insert({
+        event_type: event, campaign_id: campaign.id, previous_status: prev, new_status: next,
+        reason, actor: "admin",
+        metadata: { name: campaign.name },
+      } as any);
+    } catch { /* non-blocking */ }
+  };
+
+  const del = async (c: Campaign) => {
+    const canDelete = (c.total_codes_generated ?? 0) === 0;
+    if (!canDelete) {
+      if (!confirm("This campaign has generated codes and cannot be deleted. Archive it instead?")) return;
+      const { error } = await supabase.from("coupon_campaigns")
+        .update({ is_active: false, status: "archived", archived_at: new Date().toISOString() } as any).eq("id", c.id);
+      if (error) return toast.error(friendlyError(error));
+      await audit("archived", c, c.status, "archived");
+      toast.success("Campaign archived");
+      return load();
+    }
+    if (!confirm("Delete this campaign?")) return;
+    const { error } = await supabase.from("coupon_campaigns").delete().eq("id", c.id);
     if (error) return toast.error(friendlyError(error));
+    await audit("deleted", c);
+    load();
+  };
+
+  const togglePause = async (c: Campaign) => {
+    const paused = c.status === "paused" || c.is_active === false;
+    const next = paused ? "active" : "paused";
+    const { error } = await supabase.from("coupon_campaigns")
+      .update({ status: next, is_active: !paused } as any).eq("id", c.id);
+    if (error) return toast.error(friendlyError(error));
+    await audit(paused ? "resumed" : "paused", c, c.status, next);
+    toast.success(paused ? "Resumed" : "Paused");
+    load();
+  };
+
+  const archive = async (c: Campaign) => {
+    if (!confirm("Archive this campaign? It will be hidden from active lists.")) return;
+    const { error } = await supabase.from("coupon_campaigns")
+      .update({ is_active: false, status: "archived", archived_at: new Date().toISOString() } as any).eq("id", c.id);
+    if (error) return toast.error(friendlyError(error));
+    await audit("archived", c, c.status, "archived");
+    toast.success("Archived");
+    load();
+  };
+
+  const clone = async (c: Campaign) => {
+    const { id, created_at, updated_at, total_codes_generated, total_codes_used, shared_code, archived_at, ...rest } = c as any;
+    const payload = { ...rest, name: `${c.name} (Copy)`, status: "draft", is_active: false };
+    const { data, error } = await supabase.from("coupon_campaigns").insert(payload).select().single();
+    if (error) return toast.error(friendlyError(error));
+    await audit("cloned", data, undefined, "draft", `from ${c.id}`);
+    toast.success("Campaign cloned");
     load();
   };
 
