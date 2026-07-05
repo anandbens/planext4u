@@ -222,6 +222,11 @@ const AdminFoodCouponsPage = lazy(() => import("./pages/admin/AdminFoodCouponsPa
 const AdminDropshippingPage = lazy(() => import("./pages/admin/AdminDropshippingPage"));
 const VendorDropshippingPage = lazy(() => import("./pages/vendor/VendorDropshippingPage"));
 const AdminCouponsPage = lazy(() => import("./pages/admin/AdminCouponsPage"));
+const CouponDashboardPage = lazy(() => import("./pages/admin/coupons/CouponDashboardPage"));
+const CouponInventoryPage = lazy(() => import("./pages/admin/coupons/CouponInventoryPage"));
+const CouponAuditLogPage = lazy(() => import("./pages/admin/coupons/CouponAuditLogPage"));
+const CouponAnalyticsPage = lazy(() => import("./pages/admin/coupons/CouponAnalyticsPage"));
+const CouponReportsPage = lazy(() => import("./pages/admin/coupons/CouponReportsPage"));
 const VendorCouponsPage = lazy(() => import("./pages/vendor/VendorCouponsPage"));
 const CustomerCouponsPage = lazy(() => import("./pages/customer/CustomerCouponsPage"));
 const CallsPage = lazy(() => import("./pages/customer/CallsPage"));
