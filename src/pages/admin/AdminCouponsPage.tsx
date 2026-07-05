@@ -18,6 +18,7 @@ import { CouponEligibilityPreview } from "@/components/admin/CouponEligibilityPr
 import { CouponGenerateConfirm } from "@/components/admin/CouponGenerateConfirm";
 import { CouponAdminNav } from "@/components/admin/CouponAdminNav";
 import { CouponEligibilityTabs } from "@/components/admin/CouponEligibilityTabs";
+import { CouponEligibilityDiagnostics } from "@/components/admin/CouponEligibilityDiagnostics";
 
 type Campaign = any;
 
@@ -275,6 +276,11 @@ export default function AdminCouponsPage() {
               <div className="sm:col-span-2">
                 <CouponEligibilityPreview editing={editing} vendors={vendors as any} districts={districts as any} />
               </div>
+              {editing?.id && (
+                <div className="sm:col-span-2">
+                  <CouponEligibilityDiagnostics campaignId={editing.id} />
+                </div>
+              )}
               <div className="sm:col-span-2">
                 <CouponEligibilityTabs
                   editing={editing}

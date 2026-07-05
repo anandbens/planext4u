@@ -7,9 +7,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Tag, X, Copy } from "lucide-react";
+import { Tag, X, Copy, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
+import { supabase as sb } from "@/integrations/supabase/client";
 
 interface Props { customerId: string }
 
@@ -109,15 +111,32 @@ export function CouponPopup({ customerId }: Props) {
           </div>
         </div>
         <div className="p-4 space-y-2">
-          <Button className="w-full" onClick={() => {
+          <Button className="w-full" onClick={async () => {
+            // Claim reward: auto-add first eligible campaign product to cart
+            try {
+              const pids: string[] = campaign.product_ids || [];
+              if (pids.length === 0) { toast.error("No product configured for this offer"); return; }
+              const { data: prod } = await sb.from("products").select("*").in("id", pids).eq("status","active").limit(1).maybeSingle();
+              if (!prod) { toast.error("Offer product unavailable right now"); return; }
+              const res = await api.addToCart(prod as any, 1);
+              if (!res?.success) { toast.error(res?.message || "Could not add to cart"); return; }
+              navigator.clipboard.writeText(campaign.code).catch(() => {});
+              toast.success(`Added to cart — apply code ${campaign.code} at checkout`);
+              setOpen(false);
+              navigate("/app/cart");
+            } catch (e: any) {
+              toast.error(e?.message || "Failed to claim");
+            }
+          }}><Gift className="w-4 h-4 mr-1" /> Claim Reward</Button>
+          <Button variant="outline" className="w-full" onClick={() => {
             navigator.clipboard.writeText(campaign.code);
             toast.success("Code copied");
             setOpen(false);
             navigate("/app/coupons");
           }}><Copy className="w-4 h-4 mr-1" /> Copy & View My Coupons</Button>
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => dismiss(false)}>Later</Button>
-            <Button variant="ghost" className="flex-1" onClick={() => dismiss(true)}>Don't show again</Button>
+            <Button variant="ghost" size="sm" className="flex-1" onClick={() => dismiss(false)}>Later</Button>
+            <Button variant="ghost" size="sm" className="flex-1" onClick={() => dismiss(true)}>Don't show again</Button>
           </div>
         </div>
       </DialogContent>
