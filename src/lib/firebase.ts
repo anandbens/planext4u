@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { Capacitor } from "@capacitor/core";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, signOut } from "firebase/auth";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 
 const PUBLISHED_APP_URL = "https://www.planext4u.net";
 const FIREBASE_FALLBACK_AUTH_DOMAIN = "p4u-console.firebaseapp.com";
@@ -23,13 +24,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const firebaseAuth = getAuth(app);
 
+const IS_NATIVE = Capacitor.isNativePlatform();
+
 const WEB_ALLOWED_HOSTNAMES = ["localhost", "127.0.0.1", "planext4u.lovable.app", ...PLANEXT_HOSTNAMES];
 
 function isAllowedHostname(host: string): boolean {
-  if (Capacitor.isNativePlatform()) {
-    return true;
-  }
-
+  if (IS_NATIVE) return true;
   return WEB_ALLOWED_HOSTNAMES.includes(host);
 }
 const PRODUCTION_URL = PUBLISHED_APP_URL;
@@ -44,27 +44,16 @@ function redirectToAuthorizedHost(target: string) {
       window.open(target, "_top");
       return;
     } catch {
-      // fall through to same-frame navigation
+      // fall through
     }
   }
-
   window.location.replace(target);
 }
 
-/**
- * Check if Firebase Phone Auth is supported on the current hostname.
- * If not, redirect the user to the production domain preserving the path.
- * Returns true if the current host is allowed, false if redirecting.
- */
 export function ensureFirebaseHostname(): boolean {
-  // CRITICAL: On native (Capacitor) the WebView loads bundled assets from
-  // `capacitor://localhost` or `http://localhost`. Those hostnames will never
-  // match `PLANEXT_HOSTNAMES`, so the legacy code below would redirect the
-  // entire WebView to a browser-hosted login route on launch —
-  // effectively kicking the user out of the installed app and into the web
-  // build. Firebase Phone Auth on native uses the Firebase Auth SDK directly
-  // (no reCAPTCHA hostname check), so we always treat native as allowed.
-  if (Capacitor.isNativePlatform()) return true;
+  // Native (Capacitor) uses the native Firebase SDK via
+  // @capacitor-firebase/authentication — no reCAPTCHA, no hostname check.
+  if (IS_NATIVE) return true;
 
   const host = window.location.hostname;
   if (isAllowedHostname(host)) return true;
@@ -75,7 +64,32 @@ export function ensureFirebaseHostname(): boolean {
   return false;
 }
 
+// ---------------- Web (reCAPTCHA) path ----------------
+
 let confirmationResultGlobal: ConfirmationResult | null = null;
+let recaptchaReady: Promise<void> | null = null;
+
+// ---------------- Native path ----------------
+// The native plugin returns a verificationId via the phoneCodeSent event;
+// we cache the latest one and use it in confirmVerificationCode.
+let nativeVerificationId: string | null = null;
+let nativePhoneListenerAttached = false;
+
+async function ensureNativePhoneListener() {
+  if (nativePhoneListenerAttached) return;
+  nativePhoneListenerAttached = true;
+  await FirebaseAuthentication.addListener("phoneVerificationCompleted", async (event: any) => {
+    // Android SMS auto-retrieval fast-path: the plugin signs the user in
+    // automatically. Store any verificationId in case caller still wants it.
+    if (event?.verificationId) nativeVerificationId = event.verificationId;
+  });
+  await FirebaseAuthentication.addListener("phoneCodeSent", (event: any) => {
+    if (event?.verificationId) nativeVerificationId = event.verificationId;
+  });
+  await FirebaseAuthentication.addListener("phoneVerificationFailed", (event: any) => {
+    console.warn("[firebase-native] phoneVerificationFailed", event);
+  });
+}
 
 function getOrCreateRecaptchaContainer(): HTMLElement {
   const existing = document.getElementById("recaptcha-container");
@@ -86,9 +100,10 @@ function getOrCreateRecaptchaContainer(): HTMLElement {
   return el;
 }
 
-let recaptchaReady: Promise<void> | null = null;
-
 export function setupRecaptcha(): RecaptchaVerifier {
+  if (IS_NATIVE) {
+    throw new Error("setupRecaptcha is not used on native platforms");
+  }
   if (!isAllowedHostname(window.location.hostname)) {
     throw Object.assign(new Error("Phone OTP is only available on the published app."), {
       code: "auth/unauthorized-hostname",
@@ -96,42 +111,31 @@ export function setupRecaptcha(): RecaptchaVerifier {
   }
 
   if ((window as any).recaptchaVerifier) {
-    try {
-      (window as any).recaptchaVerifier.clear();
-    } catch {
-      // ignore if already cleared
-    }
+    try { (window as any).recaptchaVerifier.clear(); } catch { /* ignore */ }
     (window as any).recaptchaVerifier = null;
     recaptchaReady = null;
   }
 
-  // Remove old container to get a fresh one
   const old = document.getElementById("recaptcha-container");
   if (old) old.remove();
   getOrCreateRecaptchaContainer();
 
-  const verifier = new RecaptchaVerifier(firebaseAuth, "recaptcha-container", {
-    size: "invisible",
-  });
+  const verifier = new RecaptchaVerifier(firebaseAuth, "recaptcha-container", { size: "invisible" });
   (window as any).recaptchaVerifier = verifier;
   recaptchaReady = verifier.render().then(() => {}).catch(() => {});
   return verifier;
 }
 
 /**
- * Pre-render reCAPTCHA so it's ready when user clicks "Send OTP".
- * Call this on page mount.
+ * Pre-render reCAPTCHA (web only). No-op on native.
  */
 export function preRenderRecaptcha() {
-  if (Capacitor.isNativePlatform()) return;
+  if (IS_NATIVE) return;
   if (!isAllowedHostname(window.location.hostname)) return;
   if ((window as any).recaptchaVerifier) return;
   getOrCreateRecaptchaContainer();
-  const verifier = new RecaptchaVerifier(firebaseAuth, "recaptcha-container", {
-    size: "invisible",
-  });
+  const verifier = new RecaptchaVerifier(firebaseAuth, "recaptcha-container", { size: "invisible" });
   (window as any).recaptchaVerifier = verifier;
-  // Pre-render and track readiness
   recaptchaReady = verifier.render().then(() => {}).catch(() => {});
 }
 
@@ -142,12 +146,31 @@ export async function sendOTP(phoneNumber: string) {
     });
   }
 
+  if (IS_NATIVE) {
+    // Sign out any lingering native session for a different phone
+    try {
+      const cur = await FirebaseAuthentication.getCurrentUser();
+      if (cur?.user?.phoneNumber && cur.user.phoneNumber.replace(/\s/g, "") !== phoneNumber.replace(/\s/g, "")) {
+        await FirebaseAuthentication.signOut().catch(() => undefined);
+      }
+    } catch { /* ignore */ }
+
+    await ensureNativePhoneListener();
+    nativeVerificationId = null;
+
+    // Fires SMS via Play Integrity (Android) or APNs silent push (iOS).
+    // No reCAPTCHA. On Android, SMS Retriever auto-fills the OTP when
+    // the app signature matches the SMS hash.
+    await FirebaseAuthentication.signInWithPhoneNumber({ phoneNumber });
+    return { verificationId: nativeVerificationId } as any;
+  }
+
+  // Web path
   const currentPhone = firebaseAuth.currentUser?.phoneNumber?.replace(/\s/g, "");
   if (firebaseAuth.currentUser && currentPhone !== phoneNumber.replace(/\s/g, "")) {
     await signOut(firebaseAuth).catch(() => undefined);
   }
 
-  // Wait for pre-rendered verifier to be ready
   let appVerifier = (window as any).recaptchaVerifier;
   if (appVerifier && recaptchaReady) {
     await recaptchaReady;
@@ -162,33 +185,51 @@ export async function sendOTP(phoneNumber: string) {
 }
 
 export async function verifyOTP(otp: string) {
-  if (!confirmationResultGlobal) {
-    throw new Error("Please send OTP first");
+  if (IS_NATIVE) {
+    // Native plugin may have already signed the user in via auto-retrieval.
+    const cur = await FirebaseAuthentication.getCurrentUser().catch(() => null);
+    if (cur?.user) return cur.user;
+
+    if (!nativeVerificationId) {
+      throw new Error("Please send OTP first");
+    }
+    await FirebaseAuthentication.confirmVerificationCode({
+      verificationId: nativeVerificationId,
+      verificationCode: otp,
+    });
+    const after = await FirebaseAuthentication.getCurrentUser();
+    if (!after?.user) throw new Error("Verification failed");
+    return after.user;
   }
+
+  if (!confirmationResultGlobal) throw new Error("Please send OTP first");
   const result = await confirmationResultGlobal.confirm(otp);
   return result.user;
 }
 
 export async function getFirebaseIdToken(): Promise<string> {
+  if (IS_NATIVE) {
+    // Native plugin returns the current user's ID token directly — no
+    // forced refresh (Firebase just minted one during confirm).
+    const res = await FirebaseAuthentication.getIdToken({ forceRefresh: false });
+    if (!res?.token) throw new Error("No Firebase user signed in");
+    return res.token;
+  }
   const user = firebaseAuth.currentUser;
   if (!user) throw new Error("No Firebase user signed in");
-  // Do NOT force-refresh — Firebase just minted a fresh token during
-  // confirmationResult.confirm(). Forcing a refresh here adds a second network
-  // round-trip to Google's token endpoint on every OTP login (300–800 ms on
-  // mobile), for zero benefit.
   return user.getIdToken(false);
 }
-
 
 export async function resetPhoneAuth() {
   confirmationResultGlobal = null;
   recaptchaReady = null;
+  nativeVerificationId = null;
+  if (IS_NATIVE) {
+    await FirebaseAuthentication.signOut().catch(() => undefined);
+    return;
+  }
   if ((window as any).recaptchaVerifier) {
-    try {
-      (window as any).recaptchaVerifier.clear();
-    } catch {
-      // ignore
-    }
+    try { (window as any).recaptchaVerifier.clear(); } catch { /* ignore */ }
     (window as any).recaptchaVerifier = null;
   }
   const el = document.getElementById("recaptcha-container");
@@ -201,12 +242,10 @@ export async function resetPhoneAuth() {
 export function clearRecaptcha() {
   confirmationResultGlobal = null;
   recaptchaReady = null;
+  nativeVerificationId = null;
+  if (IS_NATIVE) return; // nothing to tear down natively
   if ((window as any).recaptchaVerifier) {
-    try {
-      (window as any).recaptchaVerifier.clear();
-    } catch {
-      // ignore
-    }
+    try { (window as any).recaptchaVerifier.clear(); } catch { /* ignore */ }
     (window as any).recaptchaVerifier = null;
   }
   const el = document.getElementById("recaptcha-container");
