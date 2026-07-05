@@ -1094,6 +1094,8 @@ export type Database = {
       }
       coupon_campaigns: {
         Row: {
+          archive_retention_days: number | null
+          archived_at: string | null
           center_lat: number | null
           center_lng: number | null
           code_mode: string
@@ -1132,6 +1134,8 @@ export type Database = {
           vendor_id: string | null
         }
         Insert: {
+          archive_retention_days?: number | null
+          archived_at?: string | null
           center_lat?: number | null
           center_lng?: number | null
           code_mode?: string
@@ -1170,6 +1174,8 @@ export type Database = {
           vendor_id?: string | null
         }
         Update: {
+          archive_retention_days?: number | null
+          archived_at?: string | null
           center_lat?: number | null
           center_lng?: number | null
           code_mode?: string
