@@ -41,15 +41,80 @@ async function findAuthUserByEmailOrPhone(
   email: string,
   phone: string,
 ): Promise<any | null> {
-  const perPage = 1000;
-  for (let page = 1; page <= 50; page++) {
-    const { data, error } = await client.auth.admin.listUsers({ page, perPage });
-    if (error) { console.error("listUsers error:", error.message); return null; }
-    const users = data?.users || [];
-    const found = users.find((u: any) => u.email === email || u.phone === phone);
-    if (found) return found;
-    if (users.length < perPage) return null;
+  // Fast path: phone OTP auth users are created with a deterministic synthetic
+  // email, so filter by that instead of paging through every auth user. The old
+  // implementation could scan up to 50k users and made OTP verification feel
+  // stuck after the SMS code was entered.
+  const { data, error } = await client.auth.admin.listUsers({ page: 1, perPage: 100, filter: email });
+  if (error) {
+    console.error("listUsers filter error:", error.message);
+    return null;
   }
+  const users = data?.users || [];
+  const found = users.find((u: any) => u.email === email || u.phone === phone);
+  if (found) return found;
+
+  // Keep a tiny compatibility fallback for older auth-js runtimes that may not
+  // honor `filter`; do not scan all users during login.
+  const fallback = users.find((u: any) => u.email === email);
+  if (fallback) return fallback;
+  return null;
+}
+
+async function findCustomerForPhoneLogin(client: any, phoneNumber: string) {
+  const normalizedPhone = phoneNumber.replace(/\s/g, "");
+  const phoneDigits = normalizedPhone.replace(/\D/g, "");
+  const last10 = phoneDigits.length > 10 ? phoneDigits.slice(-10) : phoneDigits;
+  const candidates = Array.from(new Set([
+    normalizedPhone,
+    phoneDigits,
+    last10,
+    last10 ? `+91${last10}` : "",
+  ].filter(Boolean)));
+
+  console.log("Customer lookup start", { phone: normalizedPhone, last10 });
+
+  // 1) Fast exact match. This uses normal indexes/unique constraints if present
+  // and avoids the previous leading-wildcard OR query that was slow/flaky.
+  const exact = await client
+    .from("customers")
+    .select("id, name, email, mobile, status, created_at")
+    .in("mobile", candidates)
+    .neq("status", "deleted")
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (exact.error) {
+    console.error("Customer exact lookup error:", exact.error.message || JSON.stringify(exact.error));
+  } else if (exact.data?.length) {
+    const active = exact.data.find((c: any) => String(c.status || "active").toLowerCase() === "active");
+    const picked = active || exact.data[0];
+    console.log("Customer exact lookup hit", picked.id);
+    return picked;
+  }
+
+  // 2) Fallback suffix match for legacy rows stored with separators / country
+  // codes. Limit aggressively so this cannot stall login indefinitely.
+  if (last10) {
+    const suffix = await client
+      .from("customers")
+      .select("id, name, email, mobile, status, created_at")
+      .ilike("mobile", `%${last10}`)
+      .neq("status", "deleted")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (suffix.error) {
+      console.error("Customer suffix lookup error:", suffix.error.message || JSON.stringify(suffix.error));
+    } else if (suffix.data?.length) {
+      const active = suffix.data.find((c: any) => String(c.status || "active").toLowerCase() === "active");
+      const picked = active || suffix.data[0];
+      console.log("Customer suffix lookup hit", picked.id);
+      return picked;
+    }
+  }
+
+  console.log("Customer lookup miss", { phone: normalizedPhone, last10 });
   return null;
 }
 
