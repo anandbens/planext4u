@@ -12,10 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/friendly-error";
-import { Plus, Pencil, Trash2, Tag, Download, Ticket, FileDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Tag, Download, Ticket, FileDown, Copy, Pause, Play, Archive } from "lucide-react";
 import { CouponExportDialog } from "@/components/admin/CouponExportDialog";
 import { CouponEligibilityPreview } from "@/components/admin/CouponEligibilityPreview";
 import { CouponGenerateConfirm } from "@/components/admin/CouponGenerateConfirm";
+import { CouponAdminNav } from "@/components/admin/CouponAdminNav";
 
 type Campaign = any;
 
@@ -54,6 +55,12 @@ export default function AdminCouponsPage() {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("generate") === "1") {
+      openNew();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadProductsForVendor = async (vendorId: string | null | undefined) => {
     if (!vendorId) { setProducts([]); return; }
@@ -110,10 +117,62 @@ export default function AdminCouponsPage() {
     load();
   };
 
-  const del = async (id: string) => {
-    if (!confirm("Delete this campaign and all its codes?")) return;
-    const { error } = await supabase.from("coupon_campaigns").delete().eq("id", id);
+  const audit = async (event: string, campaign: any, prev?: string, next?: string, reason?: string) => {
+    try {
+      await supabase.from("coupon_audit_log").insert({
+        event_type: event, campaign_id: campaign.id, previous_status: prev, new_status: next,
+        reason, actor: "admin",
+        metadata: { name: campaign.name },
+      } as any);
+    } catch { /* non-blocking */ }
+  };
+
+  const del = async (c: Campaign) => {
+    const canDelete = (c.total_codes_generated ?? 0) === 0;
+    if (!canDelete) {
+      if (!confirm("This campaign has generated codes and cannot be deleted. Archive it instead?")) return;
+      const { error } = await supabase.from("coupon_campaigns")
+        .update({ is_active: false, status: "archived", archived_at: new Date().toISOString() } as any).eq("id", c.id);
+      if (error) return toast.error(friendlyError(error));
+      await audit("archived", c, c.status, "archived");
+      toast.success("Campaign archived");
+      return load();
+    }
+    if (!confirm("Delete this campaign?")) return;
+    const { error } = await supabase.from("coupon_campaigns").delete().eq("id", c.id);
     if (error) return toast.error(friendlyError(error));
+    await audit("deleted", c);
+    load();
+  };
+
+  const togglePause = async (c: Campaign) => {
+    const paused = c.status === "paused" || c.is_active === false;
+    const next = paused ? "active" : "paused";
+    const { error } = await supabase.from("coupon_campaigns")
+      .update({ status: next, is_active: !paused } as any).eq("id", c.id);
+    if (error) return toast.error(friendlyError(error));
+    await audit(paused ? "resumed" : "paused", c, c.status, next);
+    toast.success(paused ? "Resumed" : "Paused");
+    load();
+  };
+
+  const archive = async (c: Campaign) => {
+    if (!confirm("Archive this campaign? It will be hidden from active lists.")) return;
+    const { error } = await supabase.from("coupon_campaigns")
+      .update({ is_active: false, status: "archived", archived_at: new Date().toISOString() } as any).eq("id", c.id);
+    if (error) return toast.error(friendlyError(error));
+    await audit("archived", c, c.status, "archived");
+    toast.success("Archived");
+    load();
+  };
+
+  const clone = async (c: Campaign) => {
+    const { id, created_at, updated_at, total_codes_generated, total_codes_used, shared_code, archived_at, ...rest } = c as any;
+    const payload = { ...rest, name: `${c.name} (Copy)`, status: "draft", is_active: false };
+    const { data, error } = await supabase.from("coupon_campaigns").insert(payload).select().single();
+    if (error) return toast.error(friendlyError(error));
+    await audit("cloned", data, undefined, "draft", `from ${c.id}`);
+    toast.success("Campaign cloned");
     load();
   };
 
@@ -156,6 +215,7 @@ export default function AdminCouponsPage() {
           <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> New Campaign</Button>
         </div>
       </div>
+      <CouponAdminNav />
 
       <CouponExportDialog
         open={exportOpen}
@@ -176,7 +236,9 @@ export default function AdminCouponsPage() {
                   <div className="flex items-center gap-2"><Tag className="w-4 h-4 text-primary shrink-0" /><h3 className="font-bold truncate">{c.name}</h3></div>
                   <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{c.description}</p>
                 </div>
-                <Badge variant={c.is_active ? "default" : "outline"}>{c.is_active ? "Active" : "Inactive"}</Badge>
+                <Badge variant={c.status === "archived" ? "outline" : c.status === "paused" ? "secondary" : c.is_active ? "default" : "outline"}>
+                  {c.status === "archived" ? "Archived" : c.status === "paused" ? "Paused" : c.is_active ? "Active" : "Inactive"}
+                </Badge>
               </div>
               <div className="text-xs space-y-0.5">
                 <p>{c.discount_type === "percent" ? `${c.discount_value}% off` : `₹${c.discount_value} off`}{c.max_discount ? ` (max ₹${c.max_discount})` : ""}</p>
@@ -185,10 +247,17 @@ export default function AdminCouponsPage() {
                 <p className="text-muted-foreground">Vendor: {vendors.find(v => v.id === c.vendor_id)?.business_name || "Any"}</p>
                 {c.first_time_only && <Badge variant="secondary" className="text-[10px]">First-time users only</Badge>}
               </div>
-              <div className="flex flex-wrap gap-2 pt-2">
+              <div className="flex flex-wrap gap-1.5 pt-2">
                 <Button size="sm" variant="outline" onClick={() => openEdit(c)}><Pencil className="w-3 h-3 mr-1" />Edit</Button>
                 <Button size="sm" variant="outline" onClick={() => viewCodes(c)}><Ticket className="w-3 h-3 mr-1" />Codes</Button>
-                <Button size="sm" variant="ghost" onClick={() => del(c.id)}><Trash2 className="w-3 h-3 text-destructive" /></Button>
+                <Button size="sm" variant="outline" onClick={() => clone(c)}><Copy className="w-3 h-3 mr-1" />Clone</Button>
+                <Button size="sm" variant="outline" onClick={() => togglePause(c)}>
+                  {c.status === "paused" || !c.is_active ? <><Play className="w-3 h-3 mr-1" />Resume</> : <><Pause className="w-3 h-3 mr-1" />Pause</>}
+                </Button>
+                {c.status !== "archived" && (
+                  <Button size="sm" variant="outline" onClick={() => archive(c)}><Archive className="w-3 h-3 mr-1" />Archive</Button>
+                )}
+                <Button size="sm" variant="ghost" onClick={() => del(c)}><Trash2 className="w-3 h-3 text-destructive" /></Button>
               </div>
             </Card>
           ))}
