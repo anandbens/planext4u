@@ -154,8 +154,12 @@ export default function CustomerPhoneLoginPage() {
       console.log("[PhoneLogin] Login successful!");
       toast.success("Login successful! 🎉");
 
+      // Tight 75 ms poll (was 250 ms) — the AuthProvider usually finishes
+      // hydration within a few hundred ms, so a coarse interval added dead
+      // wait to every successful login.
       const waitForCustomer = () => new Promise<void>((resolve) => {
         let attempts = 0;
+        const MAX_ATTEMPTS = 80; // 80 × 75ms ≈ 6s upper bound
         const check = async () => {
           const saved = localStorage.getItem("customer_user");
           if (saved) {
@@ -164,7 +168,7 @@ export default function CustomerPhoneLoginPage() {
           }
 
           const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData.session?.user || attempts >= 20) {
+          if (sessionData.session?.user || attempts >= MAX_ATTEMPTS) {
             resolve();
             return;
           }
@@ -172,7 +176,7 @@ export default function CustomerPhoneLoginPage() {
           attempts += 1;
           setTimeout(() => {
             void check();
-          }, 250);
+          }, 75);
         };
 
         void check();
