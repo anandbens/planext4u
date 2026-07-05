@@ -14,12 +14,13 @@ import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
 const OTP_SEND_TIMEOUT_MS = 18000;
+const OTP_GATE_TIMEOUT_MS = 6000;
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, code = "auth/otp-timeout"): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(() => {
       reject(Object.assign(new Error("OTP request timed out. Please try again."), {
-        code: "auth/otp-timeout",
+        code,
       }));
     }, timeoutMs);
 
@@ -89,9 +90,11 @@ export default function CustomerLoginPage() {
     setLoading(true);
     try {
       const fullPhone = `${countryCode}${cleaned}`;
-      const { data: loginStatus, error: registrationCheckError } = await supabase.rpc("check_phone_login_status" as any, {
-        _phone: cleaned,
-      });
+      const { data: loginStatus, error: registrationCheckError } = await withTimeout(
+        supabase.rpc("check_phone_login_status" as any, { _phone: cleaned }),
+        OTP_GATE_TIMEOUT_MS,
+        "auth/otp-gate-timeout",
+      );
 
       if (registrationCheckError) {
         throw new Error("Unable to verify mobile number right now. Please try again.");
@@ -112,7 +115,7 @@ export default function CustomerLoginPage() {
       }
 
       // Rate limit check before Firebase OTP
-      const rateCheck = await checkOtpRateLimit(`${countryCode}${cleaned}`);
+      const rateCheck = await withTimeout(checkOtpRateLimit(`${countryCode}${cleaned}`), OTP_GATE_TIMEOUT_MS, "auth/otp-gate-timeout");
       if (!rateCheck.allowed) {
         toast.error("Too many OTP requests. Please try again after 5 minutes.", { duration: 6000 });
         setTimer(rateCheck.retry_after);
@@ -131,6 +134,7 @@ export default function CustomerLoginPage() {
       } else if (err.code === "auth/invalid-phone-number") toast.error("Invalid phone number.");
       else if (err.code === "auth/captcha-check-failed") toast.error("Security check failed. Please refresh and try again.");
       else if (err.code === "auth/recaptcha-timeout" || err.code === "auth/otp-timeout") toast.error("OTP is taking too long. Please try again.", { duration: 6000 });
+      else if (err.code === "auth/otp-gate-timeout") toast.error("Unable to verify this number right now. Please try again.", { duration: 6000 });
       else toast.error(err.message || "Failed to send OTP");
       clearRecaptcha();
     } finally { setLoading(false); }

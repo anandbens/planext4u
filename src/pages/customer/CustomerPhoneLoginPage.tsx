@@ -12,11 +12,11 @@ import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 const OTP_SEND_TIMEOUT_MS = 18000;
 const OTP_GATE_TIMEOUT_MS = 6000;
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, code = "auth/otp-timeout"): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(() => {
       reject(Object.assign(new Error("OTP request timed out. Please try again."), {
-        code: "auth/otp-timeout",
+        code,
       }));
     }, timeoutMs);
 
@@ -72,7 +72,7 @@ export default function CustomerPhoneLoginPage() {
       const [statusRes, rateRes] = await withTimeout(Promise.all([
         supabase.rpc('check_phone_login_status' as any, { _phone: cleaned }),
         checkOtpRateLimit(fullPhone),
-      ]), OTP_GATE_TIMEOUT_MS);
+      ]), OTP_GATE_TIMEOUT_MS, "auth/otp-gate-timeout");
 
       const ls = (statusRes.data || {}) as { found?: boolean; status?: string };
       const s = (ls.status || '').toLowerCase();
