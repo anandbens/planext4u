@@ -198,8 +198,14 @@ export function CouponEligibilityPreview({ editing, vendors, districts }: Props)
   if (editing?.total_codes_target && customerCount !== null && customerCount > 0 && Number(editing.total_codes_target) > customerCount * 2) {
     warnings.push("Coupon quantity is much larger than the eligible customer base.");
   }
-  if (editing?.qty_limit && editing?.total_codes_target && Number(editing.qty_limit) < Number(editing.total_codes_target)) {
-    warnings.push(`Redemption limit (${editing.qty_limit}) is smaller than target codes (${editing.total_codes_target}).`);
+  // per_customer_limit × eligible customers must be ≥ target codes
+  if (editing?.per_customer_limit && editing?.total_codes_target && customerCount !== null && customerCount > 0
+      && Number(editing.per_customer_limit) * customerCount < Number(editing.total_codes_target)) {
+    warnings.push(`Target codes (${editing.total_codes_target}) exceed capacity — ${customerCount} eligible customers × ${editing.per_customer_limit} per user = ${customerCount * Number(editing.per_customer_limit)}.`);
+  }
+  if (editing?.daily_usage_limit && editing?.total_codes_target
+      && Number(editing.daily_usage_limit) * 30 < Number(editing.total_codes_target)) {
+    // informational only — no warning
   }
 
   const coveragePct = districts.length > 0 ? Math.round((derived.eligibleDistricts.length / districts.length) * 100) : 0;

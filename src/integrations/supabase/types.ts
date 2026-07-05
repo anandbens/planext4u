@@ -1172,6 +1172,7 @@ export type Database = {
           created_by: string | null
           customer_ids: string[]
           customer_segments: string[]
+          daily_usage_limit: number | null
           deleted_at: string | null
           description: string | null
           discount_type: string
@@ -1237,6 +1238,7 @@ export type Database = {
           created_by?: string | null
           customer_ids?: string[]
           customer_segments?: string[]
+          daily_usage_limit?: number | null
           deleted_at?: string | null
           description?: string | null
           discount_type: string
@@ -1302,6 +1304,7 @@ export type Database = {
           created_by?: string | null
           customer_ids?: string[]
           customer_segments?: string[]
+          daily_usage_limit?: number | null
           deleted_at?: string | null
           description?: string | null
           discount_type?: string
