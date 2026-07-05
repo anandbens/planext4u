@@ -28,11 +28,13 @@ export function CustomerProtectedRoute({ children }: { children: React.ReactNode
   const location = useLocation();
   const [resolved, setResolved] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [sessionGraceExpired, setSessionGraceExpired] = useState(false);
   const settledRef = useRef(false);
 
   useEffect(() => {
     if (customerUser) { settledRef.current = true; setResolved(true); return; }
     settledRef.current = false;
+    setSessionGraceExpired(false);
 
     const isNative = Capacitor.isNativePlatform();
     const stampValid = isSessionStampValid("customer");
@@ -62,7 +64,8 @@ export function CustomerProtectedRoute({ children }: { children: React.ReactNode
     });
 
     const t = setTimeout(() => settle(null), hardTimeoutMs);
-    return () => { clearTimeout(t); subscription.unsubscribe(); };
+    const grace = setTimeout(() => setSessionGraceExpired(true), isNative ? 3500 : 1800);
+    return () => { clearTimeout(t); clearTimeout(grace); subscription.unsubscribe(); };
   }, [customerUser]);
 
   if (isLoading || (!customerUser && !resolved)) {
@@ -84,7 +87,7 @@ export function CustomerProtectedRoute({ children }: { children: React.ReactNode
   // No profile yet, but Supabase says we DO have a live session AND we're inside
   // the 3-day trust window — keep the spinner so the auth provider can finish
   // loading the role instead of bouncing to /login.
-  if (hasSession && isSessionStampValid("customer")) {
+  if (hasSession && isSessionStampValid("customer") && !sessionGraceExpired) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
