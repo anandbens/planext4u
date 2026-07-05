@@ -233,30 +233,38 @@ export default function CustomerPhoneLoginPage() {
       return;
     }
     setLoading(true);
+    const t0 = performance.now();
+    const stepMs = (label: string) => otpLog(`verify:${label}`, { elapsedMs: Math.round(performance.now() - t0) });
+
+    // Verify watchdog — never leave the button stuck.
+    clearWatchdog();
+    watchdogRef.current = window.setTimeout(() => {
+      otpLog("verify:watchdogTripped", { ms: 25000 });
+      setLoading(false);
+      toast.error("Login is taking too long. Please try again.", { duration: 6000 });
+    }, 25000);
+
     try {
-      // Step 1: Verify OTP with Firebase
-      console.log("[PhoneLogin] Step 1: Verifying OTP with Firebase...");
+      stepMs("1:firebaseVerify:start");
       await verifyOTP(otp);
-      console.log("[PhoneLogin] Step 1 done: Firebase OTP verified");
+      stepMs("1:firebaseVerify:done");
 
-      // Step 2: Get Firebase ID token
-      console.log("[PhoneLogin] Step 2: Getting Firebase ID token...");
+      stepMs("2:idToken:start");
       const idToken = await getFirebaseIdToken();
-      console.log("[PhoneLogin] Step 2 done: Got Firebase ID token");
+      stepMs("2:idToken:done");
 
-      // Step 3: Call edge function to create/verify Supabase session
-      console.log("[PhoneLogin] Step 3: Invoking firebase-phone-auth edge function...");
+      stepMs("3:edgeInvoke:start");
       const { data, error } = await supabase.functions.invoke("firebase-phone-auth", {
         body: { firebase_id_token: idToken },
       });
+      stepMs("3:edgeInvoke:done");
+      otpLog("verify:edgeResponse", {
+        ok: !!data?.success,
+        code: data?.code,
+        errMsg: error?.message,
+      });
 
-      console.log("[PhoneLogin] Step 3 response:", JSON.stringify({ data: data ? { success: data.success, code: data.code, error: data.error } : null, error: error?.message }));
-
-      if (error) {
-        // supabase.functions.invoke error (network, CORS, etc.)
-        console.error("[PhoneLogin] Edge function invoke error:", error);
-        throw new Error(error.message || "Network error. Please check your connection and try again.");
-      }
+      if (error) throw new Error(error.message || "Network error. Please check your connection and try again.");
 
       if (!data?.success) {
         const errMsg = data?.code === "NOT_REGISTERED"
@@ -267,53 +275,24 @@ export default function CustomerPhoneLoginPage() {
         throw new Error(errMsg);
       }
 
-      // Step 4: Establish Supabase session using the magic link token
-      console.log("[PhoneLogin] Step 4: Verifying Supabase OTP with token_hash...");
+      stepMs("4:supabaseVerify:start");
       const { error: verifyError } = await supabase.auth.verifyOtp({
         token_hash: data.token_hash,
         type: "magiclink",
       });
+      stepMs("4:supabaseVerify:done");
 
-      if (verifyError) {
-        console.error("[PhoneLogin] Step 4 verifyOtp error:", verifyError);
-        throw new Error("Session verification failed. Please try logging in again.");
-      }
+      if (verifyError) throw new Error("Session verification failed. Please try logging in again.");
 
-      console.log("[PhoneLogin] Login successful!");
+      // Session is set. Navigate immediately — CustomerProtectedRoute will
+      // spin briefly while AuthProvider hydrates the profile, then render.
+      // The old localStorage poll added multi-second dead time on every login.
       toast.success("Login successful! 🎉");
-
-      // Tight 75 ms poll (was 250 ms) — the AuthProvider usually finishes
-      // hydration within a few hundred ms, so a coarse interval added dead
-      // wait to every successful login.
-      const waitForCustomer = () => new Promise<void>((resolve) => {
-        let attempts = 0;
-        const MAX_ATTEMPTS = 80; // 80 × 75ms ≈ 6s upper bound
-        const check = async () => {
-          const saved = localStorage.getItem("customer_user");
-          if (saved) {
-            resolve();
-            return;
-          }
-
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData.session?.user || attempts >= MAX_ATTEMPTS) {
-            resolve();
-            return;
-          }
-
-          attempts += 1;
-          setTimeout(() => {
-            void check();
-          }, 75);
-        };
-
-        void check();
-      });
-
-      await waitForCustomer();
+      stepMs("5:navigate");
       navigate("/app", { replace: true });
     } catch (err: any) {
-      console.error("[PhoneLogin] OTP verify error:", err, "code:", err.code, "message:", err.message);
+      otpLog("verify:error", { code: err?.code, msg: err?.message, elapsedMs: Math.round(performance.now() - t0) });
+      console.error("[PhoneLogin] OTP verify error:", err);
       if (err.code === "auth/invalid-verification-code") {
         toast.error("Invalid OTP. Please check and try again.");
       } else if (err.code === "auth/code-expired") {
@@ -322,9 +301,11 @@ export default function CustomerPhoneLoginPage() {
         toast.error(err.message || "Verification failed. Please try again.");
       }
     } finally {
+      clearWatchdog();
       setLoading(false);
     }
   };
+
 
   const handleResend = () => {
     setOtp("");
