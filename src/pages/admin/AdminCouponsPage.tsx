@@ -230,7 +230,9 @@ export default function AdminCouponsPage() {
                   <div className="flex items-center gap-2"><Tag className="w-4 h-4 text-primary shrink-0" /><h3 className="font-bold truncate">{c.name}</h3></div>
                   <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">{c.description}</p>
                 </div>
-                <Badge variant={c.is_active ? "default" : "outline"}>{c.is_active ? "Active" : "Inactive"}</Badge>
+                <Badge variant={c.status === "archived" ? "outline" : c.status === "paused" ? "secondary" : c.is_active ? "default" : "outline"}>
+                  {c.status === "archived" ? "Archived" : c.status === "paused" ? "Paused" : c.is_active ? "Active" : "Inactive"}
+                </Badge>
               </div>
               <div className="text-xs space-y-0.5">
                 <p>{c.discount_type === "percent" ? `${c.discount_value}% off` : `₹${c.discount_value} off`}{c.max_discount ? ` (max ₹${c.max_discount})` : ""}</p>
@@ -239,10 +241,17 @@ export default function AdminCouponsPage() {
                 <p className="text-muted-foreground">Vendor: {vendors.find(v => v.id === c.vendor_id)?.business_name || "Any"}</p>
                 {c.first_time_only && <Badge variant="secondary" className="text-[10px]">First-time users only</Badge>}
               </div>
-              <div className="flex flex-wrap gap-2 pt-2">
+              <div className="flex flex-wrap gap-1.5 pt-2">
                 <Button size="sm" variant="outline" onClick={() => openEdit(c)}><Pencil className="w-3 h-3 mr-1" />Edit</Button>
                 <Button size="sm" variant="outline" onClick={() => viewCodes(c)}><Ticket className="w-3 h-3 mr-1" />Codes</Button>
-                <Button size="sm" variant="ghost" onClick={() => del(c.id)}><Trash2 className="w-3 h-3 text-destructive" /></Button>
+                <Button size="sm" variant="outline" onClick={() => clone(c)}><Copy className="w-3 h-3 mr-1" />Clone</Button>
+                <Button size="sm" variant="outline" onClick={() => togglePause(c)}>
+                  {c.status === "paused" || !c.is_active ? <><Play className="w-3 h-3 mr-1" />Resume</> : <><Pause className="w-3 h-3 mr-1" />Pause</>}
+                </Button>
+                {c.status !== "archived" && (
+                  <Button size="sm" variant="outline" onClick={() => archive(c)}><Archive className="w-3 h-3 mr-1" />Archive</Button>
+                )}
+                <Button size="sm" variant="ghost" onClick={() => del(c)}><Trash2 className="w-3 h-3 text-destructive" /></Button>
               </div>
             </Card>
           ))}
