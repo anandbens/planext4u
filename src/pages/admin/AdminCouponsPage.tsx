@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { friendlyError } from "@/lib/friendly-error";
 import { Plus, Pencil, Trash2, Tag, Download, Ticket, FileDown } from "lucide-react";
 import { CouponExportDialog } from "@/components/admin/CouponExportDialog";
+import { CouponEligibilityPreview } from "@/components/admin/CouponEligibilityPreview";
 
 type Campaign = any;
 
@@ -199,6 +200,9 @@ export default function AdminCouponsPage() {
           <DialogHeader><DialogTitle>{editing?.id ? "Edit Campaign" : "New Campaign"}</DialogTitle></DialogHeader>
           {editing && (
             <div className="grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <CouponEligibilityPreview editing={editing} vendors={vendors as any} districts={districts as any} />
+              </div>
               <div className="sm:col-span-2"><Label>Name *</Label><Input value={editing.name || ""} onChange={e => setEditing({ ...editing, name: e.target.value })} placeholder="Namakkal Petrol Welcome ₹50" /></div>
               <div className="sm:col-span-2"><Label>Description</Label><Textarea rows={2} value={editing.description || ""} onChange={e => setEditing({ ...editing, description: e.target.value })} /></div>
               <div><Label>Discount Type</Label>
