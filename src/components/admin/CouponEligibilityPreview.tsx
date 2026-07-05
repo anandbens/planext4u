@@ -78,7 +78,9 @@ export function CouponEligibilityPreview({ editing, vendors, districts }: Props)
     const eligibleStateIds = new Set(eligibleDistricts.map(d => d.state_id).filter(Boolean) as string[]);
 
     let elVendors = vendors;
+    const selectedVendorIds: string[] = editing?.vendor_ids || [];
     if (editing?.vendor_id) elVendors = elVendors.filter(v => v.id === editing.vendor_id);
+    if (selectedVendorIds.length) elVendors = elVendors.filter(v => selectedVendorIds.includes(v.id));
 
     let excludedByRadius = 0;
     if (editing?.use_geo_radius && editing?.center_lat != null && editing?.center_lng != null && editing?.radius_km) {
@@ -98,10 +100,16 @@ export function CouponEligibilityPreview({ editing, vendors, districts }: Props)
   const refresh = async () => {
     setLoading(true);
     try {
-      // Products (in-scope + total for vendor)
+      // Product scope: explicit product_ids > vendor scope > all active
+      const explicitProductIds: string[] = editing?.product_ids || [];
+      const vendorScope: string[] = editing?.vendor_ids || [];
       let pq: any = supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "active");
       if (editing?.vendor_id) pq = pq.eq("vendor_id", editing.vendor_id);
-      if ((editing?.product_ids || []).length) pq = pq.in("id", editing.product_ids);
+      if (explicitProductIds.length) {
+        pq = pq.in("id", explicitProductIds);
+      } else if (vendorScope.length) {
+        pq = pq.in("vendor_id", vendorScope);
+      }
       const { count: pc } = await pq;
       setProductCount(pc || 0);
 
@@ -151,7 +159,7 @@ export function CouponEligibilityPreview({ editing, vendors, districts }: Props)
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editing?.vendor_id, editing?.district_ids?.length, editing?.product_ids?.length, editing?.first_time_only, editing?.use_geo_radius, editing?.radius_km, editing?.center_lat, editing?.center_lng]);
+  }, [editing?.vendor_id, editing?.vendor_ids?.length, editing?.district_ids?.length, editing?.product_ids?.length, editing?.first_time_only, editing?.use_geo_radius, editing?.radius_km, editing?.center_lat, editing?.center_lng]);
 
   // Interactive map with radius circle
   useEffect(() => {
