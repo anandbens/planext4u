@@ -10,8 +10,9 @@ import type { AuthUser, CustomerUser, VendorUser, UserRole, AppRole } from "@/li
 
 const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
 const VENDOR_PROFILE_SELECT = "id, name, business_name, email, mobile, status";
-const AUTH_QUERY_TIMEOUT_MS = 7000;
-const AUTH_QUERY_RETRY_DELAY_MS = 700;
+const AUTH_QUERY_TIMEOUT_MS = 3000;
+const AUTH_BOOTSTRAP_TIMEOUT_MS = 2500;
+const AUTH_QUERY_RETRY_DELAY_MS = 250;
 
 function isTransientAuthError(error: unknown): boolean {
   const message = String((error as { message?: string })?.message || error || "").toLowerCase();
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const loginResolveRef = useRef<(() => void) | null>(null);
   const isFreshLoginRef = useRef(false);
+  const hydrationInFlightRef = useRef<{ key: string; promise: Promise<string> } | null>(null);
   // Captures the most recent role-load outcome so login() can surface a friendly
   // message when the user was signed out due to status (deleted/suspended/etc.)
   const lastAuthErrorRef = useRef<string | null>(null);
@@ -131,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('[auth] vendor role has no vendor_id — orphan record');
         return 'orphan_role';
       }
-      const vendor = await getVendorProfile(vendorId);
+      const vendor = roleRecord.__profile || await getVendorProfile(vendorId);
 
       // Orphan: role row exists but vendor record is missing → signal caller to try other roles
       if (!vendor) {
@@ -172,10 +174,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('[auth] customer role has no customer_id — orphan record');
         return 'orphan_role';
       }
-      const { data: customer, error: customerError } = await withAuthRetry(
-        "customer profile lookup",
-        () => supabase.from("customers").select("id, name, email, mobile, status").eq("id", customerId).maybeSingle(),
-      );
+      let customer = roleRecord.__profile as { id: string; name: string | null; email: string | null; mobile: string | null; status?: string | null } | null;
+      let customerError: { message?: string } | null = null;
+      if (!customer) {
+        const result = await withAuthRetry(
+          "customer profile lookup",
+          () => supabase.from("customers").select("id, name, email, mobile, status").eq("id", customerId).maybeSingle(),
+        );
+        customer = result.data as typeof customer;
+        customerError = result.error;
+      }
 
       if (customerError) {
         throw new Error(customerError.message || "Unable to load customer profile.");
@@ -218,14 +226,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Log login event for fresh logins
     if (isFreshLogin) {
-      try {
-        await supabase.from("login_logs").insert({
+      void withAuthTimeout(
+        supabase.from("login_logs").insert({
           user_id: supabaseUid,
           role: role,
           portal: role === 'admin' || role === 'finance' || role === 'sales' ? 'admin' : role,
           login_method: 'phone_otp',
-        } as any);
-      } catch {}
+        } as any),
+        "login log",
+        1200,
+      ).catch((error) => console.warn('[auth] login log skipped:', error?.message || error));
     }
 
     return 'loaded';
@@ -295,57 +305,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [processRole, pickPreferredRole]);
 
   const loadUserRole = useCallback(async (supabaseUid: string, email: string, name: string, isFreshLogin: boolean) => {
-    const { data: roles, error: rolesError } = await withAuthRetry(
-      "role lookup",
-      () => supabase
-        .from("user_roles")
-        .select("role, vendor_id, customer_id, password_set")
-        .eq("user_id", supabaseUid),
-    );
+    const portal = detectActivePortal();
 
-    if (rolesError) {
-      console.error('[auth] role lookup failed:', rolesError.message || rolesError);
-      lastAuthErrorRef.current = "Login was accepted, but your role could not be loaded. Please try again in a moment.";
-      return 'role_lookup_failed';
-    }
+    const loadBootstrap = async () => {
+      const { data, error } = await withAuthTimeout(
+        supabase.rpc("get_auth_bootstrap" as any, { _portal: portal } as any) as PromiseLike<{ data: any; error: any }>,
+        "auth bootstrap",
+        AUTH_BOOTSTRAP_TIMEOUT_MS,
+      );
+      if (error) throw error;
+      return data as { status?: string; role_record?: any } | null;
+    };
 
-    if (!roles || roles.length === 0) {
+    try {
+      let bootstrap = await loadBootstrap();
+      if (bootstrap?.status === 'loaded' && bootstrap.role_record) {
+        return await processRole(bootstrap.role_record, supabaseUid, email, name, isFreshLogin);
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       const provider = session?.user?.app_metadata?.provider;
       
-      if (provider === 'google') {
+      if (bootstrap?.status === 'unregistered' && provider === 'google') {
         try {
           const { data: linkData } = await supabase.functions.invoke("google-oauth-link");
           if (linkData?.success && linkData?.registered) {
-            const { data: newRoles, error: newRolesError } = await withAuthRetry(
-              "linked role lookup",
-              () => supabase
-                .from("user_roles")
-                .select("role, vendor_id, customer_id, password_set")
-                .eq("user_id", supabaseUid),
-            );
-            if (newRolesError) {
-              console.error('[auth] linked role lookup failed:', newRolesError.message || newRolesError);
-              lastAuthErrorRef.current = "Login was accepted, but your role could not be loaded. Please try again in a moment.";
-              return 'role_lookup_failed';
-            }
-            if (newRoles && newRoles.length > 0) {
-              const portal = detectActivePortal();
-              return await tryRolesWithFallback(newRoles, portal, supabaseUid, email, name, isFreshLogin);
+            bootstrap = await loadBootstrap();
+            if (bootstrap?.status === 'loaded' && bootstrap.role_record) {
+              return await processRole(bootstrap.role_record, supabaseUid, email, name, isFreshLogin);
             }
           }
         } catch {}
         await supabase.auth.signOut();
         return 'unregistered';
       }
-      
+
       await supabase.auth.signOut();
       return 'unregistered';
+    } catch (error: any) {
+      console.error('[auth] auth bootstrap failed:', error?.message || error);
+      lastAuthErrorRef.current = isTransientAuthError(error)
+        ? "Login was accepted, but the backend is taking too long to load your role. Please try again."
+        : (error?.message || "Login failed while loading your role.");
+      return 'role_lookup_failed';
+    }
+  }, [processRole, detectActivePortal]);
+
+  const hydrateUserRole = useCallback((supabaseUid: string, email: string, name: string, isFreshLogin: boolean) => {
+    const key = `${supabaseUid}:${detectActivePortal()}`;
+    if (hydrationInFlightRef.current?.key === key) {
+      return hydrationInFlightRef.current.promise;
     }
 
-    const portal = detectActivePortal();
-    return await tryRolesWithFallback(roles, portal, supabaseUid, email, name, isFreshLogin);
-  }, [tryRolesWithFallback, detectActivePortal]);
+    const promise = loadUserRole(supabaseUid, email, name, isFreshLogin).finally(() => {
+      if (hydrationInFlightRef.current?.key === key) hydrationInFlightRef.current = null;
+    });
+    hydrationInFlightRef.current = { key, promise };
+    return promise;
+  }, [detectActivePortal, loadUserRole]);
 
   // SECURITY: Purge any cached profile that does not belong to the supplied
   // Supabase auth UID. Prevents UI from showing a previous user's identity
@@ -452,7 +469,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isFreshLoginRef.current = false;
         setTimeout(async () => {
           try {
-            const result = await loadUserRole(id, email || '', name, isFreshLogin);
+            const result = await hydrateUserRole(id, email || '', name, isFreshLogin);
             if (result === 'role_lookup_failed') {
               await supabase.auth.signOut();
             }
@@ -506,14 +523,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!user && !customerUser && !vendorUser) {
             const { id, email, user_metadata } = session.user;
             const name = user_metadata?.name || email?.split('@')[0] || '';
-            loadUserRole(id, email || '', name, false).finally(() => setIsLoading(false));
+            hydrateUserRole(id, email || '', name, false).finally(() => setIsLoading(false));
           }
         });
       }, 800);
     }
 
     return () => { cancelled = true; clearTimeout(loadingFallback); subscription.unsubscribe(); };
-  }, [loadUserRole, purgeMismatchedCaches]);
+  }, [hydrateUserRole, purgeMismatchedCaches]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
@@ -535,7 +552,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     if (signInData?.user) {
       const name = signInData.user.user_metadata?.name || signInData.user.email?.split('@')[0] || '';
-      const result = await loadUserRole(signInData.user.id, signInData.user.email || email, name, true);
+      const result = await hydrateUserRole(signInData.user.id, signInData.user.email || email, name, true);
       isFreshLoginRef.current = false;
       setIsLoading(false);
       if (result === 'role_lookup_failed') await supabase.auth.signOut();
@@ -567,7 +584,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     if (signInData?.user) {
       const name = signInData.user.user_metadata?.name || signInData.user.email?.split('@')[0] || '';
-      const result = await loadUserRole(signInData.user.id, signInData.user.email || email, name, true);
+      const result = await hydrateUserRole(signInData.user.id, signInData.user.email || email, name, true);
       isFreshLoginRef.current = false;
       setIsLoading(false);
       if (result === 'role_lookup_failed') await supabase.auth.signOut();
@@ -613,7 +630,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     if (signInData?.user) {
       const name = signInData.user.user_metadata?.name || signInData.user.email?.split('@')[0] || '';
-      const result = await loadUserRole(signInData.user.id, signInData.user.email || email, name, true);
+      const result = await hydrateUserRole(signInData.user.id, signInData.user.email || email, name, true);
       isFreshLoginRef.current = false;
       setIsLoading(false);
       if (result === 'role_lookup_failed') await supabase.auth.signOut();
