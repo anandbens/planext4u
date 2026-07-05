@@ -196,16 +196,24 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
           )}
         </TabsContent>
 
-        {/* VENDORS */}
+        {/* VENDORS — location-aware, vendor picker FIRST */}
         <TabsContent value="vendors" className="space-y-3 mt-3">
-          <div>
-            <Label className="text-xs">Vendor Categories (empty = all)</Label>
-            <CheckList items={vendorCats as any} selected={editing.vendor_category_ids || []}
-              onToggle={(id) => toggleArr("vendor_category_ids", id)} placeholder="Search vendor categories…" />
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-muted-foreground">
+              Showing vendors for <span className="font-medium text-foreground">{locationLabel}</span>
+              {filteredVendors.length !== vendors.length && ` · ${filteredVendors.length} of ${vendors.length}`}
+            </p>
+            {(editing.vendor_ids || []).length > 0 && (
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]"
+                onClick={() => onChange({ vendor_ids: [] })}>
+                <X className="w-3 h-3 mr-0.5" />Clear vendors
+              </Button>
+            )}
           </div>
+
           <div>
-            <Label className="text-xs">Vendors (empty = all active)</Label>
-            <CheckList items={vendors as any} selected={editing.vendor_ids || []}
+            <Label className="text-xs">Vendors (empty = all active in this location)</Label>
+            <CheckList items={filteredVendors as any} selected={editing.vendor_ids || []}
               onToggle={(id) => toggleArr("vendor_ids", id)} placeholder="Search vendors…" />
             {(editing.vendor_ids || []).length > 0 && (
               <p className="text-[11px] text-muted-foreground mt-1">
@@ -213,17 +221,29 @@ export function CouponEligibilityTabs({ editing, onChange, vendors, districts }:
               </p>
             )}
           </div>
+
+          <div>
+            <Label className="text-xs">Vendor Categories (empty = all)</Label>
+            <CheckList items={vendorCats as any} selected={editing.vendor_category_ids || []}
+              onToggle={(id) => toggleArr("vendor_category_ids", id)} placeholder="Search vendor categories…" />
+          </div>
         </TabsContent>
 
-        {/* PRODUCTS */}
+        {/* PRODUCTS — depend on Vendor selection, autosuggest as you type */}
         <TabsContent value="products" className="space-y-3 mt-3">
+          <ProductAutosuggest
+            vendorIds={editing.vendor_ids || []}
+            selectedIds={editing.product_ids || []}
+            onToggle={(id) => toggleArr("product_ids", id)}
+            onClear={() => onChange({ product_ids: [] })}
+          />
           <div>
             <Label className="text-xs">Product Categories (empty = all)</Label>
             <CheckList items={categories as any} selected={editing.category_ids || []}
               onToggle={(id) => toggleArr("category_ids", id)} placeholder="Search product categories…" />
           </div>
-          <p className="text-[11px] text-muted-foreground">Use the Products picker below (in the main editor) to add specific product IDs.</p>
         </TabsContent>
+
 
         {/* CUSTOMERS */}
         <TabsContent value="customers" className="space-y-3 mt-3">
