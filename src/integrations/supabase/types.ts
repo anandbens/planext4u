@@ -10072,6 +10072,7 @@ export type Database = {
           status: string
         }[]
       }
+      get_auth_bootstrap: { Args: { _portal?: string }; Returns: Json }
       get_coupon_eligibility_breakdown: {
         Args: { _campaign_id: string; _customer_id: string }
         Returns: Json
