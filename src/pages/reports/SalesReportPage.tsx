@@ -3,10 +3,12 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, ShoppingCart, TrendingUp, Percent } from "lucide-react";
+import { DollarSign, ShoppingCart, TrendingUp, Percent, FileDown } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import ReportDataGrid, { Column } from "@/components/admin/ReportDataGrid";
+import { Button } from "@/components/ui/button";
+import { downloadOrdersSummaryPdf } from "@/lib/orders-summary-pdf";
 
 interface OrderRow {
   id: string; created_at: string; customer_name: string; vendor_name: string;
