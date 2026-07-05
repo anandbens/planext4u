@@ -77,9 +77,25 @@ export default function PaymentPage() {
         console.error('Pre-payment stock check failed', e);
       }
 
-      // Validate amount before hitting Razorpay — a 0/NaN amount returns a
-      // confusing gateway error.
-      if (!total || !Number.isFinite(Number(total)) || Number(total) <= 0) {
+      // If the final payable is 0 (fully covered by coupon + points), skip the
+      // payment gateway entirely and confirm the order as paid directly.
+      const numericTotal = Number(total);
+      if (Number.isFinite(numericTotal) && numericTotal === 0) {
+        try {
+          if (isServiceBooking) {
+            await createBooking(null, undefined);
+          } else {
+            await createOrder(null, undefined);
+          }
+        } catch (e: any) {
+          return failWith(e?.message || 'Could not place your free order', e);
+        }
+        return;
+      }
+
+      // Validate amount before hitting Razorpay — a NaN/negative amount returns
+      // a confusing gateway error.
+      if (!Number.isFinite(numericTotal) || numericTotal < 0) {
         return failWith(`Invalid order total (${total}). Please go back to your cart and retry.`);
       }
 
