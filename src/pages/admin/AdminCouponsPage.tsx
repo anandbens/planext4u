@@ -148,8 +148,19 @@ export default function AdminCouponsPage() {
           <h1 className="page-title">Coupons</h1>
           <p className="page-description">{list.length} campaigns · bulk-generate 6-8 digit codes tied to vendors, products, districts</p>
         </div>
-        <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> New Campaign</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setExportOpen(true)}><FileDown className="w-4 h-4 mr-1" /> Export</Button>
+          <Button onClick={openNew}><Plus className="w-4 h-4 mr-1" /> New Campaign</Button>
+        </div>
       </div>
+
+      <CouponExportDialog
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        campaigns={list}
+        vendors={vendors}
+        districts={districts}
+      />
 
       {loading ? (
         <div className="flex justify-center py-12"><div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" /></div>
