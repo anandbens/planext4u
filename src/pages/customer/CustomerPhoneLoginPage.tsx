@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Phone, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha } from "@/lib/firebase";
+import { sendOTPWithRetry, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha, otpLog } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
 import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
 
-const OTP_SEND_TIMEOUT_MS = 18000;
+const OTP_SEND_TIMEOUT_MS = 22000;
 const OTP_GATE_GRACE_MS = 500;
+const OTP_GATE_HARD_TIMEOUT_MS = 2500;
+const OTP_WATCHDOG_MS = 30000;
 
 type OtpGateResult =
   | { allowed: true }
@@ -38,15 +40,30 @@ function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number, code = "auth
 }
 
 async function checkOtpGate(cleanedPhone: string, fullPhone: string): Promise<OtpGateResult> {
-  const loginStatusPromise = supabase.rpc('check_phone_login_status' as any, { _phone: cleanedPhone }) as PromiseLike<{
-    data: unknown;
-    error: { message?: string } | null;
-  }>;
-  const rateLimitPromise = checkOtpRateLimit(fullPhone);
+  const loginStatusPromise = withTimeout(
+    supabase.rpc('check_phone_login_status' as any, { _phone: cleanedPhone }) as PromiseLike<{
+      data: unknown;
+      error: { message?: string } | null;
+    }>,
+    OTP_GATE_HARD_TIMEOUT_MS,
+    "auth/otp-gate-timeout",
+  ).catch((err) => {
+    otpLog("gate:loginStatusTimeout", { msg: err?.message });
+    return { data: null, error: { message: err?.message || "gate-timeout" } };
+  });
+
+  const rateLimitPromise = withTimeout(
+    Promise.resolve(checkOtpRateLimit(fullPhone)),
+    OTP_GATE_HARD_TIMEOUT_MS,
+    "auth/otp-rate-timeout",
+  ).catch((err) => {
+    otpLog("gate:rateLimitTimeout", { msg: err?.message });
+    return { allowed: true, remaining: 0, retry_after: 0 };
+  });
 
   const statusRes = await loginStatusPromise;
   if (statusRes.error) {
-    console.warn("OTP login status check failed, continuing with OTP:", statusRes.error.message);
+    otpLog("gate:loginStatusError", { msg: statusRes.error.message });
     return { allowed: true };
   }
 
@@ -105,6 +122,14 @@ export default function CustomerPhoneLoginPage() {
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(0);
   const otpRef = useRef<HTMLInputElement>(null);
+  const watchdogRef = useRef<number | null>(null);
+
+  const clearWatchdog = () => {
+    if (watchdogRef.current !== null) {
+      window.clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }
+  };
 
   useEffect(() => {
     if (timer > 0) {
@@ -118,7 +143,10 @@ export default function CustomerPhoneLoginPage() {
     if (ensureFirebaseHostname()) {
       preRenderRecaptcha();
     }
-    return () => clearRecaptcha();
+    return () => {
+      clearWatchdog();
+      clearRecaptcha();
+    };
   }, []);
 
   const handleSendOTP = async () => {
@@ -129,22 +157,49 @@ export default function CustomerPhoneLoginPage() {
     }
     if (!ensureFirebaseHostname()) return;
     setLoading(true);
+    otpLog("ui:sendOTP:click", { phone: cleaned.slice(0, 3) + "***" });
+
+    // UI watchdog: never leave the button stuck. If the entire OTP send
+    // pipeline hasn't completed within OTP_WATCHDOG_MS, forcibly reset state
+    // so the user can retry immediately.
+    clearWatchdog();
+    watchdogRef.current = window.setTimeout(() => {
+      otpLog("ui:watchdogTripped", { ms: OTP_WATCHDOG_MS });
+      setLoading(false);
+      clearRecaptcha();
+      toast.error("Still waiting for OTP. Tap Send OTP again to retry.", { duration: 6000 });
+    }, OTP_WATCHDOG_MS);
+
     try {
       const fullPhone = `${countryCode}${cleaned}`;
 
+      otpLog("ui:gate:start", {});
       const gateResult = await getQuickGateResult(checkOtpGate(cleaned, fullPhone));
+      otpLog("ui:gate:done", { result: gateResult });
       if (gateResult?.allowed === false) {
         showOtpGateBlock(gateResult, setTimer);
         return;
       }
 
-      await withTimeout(sendOTP(fullPhone), OTP_SEND_TIMEOUT_MS);
+      await withTimeout(
+        sendOTPWithRetry(fullPhone, {
+          onAttempt: (attempt, err) => {
+            otpLog("ui:sendOTP:attempt", { attempt, err: err?.code });
+            if (attempt > 1 && !err) {
+              toast.message("Retrying OTP delivery…", { duration: 2500 });
+            }
+          },
+        }),
+        OTP_SEND_TIMEOUT_MS,
+        "auth/otp-timeout",
+      );
 
       setOtpSent(true);
       setTimer(30);
       toast.success("OTP sent successfully!");
       setTimeout(() => otpRef.current?.focus(), 300);
     } catch (err: any) {
+      otpLog("ui:sendOTP:error", { code: err?.code, msg: err?.message });
       console.error("OTP send error:", err);
       if (err.code === "auth/too-many-requests") {
         toast.error("OTP limit reached. Please wait 2-3 minutes before retrying.", { duration: 6000 });
@@ -152,17 +207,25 @@ export default function CustomerPhoneLoginPage() {
       } else if (err.code === "auth/invalid-phone-number") {
         toast.error("Invalid phone number. Check and try again.");
       } else if (err.code === "auth/captcha-check-failed") {
-        toast.error("Security check failed. Please refresh and try again.");
-      } else if (err.code === "auth/recaptcha-timeout" || err.code === "auth/otp-timeout") {
+        toast.error("Security check failed. Please tap Send OTP again.", { duration: 6000 });
+      } else if (
+        err.code === "auth/recaptcha-timeout" ||
+        err.code === "auth/otp-timeout" ||
+        err.code === "auth/otp-signin-timeout"
+      ) {
         toast.error("OTP is taking too long. Please try again.", { duration: 6000 });
+      } else if (err.code === "auth/network-request-failed") {
+        toast.error("Network issue. Check your connection and retry.", { duration: 6000 });
       } else {
         toast.error(err.message || "Failed to send OTP. Please try again.");
       }
       clearRecaptcha();
     } finally {
+      clearWatchdog();
       setLoading(false);
     }
   };
+
 
   const handleVerifyOTP = async () => {
     if (otp.length !== 6) {

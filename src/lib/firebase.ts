@@ -30,13 +30,22 @@ function isAllowedHostname(host: string): boolean {
 }
 const PRODUCTION_URL = PUBLISHED_APP_URL;
 const RECAPTCHA_RENDER_TIMEOUT_MS = 4500;
+const SIGN_IN_WITH_PHONE_TIMEOUT_MS = 15000;
+const MAX_OTP_ATTEMPTS = 2;
 
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+export function otpLog(step: string, meta: Record<string, unknown> = {}) {
+  try {
+    // eslint-disable-next-line no-console
+    console.log(`[OTP ${new Date().toISOString()}] ${step}`, meta);
+  } catch {
+    // ignore
+  }
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, code = "auth/recaptcha-timeout", message = "Security check timed out. Please try again."): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(() => {
-      reject(Object.assign(new Error("Security check timed out. Please try again."), {
-        code: "auth/recaptcha-timeout",
-      }));
+      reject(Object.assign(new Error(message), { code }));
     }, timeoutMs);
 
     promise.then(
@@ -50,6 +59,28 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
       },
     );
   });
+}
+
+const TRANSIENT_OTP_CODES = new Set([
+  "auth/network-request-failed",
+  "auth/internal-error",
+  "auth/timeout",
+  "auth/captcha-check-failed",
+  "auth/recaptcha-timeout",
+  "auth/otp-signin-timeout",
+  "auth/web-storage-unsupported",
+]);
+
+function isTransientOtpError(err: any): boolean {
+  if (!err) return false;
+  const code = err.code || "";
+  if (TRANSIENT_OTP_CODES.has(code)) return true;
+  const msg = String(err.message || "").toLowerCase();
+  return msg.includes("network") || msg.includes("timeout") || msg.includes("captcha");
+}
+
+function sleep(ms: number) {
+  return new Promise((r) => window.setTimeout(r, ms));
 }
 
 function getAuthorizedFirebaseUrl(): string {
@@ -135,7 +166,10 @@ export function preRenderRecaptcha() {
   recaptchaReady = verifier.render().then(() => {}).catch(() => {});
 }
 
-export async function sendOTP(phoneNumber: string) {
+export async function sendOTP(phoneNumber: string, opts: { rebuildRecaptcha?: boolean } = {}) {
+  const t0 = performance.now();
+  otpLog("sendOTP:start", { phone: phoneNumber.slice(0, 3) + "***", rebuild: !!opts.rebuildRecaptcha });
+
   if (!ensureFirebaseHostname()) {
     throw Object.assign(new Error("Phone OTP is only available on the published app."), {
       code: "auth/unauthorized-hostname",
@@ -144,20 +178,84 @@ export async function sendOTP(phoneNumber: string) {
 
   const currentPhone = firebaseAuth.currentUser?.phoneNumber?.replace(/\s/g, "");
   if (firebaseAuth.currentUser && currentPhone !== phoneNumber.replace(/\s/g, "")) {
+    otpLog("sendOTP:signOutStale", {});
     await signOut(firebaseAuth).catch(() => undefined);
   }
 
-  let appVerifier = (window as any).recaptchaVerifier;
-  if (appVerifier && recaptchaReady) {
-    await withTimeout(recaptchaReady, RECAPTCHA_RENDER_TIMEOUT_MS);
-  } else {
-    appVerifier = setupRecaptcha();
-    if (recaptchaReady) await withTimeout(recaptchaReady, RECAPTCHA_RENDER_TIMEOUT_MS);
+  // Rebuild reCAPTCHA on retries to recover from captcha-check-failed / timeout.
+  if (opts.rebuildRecaptcha) {
+    otpLog("sendOTP:recaptchaRebuild", {});
+    try {
+      if ((window as any).recaptchaVerifier) (window as any).recaptchaVerifier.clear();
+    } catch {
+      // ignore
+    }
+    (window as any).recaptchaVerifier = null;
+    recaptchaReady = null;
+    const el = document.getElementById("recaptcha-container");
+    if (el) el.remove();
   }
 
-  const result = await signInWithPhoneNumber(firebaseAuth, phoneNumber, appVerifier);
-  confirmationResultGlobal = result;
-  return result;
+  let appVerifier = (window as any).recaptchaVerifier;
+  try {
+    if (appVerifier && recaptchaReady) {
+      otpLog("sendOTP:recaptchaWaitExisting", {});
+      await withTimeout(recaptchaReady, RECAPTCHA_RENDER_TIMEOUT_MS);
+    } else {
+      otpLog("sendOTP:recaptchaSetup", {});
+      appVerifier = setupRecaptcha();
+      if (recaptchaReady) await withTimeout(recaptchaReady, RECAPTCHA_RENDER_TIMEOUT_MS);
+    }
+  } catch (e: any) {
+    otpLog("sendOTP:recaptchaError", { code: e?.code, msg: e?.message });
+    throw e;
+  }
+
+  otpLog("sendOTP:signInWithPhoneNumber", { elapsedMs: Math.round(performance.now() - t0) });
+  try {
+    const result = await withTimeout(
+      signInWithPhoneNumber(firebaseAuth, phoneNumber, appVerifier),
+      SIGN_IN_WITH_PHONE_TIMEOUT_MS,
+      "auth/otp-signin-timeout",
+      "OTP request timed out. Please try again.",
+    );
+    confirmationResultGlobal = result;
+    otpLog("sendOTP:success", { elapsedMs: Math.round(performance.now() - t0) });
+    return result;
+  } catch (e: any) {
+    otpLog("sendOTP:error", { code: e?.code, msg: e?.message, elapsedMs: Math.round(performance.now() - t0) });
+    throw e;
+  }
+}
+
+/**
+ * Send OTP with exponential backoff retry when Firebase / reCAPTCHA errors
+ * are transient. On each retry, reCAPTCHA is torn down and rebuilt so a
+ * stale captcha token never blocks delivery indefinitely.
+ */
+export async function sendOTPWithRetry(
+  phoneNumber: string,
+  opts: { maxAttempts?: number; onAttempt?: (attempt: number, err?: any) => void } = {},
+) {
+  const maxAttempts = opts.maxAttempts ?? MAX_OTP_ATTEMPTS;
+  let lastError: any;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      opts.onAttempt?.(attempt);
+      otpLog("sendOTPWithRetry:attempt", { attempt, maxAttempts });
+      return await sendOTP(phoneNumber, { rebuildRecaptcha: attempt > 1 });
+    } catch (err: any) {
+      lastError = err;
+      opts.onAttempt?.(attempt, err);
+      otpLog("sendOTPWithRetry:attemptFailed", { attempt, code: err?.code, msg: err?.message });
+      if (attempt >= maxAttempts) break;
+      if (!isTransientOtpError(err)) break;
+      const backoff = Math.min(1500 * 2 ** (attempt - 1), 4000);
+      otpLog("sendOTPWithRetry:backoff", { attempt, backoff });
+      await sleep(backoff);
+    }
+  }
+  throw lastError;
 }
 
 export async function verifyOTP(otp: string) {
