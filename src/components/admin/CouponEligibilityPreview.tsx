@@ -100,10 +100,16 @@ export function CouponEligibilityPreview({ editing, vendors, districts }: Props)
   const refresh = async () => {
     setLoading(true);
     try {
-      // Products (in-scope + total for vendor)
+      // Product scope: explicit product_ids > vendor scope > all active
+      const explicitProductIds: string[] = editing?.product_ids || [];
+      const vendorScope: string[] = editing?.vendor_ids || [];
       let pq: any = supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "active");
       if (editing?.vendor_id) pq = pq.eq("vendor_id", editing.vendor_id);
-      if ((editing?.product_ids || []).length) pq = pq.in("id", editing.product_ids);
+      if (explicitProductIds.length) {
+        pq = pq.in("id", explicitProductIds);
+      } else if (vendorScope.length) {
+        pq = pq.in("vendor_id", vendorScope);
+      }
       const { count: pc } = await pq;
       setProductCount(pc || 0);
 
