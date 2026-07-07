@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CountryConfig,
@@ -26,29 +26,36 @@ const CountryContext = createContext<CountryContextValue>({
 });
 
 const CACHE_KEY = "p4u:active_country_v1";
+const CACHE_TS_KEY = "p4u:active_country_v1:ts";
+// Country config rarely changes — cache for 24h so navigation never triggers a refetch.
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
-function loadCached(): CountryConfig {
+function loadCached(): { country: CountryConfig; fresh: boolean } {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
-    if (raw) return { ...DEFAULT_COUNTRY, ...JSON.parse(raw) };
+    const ts = Number(localStorage.getItem(CACHE_TS_KEY) || 0);
+    if (raw) {
+      const parsed = { ...DEFAULT_COUNTRY, ...JSON.parse(raw) } as CountryConfig;
+      return { country: parsed, fresh: Date.now() - ts < CACHE_TTL_MS };
+    }
   } catch {}
-  return DEFAULT_COUNTRY;
+  return { country: DEFAULT_COUNTRY, fresh: false };
 }
 
 export function CountryProvider({ children }: { children: ReactNode }) {
+  const initial = useRef(loadCached()).current;
   const [country, setCountry] = useState<CountryConfig>(() => {
-    const cached = loadCached();
-    setGlobalActiveCountry(cached);
-    return cached;
+    setGlobalActiveCountry(initial.country);
+    return initial.country;
   });
-  const [loading, setLoading] = useState(true);
+  // If cache is fresh, we do not need to block on a refresh.
+  const [loading, setLoading] = useState(!initial.fresh);
 
   const refresh = useCallback(async () => {
     try {
       const { data, error } = await supabase.rpc("get_active_country");
       if (error || !data) return;
       const c = data as unknown as CountryConfig;
-      // Coerce currency_position to literal type
       const normalized: CountryConfig = {
         ...DEFAULT_COUNTRY,
         ...c,
@@ -58,6 +65,7 @@ export function CountryProvider({ children }: { children: ReactNode }) {
       setGlobalActiveCountry(normalized);
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify(normalized));
+        localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
       } catch {}
     } catch (e) {
       console.warn("Country refresh failed", e);
@@ -67,31 +75,23 @@ export function CountryProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refresh();
+    // Persistent cache: skip network call entirely when cache is still fresh.
+    // (Audit finding: platform_settings realtime channel was firing but the value
+    //  almost never changes — removed to eliminate an idle websocket subscription.)
+    if (!initial.fresh) {
+      refresh();
+    }
+    // No realtime subscription — country/currency is refreshed via TTL only.
+  }, [refresh, initial.fresh]);
 
-    // Realtime: listen for platform_settings changes (country switch)
-    const channel = supabase
-      .channel("platform_settings_changes")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "platform_settings" },
-        () => refresh()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [refresh]);
-
-  const value: CountryContextValue = {
+  const value = useMemo<CountryContextValue>(() => ({
     country,
     loading,
     refresh,
     format: (amount, opts) => fmt(amount, { ...(opts || {}), country }),
     symbol: country.currency_symbol,
     code: country.currency_code,
-  };
+  }), [country, loading, refresh]);
 
   return <CountryContext.Provider value={value}>{children}</CountryContext.Provider>;
 }
