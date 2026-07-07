@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Home, Search, ShoppingCart, ClipboardList, User, Menu, ChevronDown, ChevronRight, MapPin, X, Heart, Gift, CreditCard, Bell, LogOut, ShoppingBag, Wrench, Megaphone, CalendarDays, Wallet, Shield, Newspaper, HelpCircle, ArrowLeft, MapPinned, Building, Film, Plus, Compass, Users, UtensilsCrossed, Coins, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,11 @@ import { useModuleStatus } from "@/hooks/useModuleStatus";
 import { useCustomerBasics, WALLET_REFRESH_EVENT } from "@/hooks/useCustomerBasics";
 
 export { WALLET_REFRESH_EVENT };
-function WalletBalance() {
+const WalletBalance = memo(function WalletBalance() {
   const { walletPoints } = useCustomerBasics();
   return <span className="text-xs font-extrabold tracking-tight">{walletPoints.toLocaleString()}</span>;
-}
+});
+
 
 interface CustomerLayoutProps {
   children: React.ReactNode;
@@ -68,7 +69,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = useCallback(async (query: string) => {
     if (socialMode || location.pathname.startsWith('/app/social')) return;
     const term = query.replace(/[%,]/g, "").trim();
     if (!term) return;
@@ -88,13 +89,13 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
       }
     } catch {}
     navigate(`/app/browse?search=${encodeURIComponent(term)}`);
-  };
+  }, [socialMode, location.pathname, navigate]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     customerLogout();
     toast.success("Logged out");
     navigate("/app");
-  };
+  }, [customerLogout, navigate]);
 
   const { modules } = useModuleStatus();
 
@@ -104,16 +105,16 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
   const { profilePhoto, name: basicsName } = useCustomerBasics();
   const initial = ((basicsName ?? customerUser?.name)?.charAt(0) || 'U').toUpperCase();
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { icon: Home, label: "Dashboard", to: "/app" },
     { icon: ShoppingBag, label: "Shop", to: "/app/browse", badge: cartCount, comingSoon: !modules.shop },
     { icon: Megaphone, label: "Socio", to: "/app/social", comingSoon: !modules.socio },
     { icon: Wrench, label: "Services", to: "/app/services", comingSoon: !modules.services },
     { icon: Building, label: "Find Home", to: "/app/find-home", comingSoon: !modules.homes },
     { icon: Newspaper, label: "Classified", to: "/app/classifieds", comingSoon: !modules.classifieds },
-  ];
+  ], [cartCount, modules.shop, modules.socio, modules.services, modules.homes, modules.classifieds]);
 
-  const isActive = (path: string) => {
+  const isActive = useCallback((path: string) => {
     if (path === '/app') return location.pathname === '/app';
     if (path === '/app/browse') return location.pathname.startsWith('/app/browse') || location.pathname.startsWith('/app/product') || location.pathname.startsWith('/app/cart') || location.pathname.startsWith('/app/vendor');
     if (path === '/app/services') return location.pathname.startsWith('/app/services') || location.pathname.startsWith('/app/service/');
@@ -122,16 +123,17 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
     if (path === '/app/find-home') return location.pathname.startsWith('/app/find-home');
     if (path === '/app/food') return location.pathname.startsWith('/app/food');
     return location.pathname === path;
-  };
+  }, [location.pathname]);
 
   // Find active nav index for pill indicator
-  const activeNavIndex = navItems.findIndex(item => isActive(item.to));
+  const activeNavIndex = useMemo(() => navItems.findIndex(item => isActive(item.to)), [navItems, isActive]);
 
-  const quickActions = [
+  const quickActions = useMemo(() => [
     { label: "Your\nOrders", icon: ClipboardList, to: "/app/orders" },
     { label: "Help &\nSupport", icon: HelpCircle, to: "#" },
     { label: "Your\nWishlist", icon: Heart, to: "/app/wishlist" },
-  ];
+  ], []);
+
 
   const menuListItems = [
     { label: "Your Wishlist", icon: Heart, to: "/app/wishlist" },
