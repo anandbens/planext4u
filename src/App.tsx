@@ -247,12 +247,19 @@ const CallsPage = lazy(() => import("./pages/customer/CallsPage"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 2 * 60_000,
+      // 5 min staleTime — returning to a page within 5 min reuses cached
+      // data with zero network. Individual queries can override for
+      // fresher-needing data (orders, wallet, notifications).
+      staleTime: 5 * 60_000,
       gcTime: 24 * 60 * 60_000,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
+      // Cached queries do NOT refetch on remount — big win when navigating
+      // back to a screen. Stale data still refetches in background.
+      refetchOnMount: false,
       retry: 1,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
+      networkMode: "online",
     },
   },
 });
