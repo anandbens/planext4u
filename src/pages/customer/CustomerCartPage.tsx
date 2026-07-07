@@ -725,18 +725,48 @@ export default function CustomerCartPage() {
                 <Card className="p-4">
                   <h3 className="text-sm font-semibold mb-2">Redeem Points</h3>
                   <div className="flex gap-2">
-                    <Input type="number" placeholder={`Enter Points (max ${maxPoints})`} value={pointsUsed || ""} onChange={(e) => {
-                      const raw = Number(e.target.value);
-                      if (Number.isNaN(raw) || raw <= 0) { setPointsUsed(0); return; }
-                      if (raw > maxPoints) {
-                        toast.error(`You can redeem a maximum of ${maxPoints} points for this order.`);
-                        setPointsUsed(maxPoints);
-                        return;
-                      }
-                      setPointsUsed(Math.floor(raw));
-                    }} className="h-10 flex-1" min={0} max={maxPoints} />
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder={`Enter Points (max ${maxPoints})`}
+                      value={pointsUsed || ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "" || val === "0") {
+                          setPointsUsed(0);
+                          setPointsError(null);
+                          return;
+                        }
+                        // Block decimals, negatives, and non-numeric characters
+                        if (!/^\d+$/.test(val)) {
+                          setPointsError("Please enter a valid whole number.");
+                          return;
+                        }
+                        const raw = parseInt(val, 10);
+                        if (raw > maxPoints) {
+                          setPointsError(`You can redeem a maximum of ${maxPoints} points for this order.`);
+                          return;
+                        }
+                        setPointsUsed(raw);
+                        setPointsError(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (["-", ".", "e", "E", "+"].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className={`h-10 flex-1 ${pointsError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      min={0}
+                      max={maxPoints}
+                      step={1}
+                      aria-invalid={!!pointsError}
+                    />
                     <Button className="h-10 px-6" onClick={applyPoints}>Apply</Button>
                   </div>
+                  {pointsError && (
+                    <p className="text-xs text-destructive mt-1 font-medium">{pointsError}</p>
+                  )}
                   <div className="mt-2 space-y-1">
                     <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">💰 Wallet Balance</span>
