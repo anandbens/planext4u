@@ -44,13 +44,12 @@ export default function SupportTicketsPage() {
   useEffect(() => { load(); }, [page, search, dateFrom, dateTo, filterStatus]);
 
   useEffect(() => {
+    // Realtime subscription removed — admin tickets list refreshes on filter
+    // change and after every mutation (resolve). A live websocket for a rarely-
+    // watched admin list is not worth the connection overhead.
     supabase.auth.getUser().then(({ data }) => setAdminId(data?.user?.id || ""));
-    const ch = supabase.channel("admin-tickets-list")
-      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets" }, () => load())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const handleResolve = async () => {
     if (!selected) return;

@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { closeOAuthBrowser, extractOAuthResultFromUrl, isNativePlatform, isOAuthCallbackUrl } from "@/lib/capacitor-auth";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { installRoutePrefetch } from "@/lib/route-prefetch";
+
 import { ProtectedRoute } from "@/components/admin/ProtectedRoute";
 import { CustomerProtectedRoute } from "@/components/customer/CustomerProtectedRoute";
 import { GuestOrCustomerRoute } from "@/components/customer/GuestOrCustomerRoute";
@@ -382,6 +384,12 @@ const AppRoutes = () => {
   const [isRiderNativeApp, setIsRiderNativeApp] = useState(forcedRiderPortal);
   const [appIdReady, setAppIdReady] = useState(!isNativePlatform() || forcedVendorPortal || forcedRiderPortal);
   usePushNotifications();
+
+  // Install a single delegated hover/focus/touch listener that prefetches the
+  // JS chunk of the target route BEFORE the user clicks. Nav feels instant.
+  useEffect(() => installRoutePrefetch(), []);
+
+
 
   // Detect native app identity on mount
   useEffect(() => {

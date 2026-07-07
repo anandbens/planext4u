@@ -153,7 +153,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <Link to="/app" className="shrink-0">
-                <img loading="lazy" decoding="async" src={p4uLogo} alt="P4U" className="h-8 w-8 rounded-lg object-contain" />
+                <img loading="lazy" decoding="async" src={p4uLogo} alt="P4U" className="h-8 w-8 rounded-lg object-contain"  width={1024} height={1024}/>
               </Link>
               <button onClick={() => setLocationModalOpen(true)} className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -231,7 +231,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 lg:gap-4 py-3">
             <Link to="/app" className="flex items-center gap-2 shrink-0">
-              <img loading="lazy" decoding="async" src={p4uLogo} alt="Planext4u" className="h-10 w-10 md:h-11 md:w-11 object-contain rounded-lg" />
+              <img loading="lazy" decoding="async" src={p4uLogo} alt="Planext4u" className="h-10 w-10 md:h-11 md:w-11 object-contain rounded-lg"  width={1024} height={1024}/>
             </Link>
 
             <button onClick={() => setLocationModalOpen(true)}
@@ -487,7 +487,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               </div>
             </div>
             <div className="flex flex-col items-center lg:items-end gap-4">
-              <img loading="lazy" decoding="async" src={p4uLogoDark} alt="Planext4u" className="h-20 w-20 object-contain rounded-xl" />
+              <img loading="lazy" decoding="async" src={p4uLogoDark} alt="Planext4u" className="h-20 w-20 object-contain rounded-xl"  width={1024} height={1024}/>
               <div className="flex flex-col gap-2">
                 <div className="bg-white text-[hsl(var(--brand-dark))] rounded-lg px-4 py-2 text-center text-xs font-medium cursor-pointer hover:opacity-90">
                   <span className="text-[9px] block opacity-60">Download on the</span>App Store

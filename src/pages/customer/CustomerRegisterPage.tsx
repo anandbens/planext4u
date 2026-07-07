@@ -355,7 +355,7 @@ export default function CustomerRegisterPage() {
     <div className="min-h-screen bg-background">
       <div className="bg-primary pt-10 pb-14 px-6 flex flex-col items-center relative">
         <Link to="/app/login" className="absolute top-4 left-4 text-primary-foreground/60 hover:text-primary-foreground"><ArrowLeft className="h-5 w-5" /></Link>
-        <img loading="lazy" decoding="async" src={p4uLogoTeal} alt="Planext4u" className="h-16 w-16 object-contain mb-2 rounded-xl" />
+        <img loading="lazy" decoding="async" src={p4uLogoTeal} alt="Planext4u" className="h-16 w-16 object-contain mb-2 rounded-xl"  width={1024} height={1024}/>
         <h2 className="text-primary-foreground text-lg font-bold">Create Account</h2>
         <p className="text-primary-foreground/60 text-xs">Join Planext4u and start shopping</p>
       </div>

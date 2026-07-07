@@ -79,12 +79,12 @@ export default function AdminComplaintsPage() {
   useEffect(() => { fetchComplaints(); }, []);
 
   useEffect(() => {
+    // Realtime subscription removed — admin complaints list refetches after
+    // every mutation. A live websocket for a rarely-watched admin list is not
+    // worth the connection overhead.
     supabase.auth.getUser().then(({ data }) => setAdminId(data?.user?.id || ""));
-    const ch = supabase.channel("admin-complaints-list")
-      .on("postgres_changes", { event: "*", schema: "public", table: "complaints" }, () => fetchComplaints())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
   }, []);
+
 
   const filtered = complaints.filter(c => {
     if (filterStatus !== "all" && c.status !== filterStatus) return false;
