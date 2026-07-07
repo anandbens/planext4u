@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { sendOTPWithRetry, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha, otpLog } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
-import p4uLogo from "@/assets/p4u-logo.png";
+import p4uLogo from "@/assets/p4u-logo.webp";
 
 const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
 const OTP_VERIFY_FIREBASE_TIMEOUT_MS = 8000;

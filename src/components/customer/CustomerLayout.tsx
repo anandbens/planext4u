@@ -10,9 +10,9 @@ import { LocationModal, loadSelectedLocation, LOCATION_CHANGED_EVENT } from "@/c
 import { SearchAutocomplete } from "@/components/customer/SearchAutocomplete";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import p4uLogoDark from "@/assets/p4u-logo-dark.png";
-import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
-import p4uLogo from "@/assets/p4u-logo.png";
+import p4uLogoDark from "@/assets/p4u-logo-dark.webp";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.webp";
+import p4uLogo from "@/assets/p4u-logo.webp";
 import IncomingCallProvider from "@/components/social/IncomingCallProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";

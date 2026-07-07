@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Lock, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.webp";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();

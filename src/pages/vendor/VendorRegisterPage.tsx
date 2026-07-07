@@ -14,7 +14,7 @@ import { compressToWebP } from "@/lib/webp-compress";
 import { api } from "@/lib/api";
 import { checkVendorPhoneUnique, checkVendorEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
 import { useCountry } from "@/lib/country-context";
-import p4uLogo from "@/assets/p4u-logo.png";
+import p4uLogo from "@/assets/p4u-logo.webp";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 const MAX_FILE_SIZE = 2 * 1024 * 1024;

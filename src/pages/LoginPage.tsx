@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import p4uLogo from "@/assets/p4u-logo.png";
+import p4uLogo from "@/assets/p4u-logo.webp";
 
 export default function LoginPage() {
   const { login } = useAuth();

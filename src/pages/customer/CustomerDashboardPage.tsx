@@ -6,8 +6,8 @@ import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { useCustomerBasics } from "@/hooks/useCustomerBasics";
 import { SplashScreen } from "@/components/customer/SplashScreen";
-import p4uLogo from "@/assets/p4u-logo-dark.png";
-import dashboardBg from "@/assets/dashboard-food-bg.jpg";
+import p4uLogo from "@/assets/p4u-logo-dark.webp";
+import dashboardBg from "@/assets/dashboard-food-bg.webp";
 
 /**
  * Glassmorphic dashboard shown immediately after splash.

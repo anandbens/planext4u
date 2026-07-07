@@ -15,7 +15,7 @@ import { sendOTP, verifyOTP, clearRecaptcha, getFirebaseIdToken, resetPhoneAuth,
 import { supabase } from "@/integrations/supabase/client";
 import { checkCustomerPhoneUnique, checkCustomerEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
 import { useCountry } from "@/lib/country-context";
-import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.webp";
 
 function TermsContent() {
   return (

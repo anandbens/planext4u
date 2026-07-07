@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { VendorNotificationBell } from "@/components/vendor/VendorNotificationBell";
 import { supabase } from "@/integrations/supabase/client";
-import p4uLogo from "@/assets/p4u-logo.png";
+import p4uLogo from "@/assets/p4u-logo.webp";
 
 interface VendorLayoutProps {
   children: ReactNode;
