@@ -18,7 +18,7 @@ import "./index.css";
 import { initNativeBridges } from "./lib/native-bootstrap";
 import { installCdnImagePatch } from "./lib/cdn-runtime-patch";
 
-// Install global runtime safety net so any <img>/<video>/<source>/<audio>
+// Install global runtime safety net so any <img loading="lazy" decoding="async">/<video>/<source>/<audio>
 // pointing at a raw Backblaze URL is transparently routed via Cloudflare CDN
 // before the browser fires the network request. Must run before React renders.
 installCdnImagePatch();

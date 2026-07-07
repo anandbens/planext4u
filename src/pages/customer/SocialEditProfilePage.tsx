@@ -127,7 +127,7 @@ export default function SocialEditProfilePage() {
           <div className="relative">
             <div className="h-24 w-24 rounded-full bg-accent flex items-center justify-center border-2 border-border overflow-hidden">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-3xl font-bold text-primary">{form.displayName.charAt(0).toUpperCase() || 'U'}</span>
               )}

@@ -106,7 +106,7 @@ export default function SocialCommentsPage() {
                 <Link to={`/app/social/profile/${comment.user_id}`}>
                   <Avatar className="h-9 w-9 shrink-0">
                     {comment.avatar_url ? (
-                      <img src={comment.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                      <img loading="lazy" decoding="async" src={comment.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
                     ) : (
                       <AvatarFallback className="bg-muted text-xs font-bold">
                         {(comment.display_name || comment.username || 'U').charAt(0).toUpperCase()}
@@ -165,7 +165,7 @@ export default function SocialCommentsPage() {
                         <div key={reply.id} className="flex gap-2.5 mt-2.5">
                           <Avatar className="h-7 w-7">
                             {reply.avatar_url ? (
-                              <img src={reply.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                              <img loading="lazy" decoding="async" src={reply.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
                             ) : (
                               <AvatarFallback className="bg-muted text-[10px] font-bold">
                                 {(reply.display_name || reply.username || 'U').charAt(0).toUpperCase()}

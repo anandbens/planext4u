@@ -119,7 +119,7 @@ export default function AdminOnboardingPage() {
                   <Switch checked={s.is_active} onCheckedChange={() => toggleActive(s)} />
                 </div>
                 {s.image_url && (
-                  <img src={s.image_url} alt={s.title} className="w-full h-40 object-contain rounded-lg bg-muted" />
+                  <img loading="lazy" decoding="async" src={s.image_url} alt={s.title} className="w-full h-40 object-contain rounded-lg bg-muted" />
                 )}
                 <h3 className="font-semibold text-sm">{s.title}</h3>
                 <p className="text-xs text-muted-foreground line-clamp-2">{s.description}</p>
@@ -186,7 +186,7 @@ export default function AdminOnboardingPage() {
             {activeSlides[previewIdx] && (
               <>
                 <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={activeSlides[previewIdx].image_url}
                     alt={activeSlides[previewIdx].title}
                     className="w-48 h-48 object-contain rounded-xl"

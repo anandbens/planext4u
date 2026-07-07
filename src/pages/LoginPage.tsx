@@ -43,7 +43,7 @@ export default function LoginPage() {
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIvPjwvc3ZnPg==')] opacity-50" />
             <div className="relative">
               <div className="bg-white rounded-2xl p-3 w-20 h-20 mx-auto mb-4 shadow-lg">
-                <img src={p4uLogo} alt="Planext4u" className="w-full h-full object-contain" />
+                <img loading="lazy" decoding="async" src={p4uLogo} alt="Planext4u" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-xl font-bold text-white">Admin Portal</h1>
               <p className="text-white/60 text-xs mt-1">Restricted access — Authorized personnel only</p>

@@ -144,7 +144,7 @@ export default function SocialPostDetailPage() {
         <Link to={`/app/social/profile/${post.user_id}`}>
           <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 p-[1.5px]">
             <div className="h-full w-full rounded-full bg-card flex items-center justify-center overflow-hidden">
-              {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> :
+              {avatarUrl ? <img loading="lazy" decoding="async" src={avatarUrl} alt="" className="w-full h-full object-cover" /> :
                 <span className="text-sm font-bold">{username.charAt(0).toUpperCase()}</span>}
             </div>
           </div>
@@ -234,7 +234,7 @@ export default function SocialPostDetailPage() {
                     <div key={tag.id} className={`rounded-lg overflow-hidden border-2 border-card shadow-xl bg-card ${i > 0 ? '-ml-5 relative z-0' : 'relative z-[1]'}`}
                       style={{ animation: "detail-product-pulse 2.5s ease-in-out infinite", width: i === 0 ? 56 : 48, height: i === 0 ? 56 : 48 }}>
                       {tag.socio_shopping_icon || tag.image ? (
-                        <img src={tag.socio_shopping_icon || tag.image} alt="" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={tag.socio_shopping_icon || tag.image} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-accent flex items-center justify-center"><ShoppingBag className="h-5 w-5 text-primary" /></div>
                       )}
@@ -261,7 +261,7 @@ export default function SocialPostDetailPage() {
                   onClick={() => navigate(`/app/product/${tag.id}`)}
                 >
                   {tag.socio_shopping_icon || tag.image ? (
-                    <img src={tag.socio_shopping_icon || tag.image} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0 border border-border/50" />
+                    <img loading="lazy" decoding="async" src={tag.socio_shopping_icon || tag.image} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0 border border-border/50" />
                   ) : (
                     <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center shrink-0"><ShoppingBag className="h-5 w-5 text-primary" /></div>
                   )}

@@ -184,7 +184,7 @@ export default function CategoriesPage() {
           { key: "image", label: "Image", render: (c) => {
             const imgSrc = c.image;
             return imgSrc?.startsWith("/") || imgSrc?.startsWith("http")
-              ? <img src={imgSrc} alt={c.name} className="h-10 w-10 rounded object-cover" />
+              ? <img loading="lazy" decoding="async" src={imgSrc} alt={c.name} className="h-10 w-10 rounded object-cover" />
               : <span className="text-xl">{imgSrc}</span>;
           }},
           { key: "subcategories", label: "Sub Categories (Services)", render: (c) => {

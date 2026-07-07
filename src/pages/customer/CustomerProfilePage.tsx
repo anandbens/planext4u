@@ -113,7 +113,7 @@ export default function CustomerProfilePage() {
           <Card className="p-6 flex items-center gap-4">
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
               {profile?.profile_photo ? (
-                <img
+                <img loading="lazy" decoding="async"
                   src={profile.profile_photo}
                   alt={displayName || 'Profile'}
                   className="h-full w-full object-cover"

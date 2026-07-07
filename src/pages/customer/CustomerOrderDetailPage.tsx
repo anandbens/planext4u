@@ -185,7 +185,7 @@ export default function CustomerOrderDetailPage() {
               >
                 <div className="h-14 w-14 bg-secondary/30 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
                   {item.image ? (
-                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={item.image} alt={item.title} className="w-full h-full object-cover" />
                   ) : (
                     <Package className="h-6 w-6 text-muted-foreground" />
                   )}

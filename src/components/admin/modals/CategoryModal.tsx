@@ -272,7 +272,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
                 <MediaLibraryPicker value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="categories" label="Choose Image" className="mt-1" />
               ) : (
                 form.image?.startsWith('http') || form.image?.startsWith('/')
-                  ? <img src={form.image} alt="cat" className="mt-1 h-12 w-12 rounded object-cover" />
+                  ? <img loading="lazy" decoding="async" src={form.image} alt="cat" className="mt-1 h-12 w-12 rounded object-cover" />
                   : <span className="text-2xl mt-1 block">{form.image}</span>
               )}
             </div>
@@ -282,7 +282,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
                 <MediaLibraryPicker value={form.icon} onChange={(url) => setForm({ ...form, icon: url })} folder="icons" label="Choose Icon" className="mt-1" />
               ) : (
                 form.icon?.startsWith('http') || form.icon?.startsWith('/')
-                  ? <img src={form.icon} alt="icon" className="mt-1 h-10 w-10 rounded object-contain" />
+                  ? <img loading="lazy" decoding="async" src={form.icon} alt="icon" className="mt-1 h-10 w-10 rounded object-contain" />
                   : <p className="text-sm mt-1">{form.icon || '—'}</p>
               )}
             </div>
@@ -294,7 +294,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
             {editMode ? (
               <MediaLibraryPicker value={form.banner_image} onChange={(url) => setForm({ ...form, banner_image: url })} folder="categories" label="Upload Banner Image" className="mt-1" />
             ) : form.banner_image ? (
-              <img src={form.banner_image} alt="Banner" className="mt-1 h-20 w-full object-cover rounded" />
+              <img loading="lazy" decoding="async" src={form.banner_image} alt="Banner" className="mt-1 h-20 w-full object-cover rounded" />
             ) : <p className="text-sm mt-1 text-muted-foreground">—</p>}
           </div>
 
@@ -416,7 +416,7 @@ export function CategoryModal({ category, open, onOpenChange, mode, onSave, onCr
               {editMode ? (
                 <MediaLibraryPicker value={form.promotion_banner_url} onChange={(url) => setForm({ ...form, promotion_banner_url: url })} folder="promotions" label="Upload Promotion Banner" className="mt-1" />
               ) : form.promotion_banner_url ? (
-                <img src={form.promotion_banner_url} alt="Promotion" className="mt-1 h-16 w-full object-cover rounded" />
+                <img loading="lazy" decoding="async" src={form.promotion_banner_url} alt="Promotion" className="mt-1 h-16 w-full object-cover rounded" />
               ) : <p className="text-sm mt-1 text-muted-foreground">—</p>}
             </div>
           </div>

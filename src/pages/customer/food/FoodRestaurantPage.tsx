@@ -244,7 +244,7 @@ export default function FoodRestaurantPage() {
       {/* Banner */}
       <div className="relative aspect-[16/9] bg-muted">
         {galleryImages[0] && (
-          <img
+          <img loading="lazy" decoding="async"
             src={galleryImages[0]}
             alt={restaurant.name}
             className="w-full h-full object-cover"
@@ -274,7 +274,7 @@ export default function FoodRestaurantPage() {
         <div className="flex items-start justify-between gap-3">
           <div className="flex gap-3 flex-1 min-w-0">
             {restaurant.logo_url && (
-              <img
+              <img loading="lazy" decoding="async"
                 src={restaurant.logo_url}
                 alt={`${restaurant.name} logo`}
                 className="w-14 h-14 rounded-lg object-cover border border-border/40 shrink-0"
@@ -378,7 +378,7 @@ export default function FoodRestaurantPage() {
                 className="min-w-[220px] rounded-xl border border-border/60 p-3 bg-card"
               >
                 {c.image_url && (
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={c.image_url}
                     alt={c.name}
                     className="w-full h-28 rounded-lg object-cover mb-2"
@@ -614,12 +614,12 @@ export default function FoodRestaurantPage() {
                   galleryIndex === i ? "border-primary" : "border-border/40"
                 }`}
               >
-                <img src={src} alt={`Photo ${i + 1}`} className="w-full h-32 object-cover" />
+                <img loading="lazy" decoding="async" src={src} alt={`Photo ${i + 1}`} className="w-full h-32 object-cover" />
               </button>
             ))}
           </div>
           {galleryImages[galleryIndex] && (
-            <img
+            <img loading="lazy" decoding="async"
               src={galleryImages[galleryIndex]}
               alt="Selected"
               className="w-full max-h-[60vh] object-contain rounded-lg"

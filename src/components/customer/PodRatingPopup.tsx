@@ -191,7 +191,7 @@ export function PodRatingPopup({ open, onOpenChange, order, customerId, customer
               {items.slice(0, 3).map((item: any, i: number) => (
                 <div key={i} className="flex items-center gap-2">
                   <div className="h-8 w-8 bg-secondary rounded flex items-center justify-center text-sm shrink-0 overflow-hidden">
-                    {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji || "📦"}</span>}
+                    {item.image ? <img loading="lazy" decoding="async" src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji || "📦"}</span>}
                   </div>
                   <p className="text-xs truncate flex-1">{item.title}</p>
                   <p className="text-xs font-medium">×{item.qty}</p>
@@ -265,7 +265,7 @@ export function PodRatingPopup({ open, onOpenChange, order, customerId, customer
 
             <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
               <div className="h-12 w-12 bg-secondary rounded-lg flex items-center justify-center overflow-hidden shrink-0">
-                {currentItem.image ? <img src={currentItem.image} alt="" className="w-full h-full object-cover" /> : <span className="text-xl">{currentItem.emoji || "📦"}</span>}
+                {currentItem.image ? <img loading="lazy" decoding="async" src={currentItem.image} alt="" className="w-full h-full object-cover" /> : <span className="text-xl">{currentItem.emoji || "📦"}</span>}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{currentItem.title}</p>

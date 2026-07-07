@@ -135,7 +135,7 @@ export default function VendorRestaurantPage() {
         {/* Restaurant header card */}
         <Card className="p-0 overflow-hidden">
           {(restaurant as any).banner_url && (
-            <img src={(restaurant as any).banner_url} alt={restaurant.name} className="w-full h-32 object-cover" />
+            <img loading="lazy" decoding="async" src={(restaurant as any).banner_url} alt={restaurant.name} className="w-full h-32 object-cover" />
           )}
           <div className="p-4">
             <div className="flex justify-between items-start">

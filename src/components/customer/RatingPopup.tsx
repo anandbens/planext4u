@@ -173,7 +173,7 @@ export function RatingPopup({ customerId, userId }: Props) {
             >
               <div className="h-14 w-14 rounded-lg bg-secondary/30 overflow-hidden shrink-0 flex items-center justify-center">
                 {current.product_image ? (
-                  <img src={current.product_image} alt="" className="h-full w-full object-cover" />
+                  <img loading="lazy" decoding="async" src={current.product_image} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <Package className="h-6 w-6 text-muted-foreground" />
                 )}

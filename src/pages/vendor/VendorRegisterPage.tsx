@@ -242,7 +242,7 @@ export default function VendorRegisterPage() {
           </Link>
           <div className="flex items-center gap-2">
             <div className="bg-primary rounded-lg p-1 h-7 w-7 flex items-center justify-center">
-              <img src={p4uLogo} alt="P4U" className="w-full h-full object-contain" />
+              <img loading="lazy" decoding="async" src={p4uLogo} alt="P4U" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-base font-bold">Vendor Registration</h1>
           </div>

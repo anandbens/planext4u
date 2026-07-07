@@ -478,7 +478,7 @@ export default function PaymentPage() {
             {orderItems.map((item: any, i: number) => (
               <div key={i} className="flex items-center gap-3 mb-2">
                 <div className="h-12 w-12 bg-secondary/30 rounded-lg overflow-hidden shrink-0">
-                  {item.image ? <img src={item.image} className="w-full h-full object-cover" /> : <span className="flex items-center justify-center h-full text-lg">{item.emoji}</span>}
+                  {item.image ? <img loading="lazy" decoding="async" src={item.image} className="w-full h-full object-cover" /> : <span className="flex items-center justify-center h-full text-lg">{item.emoji}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{item.title}</p>
@@ -554,7 +554,7 @@ export default function PaymentPage() {
                 {cart.map((item: any, i: number) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="h-14 w-14 bg-secondary/30 rounded-lg overflow-hidden shrink-0">
-                      {item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" /> : <span className="flex items-center justify-center h-full text-lg">{item.emoji}</span>}
+                      {item.image ? <img loading="lazy" decoding="async" src={item.image} alt={item.title} className="w-full h-full object-cover" /> : <span className="flex items-center justify-center h-full text-lg">{item.emoji}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate">{item.title}</p>

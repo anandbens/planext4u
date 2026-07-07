@@ -100,7 +100,7 @@ export function CouponPopup({ customerId }: Props) {
         <div className="bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground p-6 relative">
           <button onClick={() => dismiss(false)} className="absolute top-3 right-3 opacity-70 hover:opacity-100"><X className="w-5 h-5" /></button>
           {campaign.popup_image_url && (
-            <img src={campaign.popup_image_url} alt="" className="w-24 h-24 object-cover rounded-lg mx-auto mb-3" />
+            <img loading="lazy" decoding="async" src={campaign.popup_image_url} alt="" className="w-24 h-24 object-cover rounded-lg mx-auto mb-3" />
           )}
           <div className="flex items-center justify-center gap-2 mb-2"><Tag className="w-5 h-5" /><span className="text-xs uppercase tracking-widest opacity-90">Special Offer</span></div>
           <h2 className="text-2xl font-bold text-center">{campaign.popup_title || campaign.name}</h2>

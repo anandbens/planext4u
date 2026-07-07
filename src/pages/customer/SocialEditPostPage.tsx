@@ -194,7 +194,7 @@ export default function SocialEditPostPage() {
               mediaItems[0]?.type === "video" ? (
                 <PlayableVideo src={mediaItems[0]?.url} className="w-full h-full object-cover" controls />
               ) : (
-                <img
+                <img loading="lazy" decoding="async"
                   src={mediaItems[0]?.mediumUrl || mediaItems[0]?.url}
                   alt=""
                   className="w-full h-full object-cover"
@@ -304,7 +304,7 @@ export default function SocialEditPostPage() {
               {productTags.map((t: any) => (
                 <span key={t.id} className="inline-flex items-center gap-2 bg-accent rounded-lg px-2 py-1 text-xs max-w-[200px]">
                   {(t.image || t.socio_shopping_icon) && (
-                    <img src={t.image || t.socio_shopping_icon} alt="" className="h-5 w-5 rounded object-cover" />
+                    <img loading="lazy" decoding="async" src={t.image || t.socio_shopping_icon} alt="" className="h-5 w-5 rounded object-cover" />
                   )}
                   <span className="truncate">{t.title}</span>
                   <button onClick={() => setProductTags((prev) => prev.filter((x) => x.id !== t.id))}>
@@ -344,7 +344,7 @@ export default function SocialEditPostPage() {
                       className="flex items-center gap-2 w-full text-left px-2 py-2 rounded hover:bg-accent text-sm"
                     >
                       {(p.image || p.socio_shopping_icon) && (
-                        <img src={p.image || p.socio_shopping_icon} alt="" className="h-8 w-8 rounded object-cover" />
+                        <img loading="lazy" decoding="async" src={p.image || p.socio_shopping_icon} alt="" className="h-8 w-8 rounded object-cover" />
                       )}
                       <span className="flex-1 truncate">{p.title}</span>
                       {p.price != null && <span className="text-xs text-primary font-bold">₹{p.price}</span>}

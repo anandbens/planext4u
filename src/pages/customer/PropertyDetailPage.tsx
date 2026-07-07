@@ -706,7 +706,7 @@ export default function PropertyDetailPage() {
         <DialogContent className="max-w-3xl p-0">
           <DialogTitle className="sr-only">Image Gallery</DialogTitle>
           <div className="relative">
-            <img src={images[imgIdx]} alt="" className="w-full h-auto max-h-[80vh] object-contain bg-black" />
+            <img loading="lazy" decoding="async" src={images[imgIdx]} alt="" className="w-full h-auto max-h-[80vh] object-contain bg-black" />
             <button onClick={() => setShowGallery(false)} className="absolute top-2 right-2 h-8 w-8 rounded-full bg-card/80 flex items-center justify-center">
               <X className="h-4 w-4" />
             </button>
@@ -727,7 +727,7 @@ export default function PropertyDetailPage() {
               {images.map((img: string, i: number) => (
                 <button key={i} onClick={() => setImgIdx(i)}
                   className={`shrink-0 h-14 w-20 rounded overflow-hidden border-2 transition-all ${i === imgIdx ? 'border-primary' : 'border-transparent opacity-60'}`}>
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={img} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

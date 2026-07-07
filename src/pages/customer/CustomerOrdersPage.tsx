@@ -132,7 +132,7 @@ export default function CustomerOrdersPage() {
                       {o.items?.map((item: any, i: number) => (
                         <div key={i} className="flex items-center gap-3 mb-1">
                           <div className="h-10 w-10 bg-secondary/30 rounded-lg flex items-center justify-center text-lg shrink-0 overflow-hidden">
-                            {item.image ? <img src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji}</span>}
+                            {item.image ? <img loading="lazy" decoding="async" src={item.image} alt="" className="w-full h-full object-cover" /> : <span>{item.emoji}</span>}
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-medium">{item.title}</p>

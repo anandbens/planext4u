@@ -267,7 +267,7 @@ export default function ImageEditor({ imageUrl, onSave, onCancel }: ImageEditorP
         onPointerLeave={handlePointerUp}
       >
         {imgLoaded && (
-          <img
+          <img loading="lazy" decoding="async"
             src={imageUrl}
             alt=""
             className="max-w-full max-h-full object-contain"

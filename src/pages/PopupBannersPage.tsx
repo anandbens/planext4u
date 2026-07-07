@@ -40,7 +40,7 @@ export default function PopupBannersPage() {
         columns={[
           { key: "id", label: "ID" },
           { key: "image", label: "Image", render: (b) => b.image ? (
-            <img src={b.image} alt={b.title} className="h-10 w-16 rounded-lg object-cover" />
+            <img loading="lazy" decoding="async" src={b.image} alt={b.title} className="h-10 w-16 rounded-lg object-cover" />
           ) : (
             <div className="h-10 w-16 rounded-lg bg-secondary/30 flex items-center justify-center text-xs text-muted-foreground">No img</div>
           )},

@@ -3,7 +3,7 @@
  *
  * Accepts a stored value that may be a public URL (legacy) or a
  * `b2-private://<key>` reference. Resolves it to a short-lived signed URL
- * via the `b2-presigned-download` edge function and renders an <img> or a
+ * via the `b2-presigned-download` edge function and renders an <img loading="lazy" decoding="async"> or a
  * PDF placeholder. Falls back gracefully if signing fails.
  */
 

@@ -452,7 +452,7 @@ export default function VendorProductsPage() {
             filtered.map((p) => (
               <Card key={p.id} className="p-4 flex items-center gap-4">
                 <div className="h-14 w-14 bg-secondary/30 rounded-xl flex items-center justify-center text-2xl shrink-0 overflow-hidden">
-                  {p.image ? <img src={p.image} alt="" className="w-full h-full object-cover" /> : <span>{p.emoji || "📦"}</span>}
+                  {p.image ? <img loading="lazy" decoding="async" src={p.image} alt="" className="w-full h-full object-cover" /> : <span>{p.emoji || "📦"}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -575,7 +575,7 @@ export default function VendorProductsPage() {
                     <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
                       {form.images.map((img, i) => (
                         <div key={i} className="relative h-20 w-20 shrink-0 rounded-lg overflow-hidden bg-secondary/30">
-                          <img src={img} alt="" className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={img} alt="" className="w-full h-full object-cover" />
                           <button type="button" className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-card/80 flex items-center justify-center" onClick={() => removeImage(i)}><X className="h-3 w-3" /></button>
                         </div>
                       ))}
@@ -589,7 +589,7 @@ export default function VendorProductsPage() {
                     <Label>Thumbnail</Label>
                     {form.thumbnail_image ? (
                       <div className="relative h-20 w-20 rounded-lg overflow-hidden bg-secondary/30 mt-1">
-                        <img src={form.thumbnail_image} alt="" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={form.thumbnail_image} alt="" className="w-full h-full object-cover" />
                         <button type="button" className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-card/80 flex items-center justify-center" onClick={() => setForm({ ...form, thumbnail_image: "" })}><X className="h-3 w-3" /></button>
                       </div>
                     ) : (
@@ -602,7 +602,7 @@ export default function VendorProductsPage() {
                     <Label>Banner</Label>
                     {form.banner_image ? (
                       <div className="relative h-20 w-32 rounded-lg overflow-hidden bg-secondary/30 mt-1">
-                        <img src={form.banner_image} alt="" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={form.banner_image} alt="" className="w-full h-full object-cover" />
                         <button type="button" className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-card/80 flex items-center justify-center" onClick={() => setForm({ ...form, banner_image: "" })}><X className="h-3 w-3" /></button>
                       </div>
                     ) : (

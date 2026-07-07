@@ -177,7 +177,7 @@ export function FoodReviewModal(p: Props) {
             <div className="flex gap-2 flex-wrap">
               {photos.map(url => (
                 <div key={url} className="relative h-16 w-16 rounded-md overflow-hidden">
-                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <img loading="lazy" decoding="async" src={url} alt="" className="h-full w-full object-cover" />
                   <button type="button" onClick={() => removePhoto(url)}
                     className="absolute top-0.5 right-0.5 bg-foreground/70 text-background rounded-full p-0.5">
                     <X className="h-3 w-3" />

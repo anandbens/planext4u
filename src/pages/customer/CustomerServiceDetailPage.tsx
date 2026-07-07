@@ -226,7 +226,7 @@ export default function CustomerServiceDetailPage() {
       <div className="max-w-5xl mx-auto px-4 py-6 pb-20 md:pb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="relative rounded-2xl overflow-hidden h-72 md:h-96">
-            <img src={imgUrl} alt={service.title} className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={imgUrl} alt={service.title} className="w-full h-full object-cover" />
             <button onClick={() => navigate(-1)} className="absolute top-4 left-4 h-8 w-8 rounded-full bg-card/80 backdrop-blur flex items-center justify-center md:hidden">
               <ChevronLeft className="h-4 w-4" />
             </button>

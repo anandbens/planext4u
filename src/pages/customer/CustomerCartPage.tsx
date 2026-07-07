@@ -653,7 +653,7 @@ export default function CustomerCartPage() {
                         <Card key={item.id} className="p-4">
                           <div className="flex gap-3">
                             <Link to={`/app/product/${item.id}`} className="h-20 w-20 bg-secondary/30 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
-                              {item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" /> : <span className="text-3xl">{item.emoji}</span>}
+                              {item.image ? <img loading="lazy" decoding="async" src={item.image} alt={item.title} className="w-full h-full object-cover" /> : <span className="text-3xl">{item.emoji}</span>}
                             </Link>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between">
@@ -704,7 +704,7 @@ export default function CustomerCartPage() {
                       {savedForLater.map(item => (
                         <Card key={item.id} className="p-4 flex items-center gap-3">
                           <div className="h-14 w-14 bg-secondary/30 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
-                            {item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-cover" /> : <span className="text-2xl">{item.emoji}</span>}
+                            {item.image ? <img loading="lazy" decoding="async" src={item.image} alt={item.title} className="w-full h-full object-cover" /> : <span className="text-2xl">{item.emoji}</span>}
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="text-sm font-semibold truncate">{item.title}</h3>

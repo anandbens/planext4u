@@ -194,7 +194,7 @@ export default function VendorMediaLibraryPage() {
                 {item.file_type === "video" ? (
                   <Video className="h-8 w-8 text-muted-foreground" />
                 ) : (
-                  <img src={item.file_url} alt={item.file_name} className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={item.file_url} alt={item.file_name} className="w-full h-full object-cover" />
                 )}
               </div>
               <div className="p-2">

@@ -247,7 +247,7 @@ function MenuManager({ restaurant, onClose }: { restaurant: Restaurant; onClose:
             <Button size="sm" onClick={() => setEditItem({ restaurant_id: restaurant.id, in_stock: true, is_veg: true, gst_rate: 5, prep_minutes: 15 })}><Plus className="w-4 h-4 mr-1" /> New Item</Button>
             {items.map(it => (
               <Card key={it.id} className="p-3 flex justify-between items-center gap-3">
-                {it.image_url && <img src={it.image_url} alt={it.name} className="w-14 h-14 rounded object-cover" />}
+                {it.image_url && <img loading="lazy" decoding="async" src={it.image_url} alt={it.name} className="w-14 h-14 rounded object-cover" />}
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{it.name} <Badge variant="outline" className="ml-1 text-[10px]">{it.is_veg ? "VEG" : "NON-VEG"}</Badge></p>
                   <p className="text-xs text-muted-foreground truncate">{it.description}</p>
@@ -268,7 +268,7 @@ function MenuManager({ restaurant, onClose }: { restaurant: Restaurant; onClose:
               const itemsInCombo = items.filter(i => (c.item_ids || []).includes(i.id));
               return (
                 <Card key={c.id} className="p-3 flex justify-between items-start gap-3">
-                  {c.image_url && <img src={c.image_url} alt={c.name} className="w-14 h-14 rounded object-cover" />}
+                  {c.image_url && <img loading="lazy" decoding="async" src={c.image_url} alt={c.name} className="w-14 h-14 rounded object-cover" />}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">{c.name}</p>
                     <p className="text-xs text-muted-foreground line-clamp-2">{itemsInCombo.map(i => i.name).join(", ")}</p>

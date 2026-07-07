@@ -217,7 +217,7 @@ export default function PeopleYouMayKnow() {
             <Link to={`/app/social/profile/${user.id}`}>
               <div className="h-16 w-16 rounded-full bg-muted overflow-hidden border-2 border-primary/20">
                 {user.profile_photo ? (
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={user.profile_photo}
                     alt={user.name}
                     className="w-full h-full object-cover"

@@ -74,7 +74,7 @@ export function VendorOrderDetailModal({ order, onClose }: Props) {
                 {(o.items || []).map((item: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 pb-2 border-b border-border/20 last:border-0 last:pb-0">
                     {item.image && (
-                      <img src={item.image} className="h-10 w-10 rounded object-cover shrink-0" alt="" />
+                      <img loading="lazy" decoding="async" src={item.image} className="h-10 w-10 rounded object-cover shrink-0" alt="" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium truncate">{item.title}</p>

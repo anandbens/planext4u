@@ -72,7 +72,7 @@ export default function FollowedByChip({ profileUserId }: Props) {
             className="h-5 w-5 rounded-full bg-muted border-2 border-card overflow-hidden flex items-center justify-center"
           >
             {u.avatar_url ? (
-              <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={u.avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <span className="text-[8px] font-bold text-muted-foreground">
                 {(u.display_name || u.username).charAt(0).toUpperCase()}

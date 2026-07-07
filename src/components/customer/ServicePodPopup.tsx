@@ -184,7 +184,7 @@ export function ServicePodPopup({ open, onOpenChange, booking, service, customer
             {booking.completion_photo_url && (
               <div className="p-2 bg-info/5 rounded-lg">
                 <p className="text-xs font-medium mb-1">Vendor's completion photo:</p>
-                <img src={booking.completion_photo_url} alt="Completion" className="max-h-32 rounded object-cover" />
+                <img loading="lazy" decoding="async" src={booking.completion_photo_url} alt="Completion" className="max-h-32 rounded object-cover" />
               </div>
             )}
 
@@ -202,7 +202,7 @@ export function ServicePodPopup({ open, onOpenChange, booking, service, customer
                 <div className="border-2 border-dashed border-border rounded-lg p-3 text-center">
                   {photoPreview ? (
                     <div>
-                      <img src={photoPreview} alt="Preview" className="max-h-24 mx-auto rounded" />
+                      <img loading="lazy" decoding="async" src={photoPreview} alt="Preview" className="max-h-24 mx-auto rounded" />
                       <Button variant="outline" size="sm" className="mt-1 text-xs" onClick={() => { setPhoto(null); setPhotoPreview(""); }}>Change</Button>
                     </div>
                   ) : (

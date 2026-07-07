@@ -381,7 +381,7 @@ export default function CustomerBrowsePage() {
                     <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all overflow-hidden
                       ${active ? 'cat-themed-soft-bg cat-themed-border shadow-sm' : 'bg-card border-border/50 hover:border-primary/30'}`}>
                       {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
-                        <img src={c.image} alt={c.name} className="h-8 w-8 rounded-lg object-cover" />
+                        <img loading="lazy" decoding="async" src={c.image} alt={c.name} className="h-8 w-8 rounded-lg object-cover" />
                       ) : (
                         <span className="text-xl">{c.image || '📦'}</span>
                       )}
@@ -502,7 +502,7 @@ export default function CustomerBrowsePage() {
                             if (allImages.length > 1) {
                               return (
                                 <div className="relative w-full h-full">
-                                  <img src={allImages[0]} alt={p.title} className={`w-full h-full object-cover ${isOutOfStock ? 'opacity-50' : ''}`} />
+                                  <img loading="lazy" decoding="async" src={allImages[0]} alt={p.title} className={`w-full h-full object-cover ${isOutOfStock ? 'opacity-50' : ''}`} />
                                   <div className="absolute bottom-1 right-1 bg-card/80 text-[9px] font-medium px-1.5 py-0.5 rounded-full">{allImages.length} 📷</div>
                                 </div>
                               );

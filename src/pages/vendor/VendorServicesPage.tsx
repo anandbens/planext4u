@@ -281,7 +281,7 @@ export default function VendorServicesPage() {
             filtered.map((s) => (
               <Card key={s.id} className="p-4 flex items-center gap-4">
                 <div className="h-14 w-14 bg-secondary/30 rounded-xl flex items-center justify-center text-2xl shrink-0 overflow-hidden">
-                  {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" /> : <span>{s.emoji || "🔧"}</span>}
+                  {s.image ? <img loading="lazy" decoding="async" src={s.image} alt="" className="w-full h-full object-cover" /> : <span>{s.emoji || "🔧"}</span>}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

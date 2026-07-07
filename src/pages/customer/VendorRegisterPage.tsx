@@ -624,7 +624,7 @@ export default function VendorRegisterPage() {
               {form.store_logo_url ? (
                 <div className="relative mt-2 group">
                   <div className="aspect-square w-28 rounded-lg overflow-hidden border border-border/30 bg-secondary/20">
-                    <img src={form.store_logo_url} alt="Store Logo" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={form.store_logo_url} alt="Store Logo" className="w-full h-full object-cover" />
                   </div>
                   <button type="button" onClick={() => updateField('store_logo_url', '')} className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1">
                     <X className="h-3 w-3" />

@@ -86,7 +86,7 @@ export function ClassifiedModal({ ad, open, onOpenChange, mode, onSave, onDelete
             <div className="flex gap-2 flex-wrap mt-1">
               {(form.images || []).map((img: string, i: number) => (
                 <div key={i} className="relative h-20 w-20 rounded-lg overflow-hidden border border-border/50">
-                  <img src={img} alt={`Ad ${i}`} className="h-full w-full object-cover" />
+                  <img loading="lazy" decoding="async" src={img} alt={`Ad ${i}`} className="h-full w-full object-cover" />
                   {isEdit && (
                     <button onClick={() => removeImage(i)}
                       className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">

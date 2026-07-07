@@ -104,7 +104,7 @@ export default function AdminVendorOnboardingPage() {
               <Card key={s.id} className="overflow-hidden">
                 <div className="h-40 bg-secondary/20 flex items-center justify-center overflow-hidden">
                   {s.image_url ? (
-                    <img src={s.image_url} alt={s.title} className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={s.image_url} alt={s.title} className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-4xl">📱</span>
                   )}
@@ -160,7 +160,7 @@ export default function AdminVendorOnboardingPage() {
           <DialogTitle className="sr-only">Preview</DialogTitle>
           {activeSlides[previewIdx] && (
             <div className="flex flex-col items-center text-center p-8">
-              <img src={activeSlides[previewIdx].image_url} alt="" className="w-64 h-64 object-contain rounded-2xl mb-6" />
+              <img loading="lazy" decoding="async" src={activeSlides[previewIdx].image_url} alt="" className="w-64 h-64 object-contain rounded-2xl mb-6" />
               <h2 className="text-xl font-bold">{activeSlides[previewIdx].title}</h2>
               <p className="text-sm text-muted-foreground mt-2 px-4">{activeSlides[previewIdx].description}</p>
               <div className="flex gap-2 mt-6">

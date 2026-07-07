@@ -155,7 +155,7 @@ export default function SocialDMPage() {
                 className="w-full flex items-center gap-3 px-2 py-3 hover:bg-muted/50 rounded-lg transition-colors"
               >
                 <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                  {p.avatar_url ? <img src={p.avatar_url} className="w-full h-full object-cover" /> :
+                  {p.avatar_url ? <img loading="lazy" decoding="async" src={p.avatar_url} className="w-full h-full object-cover" /> :
                     <span className="text-sm font-bold">{(p.display_name || p.username || 'U').charAt(0).toUpperCase()}</span>}
                 </div>
                 <div className="text-left">
@@ -236,7 +236,7 @@ export default function SocialDMPage() {
                 >
                   <Avatar className="h-14 w-14">
                     {prof?.avatar_url ? (
-                      <img src={prof.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                      <img loading="lazy" decoding="async" src={prof.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
                     ) : (
                       <AvatarFallback className="bg-accent text-accent-foreground">
                         {(prof?.display_name || prof?.username || 'U').charAt(0).toUpperCase()}

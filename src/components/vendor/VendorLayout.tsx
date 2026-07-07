@@ -149,7 +149,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
         <div className="p-4 border-b border-border/50">
           <Link to="/vendor" className="flex items-center gap-3">
             <div className="bg-primary rounded-xl p-1.5 h-10 w-10 flex items-center justify-center shadow-md">
-              <img src={p4uLogo} alt="P4U" className="w-full h-full object-contain" />
+              <img loading="lazy" decoding="async" src={p4uLogo} alt="P4U" className="w-full h-full object-contain" />
             </div>
             <div>
               <p className="text-sm font-bold">Vendor Portal</p>
@@ -195,7 +195,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Link to="/vendor" className="shrink-0">
-                  <img src={p4uLogo} alt="P4U" className="h-8 w-8 rounded-lg object-contain" />
+                  <img loading="lazy" decoding="async" src={p4uLogo} alt="P4U" className="h-8 w-8 rounded-lg object-contain" />
                 </Link>
                 <div className="min-w-0">
                   <h1 className="text-sm font-bold text-primary-foreground truncate">{vendorUser?.business_name || "Vendor Portal"}</h1>

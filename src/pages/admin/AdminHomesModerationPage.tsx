@@ -241,7 +241,7 @@ export default function AdminHomesModerationPage() {
               {Array.isArray(selectedProperty.images) && selectedProperty.images.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
                   {selectedProperty.images.slice(0, 6).map((img: string, i: number) => (
-                    <img key={i} src={img} alt="" className="w-full h-24 object-cover rounded-lg" />
+                    <img loading="lazy" decoding="async" key={i} src={img} alt="" className="w-full h-24 object-cover rounded-lg" />
                   ))}
                 </div>
               )}

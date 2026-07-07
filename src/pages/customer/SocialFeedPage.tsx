@@ -152,7 +152,7 @@ function CommentItem({ comment, isMock, postId, onReply }: { comment: any; isMoc
   return (
     <div className="flex items-start gap-2 py-1">
       <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
-        {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : <span className="text-[9px] font-bold">{name.charAt(0).toUpperCase()}</span>}
+        {avatar ? <img loading="lazy" decoding="async" src={avatar} alt="" className="w-full h-full object-cover" /> : <span className="text-[9px] font-bold">{name.charAt(0).toUpperCase()}</span>}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm">
@@ -406,7 +406,7 @@ function PostCard({ post }: { post: any }) {
         <Link to={`/app/social/profile/${post.user_id}`}>
           <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 p-[1.5px]">
             <div className="h-full w-full rounded-full bg-card flex items-center justify-center overflow-hidden">
-              {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> :
+              {avatarUrl ? <img loading="lazy" decoding="async" src={avatarUrl} alt="" className="w-full h-full object-cover" /> :
                 <span className="text-xs font-bold">{username.charAt(0).toUpperCase()}</span>}
             </div>
           </div>
@@ -542,7 +542,7 @@ function PostCard({ post }: { post: any }) {
                     <div key={tag.id} className={`rounded-lg overflow-hidden border-2 border-card shadow-xl bg-card ${i > 0 ? '-ml-5 relative z-0' : 'relative z-[1]'}`}
                       style={{ animation: "feed-product-pulse 2.5s ease-in-out infinite", width: i === 0 ? 56 : 48, height: i === 0 ? 56 : 48 }}>
                       {tag.socio_shopping_icon || tag.image ? (
-                        <img src={tag.socio_shopping_icon || tag.image} alt="" className="w-full h-full object-cover" />
+                        <img loading="lazy" decoding="async" src={tag.socio_shopping_icon || tag.image} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-accent flex items-center justify-center"><ShoppingBag className="h-5 w-5 text-primary" /></div>
                       )}
@@ -571,7 +571,7 @@ function PostCard({ post }: { post: any }) {
                   onClick={(e) => { e.stopPropagation(); navigate(`/app/product/${tag.id}`); }}
                 >
                   {tag.socio_shopping_icon || tag.image ? (
-                    <img src={tag.socio_shopping_icon || tag.image} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0 border border-border/50" />
+                    <img loading="lazy" decoding="async" src={tag.socio_shopping_icon || tag.image} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0 border border-border/50" />
                   ) : (
                     <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center shrink-0"><ShoppingBag className="h-5 w-5 text-primary" /></div>
                   )}
@@ -597,7 +597,7 @@ function PostCard({ post }: { post: any }) {
             fullscreenImg.includes('video') || fullscreenImg.endsWith('.mp4') ? (
               <PlayableVideo src={fullscreenImg} className="w-full h-full object-contain max-h-[90vh]" controls autoPlay />
             ) : (
-              <img src={fullscreenImg} alt="" className="w-full h-full object-contain max-h-[90vh]" />
+              <img loading="lazy" decoding="async" src={fullscreenImg} alt="" className="w-full h-full object-contain max-h-[90vh]" />
             )
           )}
           {isCarousel && fullscreenImg && (
@@ -866,7 +866,7 @@ function VideoThumbnail({ src }: { src: string }) {
   }, [src]);
 
   if (thumb) {
-    return <img src={thumb} alt="" className="w-full h-full object-cover" />;
+    return <img loading="lazy" decoding="async" src={thumb} alt="" className="w-full h-full object-cover" />;
   }
   // Fallback: show a play icon on dark background
   return (
@@ -1000,9 +1000,9 @@ function StoryBubble({ story, navigate, customerUser }: { story: any; navigate: 
               ) : story.storyMediaType === 'video' && story.storyMediaUrl ? (
                 <VideoThumbnail src={story.storyMediaUrl} />
               ) : story.storyMediaUrl ? (
-                <img src={story.storyMediaUrl} alt="" className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={story.storyMediaUrl} alt="" className="w-full h-full object-cover" />
               ) : story.avatar ? (
-                <img src={story.avatar} alt="" className="w-full h-full object-cover" />
+                <img loading="lazy" decoding="async" src={story.avatar} alt="" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-sm font-bold text-muted-foreground">{story.username.charAt(0).toUpperCase()}</span>
               )}

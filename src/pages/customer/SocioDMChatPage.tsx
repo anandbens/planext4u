@@ -460,7 +460,7 @@ export default function SocioDMChatPage() {
         <button onClick={() => recipientId && navigate(`/app/social/profile/${recipientId}`)} className="flex items-center gap-3 flex-1 min-w-0">
           <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center overflow-hidden shrink-0">
             {recipientProfile?.avatar_url ? (
-              <img src={recipientProfile.avatar_url} className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={recipientProfile.avatar_url} className="w-full h-full object-cover" />
             ) : (
               <span className="text-sm font-bold">{recipientProfile?.display_name?.charAt(0) || 'U'}</span>
             )}
@@ -523,7 +523,7 @@ export default function SocioDMChatPage() {
               {!mine && showAvatar && (
                 <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0 mt-1">
                   {recipientProfile?.avatar_url ? (
-                    <img src={recipientProfile.avatar_url} className="w-full h-full rounded-full object-cover" />
+                    <img loading="lazy" decoding="async" src={recipientProfile.avatar_url} className="w-full h-full rounded-full object-cover" />
                   ) : (
                     <span className="text-[10px] font-bold">{recipientProfile?.display_name?.charAt(0) || 'U'}</span>
                   )}
@@ -534,7 +534,7 @@ export default function SocioDMChatPage() {
                 <div className={`relative px-3.5 py-2.5 rounded-2xl text-sm ${mine ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-muted rounded-bl-md'}`}>
                   {/* Image message */}
                   {msg.message_type === 'image' && msg.media_url && (
-                    <img src={msg.media_url} alt="Shared image" className="rounded-lg max-w-full max-h-60 object-cover mb-1 cursor-pointer" onClick={() => window.open(msg.media_url, '_blank')} />
+                    <img loading="lazy" decoding="async" src={msg.media_url} alt="Shared image" className="rounded-lg max-w-full max-h-60 object-cover mb-1 cursor-pointer" onClick={() => window.open(msg.media_url, '_blank')} />
                   )}
                   {/* Audio message */}
                   {msg.message_type === 'audio' && msg.media_url ? (
