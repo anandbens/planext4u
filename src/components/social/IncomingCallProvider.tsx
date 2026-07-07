@@ -128,7 +128,7 @@ export default function IncomingCallProvider() {
                 {/* Avatar */}
                 <div className="h-14 w-14 rounded-full bg-primary/20 overflow-hidden shrink-0 border-2 border-primary/30">
                   {callerProfile?.avatar_url ? (
-                    <img src={callerProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={callerProfile.avatar_url} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-xl font-bold text-primary">{displayName.charAt(0).toUpperCase()}</span>

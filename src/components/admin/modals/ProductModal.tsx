@@ -499,7 +499,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <div className="flex flex-wrap gap-2">
                   {(form.images || []).map((img: string, i: number) => (
                     <div key={i} className="relative h-20 w-20 rounded-lg overflow-hidden border border-border/30">
-                      <img src={img} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={img} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
                       <button className="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-bl text-[10px] px-1" onClick={() => {
                         const imgs = form.images.filter((_: string, j: number) => j !== i);
                         setForm({ ...form, images: imgs, image: imgs[0] || "" });
@@ -516,7 +516,7 @@ export function ProductModal({ product, open, onOpenChange, mode, onSave, onCrea
                 <div className="flex gap-2 overflow-x-auto">
                   {form.images.map((img: string, i: number) => (
                     <div key={i} className="h-20 w-20 rounded-lg overflow-hidden bg-secondary/20 border border-border/30 shrink-0">
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={img} alt="" className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>

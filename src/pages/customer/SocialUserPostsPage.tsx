@@ -82,7 +82,7 @@ function SinglePostCard({ post, profile, isFirst }: { post: any; profile: any; i
         <Link to={`/app/social/profile/${post.user_id}`}>
           <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 p-[1.5px]">
             <div className="h-full w-full rounded-full bg-card flex items-center justify-center overflow-hidden">
-              {avatarUrl ? <img src={avatarUrl} alt="" className="w-full h-full object-cover" /> :
+              {avatarUrl ? <img loading="lazy" decoding="async" src={avatarUrl} alt="" className="w-full h-full object-cover" /> :
                 <span className="text-sm font-bold">{username.charAt(0).toUpperCase()}</span>}
             </div>
           </div>

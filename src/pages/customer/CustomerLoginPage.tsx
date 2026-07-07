@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { isNativePlatform } from "@/lib/capacitor-auth";
 import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
-import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.webp";
 
 const OTP_SEND_TIMEOUT_MS = 22000;
 const OTP_GATE_GRACE_MS = 500;
@@ -349,7 +349,7 @@ export default function CustomerLoginPage() {
         className="bg-primary pb-16 px-6 flex flex-col items-center relative"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 3rem)' }}
       >
-        <img src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
+        <img loading="lazy" decoding="async" src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
         <h2 className="text-primary-foreground text-xl font-bold tracking-wider">Planext 4u</h2>
         <span className="text-primary-foreground/60 text-[10px] absolute top-14 right-[calc(50%-40px)] font-semibold">TM</span>
       </div>

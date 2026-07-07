@@ -302,7 +302,7 @@ export default function SettlementsPage() {
                     {orderItems.map((item: any, idx: number) => (
                       <Card key={idx} className="p-3">
                         <div className="flex items-center gap-3">
-                          {item.image && <img src={item.image} alt={item.title} className="h-10 w-10 rounded object-cover" />}
+                          {item.image && <img loading="lazy" decoding="async" src={item.image} alt={item.title} className="h-10 w-10 rounded object-cover" />}
                           <div className="flex-1">
                             <p className="text-sm font-medium">{item.emoji || ""} {item.title}</p>
                             <p className="text-xs text-muted-foreground">

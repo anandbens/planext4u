@@ -473,7 +473,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                     />
                   ) : (
                     (form.shop_photo_url || (vendor as any)?.shop_photo_url) ? (
-                      <img src={form.shop_photo_url || (vendor as any)?.shop_photo_url} alt="Shop" className="rounded-lg max-h-40 object-cover w-full" />
+                      <img loading="lazy" decoding="async" src={form.shop_photo_url || (vendor as any)?.shop_photo_url} alt="Shop" className="rounded-lg max-h-40 object-cover w-full" />
                     ) : (
                       <div className="h-24 rounded-lg border-2 border-dashed border-muted-foreground/20 flex items-center justify-center text-muted-foreground text-sm">
                         <ImageIcon className="h-5 w-5 mr-2" /> No shop photo uploaded
@@ -483,7 +483,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                   {vendorApp?.shop_photo_url && !form.shop_photo_url && !editMode && (
                     <div className="mt-2">
                       <p className="text-xs text-muted-foreground mb-1">From application:</p>
-                      <img src={vendorApp.shop_photo_url} alt="Shop from application" className="rounded-lg max-h-32 object-cover" />
+                      <img loading="lazy" decoding="async" src={vendorApp.shop_photo_url} alt="Shop from application" className="rounded-lg max-h-32 object-cover" />
                     </div>
                   )}
                 </div>
@@ -516,13 +516,13 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                           {vendorApp.aadhaar_front_url && (
                             <div>
                               <p className="text-[10px] text-muted-foreground mb-1">Front</p>
-                              <img src={vendorApp.aadhaar_front_url} alt="Aadhaar Front" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.aadhaar_front_url!, "_blank")} />
+                              <img loading="lazy" decoding="async" src={vendorApp.aadhaar_front_url} alt="Aadhaar Front" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.aadhaar_front_url!, "_blank")} />
                             </div>
                           )}
                           {vendorApp.aadhaar_back_url && (
                             <div>
                               <p className="text-[10px] text-muted-foreground mb-1">Back</p>
-                              <img src={vendorApp.aadhaar_back_url} alt="Aadhaar Back" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.aadhaar_back_url!, "_blank")} />
+                              <img loading="lazy" decoding="async" src={vendorApp.aadhaar_back_url} alt="Aadhaar Back" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.aadhaar_back_url!, "_blank")} />
                             </div>
                           )}
                         </div>
@@ -542,7 +542,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                           <p className="text-xs text-muted-foreground font-mono mb-2">No: {vendorApp.pan_number}</p>
                         )}
                         {vendorApp.pan_image_url && (
-                          <img src={vendorApp.pan_image_url} alt="PAN" className="rounded-lg max-h-28 object-cover cursor-pointer border border-border" onClick={() => window.open(vendorApp.pan_image_url!, "_blank")} />
+                          <img loading="lazy" decoding="async" src={vendorApp.pan_image_url} alt="PAN" className="rounded-lg max-h-28 object-cover cursor-pointer border border-border" onClick={() => window.open(vendorApp.pan_image_url!, "_blank")} />
                         )}
                       </Card>
                     )}
@@ -560,7 +560,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                           <p className="text-xs text-muted-foreground font-mono mb-2">GSTIN: {vendorApp.gst_number}</p>
                         )}
                         {vendorApp.gst_certificate_url && (
-                          <img src={vendorApp.gst_certificate_url} alt="GST" className="rounded-lg max-h-28 object-cover cursor-pointer border border-border" onClick={() => window.open(vendorApp.gst_certificate_url!, "_blank")} />
+                          <img loading="lazy" decoding="async" src={vendorApp.gst_certificate_url} alt="GST" className="rounded-lg max-h-28 object-cover cursor-pointer border border-border" onClick={() => window.open(vendorApp.gst_certificate_url!, "_blank")} />
                         )}
                       </Card>
                     )}
@@ -574,7 +574,7 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                           </h5>
                           <Badge className="bg-success/10 text-success border-0 text-[10px]">Submitted</Badge>
                         </div>
-                        <img src={vendorApp.fssai_url} alt="FSSAI" className="rounded-lg max-h-28 object-cover cursor-pointer border border-border" onClick={() => window.open(vendorApp.fssai_url!, "_blank")} />
+                        <img loading="lazy" decoding="async" src={vendorApp.fssai_url} alt="FSSAI" className="rounded-lg max-h-28 object-cover cursor-pointer border border-border" onClick={() => window.open(vendorApp.fssai_url!, "_blank")} />
                       </Card>
                     )}
 
@@ -588,13 +588,13 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                           {vendorApp.store_logo_url && (
                             <div>
                               <p className="text-[10px] text-muted-foreground mb-1">Store Logo</p>
-                              <img src={vendorApp.store_logo_url} alt="Logo" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.store_logo_url!, "_blank")} />
+                              <img loading="lazy" decoding="async" src={vendorApp.store_logo_url} alt="Logo" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.store_logo_url!, "_blank")} />
                             </div>
                           )}
                           {vendorApp.shop_photo_url && (
                             <div>
                               <p className="text-[10px] text-muted-foreground mb-1">Shop Photo</p>
-                              <img src={vendorApp.shop_photo_url} alt="Shop" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.shop_photo_url!, "_blank")} />
+                              <img loading="lazy" decoding="async" src={vendorApp.shop_photo_url} alt="Shop" className="rounded-lg max-h-28 object-cover w-full cursor-pointer border border-border" onClick={() => window.open(vendorApp.shop_photo_url!, "_blank")} />
                             </div>
                           )}
                         </div>

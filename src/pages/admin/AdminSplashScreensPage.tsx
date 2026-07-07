@@ -129,7 +129,7 @@ export default function AdminSplashScreensPage() {
             {filtered.map((s) => (
               <Card key={s.id} className="overflow-hidden group">
                 <div className="relative h-48" style={{ backgroundColor: s.background_color }}>
-                  {s.image_url && <img src={s.image_url} alt={s.title} className="absolute inset-0 w-full h-full object-cover opacity-40" />}
+                  {s.image_url && <img loading="lazy" decoding="async" src={s.image_url} alt={s.title} className="absolute inset-0 w-full h-full object-cover opacity-40" />}
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10">
                     <p className="text-lg font-bold drop-shadow">{s.title}</p>
                     {s.tagline && <p className="text-xs opacity-80 mt-1 px-4 text-center">{s.tagline}</p>}
@@ -208,7 +208,7 @@ export default function AdminSplashScreensPage() {
             {/* Preview */}
             {form.image_url && (
               <div className="rounded-xl overflow-hidden h-32 relative" style={{ backgroundColor: form.background_color }}>
-                <img src={form.image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                <img loading="lazy" decoding="async" src={form.image_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
                   <p className="text-sm font-bold">{form.title || "Preview"}</p>
                   {form.tagline && <p className="text-[10px] opacity-80 mt-0.5">{form.tagline}</p>}

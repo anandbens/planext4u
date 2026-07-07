@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { sendOTPWithRetry, verifyOTP, clearRecaptcha, getFirebaseIdToken, ensureFirebaseHostname, preRenderRecaptcha, otpLog } from "@/lib/firebase";
 import { supabase } from "@/integrations/supabase/client";
 import { checkOtpRateLimit } from "@/lib/otp-rate-limit";
-import p4uLogo from "@/assets/p4u-logo.png";
+import p4uLogo from "@/assets/p4u-logo.webp";
 
 const ACTIVE_VENDOR_STATUSES = new Set(["active", "verified", "level2_approved", "approved"]);
 const OTP_VERIFY_FIREBASE_TIMEOUT_MS = 8000;
@@ -214,7 +214,7 @@ export default function VendorLoginPage() {
               <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjA4KSIvPjwvc3ZnPg==')] opacity-50" />
               <div className="relative">
                 <div className="bg-white rounded-2xl p-3 w-16 h-16 mx-auto mb-3 shadow-lg">
-                  <img src={p4uLogo} alt="Planext4u" className="w-full h-full object-contain" />
+                  <img loading="lazy" decoding="async" src={p4uLogo} alt="Planext4u" className="w-full h-full object-contain" />
                 </div>
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Store className="h-5 w-5 text-primary-foreground/80" />

@@ -176,7 +176,7 @@ export default function CustomerClassifiedDetailPage() {
                     onClick={() => setCurrentImage(i)}
                     className={`h-12 w-12 rounded-lg overflow-hidden border-2 transition-all ${i === currentImage ? "border-primary shadow-md" : "border-transparent opacity-60"}`}
                   >
-                    <img src={img} alt="" className="h-full w-full object-cover" />
+                    <img loading="lazy" decoding="async" src={img} alt="" className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>

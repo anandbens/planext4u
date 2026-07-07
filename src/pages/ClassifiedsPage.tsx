@@ -106,7 +106,7 @@ export default function ClassifiedsPage() {
           { key: "image", label: "Image", render: (a) => {
             const images = Array.isArray((a as any).images) ? (a as any).images : [];
             return images.length > 0 ? (
-              <img src={images[0]} alt={a.title} className="h-10 w-10 rounded-lg object-cover" />
+              <img loading="lazy" decoding="async" src={images[0]} alt={a.title} className="h-10 w-10 rounded-lg object-cover" />
             ) : (
               <div className="h-10 w-10 rounded-lg bg-secondary/30 flex items-center justify-center text-lg">📦</div>
             );

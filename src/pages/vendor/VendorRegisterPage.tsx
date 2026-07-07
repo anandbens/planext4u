@@ -14,7 +14,7 @@ import { compressToWebP } from "@/lib/webp-compress";
 import { api } from "@/lib/api";
 import { checkVendorPhoneUnique, checkVendorEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
 import { useCountry } from "@/lib/country-context";
-import p4uLogo from "@/assets/p4u-logo.png";
+import p4uLogo from "@/assets/p4u-logo.webp";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
@@ -242,7 +242,7 @@ export default function VendorRegisterPage() {
           </Link>
           <div className="flex items-center gap-2">
             <div className="bg-primary rounded-lg p-1 h-7 w-7 flex items-center justify-center">
-              <img src={p4uLogo} alt="P4U" className="w-full h-full object-contain" />
+              <img loading="lazy" decoding="async" src={p4uLogo} alt="P4U" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-base font-bold">Vendor Registration</h1>
           </div>

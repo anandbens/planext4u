@@ -1,5 +1,5 @@
 /**
- * SmartImage — drop-in <img> replacement that resolves stored URLs through
+ * SmartImage — drop-in <img loading="lazy" decoding="async"> replacement that resolves stored URLs through
  * `resolveB2Url`. Works for `b2-private://` refs and for raw B2/CDN URLs whose
  * bucket is private at the B2 level (returns 404 on direct fetch). Falls back
  * to rendering the source as-is for unrelated URLs / data URIs.

@@ -167,7 +167,7 @@ export default function VendorBookingsPage() {
         {b.completion_photo_url && (
           <div className="mt-2 p-2 bg-success/5 rounded-lg">
             <p className="text-xs font-medium text-success mb-1">✅ Completion Photo</p>
-            <img src={b.completion_photo_url} alt="Completion" className="h-20 rounded object-cover" />
+            <img loading="lazy" decoding="async" src={b.completion_photo_url} alt="Completion" className="h-20 rounded object-cover" />
             {b.completion_notes && <p className="text-xs text-muted-foreground mt-1">{b.completion_notes}</p>}
           </div>
         )}
@@ -246,7 +246,7 @@ export default function VendorBookingsPage() {
             <div className="border-2 border-dashed border-border rounded-lg p-4 text-center">
               {completionPhotoPreview ? (
                 <div className="relative">
-                  <img src={completionPhotoPreview} alt="Preview" className="max-h-48 mx-auto rounded-lg object-cover" />
+                  <img loading="lazy" decoding="async" src={completionPhotoPreview} alt="Preview" className="max-h-48 mx-auto rounded-lg object-cover" />
                   <Button variant="outline" size="sm" className="mt-2 text-xs" onClick={() => { setCompletionPhoto(null); setCompletionPhotoPreview(""); }}>
                     Change Photo
                   </Button>

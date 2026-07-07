@@ -57,7 +57,7 @@ export function ImageUploader({
       {value ? (
         <div className="relative group">
           <div className={`${aspectRatio} w-full rounded-lg overflow-hidden bg-secondary/20 border border-border/30`}>
-            <img src={value} alt="Preview" className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={value} alt="Preview" className="w-full h-full object-cover" />
           </div>
           {!disabled && (
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">

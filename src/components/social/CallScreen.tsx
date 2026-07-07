@@ -125,7 +125,7 @@ export default function CallScreen({
           {/* Avatar */}
           <div className={`h-28 w-28 rounded-full overflow-hidden border-4 border-primary/30 shadow-2xl ${status === "calling" ? "animate-pulse" : ""}`}>
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              <img loading="lazy" decoding="async" src={avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-primary/20 flex items-center justify-center">
                 <span className="text-4xl font-bold text-primary">{displayName.charAt(0).toUpperCase()}</span>

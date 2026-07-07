@@ -81,14 +81,14 @@ export default function ProductTagOverlay({ tags, editable, onRemove, onClick }:
             />
             {/* The icon itself - large and responsive */}
             {tag.socio_shopping_icon ? (
-              <img
+              <img loading="lazy" decoding="async"
                 src={tag.socio_shopping_icon}
                 alt=""
                 className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full object-cover ring-[3px] ring-primary shadow-xl"
                 style={{ animation: "socio-glow 2s ease-in-out infinite" }}
               />
             ) : tag.image ? (
-              <img
+              <img loading="lazy" decoding="async"
                 src={tag.image}
                 alt=""
                 className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full object-cover ring-[3px] ring-primary shadow-xl"

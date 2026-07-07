@@ -6,8 +6,8 @@ import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { useCustomerBasics } from "@/hooks/useCustomerBasics";
 import { SplashScreen } from "@/components/customer/SplashScreen";
-import p4uLogo from "@/assets/p4u-logo-dark.png";
-import dashboardBg from "@/assets/dashboard-food-bg.jpg";
+import p4uLogo from "@/assets/p4u-logo-dark.webp";
+import dashboardBg from "@/assets/dashboard-food-bg.webp";
 
 /**
  * Glassmorphic dashboard shown immediately after splash.
@@ -95,7 +95,7 @@ export default function CustomerDashboardPage() {
           {/* Header */}
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 shrink-0 rounded-[0.95rem] overflow-hidden bg-white/10 backdrop-blur-md border border-white/25 shadow-[0_12px_28px_rgba(0,60,60,0.18)] flex items-center justify-center">
-              <img src={p4uLogo} alt="Planext4u" className="h-full w-full object-contain" />
+              <img loading="lazy" decoding="async" src={p4uLogo} alt="Planext4u" className="h-full w-full object-contain" />
             </div>
 
             <Link
@@ -104,7 +104,7 @@ export default function CustomerDashboardPage() {
               aria-label="Profile"
             >
               {profilePhoto ? (
-                <img
+                <img loading="lazy" decoding="async"
                   src={profilePhoto}
                   alt="Profile"
                   className="h-full w-full object-cover"

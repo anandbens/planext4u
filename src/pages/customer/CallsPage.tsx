@@ -88,7 +88,7 @@ export default function CallsPage() {
                 <li key={u.userId} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50">
                   <div className="h-11 w-11 rounded-full bg-primary/15 overflow-hidden shrink-0">
                     {u.avatarUrl ? (
-                      <img src={u.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      <img loading="lazy" decoding="async" src={u.avatarUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-primary font-semibold">
                         {(u.displayName || u.userId).charAt(0).toUpperCase()}
@@ -135,7 +135,7 @@ export default function CallsPage() {
             <div className="max-w-md mx-auto bg-card border border-border rounded-2xl shadow-2xl p-4 flex items-center gap-3">
               <div className="h-14 w-14 rounded-full bg-primary/20 overflow-hidden shrink-0 border-2 border-primary/30">
                 {incomingCall.fromProfile?.avatarUrl ? (
-                  <img src={incomingCall.fromProfile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={incomingCall.fromProfile.avatarUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-primary font-bold text-xl">
                     {(incomingCall.fromProfile?.displayName || "?").charAt(0).toUpperCase()}
@@ -187,7 +187,7 @@ export default function CallsPage() {
               <div className="flex flex-col items-center pt-20 gap-4">
                 <div className={`h-28 w-28 rounded-full overflow-hidden border-4 border-primary/30 shadow-2xl ${status === "calling" ? "animate-pulse" : ""}`}>
                   {activeCall.remoteProfile?.avatarUrl ? (
-                    <img src={activeCall.remoteProfile.avatarUrl} alt="" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={activeCall.remoteProfile.avatarUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-primary/20 flex items-center justify-center text-4xl font-bold text-primary">
                       {(activeCall.remoteProfile?.displayName || "?").charAt(0).toUpperCase()}

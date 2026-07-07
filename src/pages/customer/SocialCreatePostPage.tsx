@@ -393,7 +393,7 @@ export default function SocialCreatePostPage() {
             fileTypes[0] === 'video' ? (
               <video src={previewUrls[0]} className="w-full h-full object-contain" controls muted />
             ) : (
-              <img src={previewUrls[0]} alt="" className="w-full h-full object-contain" style={{ filter: FILTER_CSS[selectedFilter] }} />
+              <img loading="lazy" decoding="async" src={previewUrls[0]} alt="" className="w-full h-full object-contain" style={{ filter: FILTER_CSS[selectedFilter] }} />
             )
           )}
           {previewUrls.length > 1 && (
@@ -455,7 +455,7 @@ export default function SocialCreatePostPage() {
                     <Video className="h-6 w-6 text-muted-foreground" />
                   </div>
                 ) : (
-                  <img src={url} alt="" className="h-16 w-16 rounded object-cover" style={{ filter: FILTER_CSS[selectedFilter] }} />
+                  <img loading="lazy" decoding="async" src={url} alt="" className="h-16 w-16 rounded object-cover" style={{ filter: FILTER_CSS[selectedFilter] }} />
                 )}
                 <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
                   <X className="h-3 w-3 text-destructive-foreground" />
@@ -480,7 +480,7 @@ export default function SocialCreatePostPage() {
               <button key={filter} onClick={() => setSelectedFilter(filter)}
                 className={`flex flex-col items-center gap-1.5 shrink-0 ${selectedFilter === filter ? 'opacity-100' : 'opacity-60'}`}>
                 <div className={`h-16 w-16 rounded-lg overflow-hidden border-2 ${selectedFilter === filter ? 'border-primary' : 'border-transparent'}`}>
-                  {previewUrls[0] && fileTypes[0] !== 'video' && <img src={previewUrls[0]} alt="" className="h-full w-full object-cover" style={{ filter: FILTER_CSS[filter] }} />}
+                  {previewUrls[0] && fileTypes[0] !== 'video' && <img loading="lazy" decoding="async" src={previewUrls[0]} alt="" className="h-full w-full object-cover" style={{ filter: FILTER_CSS[filter] }} />}
                   {previewUrls[0] && fileTypes[0] === 'video' && <div className="h-full w-full bg-muted flex items-center justify-center"><Video className="h-4 w-4" /></div>}
                 </div>
                 <span className="text-[10px] font-medium">{filter}</span>
@@ -519,7 +519,7 @@ export default function SocialCreatePostPage() {
       <div className="p-4 space-y-4">
         <div className="flex gap-3">
           <div className="h-12 w-12 rounded-lg overflow-hidden shrink-0">
-            {previewUrls[0] && fileTypes[0] !== 'video' && <img src={previewUrls[0]} alt="" className="h-full w-full object-cover" style={{ filter: FILTER_CSS[selectedFilter] }} />}
+            {previewUrls[0] && fileTypes[0] !== 'video' && <img loading="lazy" decoding="async" src={previewUrls[0]} alt="" className="h-full w-full object-cover" style={{ filter: FILTER_CSS[selectedFilter] }} />}
             {previewUrls[0] && fileTypes[0] === 'video' && <div className="h-full w-full bg-muted flex items-center justify-center rounded-lg"><Video className="h-5 w-5 text-muted-foreground" /></div>}
           </div>
           <Textarea placeholder="Write a caption..." value={caption} onChange={(e) => setCaption(e.target.value.slice(0, 2200))}
@@ -646,7 +646,7 @@ function ProductSearchPicker({ search, onSearchChange, onSelect }: { search: str
       {results.map(p => (
         <button key={p.id} onClick={() => onSelect({ id: p.id, title: p.title })} className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent text-left">
           <div className="h-10 w-10 rounded bg-secondary/30 overflow-hidden shrink-0">
-            {p.image ? <img src={p.image} alt="" className="h-full w-full object-cover" /> : <ShoppingBag className="h-5 w-5 m-auto mt-2.5 text-muted-foreground" />}
+            {p.image ? <img loading="lazy" decoding="async" src={p.image} alt="" className="h-full w-full object-cover" /> : <ShoppingBag className="h-5 w-5 m-auto mt-2.5 text-muted-foreground" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{p.title}</p>
@@ -713,7 +713,7 @@ function PeopleTagPicker({ search, onSearchChange, selectedIds, onToggle, curren
           <button key={p.user_id} onClick={() => onToggle({ id: p.user_id, username: p.display_name || p.username })}
             className={`flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent text-left ${isSelected ? 'bg-primary/10' : ''}`}>
             <div className="h-8 w-8 rounded-full bg-muted overflow-hidden shrink-0 flex items-center justify-center">
-              {p.avatar_url ? <img src={p.avatar_url} alt="" className="w-full h-full object-cover" /> :
+              {p.avatar_url ? <img loading="lazy" decoding="async" src={p.avatar_url} alt="" className="w-full h-full object-cover" /> :
                 <span className="text-xs font-bold">{(p.display_name || p.username || 'U').charAt(0).toUpperCase()}</span>}
             </div>
             <div className="flex-1 min-w-0">
@@ -752,7 +752,7 @@ function PositionProductPicker({ search, onSearchChange, onSelect }: { search: s
       {results.map((p: any) => (
         <button key={p.id} onClick={() => onSelect({ id: p.id, title: p.title, price: p.price, image: p.socio_shopping_icon || p.image })} className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-accent text-left">
           <div className="h-10 w-10 rounded bg-secondary/30 overflow-hidden shrink-0">
-            {(p.socio_shopping_icon || p.image) ? <img src={p.socio_shopping_icon || p.image} alt="" className="h-full w-full object-cover" /> : <ShoppingBag className="h-5 w-5 m-auto mt-2.5 text-muted-foreground" />}
+            {(p.socio_shopping_icon || p.image) ? <img loading="lazy" decoding="async" src={p.socio_shopping_icon || p.image} alt="" className="h-full w-full object-cover" /> : <ShoppingBag className="h-5 w-5 m-auto mt-2.5 text-muted-foreground" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{p.title}</p>

@@ -180,8 +180,8 @@ export default function VendorKYCPage() {
 
                 {(doc.status === 'submitted' || doc.status === 'verified' || doc.status === 'in_progress') && (doc.front_url || doc.back_url) && (
                   <div className="mt-3 flex gap-2 flex-wrap">
-                    {doc.front_url && <div className="h-20 w-20 rounded-lg overflow-hidden border border-border"><img src={doc.front_url} alt="Front" className="h-full w-full object-cover" /></div>}
-                    {doc.back_url && <div className="h-20 w-20 rounded-lg overflow-hidden border border-border"><img src={doc.back_url} alt="Back" className="h-full w-full object-cover" /></div>}
+                    {doc.front_url && <div className="h-20 w-20 rounded-lg overflow-hidden border border-border"><img loading="lazy" decoding="async" src={doc.front_url} alt="Front" className="h-full w-full object-cover" /></div>}
+                    {doc.back_url && <div className="h-20 w-20 rounded-lg overflow-hidden border border-border"><img loading="lazy" decoding="async" src={doc.back_url} alt="Back" className="h-full w-full object-cover" /></div>}
                   </div>
                 )}
 
@@ -211,7 +211,7 @@ export default function VendorKYCPage() {
                         </button>
                         {frontFile && (
                           <div className="relative h-20 w-20 rounded-xl overflow-hidden border border-border shrink-0">
-                            <img src={frontFile} alt="Front" className="h-full w-full object-cover" />
+                            <img loading="lazy" decoding="async" src={frontFile} alt="Front" className="h-full w-full object-cover" />
                             <button type="button" onClick={() => setFrontFile(null)} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"><X className="h-3 w-3" /></button>
                           </div>
                         )}
@@ -229,7 +229,7 @@ export default function VendorKYCPage() {
                           </button>
                           {backFile && (
                             <div className="relative h-20 w-20 rounded-xl overflow-hidden border border-border shrink-0">
-                              <img src={backFile} alt="Back" className="h-full w-full object-cover" />
+                              <img loading="lazy" decoding="async" src={backFile} alt="Back" className="h-full w-full object-cover" />
                               <button type="button" onClick={() => setBackFile(null)} className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"><X className="h-3 w-3" /></button>
                             </div>
                           )}

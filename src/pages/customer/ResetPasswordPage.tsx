@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Lock, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.webp";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -66,7 +66,7 @@ export default function ResetPasswordPage() {
         className="bg-primary pb-16 px-6 flex flex-col items-center relative"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 3rem)" }}
       >
-        <img src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
+        <img loading="lazy" decoding="async" src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
         <h2 className="text-primary-foreground text-xl font-bold tracking-wider">Planext 4u</h2>
       </div>
 

@@ -121,7 +121,7 @@ export default function CustomerPostAdPage() {
               <div className="flex gap-2 flex-wrap mt-2">
                 {images.map((img, i) => (
                   <div key={i} className="relative h-20 w-20 rounded-xl overflow-hidden border border-border/50">
-                    <img src={img} alt={`Upload ${i + 1}`} className="h-full w-full object-cover" />
+                    <img loading="lazy" decoding="async" src={img} alt={`Upload ${i + 1}`} className="h-full w-full object-cover" />
                     <button type="button" onClick={() => removeImage(i)}
                       className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">
                       <X className="h-3 w-3" />

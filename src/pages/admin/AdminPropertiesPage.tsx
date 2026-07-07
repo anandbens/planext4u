@@ -143,7 +143,7 @@ export default function AdminPropertiesPage() {
             <DialogTitle>{selectedProperty.title}</DialogTitle>
             <div className="space-y-3 pt-2">
               {Array.isArray(selectedProperty.images) && selectedProperty.images[0] && (
-                <img src={selectedProperty.images[0]} alt="" className="w-full h-48 object-cover rounded-lg" />
+                <img loading="lazy" decoding="async" src={selectedProperty.images[0]} alt="" className="w-full h-48 object-cover rounded-lg" />
               )}
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div><span className="text-muted-foreground">Type:</span> <span className="capitalize">{selectedProperty.transaction_type}</span></div>

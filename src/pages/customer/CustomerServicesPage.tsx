@@ -305,7 +305,7 @@ export default function CustomerServicesPage() {
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer whitespace-nowrap transition-colors
                 ${activeParentName === c.name ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:bg-accent'}`}>
                 {c.image && (c.image.startsWith('/') || c.image.startsWith('http')) ? (
-                  <img src={c.image} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
+                  <img loading="lazy" decoding="async" src={c.image} alt={c.name} className="h-6 w-6 rounded-full object-cover" />
                 ) : (
                   <span className="text-base">{c.image || '🛠️'}</span>
                 )}
@@ -334,7 +334,7 @@ export default function CustomerServicesPage() {
                     <div className="flex flex-col items-center gap-1.5 min-w-[72px]">
                       <div className={`h-14 w-14 rounded-2xl flex items-center justify-center border-2 transition-all overflow-hidden ${isActive ? 'border-primary bg-primary/10' : 'border-border/50 bg-card hover:border-primary/40'}`}>
                         {s.image && (s.image.startsWith("/") || s.image.startsWith("http")) ? (
-                          <img src={s.image} alt={s.name} className="h-9 w-9 rounded-lg object-cover" />
+                          <img loading="lazy" decoding="async" src={s.image} alt={s.name} className="h-9 w-9 rounded-lg object-cover" />
                         ) : (
                           <span className="text-xl">{s.image || "🛠️"}</span>
                         )}

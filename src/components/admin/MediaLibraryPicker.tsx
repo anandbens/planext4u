@@ -70,7 +70,7 @@ export function MediaLibraryPicker({
       {value ? (
         <div className="relative group">
           <div className={`${aspectRatio} w-full rounded-lg overflow-hidden bg-secondary/20 border border-border/30`}>
-            <img src={value} alt="Preview" className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={value} alt="Preview" className="w-full h-full object-cover" />
           </div>
           {!disabled && (
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
@@ -352,7 +352,7 @@ export function MediaLibraryDialog({ open, onOpenChange, onSelect, defaultFolder
             {selectedItem && (
               <div className="border-t border-border/50 pt-3 pb-1 flex items-center gap-4">
                 <div className="h-12 w-12 rounded overflow-hidden shrink-0">
-                  <img src={selectedItem.file_url} alt="" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={selectedItem.file_url} alt="" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{selectedItem.file_name}</p>
@@ -382,7 +382,7 @@ export function MediaLibraryDialog({ open, onOpenChange, onSelect, defaultFolder
               <div className="space-y-4">
                 <div className="flex gap-4">
                   <div className="w-48 h-48 rounded-lg overflow-hidden bg-secondary/20 border border-border/30 shrink-0">
-                    <img src={previewFile.preview} alt="Preview" className="w-full h-full object-cover" />
+                    <img loading="lazy" decoding="async" src={previewFile.preview} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 space-y-3">
                     <div>

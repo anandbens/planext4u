@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.webp";
 import { closeOAuthBrowser } from "@/lib/capacitor-auth";
 
 type CallbackStatus = "checking" | "linked" | "failed";
@@ -113,7 +113,7 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4 px-6 text-center">
-      <img src={p4uLogoTeal} alt="Planext4u" className="h-16 w-16 object-contain rounded-xl" />
+      <img loading="lazy" decoding="async" src={p4uLogoTeal} alt="Planext4u" className="h-16 w-16 object-contain rounded-xl" />
       <Loader2 className="h-10 w-10 animate-spin text-primary" />
       <p className="text-sm font-medium text-foreground">
         {status === "failed" ? "Redirecting to login..." : message}

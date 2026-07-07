@@ -135,7 +135,7 @@ export default function CustomerWishlistPage() {
                   {services.map((s: any) => (
                     <Card key={s.id} className="p-4 flex items-center gap-3">
                       <div className="h-16 w-16 bg-secondary/20 rounded-lg shrink-0 flex items-center justify-center overflow-hidden">
-                        {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" /> : <Wrench className="h-6 w-6 text-muted-foreground" />}
+                        {s.image ? <img loading="lazy" decoding="async" src={s.image} alt="" className="w-full h-full object-cover" /> : <Wrench className="h-6 w-6 text-muted-foreground" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold truncate">{s.title || s.name}</h3>
@@ -159,7 +159,7 @@ export default function CustomerWishlistPage() {
                     <Link key={v.id} to={`/app/vendor/${v.id}`}>
                       <Card className="p-4 flex items-center gap-3 hover:shadow-md transition-shadow">
                         <div className="h-14 w-14 bg-secondary/20 rounded-full shrink-0 flex items-center justify-center overflow-hidden">
-                          {v.logo ? <img src={v.logo} alt="" className="w-full h-full object-cover" /> : <Store className="h-6 w-6 text-muted-foreground" />}
+                          {v.logo ? <img loading="lazy" decoding="async" src={v.logo} alt="" className="w-full h-full object-cover" /> : <Store className="h-6 w-6 text-muted-foreground" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-semibold truncate">{v.business_name || v.name}</h3>

@@ -86,7 +86,7 @@ export default function BannersPage() {
         columns={[
           { key: "id", label: "ID" },
           { key: "preview", label: "Preview", render: (b) => b.desktop_image ? (
-            <img src={b.desktop_image} alt={b.title} className="h-10 w-20 rounded object-cover" />
+            <img loading="lazy" decoding="async" src={b.desktop_image} alt={b.title} className="h-10 w-20 rounded object-cover" />
           ) : <div className={`h-10 w-20 rounded bg-gradient-to-r ${b.gradient || 'from-primary to-primary/70'}`} /> },
           { key: "title", label: "Banner", render: (b) => (
             <div><p className="font-medium">{b.title}</p><p className="text-xs text-muted-foreground">{b.subtitle}</p></div>

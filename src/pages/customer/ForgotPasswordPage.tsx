@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Mail, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.webp";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
         <Link to="/app/login" className="absolute top-4 left-4 text-primary-foreground/60 hover:text-primary-foreground">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <img src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
+        <img loading="lazy" decoding="async" src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
         <h2 className="text-primary-foreground text-xl font-bold tracking-wider">Planext 4u</h2>
       </div>
 

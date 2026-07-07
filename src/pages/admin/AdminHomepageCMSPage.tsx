@@ -617,7 +617,7 @@ export default function AdminHomepageCMSPage() {
                     <button onClick={() => moveOrder("homepage_banners", banners, idx, 1)} disabled={idx === banners.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30"><ChevronDown className="h-4 w-4" /></button>
                   </div>
                   <div className="h-16 w-28 rounded-lg bg-secondary/50 flex items-center justify-center overflow-hidden shrink-0">
-                    {b.media_url ? <img src={b.media_url} className="w-full h-full object-cover" alt="" /> : <Image className="h-6 w-6 text-muted-foreground" />}
+                    {b.media_url ? <img loading="lazy" decoding="async" src={b.media_url} className="w-full h-full object-cover" alt="" /> : <Image className="h-6 w-6 text-muted-foreground" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{b.title}</p>
@@ -688,7 +688,7 @@ export default function AdminHomepageCMSPage() {
               videoAds.map((v: any) => (
                 <Card key={v.id} className="p-4 flex items-center gap-4">
                   <div className="h-16 w-12 rounded-lg bg-secondary/50 flex items-center justify-center shrink-0 overflow-hidden">
-                    {v.thumbnail_url ? <img src={v.thumbnail_url} className="w-full h-full object-cover" alt="" /> : <Play className="h-6 w-6 text-muted-foreground" />}
+                    {v.thumbnail_url ? <img loading="lazy" decoding="async" src={v.thumbnail_url} className="w-full h-full object-cover" alt="" /> : <Play className="h-6 w-6 text-muted-foreground" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{v.title}</p>

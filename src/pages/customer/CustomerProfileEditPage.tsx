@@ -410,7 +410,7 @@ export default function CustomerProfileEditPage() {
         <div className="flex justify-center">
           <div className="relative">
             {profilePhoto ? (
-              <img src={profilePhoto} alt="Profile" className="h-24 w-24 rounded-full object-cover border-2 border-primary/20" />
+              <img loading="lazy" decoding="async" src={profilePhoto} alt="Profile" className="h-24 w-24 rounded-full object-cover border-2 border-primary/20" />
             ) : (
               <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
                 {form.name.charAt(0) || <User className="h-10 w-10" />}

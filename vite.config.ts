@@ -29,10 +29,20 @@ export default defineConfig(({ mode }) => ({
     // is not undone by a giant shared vendor bundle.
     rollupOptions: {
       output: {
-        manualChunks: {
-          "react-vendor": ["react", "react-dom", "react-router-dom"],
-          "supabase": ["@supabase/supabase-js"],
-          "query": ["@tanstack/react-query"],
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(id)) return "react-vendor";
+          if (id.includes("@supabase")) return "supabase";
+          if (id.includes("@tanstack")) return "query";
+          if (id.includes("@radix-ui")) return "radix";
+          if (id.includes("date-fns") || id.includes("react-day-picker")) return "date";
+          if (id.includes("embla-carousel")) return "embla";
+          if (id.includes("@dnd-kit")) return "dnd";
+          if (id.includes("firebase") || id.includes("@capacitor-firebase")) return "firebase";
+          if (id.includes("recharts") || id.includes("d3-")) return "charts";
+          if (id.includes("xlsx") || id.includes("jspdf") || id.includes("html2canvas")) return "export";
+          if (id.includes("framer-motion")) return "motion";
+          if (id.includes("lucide-react")) return "icons";
         },
       },
     },
@@ -40,3 +50,4 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 1200,
   },
 }));
+

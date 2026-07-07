@@ -80,7 +80,7 @@ export default function VendorOrdersPage() {
         </div>
         {o.items?.map((item: any, i: number) => (
           <div key={i} className="flex items-center gap-2 mb-1">
-            {item.image && <img src={item.image} className="h-8 w-8 rounded object-cover" />}
+            {item.image && <img loading="lazy" decoding="async" src={item.image} className="h-8 w-8 rounded object-cover" />}
             <div>
               <p className="text-xs text-muted-foreground">{item.title} × {item.qty}</p>
               {item.selected_attributes && Object.keys(item.selected_attributes).length > 0 && (

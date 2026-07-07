@@ -243,7 +243,7 @@ export default function AdminServicesPage() {
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
               <div className="flex gap-3">
                 {(reviewService as any).image ? (
-                  <img src={(reviewService as any).image} alt={reviewService.title}
+                  <img loading="lazy" decoding="async" src={(reviewService as any).image} alt={reviewService.title}
                     className="h-24 w-24 rounded-lg object-cover border" />
                 ) : (
                   <div className="h-24 w-24 rounded-lg bg-muted flex items-center justify-center text-3xl border">{reviewService.emoji}</div>
@@ -279,7 +279,7 @@ export default function AdminServicesPage() {
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Gallery</p>
                   <div className="flex gap-2 flex-wrap">
                     {(reviewService as any).images.slice(0, 6).map((img: string, i: number) => (
-                      <img key={i} src={img} alt={`Gallery ${i}`} className="h-16 w-16 rounded object-cover border" />
+                      <img loading="lazy" decoding="async" key={i} src={img} alt={`Gallery ${i}`} className="h-16 w-16 rounded object-cover border" />
                     ))}
                   </div>
                 </div>

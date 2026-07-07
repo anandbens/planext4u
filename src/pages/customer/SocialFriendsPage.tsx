@@ -94,7 +94,7 @@ export default function SocialFriendsPage() {
             {filtered.map((friend: any) => (
               <div key={friend.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition">
                 <Avatar className="h-12 w-12 cursor-pointer" onClick={() => navigate(`/app/social/profile/${friend.user_id}`)}>
-                  {friend.avatar_url ? <img src={friend.avatar_url} alt="" className="w-full h-full object-cover rounded-full" /> :
+                  {friend.avatar_url ? <img loading="lazy" decoding="async" src={friend.avatar_url} alt="" className="w-full h-full object-cover rounded-full" /> :
                     <AvatarFallback className="bg-muted font-bold">{friend.username?.charAt(0).toUpperCase()}</AvatarFallback>}
                 </Avatar>
                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/app/social/profile/${friend.user_id}`)}>

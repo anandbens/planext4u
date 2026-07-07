@@ -1,4 +1,4 @@
-import { useEffect, useState, ReactNode, useCallback, useRef } from "react";
+import { useEffect, useMemo, useState, ReactNode, useCallback, useRef } from "react";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContext } from "@/lib/auth-context";
@@ -676,25 +676,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     throw new Error("Demo seeding has been removed from this application.");
   };
 
+  // Memoize the context value so consumers do not re-render on every AuthProvider
+  // re-render — only when one of the actual auth state fields changes.
+  const contextValue = useMemo(() => ({
+    user,
+    customerUser,
+    vendorUser,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    customerLogin,
+    vendorLogin,
+    logout,
+    customerLogout,
+    vendorLogout,
+    hasAccess,
+    seedDemoUsers,
+  }), [user, customerUser, vendorUser, isLoading]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        customerUser,
-        vendorUser,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        customerLogin,
-        vendorLogin,
-        logout,
-        customerLogout,
-        vendorLogout,
-        hasAccess,
-        seedDemoUsers,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 }
+

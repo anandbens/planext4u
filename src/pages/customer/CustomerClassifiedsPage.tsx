@@ -23,7 +23,7 @@ function AdImageCarousel({ images }: { images: string[] }) {
   }
   return (
     <div className="relative h-40 overflow-hidden group">
-      <img src={images[current]} alt="Ad" className="w-full h-full object-cover transition-all duration-300" />
+      <img loading="lazy" decoding="async" src={images[current]} alt="Ad" className="w-full h-full object-cover transition-all duration-300" />
       {images.length > 1 && (
         <>
           <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrent(p => p === 0 ? images.length - 1 : p - 1); }}

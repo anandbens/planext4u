@@ -48,25 +48,19 @@ export function CustomerProtectedRoute({ children }: { children: React.ReactNode
       setResolved(true);
     };
 
-    // Listen for the next decisive auth event.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        if (session) settle(true);
-        else if (event === "INITIAL_SESSION") settle(false);
-      } else if (event === "SIGNED_OUT") {
-        settle(false);
-      }
-    });
-
-    // Probe current session in parallel.
+    // NOTE: We deliberately do NOT open our own onAuthStateChange subscription
+    // here. AuthProvider owns the single top-level auth listener and drives
+    // customerUser + isLoading via context, so this guard just needs a one-shot
+    // session probe for cold-start detection.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) settle(true);
+      settle(!!session);
     });
 
     const t = setTimeout(() => settle(null), hardTimeoutMs);
     const grace = setTimeout(() => setSessionGraceExpired(true), isNative ? 3500 : 1800);
-    return () => { clearTimeout(t); clearTimeout(grace); subscription.unsubscribe(); };
+    return () => { clearTimeout(t); clearTimeout(grace); };
   }, [customerUser]);
+
 
   if (isLoading || (!customerUser && !resolved)) {
     return (

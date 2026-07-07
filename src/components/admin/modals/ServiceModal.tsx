@@ -329,7 +329,7 @@ export function ServiceModal({ service, open, onOpenChange, mode, onSave, onCrea
                 <MediaLibraryPicker value={form.image} onChange={(url) => setForm({ ...form, image: url })} folder="services" label="Upload Service Image" />
               ) : form.image ? (
                 <div className="h-32 w-full rounded-lg overflow-hidden bg-secondary/20 border border-border/30">
-                  <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={form.image} alt="Preview" className="w-full h-full object-cover" />
                 </div>
               ) : null}
             </div>

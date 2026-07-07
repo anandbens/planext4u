@@ -132,7 +132,7 @@ export default function SocialNotificationsPage() {
       >
         <div className="h-11 w-11 rounded-full shrink-0 overflow-hidden bg-muted flex items-center justify-center">
           {actor?.avatar_url ? (
-            <img src={actor.avatar_url} alt="" className="w-full h-full object-cover" />
+            <img loading="lazy" decoding="async" src={actor.avatar_url} alt="" className="w-full h-full object-cover" />
           ) : (
             <span className="text-lg">{getIcon(n.type)}</span>
           )}

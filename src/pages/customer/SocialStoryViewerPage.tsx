@@ -186,7 +186,7 @@ export default function SocialStoryViewerPage() {
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8 border-2 border-white">
               {group.user.avatarUrl ? (
-                <img src={group.user.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+                <img loading="lazy" decoding="async" src={group.user.avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
               ) : (
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                   {group.user.username?.charAt(0).toUpperCase()}
@@ -230,7 +230,7 @@ export default function SocialStoryViewerPage() {
               onMouseDown={() => setIsPaused(true)} onMouseUp={() => setIsPaused(false)}
               onTouchStart={() => setIsPaused(true)} onTouchEnd={() => setIsPaused(false)} />
           ) : (
-            <img src={story.media_url} alt="" className="w-full h-full object-cover"
+            <img loading="lazy" decoding="async" src={story.media_url} alt="" className="w-full h-full object-cover"
               onMouseDown={() => setIsPaused(true)} onMouseUp={() => setIsPaused(false)}
               onTouchStart={() => setIsPaused(true)} onTouchEnd={() => setIsPaused(false)} />
           )

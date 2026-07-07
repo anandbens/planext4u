@@ -143,7 +143,7 @@ export default function CFServicesPage() {
           { key: "image", label: "Image", render: (c) => {
             const img = c.image;
             return img?.startsWith("/") || img?.startsWith("http")
-              ? <img src={img} alt={c.name} className="h-10 w-10 rounded object-cover" />
+              ? <img loading="lazy" decoding="async" src={img} alt={c.name} className="h-10 w-10 rounded object-cover" />
               : <span className="text-xl">{img}</span>;
           }},
           { key: "subcategories", label: "Subcategories", render: (c) => {

@@ -209,7 +209,7 @@ export function SearchAutocomplete({ onSearch, placeholder, className, socialMod
                 <button key={u.id} onClick={() => handleSelectUser(u)}
                   className="flex items-center gap-3 w-full text-left py-2 px-2 hover:bg-accent/30 rounded-lg">
                   <Avatar className="h-9 w-9">
-                    {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover rounded-full" /> :
+                    {u.avatar_url ? <img loading="lazy" decoding="async" src={u.avatar_url} alt="" className="w-full h-full object-cover rounded-full" /> :
                       <AvatarFallback className="bg-muted text-xs font-bold">{u.username?.charAt(0).toUpperCase()}</AvatarFallback>}
                   </Avatar>
                   <div className="flex-1 min-w-0">

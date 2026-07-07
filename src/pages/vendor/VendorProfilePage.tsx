@@ -226,7 +226,7 @@ export default function VendorProfilePage() {
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
         {/* Background Image */}
         <div className="relative rounded-2xl overflow-hidden h-40 bg-gradient-to-r from-primary/20 to-primary/5">
-          {backgroundImage && <img src={backgroundImage} alt="Background" className="w-full h-full object-cover" />}
+          {backgroundImage && <img loading="lazy" decoding="async" src={backgroundImage} alt="Background" className="w-full h-full object-cover" />}
           <input ref={bgInputRef} type="file" className="hidden" accept="image/*" onChange={handleBgUpload} />
           <Button
             size="sm"

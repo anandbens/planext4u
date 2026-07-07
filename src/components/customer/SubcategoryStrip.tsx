@@ -53,7 +53,7 @@ export function SubcategoryStrip({
                     >
                       <div className="h-14 w-14 rounded-2xl bg-secondary/40 flex items-center justify-center overflow-hidden">
                         {s.image && (s.image.startsWith("/") || s.image.startsWith("http")) ? (
-                          <img src={s.image} alt={s.name} className="w-full h-full object-cover" />
+                          <img loading="lazy" decoding="async" src={s.image} alt={s.name} className="w-full h-full object-cover" />
                         ) : (
                           <span className="text-2xl">{s.image || "📦"}</span>
                         )}
@@ -88,7 +88,7 @@ export function SubcategoryStrip({
                   }`}
                 >
                   {s.image && (s.image.startsWith("/") || s.image.startsWith("http")) ? (
-                    <img src={s.image} alt={s.name} className="h-9 w-9 rounded-lg object-cover" />
+                    <img loading="lazy" decoding="async" src={s.image} alt={s.name} className="h-9 w-9 rounded-lg object-cover" />
                   ) : (
                     <span className="text-xl">{s.image || "📦"}</span>
                   )}

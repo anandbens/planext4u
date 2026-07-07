@@ -217,7 +217,7 @@ export default function SocialLayout({ children, hideRightSidebar, hideSidebar }
               {suggestions.map((item: any) => (
                 <div key={item.id} className="flex items-center gap-2.5 py-1.5">
                   <Avatar className="h-9 w-9 cursor-pointer" onClick={() => navigate(`/app/social/profile/${item.user_id}`)}>
-                    {item.avatar_url ? <img src={item.avatar_url} alt="" className="w-full h-full object-cover rounded-full" /> :
+                    {item.avatar_url ? <img loading="lazy" decoding="async" src={item.avatar_url} alt="" className="w-full h-full object-cover rounded-full" /> :
                       <AvatarFallback className="bg-muted text-xs font-bold">{item.username?.charAt(0).toUpperCase()}</AvatarFallback>}
                   </Avatar>
                   <div className="flex-1 min-w-0">

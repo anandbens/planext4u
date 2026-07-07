@@ -10,9 +10,9 @@ import { LocationModal, loadSelectedLocation, LOCATION_CHANGED_EVENT } from "@/c
 import { SearchAutocomplete } from "@/components/customer/SearchAutocomplete";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import p4uLogoDark from "@/assets/p4u-logo-dark.png";
-import p4uLogoTeal from "@/assets/p4u-logo-teal.png";
-import p4uLogo from "@/assets/p4u-logo.png";
+import p4uLogoDark from "@/assets/p4u-logo-dark.webp";
+import p4uLogoTeal from "@/assets/p4u-logo-teal.webp";
+import p4uLogo from "@/assets/p4u-logo.webp";
 import IncomingCallProvider from "@/components/social/IncomingCallProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -153,7 +153,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <Link to="/app" className="shrink-0">
-                <img src={p4uLogo} alt="P4U" className="h-8 w-8 rounded-lg object-contain" />
+                <img loading="lazy" decoding="async" src={p4uLogo} alt="P4U" className="h-8 w-8 rounded-lg object-contain" />
               </Link>
               <button onClick={() => setLocationModalOpen(true)} className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -184,7 +184,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               ) : (
                 <button onClick={() => setMobileMenuOpen(true)} className="h-9 w-9 rounded-full bg-primary-foreground/15 flex items-center justify-center overflow-hidden">
                   {profilePhoto ? (
-                    <img src={profilePhoto} alt={customerUser.name} className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                    <img loading="lazy" decoding="async" src={profilePhoto} alt={customerUser.name} className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                   ) : (
                     <span className="text-sm font-bold text-primary-foreground">{initial}</span>
                   )}
@@ -231,7 +231,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 lg:gap-4 py-3">
             <Link to="/app" className="flex items-center gap-2 shrink-0">
-              <img src={p4uLogo} alt="Planext4u" className="h-10 w-10 md:h-11 md:w-11 object-contain rounded-lg" />
+              <img loading="lazy" decoding="async" src={p4uLogo} alt="Planext4u" className="h-10 w-10 md:h-11 md:w-11 object-contain rounded-lg" />
             </Link>
 
             <button onClick={() => setLocationModalOpen(true)}
@@ -344,7 +344,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                   <Link to="/app/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-4">
                     <div className="h-16 w-16 rounded-full bg-accent flex items-center justify-center overflow-hidden">
                       {profilePhoto ? (
-                        <img src={profilePhoto} alt={customerUser.name} className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                        <img loading="lazy" decoding="async" src={profilePhoto} alt={customerUser.name} className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                       ) : (
                         <span className="text-2xl font-bold text-primary">{initial}</span>
                       )}
@@ -487,7 +487,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
               </div>
             </div>
             <div className="flex flex-col items-center lg:items-end gap-4">
-              <img src={p4uLogoDark} alt="Planext4u" className="h-20 w-20 object-contain rounded-xl" />
+              <img loading="lazy" decoding="async" src={p4uLogoDark} alt="Planext4u" className="h-20 w-20 object-contain rounded-xl" />
               <div className="flex flex-col gap-2">
                 <div className="bg-white text-[hsl(var(--brand-dark))] rounded-lg px-4 py-2 text-center text-xs font-medium cursor-pointer hover:opacity-90">
                   <span className="text-[9px] block opacity-60">Download on the</span>App Store
@@ -544,7 +544,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
                     ) : tab.label === 'Profile' ? (
                       <div className={`h-7 w-7 rounded-full bg-muted flex items-center justify-center overflow-hidden ${tab.active ? 'border-2 border-foreground' : 'border border-border'}`}>
                         {profilePhoto ? (
-                          <img src={profilePhoto} alt="" className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                          <img loading="lazy" decoding="async" src={profilePhoto} alt="" className="h-full w-full object-cover" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                         ) : (
                           <span className="text-xs font-bold">{initial}</span>
                         )}
