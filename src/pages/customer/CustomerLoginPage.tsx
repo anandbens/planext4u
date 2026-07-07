@@ -349,7 +349,7 @@ export default function CustomerLoginPage() {
         className="bg-primary pb-16 px-6 flex flex-col items-center relative"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 3rem)' }}
       >
-        <img loading="lazy" decoding="async" src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl" />
+        <img loading="lazy" decoding="async" src={p4uLogoTeal} alt="Planext4u" className="h-20 w-20 object-contain mb-2 rounded-xl"  width={1024} height={1024}/>
         <h2 className="text-primary-foreground text-xl font-bold tracking-wider">Planext 4u</h2>
         <span className="text-primary-foreground/60 text-[10px] absolute top-14 right-[calc(50%-40px)] font-semibold">TM</span>
       </div>
