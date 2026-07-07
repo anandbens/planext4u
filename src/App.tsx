@@ -234,16 +234,19 @@ const CustomerCouponsPage = lazy(() => import("./pages/customer/CustomerCouponsP
 const CallsPage = lazy(() => import("./pages/customer/CallsPage"));
 
 // React Query defaults tuned for this app:
-// - 60s staleTime → avoid refetching the same data on every component mount /
-//   route change while still keeping data reasonably fresh.
-// - 5min gcTime → keep cached pages warm when the user navigates back.
+// - 2 min staleTime baseline → avoid refetching identical rows across every
+//   route change / component mount. Reference data (categories, country,
+//   platform_variables, customer basics) sets longer per-query staleTimes.
+// - 24 h gcTime so navigating back to a page rehydrates instantly from cache
+//   instead of re-hitting the database.
+// - Persisted to localStorage so a cold reload does NOT refetch everything.
 // - No window-focus refetch → big perf win on mobile WebViews.
 // - Single retry with capped backoff → don't compound slowness on flaky calls.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60_000,
-      gcTime: 5 * 60_000,
+      staleTime: 2 * 60_000,
+      gcTime: 24 * 60 * 60_000,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       retry: 1,
@@ -251,6 +254,40 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Persist the React Query cache in localStorage so navigating back to a
+// screen or reloading the app rehydrates instantly instead of re-issuing
+// the same reference-data queries (categories, country, platform_variables,
+// customer basics, etc.). Bump `buster` on incompatible cache shape changes.
+if (typeof window !== "undefined") {
+  import("@tanstack/query-sync-storage-persister")
+    .then(({ createSyncStoragePersister }) =>
+      import("@tanstack/react-query-persist-client").then(({ persistQueryClient }) => {
+        const persister = createSyncStoragePersister({
+          storage: window.localStorage,
+          key: "p4u-rq-cache-v1",
+          throttleTime: 1000,
+        });
+        persistQueryClient({
+          queryClient: queryClient as any,
+          persister,
+          maxAge: 24 * 60 * 60 * 1000,
+          buster: "v1",
+          dehydrateOptions: {
+            // Skip transient / user-scoped realtime queries from being persisted.
+            shouldDehydrateQuery: (q) => {
+              const key = Array.isArray(q.queryKey) ? String(q.queryKey[0]) : "";
+              // Never persist: chat threads, incoming calls, live tracking,
+              // realtime notifications — they should always re-fetch fresh.
+              const skip = /^(chat|call|live-|realtime|notifications|delivery|order-)/i;
+              return !skip.test(key);
+            },
+          },
+        });
+      })
+    )
+    .catch(() => { /* non-fatal — fall back to in-memory cache */ });
+}
 
 const NATIVE_PORTAL_STORAGE_KEY = "p4u_native_portal";
 

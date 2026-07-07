@@ -71,6 +71,17 @@ async function savePushToken(userId: string, token: string) {
   const deviceId = localStorage.getItem("p4u_device_id") || "";
   const platform = isNativePlatform() ? "android" : "web";
 
+  // Throttle: skip if we already upserted an identical (userId, deviceId, token)
+  // in this browser session. Previously this ran on every app open AND every
+  // route change, driving ~1,400 duplicate INSERT ... ON CONFLICT round-trips
+  // per user per day.
+  try {
+    const key = `p4u_dev_upserted:${userId}:${deviceId}`;
+    const prev = sessionStorage.getItem(key);
+    if (prev && prev === token) return;
+    sessionStorage.setItem(key, token);
+  } catch { /* ignore quota / SSR */ }
+
   try {
     // Upsert into user_devices
     const { error } = await supabase

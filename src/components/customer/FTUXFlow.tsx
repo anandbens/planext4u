@@ -42,7 +42,14 @@ export function FTUXFlow({ children, userId }: FTUXFlowProps) {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
-    // Check if onboarding needed
+    // Once-per-session throttle: FTUX device check only needs to run at most
+    // once per user per browser session. Previously it fired on every mount
+    // of the customer route tree.
+    const sessionKey = userId ? `p4u_ftux_checked:${userId}` : "p4u_ftux_checked:anon";
+    try {
+      if (sessionStorage.getItem(sessionKey)) return;
+    } catch { /* ignore */ }
+
     const checkOnboarding = async () => {
       const deviceId = await getNativeDeviceId();
 
@@ -73,6 +80,7 @@ export function FTUXFlow({ children, userId }: FTUXFlowProps) {
         const completed = localStorage.getItem("p4u_onboarding_completed");
         if (!completed) setNeedsOnboarding(true);
       }
+      try { sessionStorage.setItem(sessionKey, "1"); } catch { /* ignore */ }
     };
     checkOnboarding();
   }, [userId]);

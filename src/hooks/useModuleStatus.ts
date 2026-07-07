@@ -43,7 +43,8 @@ export function useModuleStatus() {
       });
       return out;
     },
-    staleTime: 60_000,
+    staleTime: 15 * 60_000,
+    gcTime: 60 * 60_000,
   });
   return { modules: data || FALLBACK, isLoading };
 }

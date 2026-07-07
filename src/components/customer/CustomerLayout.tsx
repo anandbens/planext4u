@@ -17,26 +17,12 @@ import IncomingCallProvider from "@/components/social/IncomingCallProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useModuleStatus } from "@/hooks/useModuleStatus";
+import { useCustomerBasics, WALLET_REFRESH_EVENT } from "@/hooks/useCustomerBasics";
 
-export const WALLET_REFRESH_EVENT = "wallet:refresh";
+export { WALLET_REFRESH_EVENT };
 function WalletBalance() {
-  const { customerUser } = useAuth();
-  const { data: balance = 0, refetch } = useQuery({
-    queryKey: ["wallet-balance", customerUser?.id],
-    queryFn: async () => {
-      if (!customerUser?.id) return 0;
-      const { data } = await supabase.from("customers").select("wallet_points").eq("id", customerUser.id).maybeSingle();
-      return data?.wallet_points || 0;
-    },
-    enabled: !!customerUser?.id,
-    staleTime: 30000,
-  });
-  useEffect(() => {
-    const handler = () => refetch();
-    window.addEventListener(WALLET_REFRESH_EVENT, handler);
-    return () => window.removeEventListener(WALLET_REFRESH_EVENT, handler);
-  }, [refetch]);
-  return <span className="text-xs font-extrabold tracking-tight">{balance.toLocaleString()}</span>;
+  const { walletPoints } = useCustomerBasics();
+  return <span className="text-xs font-extrabold tracking-tight">{walletPoints.toLocaleString()}</span>;
 }
 
 interface CustomerLayoutProps {
@@ -112,26 +98,11 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
 
   const { modules } = useModuleStatus();
 
-  // Fetch profile photo so all avatar slots (header, menu, bottom nav) show
-  // the uploaded picture instead of the name initial. Triggers in the DB keep
-  // customers.profile_photo and social_profiles.avatar_url in sync, so a single
-  // read of customers.profile_photo is sufficient regardless of where the user
-  // last updated their picture.
-  const { data: profilePhoto } = useQuery({
-    queryKey: ["layout-profile-photo", customerUser?.id],
-    queryFn: async () => {
-      if (!customerUser?.id) return null;
-      const { data } = await supabase
-        .from("customers")
-        .select("profile_photo")
-        .eq("id", customerUser.id)
-        .maybeSingle();
-      return data?.profile_photo || null;
-    },
-    enabled: !!customerUser?.id,
-    staleTime: 30_000,
-  });
-  const initial = (customerUser?.name?.charAt(0) || 'U').toUpperCase();
+  // Profile photo comes from the shared `customer-basics` cache so the
+  // header avatar, dashboard avatar, and wallet chip all share ONE query
+  // (previously 3 separate reads of the same customer row).
+  const { profilePhoto, name: basicsName } = useCustomerBasics();
+  const initial = ((basicsName ?? customerUser?.name)?.charAt(0) || 'U').toUpperCase();
 
   const navItems = [
     { icon: Home, label: "Dashboard", to: "/app" },

@@ -36,23 +36,22 @@ export default function CustomerOrderDetailPage() {
   const qc = useQueryClient();
   const [showPodPopup, setShowPodPopup] = useState(false);
 
-  const { data: order, isLoading } = useQuery({
-    queryKey: ["orderDetail", orderId],
+  // Parallel boot: fetch the order row and its delivery-proof in ONE round-trip
+  // via Promise.all so the detail page doesn't wait on a sequential waterfall.
+  const { data: boot, isLoading } = useQuery({
+    queryKey: ["orderDetailBoot", orderId],
     queryFn: async () => {
-      const { data } = await supabase.from("orders").select("*").eq("id", orderId!).single();
-      return data as any;
+      if (!orderId) return { order: null, pod: null };
+      const [{ data: order }, { data: pod }] = await Promise.all([
+        supabase.from("orders").select("*").eq("id", orderId).single(),
+        supabase.from("delivery_proofs" as any).select("*").eq("order_id", orderId).maybeSingle(),
+      ]);
+      return { order, pod };
     },
     enabled: !!orderId,
   });
-
-  const { data: existingPod } = useQuery({
-    queryKey: ["deliveryProof", orderId],
-    queryFn: async () => {
-      const { data } = await supabase.from("delivery_proofs" as any).select("*").eq("order_id", orderId!).maybeSingle();
-      return data;
-    },
-    enabled: !!orderId,
-  });
+  const order = boot?.order as any;
+  const existingPod = boot?.pod as any;
 
   // Auto-show POD popup when order is delivered and no POD exists
   useEffect(() => {
@@ -352,8 +351,7 @@ export default function CustomerOrderDetailPage() {
         customerName={customerName}
         supabaseUid={supabaseUid}
         onComplete={() => {
-          qc.invalidateQueries({ queryKey: ["deliveryProof", orderId] });
-          qc.invalidateQueries({ queryKey: ["orderDetail", orderId] });
+          qc.invalidateQueries({ queryKey: ["orderDetailBoot", orderId] });
         }}
       />
     </CustomerLayout>

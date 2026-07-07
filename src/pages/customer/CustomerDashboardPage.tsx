@@ -1,19 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 import { ShoppingBag, Users, BriefcaseBusiness, Tag, Home as HomeIcon, Wallet as WalletIcon, ArrowRight, Siren, LifeBuoy, Zap } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
+import { useCustomerBasics } from "@/hooks/useCustomerBasics";
 import { SplashScreen } from "@/components/customer/SplashScreen";
 import p4uLogo from "@/assets/p4u-logo-dark.png";
 import dashboardBg from "@/assets/dashboard-food-bg.jpg";
-
-type DashboardProfile = {
-  profile_photo: string | null;
-  wallet_points: number | null;
-};
 
 /**
  * Glassmorphic dashboard shown immediately after splash.
@@ -32,23 +26,9 @@ export default function CustomerDashboardPage() {
     if (!showSplash) sessionStorage.setItem("p4u_splash_shown", "1");
   }, [showSplash]);
 
-  // Profile photo
-  const { data: profilePhoto } = useQuery<DashboardProfile | null>({
-    queryKey: ["dash-profile-photo", customerUser?.id],
-    queryFn: async () => {
-      if (!customerUser?.id) return null;
-      const { data } = await supabase
-        .from("customers")
-        .select("profile_photo, wallet_points")
-        .eq("id", customerUser.id)
-        .maybeSingle();
-      return data || null;
-    },
-    enabled: !!customerUser?.id,
-    staleTime: 30_000,
-  });
-
-  const walletBalance = profilePhoto?.wallet_points || 0;
+  // Shared cache with CustomerLayout — single query for wallet + photo.
+  const { walletPoints, profilePhoto } = useCustomerBasics();
+  const walletBalance = walletPoints;
   const initial = (customerUser?.name?.charAt(0) || "U").toUpperCase();
 
   const tiles = [
@@ -123,9 +103,9 @@ export default function CustomerDashboardPage() {
               className="h-[3.1rem] w-[3.1rem] shrink-0 rounded-full overflow-hidden border-[3px] border-white/75 shadow-[0_12px_30px_rgba(0,55,55,0.22)] bg-white/20 backdrop-blur-md flex items-center justify-center"
               aria-label="Profile"
             >
-              {profilePhoto?.profile_photo ? (
+              {profilePhoto ? (
                 <img
-                  src={profilePhoto.profile_photo}
+                  src={profilePhoto}
                   alt="Profile"
                   className="h-full w-full object-cover"
                 />
