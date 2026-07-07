@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+
 
 /**
  * Single source of truth for the customer's frequently-read "basic" profile
@@ -66,15 +67,21 @@ export function useCustomerBasics() {
     return () => window.removeEventListener(WALLET_REFRESH_EVENT, handler);
   }, [qc, userId]);
 
-  return {
-    basics: query.data ?? null,
-    walletPoints: query.data?.wallet_points ?? 0,
-    profilePhoto: query.data?.profile_photo ?? null,
-    name: query.data?.name ?? customerUser?.name ?? null,
+  // Stabilize the returned object so consumers wrapped in React.memo don't
+  // re-render on unrelated parent updates. Fields that don't change keep the
+  // same reference across renders.
+  const data = query.data ?? null;
+  const authName = customerUser?.name ?? null;
+  return useMemo(() => ({
+    basics: data,
+    walletPoints: data?.wallet_points ?? 0,
+    profilePhoto: data?.profile_photo ?? null,
+    name: data?.name ?? authName ?? null,
     isLoading: query.isLoading,
     refetch: query.refetch,
-  };
+  }), [data, authName, query.isLoading, query.refetch]);
 }
+
 
 export function refreshCustomerBasics() {
   try { window.dispatchEvent(new Event(WALLET_REFRESH_EVENT)); } catch { /* ignore */ }
