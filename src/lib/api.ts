@@ -2115,12 +2115,12 @@ export const api = {
       { data: storeBanners },
       { data: platformVars },
     ] = await Promise.all([
-      supabase.from('banners').select('id,image,link,title,priority,status,position,start_date,end_date').eq('status', 'active').order('priority', { ascending: false }),
-      supabase.from('categories').select('id,name,image,icon,slug,display_order,parent_id,category_type,status,show_on_homepage,count,banner_image,theme_color,theme_accent,is_trending,is_emergency').eq('status', 'active'),
-      supabase.from('service_categories').select('id,name,image,icon,slug,display_order,parent_id,status,show_on_homepage,count,banner_image,is_trending,is_emergency,promotion_active,promotion_banner_url,promotion_title').eq('status', 'active').is('parent_id', null).order('display_order', { ascending: true }),
-      supabase.from('products').select('id,title,image,images,price,mrp,discount,rating,reviews,stock,unit,slug,vendor_id,vendor_name,category_id,category_name,subcategory_id,subcategory_name,status,is_deal_of_day,emoji,created_at').eq('status', 'active').limit(100),
+      supabase.from('banners').select('id,title,subtitle,desktop_image,mobile_image,link,priority,status,start_date,end_date,gradient').eq('status', 'active').order('priority', { ascending: false }),
+      supabase.from('categories').select('id,name,image,icon,display_order,parent_id,category_type,status,show_on_homepage,count,banner_image,theme_color,theme_accent,is_trending,is_emergency').eq('status', 'active'),
+      supabase.from('service_categories').select('id,name,image,icon,display_order,parent_id,status,show_on_homepage,count,banner_image,is_trending,is_emergency,promotion_active,promotion_banner_url,promotion_title').eq('status', 'active').is('parent_id', null).order('display_order', { ascending: true }),
+      supabase.from('products').select('id,title,image,images,price,discount,rating,reviews,stock,slug,vendor_id,vendor_name,category_id,category_name,subcategory_id,subcategory_name,status,is_deal_of_day,emoji,created_at').eq('status', 'active').limit(100),
       supabase.from('services').select('id,title,description,image,price,discount,rating,reviews,duration,vendor_id,vendor_name,category_id,category_name,service_area,status,slug,emoji').eq('status', 'active').limit(4),
-      supabase.from('popup_banners').select('id,image,title,description,link,status,position,start_date,end_date,created_at').eq('status', 'active').order('created_at', { ascending: false }),
+      supabase.from('popup_banners').select('id,title,description,image,link,status,start_date,end_date,created_at').eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('platform_variables').select('key, value').or('key.ilike.homepage_image_%,key.eq.homepage_categories_max,key.eq.homepage_subcategories_per_parent'),
     ]);
 
@@ -2175,7 +2175,7 @@ export const api = {
   browseProducts: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number; userCityId?: string | null }) => {
     // Narrow column list: card render + post-processing (vendor filter, priority ranking, sort).
     // Product detail page re-fetches the full row via getProductById.
-    const PRODUCT_LIST_COLS = 'id,title,image,images,price,mrp,discount,rating,reviews,stock,unit,slug,vendor_id,vendor_name,category_id,category_name,subcategory_id,subcategory_name,status,is_deal_of_day,emoji,product_attributes,created_at';
+    const PRODUCT_LIST_COLS = 'id,title,image,images,price,discount,rating,reviews,stock,slug,vendor_id,vendor_name,category_id,category_name,subcategory_id,subcategory_name,status,is_deal_of_day,emoji,product_attributes,created_at';
     let query = supabase.from('products').select(PRODUCT_LIST_COLS).eq('status', 'active');
     if (params.category) {
       // Resolve whether the supplied name is a parent category or a subcategory.
