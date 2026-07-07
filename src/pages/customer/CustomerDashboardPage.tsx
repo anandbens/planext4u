@@ -123,34 +123,19 @@ export default function CustomerDashboardPage() {
   // Shared cache with CustomerLayout — single query for wallet + photo.
   const { walletPoints, profilePhoto } = useCustomerBasics();
   const walletBalance = walletPoints;
-  const initial = (customerUser?.name?.charAt(0) || "U").toUpperCase();
+  const initial = useMemo(
+    () => (customerUser?.name?.charAt(0) || "U").toUpperCase(),
+    [customerUser?.name],
+  );
 
-  const tiles = [
-    {
-      label: "Shop",
-      tagline: "Find everything\nyou need",
-      icon: ShoppingBag,
-      to: "/app/browse",
-    },
-    {
-      label: "Socio",
-      tagline: "Connect with\nyour community",
-      icon: Users,
-      to: "/app/social",
-    },
-    {
-      label: "Services",
-      tagline: "Book trusted\nservices",
-      icon: BriefcaseBusiness,
-      to: "/app/services",
-    },
-    {
-      label: "Classifieds",
-      tagline: "Buy, sell & discover\nnear you",
-      icon: Tag,
-      to: "/app/classifieds",
-    },
-  ];
+  // Stable navigation callback so memoized tiles / quick-actions never re-render on state changes.
+  const handleNavigate = useCallback((to: string) => navigate(to), [navigate]);
+  const openWallet = useCallback(() => navigate("/app/wallet"), [navigate]);
+  const openHome = useCallback(() => navigate("/app/home"), [navigate]);
+  const walletBalanceText = useMemo(
+    () => fmt(walletBalance, { decimals: 0 }),
+    [fmt, walletBalance],
+  );
 
   return (
     <>
