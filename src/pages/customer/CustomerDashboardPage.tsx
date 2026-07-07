@@ -263,31 +263,8 @@ export default function CustomerDashboardPage() {
             transition={{ duration: 0.4, delay: 0.45 }}
             className="mt-3 flex items-start justify-around gap-2 px-2"
           >
-            {[
-              { label: "Emergency", icon: Siren, to: `/app/services?category=${encodeURIComponent("Emergency")}` },
-              { label: "Help", icon: LifeBuoy, to: `/app/services?category=${encodeURIComponent("Help")}` },
-              { label: "Quick Assist", icon: Zap, to: `/app/services?category=${encodeURIComponent("Quick Assist")}` },
-            ].map((b, i) => (
-              <motion.button
-                key={b.label}
-                whileTap={{ scale: 0.92 }}
-                onClick={() => navigate(b.to)}
-                aria-label={b.label}
-                className="flex flex-col items-center gap-1.5 min-w-0"
-              >
-                <div
-                  className="h-[3.4rem] w-[3.4rem] aspect-square shrink-0 rounded-full flex items-center justify-center border-[3px] border-white/85 shadow-[0_14px_32px_rgba(0,82,78,0.28),0_0_0_4px_rgba(255,255,255,0.45),inset_0_14px_22px_rgba(255,255,255,0.14)]"
-                  style={{
-                    background:
-                      "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)",
-                  }}
-                >
-                  <b.icon className="h-6 w-6 shrink-0 text-white drop-shadow-md" strokeWidth={2.2} />
-                </div>
-                <span className="text-[0.7rem] leading-none font-semibold text-[#103348] text-center">
-                  {b.label}
-                </span>
-              </motion.button>
+            {QUICK_ACTIONS.map((b) => (
+              <QuickAction key={b.label} label={b.label} icon={b.icon} to={b.to} onNavigate={handleNavigate} />
             ))}
           </motion.div>
         </div>
