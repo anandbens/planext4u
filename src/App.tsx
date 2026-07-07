@@ -269,7 +269,7 @@ if (typeof window !== "undefined") {
           throttleTime: 1000,
         });
         persistQueryClient({
-          queryClient,
+          queryClient: queryClient as any,
           persister,
           maxAge: 24 * 60 * 60 * 1000,
           buster: "v1",
