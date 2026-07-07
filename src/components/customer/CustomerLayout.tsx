@@ -135,7 +135,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
   ], []);
 
 
-  const menuListItems = [
+  const menuListItems = useMemo(() => [
     { label: "Your Wishlist", icon: Heart, to: "/app/wishlist" },
     { label: "My Coupons", icon: Tag, to: "/app/coupons" },
     { label: "Wallet & Points", icon: Wallet, to: "/app/wallet" },
@@ -144,7 +144,8 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
     { label: "Saved Addresses", icon: MapPinned, to: "/app/profile/edit" },
     { label: "Account Ownership & Control", icon: Shield, to: "/app/account-control" },
     { label: "Become a Seller", icon: ShoppingBag, to: "/app/vendor-register" },
-  ];
+  ], []);
+
 
   return (
     <div className="min-h-[100dvh] bg-background">
