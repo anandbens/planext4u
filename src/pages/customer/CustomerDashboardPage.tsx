@@ -103,9 +103,9 @@ export default function CustomerDashboardPage() {
               className="h-[3.1rem] w-[3.1rem] shrink-0 rounded-full overflow-hidden border-[3px] border-white/75 shadow-[0_12px_30px_rgba(0,55,55,0.22)] bg-white/20 backdrop-blur-md flex items-center justify-center"
               aria-label="Profile"
             >
-              {profilePhoto?.profile_photo ? (
+              {profilePhoto ? (
                 <img
-                  src={profilePhoto.profile_photo}
+                  src={profilePhoto}
                   alt="Profile"
                   className="h-full w-full object-cover"
                 />
