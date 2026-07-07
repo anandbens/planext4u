@@ -9,6 +9,13 @@
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="canonical" href="https://planext4u.com" />
 
+    <!-- Perf: preconnect to backend + preload LCP splash logo -->
+    <link rel="preconnect" href="https://jhtddsqnpfvjvnfojeea.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://jhtddsqnpfvjvnfojeea.supabase.co" />
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
+    <link rel="preload" as="image" href="/p4u-logo.webp" type="image/webp" fetchpriority="high" />
+
+
     <!-- iOS / Apple PWA & Capacitor WebView meta -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
