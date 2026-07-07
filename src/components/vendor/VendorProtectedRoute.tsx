@@ -39,22 +39,17 @@ export function VendorProtectedRoute({ children }: { children: React.ReactNode }
       setResolved(true);
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        if (session) settle(true);
-        else if (event === "INITIAL_SESSION") settle(false);
-      } else if (event === "SIGNED_OUT") {
-        settle(false);
-      }
-    });
+    // Single top-level auth subscription lives in AuthProvider; this guard just
+    // does a one-shot session probe on cold start.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) settle(true);
+      settle(!!session);
     });
 
     const t = setTimeout(() => settle(null), hardTimeoutMs);
     const grace = setTimeout(() => setSessionGraceExpired(true), isNative ? 3500 : 1800);
-    return () => { clearTimeout(t); clearTimeout(grace); subscription.unsubscribe(); };
+    return () => { clearTimeout(t); clearTimeout(grace); };
   }, [vendorUser]);
+
 
   if (isLoading || (!vendorUser && !resolved)) {
     return (

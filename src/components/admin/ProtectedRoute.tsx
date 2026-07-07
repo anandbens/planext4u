@@ -42,22 +42,15 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       setResolved(true);
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        if (session) settle(true);
-        else if (event === "INITIAL_SESSION") settle(false);
-      } else if (event === "SIGNED_OUT") {
-        settle(false);
-      }
-    });
-
+    // Single top-level auth subscription lives in AuthProvider. One-shot probe here.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) settle(true);
+      settle(!!session);
     });
 
     const t = setTimeout(() => settle(null), hardTimeoutMs);
-    return () => { clearTimeout(t); subscription.unsubscribe(); };
+    return () => { clearTimeout(t); };
   }, [user]);
+
 
   if (isLoading || (!user && !resolved)) {
     return (
