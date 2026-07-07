@@ -215,29 +215,8 @@ export default function CustomerDashboardPage() {
           <div className="relative mt-6 flex-none">
             <div className="relative w-full">
               <div className="grid grid-cols-2 grid-rows-2 gap-3">
-                {tiles.map((t, i) => (
-                  <motion.button
-                    key={t.label}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4, delay: 0.05 * i }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => navigate(t.to)}
-                    className="group relative aspect-square min-w-0 rounded-[1.4rem] px-2 py-3 text-left bg-white/38 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_20px_55px_rgba(15,77,75,0.18),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-30px_80px_rgba(255,255,255,0.34)] hover:bg-white/44 transition-all duration-300 flex flex-col items-center justify-center"
-                  >
-                    <div className="h-[3.4rem] w-[3.4rem] aspect-square shrink-0 rounded-full bg-[#089b96]/54 backdrop-blur-2xl border-2 border-white/72 shadow-[0_14px_32px_rgba(0,95,92,0.24),inset_0_18px_28px_rgba(255,255,255,0.18)] flex items-center justify-center mb-2">
-                      <t.icon className="h-6 w-6 shrink-0 text-white drop-shadow-[0_3px_6px_rgba(0,83,80,0.35)]" strokeWidth={1.9} />
-                    </div>
-                    <h3 className="text-[0.98rem] leading-none font-extrabold text-[#103348] drop-shadow-sm">
-                      {t.label}
-                    </h3>
-                    <p className="text-[0.65rem] text-[#1e3149]/88 mt-1.5 text-center whitespace-pre-line leading-[1.2]">
-                      {t.tagline}
-                    </p>
-                    <div className="mt-2 h-6 w-6 aspect-square shrink-0 rounded-full bg-[#bfece8]/82 backdrop-blur-md border border-white/50 flex items-center justify-center p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
-                      <ArrowRight className="h-full w-full shrink-0 text-[#078a86]" strokeWidth={3} />
-                    </div>
-                  </motion.button>
+                {TILES.map((t, i) => (
+                  <DashboardTile key={t.label} label={t.label} tagline={t.tagline} icon={t.icon} to={t.to} index={i} onNavigate={handleNavigate} />
                 ))}
               </div>
 
