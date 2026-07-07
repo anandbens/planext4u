@@ -989,7 +989,10 @@ export const api = {
   // City → 25 km, State → 200 km, Pan-India / VIP → unlimited.
   // Honours admin-configured radius_km when larger than the type default.
   browseServices: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number; userCityId?: string | null }) => {
-    let query = supabase.from('services').select('*').eq('status', 'active');
+    // Narrow column list: card render + post-processing (vendor filter, distance, sort).
+    // Service detail page re-fetches the full row via getServiceById.
+    const SERVICE_LIST_COLS = 'id,title,description,image,images,price,discount,rating,reviews,duration,vendor_id,vendor_name,category_id,category_name,subcategory_id,subcategory_name,service_area,latitude,longitude,location_address,status,slug,emoji,created_at';
+    let query = supabase.from('services').select(SERVICE_LIST_COLS).eq('status', 'active');
     if (params.category) {
       // Resolve whether the supplied name is a parent service category or a subcategory.
       // - Parent  → match services whose category_name matches (covers all subcategories).
@@ -2112,12 +2115,12 @@ export const api = {
       { data: storeBanners },
       { data: platformVars },
     ] = await Promise.all([
-      supabase.from('banners').select('*').eq('status', 'active').order('priority', { ascending: false }),
-      supabase.from('categories').select('*').eq('status', 'active'),
-      supabase.from('service_categories').select('*').eq('status', 'active').is('parent_id', null).order('display_order', { ascending: true }),
-      supabase.from('products').select('*').eq('status', 'active').limit(100),
-      supabase.from('services').select('*').eq('status', 'active').limit(4),
-      supabase.from('popup_banners').select('*').eq('status', 'active').order('created_at', { ascending: false }),
+      supabase.from('banners').select('id,image,link,title,priority,status,position,start_date,end_date').eq('status', 'active').order('priority', { ascending: false }),
+      supabase.from('categories').select('id,name,image,icon,slug,display_order,parent_id,category_type,status,show_on_homepage,count,banner_image,theme_color,theme_accent,is_trending,is_emergency').eq('status', 'active'),
+      supabase.from('service_categories').select('id,name,image,icon,slug,display_order,parent_id,status,show_on_homepage,count,banner_image,is_trending,is_emergency,promotion_active,promotion_banner_url,promotion_title').eq('status', 'active').is('parent_id', null).order('display_order', { ascending: true }),
+      supabase.from('products').select('id,title,image,images,price,mrp,discount,rating,reviews,stock,unit,slug,vendor_id,vendor_name,category_id,category_name,subcategory_id,subcategory_name,status,is_deal_of_day,emoji,created_at').eq('status', 'active').limit(100),
+      supabase.from('services').select('id,title,description,image,price,discount,rating,reviews,duration,vendor_id,vendor_name,category_id,category_name,service_area,status,slug,emoji').eq('status', 'active').limit(4),
+      supabase.from('popup_banners').select('id,image,title,description,link,status,position,start_date,end_date,created_at').eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('platform_variables').select('key, value').or('key.ilike.homepage_image_%,key.eq.homepage_categories_max,key.eq.homepage_subcategories_per_parent'),
     ]);
 
@@ -2170,7 +2173,10 @@ export const api = {
   },
 
   browseProducts: async (params: { category?: string; search?: string; sort?: string; userLat?: number; userLng?: number; userCityId?: string | null }) => {
-    let query = supabase.from('products').select('*').eq('status', 'active');
+    // Narrow column list: card render + post-processing (vendor filter, priority ranking, sort).
+    // Product detail page re-fetches the full row via getProductById.
+    const PRODUCT_LIST_COLS = 'id,title,image,images,price,mrp,discount,rating,reviews,stock,unit,slug,vendor_id,vendor_name,category_id,category_name,subcategory_id,subcategory_name,status,is_deal_of_day,emoji,product_attributes,created_at';
+    let query = supabase.from('products').select(PRODUCT_LIST_COLS).eq('status', 'active');
     if (params.category) {
       // Resolve whether the supplied name is a parent category or a subcategory.
       // - Parent  → match products whose category_name matches (covers all its subcategories).
