@@ -236,7 +236,7 @@ export default function CustomerDashboardPage() {
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.3 }}
                   whileTap={{ scale: 0.92 }}
-                  onClick={() => navigate("/app/home")}
+                  onClick={openHome}
                   aria-label="Home"
                   className="pointer-events-auto h-full w-full aspect-square shrink-0 rounded-full flex flex-col items-center justify-center shadow-[0_18px_42px_rgba(0,82,78,0.38),0_0_0_6px_rgba(255,255,255,0.58),0_0_0_9px_rgba(255,255,255,0.28),inset_0_18px_28px_rgba(255,255,255,0.12)] border-[3px] border-white/85"
                   style={{
