@@ -105,12 +105,10 @@ export default function FoodCartPage() {
 
   useEffect(() => { saveCart(cart); }, [cart]);
 
-  // Load wallet balance + active coupons
-  useEffect(() => {
-    if (!customerUser?.customer_id) return;
-    supabase.from("customers").select("wallet_points").eq("id", customerUser.customer_id).maybeSingle()
-      .then(({ data }) => setWalletBalance(data?.wallet_points || 0));
-  }, [customerUser?.customer_id]);
+  // Load wallet balance from the shared customer-basics cache instead of
+  // re-querying `customers.wallet_points` on every cart mount.
+  const { walletPoints } = useCustomerBasics();
+  useEffect(() => { setWalletBalance(walletPoints || 0); }, [walletPoints]);
 
   useEffect(() => {
     if (!restaurant) return;
