@@ -725,8 +725,14 @@ export default function CustomerCartPage() {
                   <h3 className="text-sm font-semibold mb-2">Redeem Points</h3>
                   <div className="flex gap-2">
                     <Input type="number" placeholder={`Enter Points (max ${maxPoints})`} value={pointsUsed || ""} onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setPointsUsed(val);
+                      const raw = Number(e.target.value);
+                      if (Number.isNaN(raw) || raw <= 0) { setPointsUsed(0); return; }
+                      if (raw > maxPoints) {
+                        toast.error(`You can redeem a maximum of ${maxPoints} points for this order.`);
+                        setPointsUsed(maxPoints);
+                        return;
+                      }
+                      setPointsUsed(Math.floor(raw));
                     }} className="h-10 flex-1" min={0} max={maxPoints} />
                     <Button className="h-10 px-6" onClick={applyPoints}>Apply</Button>
                   </div>
