@@ -351,8 +351,7 @@ export default function CustomerOrderDetailPage() {
         customerName={customerName}
         supabaseUid={supabaseUid}
         onComplete={() => {
-          qc.invalidateQueries({ queryKey: ["deliveryProof", orderId] });
-          qc.invalidateQueries({ queryKey: ["orderDetail", orderId] });
+          qc.invalidateQueries({ queryKey: ["orderDetailBoot", orderId] });
         }}
       />
     </CustomerLayout>
