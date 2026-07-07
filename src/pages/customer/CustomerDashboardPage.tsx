@@ -1,13 +1,107 @@
-import { useState, useEffect } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ShoppingBag, Users, BriefcaseBusiness, Tag, Home as HomeIcon, Wallet as WalletIcon, ArrowRight, Siren, LifeBuoy, Zap } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { useCustomerBasics } from "@/hooks/useCustomerBasics";
 import { SplashScreen } from "@/components/customer/SplashScreen";
 import p4uLogo from "@/assets/p4u-logo-dark.webp";
 import dashboardBg from "@/assets/dashboard-food-bg.webp";
+
+// ---- Memoized subcomponents ----
+// Each tile / quick-action / wallet chunk only re-renders when its own props change.
+// Prevents the whole grid from re-rendering when wallet balance or profile photo update.
+
+interface TileProps {
+  label: string;
+  tagline: string;
+  icon: LucideIcon;
+  to: string;
+  index: number;
+  onNavigate: (to: string) => void;
+}
+const DashboardTile = memo(function DashboardTile({ label, tagline, icon: Icon, to, index, onNavigate }: TileProps) {
+  const handleClick = useCallback(() => onNavigate(to), [onNavigate, to]);
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, delay: 0.05 * index }}
+      whileTap={{ scale: 0.97 }}
+      onClick={handleClick}
+      className="group relative aspect-square min-w-0 rounded-[1.4rem] px-2 py-3 text-left bg-white/38 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_20px_55px_rgba(15,77,75,0.18),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-30px_80px_rgba(255,255,255,0.34)] hover:bg-white/44 transition-all duration-300 flex flex-col items-center justify-center"
+    >
+      <div className="h-[3.4rem] w-[3.4rem] aspect-square shrink-0 rounded-full bg-[#089b96]/54 backdrop-blur-2xl border-2 border-white/72 shadow-[0_14px_32px_rgba(0,95,92,0.24),inset_0_18px_28px_rgba(255,255,255,0.18)] flex items-center justify-center mb-2">
+        <Icon className="h-6 w-6 shrink-0 text-white drop-shadow-[0_3px_6px_rgba(0,83,80,0.35)]" strokeWidth={1.9} />
+      </div>
+      <h3 className="text-[0.98rem] leading-none font-extrabold text-[#103348] drop-shadow-sm">{label}</h3>
+      <p className="text-[0.65rem] text-[#1e3149]/88 mt-1.5 text-center whitespace-pre-line leading-[1.2]">{tagline}</p>
+      <div className="mt-2 h-6 w-6 aspect-square shrink-0 rounded-full bg-[#bfece8]/82 backdrop-blur-md border border-white/50 flex items-center justify-center p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
+        <ArrowRight className="h-full w-full shrink-0 text-[#078a86]" strokeWidth={3} />
+      </div>
+    </motion.button>
+  );
+});
+
+interface QuickActionProps { label: string; icon: LucideIcon; to: string; onNavigate: (to: string) => void; }
+const QuickAction = memo(function QuickAction({ label, icon: Icon, to, onNavigate }: QuickActionProps) {
+  const handleClick = useCallback(() => onNavigate(to), [onNavigate, to]);
+  return (
+    <motion.button whileTap={{ scale: 0.92 }} onClick={handleClick} aria-label={label} className="flex flex-col items-center gap-1.5 min-w-0">
+      <div
+        className="h-[3.4rem] w-[3.4rem] aspect-square shrink-0 rounded-full flex items-center justify-center border-[3px] border-white/85 shadow-[0_14px_32px_rgba(0,82,78,0.28),0_0_0_4px_rgba(255,255,255,0.45),inset_0_14px_22px_rgba(255,255,255,0.14)]"
+        style={{ background: "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)" }}
+      >
+        <Icon className="h-6 w-6 shrink-0 text-white drop-shadow-md" strokeWidth={2.2} />
+      </div>
+      <span className="text-[0.7rem] leading-none font-semibold text-[#103348] text-center">{label}</span>
+    </motion.button>
+  );
+});
+
+const WalletCard = memo(function WalletCard({ balanceText, onOpen }: { balanceText: string; onOpen: () => void }) {
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.35 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onOpen}
+      className="mt-3 w-full rounded-[1.4rem] px-3 py-2.5 bg-white/42 backdrop-blur-[36px] border-2 border-white/70 shadow-[0_18px_48px_rgba(15,77,75,0.16),inset_0_1.5px_0_rgba(255,255,255,0.86),inset_0_-18px_54px_rgba(255,255,255,0.25)] flex items-center gap-3 text-left"
+    >
+      <div className="h-[3.2rem] w-[3.2rem] aspect-square rounded-full flex items-center justify-center shrink-0 shadow-[0_12px_28px_rgba(0,100,96,0.25),inset_0_16px_26px_rgba(255,255,255,0.16)]" style={{ background: "radial-gradient(circle at 30% 30%, #0bb3ad 0%, #089b96 70%)" }}>
+        <WalletIcon className="h-6 w-6 shrink-0 text-white drop-shadow-md" strokeWidth={1.9} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-[1rem] leading-none font-extrabold text-[#103348]">Wallet</h3>
+        <p className="text-[0.7rem] text-[#1e3149]/88 mt-1.5 leading-[1.18]">Secure payments made easy</p>
+      </div>
+      <div className="flex flex-col items-end gap-2">
+        <div className="px-2.5 py-1 rounded-full bg-[#c6eee9]/82 backdrop-blur-md border border-white/55">
+          <span className="text-[0.78rem] font-bold text-[#078a86]">{balanceText}</span>
+        </div>
+        <div className="h-6 w-6 aspect-square shrink-0 rounded-full bg-[#c6eee9]/82 flex items-center justify-center p-1 border border-white/45">
+          <ArrowRight className="h-full w-full shrink-0 text-[#078a86]" strokeWidth={3} />
+        </div>
+      </div>
+    </motion.button>
+  );
+});
+
+// Static tile config lives outside the component so the array identity never changes.
+const TILES: ReadonlyArray<{ label: string; tagline: string; icon: LucideIcon; to: string }> = [
+  { label: "Shop", tagline: "Find everything\nyou need", icon: ShoppingBag, to: "/app/browse" },
+  { label: "Socio", tagline: "Connect with\nyour community", icon: Users, to: "/app/social" },
+  { label: "Services", tagline: "Book trusted\nservices", icon: BriefcaseBusiness, to: "/app/services" },
+  { label: "Classifieds", tagline: "Buy, sell & discover\nnear you", icon: Tag, to: "/app/classifieds" },
+];
+const QUICK_ACTIONS: ReadonlyArray<{ label: string; icon: LucideIcon; to: string }> = [
+  { label: "Emergency", icon: Siren, to: `/app/services?category=${encodeURIComponent("Emergency")}` },
+  { label: "Help", icon: LifeBuoy, to: `/app/services?category=${encodeURIComponent("Help")}` },
+  { label: "Quick Assist", icon: Zap, to: `/app/services?category=${encodeURIComponent("Quick Assist")}` },
+];
 
 /**
  * Glassmorphic dashboard shown immediately after splash.
