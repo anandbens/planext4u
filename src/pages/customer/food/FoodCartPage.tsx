@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { useCustomerBasics } from "@/hooks/useCustomerBasics";
 import { foodApi, calculateDeliveryFee, calculateRiderPayout, calculateETA, Restaurant } from "@/lib/food-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
