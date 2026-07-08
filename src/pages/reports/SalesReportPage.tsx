@@ -121,7 +121,7 @@ export default function SalesReportPage() {
                 onClick={() => downloadOrdersSummaryPdf(
                   rows.map(r => ({
                     id: r.id, date: r.created_at,
-                    customer_name: r.customer_name, vendor_name: r.vendor_name,
+                    customer_name: r.customer_name, customer_mobile: r.customer_mobile, vendor_name: r.vendor_name,
                     coupon_code: r.coupon_code,
                     subtotal: Number(r.subtotal || 0),
                     discount: Number(r.discount || 0),
