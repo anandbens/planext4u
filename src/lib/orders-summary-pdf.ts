@@ -52,6 +52,7 @@ export function buildOrdersSummaryHtml(rows: OrderSummaryRow[], opts: OrdersSumm
     `<th>Order ID</th>`,
     `<th>Date</th>`,
     showCustomerColumn ? `<th>Customer</th>` : "",
+    showCustomerColumn ? `<th>Mobile</th>` : "",
     showVendorColumn ? `<th>Vendor</th>` : "",
     `<th>Coupon</th>`,
     `<th style="text-align:right">Subtotal</th>`,
