@@ -41,13 +41,26 @@ export default function CustomerWishlistPage() {
     const loadData = async () => {
       setLoading(true);
       if (tab === "products" && wishlist.length > 0) {
-        const { data } = await supabase.from('products').select('*').eq('status', 'active').in('id', wishlist);
+        // Narrowed from select('*') (61 cols) to the 6 fields the card renders.
+        const { data } = await supabase
+          .from('products')
+          .select('id, title, image, emoji, price, discount')
+          .eq('status', 'active')
+          .in('id', wishlist);
         setProducts(data || []);
       } else if (tab === "services" && serviceWishlist.length > 0) {
-        const { data } = await supabase.from('services' as any).select('*').in('id', serviceWishlist);
+        // Narrowed from select('*') (44 cols) to the 5 fields the row renders.
+        const { data } = await supabase
+          .from('services' as any)
+          .select('id, title, name, image, vendor_name, price')
+          .in('id', serviceWishlist);
         setServices((data || []) as any[]);
       } else if (tab === "sellers" && sellerWishlist.length > 0) {
-        const { data } = await supabase.from('vendors' as any).select('*').in('id', sellerWishlist);
+        // Narrowed from select('*') (40 cols) to the 5 fields the row renders.
+        const { data } = await supabase
+          .from('vendors' as any)
+          .select('id, business_name, name, logo, category_name')
+          .in('id', sellerWishlist);
         setSellers((data || []) as any[]);
       }
       setLoading(false);
