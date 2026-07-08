@@ -2570,7 +2570,8 @@ export const api = {
 
   // Reports
   getSalesReport: async (_params: any) => {
-    const { data: orders } = await supabase.from('orders').select('*');
+    // Sales report only aggregates status/total/tax — 3 cols vs 55 = ~94% payload cut.
+    const { data: orders } = await supabase.from('orders').select('status,total,tax').returns<Pick<Order, 'status' | 'total' | 'tax'>[]>();
     const allOrders = orders || [];
     const nonCancelled = allOrders.filter(o => o.status !== 'cancelled');
     return {
