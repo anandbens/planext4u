@@ -1,0 +1,79 @@
+# Staging-only k6 load test — 100 → 500 → 1000 VUs.
+#
+# Runs manually (workflow_dispatch) OR on a weekly schedule. Never runs on push
+# to protect production. The BASE_URL secret MUST point at a staging deployment;
+# the k6 script itself refuses to run against production hostnames.
+
+name: load-test-staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Staging base URL (must contain 'staging' or be localhost). Overrides the STAGING_BASE_URL secret."
+        required: false
+        type: string
+  schedule:
+    # Every Monday 03:00 UTC.
+    - cron: '0 3 * * 1'
+
+concurrency:
+  group: load-test-staging
+  cancel-in-progress: false
+
+jobs:
+  k6:
+    name: k6 staged (100/500/1000 VUs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging  # gates on the `staging` GitHub environment (approvals + secrets)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve BASE_URL
+        id: resolve
+        env:
+          INPUT_URL: ${{ github.event.inputs.base_url }}
+          SECRET_URL: ${{ secrets.STAGING_BASE_URL }}
+        run: |
+          URL="${INPUT_URL:-$SECRET_URL}"
+          if [ -z "$URL" ]; then
+            echo "::error::No BASE_URL provided (set input or STAGING_BASE_URL secret)."
+            exit 1
+          fi
+          case "$URL" in
+            *staging*|http://localhost*|http://127.0.0.1*) ;;
+            *)
+              echo "::error::BASE_URL '$URL' does not look like a staging host. Refusing to run."
+              exit 1
+              ;;
+          esac
+          echo "base_url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+
+      - name: Run k6 (thresholds enforce pass/fail)
+        env:
+          BASE_URL: ${{ steps.resolve.outputs.base_url }}
+        run: |
+          mkdir -p artifacts
+          k6 run \
+            --summary-export=artifacts/summary.json \
+            --out json=artifacts/raw.json \
+            tests/load/k6-staged.js
+
+      - name: Upload k6 artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-load-test-${{ github.run_id }}
+          path: artifacts/
+          retention-days: 30
