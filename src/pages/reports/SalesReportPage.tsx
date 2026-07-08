@@ -64,6 +64,7 @@ export default function SalesReportPage() {
     { key: "id", label: "Order ID", sortable: true, render: r => <span className="font-mono text-xs">{r.id}</span> },
     { key: "created_at", label: "Date", sortable: true, render: r => format(parseISO(r.created_at), "dd MMM yyyy, HH:mm") },
     { key: "customer_name", label: "Customer", sortable: true, render: r => r.customer_name || "—" },
+    { key: "customer_mobile", label: "Mobile", sortable: true, render: r => r.customer_mobile ? <span className="font-mono text-xs">{r.customer_mobile}</span> : "—" },
     { key: "vendor_name", label: "Vendor", sortable: true, render: r => r.vendor_name || "—" },
     { key: "items_count", label: "Items", sortable: true, align: "center" },
     { key: "subtotal", label: "Subtotal (₹)", sortable: true, align: "right", render: r => `₹${Number(r.subtotal || 0).toLocaleString("en-IN")}` },
