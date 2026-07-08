@@ -263,8 +263,42 @@ export interface CartItem {
   variant_id?: string;
 }
 
+// ===== Narrow column projections for high-traffic list fetches =====
+// Response shapes preserved: these lists cover every field consumers currently
+// read from Product/Order rows (verified against Product/Order interfaces above,
+// admin modals, customer pages, and OrdersPage/ProductsPage filter logic).
+// Single-row detail fetches keep `select('*')` since payload doesn't matter there.
+const PRODUCT_LIST_COLS_FULL = [
+  'id', 'vendor_id', 'category_id', 'subcategory_id', 'subcategory_name',
+  'title', 'description', 'short_description', 'long_description',
+  'price', 'tax', 'discount', 'discount_type', 'max_points_redeemable',
+  'max_redemption_percentage', 'status', 'vendor_name', 'category_name',
+  'emoji', 'image', 'images', 'thumbnail_image', 'banner_image',
+  'rating', 'reviews', 'stock', 'sales', 'rejection_reason', 'inactivation_reason',
+  'created_at', 'updated_at', 'youtube_video_url', 'tax_slab_id',
+  'product_attributes', 'is_available', 'duration_hours', 'duration_minutes',
+  'promise_p4u', 'helpline_number', 'product_type', 'sku', 'slug',
+  'meta_title', 'meta_description', 'manage_stock', 'stock_status',
+  'weight', 'dimensions', 'parent_item_id', 'parent_item_name',
+  'replacement_time', 'is_deal_of_day',
+].join(',');
+
+const ORDER_LIST_COLS_FULL = [
+  'id', 'customer_id', 'vendor_id', 'subtotal', 'tax', 'discount', 'points_used',
+  'total', 'status', 'created_at', 'updated_at', 'customer_name', 'vendor_name',
+  'items', 'delivery_rating', 'rating_comment', 'rated_at',
+  'payment_reference_id', 'razorpay_order_id', 'platform_fee', 'gst_on_platform_fee',
+  'shipping_type', 'courier_name', 'tracking_number', 'tracking_url',
+  'shipping_notes', 'pod_confirmed', 'pod_confirmed_at', 'deleted_at',
+].join(',');
+
+// Aggregate-only projection: dashboards and reports that need row-level totals but
+// never render or hydrate a full Order object.
+const ORDER_AGG_COLS = 'id,status,total,tax,created_at,customer_name,vendor_name';
+
 // Auth token management (kept for backwards compat but not used for Supabase)
 export const setAuthToken = (_token: string | null) => {};
+
 
 // Helper: paginate from Supabase query
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -367,9 +401,9 @@ export const api = {
       supabase.from('customers').select('*', { count: 'exact', head: true }),
       supabase.from('vendors').select('*', { count: 'exact', head: true }),
       supabase.from('service_vendors').select('*', { count: 'exact', head: true }),
-      supabase.from('orders').select('*'),
-      supabase.from('settlements').select('*'),
-      supabase.from('classified_ads').select('*').eq('status', 'approved'),
+      supabase.from('orders').select(ORDER_LIST_COLS_FULL).returns<Order[]>(),
+      supabase.from('settlements').select('id,status').returns<{ id: string; status: string }[]>(),
+      supabase.from('classified_ads').select('id').eq('status', 'approved').returns<{ id: string }[]>(),
       supabase.from('services').select('*', { count: 'exact', head: true }),
       supabase.from('categories').select('name, count'),
       supabase.from('service_categories').select('name, count'),
@@ -864,7 +898,7 @@ export const api = {
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
 
-    let query = supabase.from('products').select('*', { count: 'exact' });
+    let query = supabase.from('products').select(PRODUCT_LIST_COLS_FULL, { count: 'exact' });
     if (params.search) query = query.or(`title.ilike.%${params.search}%,vendor_name.ilike.%${params.search}%,category_name.ilike.%${params.search}%`);
     if (params.status) query = query.eq('status', params.status);
     if (params.date_from) query = query.gte('created_at', params.date_from);
@@ -1211,7 +1245,7 @@ export const api = {
       if (restrictVendorIds.length === 0) return paginateResult([], 0, page, perPage);
     }
 
-    let query = supabase.from('orders').select('*', { count: 'exact' });
+    let query = supabase.from('orders').select(ORDER_LIST_COLS_FULL, { count: 'exact' });
 
     // Soft-delete filter
     if (params.deleted) query = query.not('deleted_at', 'is', null);
@@ -2327,7 +2361,7 @@ export const api = {
       return rpcData as unknown as Order[];
     }
     // Fallback: legacy direct query on the current customer_id.
-    const { data } = await supabase.from('orders').select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
+    const { data } = await supabase.from('orders').select(ORDER_LIST_COLS_FULL).eq('customer_id', customerId).order('created_at', { ascending: false });
     return (data || []) as unknown as Order[];
   },
 
@@ -2490,8 +2524,8 @@ export const api = {
       settlementsRes,
     ] = await Promise.all([
       supabase.from('vendors').select('*').eq('id', vendorId).maybeSingle(),
-      supabase.from('orders').select('*').eq('vendor_id', vendorId),
-      supabase.from('products').select('*').eq('vendor_id', vendorId),
+      supabase.from('orders').select(ORDER_LIST_COLS_FULL).eq('vendor_id', vendorId).returns<Order[]>(),
+      supabase.from('products').select(PRODUCT_LIST_COLS_FULL).eq('vendor_id', vendorId).returns<Product[]>(),
       supabase.from('services').select('*').eq('vendor_id', vendorId),
       supabase.from('settlements').select('*').eq('vendor_id', vendorId),
     ]);
@@ -2513,12 +2547,12 @@ export const api = {
   },
 
   getVendorProducts: async (vendorId: string) => {
-    const { data } = await supabase.from('products').select('*').eq('vendor_id', vendorId);
+    const { data } = await supabase.from('products').select(PRODUCT_LIST_COLS_FULL).eq('vendor_id', vendorId).returns<Product[]>();
     return (data || []) as Product[];
   },
 
   getVendorOrders: async (vendorId: string) => {
-    const { data } = await supabase.from('orders').select('*').eq('vendor_id', vendorId).order('created_at', { ascending: false });
+    const { data } = await supabase.from('orders').select(ORDER_LIST_COLS_FULL).eq('vendor_id', vendorId).order('created_at', { ascending: false }).returns<Order[]>();
     return (data || []) as unknown as Order[];
   },
 
@@ -2536,7 +2570,8 @@ export const api = {
 
   // Reports
   getSalesReport: async (_params: any) => {
-    const { data: orders } = await supabase.from('orders').select('*');
+    // Sales report only aggregates status/total/tax — 3 cols vs 55 = ~94% payload cut.
+    const { data: orders } = await supabase.from('orders').select('status,total,tax').returns<Pick<Order, 'status' | 'total' | 'tax'>[]>();
     const allOrders = orders || [];
     const nonCancelled = allOrders.filter(o => o.status !== 'cancelled');
     return {
