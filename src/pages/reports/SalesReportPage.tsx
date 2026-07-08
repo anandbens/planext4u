@@ -87,7 +87,7 @@ export default function SalesReportPage() {
         columns={columns}
         loading={loading}
         searchPlaceholder="Search by order ID, customer, vendor..."
-        searchKeys={["id", "customer_name", "vendor_name", "payment_reference_id"]}
+        searchKeys={["id", "customer_name", "customer_mobile", "vendor_name", "payment_reference_id"]}
         dateFrom={dateFrom}
         dateTo={dateTo}
         onDateFromChange={setDateFrom}
