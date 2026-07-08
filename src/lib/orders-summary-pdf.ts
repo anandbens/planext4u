@@ -5,6 +5,7 @@ export interface OrderSummaryRow {
   id: string;
   date: string;                     // ISO or display date
   customer_name?: string | null;
+  customer_mobile?: string | null;
   vendor_name?: string | null;
   coupon_code?: string | null;
   subtotal: number;
