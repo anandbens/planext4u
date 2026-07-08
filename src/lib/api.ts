@@ -898,7 +898,7 @@ export const api = {
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
 
-    let query = supabase.from('products').select('*', { count: 'exact' });
+    let query = supabase.from('products').select(PRODUCT_LIST_COLS_FULL, { count: 'exact' });
     if (params.search) query = query.or(`title.ilike.%${params.search}%,vendor_name.ilike.%${params.search}%,category_name.ilike.%${params.search}%`);
     if (params.status) query = query.eq('status', params.status);
     if (params.date_from) query = query.gte('created_at', params.date_from);
@@ -1245,7 +1245,7 @@ export const api = {
       if (restrictVendorIds.length === 0) return paginateResult([], 0, page, perPage);
     }
 
-    let query = supabase.from('orders').select('*', { count: 'exact' });
+    let query = supabase.from('orders').select(ORDER_LIST_COLS_FULL, { count: 'exact' });
 
     // Soft-delete filter
     if (params.deleted) query = query.not('deleted_at', 'is', null);
@@ -2361,7 +2361,7 @@ export const api = {
       return rpcData as unknown as Order[];
     }
     // Fallback: legacy direct query on the current customer_id.
-    const { data } = await supabase.from('orders').select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
+    const { data } = await supabase.from('orders').select(ORDER_LIST_COLS_FULL).eq('customer_id', customerId).order('created_at', { ascending: false });
     return (data || []) as unknown as Order[];
   },
 
