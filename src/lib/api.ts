@@ -263,8 +263,42 @@ export interface CartItem {
   variant_id?: string;
 }
 
+// ===== Narrow column projections for high-traffic list fetches =====
+// Response shapes preserved: these lists cover every field consumers currently
+// read from Product/Order rows (verified against Product/Order interfaces above,
+// admin modals, customer pages, and OrdersPage/ProductsPage filter logic).
+// Single-row detail fetches keep `select('*')` since payload doesn't matter there.
+const PRODUCT_LIST_COLS_FULL = [
+  'id', 'vendor_id', 'category_id', 'subcategory_id', 'subcategory_name',
+  'title', 'description', 'short_description', 'long_description',
+  'price', 'tax', 'discount', 'discount_type', 'max_points_redeemable',
+  'max_redemption_percentage', 'status', 'vendor_name', 'category_name',
+  'emoji', 'image', 'images', 'thumbnail_image', 'banner_image',
+  'rating', 'reviews', 'stock', 'sales', 'rejection_reason', 'inactivation_reason',
+  'created_at', 'updated_at', 'youtube_video_url', 'tax_slab_id',
+  'product_attributes', 'is_available', 'duration_hours', 'duration_minutes',
+  'promise_p4u', 'helpline_number', 'product_type', 'sku', 'slug',
+  'meta_title', 'meta_description', 'manage_stock', 'stock_status',
+  'weight', 'dimensions', 'parent_item_id', 'parent_item_name',
+  'replacement_time', 'is_deal_of_day',
+].join(',');
+
+const ORDER_LIST_COLS_FULL = [
+  'id', 'customer_id', 'vendor_id', 'subtotal', 'tax', 'discount', 'points_used',
+  'total', 'status', 'created_at', 'updated_at', 'customer_name', 'vendor_name',
+  'items', 'delivery_rating', 'rating_comment', 'rated_at',
+  'payment_reference_id', 'razorpay_order_id', 'platform_fee', 'gst_on_platform_fee',
+  'shipping_type', 'courier_name', 'tracking_number', 'tracking_url',
+  'shipping_notes', 'pod_confirmed', 'pod_confirmed_at', 'deleted_at',
+].join(',');
+
+// Aggregate-only projection: dashboards and reports that need row-level totals but
+// never render or hydrate a full Order object.
+const ORDER_AGG_COLS = 'id,status,total,tax,created_at,customer_name,vendor_name';
+
 // Auth token management (kept for backwards compat but not used for Supabase)
 export const setAuthToken = (_token: string | null) => {};
+
 
 // Helper: paginate from Supabase query
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
