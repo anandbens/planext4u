@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { downloadOrdersSummaryPdf } from "@/lib/orders-summary-pdf";
 
 interface OrderRow {
-  id: string; created_at: string; customer_name: string; vendor_name: string;
+  id: string; created_at: string; customer_name: string; customer_mobile: string; vendor_name: string;
   status: string; subtotal: number; discount: number; tax: number;
   platform_fee: number; gst_on_platform_fee: number; total: number;
   points_used: number; payment_reference_id: string; items_count: number;
