@@ -70,6 +70,7 @@ export function buildOrdersSummaryHtml(rows: OrderSummaryRow[], opts: OrdersSumm
           <td class="mono">${escapeHtml(r.id)}</td>
           <td>${escapeHtml(d)}</td>
           ${showCustomerColumn ? `<td>${escapeHtml(r.customer_name || "—")}</td>` : ""}
+          ${showCustomerColumn ? `<td class="mono">${escapeHtml(r.customer_mobile || "—")}</td>` : ""}
           ${showVendorColumn ? `<td>${escapeHtml(r.vendor_name || "—")}</td>` : ""}
           <td class="mono">${r.coupon_code ? escapeHtml(r.coupon_code) : "—"}</td>
           <td style="text-align:right">${inr(r.subtotal)}</td>
