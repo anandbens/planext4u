@@ -5,6 +5,7 @@ export interface OrderSummaryRow {
   id: string;
   date: string;                     // ISO or display date
   customer_name?: string | null;
+  customer_mobile?: string | null;
   vendor_name?: string | null;
   coupon_code?: string | null;
   subtotal: number;
@@ -51,6 +52,7 @@ export function buildOrdersSummaryHtml(rows: OrderSummaryRow[], opts: OrdersSumm
     `<th>Order ID</th>`,
     `<th>Date</th>`,
     showCustomerColumn ? `<th>Customer</th>` : "",
+    showCustomerColumn ? `<th>Mobile</th>` : "",
     showVendorColumn ? `<th>Vendor</th>` : "",
     `<th>Coupon</th>`,
     `<th style="text-align:right">Subtotal</th>`,
@@ -60,7 +62,7 @@ export function buildOrdersSummaryHtml(rows: OrderSummaryRow[], opts: OrdersSumm
   ].filter(Boolean).join("");
 
   const bodyRows = rows.length === 0
-    ? `<tr><td colspan="10" style="text-align:center;color:#64748b;padding:24px">No orders in the selected range.</td></tr>`
+    ? `<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px">No orders in the selected range.</td></tr>`
     : rows.map((r, i) => {
         const d = (() => { try { return new Date(r.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }); } catch { return r.date; } })();
         return `<tr>
@@ -68,6 +70,7 @@ export function buildOrdersSummaryHtml(rows: OrderSummaryRow[], opts: OrdersSumm
           <td class="mono">${escapeHtml(r.id)}</td>
           <td>${escapeHtml(d)}</td>
           ${showCustomerColumn ? `<td>${escapeHtml(r.customer_name || "—")}</td>` : ""}
+          ${showCustomerColumn ? `<td class="mono">${escapeHtml(r.customer_mobile || "—")}</td>` : ""}
           ${showVendorColumn ? `<td>${escapeHtml(r.vendor_name || "—")}</td>` : ""}
           <td class="mono">${r.coupon_code ? escapeHtml(r.coupon_code) : "—"}</td>
           <td style="text-align:right">${inr(r.subtotal)}</td>
@@ -77,7 +80,7 @@ export function buildOrdersSummaryHtml(rows: OrderSummaryRow[], opts: OrdersSumm
         </tr>`;
       }).join("");
 
-  const colspanTotals = 3 + (showCustomerColumn ? 1 : 0) + (showVendorColumn ? 1 : 0) + 1; // #+ID+Date+Cust?+Vend?+Coupon
+  const colspanTotals = 3 + (showCustomerColumn ? 2 : 0) + (showVendorColumn ? 1 : 0) + 1; // #+ID+Date+Cust?+Mobile?+Vend?+Coupon
 
   const LOGO_URL = "https://jhtddsqnpfvjvnfojeea.supabase.co/storage/v1/object/public/media-library/branding%2Fp4u-logo-invoice.png";
 

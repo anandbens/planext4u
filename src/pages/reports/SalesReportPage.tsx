@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { downloadOrdersSummaryPdf } from "@/lib/orders-summary-pdf";
 
 interface OrderRow {
-  id: string; created_at: string; customer_name: string; vendor_name: string;
+  id: string; created_at: string; customer_name: string; customer_mobile: string; vendor_name: string;
   status: string; subtotal: number; discount: number; tax: number;
   platform_fee: number; gst_on_platform_fee: number; total: number;
   points_used: number; payment_reference_id: string; items_count: number;
@@ -36,7 +36,7 @@ export default function SalesReportPage() {
     const fetchData = async () => {
       setLoading(true);
       let q = supabase.from("orders")
-        .select("id, created_at, customer_name, vendor_name, status, subtotal, discount, tax, platform_fee, gst_on_platform_fee, total, points_used, payment_reference_id, items, coupon_code")
+        .select("id, created_at, customer_id, customer_name, vendor_name, status, subtotal, discount, tax, platform_fee, gst_on_platform_fee, total, points_used, payment_reference_id, items, coupon_code, customers(mobile)")
         .gte("created_at", startOfDay(dateFrom).toISOString())
         .lte("created_at", endOfDay(dateTo).toISOString())
         .order("created_at", { ascending: false });
@@ -44,6 +44,7 @@ export default function SalesReportPage() {
       const { data } = await q;
       setRows((data || []).map((o: any) => ({
         ...o,
+        customer_mobile: o.customers?.mobile || "",
         platform_fee: o.platform_fee || 0,
         gst_on_platform_fee: o.gst_on_platform_fee || 0,
         items_count: Array.isArray(o.items) ? o.items.length : 0,
@@ -63,6 +64,7 @@ export default function SalesReportPage() {
     { key: "id", label: "Order ID", sortable: true, render: r => <span className="font-mono text-xs">{r.id}</span> },
     { key: "created_at", label: "Date", sortable: true, render: r => format(parseISO(r.created_at), "dd MMM yyyy, HH:mm") },
     { key: "customer_name", label: "Customer", sortable: true, render: r => r.customer_name || "—" },
+    { key: "customer_mobile", label: "Mobile", sortable: true, render: r => r.customer_mobile ? <span className="font-mono text-xs">{r.customer_mobile}</span> : "—" },
     { key: "vendor_name", label: "Vendor", sortable: true, render: r => r.vendor_name || "—" },
     { key: "items_count", label: "Items", sortable: true, align: "center" },
     { key: "subtotal", label: "Subtotal (₹)", sortable: true, align: "right", render: r => `₹${Number(r.subtotal || 0).toLocaleString("en-IN")}` },
@@ -85,7 +87,7 @@ export default function SalesReportPage() {
         columns={columns}
         loading={loading}
         searchPlaceholder="Search by order ID, customer, vendor..."
-        searchKeys={["id", "customer_name", "vendor_name", "payment_reference_id"]}
+        searchKeys={["id", "customer_name", "customer_mobile", "vendor_name", "payment_reference_id"]}
         dateFrom={dateFrom}
         dateTo={dateTo}
         onDateFromChange={setDateFrom}
@@ -119,7 +121,7 @@ export default function SalesReportPage() {
                 onClick={() => downloadOrdersSummaryPdf(
                   rows.map(r => ({
                     id: r.id, date: r.created_at,
-                    customer_name: r.customer_name, vendor_name: r.vendor_name,
+                    customer_name: r.customer_name, customer_mobile: r.customer_mobile, vendor_name: r.vendor_name,
                     coupon_code: r.coupon_code,
                     subtotal: Number(r.subtotal || 0),
                     discount: Number(r.discount || 0),
