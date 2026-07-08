@@ -2524,8 +2524,8 @@ export const api = {
       settlementsRes,
     ] = await Promise.all([
       supabase.from('vendors').select('*').eq('id', vendorId).maybeSingle(),
-      supabase.from('orders').select('*').eq('vendor_id', vendorId),
-      supabase.from('products').select('*').eq('vendor_id', vendorId),
+      supabase.from('orders').select(ORDER_LIST_COLS_FULL).eq('vendor_id', vendorId).returns<Order[]>(),
+      supabase.from('products').select(PRODUCT_LIST_COLS_FULL).eq('vendor_id', vendorId).returns<Product[]>(),
       supabase.from('services').select('*').eq('vendor_id', vendorId),
       supabase.from('settlements').select('*').eq('vendor_id', vendorId),
     ]);
@@ -2547,12 +2547,12 @@ export const api = {
   },
 
   getVendorProducts: async (vendorId: string) => {
-    const { data } = await supabase.from('products').select('*').eq('vendor_id', vendorId);
+    const { data } = await supabase.from('products').select(PRODUCT_LIST_COLS_FULL).eq('vendor_id', vendorId).returns<Product[]>();
     return (data || []) as Product[];
   },
 
   getVendorOrders: async (vendorId: string) => {
-    const { data } = await supabase.from('orders').select('*').eq('vendor_id', vendorId).order('created_at', { ascending: false });
+    const { data } = await supabase.from('orders').select(ORDER_LIST_COLS_FULL).eq('vendor_id', vendorId).order('created_at', { ascending: false }).returns<Order[]>();
     return (data || []) as unknown as Order[];
   },
 
