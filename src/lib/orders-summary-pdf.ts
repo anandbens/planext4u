@@ -80,7 +80,7 @@ export function buildOrdersSummaryHtml(rows: OrderSummaryRow[], opts: OrdersSumm
         </tr>`;
       }).join("");
 
-  const colspanTotals = 3 + (showCustomerColumn ? 1 : 0) + (showVendorColumn ? 1 : 0) + 1; // #+ID+Date+Cust?+Vend?+Coupon
+  const colspanTotals = 3 + (showCustomerColumn ? 2 : 0) + (showVendorColumn ? 1 : 0) + 1; // #+ID+Date+Cust?+Mobile?+Vend?+Coupon
 
   const LOGO_URL = "https://jhtddsqnpfvjvnfojeea.supabase.co/storage/v1/object/public/media-library/branding%2Fp4u-logo-invoice.png";
 
