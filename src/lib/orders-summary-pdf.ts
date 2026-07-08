@@ -62,7 +62,7 @@ export function buildOrdersSummaryHtml(rows: OrderSummaryRow[], opts: OrdersSumm
   ].filter(Boolean).join("");
 
   const bodyRows = rows.length === 0
-    ? `<tr><td colspan="10" style="text-align:center;color:#64748b;padding:24px">No orders in the selected range.</td></tr>`
+    ? `<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px">No orders in the selected range.</td></tr>`
     : rows.map((r, i) => {
         const d = (() => { try { return new Date(r.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }); } catch { return r.date; } })();
         return `<tr>
