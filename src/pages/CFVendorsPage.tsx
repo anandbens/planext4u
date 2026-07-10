@@ -148,7 +148,7 @@ export default function CFVendorsPage() {
       (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('vendor_category', 'service'),
       (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'verified').eq('vendor_category', 'service'),
       (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).eq('status', 'rejected').eq('vendor_category', 'service'),
-      (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).eq('status', 'submitted').eq('vendor_category', 'service'),
+      (supabase.from('vendor_applications').select('*', { count: 'exact', head: true }) as any).not('status', 'in', '(approved,verified,active,rejected)').eq('vendor_category', 'service'),
       (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'deactivated').eq('vendor_category', 'service'),
       (supabase.from('service_vendors' as any).select('*', { count: 'exact', head: true }) as any).eq('status', 'deleted').eq('vendor_category', 'service'),
     ]);
