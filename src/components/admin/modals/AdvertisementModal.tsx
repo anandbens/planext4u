@@ -72,6 +72,7 @@ export function AdvertisementModal({ ad, open, onOpenChange, mode, onSave, onCre
         title: ad.title || "", advertiser: ad.advertiser || "", description: ad.description || "",
         type: ad.type || "banner", status: ad.status || "active",
         image_url: ad.image_url || "", mobile_image_url: ad.mobile_image_url || "",
+        video_url: ad.video_url || "", mobile_video_url: ad.mobile_video_url || "", video_thumbnail_url: ad.video_thumbnail_url || "",
         link_type: ad.link_type || "custom", link_target_id: ad.link_target_id || "", link_url: ad.link_url || "",
         placements: ad.placements || ["all"],
         start_date: ad.start_date || "", end_date: ad.end_date || "",
