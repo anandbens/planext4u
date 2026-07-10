@@ -182,6 +182,47 @@ export function AdvertisementModal({ ad, open, onOpenChange, mode, onSave, onCre
             </div>
           </div>
 
+          {/* Video (optional) — takes priority over image when set */}
+          <div className="space-y-3 p-3 border rounded-lg bg-muted/20">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold">Video Advertisement (optional)</Label>
+              <span className="text-[10px] text-muted-foreground">Auto-optimized to ~480p MP4</span>
+            </div>
+            {editMode ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] text-muted-foreground">Desktop / default video</Label>
+                  <VideoOptimizerUpload
+                    value={form.video_url}
+                    folder="advertisements"
+                    onUploaded={({ videoUrl, thumbnailUrl }) => setForm(f => ({
+                      ...f,
+                      video_url: videoUrl,
+                      video_thumbnail_url: thumbnailUrl || f.video_thumbnail_url,
+                    }))}
+                    onClear={() => setForm(f => ({ ...f, video_url: "", video_thumbnail_url: "" }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-muted-foreground">Mobile video (optional)</Label>
+                  <VideoOptimizerUpload
+                    value={form.mobile_video_url}
+                    folder="advertisements"
+                    onUploaded={({ videoUrl }) => setForm(f => ({ ...f, mobile_video_url: videoUrl }))}
+                    onClear={() => setForm(f => ({ ...f, mobile_video_url: "" }))}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs truncate">{ad?.video_url || "—"}</p>
+            )}
+            {form.video_url && (
+              <p className="text-[11px] text-muted-foreground">
+                A video is attached — it will play in place of the image on this ad. Thumbnail is used as a poster while loading.
+              </p>
+            )}
+          </div>
+
           {/* Link Type & Target */}
           <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
             <Label className="text-xs font-semibold">Click Destination</Label>
