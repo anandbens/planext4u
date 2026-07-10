@@ -59,7 +59,7 @@ export function usePlacementAds(placement: string) {
     const today = new Date().toISOString().split("T")[0];
     supabase
       .from("advertisements")
-      .select("id, title, description, image_url, mobile_image_url, link_type, link_target_id, link_url, advertiser, type, placements")
+      .select("id, title, description, image_url, mobile_image_url, video_url, mobile_video_url, video_thumbnail_url, link_type, link_target_id, link_url, advertiser, type, placements")
       .eq("status", "active")
       .lte("start_date", today)
       .gte("end_date", today)
