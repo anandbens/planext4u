@@ -35,6 +35,7 @@ const PLACEMENT_OPTIONS = [
 const emptyForm = {
   title: "", advertiser: "", description: "", type: "banner" as string, status: "active" as string,
   image_url: "", mobile_image_url: "",
+  video_url: "", mobile_video_url: "", video_thumbnail_url: "",
   link_type: "custom" as string, link_target_id: "", link_url: "",
   placements: ["all"] as string[],
   start_date: new Date().toISOString().split("T")[0],
