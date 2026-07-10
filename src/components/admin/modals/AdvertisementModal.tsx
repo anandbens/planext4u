@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Search } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
+import { VideoOptimizerUpload } from "@/components/admin/VideoOptimizerUpload";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AdvertisementModalProps {
@@ -34,6 +35,7 @@ const PLACEMENT_OPTIONS = [
 const emptyForm = {
   title: "", advertiser: "", description: "", type: "banner" as string, status: "active" as string,
   image_url: "", mobile_image_url: "",
+  video_url: "", mobile_video_url: "", video_thumbnail_url: "",
   link_type: "custom" as string, link_target_id: "", link_url: "",
   placements: ["all"] as string[],
   start_date: new Date().toISOString().split("T")[0],
@@ -70,6 +72,7 @@ export function AdvertisementModal({ ad, open, onOpenChange, mode, onSave, onCre
         title: ad.title || "", advertiser: ad.advertiser || "", description: ad.description || "",
         type: ad.type || "banner", status: ad.status || "active",
         image_url: ad.image_url || "", mobile_image_url: ad.mobile_image_url || "",
+        video_url: ad.video_url || "", mobile_video_url: ad.mobile_video_url || "", video_thumbnail_url: ad.video_thumbnail_url || "",
         link_type: ad.link_type || "custom", link_target_id: ad.link_target_id || "", link_url: ad.link_url || "",
         placements: ad.placements || ["all"],
         start_date: ad.start_date || "", end_date: ad.end_date || "",
@@ -177,6 +180,47 @@ export function AdvertisementModal({ ad, open, onOpenChange, mode, onSave, onCre
               <Label className="text-xs text-muted-foreground">Mobile Image</Label>
               {editMode ? <MediaLibraryPicker value={form.mobile_image_url} onChange={url => setForm({ ...form, mobile_image_url: url })} folder="advertisements" label="Mobile" className="mt-1" /> : <p className="text-xs mt-1 truncate">{ad?.mobile_image_url || "—"}</p>}
             </div>
+          </div>
+
+          {/* Video (optional) — takes priority over image when set */}
+          <div className="space-y-3 p-3 border rounded-lg bg-muted/20">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold">Video Advertisement (optional)</Label>
+              <span className="text-[10px] text-muted-foreground">Auto-optimized to ~480p MP4</span>
+            </div>
+            {editMode ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-[11px] text-muted-foreground">Desktop / default video</Label>
+                  <VideoOptimizerUpload
+                    value={form.video_url}
+                    folder="advertisements"
+                    onUploaded={({ videoUrl, thumbnailUrl }) => setForm(f => ({
+                      ...f,
+                      video_url: videoUrl,
+                      video_thumbnail_url: thumbnailUrl || f.video_thumbnail_url,
+                    }))}
+                    onClear={() => setForm(f => ({ ...f, video_url: "", video_thumbnail_url: "" }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-muted-foreground">Mobile video (optional)</Label>
+                  <VideoOptimizerUpload
+                    value={form.mobile_video_url}
+                    folder="advertisements"
+                    onUploaded={({ videoUrl }) => setForm(f => ({ ...f, mobile_video_url: videoUrl }))}
+                    onClear={() => setForm(f => ({ ...f, mobile_video_url: "" }))}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs truncate">{ad?.video_url || "—"}</p>
+            )}
+            {form.video_url && (
+              <p className="text-[11px] text-muted-foreground">
+                A video is attached — it will play in place of the image on this ad. Thumbnail is used as a poster while loading.
+              </p>
+            )}
           </div>
 
           {/* Link Type & Target */}

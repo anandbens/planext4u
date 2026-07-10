@@ -36,6 +36,9 @@ interface Ad {
   description: string;
   image_url: string;
   mobile_image_url: string;
+  video_url?: string | null;
+  mobile_video_url?: string | null;
+  video_thumbnail_url?: string | null;
   link_type: string;
   link_target_id: string;
   link_url: string;
@@ -56,7 +59,7 @@ export function usePlacementAds(placement: string) {
     const today = new Date().toISOString().split("T")[0];
     supabase
       .from("advertisements")
-      .select("id, title, description, image_url, mobile_image_url, link_type, link_target_id, link_url, advertiser, type, placements")
+      .select("id, title, description, image_url, mobile_image_url, video_url, mobile_video_url, video_thumbnail_url, link_type, link_target_id, link_url, advertiser, type, placements")
       .eq("status", "active")
       .lte("start_date", today)
       .gte("end_date", today)
@@ -217,6 +220,7 @@ export function SocialFeedAd({ ad }: { ad: Ad }) {
   };
 
   const imgSrc = isMobile && ad.mobile_image_url ? ad.mobile_image_url : ad.image_url;
+  const videoSrc = (isMobile && ad.mobile_video_url) ? ad.mobile_video_url : (ad.video_url || "");
   const cleanDescription = cleanAdText(ad.description);
   const cleanTitle = cleanAdText(ad.title);
 
@@ -235,7 +239,18 @@ export function SocialFeedAd({ ad }: { ad: Ad }) {
         <button onClick={() => setDismissed(true)} className="p-1"><X className="h-4 w-4 text-muted-foreground" /></button>
       </div>
       <div className="relative aspect-square bg-muted overflow-hidden cursor-pointer" onClick={handleClick}>
-        {imgSrc ? (
+        {videoSrc ? (
+          <video
+            src={videoSrc}
+            poster={ad.video_thumbnail_url || imgSrc || undefined}
+            className="w-full h-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+        ) : imgSrc ? (
           <img src={imgSrc} alt={cleanTitle} className="w-full h-full object-cover" loading="lazy" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/5 flex items-center justify-center">

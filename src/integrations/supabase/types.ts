@@ -55,6 +55,7 @@ export type Database = {
           link_type: string | null
           link_url: string | null
           mobile_image_url: string | null
+          mobile_video_url: string | null
           placement: string
           placements: string[] | null
           revenue: number
@@ -62,6 +63,8 @@ export type Database = {
           status: string
           title: string
           type: string
+          video_thumbnail_url: string | null
+          video_url: string | null
         }
         Insert: {
           advertiser?: string
@@ -76,6 +79,7 @@ export type Database = {
           link_type?: string | null
           link_url?: string | null
           mobile_image_url?: string | null
+          mobile_video_url?: string | null
           placement?: string
           placements?: string[] | null
           revenue?: number
@@ -83,6 +87,8 @@ export type Database = {
           status?: string
           title: string
           type?: string
+          video_thumbnail_url?: string | null
+          video_url?: string | null
         }
         Update: {
           advertiser?: string
@@ -97,6 +103,7 @@ export type Database = {
           link_type?: string | null
           link_url?: string | null
           mobile_image_url?: string | null
+          mobile_video_url?: string | null
           placement?: string
           placements?: string[] | null
           revenue?: number
@@ -104,6 +111,8 @@ export type Database = {
           status?: string
           title?: string
           type?: string
+          video_thumbnail_url?: string | null
+          video_url?: string | null
         }
         Relationships: []
       }
