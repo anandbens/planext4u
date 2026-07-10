@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Search } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { MediaLibraryPicker } from "@/components/admin/MediaLibraryPicker";
+import { VideoOptimizerUpload } from "@/components/admin/VideoOptimizerUpload";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AdvertisementModalProps {
