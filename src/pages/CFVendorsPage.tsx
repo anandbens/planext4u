@@ -51,7 +51,7 @@ export default function CFVendorsPage() {
       let q = (supabase
         .from('vendor_applications')
         .select('*', { count: 'exact' }) as any)
-        .eq('status', 'submitted')
+        .not('status', 'in', '(approved,verified,active,rejected)')
         .eq('vendor_category', 'service');
 
       if (search) q = q.or(`name.ilike.%${search}%,business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
