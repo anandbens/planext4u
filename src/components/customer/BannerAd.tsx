@@ -36,6 +36,9 @@ interface Ad {
   description: string;
   image_url: string;
   mobile_image_url: string;
+  video_url?: string | null;
+  mobile_video_url?: string | null;
+  video_thumbnail_url?: string | null;
   link_type: string;
   link_target_id: string;
   link_url: string;
