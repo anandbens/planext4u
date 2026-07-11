@@ -188,6 +188,7 @@ const AdminModuleVisibilityPage = lazy(() => import("./pages/admin/AdminModuleVi
 // Vendor pages
 const VendorLoginPage = lazy(() => import("./pages/vendor/VendorLoginPage"));
 const VendorRegisterStandalonePage = lazy(() => import("./pages/vendor/VendorRegisterPage"));
+const PublicFranchiseRegistrationPage = lazy(() => import("./pages/PublicFranchiseRegistrationPage"));
 const VendorDashboardPage = lazy(() => import("./pages/vendor/VendorDashboardPage"));
 const VendorProductsPage = lazy(() => import("./pages/vendor/VendorProductsPage"));
 const VendorServicesPage = lazy(() => import("./pages/vendor/VendorServicesPage"));
@@ -663,6 +664,9 @@ const AppRoutes = () => {
           <Route path="/vendor/login" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorLoginPage />} />
           <Route path="/vendor/register" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorRegisterStandalonePage />} />
           <Route path="/vendor/set-password" element={<SetPasswordPage />} />
+          <Route path="/franchise/register" element={<PublicFranchiseRegistrationPage />} />
+          <Route path="/register/franchise" element={<PublicFranchiseRegistrationPage />} />
+          <Route path="/register/vendor" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorRegisterStandalonePage />} />
           <Route path="/vendor" element={vendorUser ? <VendorPage><VendorDashboardPage /></VendorPage> : <Navigate to="/vendor/login" replace />} />
           <Route path="/vendor/products" element={<VendorPage><VendorProductsPage /></VendorPage>} />
           <Route path="/vendor/services" element={<VendorPage><VendorServicesPage /></VendorPage>} />
