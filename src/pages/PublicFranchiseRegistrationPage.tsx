@@ -13,6 +13,7 @@ import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
 import { api } from "@/lib/api";
 import { useCountry } from "@/lib/country-context";
+import { friendlyError } from "@/lib/friendly-error";
 import p4uLogo from "@/assets/p4u-logo.webp";
 
 const ADVANCE_MIN = 50000;
