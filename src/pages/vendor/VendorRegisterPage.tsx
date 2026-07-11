@@ -14,7 +14,16 @@ import { compressToWebP } from "@/lib/webp-compress";
 import { api } from "@/lib/api";
 import { checkVendorPhoneUnique, checkVendorEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
 import { useCountry } from "@/lib/country-context";
+import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import p4uLogo from "@/assets/p4u-logo.webp";
+
+const ADVANCE_MIN = 50000;
+const TOTAL_STEPS = 6;
+type VendorPlanRow = {
+  id: string; plan_name: string; plan_type: string; plan_tier: number;
+  price: number; validity_days: number; radius_km: number;
+  commission_percentage: number; description: string | null;
+};
 
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
