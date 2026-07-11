@@ -132,8 +132,24 @@ export default function PublicFranchiseRegistrationPage() {
         requested_territory: form.requested_territory.trim(),
         notes: form.notes.trim() || null,
         plan_id: selectedPlanId,
-        status: "submitted",
+        status: "pending",
       };
+
+      // Pre-submit validation
+      const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRe.test(String(payload.plan_id || ""))) {
+        console.error('[franchise-register] invalid plan_id', payload.plan_id);
+        toast.error('Please select a valid franchise plan.');
+        setLoading(false);
+        return;
+      }
+      if (typeof advanceAmount !== 'number' || !Number.isFinite(advanceAmount) || advanceAmount <= 0) {
+        toast.error('Advance amount must be a valid number.');
+        setLoading(false);
+        return;
+      }
+
+      console.log("Submitting Franchise Registration", { payload, advanceAmount, planPrice, paymentMode, manualMode });
 
       const { data: newRegId, error } = await (supabase as any)
         .rpc("submit_public_franchise_registration", { payload });
