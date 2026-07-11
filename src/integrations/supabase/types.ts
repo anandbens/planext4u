@@ -10353,6 +10353,102 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_franchise_management: {
+        Args: {
+          _city?: string
+          _district?: string
+          _plan_id?: string
+          _search?: string
+          _state?: string
+          _status?: string
+        }
+        Returns: {
+          address: string
+          city: string
+          company_name: string
+          created_at: string
+          district: string
+          email: string
+          expires_at: string
+          franchise_id: string
+          franchise_plans: Json
+          id: string
+          mobile: string
+          notes: string
+          owner_name: string
+          pincode: string
+          plan_id: string
+          registration_id: string
+          source_type: string
+          started_at: string
+          state: string
+          status: string
+          territory: string
+        }[]
+      }
+      admin_list_franchise_payment_ledger: {
+        Args: {
+          _date_from?: string
+          _date_to?: string
+          _district?: string
+          _search?: string
+          _state?: string
+        }
+        Returns: {
+          amount_paid: number
+          balance: number
+          city: string
+          district: string
+          entity_id: string
+          entity_name: string
+          entity_type: string
+          id: string
+          is_synthetic_pending: boolean
+          payment_date: string
+          payment_mode: string
+          payment_record_id: string
+          payment_status: string
+          plan_amount: number
+          plan_id: string
+          plan_name: string
+          receipt_id: string
+          receipt_no: string
+          registration_no: string
+          snapshot: Json
+          state: string
+          transaction_ref: string
+        }[]
+      }
+      admin_list_franchise_registrations: {
+        Args: {
+          _city?: string
+          _district?: string
+          _plan_id?: string
+          _search?: string
+          _state?: string
+          _status?: string
+        }
+        Returns: {
+          address: string
+          applicant_name: string
+          city: string
+          company_name: string
+          created_at: string
+          district: string
+          email: string
+          franchise_plans: Json
+          id: string
+          mobile: string
+          notes: string
+          pincode: string
+          plan_id: string
+          registration_no: string
+          rejection_reason: string
+          requested_territory: string
+          state: string
+          status: string
+        }[]
+      }
       are_mutual_followers: {
         Args: { _user_a: string; _user_b: string }
         Returns: boolean
