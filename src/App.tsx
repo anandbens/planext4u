@@ -555,6 +555,9 @@ const AppRoutes = () => {
           <Route path="/admin/homes/cms" element={<AdminOnlyPage><AdminHomesCMSPage /></AdminOnlyPage>} />
           <Route path="/admin/homes/users" element={<AdminOnlyPage><AdminHomesUsersPage /></AdminOnlyPage>} />
           <Route path="/admin/vendor-plans" element={<FinancePage><AdminVendorPlansPage /></FinancePage>} />
+          <Route path="/admin/franchise/plans" element={<FinancePage><AdminFranchisePlansPage /></FinancePage>} />
+          <Route path="/admin/franchise/registrations" element={<FinancePage><AdminFranchiseRegistrationsPage /></FinancePage>} />
+          <Route path="/admin/franchise/active" element={<FinancePage><AdminActiveFranchisesPage /></FinancePage>} />
           <Route path="/admin/media-library" element={<AdminOnlyPage><AdminMediaLibraryPage /></AdminOnlyPage>} />
           <Route path="/admin/onboarding" element={<AdminOnlyPage><AdminOnboardingPage /></AdminOnlyPage>} />
           <Route path="/admin/notifications" element={<AdminOnlyPage><AdminNotificationsPage /></AdminOnlyPage>} />
