@@ -246,13 +246,10 @@ export default function VendorRegisterPage() {
         admin_notes: planMeta ? JSON.stringify({ plan_selection: planMeta }) : null,
       };
 
-      const { data: inserted, error } = await supabase
-        .from('vendor_applications')
-        .insert(payload)
-        .select('id')
-        .single();
+      const { data: newAppId, error } = await (supabase as any)
+        .rpc('submit_public_vendor_application', { payload });
       if (error) throw error;
-      const applicationId = inserted?.id;
+      const applicationId = newAppId as string | null;
 
       // Payment processing
       let paymentStatus: 'paid' | 'pending' | 'partial' = 'pending';
@@ -296,19 +293,21 @@ export default function VendorRegisterPage() {
       }
 
       if (applicationId && selectedPlan) {
-        await supabase.from('payment_records').insert({
-          entity_type: 'vendor',
-          entity_id: applicationId,
-          plan_id: selectedPlan.id,
-          plan_amount: planPrice,
-          amount_paid: paidAmount,
-          balance: Math.max(0, planPrice - paidAmount),
-          payment_mode: dbPaymentMode,
-          payment_status: paymentStatus,
-          transaction_ref: txnRef,
-          payment_date: paidAmount > 0 ? new Date().toISOString() : null,
-          remarks: paymentMode === 'manual' ? `Manual advance via ${manualMode}` : 'Online advance via Razorpay',
-          metadata: { source: 'public_vendor_registration', plan_meta: planMeta },
+        await (supabase as any).rpc('record_public_registration_payment', {
+          payload: {
+            entity_type: 'vendor',
+            entity_id: applicationId,
+            plan_id: selectedPlan.id,
+            plan_amount: planPrice,
+            amount_paid: paidAmount,
+            balance: Math.max(0, planPrice - paidAmount),
+            payment_mode: dbPaymentMode,
+            payment_status: paymentStatus,
+            transaction_ref: txnRef,
+            payment_date: paidAmount > 0 ? new Date().toISOString() : null,
+            remarks: paymentMode === 'manual' ? `Manual advance via ${manualMode}` : 'Online advance via Razorpay',
+            metadata: { source: 'public_vendor_registration', plan_meta: planMeta },
+          },
         });
       }
 

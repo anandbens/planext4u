@@ -10861,6 +10861,10 @@ export type Database = {
         }
         Returns: Json
       }
+      record_public_registration_payment: {
+        Args: { payload: Json }
+        Returns: string
+      }
       redeem_coupon_code: {
         Args: {
           _code: string
@@ -10960,6 +10964,14 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      submit_public_franchise_registration: {
+        Args: { payload: Json }
+        Returns: string
+      }
+      submit_public_vendor_application: {
+        Args: { payload: Json }
+        Returns: string
+      }
       switch_active_country: {
         Args: { _reason?: string; _to_code: string }
         Returns: Json
