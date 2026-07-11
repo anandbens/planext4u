@@ -821,6 +821,29 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-2">Share these details with the vendor for offline payment. Once paid, update the payment status and transaction ID above.</p>
                 </Card>
+                {/* Registration Payment (from public vendor registration flow) */}
+                <Card className="p-4 border-emerald-200/40 bg-emerald-50/40">
+                  <h4 className="text-sm font-semibold flex items-center gap-2 mb-2">
+                    <CreditCard className="h-4 w-4 text-emerald-600" /> Registration Payment
+                  </h4>
+                  {regPayment ? (
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div><span className="text-muted-foreground">Plan Amount:</span> <span className="font-medium">₹{Number(regPayment.plan_amount || 0).toLocaleString("en-IN")}</span></div>
+                      <div><span className="text-muted-foreground">Amount Paid:</span> <span className="font-medium">₹{Number(regPayment.amount_paid || 0).toLocaleString("en-IN")}</span></div>
+                      <div><span className="text-muted-foreground">Balance:</span> <span className="font-medium">₹{Number(regPayment.balance || 0).toLocaleString("en-IN")}</span></div>
+                      <div><span className="text-muted-foreground">Mode:</span> <span className="font-medium capitalize">{(regPayment.payment_mode || "—").replace("_"," ")}</span></div>
+                      <div className="col-span-2"><span className="text-muted-foreground">Txn Ref:</span> <span className="font-mono">{regPayment.transaction_ref || "—"}</span></div>
+                      <div><span className="text-muted-foreground">Date:</span> <span className="font-medium">{regPayment.payment_date ? new Date(regPayment.payment_date).toLocaleDateString() : "—"}</span></div>
+                      <div><span className="text-muted-foreground">Status:</span>
+                        <Badge className={`ml-1 border-0 text-[10px] capitalize ${regPayment.payment_status === 'paid' ? 'bg-success/10 text-success' : regPayment.payment_status === 'partial' ? 'bg-warning/10 text-warning' : 'bg-destructive/10 text-destructive'}`}>
+                          {regPayment.payment_status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">No registration payment recorded yet.</p>
+                  )}
+                </Card>
               </div>
             </TabsContent>
           </Tabs>
