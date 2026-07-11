@@ -13,6 +13,7 @@ import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
 import { api } from "@/lib/api";
 import { useCountry } from "@/lib/country-context";
+import { friendlyError } from "@/lib/friendly-error";
 import p4uLogo from "@/assets/p4u-logo.webp";
 
 const ADVANCE_MIN = 50000;
@@ -136,8 +137,19 @@ export default function PublicFranchiseRegistrationPage() {
 
       const { data: newRegId, error } = await (supabase as any)
         .rpc("submit_public_franchise_registration", { payload });
-      if (error) throw error;
+      if (error) {
+        console.error('[franchise-register] submit_public_franchise_registration failed', { code: error.code, message: error.message, details: error.details, hint: error.hint, payloadKeys: Object.keys(payload) });
+        toast.error(friendlyError(error, "Could not save your franchise registration. Please review your details and try again."));
+        setLoading(false);
+        return;
+      }
       const registrationId = newRegId as string | null;
+      if (!registrationId) {
+        console.error('[franchise-register] RPC returned null registration id');
+        toast.error("Registration did not return a reference. Please try again or contact support.");
+        setLoading(false);
+        return;
+      }
 
       let paymentStatus: "paid" | "pending" | "partial" = "pending";
       let paidAmount = 0;
@@ -154,7 +166,10 @@ export default function PublicFranchiseRegistrationPage() {
               notes: { entity_type: "franchise", registration_id: registrationId || "", plan_id: selectedPlan.id },
             },
           });
-          if (orderErr || !orderRes?.order_id) throw new Error(orderRes?.error || orderErr?.message || "Could not create payment order");
+          if (orderErr || !orderRes?.order_id) {
+            console.error('[franchise-register] razorpay create_order failed', { orderErr, orderRes });
+            throw new Error(orderRes?.error || orderErr?.message || "Could not create payment order");
+          }
           const rzp = await openRazorpayCheckout({
             keyId: orderRes.key_id,
             orderId: orderRes.order_id,
@@ -171,7 +186,8 @@ export default function PublicFranchiseRegistrationPage() {
           paidAmount = advanceAmount;
           paymentStatus = balanceDue > 0 ? "partial" : "paid";
         } catch (payErr: any) {
-          toast.error(payErr?.message || "Payment was cancelled. Your registration is saved as pending payment.");
+          console.error('[franchise-register] online payment failed', payErr);
+          toast.error(friendlyError(payErr, "Payment was cancelled. Your registration is saved as pending payment."));
         }
       } else if (paymentMode === "manual" && selectedPlan) {
         paidAmount = advanceAmount;
@@ -179,7 +195,7 @@ export default function PublicFranchiseRegistrationPage() {
       }
 
       if (registrationId && selectedPlan) {
-        await (supabase as any).rpc("record_public_registration_payment", {
+        const { error: payLogErr } = await (supabase as any).rpc("record_public_registration_payment", {
           payload: {
             entity_type: "franchise",
             entity_id: registrationId,
@@ -195,12 +211,17 @@ export default function PublicFranchiseRegistrationPage() {
             metadata: { source: "public_franchise_registration" },
           },
         });
+        if (payLogErr) {
+          console.error('[franchise-register] record_public_registration_payment failed', { code: payLogErr.code, message: payLogErr.message, details: payLogErr.details, hint: payLogErr.hint });
+          toast.warning(friendlyError(payLogErr, "Registration saved, but the payment entry couldn't be recorded. Our team will reconcile it manually."));
+        }
       }
 
       toast.success("Franchise application submitted! Our team will contact you within 48 hours.");
       navigate("/");
     } catch (err: any) {
-      toast.error(err.message || "Registration could not be completed. Please try again.");
+      console.error('[franchise-register] unexpected failure', err);
+      toast.error(friendlyError(err, "Registration could not be completed. Please try again."));
     }
     setLoading(false);
   };

@@ -15,6 +15,7 @@ import { api } from "@/lib/api";
 import { checkVendorPhoneUnique, checkVendorEmailUnique, validatePhoneFormat, validateEmailFormat } from "@/lib/registration-validation";
 import { useCountry } from "@/lib/country-context";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
+import { friendlyError } from "@/lib/friendly-error";
 import p4uLogo from "@/assets/p4u-logo.webp";
 
 const ADVANCE_MIN = 50000;
@@ -248,8 +249,19 @@ export default function VendorRegisterPage() {
 
       const { data: newAppId, error } = await (supabase as any)
         .rpc('submit_public_vendor_application', { payload });
-      if (error) throw error;
+      if (error) {
+        console.error('[vendor-register] submit_public_vendor_application failed', { code: error.code, message: error.message, details: error.details, hint: error.hint, payloadKeys: Object.keys(payload) });
+        toast.error(friendlyError(error, "Could not save your vendor application. Please review your details and try again."));
+        setLoading(false);
+        return;
+      }
       const applicationId = newAppId as string | null;
+      if (!applicationId) {
+        console.error('[vendor-register] RPC returned null application id');
+        toast.error("Application submission did not return a reference. Please try again or contact support.");
+        setLoading(false);
+        return;
+      }
 
       // Payment processing
       let paymentStatus: 'paid' | 'pending' | 'partial' = 'pending';
@@ -267,7 +279,10 @@ export default function VendorRegisterPage() {
               notes: { entity_type: 'vendor', application_id: applicationId || '', plan_id: selectedPlan.id },
             },
           });
-          if (orderErr || !orderRes?.order_id) throw new Error(orderRes?.error || orderErr?.message || 'Could not create payment order');
+          if (orderErr || !orderRes?.order_id) {
+            console.error('[vendor-register] razorpay create_order failed', { orderErr, orderRes });
+            throw new Error(orderRes?.error || orderErr?.message || 'Could not create payment order');
+          }
           const rzp = await openRazorpayCheckout({
             keyId: orderRes.key_id,
             orderId: orderRes.order_id,
@@ -284,7 +299,8 @@ export default function VendorRegisterPage() {
           paidAmount = advanceAmount;
           paymentStatus = balanceDue > 0 ? 'partial' : 'paid';
         } catch (payErr: any) {
-          toast.error(payErr?.message || 'Payment was cancelled. Your application is saved as pending payment.');
+          console.error('[vendor-register] online payment failed', payErr);
+          toast.error(friendlyError(payErr, 'Payment was cancelled. Your application is saved as pending payment.'));
         }
       } else if (paymentMode === 'manual' && selectedPlan) {
 
@@ -293,7 +309,7 @@ export default function VendorRegisterPage() {
       }
 
       if (applicationId && selectedPlan) {
-        await (supabase as any).rpc('record_public_registration_payment', {
+        const { error: payLogErr } = await (supabase as any).rpc('record_public_registration_payment', {
           payload: {
             entity_type: 'vendor',
             entity_id: applicationId,
@@ -309,12 +325,17 @@ export default function VendorRegisterPage() {
             metadata: { source: 'public_vendor_registration', plan_meta: planMeta },
           },
         });
+        if (payLogErr) {
+          console.error('[vendor-register] record_public_registration_payment failed', { code: payLogErr.code, message: payLogErr.message, details: payLogErr.details, hint: payLogErr.hint });
+          toast.warning(friendlyError(payLogErr, "Application saved, but the payment entry couldn't be recorded. Our team will reconcile it manually."));
+        }
       }
 
       toast.success("Application submitted! Our team will review within 48 hours.");
       navigate("/vendor/login");
     } catch (err: any) {
-      toast.error(err.message || "Registration could not be completed. Please try again.");
+      console.error('[vendor-register] unexpected failure', err);
+      toast.error(friendlyError(err, "Registration could not be completed. Please try again."));
     }
     setLoading(false);
 
