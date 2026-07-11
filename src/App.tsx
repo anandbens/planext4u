@@ -188,6 +188,7 @@ const AdminModuleVisibilityPage = lazy(() => import("./pages/admin/AdminModuleVi
 // Vendor pages
 const VendorLoginPage = lazy(() => import("./pages/vendor/VendorLoginPage"));
 const VendorRegisterStandalonePage = lazy(() => import("./pages/vendor/VendorRegisterPage"));
+const PublicFranchiseRegistrationPage = lazy(() => import("./pages/PublicFranchiseRegistrationPage"));
 const VendorDashboardPage = lazy(() => import("./pages/vendor/VendorDashboardPage"));
 const VendorProductsPage = lazy(() => import("./pages/vendor/VendorProductsPage"));
 const VendorServicesPage = lazy(() => import("./pages/vendor/VendorServicesPage"));
