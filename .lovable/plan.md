@@ -1,100 +1,60 @@
-# Franchise Management Module & Payment Receipt Generation
 
-This is a large, multi-part enhancement. I'll deliver it in ordered phases so each part is reviewable, testable, and preserves the existing Vendor Management flow. Nothing existing is removed.
+# Public Registration, Franchise Management & Multi-Page Receipts
 
-## Phase 1 — Database Schema (Lovable Cloud migration)
+Scope is large; splitting into 4 sequential phases so each is verifiable. Existing pieces I'll reuse: `PublicFranchiseRegistrationPage`, `VendorRegisterPage` (already extended with Plan & Payment step), `franchise_plans`, `franchise_registrations`, `active_franchises`, `payment_records`, `payment_receipts`, `AdminFranchisePlansPage`, `AdminFranchiseRegistrationsPage`, `AdminActiveFranchisesPage`, `AdminRegistrationPaymentsPage`, `src/lib/receipt-pdf.ts`, `src/lib/issue-receipt.ts`.
 
-New tables (all with RLS + admin/service_role grants, following existing vendor pattern):
+## Phase 1 — Database & Master Data
 
-1. **franchise_plans** — Plan master
-   - name, category, investment_amount, security_deposit, delivery_radius_km
-   - coverage_type (radius | city | district | state)
-   - validity_months, description, benefits (jsonb array), features (jsonb array)
-   - commission_structure (jsonb, future use), status (active/inactive)
+New/updated tables:
+- `business_projection_master` — scenario, category (Micro/Mini/Master), investment, members, turnover, gross_profit, net_profit, share_pct, category_profit, spend_1/10/100/1000, sort_order, status.
+- `franchise_plans` — verify Nano/Micro/Mini/Master seed rows with full plan detail fields (coverage_type, benefits[], features[], promotion_benefits, product_visibility, reward_benefits, redemption_benefits).
+- `vendor_plans` — verify Local (Basic/Standard/Premium) + VIP (Bronze/Silver/Gold/Diamond/Platinum) rows with the same descriptive fields.
+- `payment_records` — ensure fields: mode (UPI/NEFT/RTGS/IMPS/BankTransfer/Cash/Cheque), transaction_ref, amount, payment_date, remarks, status, outstanding.
+- `payment_receipts` — receipt_no (sequence), pdf_path, regenerated_at.
+- `platform_variables` seed: `company_bank_details` (name, a/c, IFSC, branch, address) for reuse across UIs and PDFs.
 
-2. **franchise_registrations** — Applications
-   - registration_no (auto: `P4U-FR-REG-YYYY-######`)
-   - applicant_name, company_name, email, mobile, address, city, district, state, pincode
-   - plan_id → franchise_plans, requested_territory
-   - status: draft | pending | approved | rejected | converted | closed
-   - approved_by, approved_at, rejection_reason, notes
+Grants + RLS on all new/updated tables. Seed the default plans and full 5×3 = 15 projection rows exactly per spec.
 
-3. **active_franchises** — Post-approval records
-   - franchise_id (auto: `P4U-FR-YYYY-######`)
-   - registration_id, plan_id, owner_name, company_name, contact info
-   - territory, coverage details, started_at, expires_at
-   - status: active | suspended | expired | cancelled
+## Phase 2 — Public Registration UX Completion
 
-4. **payment_records** — Unified payment history for both vendor & franchise
-   - entity_type ('vendor' | 'franchise'), entity_id (uuid)
-   - plan_amount, amount_paid, balance (generated column)
-   - payment_status (paid | pending | partial)
-   - payment_mode (upi | bank_transfer | neft | rtgs | cash | cheque)
-   - transaction_ref, payment_date, remarks, received_by
+- `/vendor/register` (existing): confirm Local vs VIP toggle; dynamically load plans from `vendor_plans`; render full benefits panel (Price, Validity, Coverage, Radius, Visibility, Promotion, Redemption, Reward, Key Features) — no hardcoded copy. Payment step shows Bank Details card + payment mode selector + advance/outstanding calc. On submit → row in `vendor_applications` (Pending Approval) + `payment_records` entry + auto-receipt if Paid.
+- `/franchise/register` (existing): expand fields to full spec (Applicant, Company, Mobile, Email, Address, City, State, Pincode, Preferred Territory, Preferred Plan, Remarks). Plan selector reads `franchise_plans` and shows all benefits. Same bank + payment block. Save → `franchise_registrations` (Draft/Pending) + `payment_records` + receipt.
+- Success page with Download / Print / Regenerate PDF actions.
 
-5. **payment_receipts** — Generated receipts
-   - receipt_no (auto: `P4U-VR-YYYY-######` or `P4U-FR-YYYY-######`)
-   - entity_type, entity_id, payment_record_id
-   - snapshot (jsonb — frozen plan + payment data at time of generation)
-   - pdf_url (optional, if we cache), issued_at, issued_by
+## Phase 3 — Admin Franchise Management
 
-6. **receipt_sequences** — Yearly counters for receipt numbering (atomic RPC).
+Under `/admin/franchise/*` (sidebar group already exists):
+- Franchise Plans (CRUD — already present; extend fields to full master).
+- Franchise Registrations (list, view, approve → creates `active_franchises`, reject, convert).
+- Active Franchises (list, view, edit, deactivate).
+- Franchise Payments (dedicated tab pulling from `payment_records` scoped to franchise).
+- Business Projection Master (new page, full CRUD, list grouped by scenario with inline edit).
 
-RPCs:
-- `generate_receipt_number(entity_type, year)` — atomic sequence.
-- `convert_registration_to_franchise(registration_id)` — creates active_franchise row + audit log.
+All screens use existing admin table patterns: search, filter, pagination, CSV export, audit logging via `audit_logs`.
 
-Seed 4 default plans: Nano, Micro, Mini, Master (values from spec). Admin can fully modify.
+## Phase 4 — Multi-Page PDF Receipt
 
-## Phase 2 — Admin UI: Franchise Management Menu
+Rewrite `src/lib/receipt-pdf.ts` to emit up to 5 pages:
+- Page 1: Payment Receipt (logo, company header, receipt#, dates, applicant/company, plan snapshot, amounts, txn info, status).
+- Page 2: Plan Summary — pulled from Plan Master (name, validity, radius, territory, promotion, visibility, rewards, redemption, features).
+- Pages 3-4 (franchise only): Business Projection tables per scenario, rendered from `business_projection_master`. No hardcoded numbers.
+- Final Page: Disclaimer box (exact wording from spec).
 
-Add new top-level admin menu **Franchise Management** with three sub-pages, mirroring the Vendors module structure/components:
+Trigger: auto-generate when `payment_status = paid`; store path; expose Download / Print / Regenerate on Success page, Vendor Registration detail, Franchise Registration detail, and Payment History rows.
 
-- `/admin/franchise/plans` — CRUD grid for franchise_plans
-- `/admin/franchise/registrations` — CRUD + approve/reject/convert/print
-- `/admin/franchise/active` — Manage active franchises (edit, suspend, reactivate, change plan, renew, view payments/territory/documents)
+## Technical Details
 
-Reuse existing shadcn table/grid, modal, form, and filter components from Vendor pages. Same pagination, search, filters, role-based permissions.
+- Reuse `issue-receipt.ts` — extend to accept `registration_type: 'vendor' | 'franchise'` and fetch projection rows for franchise.
+- Receipt numbering via `receipt_sequences` (already present) with prefix `P4U/RCPT/YYYY/`.
+- Bank details centralized in a single `BankDetailsCard` component reading from `platform_variables` so admin can edit without code changes.
+- PDF uses existing branded HTML → jsPDF/html2canvas pipeline already in `orders-summary-pdf.ts`; share layout primitives.
+- All plan/projection data fetched via React Query with 5-min stale; PDF renderer receives already-fetched data (no fetch inside canvas step).
 
-## Phase 3 — Payment Recording (Vendor + Franchise)
+## Deliverable Order
 
-- Add a **Payment** section to Vendor Registration form and Franchise Registration form:
-  - Payment Status, Amount Paid, Txn Ref, Payment Date, Payment Mode, Remarks
-  - Auto-computed Plan Amount / Advance Paid / Remaining Balance
-- Every save writes to `payment_records` (full history, not overwrite).
-- Payment History tab on both Vendor detail and Franchise detail pages.
+1. Migration + seeds (Phase 1).
+2. Public registration polish + Bank card + auto-receipt hook (Phase 2).
+3. Admin Business Projection Master + refinements to existing franchise admin pages (Phase 3).
+4. Multi-page PDF generator + wiring across all download points (Phase 4).
 
-## Phase 4 — Receipt Generation
-
-- Utility `src/lib/receipt-pdf.ts` — branded PDF (jsPDF/html2pdf, same stack as existing `orders-summary-pdf.ts`).
-- Receipt content: P4U logo, company name `PLANEXT4U ALL SOLUTIONS INDIA PRIVATE LIMITED`, receipt no, date, applicant, company, registration no, category, selected plan, plan amount, amount paid, balance, txn ref, payment mode, payment date, status, received by, footer.
-- **Plan summary block** — dynamically pulls benefits/features/coverage from plan master (vendor_plans or franchise_plans). Nothing hardcoded.
-- Trigger: when payment_status flips to `paid`, auto-create a `payment_receipts` row + open PDF.
-- Buttons: Download PDF / Print / Re-download — available to admin (both modules), vendor (self), franchise (self). Always regenerates from latest DB snapshot.
-
-## Phase 5 — Notifications
-
-- On `paid`: insert into vendor/customer notifications, optionally email receipt via existing email queue (`send-transactional-email` if email is configured for the entity).
-- Toast confirmation in admin UI.
-
-## Phase 6 — QA
-
-- Verify: create plan → create registration → record payment → mark paid → receipt PDF opens with correct plan summary → approve → convert to active franchise → renew/suspend flows.
-- Backward compat: existing Vendor Management pages untouched aside from the additive Payment section + Download Receipt button.
-
-## Technical notes
-
-- All plan/benefit/coverage data read live from `franchise_plans` / `vendor_plans` — no constants.
-- Receipt numbers atomic via sequence table + RPC to avoid duplicates under concurrency.
-- Follows existing patterns: `src/lib/api.ts` field whitelisting, semantic tokens, `RichTextEditor` for descriptions/benefits, Radix Select non-empty values, mobile safe-area, audit_logs on every CRUD.
-
-## Delivery order
-
-1. Migration (Phase 1) — needs your approval before I can run it.
-2. Admin UI for Franchise Plans (Phase 2a).
-3. Admin UI for Registrations + Active Franchises (Phase 2b).
-4. Payment recording on Vendor + Franchise (Phase 3).
-5. Receipt PDF + download buttons (Phase 4).
-6. Notifications + polish (Phase 5–6).
-
-Reply **approve** to start with the migration, or tell me any changes (field names, statuses, receipt layout, numbering format) you want first.
+Ready to start with the Phase 1 migration on approval.

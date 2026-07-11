@@ -26,7 +26,23 @@ interface IssueReceiptParams {
   deliveryRadiusKm?: number | null;
   validityMonths?: number | null;
   territory?: string | null;
+  promotionBenefits?: string[];
+  rewardBenefits?: string[];
+  redemptionBenefits?: string[];
+  productVisibility?: string | null;
+  keyFeatures?: string[];
 }
+
+async function fetchProjections() {
+  const { data } = await (supabase as any)
+    .from("business_projection_master")
+    .select("scenario_label,scenario_order,category,category_order,investment,members,turnover,gross_profit,net_profit,share_pct,category_profit,profit_per_person,spend_1,spend_10,spend_100,spend_1000")
+    .eq("status", "active")
+    .order("scenario_order", { ascending: true })
+    .order("category_order", { ascending: true });
+  return data || [];
+}
+
 
 /**
  * Creates a payment_receipts row (with atomic receipt number)
@@ -64,7 +80,14 @@ export async function issueAndDownloadReceipt(p: IssueReceiptParams) {
     delivery_radius_km: p.deliveryRadiusKm,
     validity_months: p.validityMonths,
     territory: p.territory,
+    promotion_benefits: p.promotionBenefits || [],
+    reward_benefits: p.rewardBenefits || [],
+    redemption_benefits: p.redemptionBenefits || [],
+    product_visibility: p.productVisibility,
+    key_features: p.keyFeatures || [],
   };
+
+  const projections = p.entityType === "franchise" ? await fetchProjections() : [];
 
   // 2. Persist receipt row (idempotent per payment_record_id)
   try {
@@ -103,6 +126,12 @@ export async function issueAndDownloadReceipt(p: IssueReceiptParams) {
     delivery_radius_km: p.deliveryRadiusKm,
     validity_months: p.validityMonths,
     territory: p.territory,
+    promotion_benefits: p.promotionBenefits || [],
+    reward_benefits: p.rewardBenefits || [],
+    redemption_benefits: p.redemptionBenefits || [],
+    product_visibility: p.productVisibility,
+    key_features: p.keyFeatures || [],
+    projections,
   };
 
   downloadReceiptPdf(data);
@@ -123,6 +152,7 @@ export async function redownloadReceipt(receiptId: string) {
     return;
   }
   const s = data.snapshot || {};
+  const projections = data.entity_type === "franchise" ? await fetchProjections() : [];
   downloadReceiptPdf({
     receipt_no: data.receipt_no,
     receipt_date: data.issued_at,
@@ -146,5 +176,11 @@ export async function redownloadReceipt(receiptId: string) {
     delivery_radius_km: s.delivery_radius_km,
     validity_months: s.validity_months,
     territory: s.territory,
+    promotion_benefits: s.promotion_benefits || [],
+    reward_benefits: s.reward_benefits || [],
+    redemption_benefits: s.redemption_benefits || [],
+    product_visibility: s.product_visibility,
+    key_features: s.key_features || [],
+    projections,
   });
 }

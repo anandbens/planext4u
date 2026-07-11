@@ -173,6 +173,7 @@ const AdminFranchisePlansPage = lazy(() => import("./pages/admin/AdminFranchiseP
 const AdminFranchiseRegistrationsPage = lazy(() => import("./pages/admin/AdminFranchiseRegistrationsPage"));
 const AdminActiveFranchisesPage = lazy(() => import("./pages/admin/AdminActiveFranchisesPage"));
 const AdminRegistrationPaymentsPage = lazy(() => import("./pages/admin/AdminRegistrationPaymentsPage"));
+const AdminBusinessProjectionsPage = lazy(() => import("./pages/admin/AdminBusinessProjectionsPage"));
 const AdminMediaLibraryPage = lazy(() => import("./pages/admin/AdminMediaLibraryPage"));
 const AdminOnboardingPage = lazy(() => import("./pages/admin/AdminOnboardingPage"));
 const AdminProductAttributesPage = lazy(() => import("./pages/admin/AdminProductAttributesPage"));
@@ -560,6 +561,7 @@ const AppRoutes = () => {
           <Route path="/admin/franchise/plans" element={<FinancePage><AdminFranchisePlansPage /></FinancePage>} />
           <Route path="/admin/franchise/registrations" element={<FinancePage><AdminFranchiseRegistrationsPage /></FinancePage>} />
           <Route path="/admin/franchise/active" element={<FinancePage><AdminActiveFranchisesPage /></FinancePage>} />
+          <Route path="/admin/franchise/projections" element={<FinancePage><AdminBusinessProjectionsPage /></FinancePage>} />
           <Route path="/admin/registration-payments" element={<FinancePage><AdminRegistrationPaymentsPage /></FinancePage>} />
           <Route path="/admin/media-library" element={<AdminOnlyPage><AdminMediaLibraryPage /></AdminOnlyPage>} />
           <Route path="/admin/onboarding" element={<AdminOnlyPage><AdminOnboardingPage /></AdminOnlyPage>} />
