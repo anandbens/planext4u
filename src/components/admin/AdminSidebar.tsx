@@ -86,6 +86,12 @@ const foodItems: NavItem[] = [
   { title: "Food Coupons", url: "/admin/food-coupons", icon: UtensilsCrossed, roles: ['admin', 'sales'] },
 ];
 
+const franchiseItems: NavItem[] = [
+  { title: "Franchise Plans", url: "/admin/franchise/plans", icon: Crown, roles: ['admin'] },
+  { title: "Registrations", url: "/admin/franchise/registrations", icon: ClipboardList, roles: ['admin', 'sales'] },
+  { title: "Active Franchises", url: "/admin/franchise/active", icon: Store, roles: ['admin', 'sales'] },
+];
+
 const systemItems: NavItem[] = [
   { title: "Homepage CMS", url: "/admin/homepage-cms", icon: Palette, roles: ['admin'] },
   { title: "Push Notifications", url: "/admin/notifications", icon: Megaphone, roles: ['admin'] },
