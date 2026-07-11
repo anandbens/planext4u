@@ -31,7 +31,7 @@ interface FranchisePlan {
 
 const emptyForm = {
   name: "", category: "", investment_amount: "0", security_deposit: "0",
-  delivery_radius_km: "0", coverage_type: "radius" as const,
+  delivery_radius_km: "0", coverage_type: "radius" as "radius" | "city" | "district" | "state",
   validity_months: "12", description: "",
   benefits: "", features: "", status: true, sort_order: "1",
 };
