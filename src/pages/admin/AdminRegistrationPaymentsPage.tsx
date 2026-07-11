@@ -68,7 +68,7 @@ export default function AdminRegistrationPaymentsPage() {
         const [receiptsRes, fRegRes, vAppRes, fPlansRes, vPlansRes] = await Promise.all([
           (supabase as any).from("payment_receipts").select("id, receipt_no, payment_record_id, snapshot, entity_type").in("payment_record_id", paymentIds),
           franchiseIds.length ? (supabase as any).from("franchise_registrations").select("id, registration_no, applicant_name, company_name").in("id", franchiseIds) : Promise.resolve({ data: [] }),
-          vendorIds.length ? (supabase as any).from("vendor_applications").select("id, business_name, contact_name, applicant_name, applicant_mobile").in("id", vendorIds) : Promise.resolve({ data: [] }),
+          vendorIds.length ? (supabase as any).from("vendor_applications").select("id, business_name, name, phone").in("id", vendorIds) : Promise.resolve({ data: [] }),
           franchisePlanIds.length ? (supabase as any).from("franchise_plans").select("id, name").in("id", franchisePlanIds) : Promise.resolve({ data: [] }),
           vendorPlanIds.length ? (supabase as any).from("vendor_plans").select("id, name").in("id", vendorPlanIds) : Promise.resolve({ data: [] }),
         ]);
