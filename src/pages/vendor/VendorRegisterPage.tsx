@@ -262,12 +262,24 @@ export default function VendorRegisterPage() {
 
       if (paymentMode === 'online' && selectedPlan && advanceAmount > 0) {
         try {
+          const { data: orderRes, error: orderErr } = await supabase.functions.invoke('razorpay', {
+            body: {
+              action: 'create_order',
+              amount: advanceAmount,
+              currency: 'INR',
+              notes: { entity_type: 'vendor', application_id: applicationId || '', plan_id: selectedPlan.id },
+            },
+          });
+          if (orderErr || !orderRes?.order_id) throw new Error(orderRes?.error || orderErr?.message || 'Could not create payment order');
           const rzp = await openRazorpayCheckout({
-            amount: advanceAmount,
-            currency: 'INR',
+            keyId: orderRes.key_id,
+            orderId: orderRes.order_id,
+            amount: orderRes.amount,
+            currency: orderRes.currency || 'INR',
             name: 'Planext4U',
             description: `Vendor registration advance – ${selectedPlan.plan_name}`,
             prefill: { name: form.name, email: form.email, contact: form.phone },
+            method: 'upi' as any,
             notes: { entity_type: 'vendor', application_id: applicationId || '', plan_id: selectedPlan.id },
           });
           txnRef = rzp.razorpay_payment_id;
@@ -278,6 +290,7 @@ export default function VendorRegisterPage() {
           toast.error(payErr?.message || 'Payment was cancelled. Your application is saved as pending payment.');
         }
       } else if (paymentMode === 'manual' && selectedPlan) {
+
         paidAmount = advanceAmount;
         paymentStatus = balanceDue > 0 ? 'partial' : 'paid';
       }
