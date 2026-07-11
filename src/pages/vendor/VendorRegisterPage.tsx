@@ -293,19 +293,21 @@ export default function VendorRegisterPage() {
       }
 
       if (applicationId && selectedPlan) {
-        await supabase.from('payment_records').insert({
-          entity_type: 'vendor',
-          entity_id: applicationId,
-          plan_id: selectedPlan.id,
-          plan_amount: planPrice,
-          amount_paid: paidAmount,
-          balance: Math.max(0, planPrice - paidAmount),
-          payment_mode: dbPaymentMode,
-          payment_status: paymentStatus,
-          transaction_ref: txnRef,
-          payment_date: paidAmount > 0 ? new Date().toISOString() : null,
-          remarks: paymentMode === 'manual' ? `Manual advance via ${manualMode}` : 'Online advance via Razorpay',
-          metadata: { source: 'public_vendor_registration', plan_meta: planMeta },
+        await (supabase as any).rpc('record_public_registration_payment', {
+          payload: {
+            entity_type: 'vendor',
+            entity_id: applicationId,
+            plan_id: selectedPlan.id,
+            plan_amount: planPrice,
+            amount_paid: paidAmount,
+            balance: Math.max(0, planPrice - paidAmount),
+            payment_mode: dbPaymentMode,
+            payment_status: paymentStatus,
+            transaction_ref: txnRef,
+            payment_date: paidAmount > 0 ? new Date().toISOString() : null,
+            remarks: paymentMode === 'manual' ? `Manual advance via ${manualMode}` : 'Online advance via Razorpay',
+            metadata: { source: 'public_vendor_registration', plan_meta: planMeta },
+          },
         });
       }
 
