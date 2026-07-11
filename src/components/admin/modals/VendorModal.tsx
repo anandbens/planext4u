@@ -78,6 +78,24 @@ export function VendorModal({ vendor, open, onOpenChange, mode, onSave, onCreate
     },
   });
 
+  // Fetch latest public-registration payment record for this vendor application
+  const applicationId = (kycDocs as any[])[0]?.id;
+  const { data: regPayment } = useQuery({
+    queryKey: ["vendorRegPayment", applicationId],
+    enabled: !!applicationId,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("payment_records")
+        .select("plan_amount, amount_paid, balance, payment_mode, payment_status, transaction_ref, payment_date")
+        .eq("entity_type", "vendor")
+        .eq("entity_id", applicationId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   // Fetch KYC documents from kyc_documents table
   const { data: kycDocuments = [] } = useQuery({
     queryKey: ["vendorKycDocs", vendor?.id],
