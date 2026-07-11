@@ -86,6 +86,12 @@ const foodItems: NavItem[] = [
   { title: "Food Coupons", url: "/admin/food-coupons", icon: UtensilsCrossed, roles: ['admin', 'sales'] },
 ];
 
+const franchiseItems: NavItem[] = [
+  { title: "Franchise Plans", url: "/admin/franchise/plans", icon: Crown, roles: ['admin'] },
+  { title: "Registrations", url: "/admin/franchise/registrations", icon: ClipboardList, roles: ['admin', 'sales'] },
+  { title: "Active Franchises", url: "/admin/franchise/active", icon: Store, roles: ['admin', 'sales'] },
+];
+
 const systemItems: NavItem[] = [
   { title: "Homepage CMS", url: "/admin/homepage-cms", icon: Palette, roles: ['admin'] },
   { title: "Push Notifications", url: "/admin/notifications", icon: Megaphone, roles: ['admin'] },
@@ -202,6 +208,7 @@ export function AdminSidebar() {
         <NavGroup label="P4U Homes" items={homesItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="P4U Social" items={socialItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="P4U Food" items={foodItems} collapsed={collapsed} userRole={role} />
+        <NavGroup label="Franchise Management" items={franchiseItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="System" items={systemItems} collapsed={collapsed} userRole={role} />
         <NavGroup label="Portals" items={portalLinks} collapsed={collapsed} userRole={role} />
       </SidebarContent>

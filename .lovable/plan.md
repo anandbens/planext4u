@@ -1,78 +1,100 @@
+# Franchise Management Module & Payment Receipt Generation
 
-# Query optimization — phased plan
+This is a large, multi-part enhancement. I'll deliver it in ordered phases so each part is reviewable, testable, and preserves the existing Vendor Management flow. Nothing existing is removed.
 
-## What the profiling shows
+## Phase 1 — Database Schema (Lovable Cloud migration)
 
-Top-30 slowest queries were pulled from `pg_stat_statements`. Findings:
+New tables (all with RLS + admin/service_role grants, following existing vendor pattern):
 
-- Existing indexes already cover most hot paths: products by status+created, orders by customer+status+created, points_transactions by user+created, customers by email/mobile (plain + trigram), etc.
-- Two real index gaps remain (see Phase 1).
-- The bigger win is client-side: ~60 files still use `select('*')` on wide tables (`products` 61 cols, `orders` 55 cols, `food_orders` 53 cols, `service_bookings` 53 cols, `vendor_applications` 44 cols). Payload is the dominant cost, not query planning.
-- No feature is missing pagination outright — most already use `.range()` — but a few unbounded list fetches exist on admin pages.
+1. **franchise_plans** — Plan master
+   - name, category, investment_amount, security_deposit, delivery_radius_km
+   - coverage_type (radius | city | district | state)
+   - validity_months, description, benefits (jsonb array), features (jsonb array)
+   - commission_structure (jsonb, future use), status (active/inactive)
 
-## Why this is phased, not one sweep
+2. **franchise_registrations** — Applications
+   - registration_no (auto: `P4U-FR-REG-YYYY-######`)
+   - applicant_name, company_name, email, mobile, address, city, district, state, pincode
+   - plan_id → franchise_plans, requested_territory
+   - status: draft | pending | approved | rejected | converted | closed
+   - approved_by, approved_at, rejection_reason, notes
 
-The codebase has hundreds of `.from(...).select(...)` call sites across ~180 tables. Editing all of them in a single turn will silently break features (a component reads a column that got dropped from the select, a mapping fn returns `undefined`, etc.). Each phase below is independently shippable, independently reversible, and validated before the next starts.
+3. **active_franchises** — Post-approval records
+   - franchise_id (auto: `P4U-FR-YYYY-######`)
+   - registration_id, plan_id, owner_name, company_name, contact info
+   - territory, coverage details, started_at, expires_at
+   - status: active | suspended | expired | cancelled
 
-## Phase 1 — Index gaps (single migration, ~2 min)
+4. **payment_records** — Unified payment history for both vendor & franchise
+   - entity_type ('vendor' | 'franchise'), entity_id (uuid)
+   - plan_amount, amount_paid, balance (generated column)
+   - payment_status (paid | pending | partial)
+   - payment_mode (upi | bank_transfer | neft | rtgs | cash | cheque)
+   - transaction_ref, payment_date, remarks, received_by
 
-Add:
-1. `service_categories(status, parent_id, display_order)` partial `WHERE parent_id IS NULL` — matches the 237-call category tree query.
-2. `social_comments(post_id, created_at DESC)` — comment threads currently scan by post_id then sort in memory.
-3. `food_orders(customer_id, status, created_at DESC)` — currently only single-column indexes.
-4. `vendor_notifications(vendor_id, read_status, created_at DESC)` — for the "unread badge + list" pattern.
+5. **payment_receipts** — Generated receipts
+   - receipt_no (auto: `P4U-VR-YYYY-######` or `P4U-FR-YYYY-######`)
+   - entity_type, entity_id, payment_record_id
+   - snapshot (jsonb — frozen plan + payment data at time of generation)
+   - pdf_url (optional, if we cache), issued_at, issued_by
 
-No structural changes, no data changes, no policy changes. Indexes only.
+6. **receipt_sequences** — Yearly counters for receipt numbering (atomic RPC).
 
-## Phase 2 — Narrow SELECTs on the 10 highest-traffic list views
+RPCs:
+- `generate_receipt_number(entity_type, year)` — atomic sequence.
+- `convert_registration_to_franchise(registration_id)` — creates active_franchise row + audit log.
 
-Target only where the profile shows real cost and payload is wide. For each, replace `select('*')` with the columns the component actually reads, verified against JSX + downstream mappers:
+Seed 4 default plans: Nano, Micro, Mini, Master (values from spec). Admin can fully modify.
 
-1. `src/lib/api.ts` — products list (`title, image, price, mrp, status, category_name, vendor_name, vendor_id, slug, stock, unit, is_deal_of_day, created_at`) — currently 61 cols.
-2. `src/lib/api.ts` — orders list for customer (`id, status, total, items, created_at, vendor_id, vendor_name`) — currently 55 cols.
-3. `src/pages/customer/CustomerHomePage.tsx` — homepage feed selects.
-4. `src/pages/customer/CustomerWishlistPage.tsx`.
-5. `src/pages/customer/CustomerVendorPage.tsx` — vendor product grid.
-6. `src/pages/CustomersPage.tsx` (admin) — grid columns only.
-7. `src/pages/VendorsPage.tsx` (admin).
-8. `src/pages/vendor/VendorProductsPage.tsx` — vendor's own product list.
-9. `src/pages/vendor/VendorOrdersPage.tsx` — vendor's own order list.
-10. `src/hooks/use-social-interactions.ts` — feed likes/comments joins.
+## Phase 2 — Admin UI: Franchise Management Menu
 
-Detail views (e.g. `ProductDetailPage`, `OrderDetailPage`) keep `select('*')` — they need the full row, and they're single-row fetches so payload doesn't matter.
+Add new top-level admin menu **Franchise Management** with three sub-pages, mirroring the Vendors module structure/components:
 
-## Phase 3 — Duplicate query dedup + explicit pagination caps
+- `/admin/franchise/plans` — CRUD grid for franchise_plans
+- `/admin/franchise/registrations` — CRUD + approve/reject/convert/print
+- `/admin/franchise/active` — Manage active franchises (edit, suspend, reactivate, change plan, renew, view payments/territory/documents)
 
-- `useCustomerBasics` fires `wallet_points` and `profile_photo` as two round-trips (see slow queries #14/#15, both ~1000 calls each). Merge into one selecting both columns.
-- Search autocomplete (`products.title ilike ...`) triggers on every keystroke — add a 200ms debounce at the input.
-- Admin `CustomersPage` and `VendorsPage` — enforce a hard `.range(0, 49)` default even if the caller forgets.
+Reuse existing shadcn table/grid, modal, form, and filter components from Vendor pages. Same pagination, search, filters, role-based permissions.
 
-## Phase 4 — Validation
+## Phase 3 — Payment Recording (Vendor + Franchise)
 
-1. Re-pull `pg_stat_statements` — top-10 totals should drop noticeably.
-2. Playwright smoke pass across the 15 features already covered by the existing regression harness.
-3. Run `tests/load/k6-staged.js` at 100/500/1000 VUs against staging. p(95) budgets: <1000/<1500/<2500 ms. If Phase 2 lands cleanly, the payload reduction alone should keep p(95) inside budget at 500 VUs. **Cannot be run from the Lovable sandbox against production** — must run against a real staging deployment.
+- Add a **Payment** section to Vendor Registration form and Franchise Registration form:
+  - Payment Status, Amount Paid, Txn Ref, Payment Date, Payment Mode, Remarks
+  - Auto-computed Plan Amount / Advance Paid / Remaining Balance
+- Every save writes to `payment_records` (full history, not overwrite).
+- Payment History tab on both Vendor detail and Franchise detail pages.
 
-## What I will NOT do
+## Phase 4 — Receipt Generation
 
-- Change database schema (columns, types, constraints) — outside scope.
-- Change business logic, RLS policies, or edge functions — outside scope.
-- Touch `.select('*')` on single-row `.eq('id', ...).single()` fetches — no payload win.
-- Add indexes speculatively for queries that aren't in the top-30 profile — index bloat has a real write cost.
+- Utility `src/lib/receipt-pdf.ts` — branded PDF (jsPDF/html2pdf, same stack as existing `orders-summary-pdf.ts`).
+- Receipt content: P4U logo, company name `PLANEXT4U ALL SOLUTIONS INDIA PRIVATE LIMITED`, receipt no, date, applicant, company, registration no, category, selected plan, plan amount, amount paid, balance, txn ref, payment mode, payment date, status, received by, footer.
+- **Plan summary block** — dynamically pulls benefits/features/coverage from plan master (vendor_plans or franchise_plans). Nothing hardcoded.
+- Trigger: when payment_status flips to `paid`, auto-create a `payment_receipts` row + open PDF.
+- Buttons: Download PDF / Print / Re-download — available to admin (both modules), vendor (self), franchise (self). Always regenerates from latest DB snapshot.
+
+## Phase 5 — Notifications
+
+- On `paid`: insert into vendor/customer notifications, optionally email receipt via existing email queue (`send-transactional-email` if email is configured for the entity).
+- Toast confirmation in admin UI.
+
+## Phase 6 — QA
+
+- Verify: create plan → create registration → record payment → mark paid → receipt PDF opens with correct plan summary → approve → convert to active franchise → renew/suspend flows.
+- Backward compat: existing Vendor Management pages untouched aside from the additive Payment section + Download Receipt button.
 
 ## Technical notes
 
-- Indexes are added via one migration; no `CREATE INDEX CONCURRENTLY` because migrations run in a transaction.
-- Column-narrowing edits go through the API layer (`src/lib/api.ts`) where possible so callers don't drift.
-- Every Phase-2 edit is preceded by grep of the returned object shape to confirm no consumer reads a dropped column.
+- All plan/benefit/coverage data read live from `franchise_plans` / `vendor_plans` — no constants.
+- Receipt numbers atomic via sequence table + RPC to avoid duplicates under concurrency.
+- Follows existing patterns: `src/lib/api.ts` field whitelisting, semantic tokens, `RichTextEditor` for descriptions/benefits, Radix Select non-empty values, mobile safe-area, audit_logs on every CRUD.
 
-## Deliverable per phase
+## Delivery order
 
-| Phase | Output | Approval needed? |
-|-------|--------|------------------|
-| 1 | Index migration | Yes (migration approval flow) |
-| 2 | ~10 file edits + regression run | No (code only) |
-| 3 | ~5 file edits + debounce util | No |
-| 4 | k6 report + slow-query re-pull | No |
+1. Migration (Phase 1) — needs your approval before I can run it.
+2. Admin UI for Franchise Plans (Phase 2a).
+3. Admin UI for Registrations + Active Franchises (Phase 2b).
+4. Payment recording on Vendor + Franchise (Phase 3).
+5. Receipt PDF + download buttons (Phase 4).
+6. Notifications + polish (Phase 5–6).
 
-Say "go phase 1" (or "go all phases") to start.
+Reply **approve** to start with the migration, or tell me any changes (field names, statuses, receipt layout, numbering format) you want first.

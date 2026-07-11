@@ -169,6 +169,9 @@ const AdminHomesCMSPage = lazy(() => import("./pages/admin/AdminHomesCMSPage"));
 const AdminHomesUsersPage = lazy(() => import("./pages/admin/AdminHomesUsersPage"));
 const AdminHomesModerationPage = lazy(() => import("./pages/admin/AdminHomesModerationPage"));
 const AdminVendorPlansPage = lazy(() => import("./pages/admin/AdminVendorPlansPage"));
+const AdminFranchisePlansPage = lazy(() => import("./pages/admin/AdminFranchisePlansPage"));
+const AdminFranchiseRegistrationsPage = lazy(() => import("./pages/admin/AdminFranchiseRegistrationsPage"));
+const AdminActiveFranchisesPage = lazy(() => import("./pages/admin/AdminActiveFranchisesPage"));
 const AdminMediaLibraryPage = lazy(() => import("./pages/admin/AdminMediaLibraryPage"));
 const AdminOnboardingPage = lazy(() => import("./pages/admin/AdminOnboardingPage"));
 const AdminProductAttributesPage = lazy(() => import("./pages/admin/AdminProductAttributesPage"));
@@ -552,6 +555,9 @@ const AppRoutes = () => {
           <Route path="/admin/homes/cms" element={<AdminOnlyPage><AdminHomesCMSPage /></AdminOnlyPage>} />
           <Route path="/admin/homes/users" element={<AdminOnlyPage><AdminHomesUsersPage /></AdminOnlyPage>} />
           <Route path="/admin/vendor-plans" element={<FinancePage><AdminVendorPlansPage /></FinancePage>} />
+          <Route path="/admin/franchise/plans" element={<FinancePage><AdminFranchisePlansPage /></FinancePage>} />
+          <Route path="/admin/franchise/registrations" element={<FinancePage><AdminFranchiseRegistrationsPage /></FinancePage>} />
+          <Route path="/admin/franchise/active" element={<FinancePage><AdminActiveFranchisesPage /></FinancePage>} />
           <Route path="/admin/media-library" element={<AdminOnlyPage><AdminMediaLibraryPage /></AdminOnlyPage>} />
           <Route path="/admin/onboarding" element={<AdminOnlyPage><AdminOnboardingPage /></AdminOnlyPage>} />
           <Route path="/admin/notifications" element={<AdminOnlyPage><AdminNotificationsPage /></AdminOnlyPage>} />
