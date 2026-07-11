@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { IndianRupee, TrendingUp, Sparkles } from "lucide-react";
-import videoAsset from "@/assets/franchise-hero-loop.mp4.asset.json";
+import videoAsset from "@/assets/franchise-warehouse-loop.mp4.asset.json";
 
 // Animated counter that eases up to `target`
 function useCountUp(target: number, duration = 1800) {
