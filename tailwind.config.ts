@@ -110,6 +110,12 @@ export default {
           from: { opacity: "0" },
           to: { opacity: "1" },
         },
+        "coin-fall": {
+          "0%": { transform: "translateY(-20px) rotate(0deg)", opacity: "0" },
+          "10%": { opacity: "1" },
+          "90%": { opacity: "1" },
+          "100%": { transform: "translateY(320px) rotate(360deg)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -117,6 +123,7 @@ export default {
         "fade-in": "fade-in 0.4s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "count-up": "count-up 0.6s ease-out",
+        "coin-fall": "coin-fall linear infinite",
       },
     },
   },
