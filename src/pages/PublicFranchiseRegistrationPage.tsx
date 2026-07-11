@@ -211,7 +211,7 @@ export default function PublicFranchiseRegistrationPage() {
       }
 
       if (registrationId && selectedPlan) {
-        const { error: payLogErr } = await (supabase as any).rpc("record_public_registration_payment", {
+        const { data: paymentRecordId, error: payLogErr } = await (supabase as any).rpc("record_public_registration_payment", {
           payload: {
             entity_type: "franchise",
             entity_id: registrationId,
@@ -230,11 +230,39 @@ export default function PublicFranchiseRegistrationPage() {
         if (payLogErr) {
           console.error('[franchise-register] record_public_registration_payment failed', { code: payLogErr.code, message: payLogErr.message, details: payLogErr.details, hint: payLogErr.hint });
           toast.warning(friendlyError(payLogErr, "Registration saved, but the payment entry couldn't be recorded. Our team will reconcile it manually."));
+        } else if (paidAmount > 0) {
+          // Auto-generate & download branded receipt
+          try {
+            const { issueAndDownloadReceipt } = await import("@/lib/issue-receipt");
+            await issueAndDownloadReceipt({
+              entityType: "franchise",
+              entityId: registrationId,
+              paymentRecordId: paymentRecordId as string | null,
+              applicantName: form.applicant_name,
+              companyName: form.company_name || null,
+              registrationNo: null,
+              category: selectedPlan.name,
+              planName: selectedPlan.name,
+              planAmount: planPrice,
+              amountPaid: paidAmount,
+              transactionRef: txnRef,
+              paymentMode: dbPaymentMode,
+              paymentDate: new Date().toISOString(),
+              paymentStatus,
+              coverageType: selectedPlan.coverage_type,
+              deliveryRadiusKm: selectedPlan.delivery_radius_km,
+              validityMonths: selectedPlan.validity_months,
+              territory: form.requested_territory || null,
+            });
+          } catch (rcptErr) {
+            console.warn('[franchise-register] receipt generation failed', rcptErr);
+          }
         }
       }
 
       toast.success("Franchise application submitted! Our team will contact you within 48 hours.");
       navigate("/");
+
     } catch (err: any) {
       console.error('[franchise-register] unexpected failure', err);
       toast.error(friendlyError(err, "Registration could not be completed. Please try again."));
