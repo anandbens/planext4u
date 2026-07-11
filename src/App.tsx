@@ -664,6 +664,9 @@ const AppRoutes = () => {
           <Route path="/vendor/login" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorLoginPage />} />
           <Route path="/vendor/register" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorRegisterStandalonePage />} />
           <Route path="/vendor/set-password" element={<SetPasswordPage />} />
+          <Route path="/franchise/register" element={<PublicFranchiseRegistrationPage />} />
+          <Route path="/register/franchise" element={<PublicFranchiseRegistrationPage />} />
+          <Route path="/register/vendor" element={vendorUser ? <Navigate to="/vendor" replace /> : <VendorRegisterStandalonePage />} />
           <Route path="/vendor" element={vendorUser ? <VendorPage><VendorDashboardPage /></VendorPage> : <Navigate to="/vendor/login" replace />} />
           <Route path="/vendor/products" element={<VendorPage><VendorProductsPage /></VendorPage>} />
           <Route path="/vendor/services" element={<VendorPage><VendorServicesPage /></VendorPage>} />
