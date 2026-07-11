@@ -15,6 +15,7 @@ import { api } from "@/lib/api";
 import { useCountry } from "@/lib/country-context";
 import { friendlyError } from "@/lib/friendly-error";
 import p4uLogo from "@/assets/p4u-logo.webp";
+import FranchiseHeroBanner from "@/components/franchise/FranchiseHeroBanner";
 
 const ADVANCE_MIN = 50000;
 const TOTAL_STEPS = 3;
