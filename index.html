@@ -89,7 +89,7 @@
         try {
           var path = window.location.pathname || '/';
           var ADMIN_PREFIXES = ['/login','/admin','/dashboard','/reports','/customers','/vendors','/products','/orders','/categories','/banners','/advertisements','/cms','/settings','/integrations','/platform-variables','/tax','/points','/referrals','/classifieds','/settlements','/occupations','/website-queries','/popup-banners','/support-tickets','/services','/file-uploads','/parent-items','/cf-'];
-          var PORTAL_PREFIXES = ['/app','/vendor','/rider','/auth'];
+          var PORTAL_PREFIXES = ['/app','/vendor','/rider','/auth','/franchise','/register'];
           var isAdmin = ADMIN_PREFIXES.some(function(p){ return path === p || path.indexOf(p + '/') === 0 || path === p + '/'; });
           var isPortal = PORTAL_PREFIXES.some(function(p){ return path === p || path.indexOf(p + '/') === 0 || path === p + '/'; });
           if (!isAdmin && !isPortal) {
