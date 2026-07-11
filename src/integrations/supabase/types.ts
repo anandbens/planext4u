@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_franchises: {
+        Row: {
+          address: string | null
+          city: string | null
+          company_name: string | null
+          coverage_details: Json
+          created_at: string
+          district: string | null
+          documents: Json
+          email: string | null
+          expires_at: string | null
+          franchise_id: string | null
+          id: string
+          mobile: string | null
+          notes: string | null
+          owner_name: string
+          pincode: string | null
+          plan_id: string | null
+          registration_id: string | null
+          started_at: string
+          state: string | null
+          status: Database["public"]["Enums"]["active_franchise_status"]
+          territory: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company_name?: string | null
+          coverage_details?: Json
+          created_at?: string
+          district?: string | null
+          documents?: Json
+          email?: string | null
+          expires_at?: string | null
+          franchise_id?: string | null
+          id?: string
+          mobile?: string | null
+          notes?: string | null
+          owner_name: string
+          pincode?: string | null
+          plan_id?: string | null
+          registration_id?: string | null
+          started_at?: string
+          state?: string | null
+          status?: Database["public"]["Enums"]["active_franchise_status"]
+          territory?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company_name?: string | null
+          coverage_details?: Json
+          created_at?: string
+          district?: string | null
+          documents?: Json
+          email?: string | null
+          expires_at?: string | null
+          franchise_id?: string | null
+          id?: string
+          mobile?: string | null
+          notes?: string | null
+          owner_name?: string
+          pincode?: string | null
+          plan_id?: string | null
+          registration_id?: string | null
+          started_at?: string
+          state?: string | null
+          status?: Database["public"]["Enums"]["active_franchise_status"]
+          territory?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_franchises_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "franchise_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "active_franchises_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "franchise_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_logs: {
         Row: {
           created_at: string | null
@@ -3612,6 +3705,152 @@ export type Database = {
           },
         ]
       }
+      franchise_plans: {
+        Row: {
+          benefits: Json
+          category: string | null
+          commission_structure: Json
+          coverage_type: Database["public"]["Enums"]["franchise_coverage_type"]
+          created_at: string
+          delivery_radius_km: number | null
+          description: string | null
+          features: Json
+          id: string
+          investment_amount: number
+          name: string
+          security_deposit: number | null
+          sort_order: number
+          status: Database["public"]["Enums"]["franchise_plan_status"]
+          updated_at: string
+          validity_months: number
+        }
+        Insert: {
+          benefits?: Json
+          category?: string | null
+          commission_structure?: Json
+          coverage_type?: Database["public"]["Enums"]["franchise_coverage_type"]
+          created_at?: string
+          delivery_radius_km?: number | null
+          description?: string | null
+          features?: Json
+          id?: string
+          investment_amount?: number
+          name: string
+          security_deposit?: number | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["franchise_plan_status"]
+          updated_at?: string
+          validity_months?: number
+        }
+        Update: {
+          benefits?: Json
+          category?: string | null
+          commission_structure?: Json
+          coverage_type?: Database["public"]["Enums"]["franchise_coverage_type"]
+          created_at?: string
+          delivery_radius_km?: number | null
+          description?: string | null
+          features?: Json
+          id?: string
+          investment_amount?: number
+          name?: string
+          security_deposit?: number | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["franchise_plan_status"]
+          updated_at?: string
+          validity_months?: number
+        }
+        Relationships: []
+      }
+      franchise_registrations: {
+        Row: {
+          address: string | null
+          applicant_name: string
+          approved_at: string | null
+          approved_by: string | null
+          city: string | null
+          company_name: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          district: string | null
+          documents: Json
+          email: string | null
+          id: string
+          mobile: string | null
+          notes: string | null
+          pincode: string | null
+          plan_id: string | null
+          registration_no: string | null
+          rejection_reason: string | null
+          requested_territory: string | null
+          state: string | null
+          status: Database["public"]["Enums"]["franchise_registration_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          applicant_name: string
+          approved_at?: string | null
+          approved_by?: string | null
+          city?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          district?: string | null
+          documents?: Json
+          email?: string | null
+          id?: string
+          mobile?: string | null
+          notes?: string | null
+          pincode?: string | null
+          plan_id?: string | null
+          registration_no?: string | null
+          rejection_reason?: string | null
+          requested_territory?: string | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["franchise_registration_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          applicant_name?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          city?: string | null
+          company_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          district?: string | null
+          documents?: Json
+          email?: string | null
+          id?: string
+          mobile?: string | null
+          notes?: string | null
+          pincode?: string | null
+          plan_id?: string | null
+          registration_no?: string | null
+          rejection_reason?: string | null
+          requested_territory?: string | null
+          state?: string | null
+          status?: Database["public"]["Enums"]["franchise_registration_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franchise_registrations_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "franchise_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fraud_alerts: {
         Row: {
           campaign_id: string | null
@@ -5415,6 +5654,113 @@ export type Database = {
           },
         ]
       }
+      payment_receipts: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["payment_entity_type"]
+          id: string
+          issued_at: string
+          issued_by: string | null
+          payment_record_id: string | null
+          pdf_url: string | null
+          receipt_no: string
+          snapshot: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["payment_entity_type"]
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          payment_record_id?: string | null
+          pdf_url?: string | null
+          receipt_no: string
+          snapshot?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: Database["public"]["Enums"]["payment_entity_type"]
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          payment_record_id?: string | null
+          pdf_url?: string | null
+          receipt_no?: string
+          snapshot?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_receipts_payment_record_id_fkey"
+            columns: ["payment_record_id"]
+            isOneToOne: false
+            referencedRelation: "payment_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_records: {
+        Row: {
+          amount_paid: number
+          balance: number | null
+          created_at: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["payment_entity_type"]
+          id: string
+          metadata: Json
+          payment_date: string | null
+          payment_mode: Database["public"]["Enums"]["payment_mode_type"] | null
+          payment_status: Database["public"]["Enums"]["payment_status_type"]
+          plan_amount: number
+          plan_id: string | null
+          received_by: string | null
+          remarks: string | null
+          transaction_ref: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          balance?: number | null
+          created_at?: string
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["payment_entity_type"]
+          id?: string
+          metadata?: Json
+          payment_date?: string | null
+          payment_mode?: Database["public"]["Enums"]["payment_mode_type"] | null
+          payment_status?: Database["public"]["Enums"]["payment_status_type"]
+          plan_amount?: number
+          plan_id?: string | null
+          received_by?: string | null
+          remarks?: string | null
+          transaction_ref?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          balance?: number | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: Database["public"]["Enums"]["payment_entity_type"]
+          id?: string
+          metadata?: Json
+          payment_date?: string | null
+          payment_mode?: Database["public"]["Enums"]["payment_mode_type"] | null
+          payment_status?: Database["public"]["Enums"]["payment_status_type"]
+          plan_amount?: number
+          plan_id?: string | null
+          received_by?: string | null
+          remarks?: string | null
+          transaction_ref?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       platform_fee_invoices: {
         Row: {
           bill_to: string
@@ -6574,6 +6920,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      receipt_sequences: {
+        Row: {
+          last_value: number
+          scope: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          last_value?: number
+          scope: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          last_value?: number
+          scope?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
       }
       referrals: {
         Row: {
@@ -9895,6 +10262,10 @@ export type Database = {
       check_otp_rate_limit: { Args: { _phone: string }; Returns: Json }
       check_phone_login_status: { Args: { _phone: string }; Returns: Json }
       check_phone_registered: { Args: { _phone: string }; Returns: boolean }
+      convert_registration_to_franchise: {
+        Args: { _registration_id: string }
+        Returns: string
+      }
       count_mutual_followers: {
         Args: { _profile: string; _viewer: string }
         Returns: number
@@ -10058,7 +10429,15 @@ export type Database = {
           code: string
         }[]
       }
+      generate_franchise_id: { Args: never; Returns: string }
+      generate_franchise_registration_number: { Args: never; Returns: string }
       generate_random_coupon_code: { Args: { _len: number }; Returns: string }
+      generate_receipt_number: {
+        Args: {
+          _entity_type: Database["public"]["Enums"]["payment_entity_type"]
+        }
+        Returns: string
+      }
       generate_service_slots: {
         Args: { _date: string; _service_id: string }
         Returns: {
@@ -10342,6 +10721,10 @@ export type Database = {
         Args: { _doc_type: string; _fy_start: number; _vendor_id: string }
         Returns: string
       }
+      next_sequence_number: {
+        Args: { _scope: string; _year: number }
+        Returns: number
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -10492,7 +10875,26 @@ export type Database = {
       }
     }
     Enums: {
+      active_franchise_status: "active" | "suspended" | "expired" | "cancelled"
       app_role: "admin" | "finance" | "sales" | "vendor" | "customer" | "rider"
+      franchise_coverage_type: "radius" | "city" | "district" | "state"
+      franchise_plan_status: "active" | "inactive"
+      franchise_registration_status:
+        | "draft"
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "converted"
+        | "closed"
+      payment_entity_type: "vendor" | "franchise"
+      payment_mode_type:
+        | "upi"
+        | "bank_transfer"
+        | "neft"
+        | "rtgs"
+        | "cash"
+        | "cheque"
+      payment_status_type: "paid" | "pending" | "partial"
       property_facing:
         | "north"
         | "south"
@@ -10651,7 +11053,28 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      active_franchise_status: ["active", "suspended", "expired", "cancelled"],
       app_role: ["admin", "finance", "sales", "vendor", "customer", "rider"],
+      franchise_coverage_type: ["radius", "city", "district", "state"],
+      franchise_plan_status: ["active", "inactive"],
+      franchise_registration_status: [
+        "draft",
+        "pending",
+        "approved",
+        "rejected",
+        "converted",
+        "closed",
+      ],
+      payment_entity_type: ["vendor", "franchise"],
+      payment_mode_type: [
+        "upi",
+        "bank_transfer",
+        "neft",
+        "rtgs",
+        "cash",
+        "cheque",
+      ],
+      payment_status_type: ["paid", "pending", "partial"],
       property_facing: [
         "north",
         "south",
