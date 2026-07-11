@@ -286,6 +286,8 @@ export default function PublicFranchiseRegistrationPage() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 py-6 pb-28 space-y-5">
+        <FranchiseHeroBanner />
+
         <Card className="p-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold">Step {step} of {TOTAL_STEPS}</p>
