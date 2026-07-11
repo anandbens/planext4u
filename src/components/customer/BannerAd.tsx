@@ -34,8 +34,8 @@ interface Ad {
   id: string;
   title: string;
   description: string;
-  image_url: string;
-  mobile_image_url: string;
+  image_url?: string | null;
+  mobile_image_url?: string | null;
   video_url?: string | null;
   mobile_video_url?: string | null;
   video_thumbnail_url?: string | null;
@@ -56,21 +56,47 @@ export function usePlacementAds(placement: string) {
   const [ads, setAds] = useState<Ad[]>([]);
 
   useEffect(() => {
+    let mounted = true;
     const today = new Date().toISOString().split("T")[0];
-    supabase
+    const normalizeAds = (rows: any[] = []) => rows.map((ad) => ({
+      ...ad,
+      image_url: ad.image_url || "",
+      mobile_image_url: ad.mobile_image_url || "",
+      video_url: ad.video_url || "",
+      mobile_video_url: ad.mobile_video_url || "",
+      video_thumbnail_url: ad.video_thumbnail_url || "",
+      placements: Array.isArray(ad.placements) && ad.placements.length > 0 ? ad.placements : ["all"],
+    }));
+    const filterAds = (rows: any[]) => normalizeAds(rows).filter((ad) => {
+      const p: string[] = ad.placements || ["all"];
+      return p.includes("all") || p.includes(placement);
+    });
+    const fetchAds = async () => {
+      const query = supabase
       .from("advertisements")
       .select("id, title, description, image_url, mobile_image_url, video_url, mobile_video_url, video_thumbnail_url, link_type, link_target_id, link_url, advertiser, type, placements")
       .eq("status", "active")
       .lte("start_date", today)
-      .gte("end_date", today)
-      .then(({ data }) => {
-        if (!data) return;
-        const filtered = (data as any[]).filter((ad) => {
-          const p: string[] = ad.placements || ["all"];
-          return p.includes("all") || p.includes(placement);
-        });
-        setAds(filtered as Ad[]);
-      });
+      .gte("end_date", today);
+      const { data, error } = await query;
+      if (!error) {
+        if (mounted) setAds(filterAds(data || []) as Ad[]);
+        return;
+      }
+
+      const missingVideoColumn = /video_url|mobile_video_url|video_thumbnail_url|schema cache|column/i.test(error.message || "");
+      if (!missingVideoColumn) return;
+
+      const { data: fallbackData } = await supabase
+        .from("advertisements")
+        .select("id, title, description, image_url, mobile_image_url, link_type, link_target_id, link_url, advertiser, type, placements")
+        .eq("status", "active")
+        .lte("start_date", today)
+        .gte("end_date", today);
+      if (mounted) setAds(filterAds(fallbackData || []) as Ad[]);
+    };
+    void fetchAds();
+    return () => { mounted = false; };
   }, [placement]);
 
   return ads;
@@ -118,7 +144,7 @@ export function BannerAd({ placement, className = "", variant = "banner" }: Bann
     }
   };
 
-  const imgSrc = isMobile && ad.mobile_image_url ? ad.mobile_image_url : ad.image_url;
+  const imgSrc = (isMobile && ad.mobile_image_url ? ad.mobile_image_url : ad.image_url) || "";
 
   if (variant === "inline") {
     return (
@@ -219,8 +245,8 @@ export function SocialFeedAd({ ad }: { ad: Ad }) {
     }
   };
 
-  const imgSrc = isMobile && ad.mobile_image_url ? ad.mobile_image_url : ad.image_url;
-  const videoSrc = (isMobile && ad.mobile_video_url) ? ad.mobile_video_url : (ad.video_url || "");
+  const imgSrc = (isMobile && ad.mobile_image_url ? ad.mobile_image_url : ad.image_url) || "";
+  const videoSrc = ((isMobile && ad.mobile_video_url) ? ad.mobile_video_url : ad.video_url) || "";
   const cleanDescription = cleanAdText(ad.description);
   const cleanTitle = cleanAdText(ad.title);
 
