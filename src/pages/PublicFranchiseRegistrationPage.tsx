@@ -16,6 +16,7 @@ import { useCountry } from "@/lib/country-context";
 import { friendlyError } from "@/lib/friendly-error";
 import p4uLogo from "@/assets/p4u-logo.webp";
 import FranchiseHeroBanner from "@/components/franchise/FranchiseHeroBanner";
+import FranchiseLedSideDisplays from "@/components/franchise/FranchiseLedSideDisplays";
 
 const ADVANCE_MIN = 50000;
 const TOTAL_STEPS = 3;
@@ -272,7 +273,8 @@ export default function PublicFranchiseRegistrationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-teal-50 relative">
+      <FranchiseLedSideDisplays />
       <header className="sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link to="/"><Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button></Link>
@@ -285,7 +287,7 @@ export default function PublicFranchiseRegistrationPage() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 pb-28 space-y-5">
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-28 space-y-5 relative z-10">
         <FranchiseHeroBanner />
 
         <Card className="p-4">
