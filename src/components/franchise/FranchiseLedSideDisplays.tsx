@@ -4,11 +4,19 @@ import videoAsset from "@/assets/franchise-actors-loop.mp4.asset.json";
 const kickAutoplay = (videos: HTMLVideoElement[]) => {
   videos.forEach((v) => {
     try {
+      // iOS Safari requires these to be set imperatively (not just as attrs)
+      // for autoplay to succeed reliably, especially after bfcache restore.
       v.muted = true;
+      (v as any).defaultMuted = true;
       v.loop = true;
       v.playsInline = true;
-      const p = v.play();
-      if (p && typeof p.catch === "function") p.catch(() => {});
+      v.setAttribute("webkit-playsinline", "true");
+      v.setAttribute("playsinline", "true");
+      v.setAttribute("muted", "");
+      if (v.paused) {
+        const p = v.play();
+        if (p && typeof p.catch === "function") p.catch(() => {});
+      }
     } catch { /* ignore */ }
   });
 };
@@ -16,22 +24,64 @@ const kickAutoplay = (videos: HTMLVideoElement[]) => {
 function useForceAutoplay() {
   const ref = useRef<HTMLVideoElement[]>([]);
   const register = (el: HTMLVideoElement | null) => {
-    if (el && !ref.current.includes(el)) ref.current.push(el);
+    if (el && !ref.current.includes(el)) {
+      ref.current.push(el);
+      // Kick immediately on mount so iOS starts playback ASAP.
+      kickAutoplay([el]);
+      el.addEventListener("loadedmetadata", () => kickAutoplay([el]));
+      el.addEventListener("canplay", () => kickAutoplay([el]));
+      // If the video pauses (bfcache, backgrounding), resume.
+      el.addEventListener("pause", () => {
+        if (!el.ended) setTimeout(() => kickAutoplay([el]), 50);
+      });
+    }
   };
   useEffect(() => {
     kickAutoplay(ref.current);
+
+    // Re-kick on first user gesture (iOS may still block until interaction).
     const once = () => {
       kickAutoplay(ref.current);
       window.removeEventListener("touchstart", once);
+      window.removeEventListener("touchend", once);
       window.removeEventListener("click", once);
     };
     window.addEventListener("touchstart", once, { passive: true });
+    window.addEventListener("touchend", once, { passive: true });
     window.addEventListener("click", once);
-    const t = setTimeout(() => kickAutoplay(ref.current), 1200);
+
+    // Handle bfcache restore on refresh / back-forward navigation (iOS Safari).
+    const onPageShow = () => kickAutoplay(ref.current);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") kickAutoplay(ref.current);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    // Retry a few times as the video decodes (mobile Safari can be slow).
+    const timers = [300, 900, 2000, 4000].map((ms) =>
+      setTimeout(() => kickAutoplay(ref.current), ms),
+    );
+
+    // IntersectionObserver: resume playback when panel scrolls back into view.
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) kickAutoplay([e.target as HTMLVideoElement]);
+        });
+      },
+      { threshold: 0.1 },
+    );
+    ref.current.forEach((v) => io.observe(v));
+
     return () => {
-      clearTimeout(t);
+      timers.forEach(clearTimeout);
       window.removeEventListener("touchstart", once);
+      window.removeEventListener("touchend", once);
       window.removeEventListener("click", once);
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisibility);
+      io.disconnect();
     };
   }, []);
   return register;
@@ -72,7 +122,9 @@ export default function FranchiseLedSideDisplays() {
               loop
               muted
               playsInline
+              {...({ defaultMuted: true, "webkit-playsinline": "true", "x5-playsinline": "true", "x5-video-player-type": "h5-page" } as Record<string, unknown>)}
               preload="auto"
+              disableRemotePlayback
               className="w-full h-full object-cover"
             />
             <div
@@ -114,7 +166,9 @@ export function FranchiseLedMobilePanel() {
           loop
           muted
           playsInline
+          {...({ defaultMuted: true, "webkit-playsinline": "true", "x5-playsinline": "true", "x5-video-player-type": "h5-page" } as Record<string, unknown>)}
           preload="auto"
+          disableRemotePlayback
           className="w-full h-full object-cover"
         />
         <div
