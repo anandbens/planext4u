@@ -246,13 +246,10 @@ export default function VendorRegisterPage() {
         admin_notes: planMeta ? JSON.stringify({ plan_selection: planMeta }) : null,
       };
 
-      const { data: inserted, error } = await supabase
-        .from('vendor_applications')
-        .insert(payload)
-        .select('id')
-        .single();
+      const { data: newAppId, error } = await (supabase as any)
+        .rpc('submit_public_vendor_application', { payload });
       if (error) throw error;
-      const applicationId = inserted?.id;
+      const applicationId = newAppId as string | null;
 
       // Payment processing
       let paymentStatus: 'paid' | 'pending' | 'partial' = 'pending';
