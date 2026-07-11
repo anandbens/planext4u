@@ -238,12 +238,14 @@ export default function AdminFranchiseRegistrationsPage() {
     setIsReconciling(true);
     setReconcileSummary("");
     try {
-      const [regResult] = await Promise.all([
+      const [allResult] = await Promise.all([
+        (supabase as any).from("franchise_registrations").select("id,status").order("created_at", { ascending: false }),
         refetchRegs(),
         refetchPayments(),
         refetchAudit(),
       ]);
-      const list = (regResult.data || []) as Reg[];
+      if (allResult.error) throw allResult.error;
+      const list = (allResult.data || []) as Pick<Reg, "id" | "status">[];
       const counts = list.reduce<Record<string, number>>((acc, r) => {
         acc[r.status] = (acc[r.status] || 0) + 1;
         return acc;
