@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import videoAsset from "@/assets/franchise-actors-loop.mp4.asset.json";
+import videoAsset from "@/assets/franchise-led-earnings-loop.mp4.asset.json";
+import posterImage from "@/assets/franchise-led-poster.webp";
 
 const kickAutoplay = (videos: HTMLVideoElement[]) => {
   videos.forEach((v) => {
@@ -87,21 +88,52 @@ function useForceAutoplay() {
   return register;
 }
 
+function LedVideo({ register, className }: { register: (el: HTMLVideoElement | null) => void; className?: string }) {
+  return (
+    <>
+      <img
+        src={posterImage}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        width={1024}
+        height={1792}
+        className="absolute inset-0 h-full w-full object-cover"
+        aria-hidden="true"
+      />
+      <video
+        ref={register}
+        src={videoAsset.url}
+        poster={posterImage}
+        autoPlay
+        loop
+        muted
+        playsInline
+        aria-hidden="true"
+        {...({ defaultMuted: true, "webkit-playsinline": "true", "x5-playsinline": "true", "x5-video-player-type": "h5-page" } as Record<string, unknown>)}
+        preload="auto"
+        disableRemotePlayback
+        className={className || "absolute inset-0 h-full w-full object-cover"}
+      />
+    </>
+  );
+}
+
 /**
  * Desktop-only LED-style side displays flanking the form.
  * On mobile screens NOTHING renders here — use <FranchiseLedMobilePanel />
  * placed below the form for the mobile experience.
  *
- * Z-index: panels sit at `-z-10` (behind everything). Form container should
- * be `relative z-10` (already the case in PublicFranchiseRegistrationPage),
- * so the form always appears on top and never gets overlapped.
+ * Z-index: panels sit at `z-0` and are pointer-events-none. The registration
+ * form container is `z-20`, so the form always appears on top without hiding
+ * the videos behind the page background.
  */
 export default function FranchiseLedSideDisplays() {
   const register = useForceAutoplay();
 
   return (
     <div
-      className="hidden lg:block pointer-events-none fixed inset-y-0 left-0 right-0 -z-10"
+      className="hidden lg:block pointer-events-none fixed inset-y-0 left-0 right-0 z-0"
       aria-hidden="true"
     >
       {(["left", "right"] as const).map((side, i) => (
@@ -115,18 +147,7 @@ export default function FranchiseLedSideDisplays() {
         >
           <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl ring-4 ring-amber-500/40 bg-black">
             <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 pointer-events-none z-20" />
-            <video
-              ref={register}
-              src={videoAsset.url}
-              autoPlay
-              loop
-              muted
-              playsInline
-              {...({ defaultMuted: true, "webkit-playsinline": "true", "x5-playsinline": "true", "x5-video-player-type": "h5-page" } as Record<string, unknown>)}
-              preload="auto"
-              disableRemotePlayback
-              className="w-full h-full object-cover"
-            />
+            <LedVideo register={register} />
             <div
               className="absolute inset-0 pointer-events-none z-10 opacity-30 mix-blend-overlay"
               style={{
@@ -159,18 +180,7 @@ export function FranchiseLedMobilePanel() {
     <div className="lg:hidden mt-4">
       <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-xl ring-4 ring-amber-500/40 bg-black">
         <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 pointer-events-none z-20" />
-        <video
-          ref={register}
-          src={videoAsset.url}
-          autoPlay
-          loop
-          muted
-          playsInline
-          {...({ defaultMuted: true, "webkit-playsinline": "true", "x5-playsinline": "true", "x5-video-player-type": "h5-page" } as Record<string, unknown>)}
-          preload="auto"
-          disableRemotePlayback
-          className="w-full h-full object-cover"
-        />
+        <LedVideo register={register} />
         <div
           className="absolute inset-0 pointer-events-none z-10 opacity-30 mix-blend-overlay"
           style={{
