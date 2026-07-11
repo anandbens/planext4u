@@ -81,6 +81,9 @@ export default function VendorRegisterPage() {
   const requiredAdvance = Math.min(ADVANCE_MIN, planPrice || ADVANCE_MIN);
   const balanceDue = Math.max(0, planPrice - advanceAmount);
 
+  const handlePhoneBlur = async () => {
+
+
 
     const formatErr = validatePhoneFormat(form.phone);
     if (formatErr) { setFieldErrors(e => ({ ...e, phone: formatErr })); return; }
