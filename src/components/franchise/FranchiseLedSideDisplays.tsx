@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import videoAsset from "@/assets/franchise-led-earnings-loop.mp4.asset.json";
+import videoAsset from "@/assets/franchise-warehouse-loop.mp4.asset.json";
 import posterImage from "@/assets/franchise-led-poster.webp";
 
 const kickAutoplay = (videos: HTMLVideoElement[]) => {
