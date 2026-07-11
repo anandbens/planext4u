@@ -93,8 +93,8 @@ export default function AdminRegistrationPaymentsPage() {
             regNo = f?.registration_no || snap.registration_no || "—";
           } else {
             const v = vAppMap.get(p.entity_id);
-            name = v?.business_name || v?.contact_name || v?.applicant_name || snap.company_name || snap.applicant_name || "—";
-            regNo = snap.registration_no || v?.applicant_mobile || "—";
+            name = v?.business_name || v?.name || snap.company_name || snap.applicant_name || "—";
+            regNo = snap.registration_no || v?.phone || "—";
           }
           return {
             id: p.id,
