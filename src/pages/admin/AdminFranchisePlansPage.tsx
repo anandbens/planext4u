@@ -186,7 +186,6 @@ export default function AdminFranchisePlansPage() {
           onPageChange={() => {}}
           onAdd={openCreate}
           addLabel="Add Franchise Plan"
-          loading={isLoading}
         />
       </div>
 
