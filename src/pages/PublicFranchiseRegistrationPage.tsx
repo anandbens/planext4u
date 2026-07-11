@@ -448,7 +448,11 @@ export default function PublicFranchiseRegistrationPage() {
             </Button>
           )}
         </div>
+
+        {/* Mobile-only LED video panel below the form */}
+        <FranchiseLedMobilePanel />
       </div>
+
     </div>
   );
 }
