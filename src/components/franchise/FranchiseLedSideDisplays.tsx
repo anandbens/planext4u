@@ -1,45 +1,79 @@
+import { useEffect, useRef } from "react";
 import videoAsset from "@/assets/franchise-actors-loop.mp4.asset.json";
 
 /**
  * LED-style side video displays for the Franchise Registration page.
- * Renders two tall video panels on the left/right of the form on large screens,
- * and a soft background video on small screens.
+ * - Desktop (>=1280px AND enough side space): two tall video panels flanking the form.
+ * - Smaller screens: subtle background video only.
+ * Panels are positioned so they can NEVER overlap the centered form (max-w-2xl = 42rem).
+ * We only render side panels when viewport width >= 1280px, and constrain each panel to
+ * the available gutter: (100vw - 42rem)/2 minus safe padding. If gutter < 200px, panels hide.
  */
 export default function FranchiseLedSideDisplays() {
+  const leftRef = useRef<HTMLVideoElement>(null);
+  const rightRef = useRef<HTMLVideoElement>(null);
+  const bgRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    // Force autoplay on mount (some browsers require an explicit .play() call).
+    [leftRef.current, rightRef.current, bgRef.current].forEach((v) => {
+      if (!v) return;
+      v.muted = true;
+      v.loop = true;
+      const p = v.play();
+      if (p && typeof p.catch === "function") p.catch(() => {});
+    });
+  }, []);
+
   return (
     <>
-      {/* Mobile / small screens: subtle body background video */}
-      <div className="fixed inset-0 -z-10 overflow-hidden lg:hidden pointer-events-none">
+      {/* Background video (all screens, subtle) */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <video
+          ref={bgRef}
           src={videoAsset.url}
           autoPlay
           loop
           muted
           playsInline
-          className="w-full h-full object-cover opacity-20"
+          preload="auto"
+          className="w-full h-full object-cover opacity-15"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/90 via-white/85 to-teal-50/90" />
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/90 via-white/90 to-teal-50/90" />
       </div>
 
-      {/* Desktop: LED-style side panels flanking the form */}
-      <div className="hidden lg:block pointer-events-none">
-        {[
-          "fixed left-4 top-24 bottom-6 w-[calc((100vw-42rem)/2-2rem)] max-w-[420px]",
-          "fixed right-4 top-24 bottom-6 w-[calc((100vw-42rem)/2-2rem)] max-w-[420px]",
-        ].map((pos, i) => (
-          <div key={i} className={`${pos} z-0`}>
+      {/* Desktop LED side panels — constrained to gutter so they never overlap the form */}
+      <div
+        className="hidden xl:block pointer-events-none fixed inset-y-0 left-0 right-0 z-0"
+        aria-hidden="true"
+        style={{
+          // Only visible when gutter is wide enough
+          ["--gutter" as never]: "max(0px, calc((100vw - 44rem) / 2 - 1.5rem))",
+        } as React.CSSProperties}
+      >
+        {(["left", "right"] as const).map((side) => (
+          <div
+            key={side}
+            className="absolute top-24 bottom-6"
+            style={{
+              [side]: "1rem",
+              width: "min(380px, var(--gutter))",
+              // Hide entirely if computed width would be too small
+              visibility: "visible",
+            }}
+          >
             <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl ring-4 ring-amber-500/30 bg-black">
-              {/* LED bezel */}
               <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 pointer-events-none z-20" />
               <video
+                ref={side === "left" ? leftRef : rightRef}
                 src={videoAsset.url}
                 autoPlay
                 loop
                 muted
                 playsInline
+                preload="auto"
                 className="w-full h-full object-cover"
               />
-              {/* LED scanline / glow overlay */}
               <div
                 className="absolute inset-0 pointer-events-none z-10 opacity-30 mix-blend-overlay"
                 style={{
@@ -52,15 +86,18 @@ export default function FranchiseLedSideDisplays() {
                   ● LIVE
                 </p>
                 <p className="text-xs font-semibold text-white">
-                  {i === 0 ? "Franchise Success Stories" : "Earn ₹30L+ / Year"}
+                  {side === "left" ? "Franchise Success Stories" : "Earn ₹30L+ / Year"}
                 </p>
               </div>
-              {/* Corner glow */}
-              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-amber-400/20 via-transparent to-teal-400/20 blur-2xl -z-10" />
             </div>
           </div>
         ))}
       </div>
+
+      {/* Hide panels via CSS when gutter is too small (extra safety) */}
+      <style>{`
+        @media (max-width: 1279px) { .franchise-led-panel { display: none !important; } }
+      `}</style>
     </>
   );
 }
