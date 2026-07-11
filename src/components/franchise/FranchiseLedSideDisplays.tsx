@@ -92,16 +92,16 @@ function useForceAutoplay() {
  * On mobile screens NOTHING renders here — use <FranchiseLedMobilePanel />
  * placed below the form for the mobile experience.
  *
- * Z-index: panels sit at `-z-10` (behind everything). Form container should
- * be `relative z-10` (already the case in PublicFranchiseRegistrationPage),
- * so the form always appears on top and never gets overlapped.
+ * Z-index: panels sit at `z-0` and are pointer-events-none. The registration
+ * form container is `z-20`, so the form always appears on top without hiding
+ * the videos behind the page background.
  */
 export default function FranchiseLedSideDisplays() {
   const register = useForceAutoplay();
 
   return (
     <div
-      className="hidden lg:block pointer-events-none fixed inset-y-0 left-0 right-0 -z-10"
+      className="hidden lg:block pointer-events-none fixed inset-y-0 left-0 right-0 z-0"
       aria-hidden="true"
     >
       {(["left", "right"] as const).map((side, i) => (
@@ -122,6 +122,7 @@ export default function FranchiseLedSideDisplays() {
               loop
               muted
               playsInline
+              aria-hidden="true"
               {...({ defaultMuted: true, "webkit-playsinline": "true", "x5-playsinline": "true", "x5-video-player-type": "h5-page" } as Record<string, unknown>)}
               preload="auto"
               disableRemotePlayback
@@ -166,6 +167,7 @@ export function FranchiseLedMobilePanel() {
           loop
           muted
           playsInline
+          aria-hidden="true"
           {...({ defaultMuted: true, "webkit-playsinline": "true", "x5-playsinline": "true", "x5-video-player-type": "h5-page" } as Record<string, unknown>)}
           preload="auto"
           disableRemotePlayback
