@@ -374,16 +374,17 @@ export default function VendorRegisterPage() {
         {/* Progress */}
         <Card className="p-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold">Step {step} of 5</p>
+            <p className="text-sm font-semibold">Step {step} of {TOTAL_STEPS}</p>
             <span className="text-sm font-bold text-primary">{formCompletion}%</span>
           </div>
-          <Progress value={step * 20} className="h-2" />
+          <Progress value={(step / TOTAL_STEPS) * 100} className="h-2" />
           <div className="flex justify-between mt-2">
-            {["Personal", "Business", "KYC", "Bank", "Review"].map((l, i) => (
+            {["Personal", "Business", "KYC", "Bank", "Plan", "Review"].map((l, i) => (
               <button key={l} onClick={() => { if (i + 1 < step) setStep(i + 1); }}
                 className={`text-[10px] ${step === i + 1 ? 'text-primary font-bold' : 'text-muted-foreground'}`}>{l}</button>
             ))}
           </div>
+
         </Card>
 
         {/* Step 1: Personal */}
