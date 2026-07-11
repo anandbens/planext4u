@@ -134,13 +134,10 @@ export default function PublicFranchiseRegistrationPage() {
         status: "submitted",
       };
 
-      const { data: reg, error } = await (supabase as any)
-        .from("franchise_registrations")
-        .insert(payload)
-        .select("id")
-        .single();
+      const { data: newRegId, error } = await (supabase as any)
+        .rpc("submit_public_franchise_registration", { payload });
       if (error) throw error;
-      const registrationId = reg?.id;
+      const registrationId = newRegId as string | null;
 
       let paymentStatus: "paid" | "pending" | "partial" = "pending";
       let paidAmount = 0;
