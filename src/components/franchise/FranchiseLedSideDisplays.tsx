@@ -121,8 +121,11 @@ export default function FranchiseLedSideDisplays() {
               autoPlay
               loop
               muted
+              defaultMuted
               playsInline
+              {...({ "webkit-playsinline": "true", "x5-playsinline": "true", "x5-video-player-type": "h5-page" } as Record<string, string>)}
               preload="auto"
+              disableRemotePlayback
               className="w-full h-full object-cover"
             />
             <div
