@@ -1,6 +1,25 @@
 // P4U-branded printable Payment Receipt (opens print dialog → Save as PDF).
 // Used by Vendor Registrations and Franchise Registrations for settlement receipts.
 
+export interface ProjectionRow {
+  scenario_label: string;
+  scenario_order: number;
+  category: string;
+  category_order: number;
+  investment: number;
+  members: number;
+  turnover: number;
+  gross_profit: number;
+  net_profit: number;
+  share_pct: number;
+  category_profit: number;
+  profit_per_person: number;
+  spend_1: number;
+  spend_10: number;
+  spend_100: number;
+  spend_1000: number;
+}
+
 export interface ReceiptData {
   receipt_no: string;
   receipt_date: string; // ISO
@@ -8,7 +27,7 @@ export interface ReceiptData {
   applicant_name: string;
   company_name?: string | null;
   registration_no?: string | null;
-  category?: string | null; // Vendor/franchise category
+  category?: string | null;
   plan_name?: string | null;
   plan_amount: number;
   amount_paid: number;
@@ -18,13 +37,18 @@ export interface ReceiptData {
   payment_date?: string | null;
   payment_status: "paid" | "pending" | "partial";
   received_by?: string | null;
-  // Plan summary
   plan_benefits?: string[];
   plan_features?: string[];
   coverage_type?: string | null;
   delivery_radius_km?: number | null;
   validity_months?: number | null;
   territory?: string | null;
+  promotion_benefits?: string[];
+  reward_benefits?: string[];
+  redemption_benefits?: string[];
+  product_visibility?: string | null;
+  key_features?: string[];
+  projections?: ProjectionRow[];
 }
 
 const COMPANY_NAME = "PLANEXT4U ALL SOLUTIONS INDIA PRIVATE LIMITED";
@@ -104,9 +128,25 @@ export function buildReceiptHtml(data: ReceiptData): string {
   .plan h4 { margin:0 0 10px; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#64748b; }
   .plan .name { font-size:15px; font-weight:700; color:#011d33; }
   .footer { text-align:center; color:#64748b; font-size:11px; padding:16px 28px 24px; border-top:1px dashed #cbd5e1; }
+  .page-break { page-break-before: always; break-before: page; }
+  .page { max-width: 820px; margin: 24px auto; border:1px solid #e2e8f0; border-radius:16px; padding: 28px; background:#fff; }
+  .page h2 { margin:0 0 6px; font-size:22px; color:#011d33; }
+  .page .sub-title { color:#64748b; font-size:12px; margin-bottom:16px; }
+  .proj { width:100%; border-collapse:collapse; font-size:11px; margin-top:10px; }
+  .proj th, .proj td { border:1px solid #e2e8f0; padding:6px 8px; text-align:right; }
+  .proj th { background:#f1f5f9; text-transform:uppercase; font-size:9px; letter-spacing:0.5px; color:#475569; }
+  .proj td.cat, .proj th.cat { text-align:left; font-weight:600; color:#011d33; background:#f8fafc; }
+  .scenario-title { font-size:14px; font-weight:700; color:#009999; margin-top:14px; text-transform:uppercase; letter-spacing:1px; }
+  .disclaimer { border:2px solid #f89f03; background:#fffbeb; border-radius:12px; padding:20px; margin-top:20px; }
+  .disclaimer h3 { margin:0 0 12px; color:#b45309; text-transform:uppercase; letter-spacing:2px; font-size:13px; }
+  .disclaimer p { font-size:12px; color:#334155; line-height:1.7; margin:0 0 10px; }
+  .plan-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px; }
+  .plan-detail-card { border:1px solid #e2e8f0; border-radius:10px; padding:14px; }
+  .plan-detail-card h5 { margin:0 0 8px; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#64748b; }
+  .plan-detail-card ul { margin:0; padding-left:18px; font-size:12px; color:#334155; line-height:1.6; }
   .btnbar { max-width:820px; margin:16px auto 0; display:flex; gap:8px; justify-content:flex-end; }
   .btnbar button { background:#009999; color:#fff; border:0; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer; }
-  @media print { .btnbar { display:none } body { padding:0 } .sheet { border:0; border-radius:0 } }
+  @media print { .btnbar { display:none } body { padding:0 } .sheet, .page { border:0; border-radius:0; margin:0 auto; } }
 </style>
 </head><body>
   <div class="sheet">
@@ -188,9 +228,114 @@ export function buildReceiptHtml(data: ReceiptData): string {
     </div>
   </div>
 
+  ${buildPlanDetailPage(data)}
+  ${entity_type === "franchise" ? buildProjectionPages(data.projections || []) : ""}
+  ${buildDisclaimerPage(entity_type)}
+
   <div class="btnbar"><button onclick="window.print()">Download / Print PDF</button></div>
   <script>window.onload=()=>setTimeout(()=>window.print(),400)</script>
 </body></html>`;
+}
+
+function buildPlanDetailPage(d: ReceiptData): string {
+  const list = (arr?: string[]) =>
+    arr && arr.length
+      ? `<ul>${arr.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>`
+      : `<div style="font-size:12px;color:#94a3b8">Not specified.</div>`;
+  return `
+  <div class="page page-break">
+    <h2>Plan Summary — ${escapeHtml(d.plan_name || "")}</h2>
+    <div class="sub-title">${escapeHtml(d.entity_type === "franchise" ? "Franchise" : "Vendor")} Plan Details • Validity ${d.validity_months || "—"} months • Radius ${d.delivery_radius_km || "—"} KM • Territory ${escapeHtml(d.territory || "—")}</div>
+    <div class="plan-detail-grid">
+      <div class="plan-detail-card"><h5>Promotion Benefits</h5>${list(d.promotion_benefits)}</div>
+      <div class="plan-detail-card"><h5>Product Visibility</h5><div style="font-size:12px;color:#334155">${escapeHtml(d.product_visibility || "—")}</div></div>
+      <div class="plan-detail-card"><h5>Reward Benefits</h5>${list(d.reward_benefits)}</div>
+      <div class="plan-detail-card"><h5>Redemption Benefits</h5>${list(d.redemption_benefits)}</div>
+      <div class="plan-detail-card"><h5>Key Features</h5>${list(d.key_features?.length ? d.key_features : d.plan_features)}</div>
+      <div class="plan-detail-card"><h5>Benefits Summary</h5>${list(d.plan_benefits)}</div>
+    </div>
+  </div>`;
+}
+
+function buildProjectionPages(rows: ProjectionRow[]): string {
+  if (!rows.length) return "";
+  const byScenario = new Map<string, ProjectionRow[]>();
+  rows
+    .slice()
+    .sort((a, b) => a.scenario_order - b.scenario_order || a.category_order - b.category_order)
+    .forEach(r => {
+      if (!byScenario.has(r.scenario_label)) byScenario.set(r.scenario_label, []);
+      byScenario.get(r.scenario_label)!.push(r);
+    });
+
+  const scenarios = Array.from(byScenario.entries());
+  // Split scenarios across two pages: first 3 on page 1, remaining on page 2
+  const buildTable = (block: [string, ProjectionRow[]][]) =>
+    block.map(([label, items]) => `
+      <div class="scenario-title">Scenario — ${escapeHtml(label)}</div>
+      <table class="proj">
+        <thead>
+          <tr>
+            <th class="cat">Category</th>
+            <th>Investment</th><th>Members</th><th>Turnover</th>
+            <th>Gross Profit</th><th>Net Profit</th><th>Share %</th>
+            <th>Category Profit</th><th>Per Person</th>
+            <th>₹1/Day</th><th>₹10</th><th>₹100</th><th>₹1000</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(i => `<tr>
+            <td class="cat">${escapeHtml(i.category)}</td>
+            <td>${inr(i.investment)}</td>
+            <td>${i.members}</td>
+            <td>${inr(i.turnover)}</td>
+            <td>${inr(i.gross_profit)}</td>
+            <td>${inr(i.net_profit)}</td>
+            <td>${i.share_pct}%</td>
+            <td>${inr(i.category_profit)}</td>
+            <td>${inr(i.profit_per_person)}</td>
+            <td>${inr(i.spend_1)}</td>
+            <td>${inr(i.spend_10)}</td>
+            <td>${inr(i.spend_100)}</td>
+            <td>${inr(i.spend_1000)}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>`).join("");
+
+  const first = scenarios.slice(0, 3);
+  const second = scenarios.slice(3);
+
+  return `
+  <div class="page page-break">
+    <h2>Business Projection (Page 2)</h2>
+    <div class="sub-title">Illustrative earning potential based on user acquisition & spending patterns.</div>
+    ${buildTable(first)}
+  </div>
+  ${second.length ? `
+  <div class="page page-break">
+    <h2>Business Projection (Page 3)</h2>
+    <div class="sub-title">Illustrative earning potential — continued.</div>
+    ${buildTable(second)}
+  </div>` : ""}`;
+}
+
+function buildDisclaimerPage(entity: "vendor" | "franchise"): string {
+  return `
+  <div class="page page-break">
+    <h2>Important Disclaimer</h2>
+    <div class="sub-title">Please read carefully before making any investment decision.</div>
+    <div class="disclaimer">
+      <h3>Disclaimer</h3>
+      ${entity === "franchise" ? `
+      <p>The above business projections, turnover estimates, profit calculations and earning illustrations are provided solely for illustration and business planning purposes.</p>
+      <p>These projections are based on assumed customer acquisition, transaction volume, average user spending, operational efficiency and market assumptions.</p>
+      <p>Actual revenue, profitability and return on investment may vary depending on customer growth, vendor onboarding, geographic coverage, marketing activities, competition, operational execution and prevailing market conditions.</p>
+      ` : ""}
+      <p><strong>${escapeHtml(COMPANY_NAME)}</strong> does not guarantee any minimum revenue, turnover, profit or return on investment.</p>
+      <p>Applicants are advised to perform their own financial and business due diligence before making any investment decision.</p>
+      <p style="margin-top:14px;font-size:11px;color:#64748b">This document is a computer-generated payment receipt and is valid without a physical signature. Any dispute is subject to Coimbatore jurisdiction.</p>
+    </div>
+  </div>`;
 }
 
 export function downloadReceiptPdf(data: ReceiptData) {

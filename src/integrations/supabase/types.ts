@@ -341,6 +341,81 @@ export type Database = {
         }
         Relationships: []
       }
+      business_projection_master: {
+        Row: {
+          category: string
+          category_order: number
+          category_profit: number
+          created_at: string
+          gross_profit: number
+          id: string
+          investment: number
+          members: number
+          net_profit: number
+          notes: string | null
+          profit_per_person: number
+          scenario: string
+          scenario_label: string
+          scenario_order: number
+          share_pct: number
+          spend_1: number
+          spend_10: number
+          spend_100: number
+          spend_1000: number
+          status: string
+          turnover: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          category_order?: number
+          category_profit?: number
+          created_at?: string
+          gross_profit?: number
+          id?: string
+          investment?: number
+          members?: number
+          net_profit?: number
+          notes?: string | null
+          profit_per_person?: number
+          scenario: string
+          scenario_label: string
+          scenario_order?: number
+          share_pct?: number
+          spend_1?: number
+          spend_10?: number
+          spend_100?: number
+          spend_1000?: number
+          status?: string
+          turnover?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          category_order?: number
+          category_profit?: number
+          created_at?: string
+          gross_profit?: number
+          id?: string
+          investment?: number
+          members?: number
+          net_profit?: number
+          notes?: string | null
+          profit_per_person?: number
+          scenario?: string
+          scenario_label?: string
+          scenario_order?: number
+          share_pct?: number
+          spend_1?: number
+          spend_10?: number
+          spend_100?: number
+          spend_1000?: number
+          status?: string
+          turnover?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       call_ice_candidates: {
         Row: {
           call_id: string
@@ -3717,10 +3792,16 @@ export type Database = {
           features: Json
           id: string
           investment_amount: number
+          key_features: Json | null
           name: string
+          product_visibility: string | null
+          promotion_benefits: Json | null
+          redemption_benefits: Json | null
+          reward_benefits: Json | null
           security_deposit: number | null
           sort_order: number
           status: Database["public"]["Enums"]["franchise_plan_status"]
+          territory: string | null
           updated_at: string
           validity_months: number
         }
@@ -3735,10 +3816,16 @@ export type Database = {
           features?: Json
           id?: string
           investment_amount?: number
+          key_features?: Json | null
           name: string
+          product_visibility?: string | null
+          promotion_benefits?: Json | null
+          redemption_benefits?: Json | null
+          reward_benefits?: Json | null
           security_deposit?: number | null
           sort_order?: number
           status?: Database["public"]["Enums"]["franchise_plan_status"]
+          territory?: string | null
           updated_at?: string
           validity_months?: number
         }
@@ -3753,10 +3840,16 @@ export type Database = {
           features?: Json
           id?: string
           investment_amount?: number
+          key_features?: Json | null
           name?: string
+          product_visibility?: string | null
+          promotion_benefits?: Json | null
+          redemption_benefits?: Json | null
+          reward_benefits?: Json | null
           security_deposit?: number | null
           sort_order?: number
           status?: Database["public"]["Enums"]["franchise_plan_status"]
+          territory?: string | null
           updated_at?: string
           validity_months?: number
         }
@@ -9797,10 +9890,13 @@ export type Database = {
         Row: {
           banner_ads: boolean
           commission_percentage: number
+          coverage_type: string | null
           created_at: string
+          delivery_radius_km: number | null
           description: string | null
           id: string
           is_active: boolean
+          key_features: Json | null
           max_redemption_percentage: number
           payment_mode: string
           plan_name: string
@@ -9808,19 +9904,27 @@ export type Database = {
           plan_type: string
           price: number
           priority_listing: boolean
+          product_visibility: string | null
+          promotion_benefits: Json | null
           radius_km: number
+          redemption_benefits: Json | null
+          reward_benefits: Json | null
           updated_at: string
           validity_days: number
+          vendor_type: string | null
           video_ads: boolean
           visibility_type: string
         }
         Insert: {
           banner_ads?: boolean
           commission_percentage?: number
+          coverage_type?: string | null
           created_at?: string
+          delivery_radius_km?: number | null
           description?: string | null
           id?: string
           is_active?: boolean
+          key_features?: Json | null
           max_redemption_percentage?: number
           payment_mode?: string
           plan_name: string
@@ -9828,19 +9932,27 @@ export type Database = {
           plan_type?: string
           price?: number
           priority_listing?: boolean
+          product_visibility?: string | null
+          promotion_benefits?: Json | null
           radius_km?: number
+          redemption_benefits?: Json | null
+          reward_benefits?: Json | null
           updated_at?: string
           validity_days?: number
+          vendor_type?: string | null
           video_ads?: boolean
           visibility_type?: string
         }
         Update: {
           banner_ads?: boolean
           commission_percentage?: number
+          coverage_type?: string | null
           created_at?: string
+          delivery_radius_km?: number | null
           description?: string | null
           id?: string
           is_active?: boolean
+          key_features?: Json | null
           max_redemption_percentage?: number
           payment_mode?: string
           plan_name?: string
@@ -9848,9 +9960,14 @@ export type Database = {
           plan_type?: string
           price?: number
           priority_listing?: boolean
+          product_visibility?: string | null
+          promotion_benefits?: Json | null
           radius_km?: number
+          redemption_benefits?: Json | null
+          reward_benefits?: Json | null
           updated_at?: string
           validity_days?: number
+          vendor_type?: string | null
           video_ads?: boolean
           visibility_type?: string
         }
