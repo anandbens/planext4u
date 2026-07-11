@@ -75,6 +75,8 @@ export default function AdminFranchiseRegistrationsPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [planFilter, setPlanFilter] = useState<string>("all");
+  const [stateFilter, setStateFilter] = useState<string>("");
+  const [districtFilter, setDistrictFilter] = useState<string>("");
   const [cityFilter, setCityFilter] = useState<string>("");
   const [contactFilter, setContactFilter] = useState<string>("");
   const [reconcileSummary, setReconcileSummary] = useState<string>("");
@@ -90,17 +92,17 @@ export default function AdminFranchiseRegistrationsPage() {
   });
 
   const { data: regs, isLoading, refetch: refetchRegs } = useQuery({
-    queryKey: ["franchiseRegistrations", statusFilter, planFilter, cityFilter, contactFilter],
+    queryKey: ["franchiseRegistrations", statusFilter, planFilter, stateFilter, districtFilter, cityFilter, contactFilter],
     queryFn: async () => {
-      let q = (supabase as any).from("franchise_registrations").select("*, franchise_plans:plan_id(id,name,investment_amount,benefits,features,coverage_type,delivery_radius_km,validity_months)").order("created_at", { ascending: false });
-      if (statusFilter !== "all") q = q.eq("status", statusFilter);
-      if (planFilter !== "all") q = q.eq("plan_id", planFilter);
-      if (cityFilter.trim()) q = q.ilike("city", `%${cityFilter.trim()}%`);
-      if (contactFilter.trim()) {
-        const term = contactFilter.trim().replace(/[(),]/g, " ");
-        q = q.or(`mobile.ilike.%${term}%,email.ilike.%${term}%,applicant_name.ilike.%${term}%,registration_no.ilike.%${term}%`);
-      }
-      const { data, error } = await q;
+      const term = contactFilter.trim().replace(/[(),]/g, " ");
+      const { data, error } = await (supabase as any).rpc("admin_list_franchise_registrations", {
+        _status: statusFilter === "all" ? null : statusFilter,
+        _plan_id: planFilter === "all" ? null : planFilter,
+        _state: stateFilter.trim() || null,
+        _district: districtFilter.trim() || null,
+        _city: cityFilter.trim() || null,
+        _search: term || null,
+      });
       if (error) throw error;
       return (data || []) as Reg[];
     },
@@ -109,15 +111,23 @@ export default function AdminFranchiseRegistrationsPage() {
   const { data: paymentsByReg, refetch: refetchPayments } = useQuery({
     queryKey: ["franchiseRegPayments"],
     queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("payment_records")
-        .select("*")
-        .eq("entity_type", "franchise")
-        .order("created_at", { ascending: false });
+      const { data } = await (supabase as any).rpc("admin_list_franchise_payment_ledger", {
+        _date_from: null,
+        _date_to: null,
+        _state: null,
+        _district: null,
+        _search: null,
+      });
       const map: Record<string, any> = {};
       (data || []).forEach((p: any) => {
         // entity_id here maps to franchise_registrations.id for pre-conversion payments
-        if (!map[p.entity_id]) map[p.entity_id] = p;
+        if (!map[p.entity_id]) {
+          map[p.entity_id] = {
+            ...p,
+            id: p.payment_record_id || p.id,
+            payment_record_id: p.payment_record_id,
+          };
+        }
       });
       return map;
     },
@@ -178,13 +188,18 @@ export default function AdminFranchiseRegistrationsPage() {
   }, [regs]);
 
   const fetchVerifiedRegistration = async (regId: string) => {
-    const { data, error } = await (supabase as any)
-      .from("franchise_registrations")
-      .select("*, franchise_plans:plan_id(id,name,investment_amount,benefits,features,coverage_type,delivery_radius_km,validity_months)")
-      .eq("id", regId)
-      .single();
+    const { data, error } = await (supabase as any).rpc("admin_list_franchise_registrations", {
+      _status: null,
+      _plan_id: null,
+      _state: null,
+      _district: null,
+      _city: null,
+      _search: null,
+    });
     if (error) throw error;
-    return data as Reg;
+    const row = (data || []).find((r: Reg) => r.id === regId);
+    if (!row) throw new Error("Saved registration could not be reloaded");
+    return row as Reg;
   };
 
   const hydrateFormFromReg = (r: Reg) => {
@@ -239,7 +254,14 @@ export default function AdminFranchiseRegistrationsPage() {
     setReconcileSummary("");
     try {
       const [allResult] = await Promise.all([
-        (supabase as any).from("franchise_registrations").select("id,status").order("created_at", { ascending: false }),
+        (supabase as any).rpc("admin_list_franchise_registrations", {
+          _status: null,
+          _plan_id: null,
+          _state: null,
+          _district: null,
+          _city: null,
+          _search: null,
+        }),
         refetchRegs(),
         refetchPayments(),
         refetchAudit(),
@@ -395,12 +417,12 @@ export default function AdminFranchiseRegistrationsPage() {
 
   const printReceipt = async (r: Reg) => {
     const pay = paymentsByReg?.[r.id];
-    if (!pay) { toast.error("No payment recorded yet"); return; }
+    if (!pay || pay.is_synthetic_pending || !pay.payment_record_id) { toast.error("No payment recorded yet"); return; }
     // Prefer existing stored receipt (idempotent re-download)
     const { data: existing } = await (supabase as any)
       .from("payment_receipts")
       .select("id")
-      .eq("payment_record_id", pay.id)
+      .eq("payment_record_id", pay.payment_record_id)
       .maybeSingle();
     if (existing?.id) {
       await redownloadReceipt(existing.id);
@@ -410,7 +432,7 @@ export default function AdminFranchiseRegistrationsPage() {
     await issueAndDownloadReceipt({
       entityType: "franchise",
       entityId: r.id,
-      paymentRecordId: pay.id,
+      paymentRecordId: pay.payment_record_id,
       applicantName: r.applicant_name,
       companyName: r.company_name,
       registrationNo: r.registration_no,
@@ -543,7 +565,7 @@ export default function AdminFranchiseRegistrationsPage() {
 
         <div className="rounded-xl border bg-card p-4 space-y-3">
           <div className="font-semibold text-sm">Advanced search & filters</div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3">
             <div>
               <Label className="text-xs">Plan</Label>
               <Select value={planFilter} onValueChange={setPlanFilter}>
@@ -569,6 +591,8 @@ export default function AdminFranchiseRegistrationsPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div><Label className="text-xs">State</Label><Input value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} placeholder="Search state" /></div>
+            <div><Label className="text-xs">District</Label><Input value={districtFilter} onChange={(e) => setDistrictFilter(e.target.value)} placeholder="Search district" /></div>
             <div><Label className="text-xs">City</Label><Input value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} placeholder="Search city" /></div>
             <div><Label className="text-xs">Mobile / Email / Name</Label><Input value={contactFilter} onChange={(e) => setContactFilter(e.target.value)} placeholder="Search contact" /></div>
           </div>
