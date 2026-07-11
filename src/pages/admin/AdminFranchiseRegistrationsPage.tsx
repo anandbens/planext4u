@@ -97,7 +97,7 @@ export default function AdminFranchiseRegistrationsPage() {
       if (planFilter !== "all") q = q.eq("plan_id", planFilter);
       if (cityFilter.trim()) q = q.ilike("city", `%${cityFilter.trim()}%`);
       if (contactFilter.trim()) {
-        const term = contactFilter.trim();
+        const term = contactFilter.trim().replace(/[(),]/g, " ");
         q = q.or(`mobile.ilike.%${term}%,email.ilike.%${term}%,applicant_name.ilike.%${term}%,registration_no.ilike.%${term}%`);
       }
       const { data, error } = await q;
