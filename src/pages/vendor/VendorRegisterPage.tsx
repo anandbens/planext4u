@@ -58,7 +58,30 @@ export default function VendorRegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<{ phone?: string; email?: string }>({});
   const [fieldChecking, setFieldChecking] = useState<{ phone?: boolean; email?: boolean }>({});
 
-  const handlePhoneBlur = async () => {
+  // Plan & Payment (Step 5)
+  const [plans, setPlans] = useState<VendorPlanRow[]>([]);
+  const [planType, setPlanType] = useState<'local' | 'vip'>('local');
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const [advanceAmount, setAdvanceAmount] = useState<number>(ADVANCE_MIN);
+  const [paymentMode, setPaymentMode] = useState<'online' | 'manual'>('online');
+  const [manualMode, setManualMode] = useState<'upi' | 'bank_transfer' | 'neft' | 'rtgs' | 'cheque' | 'cash'>('upi');
+  const [transactionRef, setTransactionRef] = useState('');
+
+  useEffect(() => {
+    supabase.from('vendor_plans')
+      .select('id,plan_name,plan_type,plan_tier,price,validity_days,radius_km,commission_percentage,description')
+      .eq('is_active', true)
+      .order('plan_type', { ascending: true })
+      .order('plan_tier', { ascending: true })
+      .then(({ data }) => setPlans((data || []) as VendorPlanRow[]));
+  }, []);
+
+  const selectedPlan = plans.find(p => p.id === selectedPlanId) || null;
+  const planPrice = selectedPlan?.price || 0;
+  const requiredAdvance = Math.min(ADVANCE_MIN, planPrice || ADVANCE_MIN);
+  const balanceDue = Math.max(0, planPrice - advanceAmount);
+
+
     const formatErr = validatePhoneFormat(form.phone);
     if (formatErr) { setFieldErrors(e => ({ ...e, phone: formatErr })); return; }
     setFieldChecking(c => ({ ...c, phone: true }));
