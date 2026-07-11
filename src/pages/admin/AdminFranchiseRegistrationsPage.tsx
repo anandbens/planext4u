@@ -578,6 +578,8 @@ export default function AdminFranchiseRegistrationsPage() {
           total={rows.length}
           page={1} perPage={50} totalPages={1}
           onPageChange={() => {}}
+          onSearch={setContactFilter}
+          searchPlaceholder="Search name, mobile, email, reg no."
           onAdd={openCreate}
           addLabel="Add Registration"
           showDateFilter={false}
