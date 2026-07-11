@@ -564,8 +564,103 @@ export default function VendorRegisterPage() {
           </Card>
         )}
 
-        {/* Step 5: Review */}
+        {/* Step 5: Plan & Payment */}
         {step === 5 && (
+          <Card className="p-5 space-y-4">
+            <h3 className="text-sm font-semibold">Plan Selection & Advance Payment</h3>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Plan Type *</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(['local','vip'] as const).map(t => (
+                  <button key={t} type="button"
+                    onClick={() => { setPlanType(t); setSelectedPlanId(''); }}
+                    className={`p-3 rounded-lg border-2 text-xs font-semibold uppercase ${planType === t ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground'}`}>
+                    {t === 'local' ? 'Local' : 'VIP'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">Available Plans *</label>
+              <div className="grid grid-cols-1 gap-2">
+                {plans.filter(p => p.plan_type === planType).length === 0 && (
+                  <p className="text-xs text-muted-foreground">No {planType.toUpperCase()} plans available yet.</p>
+                )}
+                {plans.filter(p => p.plan_type === planType).map(p => (
+                  <button key={p.id} type="button" onClick={() => setSelectedPlanId(p.id)}
+                    className={`text-left p-3 rounded-lg border-2 transition ${selectedPlanId === p.id ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">{p.plan_name}</span>
+                      <span className="text-sm font-bold text-primary">₹{Number(p.price).toLocaleString('en-IN')}</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Validity {p.validity_days}d · Radius {p.radius_km}km · Commission {p.commission_percentage}%
+                    </p>
+                    {p.description && <p className="text-[11px] text-muted-foreground mt-1">{p.description}</p>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {selectedPlan && (
+              <div className="border-t pt-3 space-y-3">
+                <div className="p-3 rounded-lg bg-secondary/50 grid grid-cols-2 gap-1 text-xs">
+                  <span className="text-muted-foreground">Plan Price</span>
+                  <span className="font-semibold text-right">₹{planPrice.toLocaleString('en-IN')}</span>
+                  <span className="text-muted-foreground">Minimum Advance</span>
+                  <span className="font-semibold text-right">₹{requiredAdvance.toLocaleString('en-IN')}</span>
+                  <span className="text-muted-foreground">Balance Due</span>
+                  <span className="font-semibold text-right">₹{balanceDue.toLocaleString('en-IN')}</span>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Advance Amount (₹) *</label>
+                  <Input type="number" min={requiredAdvance} max={planPrice}
+                    value={advanceAmount}
+                    onChange={e => setAdvanceAmount(Number(e.target.value) || 0)} />
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Must be between ₹{requiredAdvance.toLocaleString('en-IN')} and ₹{planPrice.toLocaleString('en-IN')}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Payment Mode *</label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    {(['online','manual'] as const).map(m => (
+                      <button key={m} type="button" onClick={() => setPaymentMode(m)}
+                        className={`p-2 rounded-lg border-2 text-xs font-semibold capitalize ${paymentMode === m ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground'}`}>
+                        {m === 'online' ? 'Online (Razorpay)' : 'Manual (UPI / Bank)'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {paymentMode === 'manual' && (
+                  <div className="grid grid-cols-1 gap-2">
+                    <Select value={manualMode} onValueChange={(v: any) => setManualMode(v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="upi">UPI</SelectItem>
+                        <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                        <SelectItem value="neft">NEFT</SelectItem>
+                        <SelectItem value="rtgs">RTGS</SelectItem>
+                        <SelectItem value="cheque">Cheque</SelectItem>
+                        <SelectItem value="cash">Cash</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input placeholder="Transaction / UTR / Reference Number *"
+                      value={transactionRef} onChange={e => setTransactionRef(e.target.value)} maxLength={64} />
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Step 6: Review */}
+        {step === 6 && (
           <Card className="p-5 space-y-4">
             <h3 className="text-sm font-semibold">Review & Submit</h3>
             <div className="space-y-3 text-sm">
@@ -580,6 +675,12 @@ export default function VendorRegisterPage() {
                 <p className="text-muted-foreground">Vendor Category</p><p className="font-medium capitalize">{form.category === 'service' ? 'Service Provider' : 'Product Seller'}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-secondary/50">
+                <p className="text-muted-foreground">Plan</p><p className="font-medium">{selectedPlan?.plan_name || '—'}</p>
+                <p className="text-muted-foreground">Advance</p><p className="font-medium">₹{advanceAmount.toLocaleString('en-IN')}</p>
+                <p className="text-muted-foreground">Balance</p><p className="font-medium">₹{balanceDue.toLocaleString('en-IN')}</p>
+                <p className="text-muted-foreground">Payment</p><p className="font-medium capitalize">{paymentMode === 'online' ? 'Online (Razorpay)' : `Manual · ${manualMode}`}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-secondary/50">
                 <p className="text-muted-foreground">Aadhaar</p><p className="font-medium">{form.aadhaar_number ? `XXXX-XXXX-${form.aadhaar_number.slice(-4)}` : '—'}</p>
                 <p className="text-muted-foreground">PAN</p><p className="font-medium">{form.pan_number ? `${form.pan_number.slice(0, 2)}XXXX${form.pan_number.slice(-2)}` : '—'}</p>
                 <p className="text-muted-foreground">GST</p><p className="font-medium">{form.gst_number || '—'}</p>
@@ -591,14 +692,15 @@ export default function VendorRegisterPage() {
         {/* Navigation */}
         <div className="flex gap-3">
           {step > 1 && <Button variant="outline" onClick={() => setStep(s => s - 1)} className="flex-1 h-12 rounded-xl">Back</Button>}
-          {step < 5 ? (
+          {step < TOTAL_STEPS ? (
             <Button onClick={handleNext} className="flex-1 h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground">Next</Button>
           ) : (
             <Button onClick={handleSubmit} className="flex-1 h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
-              {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Submitting...</> : "Submit Application"}
+              {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Submitting & Paying...</> : (paymentMode === 'online' ? `Pay ₹${advanceAmount.toLocaleString('en-IN')} & Submit` : "Submit Application")}
             </Button>
           )}
         </div>
+
       </div>
     </div>
   );
