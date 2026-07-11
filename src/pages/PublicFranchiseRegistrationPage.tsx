@@ -16,7 +16,7 @@ import { useCountry } from "@/lib/country-context";
 import { friendlyError } from "@/lib/friendly-error";
 import p4uLogo from "@/assets/p4u-logo.webp";
 import FranchiseHeroBanner from "@/components/franchise/FranchiseHeroBanner";
-import FranchiseLedSideDisplays from "@/components/franchise/FranchiseLedSideDisplays";
+import FranchiseLedSideDisplays, { FranchiseLedMobilePanel } from "@/components/franchise/FranchiseLedSideDisplays";
 
 const ADVANCE_MIN = 50000;
 const TOTAL_STEPS = 3;
@@ -287,7 +287,7 @@ export default function PublicFranchiseRegistrationPage() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 pb-28 space-y-5 relative z-10">
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-28 space-y-5 relative z-20">
         <FranchiseHeroBanner />
 
         <Card className="p-4">
@@ -448,7 +448,11 @@ export default function PublicFranchiseRegistrationPage() {
             </Button>
           )}
         </div>
+
+        {/* Mobile-only LED video panel below the form */}
+        <FranchiseLedMobilePanel />
       </div>
+
     </div>
   );
 }
