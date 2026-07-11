@@ -559,10 +559,10 @@ const AppRoutes = () => {
           <Route path="/admin/homes/users" element={<AdminOnlyPage><AdminHomesUsersPage /></AdminOnlyPage>} />
           <Route path="/admin/vendor-plans" element={<FinancePage><AdminVendorPlansPage /></FinancePage>} />
           <Route path="/admin/franchise/plans" element={<FinancePage><AdminFranchisePlansPage /></FinancePage>} />
-          <Route path="/admin/franchise/registrations" element={<FinancePage><AdminFranchiseRegistrationsPage /></FinancePage>} />
-          <Route path="/admin/franchise/active" element={<FinancePage><AdminActiveFranchisesPage /></FinancePage>} />
+          <Route path="/admin/franchise/registrations" element={<FinanceOrSalesPage><AdminFranchiseRegistrationsPage /></FinanceOrSalesPage>} />
+          <Route path="/admin/franchise/active" element={<FinanceOrSalesPage><AdminActiveFranchisesPage /></FinanceOrSalesPage>} />
           <Route path="/admin/franchise/projections" element={<FinancePage><AdminBusinessProjectionsPage /></FinancePage>} />
-          <Route path="/admin/registration-payments" element={<FinancePage><AdminRegistrationPaymentsPage /></FinancePage>} />
+          <Route path="/admin/registration-payments" element={<FinanceOrSalesPage><AdminRegistrationPaymentsPage /></FinanceOrSalesPage>} />
           <Route path="/admin/media-library" element={<AdminOnlyPage><AdminMediaLibraryPage /></AdminOnlyPage>} />
           <Route path="/admin/onboarding" element={<AdminOnlyPage><AdminOnboardingPage /></AdminOnlyPage>} />
           <Route path="/admin/notifications" element={<AdminOnlyPage><AdminNotificationsPage /></AdminOnlyPage>} />
