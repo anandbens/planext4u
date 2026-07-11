@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { DataTable } from "@/components/admin/DataTable";
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { issueAndDownloadReceipt, redownloadReceipt } from "@/lib/issue-receipt";
+import { CheckCircle2, RefreshCw } from "lucide-react";
 
 interface Reg {
   id: string;
@@ -31,6 +32,17 @@ interface Reg {
   notes: string | null;
   created_at: string;
   franchise_plans?: any;
+}
+
+interface AuditRow {
+  id: string;
+  table_name: string;
+  operation: "insert" | "update" | "delete" | string;
+  record_id: string;
+  old_data: Record<string, any> | null;
+  new_data: Record<string, any> | null;
+  performed_by: string | null;
+  created_at: string;
 }
 
 const emptyForm = {
@@ -62,6 +74,12 @@ export default function AdminFranchiseRegistrationsPage() {
   const [editing, setEditing] = useState<Reg | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [planFilter, setPlanFilter] = useState<string>("all");
+  const [cityFilter, setCityFilter] = useState<string>("");
+  const [contactFilter, setContactFilter] = useState<string>("");
+  const [reconcileSummary, setReconcileSummary] = useState<string>("");
+  const [isReconciling, setIsReconciling] = useState(false);
+  const [verifiedFields, setVerifiedFields] = useState<{ label: string; value: string }[]>([]);
 
   const { data: plans } = useQuery({
     queryKey: ["franchisePlansAll"],
@@ -71,18 +89,24 @@ export default function AdminFranchiseRegistrationsPage() {
     },
   });
 
-  const { data: regs, isLoading } = useQuery({
-    queryKey: ["franchiseRegistrations", statusFilter],
+  const { data: regs, isLoading, refetch: refetchRegs } = useQuery({
+    queryKey: ["franchiseRegistrations", statusFilter, planFilter, cityFilter, contactFilter],
     queryFn: async () => {
       let q = (supabase as any).from("franchise_registrations").select("*, franchise_plans:plan_id(id,name,investment_amount,benefits,features,coverage_type,delivery_radius_km,validity_months)").order("created_at", { ascending: false });
       if (statusFilter !== "all") q = q.eq("status", statusFilter);
+      if (planFilter !== "all") q = q.eq("plan_id", planFilter);
+      if (cityFilter.trim()) q = q.ilike("city", `%${cityFilter.trim()}%`);
+      if (contactFilter.trim()) {
+        const term = contactFilter.trim();
+        q = q.or(`mobile.ilike.%${term}%,email.ilike.%${term}%,applicant_name.ilike.%${term}%,registration_no.ilike.%${term}%`);
+      }
       const { data, error } = await q;
       if (error) throw error;
       return (data || []) as Reg[];
     },
   });
 
-  const { data: paymentsByReg } = useQuery({
+  const { data: paymentsByReg, refetch: refetchPayments } = useQuery({
     queryKey: ["franchiseRegPayments"],
     queryFn: async () => {
       const { data } = await (supabase as any)
@@ -99,9 +123,24 @@ export default function AdminFranchiseRegistrationsPage() {
     },
   });
 
-  const openCreate = () => { setEditing(null); setForm({ ...emptyForm }); setShowModal(true); };
+  const { data: auditRows, refetch: refetchAudit } = useQuery({
+    queryKey: ["franchiseRegistrationAudit"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("audit_logs")
+        .select("id, table_name, operation, record_id, old_data, new_data, performed_by, created_at")
+        .eq("table_name", "franchise_registrations")
+        .order("created_at", { ascending: false })
+        .limit(25);
+      if (error) throw error;
+      return (data || []) as AuditRow[];
+    },
+  });
+
+  const openCreate = () => { setEditing(null); setVerifiedFields([]); setForm({ ...emptyForm }); setShowModal(true); };
   const openEdit = (r: Reg) => {
     setEditing(r);
+    setVerifiedFields([]);
     const pay = paymentsByReg?.[r.id];
     setForm({
       applicant_name: r.applicant_name || "",
@@ -132,6 +171,100 @@ export default function AdminFranchiseRegistrationsPage() {
   const amountPaid = Number(form.amount_paid || 0);
   const balance = Math.max(0, planAmount - amountPaid);
 
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: rowsCount(regs || []) };
+    (regs || []).forEach((r) => { counts[r.status] = (counts[r.status] || 0) + 1; });
+    return counts;
+  }, [regs]);
+
+  const fetchVerifiedRegistration = async (regId: string) => {
+    const { data, error } = await (supabase as any)
+      .from("franchise_registrations")
+      .select("*, franchise_plans:plan_id(id,name,investment_amount,benefits,features,coverage_type,delivery_radius_km,validity_months)")
+      .eq("id", regId)
+      .single();
+    if (error) throw error;
+    return data as Reg;
+  };
+
+  const hydrateFormFromReg = (r: Reg) => {
+    const pay = paymentsByReg?.[r.id];
+    setForm({
+      applicant_name: r.applicant_name || "",
+      company_name: r.company_name || "",
+      email: r.email || "",
+      mobile: r.mobile || "",
+      address: r.address || "",
+      city: r.city || "",
+      district: r.district || "",
+      state: r.state || "",
+      pincode: r.pincode || "",
+      plan_id: r.plan_id || "",
+      requested_territory: r.requested_territory || "",
+      status: r.status as any,
+      notes: r.notes || "",
+      payment_status: (pay?.payment_status as any) || "pending",
+      amount_paid: String(pay?.amount_paid ?? 0),
+      transaction_ref: pay?.transaction_ref || "",
+      payment_mode: pay?.payment_mode || "upi",
+      payment_date: pay?.payment_date ? String(pay.payment_date).slice(0, 10) : "",
+      payment_remarks: pay?.remarks || "",
+    });
+  };
+
+  const summarizeChangedFields = (before: Reg | null, after: Reg) => {
+    const fields: { key: keyof Reg; label: string }[] = [
+      { key: "applicant_name", label: "Applicant" },
+      { key: "company_name", label: "Company" },
+      { key: "email", label: "Email" },
+      { key: "mobile", label: "Mobile" },
+      { key: "city", label: "City" },
+      { key: "district", label: "District" },
+      { key: "state", label: "State" },
+      { key: "pincode", label: "Pincode" },
+      { key: "plan_id", label: "Plan" },
+      { key: "requested_territory", label: "Territory" },
+      { key: "status", label: "Status" },
+      { key: "notes", label: "Notes" },
+    ];
+    const planName = (id: any) => (plans || []).find((p: any) => p.id === id)?.name || id || "—";
+    return fields
+      .filter(({ key }) => !before || (before as any)[key] !== (after as any)[key])
+      .map(({ key, label }) => ({ label, value: key === "plan_id" ? planName(after.plan_id) : String((after as any)[key] ?? "—") }))
+      .slice(0, 8);
+  };
+
+  const reconcileRegistrations = async () => {
+    setIsReconciling(true);
+    setReconcileSummary("");
+    try {
+      const [regResult] = await Promise.all([
+        refetchRegs(),
+        refetchPayments(),
+        refetchAudit(),
+      ]);
+      const list = (regResult.data || []) as Reg[];
+      const counts = list.reduce<Record<string, number>>((acc, r) => {
+        acc[r.status] = (acc[r.status] || 0) + 1;
+        return acc;
+      }, {});
+      const parts = [
+        `${list.length} visible`,
+        `${counts.pending || 0} pending`,
+        `${counts.approved || 0} approved`,
+        `${counts.converted || 0} converted`,
+        `${counts.rejected || 0} rejected`,
+      ];
+      setReconcileSummary(`Reconciled from backend: ${parts.join(" · ")}`);
+      toast.success("Franchise registrations reconciled");
+    } catch (err: any) {
+      setReconcileSummary(`Reconcile failed: ${err?.message || "Unable to fetch registrations"}`);
+      toast.error(err?.message || "Unable to reconcile registrations");
+    } finally {
+      setIsReconciling(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!form.applicant_name.trim()) { toast.error("Applicant name required"); return; }
     if (!form.plan_id) { toast.error("Please select a plan"); return; }
@@ -153,6 +286,7 @@ export default function AdminFranchiseRegistrationsPage() {
     };
 
     const client = supabase as any;
+    const beforeSave = editing;
     let regId = editing?.id;
     if (editing) {
       const { error } = await client.from("franchise_registrations").update(regPayload).eq("id", editing.id);
@@ -207,10 +341,25 @@ export default function AdminFranchiseRegistrationsPage() {
       }
     }
 
-    toast.success(editing ? "Registration updated" : "Registration created");
-    setShowModal(false); setEditing(null);
+    if (regId) {
+      try {
+        const verified = await fetchVerifiedRegistration(regId);
+        setEditing(verified);
+        hydrateFormFromReg(verified);
+        setVerifiedFields(summarizeChangedFields(beforeSave, verified));
+        qc.setQueriesData({ queryKey: ["franchiseRegistrations"] }, (old: any) => {
+          if (!Array.isArray(old)) return old;
+          const exists = old.some((r: Reg) => r.id === verified.id);
+          return exists ? old.map((r: Reg) => r.id === verified.id ? verified : r) : [verified, ...old];
+        });
+        toast.success(editing ? "Changes saved and verified" : "Registration created and verified");
+      } catch (err: any) {
+        toast.warning(`Saved, but verification reload failed: ${err?.message || "Please reconcile"}`);
+      }
+    }
     qc.invalidateQueries({ queryKey: ["franchiseRegistrations"] });
     qc.invalidateQueries({ queryKey: ["franchiseRegPayments"] });
+    qc.invalidateQueries({ queryKey: ["franchiseRegistrationAudit"] });
   };
 
   const setStatus = async (r: Reg, status: Reg["status"], reason?: string) => {
@@ -220,6 +369,7 @@ export default function AdminFranchiseRegistrationsPage() {
     if (error) { toast.error(error.message); return; }
     toast.success(`Marked ${status}`);
     qc.invalidateQueries({ queryKey: ["franchiseRegistrations"] });
+    qc.invalidateQueries({ queryKey: ["franchiseRegistrationAudit"] });
   };
 
   const convertToActive = async (r: Reg) => {
@@ -228,6 +378,8 @@ export default function AdminFranchiseRegistrationsPage() {
     if (error) { toast.error(error.message || "Conversion failed"); return; }
     toast.success("Converted to active franchise");
     qc.invalidateQueries({ queryKey: ["franchiseRegistrations"] });
+    qc.invalidateQueries({ queryKey: ["activeFranchises"] });
+    qc.invalidateQueries({ queryKey: ["franchiseRegistrationAudit"] });
   };
 
   const handleDelete = async (r: Reg) => {
@@ -236,6 +388,7 @@ export default function AdminFranchiseRegistrationsPage() {
     if (error) { toast.error(error.message); return; }
     toast.success("Deleted");
     qc.invalidateQueries({ queryKey: ["franchiseRegistrations"] });
+    qc.invalidateQueries({ queryKey: ["franchiseRegistrationAudit"] });
   };
 
   const printReceipt = async (r: Reg) => {
@@ -278,6 +431,19 @@ export default function AdminFranchiseRegistrationsPage() {
 
 
   const inr = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
+
+  function rowsCount(list: Reg[]) { return list.length; }
+
+  const auditSummary = (row: AuditRow) => {
+    const oldData = row.old_data || {};
+    const newData = row.new_data || {};
+    if (row.operation === "insert") return `Created ${newData.registration_no || row.record_id}`;
+    if (row.operation === "delete") return `Deleted ${oldData.registration_no || row.record_id}`;
+    const changed = ["applicant_name", "company_name", "email", "mobile", "city", "district", "state", "pincode", "plan_id", "requested_territory", "status", "notes"]
+      .filter((key) => oldData[key] !== newData[key])
+      .map((key) => key.replace(/_/g, " "));
+    return changed.length ? `Updated ${changed.slice(0, 5).join(", ")}${changed.length > 5 ? "…" : ""}` : "Updated registration";
+  };
 
   const columns = [
     { key: "registration_no", label: "Registration No.", render: (r: Reg) => <span className="font-mono text-xs">{r.registration_no}</span> },
@@ -347,20 +513,62 @@ export default function AdminFranchiseRegistrationsPage() {
             <h1 className="text-xl font-bold">Franchise Registrations</h1>
             <p className="text-sm text-muted-foreground">Manage franchise applications, payments, approvals, and conversions.</p>
           </div>
-          <div className="min-w-[180px]">
-            <Label className="text-xs">Filter by status</Label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="converted">Converted</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-              </SelectContent>
-            </Select>
+          <Button variant="outline" onClick={reconcileRegistrations} disabled={isReconciling} className="gap-2">
+            <RefreshCw className={`h-4 w-4 ${isReconciling ? "animate-spin" : ""}`} /> Reconcile registrations
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {[
+            ["Visible", statusCounts.all || 0],
+            ["Pending", statusCounts.pending || 0],
+            ["Approved", statusCounts.approved || 0],
+            ["Converted", statusCounts.converted || 0],
+            ["Rejected", statusCounts.rejected || 0],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-lg border bg-card p-3">
+              <div className="text-[11px] text-muted-foreground">{label}</div>
+              <div className="text-lg font-bold">{value}</div>
+            </div>
+          ))}
+        </div>
+
+        {reconcileSummary && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary">
+            {reconcileSummary}
+          </div>
+        )}
+
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <div className="font-semibold text-sm">Advanced search & filters</div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div>
+              <Label className="text-xs">Plan</Label>
+              <Select value={planFilter} onValueChange={setPlanFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Plans</SelectItem>
+                  {(plans || []).map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="converted">Converted</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label className="text-xs">City</Label><Input value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} placeholder="Search city" /></div>
+            <div><Label className="text-xs">Mobile / Email / Name</Label><Input value={contactFilter} onChange={(e) => setContactFilter(e.target.value)} placeholder="Search contact" /></div>
           </div>
         </div>
 
@@ -372,13 +580,46 @@ export default function AdminFranchiseRegistrationsPage() {
           onPageChange={() => {}}
           onAdd={openCreate}
           addLabel="Add Registration"
+          showDateFilter={false}
         />
+
+        <div className="rounded-xl border bg-card p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-sm">Franchise registration audit log</h2>
+              <p className="text-xs text-muted-foreground">Every create, edit, approval, conversion, and delete is recorded here.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => refetchAudit()}>Refresh audit</Button>
+          </div>
+          <div className="space-y-2 max-h-80 overflow-y-auto">
+            {(auditRows || []).length === 0 && <div className="text-sm text-muted-foreground">No audit entries yet.</div>}
+            {(auditRows || []).map((row) => (
+              <div key={row.id} className="rounded-lg border bg-background p-3 text-sm">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="font-medium capitalize">{row.operation} · {auditSummary(row)}</div>
+                  <div className="text-xs text-muted-foreground">{new Date(row.created_at).toLocaleString("en-IN")}</div>
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  By {row.performed_by ? row.performed_by.slice(0, 8) : "system/public"} · Record {row.new_data?.registration_no || row.old_data?.registration_no || row.record_id.slice(0, 8)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogTitle>{editing ? `Edit ${editing.registration_no}` : "New Franchise Registration"}</DialogTitle>
           <div className="space-y-4 pt-2">
+            {verifiedFields.length > 0 && (
+              <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+                <div className="flex items-center gap-2 font-semibold"><CheckCircle2 className="h-4 w-4" /> Save verified from backend</div>
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {verifiedFields.map((f) => <div key={f.label}><span className="text-green-700/70">{f.label}:</span> {f.value}</div>)}
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div><Label className="text-xs">Applicant Name *</Label><Input value={form.applicant_name} onChange={(e) => setForm(f => ({ ...f, applicant_name: e.target.value }))} /></div>
               <div><Label className="text-xs">Company Name</Label><Input value={form.company_name} onChange={(e) => setForm(f => ({ ...f, company_name: e.target.value }))} /></div>
@@ -476,7 +717,7 @@ export default function AdminFranchiseRegistrationsPage() {
             </div>
 
             <div><Label className="text-xs">Notes</Label><Input value={form.notes} onChange={(e) => setForm(f => ({ ...f, notes: e.target.value }))} /></div>
-            <Button className="w-full" onClick={handleSave}>Save Registration</Button>
+            <Button className="w-full" onClick={handleSave}>Save changes</Button>
           </div>
         </DialogContent>
       </Dialog>
