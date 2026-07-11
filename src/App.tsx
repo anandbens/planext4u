@@ -172,6 +172,7 @@ const AdminVendorPlansPage = lazy(() => import("./pages/admin/AdminVendorPlansPa
 const AdminFranchisePlansPage = lazy(() => import("./pages/admin/AdminFranchisePlansPage"));
 const AdminFranchiseRegistrationsPage = lazy(() => import("./pages/admin/AdminFranchiseRegistrationsPage"));
 const AdminActiveFranchisesPage = lazy(() => import("./pages/admin/AdminActiveFranchisesPage"));
+const AdminRegistrationPaymentsPage = lazy(() => import("./pages/admin/AdminRegistrationPaymentsPage"));
 const AdminMediaLibraryPage = lazy(() => import("./pages/admin/AdminMediaLibraryPage"));
 const AdminOnboardingPage = lazy(() => import("./pages/admin/AdminOnboardingPage"));
 const AdminProductAttributesPage = lazy(() => import("./pages/admin/AdminProductAttributesPage"));
