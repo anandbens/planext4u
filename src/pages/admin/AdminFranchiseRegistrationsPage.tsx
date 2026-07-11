@@ -241,6 +241,16 @@ export default function AdminFranchiseRegistrationsPage() {
   const printReceipt = async (r: Reg) => {
     const pay = paymentsByReg?.[r.id];
     if (!pay) { toast.error("No payment recorded yet"); return; }
+    // Prefer existing stored receipt (idempotent re-download)
+    const { data: existing } = await (supabase as any)
+      .from("payment_receipts")
+      .select("id")
+      .eq("payment_record_id", pay.id)
+      .maybeSingle();
+    if (existing?.id) {
+      await redownloadReceipt(existing.id);
+      return;
+    }
     const p = r.franchise_plans;
     await issueAndDownloadReceipt({
       entityType: "franchise",
@@ -265,6 +275,7 @@ export default function AdminFranchiseRegistrationsPage() {
       territory: r.requested_territory,
     });
   };
+
 
   const inr = (n: number) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 
