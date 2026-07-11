@@ -188,16 +188,24 @@ export default function VendorRegisterPage() {
       if (form.bank_account_number && form.bank_account_number !== form.bank_confirm_account) return "Account numbers don't match";
       if (form.bank_ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(form.bank_ifsc)) return "IFSC code must be exactly 11 characters (e.g. SBIN0001234)";
     }
+    if (step === 5) {
+      if (!selectedPlanId) return "Please select a plan to continue";
+      if (!advanceAmount || advanceAmount < requiredAdvance) return `Advance payment must be at least ₹${requiredAdvance.toLocaleString('en-IN')}`;
+      if (advanceAmount > planPrice) return "Advance cannot exceed the plan price";
+      if (paymentMode === 'manual' && !transactionRef.trim()) return "Transaction/UTR reference is required for manual payment";
+    }
     return null;
   };
 
   const handleNext = () => {
     const err = validate();
     if (err) { toast.error(err); return; }
-    setStep(s => Math.min(s + 1, 5));
+    setStep(s => Math.min(s + 1, TOTAL_STEPS));
   };
 
   const handleSubmit = async () => {
+    const err = validate();
+    if (err) { toast.error(err); return; }
     setLoading(true);
     try {
       // Final uniqueness check before submit
@@ -205,6 +213,18 @@ export default function VendorRegisterPage() {
       if (phoneErr) { toast.error(phoneErr); setLoading(false); return; }
       const emailErr = await checkVendorEmailUnique(form.email);
       if (emailErr) { toast.error(emailErr); setLoading(false); return; }
+
+      const planMeta = selectedPlan ? {
+        plan_id: selectedPlan.id,
+        plan_name: selectedPlan.plan_name,
+        plan_type: selectedPlan.plan_type,
+        plan_tier: selectedPlan.plan_tier,
+        plan_price: selectedPlan.price,
+        advance_amount: advanceAmount,
+        balance_due: balanceDue,
+        payment_mode: paymentMode,
+      } : null;
+
       const payload = {
         user_id: form.email,
         name: form.name, phone: form.phone, secondary_phone: form.secondary_phone,
@@ -223,16 +243,69 @@ export default function VendorRegisterPage() {
         latitude: form.latitude, longitude: form.longitude, shop_address: form.shop_address,
         referred_by: form.referral_code?.trim() ? form.referral_code.trim().toUpperCase() : null,
         status: 'submitted',
+        admin_notes: planMeta ? JSON.stringify({ plan_selection: planMeta }) : null,
       };
 
-      const { error } = await supabase.from('vendor_applications').insert(payload);
+      const { data: inserted, error } = await supabase
+        .from('vendor_applications')
+        .insert(payload)
+        .select('id')
+        .single();
       if (error) throw error;
+      const applicationId = inserted?.id;
+
+      // Payment processing
+      let paymentStatus: 'paid' | 'pending' | 'partial' = 'pending';
+      let paidAmount = 0;
+      let txnRef = transactionRef.trim() || null;
+      let dbPaymentMode: 'upi' | 'bank_transfer' | 'neft' | 'rtgs' | 'cash' | 'cheque' = manualMode;
+
+      if (paymentMode === 'online' && selectedPlan && advanceAmount > 0) {
+        try {
+          const rzp = await openRazorpayCheckout({
+            amount: advanceAmount,
+            currency: 'INR',
+            name: 'Planext4U',
+            description: `Vendor registration advance – ${selectedPlan.plan_name}`,
+            prefill: { name: form.name, email: form.email, contact: form.phone },
+            notes: { entity_type: 'vendor', application_id: applicationId || '', plan_id: selectedPlan.id },
+          });
+          txnRef = rzp.razorpay_payment_id;
+          dbPaymentMode = 'upi';
+          paidAmount = advanceAmount;
+          paymentStatus = balanceDue > 0 ? 'partial' : 'paid';
+        } catch (payErr: any) {
+          toast.error(payErr?.message || 'Payment was cancelled. Your application is saved as pending payment.');
+        }
+      } else if (paymentMode === 'manual' && selectedPlan) {
+        paidAmount = advanceAmount;
+        paymentStatus = balanceDue > 0 ? 'partial' : 'paid';
+      }
+
+      if (applicationId && selectedPlan) {
+        await supabase.from('payment_records').insert({
+          entity_type: 'vendor',
+          entity_id: applicationId,
+          plan_id: selectedPlan.id,
+          plan_amount: planPrice,
+          amount_paid: paidAmount,
+          balance: Math.max(0, planPrice - paidAmount),
+          payment_mode: dbPaymentMode,
+          payment_status: paymentStatus,
+          transaction_ref: txnRef,
+          payment_date: paidAmount > 0 ? new Date().toISOString() : null,
+          remarks: paymentMode === 'manual' ? `Manual advance via ${manualMode}` : 'Online advance via Razorpay',
+          metadata: { source: 'public_vendor_registration', plan_meta: planMeta },
+        });
+      }
+
       toast.success("Application submitted! Our team will review within 48 hours.");
       navigate("/vendor/login");
     } catch (err: any) {
       toast.error(err.message || "Registration could not be completed. Please try again.");
     }
     setLoading(false);
+
   };
 
   const formCompletion = (() => {
