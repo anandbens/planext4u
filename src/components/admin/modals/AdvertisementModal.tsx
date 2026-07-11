@@ -43,6 +43,31 @@ const emptyForm = {
   placement: "home", impressions: 0, clicks: 0, revenue: 0,
 };
 
+const normalizeAdForm = (source: any = {}) => ({
+  ...emptyForm,
+  ...source,
+  title: source.title || "",
+  advertiser: source.advertiser || "",
+  description: source.description || "",
+  type: source.type || "banner",
+  status: source.status || "active",
+  image_url: source.image_url || "",
+  mobile_image_url: source.mobile_image_url || "",
+  video_url: source.video_url || "",
+  mobile_video_url: source.mobile_video_url || "",
+  video_thumbnail_url: source.video_thumbnail_url || "",
+  link_type: source.link_type || "custom",
+  link_target_id: source.link_target_id || "",
+  link_url: source.link_url || "",
+  placements: Array.isArray(source.placements) && source.placements.length > 0 ? source.placements : ["all"],
+  start_date: source.start_date || emptyForm.start_date,
+  end_date: source.end_date || emptyForm.end_date,
+  placement: source.placement || "home",
+  impressions: source.impressions || 0,
+  clicks: source.clicks || 0,
+  revenue: source.revenue || 0,
+});
+
 export function AdvertisementModal({ ad, open, onOpenChange, mode, onSave, onCreate, onDelete }: AdvertisementModalProps) {
   const isCreate = mode === "create";
   const [editMode, setEditMode] = useState(mode === "edit" || isCreate);
@@ -64,20 +89,11 @@ export function AdvertisementModal({ ad, open, onOpenChange, mode, onSave, onCre
   useEffect(() => {
     if (isCreate) {
       // Allow caller to pre-seed defaults (e.g. Socio tab pre-fills placements/link_type)
-      setForm({ ...emptyForm, ...(ad || {}) } as any);
+      setForm(normalizeAdForm(ad));
       setEditMode(true);
     }
     else if (ad) {
-      setForm({
-        title: ad.title || "", advertiser: ad.advertiser || "", description: ad.description || "",
-        type: ad.type || "banner", status: ad.status || "active",
-        image_url: ad.image_url || "", mobile_image_url: ad.mobile_image_url || "",
-        video_url: ad.video_url || "", mobile_video_url: ad.mobile_video_url || "", video_thumbnail_url: ad.video_thumbnail_url || "",
-        link_type: ad.link_type || "custom", link_target_id: ad.link_target_id || "", link_url: ad.link_url || "",
-        placements: ad.placements || ["all"],
-        start_date: ad.start_date || "", end_date: ad.end_date || "",
-        placement: ad.placement || "home", impressions: ad.impressions || 0, clicks: ad.clicks || 0, revenue: ad.revenue || 0,
-      });
+      setForm(normalizeAdForm(ad));
       setEditMode(mode === "edit");
     }
   }, [ad, mode, isCreate]);
