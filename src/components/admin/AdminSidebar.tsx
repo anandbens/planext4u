@@ -91,6 +91,7 @@ const franchiseItems: NavItem[] = [
   { title: "Registrations", url: "/admin/franchise/registrations", icon: ClipboardList, roles: ['admin', 'sales'] },
   { title: "Active Franchises", url: "/admin/franchise/active", icon: Store, roles: ['admin', 'sales'] },
   { title: "Registration Payments", url: "/admin/registration-payments", icon: Receipt, roles: ['admin', 'sales'] },
+  { title: "Business Projections", url: "/admin/franchise/projections", icon: ClipboardList, roles: ['admin'] },
 ];
 
 const systemItems: NavItem[] = [
