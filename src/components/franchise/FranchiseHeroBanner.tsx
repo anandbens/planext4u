@@ -43,8 +43,9 @@ export default function FranchiseHeroBanner() {
         preload="auto"
         aria-hidden="true"
       />
-      {/* Dark gradient overlay for legibility */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/55 to-primary/40" />
+      {/* Rich brand overlay: deep navy → teal → warm amber for legibility + premium feel */}
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(1,29,51,0.88)_0%,rgba(0,80,90,0.78)_45%,rgba(0,153,153,0.62)_75%,rgba(248,159,3,0.45)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(248,159,3,0.25),transparent_60%)]" />
 
       {/* Floating coins */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
