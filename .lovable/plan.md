@@ -14,12 +14,14 @@ Mobile apps  (Customer • Vendor • Rider)  +  Web admin
         ▼
 API gateway / Mobile BFF          (Sanctum-authenticated REST API v1)
         │
-        ├── Laravel modular monolith
-        │     ├── Admin
-        │     ├── Catalog management
-        │     ├── Promotions / content
-        │     ├── Customer / account
-        │     └── Orders (initially)
+        ├── Laravel microservices  (independently deployed, own DB schema each)
+        │     ├── Admin service
+        │     ├── Catalog service
+        │     ├── Promotions / content service
+        │     ├── Customer / account service
+        │     ├── Orders service
+        │     ├── Payments / settlement service
+        │     └── Vendor service
         │
         ├── Search service            → driver: DB full-text | OpenSearch | Algolia
         ├── Tracking / dispatch       → Go
@@ -31,7 +33,7 @@ Shared infrastructure:
 PostgreSQL + PostGIS • Redis • Event broker • Object storage • CDN (Cloudflare)
 ```
 
-**Resolved stack decisions:** PostgreSQL + PostGIS as the datastore (geo-heavy features are core). Laravel core with Go/Node services behind the gateway. Search and AI specified as **pluggable driver interfaces** — search: DB full-text / OpenSearch / Algolia; AI: Ollama-hosted Llama 3.1/3.3 and Qwen 2.5 32B / Qwen-Image, OpenAI GPT-4o, Gemini — selected by configuration, no vendor lock-in.
+**Resolved stack decisions:** PostgreSQL + PostGIS as the datastore (geo-heavy features are core). **Laravel microservices** — each service independently deployable with its own schema, communicating synchronously via the gateway and asynchronously over the event broker; no shared-database coupling and no cross-service joins. Go/Node services for tracking, realtime, notifications and media. Search and AI specified as **pluggable driver interfaces** — search: DB full-text / OpenSearch / Algolia; AI: Ollama-hosted Llama 3.1/3.3 and Qwen 2.5 32B / Qwen-Image, OpenAI GPT-4o, Gemini — selected by configuration, no vendor lock-in.
 
 ## Product surface being specified
 
