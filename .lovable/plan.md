@@ -74,7 +74,7 @@ Written to `docs/sow/`, one file per area so it can be loaded selectively.
 ## Technical approach
 
 - Table inventory generated from the live schema so column names, types and constraints are exact rather than inferred, then re-expressed as portable PostgreSQL DDL with PostGIS types where geospatial.
-- Business logic currently held in database routines and client libraries (coupon engine, commission cascade, points/wallet, settlements, tax) extracted and restated as explicit application-layer rules with formulas, each assigned to its owning Laravel module or Go/Node service.
+- Business logic currently held in database routines and client libraries (coupon engine, commission cascade, points/wallet, settlements, tax) extracted and restated as explicit application-layer rules with formulas, each assigned to its owning Laravel microservice or Go/Node service.
 - Existing serverless endpoints re-mapped one by one onto the target services, with the new owner named for each.
 - Row-level access rules currently enforced at the database restated as Laravel authorization policies plus query-scoping requirements.
 - Screen inventory derived from the existing route map so every specified screen maps to a real one.
