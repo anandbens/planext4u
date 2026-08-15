@@ -1,60 +1,51 @@
+# Technical Scope of Work — Planext4U Rebuild Specification
 
-# Public Registration, Franchise Management & Multi-Page Receipts
+Produce a complete, implementation-grade specification that an external team (Codex) could use to rebuild Planext4U from zero. Written at **table + endpoint level**, delivered as versioned Markdown under `docs/sow/` **and** as one consolidated downloadable file.
 
-Scope is large; splitting into 4 sequential phases so each is verifiable. Existing pieces I'll reuse: `PublicFranchiseRegistrationPage`, `VendorRegisterPage` (already extended with Plan & Payment step), `franchise_plans`, `franchise_registrations`, `active_franchises`, `payment_records`, `payment_receipts`, `AdminFranchisePlansPage`, `AdminFranchiseRegistrationsPage`, `AdminActiveFranchisesPage`, `AdminRegistrationPaymentsPage`, `src/lib/receipt-pdf.ts`, `src/lib/issue-receipt.ts`.
+This is a documentation deliverable only. No application code, schema, or configuration changes.
 
-## Phase 1 — Database & Master Data
+## What the system actually contains (verified from the live project)
 
-New/updated tables:
-- `business_projection_master` — scenario, category (Micro/Mini/Master), investment, members, turnover, gross_profit, net_profit, share_pct, category_profit, spend_1/10/100/1000, sort_order, status.
-- `franchise_plans` — verify Nano/Micro/Mini/Master seed rows with full plan detail fields (coverage_type, benefits[], features[], promotion_benefits, product_visibility, reward_benefits, redemption_benefits).
-- `vendor_plans` — verify Local (Basic/Standard/Premium) + VIP (Bronze/Silver/Gold/Diamond/Platinum) rows with the same descriptive fields.
-- `payment_records` — ensure fields: mode (UPI/NEFT/RTGS/IMPS/BankTransfer/Cash/Cheque), transaction_ref, amount, payment_date, remarks, status, outstanding.
-- `payment_receipts` — receipt_no (sequence), pdf_path, regenerated_at.
-- `platform_variables` seed: `company_bank_details` (name, a/c, IFSC, branch, address) for reuse across UIs and PDFs.
+- **205 pages / 152 components**, 1 React SPA, ~200 routes across 6 portals
+- **184 public tables**, **180 database functions/RPCs**, **524 RLS policies**, 190 migrations
+- **19 edge functions**, **7 storage buckets**, roles: `admin, finance, sales, vendor, customer, rider`
+- **9 business modules**: Ecommerce, Food Delivery, Homes (real estate), Socio (social network), Classifieds, Franchise, Vendor, Rider, Admin/Back-office
+- **3 native Capacitor apps** (customer, vendor, rider) + web
+- External systems: Supabase (DB/Auth/Storage/Realtime/Edge), Firebase (Phone Auth, FCM), Razorpay, Paystack, Backblaze B2 + Cloudflare CDN, Odoo, Google Maps, Socket.IO signalling
 
-Grants + RLS on all new/updated tables. Seed the default plans and full 5×3 = 15 projection rows exactly per spec.
+## Document set
 
-## Phase 2 — Public Registration UX Completion
+Written to `docs/sow/`, one file per area so Codex can load them selectively.
 
-- `/vendor/register` (existing): confirm Local vs VIP toggle; dynamically load plans from `vendor_plans`; render full benefits panel (Price, Validity, Coverage, Radius, Visibility, Promotion, Redemption, Reward, Key Features) — no hardcoded copy. Payment step shows Bank Details card + payment mode selector + advance/outstanding calc. On submit → row in `vendor_applications` (Pending Approval) + `payment_records` entry + auto-receipt if Paid.
-- `/franchise/register` (existing): expand fields to full spec (Applicant, Company, Mobile, Email, Address, City, State, Pincode, Preferred Territory, Preferred Plan, Remarks). Plan selector reads `franchise_plans` and shows all benefits. Same bank + payment block. Save → `franchise_registrations` (Draft/Pending) + `payment_records` + receipt.
-- Success page with Download / Print / Regenerate PDF actions.
+| File | Contents |
+|---|---|
+| `00-overview.md` | Product definition, the 9 modules, portal map, user personas, glossary, non-functional requirements (performance budgets, offline/native, i18n/currency) |
+| `01-architecture.md` | Stack and versions, SPA routing and portal isolation, per-portal auth storage keys, build/deploy topology, Capacitor projects, CDN/media pipeline, caching and React Query strategy, code-splitting |
+| `02-identity-and-rbac.md` | Auth flows (email/password, Firebase phone OTP, Google OAuth), the `user_roles` + `has_role()` security-definer pattern, cross-portal uniqueness rules, session guards, password-setup flow, RLS design principles and the policy taxonomy behind the 524 policies |
+| `03-data-model.md` | Full table inventory grouped by module — columns, types, keys, FKs, enums, indexes, GRANTs, RLS intent per table. Includes ER diagrams in `text` blocks |
+| `04-modules-ecommerce.md` | Catalog, attributes/variants, cart rules, checkout, orders, invoices, credit notes, inventory, reviews, wishlist, wallet/points, referrals, coupon engine (incl. fraud, reservation, rollback, geo/vendor mapping) |
+| `05-modules-food.md` | Restaurants, menus, combos, food orders, live tracking, rider assignment, chats, refunds, food coupons, food invoices |
+| `06-modules-homes.md` | Properties, localities, amenities, plans, enquiries, visits, bookmarks, saved searches, rent tracker, EMI/value estimator, moderation |
+| `07-modules-socio.md` | Posts, reels, stories, channels, follows/friends, DMs, notifications, hashtags, shopping tags, moderation/reports, WebRTC calling and signalling contract |
+| `08-modules-classifieds-franchise.md` | Classified ads lifecycle; franchise plans, public registration, projections master, active franchises, registration payments, multi-page receipt PDF spec |
+| `09-modules-vendor-rider.md` | Vendor onboarding/KYC/approval lifecycle, catalog and availability, settlements and TDS ledger, dropshipping, media library; rider registration, KYC, assignments, locations, payouts, settlements |
+| `10-admin-and-reporting.md` | All admin screens, homepage CMS/widget builder, platform variables, module visibility, banners/ads, audit logs, and the 19 report specs (GSTR1/3B/9, HSN, TCS, TDS 194O, daybook, settlements, revenue, etc.) with column and export definitions |
+| `11-api-contracts.md` | Per-edge-function contract (route, auth mode, request/response schema, errors, side effects) for all 19 functions; RPC contracts for the security-definer functions; gateway/webhook contracts |
+| `12-integrations.md` | Razorpay, Paystack, Firebase Phone Auth + FCM, Backblaze B2 + Cloudflare, Odoo sync, Google Maps, email pipeline and domain setup — with required secrets and config keys per integration |
+| `13-design-system.md` | Brand palette and semantic tokens, typography, component variants, mobile/safe-area rules, media standards (WebP 70%/2048px, H.264 480p/45s), accessibility |
+| `14-build-plan.md` | Rebuild sequenced into phases with dependencies, acceptance criteria per phase, test strategy (Vitest + Playwright), migration/seed order, and a definition of done |
 
-## Phase 3 — Admin Franchise Management
+## Technical approach
 
-Under `/admin/franchise/*` (sidebar group already exists):
-- Franchise Plans (CRUD — already present; extend fields to full master).
-- Franchise Registrations (list, view, approve → creates `active_franchises`, reject, convert).
-- Active Franchises (list, view, edit, deactivate).
-- Franchise Payments (dedicated tab pulling from `payment_records` scoped to franchise).
-- Business Projection Master (new page, full CRUD, list grouped by scenario with inline edit).
+- Table inventory generated from the live schema (`information_schema`, `pg_indexes`, `pg_policies`) so column names, types and constraints are exact rather than inferred.
+- Edge-function contracts derived by reading each `supabase/functions/*/index.ts` and recording actual request/response shapes and auth handling.
+- Route inventory generated from `src/App.tsx` and cross-referenced to page components, so every screen in the spec maps to a real one.
+- Business rules extracted from `src/lib/*` (coupon engine, commission cascade, points, settlements, tax) and stated as explicit rules with formulas, not prose summaries.
+- Secrets are referenced by **name only** — no values, no project identifiers, no dashboard links.
 
-All screens use existing admin table patterns: search, filter, pagination, CSV export, audit logging via `audit_logs`.
+## Deliverables
 
-## Phase 4 — Multi-Page PDF Receipt
+1. `docs/sow/` — the 15 Markdown files above, committed to the repo.
+2. `/mnt/documents/Planext4U-Technical-SOW.md` — single consolidated copy for download and external sharing.
 
-Rewrite `src/lib/receipt-pdf.ts` to emit up to 5 pages:
-- Page 1: Payment Receipt (logo, company header, receipt#, dates, applicant/company, plan snapshot, amounts, txn info, status).
-- Page 2: Plan Summary — pulled from Plan Master (name, validity, radius, territory, promotion, visibility, rewards, redemption, features).
-- Pages 3-4 (franchise only): Business Projection tables per scenario, rendered from `business_projection_master`. No hardcoded numbers.
-- Final Page: Disclaimer box (exact wording from spec).
-
-Trigger: auto-generate when `payment_status = paid`; store path; expose Download / Print / Regenerate on Success page, Vendor Registration detail, Franchise Registration detail, and Payment History rows.
-
-## Technical Details
-
-- Reuse `issue-receipt.ts` — extend to accept `registration_type: 'vendor' | 'franchise'` and fetch projection rows for franchise.
-- Receipt numbering via `receipt_sequences` (already present) with prefix `P4U/RCPT/YYYY/`.
-- Bank details centralized in a single `BankDetailsCard` component reading from `platform_variables` so admin can edit without code changes.
-- PDF uses existing branded HTML → jsPDF/html2canvas pipeline already in `orders-summary-pdf.ts`; share layout primitives.
-- All plan/projection data fetched via React Query with 5-min stale; PDF renderer receives already-fetched data (no fetch inside canvas step).
-
-## Deliverable Order
-
-1. Migration + seeds (Phase 1).
-2. Public registration polish + Bank card + auto-receipt hook (Phase 2).
-3. Admin Business Projection Master + refinements to existing franchise admin pages (Phase 3).
-4. Multi-page PDF generator + wiring across all download points (Phase 4).
-
-Ready to start with the Phase 1 migration on approval.
+Expected size: 40+ pages equivalent. Given the volume, I'll build it in three passes — foundation (00-03), modules (04-10), contracts and plan (11-14) — so you can review and correct direction after each pass.
