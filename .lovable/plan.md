@@ -14,12 +14,14 @@ Mobile apps  (Customer • Vendor • Rider)  +  Web admin
         ▼
 API gateway / Mobile BFF          (Sanctum-authenticated REST API v1)
         │
-        ├── Laravel modular monolith
-        │     ├── Admin
-        │     ├── Catalog management
-        │     ├── Promotions / content
-        │     ├── Customer / account
-        │     └── Orders (initially)
+        ├── Laravel microservices  (independently deployed, own DB schema each)
+        │     ├── Admin service
+        │     ├── Catalog service
+        │     ├── Promotions / content service
+        │     ├── Customer / account service
+        │     ├── Orders service
+        │     ├── Payments / settlement service
+        │     └── Vendor service
         │
         ├── Search service            → driver: DB full-text | OpenSearch | Algolia
         ├── Tracking / dispatch       → Go
@@ -31,7 +33,7 @@ Shared infrastructure:
 PostgreSQL + PostGIS • Redis • Event broker • Object storage • CDN (Cloudflare)
 ```
 
-**Resolved stack decisions:** PostgreSQL + PostGIS as the datastore (geo-heavy features are core). Laravel core with Go/Node services behind the gateway. Search and AI specified as **pluggable driver interfaces** — search: DB full-text / OpenSearch / Algolia; AI: Ollama-hosted Llama 3.1/3.3 and Qwen 2.5 32B / Qwen-Image, OpenAI GPT-4o, Gemini — selected by configuration, no vendor lock-in.
+**Resolved stack decisions:** PostgreSQL + PostGIS as the datastore (geo-heavy features are core). **Laravel microservices** — each service independently deployable with its own schema, communicating synchronously via the gateway and asynchronously over the event broker; no shared-database coupling and no cross-service joins. Go/Node services for tracking, realtime, notifications and media. Search and AI specified as **pluggable driver interfaces** — search: DB full-text / OpenSearch / Algolia; AI: Ollama-hosted Llama 3.1/3.3 and Qwen 2.5 32B / Qwen-Image, OpenAI GPT-4o, Gemini — selected by configuration, no vendor lock-in.
 
 ## Product surface being specified
 
@@ -50,9 +52,9 @@ Written to `docs/sow/`, one file per area so it can be loaded selectively.
 | File | Contents |
 |---|---|
 | `00-overview.md` | Product definition, modules, portal map, personas, glossary, the key-highlights feature matrix, non-functional requirements (latency budgets, availability, scale targets, offline/native, i18n and multi-currency) |
-| `01-architecture.md` | Target topology in detail: gateway/BFF responsibilities and per-client response shaping, Laravel module boundaries and inter-module contracts, service extraction criteria, deployment topology, environments, CI/CD, observability, and the 6-step installation wizard specification |
+| `01-architecture.md` | Target topology in detail: gateway/BFF responsibilities and per-client response shaping, service decomposition and bounded contexts, per-service ownership and data boundaries, synchronous vs event-driven inter-service contracts, service discovery, resilience (timeouts, retries, circuit breakers), distributed transactions/saga patterns, deployment topology, environments, CI/CD per service, observability and distributed tracing, and the 6-step installation wizard specification |
 | `02-identity-and-rbac.md` | Auth flows (email/password, phone OTP, Google OAuth), Sanctum token issuance/refresh/abilities at the gateway, role and permission model, per-portal session isolation, cross-portal identity uniqueness, Laravel policies plus query-level row scoping |
-| `03-data-model.md` | Full PostgreSQL schema by module — tables, columns, types, keys, FKs, enums, indexes, partitioning candidates, PostGIS geometry columns and spatial indexes, ER diagrams in `text` blocks |
+| `03-data-model.md` | Full PostgreSQL schema grouped by **owning service** — tables, columns, types, keys, FKs, enums, indexes, partitioning candidates, PostGIS geometry columns and spatial indexes; cross-service references expressed as IDs plus replicated read models rather than FKs, with the data-ownership matrix and ER diagrams in `text` blocks |
 | `04-modules-ecommerce.md` | Catalog, attributes/variants, cart rules, checkout, orders, invoices, credit notes, inventory, reviews, wishlist, wallet + cashback + referral engine, and the full coupon engine (fraud checks, reservation, rollback, geo/vendor mapping) |
 | `05-modules-food-delivery.md` | Restaurants, menus, combos, orders, zone-based delivery (polygon zones, fee rules, surge, per-km), live tracking, rider assignment, order chat, refunds, food coupons and invoices |
 | `06-modules-homes.md` | Properties, localities, amenities, plans, enquiries, visits, bookmarks, saved searches, rent tracker, EMI/value estimator, moderation |
@@ -61,8 +63,8 @@ Written to `docs/sow/`, one file per area so it can be loaded selectively.
 | `09-modules-vendor-rider-logistics.md` | Vendor onboarding/KYC/approval, store approval and commission management, catalog and availability, settlements and TDS ledger, dropshipping; rider registration and KYC, courier dispatch, assignment algorithm, location streaming, fleet tracking, payouts and settlements |
 | `10-admin-and-reporting.md` | All admin screens, multi-language admin (i18n), platform configuration, banners/ads, audit logging, Chart.js analytics dashboards, and the report specifications (GSTR1/3B/9, HSN, TCS, TDS 194O, daybook, settlements, revenue) with drill-down behaviour, columns and export formats |
 | `11-app-builder.md` | Drag-and-drop mobile home-screen builder: widget library and per-widget schema, layout styles, theming (colours, backgrounds, typography), section ordering and targeting rules, draft/publish/versioning, storage model, and how mobile clients render a published layout |
-| `12-api-contracts.md` | Gateway/BFF route catalogue and REST API v1 resource contracts per Laravel module; Go tracking/dispatch and media worker APIs; Node realtime gateway event protocol (WebSocket, SSE, Pusher/Echo channels); notification worker job contracts — schemas, auth mode, errors, idempotency, side effects, versioning and rate limits |
-| `13-events-and-async.md` | Event broker topology: topics, event schemas and versioning, producers/consumers per module, outbox pattern, retries and DLQ; Redis usage (cache keys/TTL, locks, rate limits, queues); Laravel queue jobs and scheduled commands |
+| `12-api-contracts.md` | Gateway/BFF route catalogue and REST API v1 resource contracts per Laravel service; inter-service API contracts; Go tracking/dispatch and media worker APIs; Node realtime gateway event protocol (WebSocket, SSE, Pusher/Echo channels); notification worker job contracts — schemas, auth mode, service-to-service auth, errors, idempotency, side effects, versioning and rate limits |
+| `13-events-and-async.md` | Event broker topology: topics, event schemas and versioning, producers/consumers per service, outbox pattern, sagas and compensating actions, retries and DLQ; Redis usage (cache keys/TTL, locks, rate limits, queues); Laravel queue jobs and scheduled commands |
 | `14-search-media-geo.md` | Search driver interface with DB full-text, OpenSearch and Algolia implementations — index definitions, mappings, analyzers, sync/reindex, ranking and faceting per module. Media workers: upload flow, image and video transcode ladders, object-storage layout, signed URLs, Cloudflare CDN and cache invalidation. PostGIS: zone polygons, radius and distance queries, per-km fee computation, dispatch geo logic, Google Maps integration for drawing and tracking |
 | `15-ai-services.md` | AI driver interface and provider adapters (Ollama/Llama 3.1 & 3.3, Qwen 2.5 32B, Qwen-Image, OpenAI GPT-4o, Gemini): product name/description/SEO generation, image generation, prompt templates, moderation, cost and rate controls, caching, fallback chain |
 | `16-integrations.md` | 12 payment gateways with a unified payment driver contract (charge, capture, refund, webhook, reconciliation) per provider; SMS/OTP; push notifications; WhatsApp and Telegram bots (order alerts and status updates); email delivery; ERP sync; maps/geocoding — configuration keys referenced by name only |
@@ -72,7 +74,7 @@ Written to `docs/sow/`, one file per area so it can be loaded selectively.
 ## Technical approach
 
 - Table inventory generated from the live schema so column names, types and constraints are exact rather than inferred, then re-expressed as portable PostgreSQL DDL with PostGIS types where geospatial.
-- Business logic currently held in database routines and client libraries (coupon engine, commission cascade, points/wallet, settlements, tax) extracted and restated as explicit application-layer rules with formulas, each assigned to its owning Laravel module or Go/Node service.
+- Business logic currently held in database routines and client libraries (coupon engine, commission cascade, points/wallet, settlements, tax) extracted and restated as explicit application-layer rules with formulas, each assigned to its owning Laravel microservice or Go/Node service.
 - Existing serverless endpoints re-mapped one by one onto the target services, with the new owner named for each.
 - Row-level access rules currently enforced at the database restated as Laravel authorization policies plus query-scoping requirements.
 - Screen inventory derived from the existing route map so every specified screen maps to a real one.
