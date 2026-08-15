@@ -1,51 +1,78 @@
 # Technical Scope of Work — Planext4U Rebuild Specification
 
-Produce a complete, implementation-grade specification that an external team (Codex) could use to rebuild Planext4U from zero. Written at **table + endpoint level**, delivered as versioned Markdown under `docs/sow/` **and** as one consolidated downloadable file.
+Produce a complete, implementation-grade specification an external team (Codex) can use to rebuild Planext4U from zero on the **target architecture below**. Written at **table + endpoint level**, delivered as versioned Markdown under `docs/sow/` **and** as one consolidated downloadable file.
+
+The current running system is used only as the source of truth for **functional behaviour, data model and business rules**. The specification is written entirely against the target stack — no reference to the platform or managed services the existing prototype runs on.
 
 This is a documentation deliverable only. No application code, schema, or configuration changes.
 
-## What the system actually contains (verified from the live project)
+## Target architecture (as specified)
 
-- **205 pages / 152 components**, 1 React SPA, ~200 routes across 6 portals
-- **184 public tables**, **180 database functions/RPCs**, **524 RLS policies**, 190 migrations
-- **19 edge functions**, **7 storage buckets**, roles: `admin, finance, sales, vendor, customer, rider`
-- **9 business modules**: Ecommerce, Food Delivery, Homes (real estate), Socio (social network), Classifieds, Franchise, Vendor, Rider, Admin/Back-office
-- **3 native Capacitor apps** (customer, vendor, rider) + web
-- External systems: Supabase (DB/Auth/Storage/Realtime/Edge), Firebase (Phone Auth, FCM), Razorpay, Paystack, Backblaze B2 + Cloudflare CDN, Odoo, Google Maps, Socket.IO signalling
+```text
+Mobile apps  (Customer • Vendor • Rider)  +  Web
+        │
+        ▼
+API gateway / Mobile BFF
+        │
+        ├── Laravel modular monolith
+        │     ├── Admin
+        │     ├── Catalog management
+        │     ├── Promotions / content
+        │     ├── Customer / account
+        │     └── Orders (initially)
+        │
+        ├── Search service            → OpenSearch / Algolia
+        ├── Tracking / dispatch       → Go
+        ├── Realtime / chat gateway   → Node.js
+        ├── Notification workers      → Node.js or Go
+        └── Media workers             → Go
+
+Shared infrastructure:
+PostgreSQL • PostGIS • Redis • Event broker • Object storage • CDN
+```
+
+## Scope of the product being specified
+
+Functional surface captured from the existing system: ~200 screens across 6 portals, 9 business modules, 184 relational tables, ~180 stored procedures/business routines, 6 roles (`admin, finance, sales, vendor, customer, rider`), 7 object-storage buckets, and 19 backend service endpoints to be re-homed onto the target services.
+
+Modules: Ecommerce • Food Delivery • Homes (real estate) • Socio (social network) • Classifieds • Franchise • Vendor • Rider • Admin/Back-office.
 
 ## Document set
 
-Written to `docs/sow/`, one file per area so Codex can load them selectively.
+Written to `docs/sow/`, one file per area so it can be loaded selectively.
 
 | File | Contents |
 |---|---|
-| `00-overview.md` | Product definition, the 9 modules, portal map, user personas, glossary, non-functional requirements (performance budgets, offline/native, i18n/currency) |
-| `01-architecture.md` | Stack and versions, SPA routing and portal isolation, per-portal auth storage keys, build/deploy topology, Capacitor projects, CDN/media pipeline, caching and React Query strategy, code-splitting |
-| `02-identity-and-rbac.md` | Auth flows (email/password, Firebase phone OTP, Google OAuth), the `user_roles` + `has_role()` security-definer pattern, cross-portal uniqueness rules, session guards, password-setup flow, RLS design principles and the policy taxonomy behind the 524 policies |
-| `03-data-model.md` | Full table inventory grouped by module — columns, types, keys, FKs, enums, indexes, GRANTs, RLS intent per table. Includes ER diagrams in `text` blocks |
-| `04-modules-ecommerce.md` | Catalog, attributes/variants, cart rules, checkout, orders, invoices, credit notes, inventory, reviews, wishlist, wallet/points, referrals, coupon engine (incl. fraud, reservation, rollback, geo/vendor mapping) |
-| `05-modules-food.md` | Restaurants, menus, combos, food orders, live tracking, rider assignment, chats, refunds, food coupons, food invoices |
+| `00-overview.md` | Product definition, the 9 modules, portal map, personas, glossary, non-functional requirements (latency budgets, availability, scale targets, offline/native, i18n and multi-currency) |
+| `01-architecture.md` | The target topology above in detail: gateway/BFF responsibilities and per-client response shaping, Laravel modular-monolith module boundaries and inter-module contracts, service extraction criteria, deployment topology, environments, CI/CD, observability |
+| `02-identity-and-rbac.md` | Auth flows (email/password, phone OTP via SMS provider, Google OAuth), token issuance and refresh at the gateway, role/permission model, per-portal session isolation, cross-portal identity uniqueness, authorization enforcement in Laravel policies + row scoping at the query layer |
+| `03-data-model.md` | Full PostgreSQL schema by module — tables, columns, types, keys, FKs, enums, indexes, partitioning candidates, PostGIS geometry columns and spatial indexes, plus ER diagrams in `text` blocks |
+| `04-modules-ecommerce.md` | Catalog, attributes/variants, cart rules, checkout, orders, invoices, credit notes, inventory, reviews, wishlist, wallet/points, referrals, and the full coupon engine (fraud checks, reservation, rollback, geo/vendor mapping) |
+| `05-modules-food.md` | Restaurants, menus, combos, orders, live tracking, rider assignment, order chat, refunds, food coupons and invoices |
 | `06-modules-homes.md` | Properties, localities, amenities, plans, enquiries, visits, bookmarks, saved searches, rent tracker, EMI/value estimator, moderation |
-| `07-modules-socio.md` | Posts, reels, stories, channels, follows/friends, DMs, notifications, hashtags, shopping tags, moderation/reports, WebRTC calling and signalling contract |
-| `08-modules-classifieds-franchise.md` | Classified ads lifecycle; franchise plans, public registration, projections master, active franchises, registration payments, multi-page receipt PDF spec |
-| `09-modules-vendor-rider.md` | Vendor onboarding/KYC/approval lifecycle, catalog and availability, settlements and TDS ledger, dropshipping, media library; rider registration, KYC, assignments, locations, payouts, settlements |
-| `10-admin-and-reporting.md` | All admin screens, homepage CMS/widget builder, platform variables, module visibility, banners/ads, audit logs, and the 19 report specs (GSTR1/3B/9, HSN, TCS, TDS 194O, daybook, settlements, revenue, etc.) with column and export definitions |
-| `11-api-contracts.md` | Per-edge-function contract (route, auth mode, request/response schema, errors, side effects) for all 19 functions; RPC contracts for the security-definer functions; gateway/webhook contracts |
-| `12-integrations.md` | Razorpay, Paystack, Firebase Phone Auth + FCM, Backblaze B2 + Cloudflare, Odoo sync, Google Maps, email pipeline and domain setup — with required secrets and config keys per integration |
-| `13-design-system.md` | Brand palette and semantic tokens, typography, component variants, mobile/safe-area rules, media standards (WebP 70%/2048px, H.264 480p/45s), accessibility |
-| `14-build-plan.md` | Rebuild sequenced into phases with dependencies, acceptance criteria per phase, test strategy (Vitest + Playwright), migration/seed order, and a definition of done |
+| `07-modules-socio.md` | Posts, reels, stories, channels, follows/friends, DMs, notifications, hashtags, shopping tags, moderation; realtime gateway protocol and WebRTC signalling contract |
+| `08-modules-classifieds-franchise.md` | Classified ad lifecycle; franchise plans, public registration, projections master, active franchises, registration payments, multi-page receipt PDF spec |
+| `09-modules-vendor-rider.md` | Vendor onboarding/KYC/approval lifecycle, catalog and availability, settlements and TDS ledger, dropshipping; rider registration, KYC, dispatch and assignment, location streaming, payouts and settlements |
+| `10-admin-and-reporting.md` | All admin screens, homepage/CMS widget builder, platform configuration, banners/ads, audit logging, and the 19 report specifications (GSTR1/3B/9, HSN, TCS, TDS 194O, daybook, settlements, revenue) with columns and export formats |
+| `11-api-contracts.md` | Gateway/BFF route catalogue; REST resource contracts per Laravel module; Go tracking/dispatch and media worker APIs; Node realtime gateway event protocol; notification worker job contracts — request/response schemas, auth mode, errors, idempotency, side effects |
+| `12-events-and-async.md` | Event broker topology: topics, event schemas and versioning, producers/consumers per module, outbox pattern, retries and DLQ, Redis usage (cache keys/TTL, locks, rate limits, queues), scheduled jobs |
+| `13-search-media-geo.md` | Search service: index definitions, mappings, analyzers, sync/reindex strategy, ranking and faceting per module. Media workers: upload flow, transcode ladder (image and video), object-storage layout, signed URLs, CDN and cache-invalidation. PostGIS: distance queries, service-area polygons, dispatch geo logic |
+| `14-integrations.md` | Payment gateways, SMS/OTP provider, push notification provider, email delivery, ERP sync, maps/geocoding — with required configuration keys per integration, referenced by name only |
+| `15-design-system.md` | Brand palette and tokens, typography, component library, mobile/safe-area rules, media standards (WebP 70% / 2048px, H.264 480p / 45s), accessibility |
+| `16-build-plan.md` | Rebuild sequenced into phases with dependencies, acceptance criteria per phase, data migration and seed order, test strategy (unit, contract, load, end-to-end), and a definition of done |
 
 ## Technical approach
 
-- Table inventory generated from the live schema (`information_schema`, `pg_indexes`, `pg_policies`) so column names, types and constraints are exact rather than inferred.
-- Edge-function contracts derived by reading each `supabase/functions/*/index.ts` and recording actual request/response shapes and auth handling.
-- Route inventory generated from `src/App.tsx` and cross-referenced to page components, so every screen in the spec maps to a real one.
-- Business rules extracted from `src/lib/*` (coupon engine, commission cascade, points, settlements, tax) and stated as explicit rules with formulas, not prose summaries.
-- Secrets are referenced by **name only** — no values, no project identifiers, no dashboard links.
+- Table inventory generated from the live schema so column names, types and constraints are exact rather than inferred, then re-expressed as portable PostgreSQL DDL with PostGIS types where geospatial.
+- Business logic currently held in database routines and client libraries (coupon engine, commission cascade, points/wallet, settlements, tax) is extracted and restated as explicit application-layer rules with formulas, assigned to the owning Laravel module or Go/Node service.
+- Existing serverless endpoints are re-mapped one by one onto the target services, with the new owner named for each.
+- Row-level access rules currently enforced at the database are restated as authorization policies and query-scoping requirements in the Laravel layer.
+- Screen inventory derived from the existing route map so every specified screen maps to a real one.
+- Secrets and credentials referenced by **name only** — never values.
 
 ## Deliverables
 
-1. `docs/sow/` — the 15 Markdown files above, committed to the repo.
+1. `docs/sow/` — the 17 Markdown files above, committed to the repo.
 2. `/mnt/documents/Planext4U-Technical-SOW.md` — single consolidated copy for download and external sharing.
 
-Expected size: 40+ pages equivalent. Given the volume, I'll build it in three passes — foundation (00-03), modules (04-10), contracts and plan (11-14) — so you can review and correct direction after each pass.
+Expected size: 50+ pages equivalent. Built in three passes — foundation (00-03), modules (04-10), platform contracts and build plan (11-16) — so you can review and correct direction after each pass.
