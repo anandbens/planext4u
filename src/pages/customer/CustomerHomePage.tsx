@@ -765,6 +765,9 @@ export default function CustomerHomePage() {
         {/* ── Sponsored Ad ── */}
         <div className="px-3 py-1 md:px-4 md:py-2"><BannerAd placement="home" /></div>
 
+        {/* ── Google Ads ── */}
+        <div className="px-3 py-1 md:px-4 md:py-2"><GoogleAdUnit placement="ecommerce" /></div>
+
         {/* ── Classifieds CTA ── */}
         {modules.classifieds && (
           <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="px-4 py-3">

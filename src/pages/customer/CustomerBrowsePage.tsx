@@ -462,6 +462,9 @@ export default function CustomerBrowsePage() {
           <BannerAd placement="products" />
         </div>
 
+        {/* Google AdSense display unit for the shopping grid */}
+        <GoogleAdUnit placement="ecommerce" className="mb-3" />
+
 
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
