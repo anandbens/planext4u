@@ -15,6 +15,7 @@ import { api, CartItem } from "@/lib/api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { BannerAd } from "@/components/customer/BannerAd";
+import { GoogleAdUnit } from "@/components/customer/GoogleAdUnit";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";
@@ -460,6 +461,9 @@ export default function CustomerBrowsePage() {
         <div className="mb-3">
           <BannerAd placement="products" />
         </div>
+
+        {/* Google AdSense display unit for the shopping grid */}
+        <GoogleAdUnit placement="ecommerce" className="mb-3" />
 
 
         {isLoading ? (
