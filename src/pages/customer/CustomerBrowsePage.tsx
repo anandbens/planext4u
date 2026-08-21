@@ -15,6 +15,7 @@ import { api, CartItem } from "@/lib/api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { BannerAd } from "@/components/customer/BannerAd";
+import { GoogleAdUnit } from "@/components/customer/GoogleAdUnit";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";

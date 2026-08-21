@@ -23,6 +23,7 @@ import { useCurrency } from "@/lib/country-context";
 import { RatingPopup } from "@/components/customer/RatingPopup";
 import { CouponPopup } from "@/components/customer/CouponPopup";
 import { BannerAd } from "@/components/customer/BannerAd";
+import { GoogleAdUnit } from "@/components/customer/GoogleAdUnit";
 import { SpecialOffersWidget } from "@/components/customer/SpecialOffersWidget";
 import { VideoAdOverlay } from "@/components/customer/VideoAdOverlay";
 import { FloatingVideoAd } from "@/components/customer/FloatingVideoAd";
