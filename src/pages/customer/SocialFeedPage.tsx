@@ -1163,13 +1163,20 @@ export default function SocialFeedPage() {
           const slot = Math.floor(idx / 5);
           // Rotate ads by priority order; if multiple ads share a slot bucket, cycle through them.
           const ad = showAd ? socioAds[slot % socioAds.length] : null;
+          // Google AdSense in-feed unit, offset from the platform ad slots so
+          // the two never stack back to back.
+          const showGoogleAd = (idx + 1) % 5 === 3;
           return (
             <div key={post.id}>
               <PostCard post={post} />
               {ad && <SocialFeedAd ad={ad} />}
+              {showGoogleAd && (
+                <GoogleAdUnit placement="socio" format="fluid" labelled className="bg-card border-b border-border pb-3" />
+              )}
             </div>
           );
         })}
+
         <div className="py-6 px-4 text-center">
           <p className="text-sm font-semibold mb-1">You're All Caught Up</p>
           <p className="text-xs text-muted-foreground">You've seen all new posts from the last 3 days.</p>
