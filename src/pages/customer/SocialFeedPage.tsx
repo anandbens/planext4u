@@ -1167,12 +1167,13 @@ export default function SocialFeedPage() {
           // Exactly one ad unit after every 5 organic posts (posts 1-5, 6-10, ...).
           const isAdSlot = (idx + 1) % FEED_AD_INTERVAL === 0;
           const slot = Math.floor(idx / FEED_AD_INTERVAL);
-          // Alternate platform ads and the Google in-feed unit within the same
-          // slot so two ad units never render back to back.
-          const preferGoogle = slot % 2 === 1;
+          // Alternate platform and Google units across slots so the two never
+          // render back to back; fall back to whichever source is available.
           const platformAd = socioAds.length > 0 ? socioAds[slot % socioAds.length] : null;
-          const showGoogleAd = isAdSlot && (preferGoogle || !platformAd);
+          const useGoogleSlot = googleAdsActive && (slot % 2 === 1 || !platformAd);
+          const showGoogleAd = isAdSlot && useGoogleSlot;
           const ad = isAdSlot && !showGoogleAd ? platformAd : null;
+
           return (
             <div key={post.id}>
               <PostCard post={post} />
