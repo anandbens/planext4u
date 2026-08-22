@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { api, ProductVariant } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { BannerAd } from "@/components/customer/BannerAd";
+import { GoogleAdUnit, useAdSenseActive } from "@/components/customer/GoogleAdUnit";
 import DOMPurify from "dompurify";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
@@ -73,6 +74,7 @@ export default function CustomerProductPage() {
   });
 
   const isVariable = (product as any)?.product_type === "variable" && variants && variants.length > 0;
+  const isGoogleAdActive = useAdSenseActive("ecommerce");
 
   // Build attribute options from variants (only show available combinations)
   const attrOptions = useMemo(() => {
@@ -531,7 +533,11 @@ export default function CustomerProductPage() {
         </div>
       </div>
       <div className="px-3 pt-2 pb-24 md:px-4 md:pt-3 md:pb-6">
-        <BannerAd placement="product_detail" />
+        {isGoogleAdActive ? (
+          <GoogleAdUnit placement="ecommerce" className="w-full" format="auto" />
+        ) : (
+          <BannerAd placement="product_detail" />
+        )}
       </div>
       <LoginPromptDialog open={loginPromptOpen} onOpenChange={setLoginPromptOpen} message="Please sign in to add items to your cart and place orders." />
     </CustomerLayout>
