@@ -18,8 +18,7 @@ import { usePlacementAds, SocialFeedAd } from "@/components/customer/BannerAd";
 import { GoogleAdUnit, useAdSenseActive } from "@/components/customer/GoogleAdUnit";
 import PlayableVideo from "@/components/social/PlayableVideo";
 
-/** Exactly one ad unit is inserted after every N organic feed posts. */
-const FEED_AD_INTERVAL = 5;
+import { resolveFeedAdSlot } from "@/lib/feed-ads";
 
 
 const FALLBACK_POSTS = [
@@ -1166,15 +1165,13 @@ export default function SocialFeedPage() {
       {/* Feed */}
       <div className="pb-28 md:pb-8">
         {posts.map((post: any, idx: number) => {
-          // Exactly one ad unit after every 5 organic posts (posts 1-5, 6-10, ...).
-          const isAdSlot = (idx + 1) % FEED_AD_INTERVAL === 0;
-          const slot = Math.floor(idx / FEED_AD_INTERVAL);
-          // Alternate platform and Google units across slots so the two never
-          // render back to back; fall back to whichever source is available.
-          const platformAd = socioAds.length > 0 ? socioAds[slot % socioAds.length] : null;
-          const useGoogleSlot = googleAdsActive && (slot % 2 === 1 || !platformAd);
-          const showGoogleAd = isAdSlot && useGoogleSlot;
-          const ad = isAdSlot && !showGoogleAd ? platformAd : null;
+          // Exactly one ad unit after every 5 organic posts (posts 1-5, 6-10, ...),
+          // alternating platform/Google sources so two ads never render back to back.
+          const { platformAdIndex, showGoogleAd } = resolveFeedAdSlot(idx, {
+            platformAdCount: socioAds.length,
+            googleAdsActive,
+          });
+          const ad = platformAdIndex !== null ? socioAds[platformAdIndex] : null;
 
           return (
             <div key={post.id}>
