@@ -27,6 +27,15 @@ const MODULE_KEYS = [
   'module_food_enabled',
 ];
 
+const ADSENSE_KEYS = [
+  'adsense_enabled',
+  'adsense_client_id',
+  'adsense_slot_socio',
+  'adsense_slot_ecommerce',
+  'admob_app_id',
+  'admob_ad_unit_banner',
+];
+
 const MODULE_LABELS: Record<string, string> = {
   module_shop_enabled: 'Shop',
   module_socio_enabled: 'Socio',
@@ -36,8 +45,17 @@ const MODULE_LABELS: Record<string, string> = {
   module_food_enabled: 'Food',
 };
 
+const ADSENSE_LABELS: Record<string, string> = {
+  adsense_enabled: 'Google AdSense Enabled',
+  adsense_client_id: 'AdSense Publisher ID (ca-pub-...)',
+  adsense_slot_socio: 'Socio In-Feed Slot ID',
+  adsense_slot_ecommerce: 'Ecommerce Display Slot ID',
+  admob_app_id: 'AdMob App ID',
+  admob_ad_unit_banner: 'AdMob Banner Ad Unit ID',
+};
+
 const isBooleanKey = (k: string) =>
-  MODULE_KEYS.includes(k) || CALL_KEYS.includes(k) || k === 'referral_cooling_enabled';
+  MODULE_KEYS.includes(k) || CALL_KEYS.includes(k) || k === 'referral_cooling_enabled' || k === 'adsense_enabled';
 
 export default function PlatformVariablesPage() {
   const [variables, setVariables] = useState<PlatformVariable[]>([]);
