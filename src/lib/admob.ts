@@ -1,0 +1,59 @@
+/**
+ * AdMob (native Android / iOS only) banner wiring.
+ *
+ * Config comes from `platform_variables` so ad units can be swapped without a
+ * new APK:
+ *   admob_enabled          -> "true" | "false" (defaults to true when an ad unit exists)
+ *   admob_ad_unit_banner   -> "ca-app-pub-XXXXXXXX/YYYYYYYY"
+ *
+ * On the web this module is a no-op — AdSense (GoogleAdUnit) handles browsers.
+ */
+import { Capacitor } from "@capacitor/core";
+import { supabase } from "@/integrations/supabase/client";
+
+let initialized = false;
+
+async function loadConfig() {
+  const { data } = await supabase
+    .from("platform_variables")
+    .select("key, value")
+    .in("key", ["admob_enabled", "admob_ad_unit_banner"]);
+  const map = new Map((data || []).map((r: any) => [r.key, String(r.value ?? "").trim()]));
+  const banner = map.get("admob_ad_unit_banner") || "";
+  const enabledRaw = (map.get("admob_enabled") || "").toLowerCase();
+  const enabled = enabledRaw ? enabledRaw === "true" : Boolean(banner);
+  return { enabled, banner };
+}
+
+/** Initialise the AdMob SDK and show the bottom banner (native only). */
+export async function initAdMobBanner() {
+  if (initialized) return;
+  if (!Capacitor.isNativePlatform()) return;
+  initialized = true;
+
+  try {
+    const { enabled, banner } = await loadConfig();
+    if (!enabled || !banner) return;
+
+    const { AdMob, BannerAdPosition, BannerAdSize } = await import("@capacitor-community/admob");
+    await AdMob.initialize({ initializeForTesting: false });
+    await AdMob.showBanner({
+      adId: banner,
+      adSize: BannerAdSize.ADAPTIVE_BANNER,
+      position: BannerAdPosition.BOTTOM_CENTER,
+      margin: 0,
+    });
+  } catch {
+    /* non-fatal — never block the app because ads failed */
+  }
+}
+
+export async function hideAdMobBanner() {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    const { AdMob } = await import("@capacitor-community/admob");
+    await AdMob.hideBanner();
+  } catch {
+    /* non-fatal */
+  }
+}
