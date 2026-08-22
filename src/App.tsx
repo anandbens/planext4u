@@ -588,6 +588,7 @@ const AppRoutes = () => {
           <Route path="/app/set-password" element={<SetPasswordPage />} />
           <Route path="/app/terms" element={<TermsPage />} />
           <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/app/account-deletion" element={<AccountDeletionPage />} />
           <Route path="/app/cms/:slug" element={<CustomerCMSPage />} />
           <Route path="/app/browse" element={<GuestPage><ShopGate><CustomerBrowsePage /></ShopGate></GuestPage>} />
           <Route path="/app/categories" element={<GuestPage><ShopGate><AllCategoriesPage /></ShopGate></GuestPage>} />
