@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { api, ProductVariant } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { BannerAd } from "@/components/customer/BannerAd";
+import { GoogleAdUnit, useAdSenseActive } from "@/components/customer/GoogleAdUnit";
 import DOMPurify from "dompurify";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
