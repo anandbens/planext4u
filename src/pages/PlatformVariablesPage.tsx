@@ -95,12 +95,16 @@ export default function PlatformVariablesPage() {
   const moduleVars = MODULE_KEYS
     .map(k => variables.find(v => v.key === k))
     .filter((v): v is PlatformVariable => !!v);
+  const adsenseVars = ADSENSE_KEYS
+    .map(k => variables.find(v => v.key === k))
+    .filter((v): v is PlatformVariable => !!v);
   const pointsVars = variables.filter(v => POINTS_KEYS.includes(v.key));
   const callVars = variables.filter(v => CALL_KEYS.includes(v.key));
   const otherVars = variables.filter(v =>
     !POINTS_KEYS.includes(v.key) &&
     !CALL_KEYS.includes(v.key) &&
-    !MODULE_KEYS.includes(v.key)
+    !MODULE_KEYS.includes(v.key) &&
+    !ADSENSE_KEYS.includes(v.key)
   );
 
   const renderRow = (v: PlatformVariable, labelOverride?: string) => {
