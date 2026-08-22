@@ -46,7 +46,7 @@ All uploads go through `media-workers`: images to WebP (quality 70, max 2048 px)
 
 - Composition: content from followed accounts, plus a configurable proportion of recommended content, ranked by recency, affinity and engagement velocity.
 - **Pagination is 20 items per page**, cursor-based on `(ranked_score, id)` — never offset pagination.
-- **Advertisement injection**: a banner ad slot is inserted after every 4 organic items, sourced from the ads placement service; ads support image and video creatives with separate desktop and mobile assets, and must degrade gracefully when creative fields are absent.
+- **Advertisement injection**: a banner ad slot is inserted after every 5 organic items, sourced from the ads placement service; ads support image and video creatives with separate desktop and mobile assets, and must degrade gracefully when creative fields are absent.
 - Feed reads are served from a cache with a short TTL; writes fan out through events.
 
 ## 5. Engagement
@@ -98,6 +98,6 @@ Path-based deep links to posts, reels, stories, profiles, hashtags and audio pag
 2. A blocked account cannot observe or reach the blocker by any surface.
 3. DM creation between non-mutuals is rejected server-side and limited to one pending request.
 4. Feed pages return exactly 20 items with a stable cursor and no duplicates or gaps across pages.
-5. An ad appears after every 4th organic item and never breaks the feed when creative fields are missing.
+5. An ad appears after every 5th organic item and never breaks the feed when creative fields are missing.
 6. A story becomes unreadable at exactly 24 h from publication, including via a direct link.
 7. Editing a post sets `is_edited` through the trigger even if the client omits it.
