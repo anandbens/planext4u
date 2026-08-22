@@ -1160,13 +1160,15 @@ export default function SocialFeedPage() {
       {/* Feed */}
       <div className="pb-28 md:pb-8">
         {posts.map((post: any, idx: number) => {
-          const showAd = socioAds.length > 0 && (idx + 1) % 5 === 0;
-          const slot = Math.floor(idx / 5);
-          // Rotate ads by priority order; if multiple ads share a slot bucket, cycle through them.
-          const ad = showAd ? socioAds[slot % socioAds.length] : null;
-          // Google AdSense in-feed unit, offset from the platform ad slots so
-          // the two never stack back to back.
-          const showGoogleAd = (idx + 1) % 5 === 3;
+          // Exactly one ad unit after every 5 organic posts (posts 1-5, 6-10, ...).
+          const isAdSlot = (idx + 1) % FEED_AD_INTERVAL === 0;
+          const slot = Math.floor(idx / FEED_AD_INTERVAL);
+          // Alternate platform ads and the Google in-feed unit within the same
+          // slot so two ad units never render back to back.
+          const preferGoogle = slot % 2 === 1;
+          const platformAd = socioAds.length > 0 ? socioAds[slot % socioAds.length] : null;
+          const showGoogleAd = isAdSlot && (preferGoogle || !platformAd);
+          const ad = isAdSlot && !showGoogleAd ? platformAd : null;
           return (
             <div key={post.id}>
               <PostCard post={post} />
@@ -1177,6 +1179,7 @@ export default function SocialFeedPage() {
             </div>
           );
         })}
+
 
         <div className="py-6 px-4 text-center">
           <p className="text-sm font-semibold mb-1">You're All Caught Up</p>
