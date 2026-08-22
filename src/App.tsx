@@ -111,6 +111,7 @@ const CustomerPhoneLoginPage = lazy(() => import("./pages/customer/CustomerPhone
 const SetLocationPage = lazy(() => import("./pages/customer/SetLocationPage"));
 const TermsPage = lazy(() => import("./pages/customer/TermsPage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/customer/PrivacyPolicyPage"));
+const AccountDeletionPage = lazy(() => import("./pages/customer/AccountDeletionPage"));
 const AuthCallbackPage = lazy(() => import("./pages/customer/AuthCallbackPage"));
 const CustomerCMSPage = lazy(() => import("./pages/customer/CustomerCMSPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/customer/ForgotPasswordPage"));
@@ -587,6 +588,7 @@ const AppRoutes = () => {
           <Route path="/app/set-password" element={<SetPasswordPage />} />
           <Route path="/app/terms" element={<TermsPage />} />
           <Route path="/app/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/app/account-deletion" element={<AccountDeletionPage />} />
           <Route path="/app/cms/:slug" element={<CustomerCMSPage />} />
           <Route path="/app/browse" element={<GuestPage><ShopGate><CustomerBrowsePage /></ShopGate></GuestPage>} />
           <Route path="/app/categories" element={<GuestPage><ShopGate><AllCategoriesPage /></ShopGate></GuestPage>} />
