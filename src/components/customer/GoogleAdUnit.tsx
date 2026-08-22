@@ -137,3 +137,20 @@ export function GoogleAdUnit({
     </div>
   );
 }
+
+/**
+ * True when AdSense is enabled AND the placement's slot id is configured.
+ * Lets feeds decide whether a Google slot would actually render, so an ad
+ * position is never left empty (and never doubled up with a platform ad).
+ */
+export function useAdSenseActive(placement: "socio" | "ecommerce"): boolean {
+  const [config, setConfig] = useState<AdSenseConfig | null>(cachedConfig);
+  useEffect(() => {
+    let mounted = true;
+    void loadAdSenseConfig().then((c) => { if (mounted) setConfig(c); });
+    return () => { mounted = false; };
+  }, []);
+  const slot = placement === "socio" ? config?.slotSocio : config?.slotEcommerce;
+  return Boolean(config?.enabled && config?.clientId && slot);
+}
+
