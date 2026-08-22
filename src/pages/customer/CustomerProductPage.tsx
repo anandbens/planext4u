@@ -533,7 +533,11 @@ export default function CustomerProductPage() {
         </div>
       </div>
       <div className="px-3 pt-2 pb-24 md:px-4 md:pt-3 md:pb-6">
-        <BannerAd placement="product_detail" />
+        {isGoogleAdActive ? (
+          <GoogleAdUnit placement="ecommerce" className="w-full" format="auto" />
+        ) : (
+          <BannerAd placement="product_detail" />
+        )}
       </div>
       <LoginPromptDialog open={loginPromptOpen} onOpenChange={setLoginPromptOpen} message="Please sign in to add items to your cart and place orders." />
     </CustomerLayout>
