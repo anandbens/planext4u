@@ -173,6 +173,6 @@ export function useAdSenseActive(placement: "socio" | "ecommerce"): boolean {
     return () => { mounted = false; };
   }, []);
   const slot = placement === "socio" ? config?.slotSocio : config?.slotEcommerce;
-  return Boolean(config?.enabled && config?.clientId && slot);
+  return Boolean(config?.enabled && config?.clientId && isValidSlot(slot));
 }
 
