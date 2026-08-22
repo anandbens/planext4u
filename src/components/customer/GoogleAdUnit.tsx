@@ -25,6 +25,13 @@ type AdSenseConfig = {
 let cachedConfig: AdSenseConfig | null = null;
 let inflight: Promise<AdSenseConfig> | null = null;
 
+// AdSense slot IDs are numeric strings. Reject empty, whitespace-only, or
+// non-numeric values early so a malformed admin entry never reaches Google.
+function isValidSlot(slot: string | undefined | null): boolean {
+  if (!slot) return false;
+  return /^\d+$/.test(String(slot).trim());
+}
+
 async function loadAdSenseConfig(): Promise<AdSenseConfig> {
   if (cachedConfig) return cachedConfig;
   if (inflight) return inflight;
