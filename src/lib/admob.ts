@@ -13,17 +13,24 @@ import { supabase } from "@/integrations/supabase/client";
 
 let initialized = false;
 
+/** Approved production banner unit (fallback when the platform variable is unset). */
+const APPROVED_BANNER_UNIT = "ca-app-pub-6006362146695296/8328252043";
+/** Stale / retired banner units that must never be requested again. */
+const STALE_BANNER_UNITS = new Set(["ca-app-pub-6006362146695296/4966935926"]);
+
 async function loadConfig() {
   const { data } = await supabase
     .from("platform_variables")
     .select("key, value")
     .in("key", ["admob_enabled", "admob_ad_unit_banner"]);
   const map = new Map((data || []).map((r: any) => [r.key, String(r.value ?? "").trim()]));
-  const banner = map.get("admob_ad_unit_banner") || "";
+  let banner = map.get("admob_ad_unit_banner") || "";
+  if (!banner || STALE_BANNER_UNITS.has(banner)) banner = APPROVED_BANNER_UNIT;
   const enabledRaw = (map.get("admob_enabled") || "").toLowerCase();
   const enabled = enabledRaw ? enabledRaw === "true" : Boolean(banner);
   return { enabled, banner };
 }
+
 
 /** Initialise the AdMob SDK and show the bottom banner (native only). */
 export async function initAdMobBanner() {
