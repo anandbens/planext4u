@@ -74,6 +74,7 @@ export default function CustomerProductPage() {
   });
 
   const isVariable = (product as any)?.product_type === "variable" && variants && variants.length > 0;
+  const isGoogleAdActive = useAdSenseActive("ecommerce");
 
   // Build attribute options from variants (only show available combinations)
   const attrOptions = useMemo(() => {
