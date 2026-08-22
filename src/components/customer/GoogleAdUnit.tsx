@@ -101,7 +101,12 @@ export function GoogleAdUnit({
   }, []);
 
   const slot = placement === "socio" ? config?.slotSocio : config?.slotEcommerce;
-  const active = Boolean(config?.enabled && config?.clientId && slot);
+  const slotValid = isValidSlot(slot);
+  const active = Boolean(config?.enabled && config?.clientId && slotValid);
+
+  // Surface a clear status message when AdSense is enabled but the slot is
+  // missing or malformed, so admins know why the unit is blank.
+  const showStatus = Boolean(config?.enabled && config?.clientId && !slotValid);
 
   useEffect(() => {
     if (!active || !config || pushedRef.current) return;
@@ -116,7 +121,17 @@ export function GoogleAdUnit({
     }
   }, [active, config]);
 
-  if (!active || !config) return null;
+  if (!active || !config) {
+    if (!showStatus) return null;
+    return (
+      <div className={`rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center ${className}`}>
+        <p className="text-xs font-medium text-muted-foreground">Google Ads — slot not configured</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">
+          Add a valid numeric <strong>adsense_slot_{placement}</strong> in Admin → Platform Variables.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className={className}>
