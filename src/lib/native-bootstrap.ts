@@ -79,4 +79,12 @@ export async function initNativeBridges() {
   } catch (e) {
     /* non-fatal */
   }
+
+  // -------- AdMob banner (native only) --------
+  try {
+    const { initAdMobBanner } = await import("./admob");
+    void initAdMobBanner();
+  } catch {
+    /* non-fatal */
+  }
 }
