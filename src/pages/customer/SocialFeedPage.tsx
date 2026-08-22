@@ -1104,6 +1104,8 @@ export default function SocialFeedPage() {
   ];
 
   const socioAds = usePlacementAds("socio");
+  const googleAdsActive = useAdSenseActive("socio");
+
 
   const posts = dbPosts.length > 0 ? dbPosts.map((p: any) => ({
     ...p,
