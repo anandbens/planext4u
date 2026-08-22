@@ -111,6 +111,7 @@ const CustomerPhoneLoginPage = lazy(() => import("./pages/customer/CustomerPhone
 const SetLocationPage = lazy(() => import("./pages/customer/SetLocationPage"));
 const TermsPage = lazy(() => import("./pages/customer/TermsPage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/customer/PrivacyPolicyPage"));
+const AccountDeletionPage = lazy(() => import("./pages/customer/AccountDeletionPage"));
 const AuthCallbackPage = lazy(() => import("./pages/customer/AuthCallbackPage"));
 const CustomerCMSPage = lazy(() => import("./pages/customer/CustomerCMSPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/customer/ForgotPasswordPage"));
