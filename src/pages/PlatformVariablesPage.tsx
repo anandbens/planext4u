@@ -149,6 +149,7 @@ export default function PlatformVariablesPage() {
       </div>
       <div className="bg-card rounded-xl border border-border/50 p-6 space-y-6" style={{ boxShadow: 'var(--shadow-sm)' }}>
         {renderGroup("Module Visibility (toggle 'Coming Soon')", moduleVars, MODULE_LABELS)}
+        {renderGroup("Google Ads (AdSense / AdMob)", adsenseVars, ADSENSE_LABELS)}
         {renderGroup("Points & Rewards", pointsVars)}
         {renderGroup("Voice & Video Calls (Socio DMs)", callVars)}
         {renderGroup("Other Settings", otherVars)}
