@@ -1,0 +1,2 @@
+insert into public.platform_variables (id, key, value) values (gen_random_uuid(),'admob_app_id','ca-app-pub-6006362146695296~2940657010'),(gen_random_uuid(),'admob_ad_unit_banner','ca-app-pub-6006362146695296/4966935926') on conflict (key) do update set value = excluded.value;
+update public.platform_variables set value='ca-pub-6006362146695296' where key='adsense_client_id';
