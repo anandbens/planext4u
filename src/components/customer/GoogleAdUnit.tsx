@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -92,7 +93,9 @@ export function GoogleAdUnit({
 }: GoogleAdUnitProps) {
   const [config, setConfig] = useState<AdSenseConfig | null>(cachedConfig);
   const insRef = useRef<HTMLModElement | null>(null);
+  const nativeSlotRef = useRef<HTMLDivElement | null>(null);
   const pushedRef = useRef(false);
+  const [nativeSlotVisible, setNativeSlotVisible] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -102,14 +105,27 @@ export function GoogleAdUnit({
 
   const slot = placement === "socio" ? config?.slotSocio : config?.slotEcommerce;
   const slotValid = isValidSlot(slot);
-  const active = Boolean(config?.enabled && config?.clientId && slotValid);
+  // Native builds use the independently configured AdMob banner. Do not make
+  // an approved Android ad depend on the website's AdSense activation/slot.
+  const isNative = Capacitor.isNativePlatform();
+  const active = isNative || Boolean(config?.enabled && config?.clientId && slotValid);
 
   // Surface a clear status message when AdSense is enabled but the slot is
   // missing or malformed, so admins know why the unit is blank.
-  const showStatus = Boolean(config?.enabled && config?.clientId && !slotValid);
+  const showStatus = !isNative && Boolean(config?.enabled && config?.clientId && !slotValid);
 
   useEffect(() => {
-    if (!active || !config || pushedRef.current) return;
+    if (!active || !isNative || !nativeSlotRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setNativeSlotVisible(entry.isIntersecting && entry.intersectionRatio >= 0.35),
+      { threshold: [0, 0.35, 1] },
+    );
+    observer.observe(nativeSlotRef.current);
+    return () => observer.disconnect();
+  }, [active, isNative]);
+
+  useEffect(() => {
+    if (!active || !config || isNative || pushedRef.current) return;
     ensureAdSenseScript(config.clientId);
     try {
       const w = window as any;
@@ -119,9 +135,17 @@ export function GoogleAdUnit({
     } catch {
       /* AdSense not reachable (blocked/offline) — fail silently */
     }
-  }, [active, config]);
+  }, [active, config, isNative]);
 
-  if (!active || !config) {
+  useEffect(() => {
+    if (!active || !isNative || !nativeSlotVisible) return;
+    void import("@/lib/admob").then(({ acquireAdMobBanner }) => acquireAdMobBanner());
+    return () => {
+      void import("@/lib/admob").then(({ releaseAdMobBanner }) => releaseAdMobBanner());
+    };
+  }, [active, isNative, nativeSlotVisible]);
+
+  if (!active || (!isNative && !config)) {
     if (!showStatus) return null;
     return (
       <div className={`rounded-lg border border-dashed border-border bg-muted/40 p-4 text-center ${className}`}>
@@ -129,6 +153,27 @@ export function GoogleAdUnit({
         <p className="text-[10px] text-muted-foreground mt-0.5">
           Add a valid numeric <strong>adsense_slot_{placement}</strong> in Admin → Platform Variables.
         </p>
+      </div>
+    );
+  }
+
+  // Native banners are overlays, so request the approved AdMob banner only
+  // while this exact in-feed/shop slot is visible instead of keeping a global
+  // banner on unrelated screens.
+  if (isNative) {
+    return (
+      <div ref={nativeSlotRef} className={`min-h-[64px] bg-card ${className}`}>
+        {labelled && (
+          <div className="flex items-center gap-2 px-4 py-2">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="text-xs font-bold text-primary">Ad</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Sponsored</p>
+              <p className="text-[11px] text-muted-foreground">Google Ads</p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -172,7 +217,9 @@ export function useAdSenseActive(placement: "socio" | "ecommerce"): boolean {
     void loadAdSenseConfig().then((c) => { if (mounted) setConfig(c); });
     return () => { mounted = false; };
   }, []);
+  // In the Android/iOS shell these positions are served by AdMob, whose
+  // configuration and approval are separate from the website's AdSense slot.
+  if (Capacitor.isNativePlatform()) return true;
   const slot = placement === "socio" ? config?.slotSocio : config?.slotEcommerce;
   return Boolean(config?.enabled && config?.clientId && isValidSlot(slot));
 }
-

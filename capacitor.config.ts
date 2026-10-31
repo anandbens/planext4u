@@ -4,12 +4,9 @@ const config: CapacitorConfig = {
   appId: "com.p4u_customer",
   appName: "Planext4u",
   webDir: "dist",
-  server: {
-    url: "https://www.planext4u.net/app",
-    androidScheme: "https",
-    iosScheme: "https",
-    allowNavigation: ["www.planext4u.net", "planext4u.net", "*.planext4u.net", "*.firebaseapp.com", "*.googleapis.com"],
-  },
+  // Ship the tested web bundle with the app. Loading the live site here made an
+  // installed APK silently use older login code until the website deployment
+  // caught up with the native release.
   ios: {
     // Keep the WebView clear of the status bar / home indicator
     contentInset: "always",
@@ -21,6 +18,9 @@ const config: CapacitorConfig = {
     limitsNavigationsToAppBoundDomains: false,
   },
   plugins: {
+    FirebaseAuthentication: {
+      providers: ["phone"],
+    },
     SplashScreen: {
       launchShowDuration: 2000,
       backgroundColor: "#009999",

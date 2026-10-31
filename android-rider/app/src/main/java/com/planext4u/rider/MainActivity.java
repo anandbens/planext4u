@@ -12,7 +12,7 @@ import com.getcapacitor.BridgeActivity;
 import com.razorpay.RzpCheckout;
 
 public class MainActivity extends BridgeActivity {
-    private static final String RIDER_LAUNCH_URL = "https://www.planext4u.net/rider/login?portal=rider";
+    private static final String RIDER_LAUNCH_URL = "https://www.planext4u.com/rider/login?portal=rider";
     private static final int RC_RUNTIME_PERMS = 4321;
 
     @Override

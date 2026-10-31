@@ -1,10 +1,11 @@
 import { initializeApp } from "firebase/app";
 import { Capacitor } from "@capacitor/core";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, signOut } from "firebase/auth";
 
-const PUBLISHED_APP_URL = "https://www.planext4u.net";
+const PUBLISHED_APP_URL = "https://www.planext4u.com";
 const FIREBASE_FALLBACK_AUTH_DOMAIN = "p4u-console.firebaseapp.com";
-const PLANEXT_HOSTNAMES = ["www.planext4u.net", "planext4u.net"];
+const PLANEXT_HOSTNAMES = ["www.planext4u.com", "planext4u.com"];
 
 const firebaseConfig = {
   apiKey: "AIzaSyDfQ-0baPOXaa31xnQXranIIwvHC2zbmiE",
@@ -32,6 +33,7 @@ const PRODUCTION_URL = PUBLISHED_APP_URL;
 const RECAPTCHA_RENDER_TIMEOUT_MS = 4500;
 const SIGN_IN_WITH_PHONE_TIMEOUT_MS = 15000;
 const MAX_OTP_ATTEMPTS = 2;
+const NATIVE_PHONE_TIMEOUT_SECONDS = 60;
 
 export function otpLog(step: string, meta: Record<string, unknown> = {}) {
   try {
@@ -113,14 +115,70 @@ export function ensureFirebaseHostname(): boolean {
 }
 
 let confirmationResultGlobal: ConfirmationResult | null = null;
+let nativeVerificationId: string | null = null;
+let nativePhoneVerifiedAutomatically = false;
 
 function getOrCreateRecaptchaContainer(): HTMLElement {
   const existing = document.getElementById("recaptcha-container");
-  if (existing) return existing;
-  const el = document.createElement("div");
+  const el = existing || document.createElement("div");
   el.id = "recaptcha-container";
-  document.body.appendChild(el);
+  el.setAttribute("aria-hidden", "true");
+  Object.assign(el.style, {
+    position: "fixed",
+    width: "1px",
+    height: "1px",
+    left: "-10000px",
+    bottom: "0",
+    opacity: "0",
+    overflow: "hidden",
+    pointerEvents: "none",
+  });
+  if (!existing) document.body.appendChild(el);
   return el;
+}
+
+async function sendNativeOTP(phoneNumber: string, resendCode: boolean): Promise<void> {
+  nativeVerificationId = null;
+  nativePhoneVerifiedAutomatically = false;
+
+  return new Promise<void>(async (resolve, reject) => {
+    let settled = false;
+    const handles: Array<{ remove: () => Promise<void> }> = [];
+    const cleanup = async () => Promise.all(handles.map((handle) => handle.remove().catch(() => undefined)));
+    const succeed = async () => {
+      if (settled) return;
+      settled = true;
+      await cleanup();
+      resolve();
+    };
+    const fail = async (event: { code?: string; message?: string }) => {
+      if (settled) return;
+      settled = true;
+      await cleanup();
+      reject(Object.assign(new Error(event.message || "Failed to send OTP."), {
+        code: event.code || "auth/phone-verification-failed",
+      }));
+    };
+
+    try {
+      handles.push(await FirebaseAuthentication.addListener("phoneCodeSent", async ({ verificationId }) => {
+        nativeVerificationId = verificationId;
+        await succeed();
+      }));
+      handles.push(await FirebaseAuthentication.addListener("phoneVerificationCompleted", async () => {
+        nativePhoneVerifiedAutomatically = true;
+        await succeed();
+      }));
+      handles.push(await FirebaseAuthentication.addListener("phoneVerificationFailed", fail));
+      await FirebaseAuthentication.signInWithPhoneNumber({
+        phoneNumber,
+        resendCode,
+        timeout: NATIVE_PHONE_TIMEOUT_SECONDS,
+      });
+    } catch (error: any) {
+      await fail(error);
+    }
+  });
 }
 
 let recaptchaReady: Promise<void> | null = null;
@@ -174,6 +232,13 @@ export async function sendOTP(phoneNumber: string, opts: { rebuildRecaptcha?: bo
     throw Object.assign(new Error("Phone OTP is only available on the published app."), {
       code: "auth/unauthorized-hostname",
     });
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    otpLog("sendOTP:native:start", { rebuild: !!opts.rebuildRecaptcha });
+    await sendNativeOTP(phoneNumber, !!opts.rebuildRecaptcha);
+    otpLog("sendOTP:native:success", { elapsedMs: Math.round(performance.now() - t0) });
+    return;
   }
 
   const currentPhone = firebaseAuth.currentUser?.phoneNumber?.replace(/\s/g, "");
@@ -259,6 +324,15 @@ export async function sendOTPWithRetry(
 }
 
 export async function verifyOTP(otp: string) {
+  if (Capacitor.isNativePlatform()) {
+    if (nativePhoneVerifiedAutomatically) return;
+    if (!nativeVerificationId) throw new Error("Please send OTP first");
+    await FirebaseAuthentication.confirmVerificationCode({
+      verificationId: nativeVerificationId,
+      verificationCode: otp,
+    });
+    return;
+  }
   if (!confirmationResultGlobal) {
     throw new Error("Please send OTP first");
   }
@@ -267,6 +341,11 @@ export async function verifyOTP(otp: string) {
 }
 
 export async function getFirebaseIdToken(): Promise<string> {
+  if (Capacitor.isNativePlatform()) {
+    const { token } = await FirebaseAuthentication.getIdToken({ forceRefresh: false });
+    if (!token) throw new Error("No Firebase user signed in");
+    return token;
+  }
   const user = firebaseAuth.currentUser;
   if (!user) throw new Error("No Firebase user signed in");
   return user.getIdToken(false);
@@ -274,6 +353,8 @@ export async function getFirebaseIdToken(): Promise<string> {
 
 export async function resetPhoneAuth() {
   confirmationResultGlobal = null;
+  nativeVerificationId = null;
+  nativePhoneVerifiedAutomatically = false;
   recaptchaReady = null;
   if ((window as any).recaptchaVerifier) {
     try {
@@ -288,10 +369,15 @@ export async function resetPhoneAuth() {
   if (firebaseAuth.currentUser) {
     await signOut(firebaseAuth).catch(() => undefined);
   }
+  if (Capacitor.isNativePlatform()) {
+    await FirebaseAuthentication.signOut().catch(() => undefined);
+  }
 }
 
 export function clearRecaptcha() {
   confirmationResultGlobal = null;
+  nativeVerificationId = null;
+  nativePhoneVerifiedAutomatically = false;
   recaptchaReady = null;
   if ((window as any).recaptchaVerifier) {
     try {

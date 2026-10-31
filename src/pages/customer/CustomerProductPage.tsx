@@ -438,7 +438,7 @@ export default function CustomerProductPage() {
             {/* Social Share */}
             <div className="mt-4">
               <Button variant="outline" size="sm" className="gap-2" onClick={async () => {
-                const displayUrl = `https://www.planext4u.net/app/product/${id}`;
+                const displayUrl = `https://www.planext4u.com/app/product/${id}`;
                 const ogUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=product&id=${id}`;
                 const text = `Check out ${product.title} - ${fmt(product.price + (product.tax || 0), { decimals: 0 })} on P4U!`;
                 if (navigator.share) {

@@ -80,7 +80,9 @@ export async function initNativeBridges() {
     /* non-fatal */
   }
 
-  // -------- AdMob banner (native only) --------
+  // -------- AdMob SDK (native only) --------
+  // Initialise only. Individual social/ecommerce GoogleAdUnit placements own
+  // banner visibility, so login, pre-login, and home never get a fixed ad.
   try {
     const { initAdMobBanner } = await import("./admob");
     void initAdMobBanner();

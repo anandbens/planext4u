@@ -382,7 +382,7 @@ export function useSocialFeed(mode: 'following' | 'for_you' = 'for_you') {
 export function useSharePost() {
   return useCallback(async (postId: string, text?: string) => {
     // Always use the published URL so links work across devices/platforms
-    const publishedOrigin = 'https://www.planext4u.net';
+    const publishedOrigin = 'https://www.planext4u.com';
     const webOrigin = window.location.origin;
     const origin = webOrigin.includes('localhost') || webOrigin.includes('capacitor://') ? publishedOrigin : webOrigin;
     const url = `${origin}/app/social/post/${postId}`;
@@ -420,7 +420,7 @@ export function useSharePost() {
 // Story shares earn points only when the story author is a verified vendor.
 export function useShareStory() {
   return useCallback(async (storyId: string, authorUserId: string, mediaUrl?: string) => {
-    const publishedOrigin = 'https://www.planext4u.net';
+    const publishedOrigin = 'https://www.planext4u.com';
     const webOrigin = window.location.origin;
     const origin = webOrigin.includes('localhost') || webOrigin.includes('capacitor://') ? publishedOrigin : webOrigin;
     const url = `${origin}/app/social/story/${storyId}`;

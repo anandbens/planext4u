@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -390,6 +390,22 @@ function RouteFallback() {
   );
 }
 
+function NativeAdRouteGuard() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (!isNativePlatform()) return;
+    const adRoute = pathname === "/app/social"
+      || pathname === "/app/browse"
+      || pathname.startsWith("/app/product/");
+    if (!adRoute) {
+      void import("@/lib/admob").then(({ resetAdMobBanner }) => resetAdMobBanner());
+    }
+  }, [pathname]);
+
+  return null;
+}
+
 const AppRoutes = () => {
   const { customerUser, vendorUser } = useAuth();
   const forcedVendorPortal = detectForcedVendorPortal();
@@ -747,6 +763,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <BrowserRouter>
+                <NativeAdRouteGuard />
                 <AppRoutes />
               </BrowserRouter>
             </TooltipProvider>

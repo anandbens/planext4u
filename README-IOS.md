@@ -81,7 +81,7 @@ matching `Usage Description`.
 In **Xcode → Signing & Capabilities → +Capability**, add:
 - **Push Notifications** (FCM)
 - **Background Modes** → Remote notifications, Audio (for in-app calls)
-- **Associated Domains** → `applinks:planext4u.net` if you later add deep links
+- **Associated Domains** → `applinks:planext4u.com` if you later add deep links
 
 ## 3. App icons & launch screens
 

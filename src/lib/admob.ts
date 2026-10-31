@@ -12,6 +12,9 @@ import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 
 let initialized = false;
+let initializing: Promise<boolean> | null = null;
+let bannerConsumers = 0;
+let bannerGeneration = 0;
 
 /** Approved production banner unit (fallback when the platform variable is unset). */
 const APPROVED_BANNER_UNIT = "ca-app-pub-6006362146695296/8328252043";
@@ -32,27 +35,76 @@ async function loadConfig() {
 }
 
 
-/** Initialise the AdMob SDK and show the bottom banner (native only). */
+async function ensureAdMobInitialized(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return false;
+  if (initialized) return true;
+  if (initializing) return initializing;
+  initializing = (async () => {
+    try {
+      const { AdMob } = await import("@capacitor-community/admob");
+      await AdMob.initialize({ initializeForTesting: false });
+      initialized = true;
+      return true;
+    } catch (error) {
+      console.warn("[AdMob] initialization failed", error);
+      return false;
+    } finally {
+      initializing = null;
+    }
+  })();
+  return initializing;
+}
+
+/** Initialise the native SDK without displaying a global/fixed ad. */
 export async function initAdMobBanner() {
-  if (initialized) return;
+  await ensureAdMobInitialized();
+}
+
+/**
+ * Show the native banner only while an approved Google ad slot is mounted.
+ * Multiple social-feed slots share one native banner and release it only when
+ * the final slot leaves the screen.
+ */
+export async function acquireAdMobBanner() {
   if (!Capacitor.isNativePlatform()) return;
-  initialized = true;
+  bannerConsumers += 1;
+  if (bannerConsumers !== 1) return;
+  const requestGeneration = bannerGeneration;
 
   try {
-    const { enabled, banner } = await loadConfig();
-    if (!enabled || !banner) return;
-
+    const [{ enabled, banner }, ready] = await Promise.all([loadConfig(), ensureAdMobInitialized()]);
+    if (!ready || !enabled || !banner || bannerConsumers === 0) return;
     const { AdMob, BannerAdPosition, BannerAdSize } = await import("@capacitor-community/admob");
-    await AdMob.initialize({ initializeForTesting: false });
     await AdMob.showBanner({
       adId: banner,
       adSize: BannerAdSize.ADAPTIVE_BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
       margin: 0,
     });
-  } catch {
-    /* non-fatal — never block the app because ads failed */
+    // Navigation/scrolling may remove the slot while Google's async request is
+    // still completing. Never allow that late response to leave a global ad.
+    if (bannerConsumers === 0 || requestGeneration !== bannerGeneration) {
+      await AdMob.hideBanner();
+    }
+  } catch (error) {
+    console.warn("[AdMob] banner request failed", error);
   }
+}
+
+export async function releaseAdMobBanner() {
+  if (!Capacitor.isNativePlatform()) return;
+  bannerConsumers = Math.max(0, bannerConsumers - 1);
+  if (bannerConsumers > 0) return;
+  bannerGeneration += 1;
+  await hideAdMobBanner();
+}
+
+/** Immediately invalidate all pending requests when leaving an approved ad route. */
+export async function resetAdMobBanner() {
+  if (!Capacitor.isNativePlatform()) return;
+  bannerConsumers = 0;
+  bannerGeneration += 1;
+  await hideAdMobBanner();
 }
 
 export async function hideAdMobBanner() {
@@ -60,7 +112,7 @@ export async function hideAdMobBanner() {
   try {
     const { AdMob } = await import("@capacitor-community/admob");
     await AdMob.hideBanner();
-  } catch {
-    /* non-fatal */
+  } catch (error) {
+    console.warn("[AdMob] banner hide failed", error);
   }
 }

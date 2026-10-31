@@ -22,8 +22,6 @@ import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { RatingPopup } from "@/components/customer/RatingPopup";
 import { CouponPopup } from "@/components/customer/CouponPopup";
-import { BannerAd } from "@/components/customer/BannerAd";
-import { GoogleAdUnit } from "@/components/customer/GoogleAdUnit";
 import { SpecialOffersWidget } from "@/components/customer/SpecialOffersWidget";
 import { VideoAdOverlay } from "@/components/customer/VideoAdOverlay";
 import { FloatingVideoAd } from "@/components/customer/FloatingVideoAd";
@@ -761,12 +759,6 @@ export default function CustomerHomePage() {
             </Card>
           ))}
         </motion.div>
-
-        {/* ── Sponsored Ad ── */}
-        <div className="px-3 py-1 md:px-4 md:py-2"><BannerAd placement="home" /></div>
-
-        {/* ── Google Ads ── */}
-        <div className="px-3 py-1 md:px-4 md:py-2"><GoogleAdUnit placement="ecommerce" /></div>
 
         {/* ── Classifieds CTA ── */}
         {modules.classifieds && (

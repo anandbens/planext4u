@@ -62,6 +62,13 @@ describe("Socio feed ad injection", () => {
     }
   });
 
+  it("prefers Google for every configured social-media slot", () => {
+    const picks = [4, 9, 14, 19].map((i) =>
+      resolveFeedAdSlot(i, { platformAdCount: 3, googleAdsActive: true }),
+    );
+    expect(picks.every((r) => r.showGoogleAd && r.platformAdIndex === null)).toBe(true);
+  });
+
   it("renders no ads when no source is available", () => {
     const feed = renderFeed(30, 0, false);
     expect(feed.filter(isAd)).toHaveLength(0);

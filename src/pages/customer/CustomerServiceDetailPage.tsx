@@ -234,7 +234,7 @@ export default function CustomerServiceDetailPage() {
               <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-destructive text-destructive' : ''}`} />
             </button>
             <button onClick={async () => {
-              const displayUrl = `https://www.planext4u.net/app/service/${id}`;
+              const displayUrl = `https://www.planext4u.com/app/service/${id}`;
               const ogUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/og-share?type=service&id=${id}`;
               const text = `Check out ${service.title} - ${fmt(service.price, { decimals: 0 })} on P4U!`;
               if (navigator.share) {

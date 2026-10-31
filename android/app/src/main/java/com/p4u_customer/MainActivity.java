@@ -10,7 +10,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.BridgeActivity;
-import com.razorpay.RzpCheckout;
+import com.ionicframework.capacitor.Checkout;
 
 /**
  * Customer Capacitor activity.
@@ -30,7 +30,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         // Explicit registration — required for Razorpay's pre-Capacitor-5 plugin.
-        registerPlugin(RzpCheckout.class);
+        registerPlugin(Checkout.class);
         super.onCreate(savedInstanceState);
 
         // Proactively request RECORD_AUDIO / CAMERA so first-time call attempts

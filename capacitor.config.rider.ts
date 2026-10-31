@@ -5,10 +5,10 @@ const config: CapacitorConfig = {
   appName: "Planext4u Rider",
   webDir: "dist",
   server: {
-    url: "https://www.planext4u.net/rider/login?portal=rider",
+    url: "https://www.planext4u.com/rider/login?portal=rider",
     androidScheme: "https",
     iosScheme: "https",
-    allowNavigation: ["www.planext4u.net", "planext4u.net", "*.planext4u.net", "*.supabase.co", "*.firebaseapp.com", "*.googleapis.com"],
+    allowNavigation: ["www.planext4u.com", "planext4u.com", "*.planext4u.com", "*.supabase.co", "*.firebaseapp.com", "*.googleapis.com"],
   },
   ios: {
     contentInset: "always",

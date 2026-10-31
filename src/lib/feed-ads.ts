@@ -43,9 +43,9 @@ export function resolveFeedAdSlot(
   }
 
   const hasPlatformAd = platformAdCount > 0;
-  // Alternate platform and Google units across slots; fall back to whichever
-  // source is available so an ad position is never left empty.
-  const showGoogleAd = googleAdsActive && (slot % 2 === 1 || !hasPlatformAd);
+  // Google owns the configured social-media slots. Internal platform ads are
+  // retained only as a fallback when Google advertising is unavailable.
+  const showGoogleAd = googleAdsActive;
   const platformAdIndex = !showGoogleAd && hasPlatformAd ? slot % platformAdCount : null;
 
   return { isAdSlot: true, slot, platformAdIndex, showGoogleAd };

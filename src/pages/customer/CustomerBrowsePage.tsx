@@ -15,7 +15,7 @@ import { api, CartItem } from "@/lib/api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { BannerAd } from "@/components/customer/BannerAd";
-import { GoogleAdUnit } from "@/components/customer/GoogleAdUnit";
+import { GoogleAdUnit, useAdSenseActive } from "@/components/customer/GoogleAdUnit";
 import { useAuth } from "@/lib/auth";
 import { useCurrency } from "@/lib/country-context";
 import { SubcategoryStrip } from "@/components/customer/SubcategoryStrip";
@@ -33,6 +33,7 @@ export default function CustomerBrowsePage() {
   const { customerUser } = useAuth();
   const { format: fmt } = useCurrency();
   const isGuest = !customerUser;
+  const isGoogleAdActive = useAdSenseActive("ecommerce");
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -456,14 +457,13 @@ export default function CustomerBrowsePage() {
           </>
         )}
 
-        {/* Inline sponsored slot — placed once, just above the grid, so a
-            scrolling shopper sees the ad in context (not after pagination). */}
-        <div className="mb-3">
-          <BannerAd placement="products" />
-        </div>
-
-        {/* Google AdSense display unit for the shopping grid */}
-        <GoogleAdUnit placement="ecommerce" className="mb-3" />
+        {/* One ecommerce ad slot above the grid: Google when configured, with
+            the existing platform creative retained as a clean fallback. */}
+        {isGoogleAdActive ? (
+          <GoogleAdUnit placement="ecommerce" className="mb-3" />
+        ) : (
+          <div className="mb-3"><BannerAd placement="products" /></div>
+        )}
 
 
         {isLoading ? (
