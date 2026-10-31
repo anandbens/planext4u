@@ -302,6 +302,68 @@ nav.fixed[class*="top-0"]:not([data-no-safe-area]) {
     line-height: 1.15;
   }
 
+  /* Super-app visual rhythm shared by every customer and vendor screen. */
+  .app-experience main {
+    animation: app-page-in 0.32s ease-out both;
+  }
+
+  .app-experience main h1,
+  .app-experience main h2,
+  .app-experience main h3 {
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  .app-experience main input:not([type="checkbox"]):not([type="radio"]),
+  .app-experience main textarea,
+  .app-experience main select {
+    border-radius: 0.9rem;
+    background-color: hsl(var(--card) / 0.88);
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  }
+
+  .app-experience main input:not([type="checkbox"]):not([type="radio"]):focus,
+  .app-experience main textarea:focus,
+  .app-experience main select:focus {
+    border-color: hsl(var(--primary) / 0.55);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.11);
+    background-color: hsl(var(--card));
+  }
+
+  .customer-home-page {
+    padding-top: 0.25rem;
+  }
+
+  .customer-home-page .home-section {
+    margin: 0.5rem 1rem;
+    border: 1px solid hsl(var(--border) / 0.58);
+    border-radius: 1.5rem;
+    background: hsl(var(--card) / 0.86);
+    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(18px);
+    overflow: hidden;
+  }
+
+  .customer-home-page .home-heading {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: hsl(var(--foreground));
+  }
+
+  .customer-home-page .home-rail-card {
+    border: 1px solid hsl(var(--border) / 0.55);
+    border-radius: 1.2rem;
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-xs);
+    overflow: hidden;
+  }
+
+  @keyframes app-page-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   .app-experience [data-radix-collection-item],
   .app-experience button,
   .app-experience a {
@@ -316,6 +378,14 @@ nav.fixed[class*="top-0"]:not([data-no-safe-area]) {
     .app-experience .rounded-xl {
       border-radius: 1rem;
     }
+
+    .customer-home-page .home-section {
+      border-radius: 1.25rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app-experience main { animation: none; }
   }
 
   .glass-card {

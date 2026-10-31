@@ -109,17 +109,19 @@ function HeroBannerCarousel({ banners, cmsBanners }: { banners: any[]; cmsBanner
   const isCMS = !!current?.media_url;
 
   const getLink = () => {
+    const canonicalize = (value: string) => value
+      .replace(/^https?:\/\/(www\.)?planext4u\.net/i, "https://www.planext4u.com");
     if (isCMS) {
       if (current.redirect_type === "product") return `/app/product/${current.redirect_id}`;
       if (current.redirect_type === "category") return `/app/browse?category=${current.redirect_id}`;
       if (current.redirect_type === "service") return `/app/service/${current.redirect_id}`;
-      return current.cta_link || "/app/browse";
+      return canonicalize(current.cta_link || "/app/browse");
     }
-    return current.link || "/app/browse";
+    return canonicalize(current.link || "/app/browse");
   };
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl shadow-lg mx-4 mt-2"
+    <div className="group relative overflow-hidden rounded-[1.5rem] shadow-xl mx-4 mt-3 ring-1 ring-black/5"
       style={themeColor ? { background: themeColor } : undefined}
       onTouchStart={e => { touchStart.current = e.touches[0].clientX; }}
       onTouchEnd={e => {
@@ -131,12 +133,12 @@ function HeroBannerCarousel({ banners, cmsBanners }: { banners: any[]; cmsBanner
         <motion.div key={idx} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.4, ease: "easeInOut" }}>
           {isCMS && current.media_type === "video" ? (
             <Link to={getLink()}>
-              <video src={current.media_url} autoPlay muted loop playsInline className="w-full h-44 sm:h-56 md:h-72 lg:h-80 object-cover rounded-2xl" />
+              <video src={current.media_url} autoPlay muted loop playsInline className="w-full h-48 sm:h-60 md:h-72 lg:h-80 object-cover rounded-[1.5rem]" />
             </Link>
           ) : (isCMS && current.media_url) || current.desktop_image ? (
             <Link to={getLink()}>
               <img src={isCMS ? current.media_url : current.desktop_image} alt={current.title}
-                className="w-full h-44 sm:h-56 md:h-72 lg:h-80 object-cover rounded-2xl" loading="lazy" />
+                className="w-full h-48 sm:h-60 md:h-72 lg:h-80 object-cover rounded-[1.5rem]" loading="lazy" />
             </Link>
           ) : (
             <div className={`bg-gradient-to-r ${current.gradient || 'from-primary to-primary/70'} rounded-2xl p-6 md:p-12 h-44 md:h-72 flex items-center`}>
@@ -185,23 +187,23 @@ function ProductSlider({ title, products, bgClass }: { title: string; products: 
   const scrollRef = useRef<HTMLDivElement>(null);
   if (!products?.length) return null;
   return (
-    <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="py-2">
-      <div className={`${bgClass || 'bg-primary'} rounded-2xl mx-4 overflow-hidden`}>
-        <div className="flex items-center justify-between px-5 py-3">
-          <h2 className="text-base md:text-lg font-bold text-primary-foreground">{title}</h2>
+    <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="home-section">
+      <div className={`${bgClass || 'bg-card/90'} overflow-hidden`}>
+        <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3">
+          <h2 className="home-heading">{title}</h2>
           <div className="flex gap-1.5">
             <button onClick={() => scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' })}
-              className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/40"><ChevronLeft className="h-3.5 w-3.5 text-primary-foreground" /></button>
+              className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center hover:bg-primary/10"><ChevronLeft className="h-3.5 w-3.5 text-primary" /></button>
             <button onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
-              className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/40"><ChevronRight className="h-3.5 w-3.5 text-primary-foreground" /></button>
+              className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center hover:bg-primary/10"><ChevronRight className="h-3.5 w-3.5 text-primary" /></button>
           </div>
         </div>
         <div ref={scrollRef} className="flex gap-3 overflow-x-auto pb-5 px-5 scrollbar-hide scroll-smooth">
           {products.map((p, i) => (
             <motion.div key={p.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }} className="shrink-0">
               <Link to={`/app/product/${p.id}`}>
-                <Card className="w-32 sm:w-40 overflow-hidden hover:shadow-xl transition-all duration-300 bg-card border-0 hover:-translate-y-1">
-                  <div className="h-28 sm:h-32 bg-secondary/20 flex items-center justify-center overflow-hidden relative">
+                <Card className="home-rail-card w-36 sm:w-44 hover:shadow-lg transition-all duration-300 border-0 hover:-translate-y-1">
+                  <div className="h-32 sm:h-36 bg-secondary/20 flex items-center justify-center overflow-hidden relative">
                     {p.discount > 0 && <span className="absolute top-1.5 left-1.5 bg-destructive text-destructive-foreground text-[9px] px-1.5 py-0.5 rounded-sm font-bold z-10">{Math.round((p.discount / p.price) * 100)}% OFF</span>}
                     {p.image ? <SmartImage src={p.image} alt={p.title} className="w-full h-full object-cover" /> : <span className="text-3xl">{p.emoji}</span>}
                   </div>
@@ -226,15 +228,15 @@ function ServiceSlider({ title, services }: { title: string; services: any[] }) 
   const scrollRef = useRef<HTMLDivElement>(null);
   if (!services?.length) return null;
   return (
-    <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="py-2">
-      <div className="bg-primary rounded-2xl mx-4 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3">
-          <h2 className="text-base md:text-lg font-bold text-primary-foreground">{title}</h2>
+    <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={slideUp} className="home-section">
+      <div className="bg-card/90 overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3">
+          <h2 className="home-heading">{title}</h2>
           <div className="flex gap-1.5">
             <button onClick={() => scrollRef.current?.scrollBy({ left: -200, behavior: 'smooth' })}
-              className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/40"><ChevronLeft className="h-3.5 w-3.5 text-primary-foreground" /></button>
+              className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center hover:bg-primary/10"><ChevronLeft className="h-3.5 w-3.5 text-primary" /></button>
             <button onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: 'smooth' })}
-              className="h-7 w-7 rounded-full bg-primary-foreground/20 flex items-center justify-center hover:bg-primary-foreground/40"><ChevronRight className="h-3.5 w-3.5 text-primary-foreground" /></button>
+              className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center hover:bg-primary/10"><ChevronRight className="h-3.5 w-3.5 text-primary" /></button>
           </div>
         </div>
         <div ref={scrollRef} className="flex gap-3 overflow-x-auto pb-5 px-5 scrollbar-hide scroll-smooth">
@@ -415,7 +417,7 @@ export default function CustomerHomePage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto space-y-0 pb-32 md:pb-6">
+      <div className="customer-home-page max-w-7xl mx-auto space-y-0 pb-32 md:pb-8">
 
         {/* Location bar only on desktop (mobile header already has it) */}
         <div className="px-4 pt-3 pb-1 hidden md:flex items-center justify-between">
@@ -436,7 +438,7 @@ export default function CustomerHomePage() {
         {/* Search is already in CustomerLayout header — no duplicate here */}
 
         {/* ── Category Pill Row (Zepto-style horizontal scroll) ── */}
-        <div className="px-4 pt-1 pb-2">
+        <div className="px-4 pt-2 pb-2">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             <Link to="/app/categories" className="shrink-0">
               <div className="flex flex-col items-center gap-1 min-w-[56px]">
@@ -484,8 +486,8 @@ export default function CustomerHomePage() {
               >
                 {data.storeBanners.map((store: any, idx: number) => (
                   <motion.div key={store.id} initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }}>
-                    <Link to={store.link || "/app/browse"} className="block group h-full">
-                      <div className="h-full rounded-xl overflow-hidden border border-border/20 bg-card hover:shadow-lg transition-all">
+                    <Link to={(store.link || "/app/browse").replace(/^https?:\/\/(www\.)?planext4u\.net/i, "https://www.planext4u.com")} className="block group h-full">
+                      <div className="home-rail-card h-full hover:shadow-lg transition-all">
                         <div className="h-20 sm:h-24 md:h-28 overflow-hidden"><img src={store.image} alt={store.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" /></div>
                         <div className="px-2 py-1.5 text-center"><p className="text-[10px] sm:text-xs font-semibold truncate">{store.title}</p></div>
                       </div>
