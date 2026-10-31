@@ -148,9 +148,9 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
 
 
   return (
-    <div className="min-h-[100dvh] bg-background">
+    <div className="app-experience customer-experience min-h-[100dvh] bg-background">
       {/* ====== MOBILE HEADER (Zepto-style) ====== */}
-      <header className="sticky top-0 z-40 md:hidden bg-primary" data-no-safe-area>
+      <header className="app-topbar sticky top-0 z-40 md:hidden bg-primary" data-no-safe-area>
         <div className="px-4 pb-2" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
           {/* Row 1: Logo + Location + Wallet + Profile */}
           <div className="flex items-center justify-between mb-3">
@@ -230,7 +230,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
       </header>
 
       {/* ====== DESKTOP HEADER (unified with mobile style) ====== */}
-      <header className="sticky top-0 z-40 hidden md:block bg-primary">
+      <header className="app-topbar sticky top-0 z-40 hidden md:block bg-primary">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 lg:gap-4 py-3">
             <Link to="/app" className="flex items-center gap-2 shrink-0">
@@ -439,7 +439,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
         )}
       </AnimatePresence>
 
-      <main className="pb-28 md:pb-0">{children}</main>
+      <main className="relative flex-1 pb-28 md:pb-0">{children}</main>
 
       {/* Footer */}
       <footer className="bg-[hsl(var(--brand-dark))] text-white py-8 lg:py-12 mt-8 lg:mt-12 hidden md:block">
@@ -536,7 +536,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             { icon: User, label: "Profile", to: "/app/social/profile", active: path.startsWith('/app/social/profile') },
           ];
           return (
-            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+            <nav className="app-bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
               <div className="flex items-center justify-around px-2 py-2 max-w-xl mx-auto">
                 {socialTabs.map(tab => (
                   <Link key={tab.to} to={tab.to} className="flex-1 flex flex-col items-center gap-0.5 py-1">
@@ -573,7 +573,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             { icon: User, label: "Profile", to: "/app/profile", active: false },
           ];
           return (
-            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+            <nav className="app-bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
               <div className="flex items-center justify-around px-2 py-2 max-w-xl mx-auto">
                 {homeTabs.map(tab => (
                   <Link key={tab.to + tab.label} to={tab.to} className="flex-1 flex flex-col items-center gap-0.5 py-1">
@@ -602,7 +602,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             { icon: User, label: "Profile", to: "/app/profile", active: false },
           ];
           return (
-            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+            <nav className="app-bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
               <div className="flex items-center justify-around px-2 py-2 max-w-xl mx-auto">
                 {classifiedTabs.map(tab => (
                   <Link key={tab.to + tab.label} to={tab.to} className="flex-1 flex flex-col items-center gap-0.5 py-1">
@@ -631,7 +631,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
             { icon: User, label: "Profile", to: "/app/profile", active: path.startsWith('/app/profile') },
           ];
           return (
-            <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+            <nav className="app-bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
               <div className="flex items-center justify-around px-2 py-2 max-w-xl mx-auto">
                 {serviceTabs.map(tab => (
                   <Link key={tab.to + tab.label} to={tab.to} className="flex-1 flex flex-col items-center gap-0.5 py-1">
@@ -654,7 +654,7 @@ export function CustomerLayout({ children, hideNav, socialMode }: CustomerLayout
           { icon: Newspaper, label: "Classified", to: "/app/classifieds", badge: 0, comingSoon: !modules.classifieds },
         ];
         return (
-          <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
+          <nav className="app-bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border/30 md:hidden safe-area-bottom">
             <div className="relative flex items-center justify-around px-1 py-2">
               {shopTabs.map((item: any) => {
                 const active = isActive(item.to);

@@ -143,17 +143,17 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background flex">
+    <div className="app-experience vendor-experience min-h-[100dvh] bg-background flex">
       {/* ====== DESKTOP SIDEBAR ====== */}
-      <aside className="hidden lg:flex flex-col w-60 border-r border-border/50 bg-card shrink-0 sticky top-0 h-screen">
-        <div className="p-4 border-b border-border/50">
+      <aside className="hidden lg:flex flex-col w-64 border-r border-white/10 bg-[hsl(var(--brand-dark))] text-white shrink-0 sticky top-0 h-screen shadow-xl">
+        <div className="p-5 border-b border-white/10">
           <Link to="/vendor" className="flex items-center gap-3">
             <div className="bg-primary rounded-xl p-1.5 h-10 w-10 flex items-center justify-center shadow-md">
               <img loading="lazy" decoding="async" src={p4uLogo} alt="P4U" className="w-full h-full object-contain"  width={1024} height={1024}/>
             </div>
             <div>
-              <p className="text-sm font-bold">Vendor Portal</p>
-              <p className="text-[10px] text-muted-foreground truncate max-w-[140px]">{vendorUser?.business_name || vendorUser?.name || "Vendor"}</p>
+              <p className="text-sm font-bold text-white">Vendor Portal</p>
+              <p className="text-[10px] text-white/55 truncate max-w-[140px]">{vendorUser?.business_name || vendorUser?.name || "Vendor"}</p>
             </div>
           </Link>
         </div>
@@ -164,8 +164,8 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
               to={item.to}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
                 isActive(item.to)
-                  ? "bg-primary/10 text-primary font-semibold shadow-sm"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  ? "bg-white text-[hsl(var(--brand-dark))] font-bold shadow-lg"
+                  : "text-white/65 hover:bg-white/10 hover:text-white"
               }`}
             >
               <item.icon className="h-4 w-4 shrink-0" />
@@ -173,8 +173,8 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
             </Link>
           ))}
         </nav>
-        <div className="p-3 border-t border-border/50 space-y-1">
-          <Link to="/app" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-secondary transition-colors">
+        <div className="p-3 border-t border-white/10 space-y-1">
+          <Link to="/app" className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/65 hover:bg-white/10 hover:text-white transition-colors">
             <Store className="h-4 w-4" /> Customer App
           </Link>
           <button
@@ -190,7 +190,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-h-[100dvh]">
         {/* ====== MOBILE HEADER (Branded, matching customer style) ====== */}
-        <header className="sticky top-0 z-30 lg:hidden bg-primary">
+        <header className="app-topbar sticky top-0 z-30 lg:hidden bg-primary">
           <div className="px-4 pb-3" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -227,7 +227,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
         </header>
 
         {/* ====== DESKTOP HEADER ====== */}
-        <header className="hidden lg:flex sticky top-0 z-30 bg-card/95 backdrop-blur-sm border-b border-border/50 px-6 py-3 items-center justify-between">
+        <header className="app-surface hidden lg:flex sticky top-0 z-30 px-7 py-4 items-center justify-between">
           <h1 className="text-lg font-bold">{title || "Dashboard"}</h1>
           <div className="flex items-center gap-3">
             <VendorNotificationBell />
@@ -249,7 +249,7 @@ export function VendorLayout({ children, title }: VendorLayoutProps) {
         </main>
 
         {/* ====== MOBILE BOTTOM NAV (Zepto-style pill) ====== */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border/30 safe-area-bottom">
+        <nav className="app-bottom-nav lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border/30 safe-area-bottom">
           <div className="relative flex items-center justify-around px-1 py-2">
             {bottomNavItems.map((item) => {
               const active = isActive(item.to);

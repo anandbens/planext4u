@@ -200,12 +200,12 @@ export default function CustomerServicesPage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-28 md:pb-6">
+      <div className="services-page max-w-7xl mx-auto px-4 py-5 pb-28 md:py-7 md:pb-8">
         {/* Header */}
-        <div className="mb-3">
+        <div className="mb-4 rounded-2xl border border-white/70 bg-card/75 p-4 shadow-sm backdrop-blur-xl">
           <div className="flex items-baseline justify-between gap-2 min-w-0">
-            <h1 className="text-xl font-bold truncate min-w-0 flex items-center gap-2">
-              <Wrench className="h-5 w-5 text-primary" />
+            <h1 className="app-section-title text-xl md:text-2xl font-extrabold truncate min-w-0 flex items-center gap-2">
+              <span className="app-icon-tile h-9 w-9 shrink-0"><Wrench className="h-4 w-4" /></span>
               {searchFilter || categoryFilter || "All Services"}
             </h1>
             <p className="text-xs text-muted-foreground shrink-0">
@@ -218,7 +218,7 @@ export default function CustomerServicesPage() {
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="app-surface flex flex-wrap items-center gap-2 mb-5 rounded-2xl p-2.5">
           <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
@@ -368,13 +368,13 @@ export default function CustomerServicesPage() {
               const vendorAvail = availabilityMap?.[s.vendor_id];
               const isAvailableToday = vendorAvail ? vendorAvail.is_available : true;
               return (
-                <Card key={s.id} className={`overflow-hidden hover:shadow-md transition-all ${!isAvailableToday ? 'opacity-60' : ''}`}>
+                <Card key={s.id} className={`app-surface group overflow-hidden rounded-[1.35rem] border-0 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${!isAvailableToday ? 'opacity-60' : ''}`}>
                   <Link to={`/app/service/${s.id}`}>
-                    <div className="bg-gradient-to-br from-primary/15 to-secondary/30 h-32 flex items-center justify-center relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-primary/15 to-secondary/30 h-40 sm:h-44 flex items-center justify-center relative overflow-hidden">
                       <img
                         src={getServiceImage(s.title, s.image)}
                         alt={s.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
                         loading="lazy"
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = getServiceImage(s.title, null); }}
                       />

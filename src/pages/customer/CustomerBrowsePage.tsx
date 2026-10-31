@@ -282,11 +282,11 @@ export default function CustomerBrowsePage() {
 
   return (
     <CustomerLayout>
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-44 md:pb-6 overflow-x-hidden" style={themeStyle}>
+      <div className="storefront-page max-w-7xl mx-auto px-4 py-5 pb-44 md:py-7 md:pb-8 overflow-x-hidden" style={themeStyle}>
         {/* Header: title + count on first line, toolbar wraps cleanly on small screens */}
-        <div className="mb-3">
+        <div className="mb-4 flex items-end justify-between gap-3 rounded-2xl border border-white/70 bg-card/75 p-4 shadow-sm backdrop-blur-xl">
           <div className="flex items-baseline justify-between gap-2 min-w-0">
-            <h1 className="text-xl font-bold truncate min-w-0">{categoryFilter || searchFilter || "All Products"}</h1>
+            <h1 className="app-section-title text-xl md:text-2xl font-extrabold truncate min-w-0">{categoryFilter || searchFilter || "All Products"}</h1>
             <p className="text-xs text-muted-foreground shrink-0">
               {filteredProducts.length} product{filteredProducts.length === 1 ? '' : 's'}
             </p>
@@ -296,7 +296,7 @@ export default function CustomerBrowsePage() {
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="app-surface flex flex-wrap items-center gap-2 mb-5 rounded-2xl p-2.5">
           <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
@@ -496,9 +496,9 @@ export default function CustomerBrowsePage() {
                   const isWished = wishlist.includes(p.id);
                   const isOutOfStock = isProductOutOfStock(p as any);
                   return (
-                    <Card key={p.id} className={`overflow-hidden hover:shadow-md transition-shadow group flex flex-col ${viewMode === "list" ? "flex-row" : ""}`}>
+                    <Card key={p.id} className={`app-surface overflow-hidden rounded-[1.35rem] border-0 transition-all duration-300 group flex flex-col hover:-translate-y-1 hover:shadow-xl ${viewMode === "list" ? "flex-row" : ""}`}>
                       <Link to={`/app/product/${p.id}`} className={`flex-1 flex ${viewMode === "list" ? "flex-row" : "flex-col"}`}>
-                        <div className={`bg-secondary/30 flex items-center justify-center relative overflow-hidden ${viewMode === "list" ? "w-28 h-28 shrink-0" : "h-36"}`}>
+                        <div className={`bg-secondary/30 flex items-center justify-center relative overflow-hidden ${viewMode === "list" ? "w-28 h-28 shrink-0" : "h-40 sm:h-44"}`}>
                           {discountPct > 0 && !isOutOfStock && <span className="discount-ribbon">{discountPct}% Off</span>}
                           {isOutOfStock && <span className="absolute top-2 left-2 z-10 bg-destructive/90 text-destructive-foreground text-[9px] px-2 py-0.5 rounded-sm font-medium">Out of Stock</span>}
                           {(() => {
