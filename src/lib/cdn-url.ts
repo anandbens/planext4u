@@ -6,14 +6,14 @@
  * background-image, etc. is served from the edge.
  *
  * Standard CDN host:
- *   https://cdn.planext4u.net/<key>
+ *   https://cdn.planext4u.com/<key>
  *
- * `cdn.planext4u.net` is a CNAME → f005.backblazeb2.com, proxied through
+ * `cdn.planext4u.com` is a CNAME → f005.backblazeb2.com, proxied through
  * Cloudflare (orange cloud) for caching + TLS. This avoids touching the
  * Vercel-managed www DNS record.
  */
 
-const CDN_BASE = "https://cdn.planext4u.net";
+const CDN_BASE = "https://cdn.planext4u.com";
 
 /** 1x1 transparent GIF — used as a safe no-op when an invalid value is passed to <img src>. */
 const BLANK_PIXEL =
@@ -21,7 +21,7 @@ const BLANK_PIXEL =
 
 /** Legacy bases we still need to rewrite away from. */
 const LEGACY_BASES = [
-  "https://cdn.planext4u.com/",
+  "https://cdn.planext4u.net/",
   "https://www.planext4u.net/media-library/",
   "https://planext4u.net/media-library/",
 ];
@@ -51,7 +51,7 @@ export function isRenderableImageSrc(value: string | null | undefined): boolean 
 
 /**
  * Rewrite any known Backblaze / legacy CDN URL form to the canonical
- * cdn.planext4u.net base. Returns the input unchanged for unrelated URLs.
+ * cdn.planext4u.com base. Returns the input unchanged for unrelated URLs.
  */
 export function toCdnUrl(url: string | null | undefined): string {
   if (!url) return "";
@@ -63,7 +63,7 @@ export function toCdnUrl(url: string | null | undefined): string {
     return trimmed;
   }
 
-  // Legacy CDN / media-library hosts → rewrite to cdn.planext4u.net
+  // Legacy CDN / media-library hosts → rewrite to cdn.planext4u.com
   for (const legacy of LEGACY_BASES) {
     if (trimmed.startsWith(legacy)) {
       return `${CDN_BASE}/${trimmed.slice(legacy.length)}`;

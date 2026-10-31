@@ -141,7 +141,7 @@ export async function uploadToB2(
     });
     onProgress?.(100);
     return {
-      // Always canonicalize to the cdn.planext4u.net host so callers persist
+      // Always canonicalize to the cdn.planext4u.com host so callers persist
       // CDN-only URLs in the database, even if the edge function returned a
       // raw Backblaze URL (defensive fallback).
       publicUrl: isPrivate ? `b2-private://${key}` : toCdnUrl(publicUrl),
@@ -199,10 +199,10 @@ const B2_PUBLIC_HOSTS = [
 ];
 
 /**
- * Canonical public media base. `cdn.planext4u.net` is a CNAME pointing to
+ * Canonical public media base. `cdn.planext4u.com` is a CNAME pointing to
  * f005.backblazeb2.com and proxied by Cloudflare (orange cloud) for caching.
  */
-const PUBLIC_CDN_BASE = "https://cdn.planext4u.net";
+const PUBLIC_CDN_BASE = "https://cdn.planext4u.com";
 
 /** Hosts that previously served media via Vercel /media-library/. */
 const MEDIA_LIBRARY_HOSTS = [/^www\.planext4u\.net$/i, /^planext4u\.net$/i];
