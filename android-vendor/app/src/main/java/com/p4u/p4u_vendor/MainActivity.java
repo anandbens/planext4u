@@ -9,7 +9,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.BridgeActivity;
-import com.razorpay.RzpCheckout;
+import com.ionicframework.capacitor.Checkout;
 
 public class MainActivity extends BridgeActivity {
     private static final String VENDOR_LAUNCH_URL = "https://www.planext4u.com/vendor/login?portal=vendor";
@@ -18,7 +18,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         // Explicit Razorpay plugin registration (capacitor-razorpay@1.0.4 is pre-Capacitor-5 spec).
-        registerPlugin(RzpCheckout.class);
+        registerPlugin(Checkout.class);
         super.onCreate(savedInstanceState);
 
         // Proactively request runtime mic/camera perms for WebRTC calls.
