@@ -1,4 +1,6 @@
 # Recovery tasks
+- [x] Follow up across Homes, Socio bookmarks, vendor notifications/media, Backblaze uploads/downloads and email/video functions; document inspected paths, unverified flows and separate bypass risks without expanding the selected-finding scope.
+- [ ] Expand fixes to separately identified callable notification/email functions and video/private-message media flows only if the user authorizes those out-of-scope changes.
 - [x] Fix and recheck 23 selected security findings: leaked-password checks, four email queue lookup paths, private record ownership, and six storage write rules; scanner status updates submitted, 38 tests passed, authenticated owner save/readback and forged-owner rejection verified.
 - [ ] Resolve the remaining 37 selected findings. Blocked on confirmation of public data visibility and registration/upload changes; do not hide public catalog/social data or break no-login registration without confirmation.
 - [x] Restore database connectivity and verify admin authentication responds (healthy database; invalid credentials returned for a synthetic login).
