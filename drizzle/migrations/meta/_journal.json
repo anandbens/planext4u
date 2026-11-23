@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795442448407,
+      "tag": "0000_pin_selected_email_queue_function_paths",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795442515266,
+      "tag": "0001_restrict_selected_private_records_and_file_writes",
+      "breakpoints": true
+    }
+  ]
+}
