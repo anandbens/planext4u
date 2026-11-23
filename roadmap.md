@@ -1,5 +1,6 @@
 # Recovery tasks
-- [ ] Fix only the 60 selected security findings, verify changes, and update their scanner statuses; request confirmation before access changes that could hide public features.
+- [x] Fix and recheck 23 selected security findings: leaked-password checks, four email queue lookup paths, private record ownership, and six storage write rules; scanner status updates submitted, 38 tests passed, authenticated owner save/readback and forged-owner rejection verified.
+- [ ] Resolve the remaining 37 selected findings. Blocked on confirmation of public data visibility and registration/upload changes; do not hide public catalog/social data or break no-login registration without confirmation.
 - [x] Restore database connectivity and verify admin authentication responds (healthy database; invalid credentials returned for a synthetic login).
 - [x] Diagnose and resolve the admin authentication lock-stealing error (official auth update; 15 tests pass; live preview makes zero auth lock requests).
 - [x] Check all portal sign-ins, callbacks, route guards, background refresh, and server authentication for the same failure (shared client everywhere; all four login pages render with zero auth locks; 20 tests pass). Successful real-account sign-in and native-device execution remain unverified; Cloud health checks still intermittently report degraded despite the database being up.
