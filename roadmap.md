@@ -1,3 +1,4 @@
 # Recovery tasks
 - [x] Restore database connectivity and verify admin authentication responds (healthy database; invalid credentials returned for a synthetic login).
 - [x] Diagnose and resolve the admin authentication lock-stealing error (official auth update; 15 tests pass; live preview makes zero auth lock requests).
+- [x] Check all portal sign-ins, callbacks, route guards, background refresh, and server authentication for the same failure (shared client everywhere; all four login pages render with zero auth locks; 20 tests pass). Successful real-account sign-in and native-device execution remain unverified; Cloud health checks still intermittently report degraded despite the database being up.
