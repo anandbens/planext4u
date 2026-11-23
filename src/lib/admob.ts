@@ -73,7 +73,7 @@ export async function acquireAdMobBanner() {
 
   try {
     const [{ enabled, banner }, ready] = await Promise.all([loadConfig(), ensureAdMobInitialized()]);
-    if (!ready || !enabled || !banner || bannerConsumers === 0) return;
+    if (!ready || !enabled || !banner || Number(bannerConsumers) === 0) return;
     const { AdMob, BannerAdPosition, BannerAdSize } = await import("@capacitor-community/admob");
     await AdMob.showBanner({
       adId: banner,
@@ -83,7 +83,7 @@ export async function acquireAdMobBanner() {
     });
     // Navigation/scrolling may remove the slot while Google's async request is
     // still completing. Never allow that late response to leave a global ad.
-    if (bannerConsumers === 0 || requestGeneration !== bannerGeneration) {
+    if (Number(bannerConsumers) === 0 || requestGeneration !== bannerGeneration) {
       await AdMob.hideBanner();
     }
   } catch (error) {
